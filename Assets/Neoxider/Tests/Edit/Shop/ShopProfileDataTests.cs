@@ -1,4 +1,5 @@
 using Neo.Shop;
+using Neo.Tests.Performance;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -131,6 +132,45 @@ namespace Neo.Tests.Edit
             Assert.That(profile.OwnedBundleIds, Has.Count.EqualTo(1));
             Assert.That(profile.PriceOverrides, Has.Count.EqualTo(1));
             Assert.That(profile.PriceOverrides[0].Id, Is.EqualTo("a"));
+        }
+
+        [Test]
+        public void Sanitize_StillDedupesAfterAnEarlierSanitize()
+        {
+            ShopProfileData first = new();
+            first.OwnedItemIds.Add("a");
+            first.OwnedItemIds.Add("a");
+            first.Sanitize();
+            ShopProfileData second = new();
+            second.OwnedItemIds.Add("a");
+            second.OwnedItemIds.Add("b");
+            second.OwnedItemIds.Add("b");
+
+            second.Sanitize();
+
+            Assert.That(first.OwnedItemIds, Is.EqualTo(new[] { "a" }));
+            Assert.That(second.OwnedItemIds, Is.EqualTo(new[] { "a", "b" }),
+                "The reused dedupe set starts empty for every list.");
+        }
+
+        [Test]
+        public void Sanitize_WarmProfile_DoesNotAllocate()
+        {
+            ShopProfileData profile = new();
+            profile.TryAddOwnedItem("sword");
+            profile.TryAddOwnedItem("hat");
+            profile.TryAddOwnedBundle("starter");
+            profile.SetPriceOverride("sword", 10f);
+            profile.Sanitize();
+
+            GcAlloc.AssertNone(() =>
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    profile.Sanitize();
+                }
+            }, "Sanitize runs on every Shop save; it must reuse its dedupe set.");
+            Assert.That(profile.OwnedItemIds, Has.Count.EqualTo(2));
         }
 
         [Test]

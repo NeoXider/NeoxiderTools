@@ -62,7 +62,7 @@ namespace Neo.Editor.Tests
             int hostsBeforeReset = Object.FindObjectsByType<CoroutineHelper>(
                 FindObjectsInactive.Include, FindObjectsSortMode.None).Length;
 
-            // Drive the actual subsystem lifecycle hook, not private handle state.
+            // WHY: Drive the actual subsystem lifecycle hook, not private handle state.
             MethodInfo reset = typeof(CoroutineExtensions).GetMethod("ResetStaticState",
                 BindingFlags.Static | BindingFlags.NonPublic);
             Assert.IsNotNull(reset);
@@ -275,7 +275,7 @@ namespace Neo.Editor.Tests
                 host.StopCoroutine(native);
             }
 
-            // Native unwinding differs: do not assume raw stop itself updates the tracked state.
+            // WHY: Native unwinding differs: do not assume raw stop itself updates the tracked state.
             handle.Stop();
             handle.Stop();
             AssertCompleted(handle);
@@ -333,7 +333,7 @@ namespace Neo.Editor.Tests
 
         private static CoroutineHelper GetGlobalHost()
         {
-            // Identify the actual owner for a native cancellation call; never synthesize handle state.
+            // WHY: Identify the actual owner for a native cancellation call; never synthesize handle state.
             FieldInfo field = typeof(CoroutineExtensions).GetField("instance",
                 BindingFlags.Static | BindingFlags.NonPublic);
             Assert.IsNotNull(field);

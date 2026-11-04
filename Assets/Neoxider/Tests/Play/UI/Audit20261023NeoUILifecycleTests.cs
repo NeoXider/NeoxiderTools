@@ -170,7 +170,7 @@ namespace Neo.Tests.Play
             GameObject page = Track(new GameObject("Temporary page"));
             page.SetActive(false);
             PageConfiguration configuration = new PageConfiguration { _pages = new[] { page } };
-            // Round-trip serialized scene references in the same process before Awake runs.
+            // WHY: Round-trip serialized scene references in the same process before Awake runs.
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(configuration), manager);
             root.SetActive(true);
             Assert.That(page.activeSelf, Is.True);

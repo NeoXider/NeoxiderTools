@@ -1,7 +1,14 @@
 ﻿# LeaderboardItem
 
-`Neo.Tools.LeaderboardItem` renders one user. Add it through
-**Neoxider / Tools / FakeLeaderboard / LeaderboardItem** or use the supplied row prefab.
+**What it is:** `Neo.Tools.LeaderboardItem` renders one user. Add it through
+**Neoxider / Tools / FakeLeaderboard / LeaderboardItem** or use the supplied row prefab. Script: `Scripts/Tools/FakeLeaderboard/LeaderboardItem.cs`.
+
+**How to use:**
+1. Put the component on a row prefab and assign the optional `textId`, `textName` and `textScore` TMP labels.
+2. Assign the prefab (or row instances) to a [Leaderboard](Leaderboard.md); `Sort()` binds each visible row.
+3. Wire `OnUser` / `OnUserTrue` / `OnuserFalse` to highlight the player's row.
+
+---
 
 ## Binding from C#
 

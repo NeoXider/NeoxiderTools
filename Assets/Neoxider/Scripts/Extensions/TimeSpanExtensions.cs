@@ -193,7 +193,7 @@ namespace Neo.Extensions
 
         private static TimeSpan AbsoluteForDisplay(TimeSpan value)
         {
-            // The positive magnitude of MinValue cannot be represented by TimeSpan. MaxValue is
+            // WHY: The positive magnitude of MinValue cannot be represented by TimeSpan. MaxValue is
             // one tick smaller, but has identical whole-millisecond and larger display components.
             return value == TimeSpan.MinValue ? TimeSpan.MaxValue : value.Duration();
         }

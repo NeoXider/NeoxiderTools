@@ -170,17 +170,17 @@ namespace Neo.Tests.Edit
         [Test]
         public void BonusPrefabData_EffectiveEndSpace_PreservesExplicitAndLegacyWorldFallbacks()
         {
-            var explicitCanvas = new AnimationFly.BonusPrefabData
+            AnimationFly.BonusPrefabData explicitCanvas = new AnimationFly.BonusPrefabData
             {
                 isWorldSpace = true,
                 endSpace = AnimationFlyCoordinateSpace.Canvas
             };
-            var legacyWorld = new AnimationFly.BonusPrefabData
+            AnimationFly.BonusPrefabData legacyWorld = new AnimationFly.BonusPrefabData
             {
                 isWorldSpace = true,
                 endSpace = AnimationFlyCoordinateSpace.Auto
             };
-            var legacyFallback = new AnimationFly.BonusPrefabData
+            AnimationFly.BonusPrefabData legacyFallback = new AnimationFly.BonusPrefabData
             {
                 isWorldSpace = false,
                 endSpace = AnimationFlyCoordinateSpace.Auto
@@ -197,7 +197,7 @@ namespace Neo.Tests.Edit
         private AnimationFly CreateFly(out RectTransform canvasRoot)
         {
             _root = new GameObject("AnimationFlyTestRoot");
-            var canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler),
+            GameObject canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler),
                 typeof(GraphicRaycaster));
             canvasObject.transform.SetParent(_root.transform);
 
@@ -226,7 +226,7 @@ namespace Neo.Tests.Edit
 
         private static RectTransform CreateRect(string name, Transform parent, Vector2 anchoredPosition)
         {
-            var go = new GameObject(name, typeof(RectTransform));
+            GameObject go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             RectTransform rect = (RectTransform)go.transform;
             rect.anchorMin = new Vector2(0.5f, 0.5f);

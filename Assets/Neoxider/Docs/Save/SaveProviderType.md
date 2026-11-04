@@ -1,6 +1,8 @@
 ﻿# SaveProviderType
 
-**Purpose:** Enum for selecting the save backend type.
+**What it is:** Enum for selecting the save backend type.
+
+**How to use:** Select it in a `SaveProviderSettings` asset, or read `ISaveProvider.ProviderType` at runtime.
 
 ## Values
 

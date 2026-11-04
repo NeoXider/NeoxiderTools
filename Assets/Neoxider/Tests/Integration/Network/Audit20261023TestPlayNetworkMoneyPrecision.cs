@@ -180,7 +180,7 @@ namespace Neo.Tests.Network.Integration
             _precisionProbe.Wallet = wallet;
             _precisionProbe.Driver = this;
             _precisionProbe.PersistenceFile = Path.Combine(_options.SaveRoot, "matrix-save.json");
-            // Keep ServerOnly until both clients' Money.Start requests crossed their ingress fences.
+            // WHY: Keep ServerOnly until both clients' Money.Start requests crossed their ingress fences.
             root.SetActive(true);
             return root;
         }
@@ -249,7 +249,7 @@ namespace Neo.Tests.Network.Integration
             yield return ExecutePeers(rounded, "precision-flush", 0, "precision-flush", 0);
             FlushPrecisionWallet(rounded);
 
-            // Public reseed of the additional wallet; the original Money213 wallet is untouched.
+            // WHY: Public reseed of the additional wallet; the original Money213 wallet is untouched.
             _precisionProbe.Wallet.SetMoney(10.5f);
             yield return ExecutePeers("money-ni7-fractional-prepare", "precision-prepare-fractional", 0,
                 "precision-prepare-fractional", 0);
@@ -299,7 +299,7 @@ namespace Neo.Tests.Network.Integration
             if (instruction.action == "precision-denied") requests.Add(RequestPrecisionSpend(wallet, 1f));
             else if (instruction.action == "precision-stale-pair")
             {
-                // Public fixture setup makes affordability stale. Restore before yielding so the
+                // WHY: Public fixture setup makes affordability stale. Restore before yielding so the
                 // existing delta-based RPC can be observed independently of stale snapshot repair.
                 wallet.CurrentMoney.Value = 0f;
                 requests.Add(RequestPrecisionSpend(wallet, 1f));

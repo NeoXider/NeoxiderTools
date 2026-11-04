@@ -1,12 +1,14 @@
 ﻿# FieldObjectSpawner
 
-**Purpose:** spawn objects at cell centers, retain per-cell metadata and maintain occupancy for blocking objects.
+**What it is:** a MonoBehaviour (`Scripts/GridSystem/FieldObjectSpawner.cs`, namespace `Neo.GridSystem`) that spawns objects at cell centers, retains per-cell metadata and maintains occupancy for blocking objects. It is the occupancy owner for the cells it fills.
 
-## Setup
-
+**How to use:**
 1. Add `FieldObjectSpawner` beside a generated `FieldGenerator`.
 2. Assign `Prefabs` in the Inspector.
 3. Call `SpawnAt` from a scene controller, and connect spawn/remove/occupied/freed UnityEvents to views as needed.
+4. Remove objects with `RemoveObject`, or with `Unregister` when your own pool despawns them; call `PruneDestroyedObjects` after code outside the spawner destroyed tracked objects.
+
+---
 
 ## Runtime API
 
@@ -17,6 +19,8 @@
 | `GetObjectsInCell(position)`, `GetAllObjects()` | Return copies of the tracked metadata lists. |
 | `IsCellOccupied(position)` | Read the field occupancy flag or tracked blocking objects. |
 | `RemoveObject(instance)` | Remove a tracked instance and schedule its destruction; free its original cell after the last tracked blocker only if that cell still belongs to the current board. Call in Play Mode. |
+| `Unregister(instance)` | Same events and occupancy transition as `RemoveObject`, without destroying the instance (hand it to `PoolManager` or your own despawn). Returns false for an untracked instance. Works in Edit Mode too. |
+| `PruneDestroyedObjects()` | Unregister every tracked object that was destroyed elsewhere and free its cell; returns the number pruned. |
 | `SpawnedObjectInfo.Cell / GameObject / OccupiesSpace` | Binding and blocking metadata. |
 | `OnObjectSpawned`, `OnObjectRemoved` | Object metadata notifications. |
 | `OnCellOccupied`, `OnCellFreed` | Blocking occupancy transition notifications. |
@@ -48,9 +52,11 @@ The ordinary event order remains `OnObjectSpawned` → field `OnCellStateChanged
 
 Use `SpawnedObjectInfo` as inspection data while registered; do not reassign its public `Cell`, `GameObject` or `OccupiesSpace` fields. Listener exceptions propagate; arbitrary callback mutation is not rolled back.
 
-Use this spawner as the occupancy owner for its cells. External destruction/despawning and independent writers of the occupancy flag still need application-level coordination with the registry. Remove objects through `RemoveObject` in Play Mode; pooling/unregister leases remain a separate design proposal.
+Use this spawner as the occupancy owner for its cells. Independent writers of the occupancy flag still need application-level coordination with the registry. Remove objects through `RemoveObject` in Play Mode, hand pooled objects back with `Unregister`, and call `PruneDestroyedObjects` after external destruction; a destroyed object otherwise keeps its cell occupied. Generation-scoped ownership leases remain a separate design proposal.
 
-При регенерации старые объекты сохраняют исходные привязки. Их удаление не освобождает клетки нового поля; автоматического переноса или удаления объектов нет. Вложенный спавн двух блокирующих объектов в свободную клетку вызывает одно уведомление о занятости. Удаление вложенного объекта после этого уведомления до возврата внешнего вызова не повторяет его. Клетка освобождается после удаления последнего блокирующего объекта.
+## Кратко по-русски
+
+При регенерации старые объекты сохраняют исходные привязки. Их удаление не освобождает клетки нового поля; автоматического переноса или удаления объектов нет. Вложенный спавн двух блокирующих объектов в свободную клетку вызывает одно уведомление о занятости. Удаление вложенного объекта после этого уведомления до возврата внешнего вызова не повторяет его. Клетка освобождается после удаления последнего блокирующего объекта. Удаляйте объекты через `RemoveObject`, пулированные возвращайте через `Unregister`, а после внешнего уничтожения вызывайте `PruneDestroyedObjects`: иначе уничтоженный объект продолжает занимать клетку.
 
 ## See Also
 

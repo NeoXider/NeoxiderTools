@@ -1,5 +1,12 @@
 ﻿# RPG Module — Internal Types
 
+**What it is:** the supporting public types of the RPG module (`Scripts/Rpg/`): enums, data/config types, events,
+runtime services and the clock and callback contracts.
+
+**How to use:** look a type up here when a component page references it; behaviour lives on the linked pages.
+
+---
+
 ## Enums
 | Type | Description |
 |------|-------------|
@@ -21,7 +28,7 @@
 | `RpgAttackEffectRefs` | Target buff IDs, target status IDs, and self buff IDs applied on a hit. |
 | `RpgButtonBinding` | Button-to-RPG action binding. |
 | `RpgStatGrowthDefinition` | Stat growth definition (formula, coefficients). |
-| `RpgTargetQuery` | Target search query. |
+| `RpgTargetQuery` | Target search query; every property has a setter for C# configuration. |
 | `RpgCharacterProfileData` | Universal RPG character profile data. |
 | `ActiveBuffEntry` / `ActiveStatusEntry` | Active buffs and statuses for runtime/save/network. |
 | `RpgResourceDefinition` / `RpgStatDefinition` | Resource pool and single-value stat authoring data. |
@@ -39,16 +46,42 @@
 | Type | Description |
 |------|-------------|
 | `IRpgCombatReceiver` | Damage receiver interface. |
-| `RpgCombatMath` | Damage calculation utility. |
-| `RpgTargetingUtility` | Internal receiver-based physics target search, used by selectors/presets. |
+| `IRpgDamageModifier` | Code hook into `RpgCharacter`'s incoming damage pipeline (shields, armor, caps). |
+| `RpgCombatMath` | Legacy multiplier utility over `ActiveBuffEntry` sequences (allocates; kept for compatibility). |
+| `RpgModifierMath` | Allocation-free outgoing/incoming/movement/attack-speed multipliers over projected modifiers. |
+| `RpgTargetingUtility` | Internal receiver-based physics target search, used by selectors/presets; allocation-free when warm. |
+| `RpgPhysicsQueryBuffers` | Internal growable 3D/2D query buffers used by attacks, targeting, auras and projectiles. |
 | `RpgCharacterResourceService` | Plain C# resource dictionary, mutations, reactive queries, and regeneration clocks. |
-| `RpgResourceRuntime` / `RpgStatRuntime` | Current runtime values and reactive objects; initial values obey definition limits. |
+| `RpgCharacterStatService` | Plain C# stat runtimes, upgrade rules, invested points, stat/resource resolvers, save rows. |
+| `RpgCharacterProgressionService` | Plain C# level, XP, upgrade points and applied-growth anchor with overflow-safe arithmetic (`ClampLevel` saturates a `long` level into the valid range). |
+| `RpgResourceRuntime` / `RpgStatRuntime` | Current runtime values and reactive objects; initial values obey definition limits, and a NaN write keeps the previous value. |
 | `RpgStatResolver` | Resolves stat values, resource maxima, and per-second regen with active modifiers. |
 | `RpgCharacterProfileService` | Serializes a sanitized clone and deserializes universal profiles. |
-| `RpgEffectShelf` | Effect libraries, stacking, UTC expiry, status damage ticks, modifier projection, and snapshots. |
+| `RpgCharacterNetworkCommand` | Transport-neutral mutation request; `IsKnownType(type)` tells a named command from a raw wire value. |
+| `RpgEffectShelf` | Effect libraries, stacking, UTC expiry, status damage ticks, modifier projection, and snapshots; `GetStatusMovementMultiplier()` and `HasBlockingStatus()` answer the status queries without allocating. |
 
 `RpgStatResolver.ResolveRegen(resource, stats, modifiers, upgradeRules)` also includes invested
 `AddRegenFlat` bonuses. The original three-argument overload remains available.
+
+The services compose without a scene:
+
+```csharp
+RpgCharacterStatService stats = new();
+stats.Build(template.stats);
+stats.BuildUpgradeRules(template.progression);
+
+RpgCharacterProgressionService progression = new() { Definition = template.progression };
+progression.SetLevel(5);
+progression.AddUpgradePoints(progression.GetUpgradePointsForLevelChange(1, 5));
+if (stats.CanUpgrade("Vitality", progression.UpgradePoints) &&
+    stats.TryGetUpgradeRule("Vitality", out RpgStatUpgradeRule rule) &&
+    progression.TrySpendUpgradePoints(rule.costPerUpgrade))
+{
+    stats.AddInvestment("Vitality");
+}
+
+float vitality = stats.ResolveStat(stats.Stats["Vitality"], progression.AppliedGrowthLevel, null);
+```
 
 `RpgEffectShelf.Tick` permits callbacks to clear/remove/apply effects. If a callback changes the shelf,
 the current pass stops before visiting stale entries; the next tick processes remaining effects.

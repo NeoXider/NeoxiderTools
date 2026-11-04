@@ -27,7 +27,7 @@ namespace Neo.NPC
                 host.followCore.SetFollowEnabled(true);
                 host.followCore.SetTarget(host.followTarget);
                 host.onTargetChanged?.Invoke(host.followTarget);
-                host.followCore.TryForceUpdatePath(host.ConstrainPosition);
+                host.followCore.TryForceUpdatePath(host.ConstrainPositionFunc);
             }
 
             public void Exit()
@@ -37,7 +37,7 @@ namespace Neo.NPC
 
             public void Tick(float deltaTime, float time)
             {
-                host.followCore.Tick(time, host.ConstrainPosition);
+                host.followCore.Tick(time, host.ConstrainPositionFunc);
             }
         }
 
@@ -81,6 +81,7 @@ namespace Neo.NPC
             public void Enter()
             {
                 host.isCombinedFollowing = false;
+                host.combinedRetryTime = float.NegativeInfinity;
 
                 host.followCore.Configure(host.triggerDistance, host.autoUpdatePath, host.pathUpdateInterval,
                     host.maxSampleDistance);
@@ -123,7 +124,7 @@ namespace Neo.NPC
                 bool shouldFollow = distSqr <= aggroSqr;
                 bool shouldStop = host.maxFollowDistance > 0f && distSqr > deaggroSqr;
 
-                if (shouldFollow && !host.isCombinedFollowing)
+                if (shouldFollow && !host.isCombinedFollowing && time >= host.combinedRetryTime)
                 {
                     host.isCombinedFollowing = true;
                     host.patrolCore.StopPatrol(false);
@@ -131,7 +132,7 @@ namespace Neo.NPC
                     host.followCore.SetFollowEnabled(true);
                     host.onStartFollowing?.Invoke();
                     host.LogDecision("Combined -> start following");
-                    host.followCore.TryForceUpdatePath(host.ConstrainPosition);
+                    host.followCore.TryForceUpdatePath(host.ConstrainPositionFunc);
                 }
                 else if (shouldStop && host.isCombinedFollowing)
                 {
@@ -144,7 +145,7 @@ namespace Neo.NPC
 
                 if (host.isCombinedFollowing)
                 {
-                    host.followCore.Tick(time, host.ConstrainPosition);
+                    host.followCore.Tick(time, host.ConstrainPositionFunc);
                 }
                 else
                 {

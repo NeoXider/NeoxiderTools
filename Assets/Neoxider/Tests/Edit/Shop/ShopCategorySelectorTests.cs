@@ -21,7 +21,7 @@ namespace Neo.Editor.Tests
             _go = new GameObject("ShopCategorySelectorTests");
             _selector = _go.AddComponent<ShopCategorySelector>();
 
-            var categories = new[]
+            ShopCategorySelector.Category[] categories = new[]
             {
                 new ShopCategorySelector.Category { Id = "all", DisplayName = "All" },
                 new ShopCategorySelector.Category { Id = "hats", DisplayName = "Hats" },

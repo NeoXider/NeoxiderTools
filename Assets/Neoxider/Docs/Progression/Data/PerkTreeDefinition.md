@@ -1,6 +1,14 @@
 # PerkTreeDefinition
 
-`PerkTreeDefinition` is a reusable ScriptableObject containing `PerkDefinition` entries. Create it with **Create > Neoxider > Progression > Perk Tree Definition**, then assign it to `ProgressionManager.PerkTree`.
+**What it is:** `PerkTreeDefinition` is a reusable ScriptableObject containing `PerkDefinition` entries. Create it with **Create > Neoxider > Progression > Perk Tree Definition**, then assign it to `ProgressionManager.PerkTree`. Script: `Scripts/Progression/Data/PerkTreeDefinition.cs`.
+
+**How to use:**
+1. Create the asset and add one entry per perk with a stable `Id`.
+2. Assign it to `ProgressionManager.PerkTree`.
+3. Gate UI with `CanBuyPerk(id, out reason)` and buy with `TryBuyPerk(id, out reason)`, or use
+   `ProgressionNoCodeAction` with `BuyPerk`.
+
+---
 
 | Entry field | Purpose |
 |-------------|---------|

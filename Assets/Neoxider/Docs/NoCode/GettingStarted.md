@@ -1,8 +1,8 @@
 # NoCode Getting Started — build gameplay without writing code
 
-NeoxiderTools lets you assemble real game logic entirely in the Unity Inspector. Every building block is a regular component: add it from `Add Component → Neoxider/…` (or the `GameObject → Neoxider` create menu), wire UnityEvents, press Play.
+**What it is:** the beginner path for assembling game logic in the Unity Inspector with NeoxiderTools components (conditions, bindings, state machines and module components). Every building block is a regular component: add it from `Add Component → Neoxider/…` (or the `GameObject → Neoxider` create menu), wire UnityEvents, press Play.
 
-This page is the beginner path. Each step names the component to drop in and what to connect — no C# involved.
+**How to use:** follow the tour below in order; each step names the component to drop in and what to connect — no C# involved. Every NoCode component also has a typed C# API, linked from its page, for when a prototype graduates to code.
 
 ## The core idea
 
@@ -71,7 +71,7 @@ Most components above persist themselves (`Money`, `Shop`, `EquipmentManager`, `
 4. For `HP {0:0}/{1:0}`, use `NoCodeFormattedText`, add two entries under **Values**, and enter that pattern under **Format**. Missing entries display as zero.
 5. For a source that spawns later, enable **Use Scene Search**, set **Search Object Name**, and enable **Wait For Object**. Keep **Poll In Late Update** enabled so Reactive mode can retry unresolved sources. Prefer explicit scene references when available.
 
-Disabling a binding releases its reactive listeners. Re-enable it after changing the source, or refresh explicitly from C#: `NoCodeFormattedText.RefreshFromSource()` is public; custom float views can expose the base class's protected refresh method. Text targets created later are populated on the next refresh without a duplicate formatted-value event.
+Disabling a binding releases its reactive listeners. Re-enable it after changing the source, or refresh explicitly (also from a UnityEvent): `NoCodeFormattedText.RefreshFromSource()` and `RefreshBinding()` on `NoCodeBindText` / `SetProgress` are public. Text targets created later are populated on the next refresh without a duplicate formatted-value event.
 
 Changing binding settings or Poll Interval in the Inspector queues reconciliation for the next active `LateUpdate`; source getters are not called from validation. Reactive fallback continues at the next allowed poll. Once stays nonpolling, and a missing/negative Component Occurrence never silently uses the first component. Existing bindings default to occurrence `0`; the legacy Editor component-list index keeps its own meaning.
 

@@ -5,6 +5,12 @@ namespace Neo.Cards
     /// <summary>
     ///     Comparers for sorting cards.
     /// </summary>
+    /// <remarks>
+    ///     The rank/suit comparers target standard playing cards (custom cards have no rank or suit and compare
+    ///     equal). For custom card data use <see cref="ByValueAscending" />, <see cref="ByValueDescending" /> or
+    ///     <see cref="ByGroupThenValueAscending" />. Pass any comparer to <c>HandModel.Sort</c>,
+    ///     <c>HandComponent.SortAsync</c> or <c>HandPresenter.SortAsync</c>.
+    /// </remarks>
     public static class CardComparer
     {
         /// <summary>
@@ -26,6 +32,23 @@ namespace Neo.Cards
         ///     Compare by suit, then rank descending.
         /// </summary>
         public static readonly IComparer<CardData> BySuitThenRankDescending = new SuitThenRankDescendingComparer();
+
+        /// <summary>
+        ///     Compare by <see cref="CardData.CompareTo" /> ascending: custom cards by
+        ///     <see cref="CardData.SortValue" /> then id, standard cards by rank, jokers last.
+        /// </summary>
+        public static readonly IComparer<CardData> ByValueAscending = new ValueComparer(true);
+
+        /// <summary>
+        ///     Compare by <see cref="CardData.CompareTo" /> descending.
+        /// </summary>
+        public static readonly IComparer<CardData> ByValueDescending = new ValueComparer(false);
+
+        /// <summary>
+        ///     Compare by <see cref="CardData.Group" /> (ordinal), then by value ascending. Groups custom cards by
+        ///     faction/class/color; standard cards group by suit name.
+        /// </summary>
+        public static readonly IComparer<CardData> ByGroupThenValueAscending = new GroupThenValueComparer();
 
         /// <summary>
         ///     Creates a comparer that accounts for trump (trumps sort last).
@@ -57,7 +80,7 @@ namespace Neo.Cards
                     return -1;
                 }
 
-                return x.Rank.CompareTo(y.Rank);
+                return ((int)x.Rank).CompareTo((int)y.Rank);
             }
         }
 
@@ -80,7 +103,7 @@ namespace Neo.Cards
                     return 1;
                 }
 
-                return y.Rank.CompareTo(x.Rank);
+                return ((int)y.Rank).CompareTo((int)x.Rank);
             }
         }
 
@@ -103,13 +126,13 @@ namespace Neo.Cards
                     return -1;
                 }
 
-                int suitCompare = x.Suit.CompareTo(y.Suit);
+                int suitCompare = ((int)x.Suit).CompareTo((int)y.Suit);
                 if (suitCompare != 0)
                 {
                     return suitCompare;
                 }
 
-                return x.Rank.CompareTo(y.Rank);
+                return ((int)x.Rank).CompareTo((int)y.Rank);
             }
         }
 
@@ -132,13 +155,37 @@ namespace Neo.Cards
                     return 1;
                 }
 
-                int suitCompare = y.Suit.CompareTo(x.Suit);
+                int suitCompare = ((int)y.Suit).CompareTo((int)x.Suit);
                 if (suitCompare != 0)
                 {
                     return suitCompare;
                 }
 
-                return y.Rank.CompareTo(x.Rank);
+                return ((int)y.Rank).CompareTo((int)x.Rank);
+            }
+        }
+
+        private sealed class ValueComparer : IComparer<CardData>
+        {
+            private readonly bool _ascending;
+
+            public ValueComparer(bool ascending)
+            {
+                _ascending = ascending;
+            }
+
+            public int Compare(CardData x, CardData y)
+            {
+                return _ascending ? x.CompareTo(y) : y.CompareTo(x);
+            }
+        }
+
+        private sealed class GroupThenValueComparer : IComparer<CardData>
+        {
+            public int Compare(CardData x, CardData y)
+            {
+                int groupCompare = string.CompareOrdinal(x.Group ?? string.Empty, y.Group ?? string.Empty);
+                return groupCompare != 0 ? groupCompare : x.CompareTo(y);
             }
         }
 
@@ -183,13 +230,13 @@ namespace Neo.Cards
                     return -1;
                 }
 
-                int suitCompare = x.Suit.CompareTo(y.Suit);
+                int suitCompare = ((int)x.Suit).CompareTo((int)y.Suit);
                 if (suitCompare != 0)
                 {
                     return _ascending ? suitCompare : -suitCompare;
                 }
 
-                return _ascending ? x.Rank.CompareTo(y.Rank) : y.Rank.CompareTo(x.Rank);
+                return _ascending ? ((int)x.Rank).CompareTo((int)y.Rank) : ((int)y.Rank).CompareTo((int)x.Rank);
             }
         }
     }

@@ -40,18 +40,18 @@ namespace Neo.UI
     /// </summary>
     public static class UIMeshRigOwnerResolver
     {
+        private static readonly List<UIMeshRigPoint> CandidateBuffer = new List<UIMeshRigPoint>();
+
         public static IUIMeshRigOwner Find(Transform start)
         {
             Transform current = start;
             while (current != null)
             {
-                Component[] components = current.GetComponents<Component>();
-                for (int index = 0; index < components.Length; index++)
+                // WHY: TryGetComponent with the interface finds the first owner component without the
+                // Component[] that GetComponents allocated on every ancestor level.
+                if (current.TryGetComponent(out IUIMeshRigOwner owner))
                 {
-                    if (components[index] is IUIMeshRigOwner owner)
-                    {
-                        return owner;
-                    }
+                    return owner;
                 }
 
                 current = current.parent;
@@ -64,6 +64,51 @@ namespace Neo.UI
         public static bool OwnsPoint(IUIMeshRigOwner owner, UIMeshRigPoint candidate)
         {
             return candidate != null && ReferenceEquals(Find(candidate.transform), owner);
+        }
+
+        /// <summary>
+        ///     Replaces <paramref name="result"/> with every point under <paramref name="root"/> (inactive
+        ///     included) whose nearest owner is <paramref name="owner"/>, in hierarchy order.
+        /// </summary>
+        internal static void CollectOwnedPoints(IUIMeshRigOwner owner, Component root, List<UIMeshRigPoint> result)
+        {
+            result.Clear();
+            if (owner == null || root == null)
+            {
+                return;
+            }
+
+            root.GetComponentsInChildren(true, CandidateBuffer);
+            for (int index = 0; index < CandidateBuffer.Count; index++)
+            {
+                UIMeshRigPoint candidate = CandidateBuffer[index];
+                if (OwnsPoint(owner, candidate))
+                {
+                    candidate.BindOwner(owner);
+                    result.Add(candidate);
+                }
+            }
+
+            CandidateBuffer.Clear();
+        }
+
+        /// <summary>
+        ///     Marks the nearest owner above <paramref name="ownerTransform"/> for a point re-collection. Owners call
+        ///     it when they are added below another rig or removed from it: the nearest owner of the points in
+        ///     between changes without any parent change, so the enclosing rig would keep deforming with them.
+        /// </summary>
+        internal static void NotifyEnclosingOwner(Transform ownerTransform)
+        {
+            if (ownerTransform == null)
+            {
+                return;
+            }
+
+            IUIMeshRigOwner enclosing = Find(ownerTransform.parent);
+            if (enclosing is Component component && component != null)
+            {
+                enclosing.NotifyBindingChanged();
+            }
         }
     }
 }

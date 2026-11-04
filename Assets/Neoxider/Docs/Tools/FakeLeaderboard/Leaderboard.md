@@ -1,16 +1,25 @@
 ﻿# Leaderboard
 
-`Neo.Tools.Leaderboard` combines a local ranking API with optional scene views. It inherits
+**What it is:** `Neo.Tools.Leaderboard` combines a local ranking API with optional scene views. It inherits
 `Singleton<Leaderboard>`; assign explicit references when possible. Add it through
-**Neoxider / Tools / Leaderboard**.
+**Neoxider / Tools / Leaderboard**. Script: `Scripts/Tools/FakeLeaderboard/Leaderboard.cs`.
+
+**How to use:**
+1. Add the component (or the leaderboard prefab), set `count`, opponent `names` and `rangeScore`.
+2. Assign a row `prefab` and `container`, or fill `leaderboardItems` with [LeaderboardItem](LeaderboardItem.md) rows.
+3. Report results with `UpdatePlayerScore(score)` (it sorts after an accepted update); connect `OnSort` for
+   reactions after each refresh.
+
+---
 
 ## Runtime API
 
 | Method/data | Contract |
 |-------------|----------|
 | `GenerateUserList()` | Replace `users` with `count - 1` generated opponents and the canonical `player` once. Clamp `count` to at least one. Empty/null name sources use `nickname`. Does not refresh rows until sorting. |
-| `Sort()` | Canonicalize one unambiguous player source entry, rebuild `sortUsers`, assign ranks, refresh rows, then invoke `OnSort`. Null entries are skipped. Equal-score order is stable. Repeated canonical references rank once without removing source slots. |
+| `Sort()` | Canonicalize one unambiguous player source entry, rebuild `sortUsers`, assign ranks, refresh rows, then invoke `OnSort`. Null entries are skipped. Equal-score order is stable. Repeated canonical references rank once without removing source slots. Each call assigns a fresh `sortUsers` list (earlier lists stay unchanged snapshots) and sorts in O(n log n) without LINQ buffers. |
 | `UpdatePlayerScore(int score, bool overrideBestScore = false)` | Accept the first nonzero result, then retain the better result according to `sortOrder`. Synchronize the player, stage its save data and sort after an accepted update. |
+| `SubmitScore(int score)` / `SubmitScore(float score)` | One-argument `UpdatePlayerScore(score)` for UnityEvents (a Counter or Money event, a game-over button); the float overload rounds to the nearest integer. Keeps only a better result. |
 | `UpdatePlayerName(string newName)` | Update and synchronize the player, stage its name and score, then sort. |
 | `GetId(LeaderboardUser user)` / `GetIdPlayer()` | Return a zero-based index in the latest sorted snapshot, or `-1` if unavailable. |
 | `IsPlayerIdentityResolved` | The source contains the canonical reference or exactly one distinct persistent-key match. A query does not generate keys or mutate data. |

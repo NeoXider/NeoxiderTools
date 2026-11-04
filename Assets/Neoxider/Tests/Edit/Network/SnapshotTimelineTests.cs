@@ -11,15 +11,19 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public sealed class SnapshotTimelineTests
     {
-        private const float Interval = 0.05f; // 20 Hz
-        private const float Frame = 1f / 60f; // a 60 fps client
+        /// <summary>Snapshot interval of a 20 Hz link.</summary>
+        private const float Interval = 0.05f;
+        /// <summary>Render frame of a 60 fps client.</summary>
+        private const float Frame = 1f / 60f;
 
         private static SnapshotTimeline NewTimeline()
         {
             return new SnapshotTimeline(SnapshotTimelineSettings.Default);
         }
 
-        // Feeds a perfectly regular link for the given number of seconds and returns the local clock at the end.
+        /// <summary>
+        ///     Feeds a perfectly regular link for the given number of seconds and returns the local clock at the end.
+        /// </summary>
         private static float RunSteady(SnapshotTimeline timeline, float seconds, float startLocal = 0f,
             float serverOffset = 100f)
         {
@@ -41,7 +45,9 @@ namespace Neo.Editor.Tests
             return local;
         }
 
-        // A link whose authority clock runs at clockRate(t) of real time (hit-stop, slowed simulation).
+        /// <summary>
+        ///     A link whose authority clock runs at clockRate(t) of real time (hit-stop, slowed simulation).
+        /// </summary>
         private static void RunWithServerRate(SnapshotTimeline timeline, float seconds, float measureAfter,
             Func<float, float> clockRate, out float lowest, out float mean)
         {
@@ -81,7 +87,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ASlowedAuthorityClock_DoesNotPushTheRenderClockAheadOfTheFrames()
         {
-            // The first host-loopback run of the game this was extracted from: hit-stop made the host's clock run at
+            // WHY: The first host-loopback run of the game this was extracted from: hit-stop made the host's clock run at
             // ~70% of real time, the render clock assumed 1:1, slid 0.2-0.4 s in FRONT of the newest frame and
             // interpolation degraded to "hold the newest position".
             SnapshotTimeline timeline = NewTimeline();
@@ -284,7 +290,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void DrivingASnapshotBuffer_WithTheTimeline_ProducesSmoothMotion()
         {
-            // Sampled once per render frame against the free-running clock, a body at constant speed must advance
+            // WHY: Sampled once per render frame against the free-running clock, a body at constant speed must advance
             // on every rendered frame, not only on the frames a snapshot landed.
             SnapshotTimeline timeline = NewTimeline();
             SnapshotBuffer<float> buffer = new SnapshotBuffer<float>(8);

@@ -1,14 +1,15 @@
 ﻿# CardComponent
 
-`CardComponent` is the scene-facing card component used for card presentation and interaction. It handles card data, face-up state, hover effects, click events, and move/flip animations. File: `Assets/Neoxider/Scripts/Cards/Components/CardComponent.cs`.
+**What it is:** `CardComponent` is the scene-facing card component used for card presentation and interaction. It handles card data, face-up state, hover effects, click events, and move/flip animations. File: `Assets/Neoxider/Scripts/Cards/Components/CardComponent.cs`.
 
-## Typical use
-
+**How to use:**
 1. Add `CardComponent` to a card prefab.
 2. Assign a `DeckConfig`.
 3. Set visual targets such as `Image` or `SpriteRenderer`.
 4. Configure animation and hover settings.
 5. Drive it through `SetData(...)`, `FlipAsync(...)`, and movement methods from gameplay systems.
+
+---
 
 ## Main inspector groups
 

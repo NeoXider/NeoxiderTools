@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b17992fc7a4b4d489e641e234583fbd, type: 3}
+  m_Name: DemoPerkTree
+  m_EditorClassIdentifier: Neo.Progression::Neo.Progression.PerkTreeDefinition
+  _perks:
+  - _id: blade_master
+    _displayName: Blade Master
+    _description: +20% melee damage. Needs Swift Feet and the Forge.
+    _icon: {fileID: 0}
+    _purchasedByDefault: 0
+    _cost: 3
+    _requiredLevel: 1
+    _prerequisitePerkIds:
+    - swift_feet
+    _requiredUnlockNodeIds:
+    - forge
+    _conditions: []
+    _rewards: []
+  - _id: iron_skin
+    _displayName: Iron Skin
+    _description: +15% armor. Needs level 3.
+    _icon: {fileID: 0}
+    _purchasedByDefault: 0
+    _cost: 2
+    _requiredLevel: 3
+    _prerequisitePerkIds: []
+    _requiredUnlockNodeIds: []
+    _conditions: []
+    _rewards: []
+  - _id: swift_feet
+    _displayName: Swift Feet
+    _description: +10% move speed.
+    _icon: {fileID: 0}
+    _purchasedByDefault: 0
+    _cost: 1
+    _requiredLevel: 1
+    _prerequisitePerkIds: []
+    _requiredUnlockNodeIds: []
+    _conditions: []
+    _rewards: []

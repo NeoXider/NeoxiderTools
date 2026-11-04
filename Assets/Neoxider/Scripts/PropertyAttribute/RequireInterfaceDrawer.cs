@@ -1,5 +1,6 @@
 ﻿#if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,6 +13,11 @@ namespace Neo
     [CustomPropertyDrawer(typeof(RequireInterface))]
     public class RequireInterfaceDrawer : PropertyDrawer
     {
+        // WHY: the drawer runs on every IMGUI event; a new GUIContent and an interpolated tooltip per field per event
+        // was pure garbage. PropertyField reads the label during the call and keeps no reference to it.
+        private static readonly GUIContent s_label = new();
+        private static readonly Dictionary<(Type, string), string> s_tooltips = new();
+
         /// <summary>
         ///     Draws the property field and validates the assigned value
         /// </summary>
@@ -23,9 +29,12 @@ namespace Neo
             RequireInterface requireInterface = (RequireInterface)attribute;
             Type requireType = requireInterface.RequireType;
 
-            if (IsValidProperty(property, requireType))
+            if (IsValidProperty(property, requireType) && label != null)
             {
-                label = new GUIContent(label) { tooltip = $"Requires {requireType.Name} interface" };
+                s_label.text = label.text;
+                s_label.image = label.image;
+                s_label.tooltip = GetTooltip(requireType, label.tooltip);
+                label = s_label;
             }
 
             Color originalColor = GUI.color;
@@ -50,6 +59,28 @@ namespace Neo
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             return EditorGUI.GetPropertyHeight(property, label, true);
+        }
+
+        /// <summary>
+        ///     Field tooltip: the field's own [Tooltip] first and the interface requirement on the next line, so the
+        ///     requirement no longer replaces it; just the requirement when the field has no tooltip.
+        /// </summary>
+        public static string GetTooltip(Type requireType, string ownTooltip)
+        {
+            (Type, string) key = (requireType, ownTooltip ?? string.Empty);
+            if (!s_tooltips.TryGetValue(key, out string tooltip))
+            {
+                string requirement = "Requires " + requireType.Name + " interface";
+                tooltip = string.IsNullOrEmpty(ownTooltip) ? requirement : ownTooltip + "\n" + requirement;
+                if (s_tooltips.Count >= 256)
+                {
+                    s_tooltips.Clear();
+                }
+
+                s_tooltips[key] = tooltip;
+            }
+
+            return tooltip;
         }
 
         /// <summary>

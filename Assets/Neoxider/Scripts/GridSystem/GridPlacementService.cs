@@ -69,6 +69,13 @@ namespace Neo.GridSystem
     {
         private readonly FieldGenerator _field;
 
+        // WHY: CanPlace runs per frame for previews and once per anchor in placement searches; reusing the duplicate
+        // set keeps those checks allocation-free. A predicate that re-enters the service gets a temporary set.
+        private readonly HashSet<Vector3Int> _positionScratch = new HashSet<Vector3Int>();
+        private bool _positionScratchInUse;
+
+        /// <summary>Creates a placement service over a generated field.</summary>
+        /// <exception cref="ArgumentNullException"><paramref name="field"/> is null.</exception>
         public GridPlacementService(FieldGenerator field)
         {
             _field = field != null ? field : throw new ArgumentNullException(nameof(field));
@@ -77,16 +84,19 @@ namespace Neo.GridSystem
         /// <summary>The field this service places into.</summary>
         public FieldGenerator Field => _field;
 
-        /// <summary>True when every footprint cell satisfies the request rules.</summary>
+        /// <summary>
+        ///     True when every footprint cell satisfies the request rules. Allocation-free unless the custom predicate
+        ///     allocates.
+        /// </summary>
         public bool CanPlace(GridPlacementRequest request)
         {
-            return Validate(request, null, out _);
+            return Validate(request, null, false, out _);
         }
 
-        /// <summary>Same as <see cref="CanPlace"/> with a human-readable failure reason.</summary>
+        /// <summary>Same as <see cref="CanPlace(GridPlacementRequest)"/> with a human-readable failure reason.</summary>
         public bool CanPlace(GridPlacementRequest request, out string failureReason)
         {
-            return Validate(request, null, out failureReason);
+            return Validate(request, null, true, out failureReason);
         }
 
         /// <summary>
@@ -97,7 +107,7 @@ namespace Neo.GridSystem
         {
             GridPlacementResult result = new GridPlacementResult();
             List<(GridPlacementEntry Entry, FieldCell Cell)> resolved = new List<(GridPlacementEntry Entry, FieldCell Cell)>();
-            if (!Validate(request, resolved, out string failureReason))
+            if (!Validate(request, resolved, true, out string failureReason))
             {
                 result.FailureReason = failureReason;
                 return result;
@@ -126,6 +136,7 @@ namespace Neo.GridSystem
         private bool Validate(
             GridPlacementRequest request,
             List<(GridPlacementEntry, FieldCell)> resolvedOrNull,
+            bool describeFailure,
             out string failureReason)
         {
             failureReason = null;
@@ -142,65 +153,80 @@ namespace Neo.GridSystem
                 return false;
             }
 
-            HashSet<Vector3Int> positions = new HashSet<Vector3Int>();
-            for (int i = 0; i < request.Entries.Count; i++)
+            bool sharedPositions = !_positionScratchInUse;
+            HashSet<Vector3Int> positions = sharedPositions ? _positionScratch : new HashSet<Vector3Int>();
+            _positionScratchInUse = true;
+            try
             {
-                GridPlacementEntry entry = request.Entries[i];
-                if (entry == null)
+                for (int i = 0; i < request.Entries.Count; i++)
                 {
-                    failureReason = $"Entry {i} is null.";
-                    return false;
+                    GridPlacementEntry entry = request.Entries[i];
+                    if (entry == null)
+                    {
+                        failureReason = describeFailure ? $"Entry {i} is null." : null;
+                        return false;
+                    }
+
+                    if (!FieldGenerator.TryAddCoordinates(request.Anchor, entry.Offset, out Vector3Int position))
+                    {
+                        failureReason = describeFailure ? $"Footprint entry {i} exceeds the coordinate range." : null;
+                        return false;
+                    }
+
+                    if (!positions.Add(position))
+                    {
+                        failureReason = describeFailure ? $"Footprint contains duplicate cell {position}." : null;
+                        return false;
+                    }
+
+                    FieldCell cell = _field.GetCell(position);
+                    if (cell == null)
+                    {
+                        failureReason = describeFailure ? $"Cell {position} is out of bounds or missing." : null;
+                        return false;
+                    }
+
+                    if (request.RequireEnabled && !cell.IsEnabled)
+                    {
+                        failureReason = describeFailure ? $"Cell {position} is disabled." : null;
+                        return false;
+                    }
+
+                    if (request.RequireWalkable && !cell.IsWalkable)
+                    {
+                        failureReason = describeFailure ? $"Cell {position} is not walkable." : null;
+                        return false;
+                    }
+
+                    if (cell.IsOccupied &&
+                        request.OverwritePolicy == GridOverwritePolicy.Reject &&
+                        request.RequireUnoccupied)
+                    {
+                        failureReason = describeFailure ? $"Cell {position} is occupied." : null;
+                        return false;
+                    }
+
+                    if (request.CellPredicate != null && !request.CellPredicate(cell))
+                    {
+                        failureReason = describeFailure
+                            ? $"Cell {position} was rejected by the custom predicate."
+                            : null;
+                        return false;
+                    }
+
+                    resolvedOrNull?.Add((entry, cell));
                 }
 
-                if (!FieldGenerator.TryAddCoordinates(request.Anchor, entry.Offset, out Vector3Int position))
-                {
-                    failureReason = $"Footprint entry {i} exceeds the coordinate range.";
-                    return false;
-                }
-
-                if (!positions.Add(position))
-                {
-                    failureReason = $"Footprint contains duplicate cell {position}.";
-                    return false;
-                }
-
-                FieldCell cell = _field.GetCell(position);
-                if (cell == null)
-                {
-                    failureReason = $"Cell {position} is out of bounds or missing.";
-                    return false;
-                }
-
-                if (request.RequireEnabled && !cell.IsEnabled)
-                {
-                    failureReason = $"Cell {position} is disabled.";
-                    return false;
-                }
-
-                if (request.RequireWalkable && !cell.IsWalkable)
-                {
-                    failureReason = $"Cell {position} is not walkable.";
-                    return false;
-                }
-
-                if (cell.IsOccupied &&
-                    request.OverwritePolicy == GridOverwritePolicy.Reject &&
-                    request.RequireUnoccupied)
-                {
-                    failureReason = $"Cell {position} is occupied.";
-                    return false;
-                }
-
-                if (request.CellPredicate != null && !request.CellPredicate(cell))
-                {
-                    failureReason = $"Cell {position} was rejected by the custom predicate.";
-                    return false;
-                }
-
-                resolvedOrNull?.Add((entry, cell));
+                return true;
             }
-
-            return true;
+            finally
+            {
+                positions.Clear();
+                if (sharedPositions)
+                {
+                    _positionScratchInUse = false;
+                }
+            }
         }
     }
 }

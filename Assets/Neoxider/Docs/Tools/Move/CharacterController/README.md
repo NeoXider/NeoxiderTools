@@ -2,6 +2,12 @@
 
 **What it is:** The current 3D character controller of the package. Motor, cameras and animation come from the bundled [Character Movement Fundamentals](../../../../ThirdParty/CharacterMovementFundamentals/) (CMF, MIT); the Neoxider components in `Scripts/Tools/Move/CharacterController/` supply input, sensitivity, cursor-aware gating, sprint, external-camera binding and Mirror support. The previous [PlayerController3DPhysics](../PlayerController3DPhysics.md) stays available as legacy.
 
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/ShowcaseScene.jpg" alt="Character Movement Fundamentals showcase: slopes, stairs, platforms and gravity zones" width="100%" /></p>
+
+*Demo scene: `Example Scenes/Showcase/ShowcaseScene.unity`, in the **Character Movement Fundamentals** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
 **Contents:**
 
 | Page | Purpose |

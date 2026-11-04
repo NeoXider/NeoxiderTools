@@ -100,7 +100,7 @@ namespace Neo.Editor
         /// <summary>Combined report for one inspected object. Cheap: dictionary lookup + throttled scan.</summary>
         internal static Report GetReport(Object target)
         {
-            var report = new Report();
+            Report report = new Report();
             if (target == null)
             {
                 return report;
@@ -241,7 +241,7 @@ namespace Neo.Editor
 
             int attributed = 0;
             // WHY: One error must count once per type even when several stack frames belong to it.
-            var seenTypes = new HashSet<string>(StringComparer.Ordinal);
+            HashSet<string> seenTypes = new HashSet<string>(StringComparer.Ordinal);
             foreach (Match match in StackTypePattern.Matches(head))
             {
                 string typeName = match.Groups[1].Value;
@@ -307,7 +307,7 @@ namespace Neo.Editor
 
             try
             {
-                using var so = new SerializedObject(target);
+                using SerializedObject so = new SerializedObject(target);
                 SerializedProperty prop = so.GetIterator();
                 int visited = 0;
                 bool enterChildren = true;
@@ -382,7 +382,7 @@ namespace Neo.Editor
         // matching "remembered for this session" semantics.
         private static void Persist()
         {
-            var sb = new StringBuilder(ErrorsByType.Count * 64);
+            StringBuilder sb = new StringBuilder(ErrorsByType.Count * 64);
             foreach (KeyValuePair<string, ErrorRecord> kv in ErrorsByType)
             {
                 sb.Append(kv.Key).Append('|')

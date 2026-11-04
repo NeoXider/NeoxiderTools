@@ -34,8 +34,7 @@ namespace Neo.UI
 
             private void Awake()
             {
-                _selectable ??= GetComponent<Selectable>();
-                _imageTarget ??= GetComponent<Image>();
+                ResolveReferences();
                 startScale = transform.localScale;
             }
 
@@ -53,8 +52,22 @@ namespace Neo.UI
 
             private void OnValidate()
             {
-                _imageTarget ??= GetComponent<Image>();
-                _selectable ??= GetComponent<Selectable>();
+                ResolveReferences();
+            }
+
+            // WHY: explicit Unity null checks instead of `??=`, which keeps a destroyed or editor fake-null
+            // reference and never falls back to the components on this object.
+            private void ResolveReferences()
+            {
+                if (_selectable == null)
+                {
+                    _selectable = GetComponent<Selectable>();
+                }
+
+                if (_imageTarget == null)
+                {
+                    _imageTarget = GetComponent<Image>();
+                }
             }
 
             public bool Interactable
@@ -121,8 +134,9 @@ namespace Neo.UI
                     return;
                 }
 
-                float scale = startScale.x * (1f + _scaleAnim);
-                transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
+                // WHY: scale every axis of the captured scale; the uniform DOScale(float) taken from x flattened or
+                // stretched buttons whose base scale is not uniform.
+                transform.DOScale(startScale * (1f + _scaleAnim), _timeAnimImage).SetUpdate(true);
             }
 
             public void OnPointerUp(PointerEventData eventData)
@@ -135,17 +149,34 @@ namespace Neo.UI
 
             public void SetOnePage(int id)
             {
-                UI.I?.SetOnePage(id);
+                if (TryGetPages(out UI pages))
+                {
+                    pages.SetOnePage(id);
+                }
             }
 
             public void SetPage(int id)
             {
-                UI.I?.SetPage(id);
+                if (TryGetPages(out UI pages))
+                {
+                    pages.SetPage(id);
+                }
             }
 
             public void SetPageAnim(int id)
             {
-                UI.I?.SetPageAnim(id);
+                if (TryGetPages(out UI pages))
+                {
+                    pages.SetPageAnim(id);
+                }
+            }
+
+            // WHY: a Unity null check; `?.` skips Unity's destroyed-object check and would forward the call to a
+            // destroyed page manager.
+            private static bool TryGetPages(out UI pages)
+            {
+                pages = UI.I;
+                return pages != null;
             }
         }
 }

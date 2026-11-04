@@ -1,10 +1,35 @@
 # SpinController
 
-**Purpose:** See Inspector fields below for configuration.
+**What it is:** the slot-machine orchestrator (`MonoBehaviour`, `Scripts/Bonus/Slot/SpinController.cs`, namespace `Neo.Bonus`). It charges the bet, plans the outcome, spins the `Row` reels, reads the visible grid, evaluates paylines with `CheckSpin`, pays the wallet and raises result events. Reel motion itself lives in [Row](Row.md); price and payout arithmetic lives in the plain C# `SlotSpinMath`.
 
-## Setup
+**How to use:**
+1. Add `SpinController` (or create the `SlotUI` prefab from the Neoxider menu) and assign ordered `Row` columns, a complete `SpritesData`, optional `BetsData` / `LinesData`, and a wallet object implementing `IMoneySpend` (and `IMoneyAdd` for payouts).
+2. Bind buttons to `StartSpin()`, `AddLine()` / `RemoveLine()`, `AddBet()` / `RemoveBet()` / `SetMaxBet()`.
+3. React to `OnEnd(bool)`, `OnWin(int)` and `OnWinLines(int[])`; read `GetLastResult()` from code.
+4. Keep **Auto Payout** on unless your own `OnWin` handler pays the player.
 
-- Add the component via the Unity menu.
+---
+
+## Pure bet and payout math (`SlotSpinMath`)
+
+`SlotSpinMath` (`Scripts/Bonus/Slot/SlotSpinMath.cs`) is the plain C# arithmetic behind `CurrentSpinPrice` and
+`LastPayout`, usable by servers, replays and tests without a scene:
+
+| Member | Description |
+|--------|-------------|
+| `int ComputeSpinPrice(int lineBet, int activeLines, bool pricePerLine)` | Line bet x active lines (at least 1) when pricing per line, otherwise the line bet. Negative bets count as 0; saturates at `int.MaxValue`. |
+| `int ComputePayout(float[] lineMultipliers, int lineBet)` | Sum of finite positive multipliers x bet, rounded half-to-even, saturated. |
+
+```csharp
+float[] multipliers = spin.checkSpin.GetMultiplayers(ids, activeLines);
+int payout = SlotSpinMath.ComputePayout(multipliers, lineBet);
+```
+
+## Performance notes
+
+`IsStop()` (polled every frame while a spin settles), `LastWinningPaylineIndices`, reel window queries and the
+win-line travel animation do not allocate per call. Plan columns are copied through reused buffers, and visible
+matrices resolve symbols without LINQ.
 
 ## Economy & per-machine weights (code)
 

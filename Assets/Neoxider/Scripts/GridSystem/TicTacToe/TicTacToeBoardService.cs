@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.GridSystem.TicTacToe
 {
     /// <summary>
-    ///     Runtime service that controls turns, moves, win checks and reset flow for TicTacToe.
+    ///     Runtime service that controls turns, moves, win checks and reset flow for TicTacToe and n-in-a-row games.
     /// </summary>
     [NeoDoc("GridSystem/TicTacToe/TicTacToeBoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
@@ -12,7 +13,14 @@ namespace Neo.GridSystem.TicTacToe
     [AddComponentMenu("Neoxider/GridSystem/TicTacToe/TicTacToeBoardService")]
     public class TicTacToeBoardService : MonoBehaviour
     {
+        [Tooltip("Call ResetBoard in Start.")]
         [SerializeField] private bool _resetOnStart = true;
+
+        [Tooltip("Marks in a row needed to win. 0 = automatic: 3, or the smallest board dimension when every " +
+                 "dimension exceeds 3. Set 5 for Gomoku-style boards.")]
+        [SerializeField, Min(0)] private int _winLineLength;
+
+        private readonly List<Vector3Int> _winningLine = new();
 
         /// <summary>
         ///     Invoked when active player changes. Argument is <see cref="TicTacToeCellState" /> as int.
@@ -35,6 +43,10 @@ namespace Neo.GridSystem.TicTacToe
         public UnityEvent OnBoardReset = new();
 
         private FieldGenerator _generator;
+
+        // WHY: bumped by every committed move and reset, so a call can tell that a listener replaced the round
+        // state while it was notifying and must not publish its own, now stale, follow-up events.
+        private int _stateVersion;
 
         private FieldGenerator Generator
         {
@@ -64,6 +76,22 @@ namespace Neo.GridSystem.TicTacToe
         /// </summary>
         public bool IsFinished { get; private set; }
 
+        /// <summary>
+        ///     Marks in a row needed to win; 0 uses the automatic rule of
+        ///     <see cref="TicTacToeWinChecker.ResolveWinLineLength" />. Takes effect on the next move.
+        /// </summary>
+        public int WinLineLength
+        {
+            get => _winLineLength;
+            set => _winLineLength = Mathf.Max(0, value);
+        }
+
+        /// <summary>
+        ///     Cells of the winning run after a win, from one end to the other; empty otherwise. Use it to highlight
+        ///     the line in a view.
+        /// </summary>
+        public IReadOnlyList<Vector3Int> WinningLine => _winningLine;
+
         private void Awake()
         {
             _generator = GetComponent<FieldGenerator>();
@@ -78,28 +106,46 @@ namespace Neo.GridSystem.TicTacToe
         }
 
         /// <summary>
-        ///     Clears board state and starts a new round from player X.
+        ///     Clears board state and starts a new round from player X. Raises
+        ///     <see cref="FieldGenerator.OnCellStateChanged" /> for every cleared mark.
         /// </summary>
         public void ResetBoard()
         {
-            if (Generator == null)
+            FieldGenerator generator = Generator;
+            if (generator == null)
             {
                 return;
             }
 
-            foreach (FieldCell cell in Generator.GetAllCells())
+            List<FieldCell> cleared = null;
+            foreach (FieldCell cell in generator.GetAllCells())
             {
-                if (!cell.IsEnabled || !cell.IsWalkable || cell.IsOccupied)
+                if (!cell.IsEnabled || !cell.IsWalkable || cell.IsOccupied ||
+                    cell.ContentId == (int)TicTacToeCellState.Empty)
                 {
                     continue;
                 }
 
                 cell.ContentId = (int)TicTacToeCellState.Empty;
+                cleared ??= new List<FieldCell>();
+                cleared.Add(cell);
             }
 
             CurrentPlayer = TicTacToeCellState.PlayerX;
             Winner = TicTacToeCellState.Empty;
             IsFinished = false;
+            _winningLine.Clear();
+            _stateVersion++;
+
+            // WHY: notify after every mark is cleared and the round state is reset, so generator-driven views
+            // observe the final empty board.
+            if (cleared != null)
+            {
+                for (int i = 0; i < cleared.Count; i++)
+                {
+                    generator.OnCellStateChanged?.Invoke(cleared[i]);
+                }
+            }
 
             OnBoardReset.Invoke();
             OnPlayerChanged.Invoke((int)CurrentPlayer);
@@ -116,18 +162,29 @@ namespace Neo.GridSystem.TicTacToe
         }
 
         /// <summary>
-        ///     Attempts to place a mark at a 3D grid position.
+        ///     Attempts to place a mark at a 3D grid position. On success the whole round state is committed first
+        ///     (<see cref="Winner" />, <see cref="IsFinished" />, <see cref="WinningLine" /> and
+        ///     <see cref="CurrentPlayer" />), then <see cref="FieldGenerator.OnCellStateChanged" /> is raised for the
+        ///     marked cell, then the winner, draw or player-changed event.
         /// </summary>
+        /// <remarks>
+        ///     During the cell notification <see cref="CurrentPlayer" /> already holds the player who moves next, or
+        ///     the player who just moved when the round finished. A cell listener may call
+        ///     <see cref="TryMakeMove(Vector3Int)" /> (the reply is made for the next player) or
+        ///     <see cref="ResetBoard" />; this call then skips its own winner, draw and player-changed events because
+        ///     the nested call has already replaced that state.
+        /// </remarks>
         /// <param name="pos">Target position in board coordinates.</param>
         /// <returns>True if move is accepted; otherwise false.</returns>
         public bool TryMakeMove(Vector3Int pos)
         {
-            if (IsFinished || Generator == null)
+            FieldGenerator generator = Generator;
+            if (IsFinished || generator == null)
             {
                 return false;
             }
 
-            FieldCell cell = Generator.GetCell(pos);
+            FieldCell cell = generator.GetCell(pos);
             if (cell == null || !cell.IsEnabled || !cell.IsWalkable || cell.IsOccupied)
             {
                 return false;
@@ -138,26 +195,39 @@ namespace Neo.GridSystem.TicTacToe
                 return false;
             }
 
-            cell.ContentId = (int)CurrentPlayer;
+            TicTacToeCellState mover = CurrentPlayer;
+            cell.ContentId = (int)mover;
 
-            Winner = TicTacToeWinChecker.GetWinner(Generator);
-            if (Winner != TicTacToeCellState.Empty)
+            TicTacToeWinChecker.TryGetWinningLine(generator, _winningLine, out TicTacToeCellState winner,
+                _winLineLength);
+            Winner = winner;
+            bool draw = winner == TicTacToeCellState.Empty && IsBoardFull();
+            IsFinished = winner != TicTacToeCellState.Empty || draw;
+            if (!IsFinished)
             {
-                IsFinished = true;
-                OnWinnerDetected.Invoke((int)Winner);
+                CurrentPlayer = mover == TicTacToeCellState.PlayerX
+                    ? TicTacToeCellState.PlayerO
+                    : TicTacToeCellState.PlayerX;
+            }
+
+            int version = ++_stateVersion;
+            generator.OnCellStateChanged?.Invoke(cell);
+            if (version != _stateVersion)
+            {
                 return true;
             }
 
-            if (IsBoardFull())
+            if (winner != TicTacToeCellState.Empty)
             {
-                IsFinished = true;
+                OnWinnerDetected.Invoke((int)winner);
+                return true;
+            }
+
+            if (draw)
+            {
                 OnDrawDetected.Invoke();
                 return true;
             }
-
-            CurrentPlayer = CurrentPlayer == TicTacToeCellState.PlayerX
-                ? TicTacToeCellState.PlayerO
-                : TicTacToeCellState.PlayerX;
 
             OnPlayerChanged.Invoke((int)CurrentPlayer);
             return true;

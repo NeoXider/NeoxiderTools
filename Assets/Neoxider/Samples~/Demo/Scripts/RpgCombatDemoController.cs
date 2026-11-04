@@ -1,22 +1,26 @@
 using System;
 using System.Collections.Generic;
 using Neo.Rpg.Components;
-using Neo.Samples.Survivor;
+using Neo.Samples;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Neo.Rpg.Demo
 {
     /// <summary>
-    ///     Drives the RPG combat demo loop and builds a compact runtime uGUI HUD panel (top-left corner)
-    ///     with player stats, enemy counters, action buttons and demo toggles — no imported UI assets.
+    ///     Drives the RPG combat demo loop (the player hits the nearest enemy, enemies pressure the player, the wave
+    ///     restores once cleared) and mirrors it into the authored HUD of RpgCombatNpcDemo.unity. The HUD, the health
+    ///     bar canvas, the log feed and the info card are saved in the scene by its DemoSceneKit builder; buttons and
+    ///     toggles call the public methods below through persistent UnityEvents. Nothing is built at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Samples/RPG Combat Demo Controller")]
     public sealed class RpgCombatDemoController : MonoBehaviour
     {
+        private const string PlayerDamageType = "Demo";
+        private const string PressureDamageType = "Enemy";
+
         [Header("Scene References")]
         [SerializeField] private RpgCharacter _player;
         [SerializeField] private RpgAttackController _playerAttack;
@@ -33,26 +37,24 @@ namespace Neo.Rpg.Demo
         [SerializeField] private bool _autoRestoreWhenCleared = true;
         [SerializeField] [Min(0.1f)] private float _restoreAfterClearDelay = 2f;
 
+        [Header("Authored HUD")]
+        [SerializeField] private TMP_Text _enemiesValue;
+        [SerializeField] private TMP_Text _lastEventValue;
+        [SerializeField] private Toggle _autoToggle;
+        [SerializeField] private Toggle _pressureToggle;
+        [SerializeField] private DemoLogFeed _log;
+
+        private readonly Dictionary<RpgCharacter, UnityAction> _enemyDeathListeners = new();
         private float _nextPlayerAttackTime;
         private float _nextEnemyPressureTime;
         private float _restoreAtTime = -1f;
         private int _enemyDeaths;
         private string _lastEvent = "Ready";
-        private readonly Dictionary<RpgCharacter, UnityAction> _enemyDeathListeners = new();
+        private bool _loopCall;
+        private bool _warnedUnbuilt;
+        private RpgCharacter _damageSource;
+        private Action<RpgDamageInfo, float> _playerDamageListener;
 
-        private TMP_Text _playerText;
-        private Image _hpFill;
-        private TMP_Text _enemiesText;
-        private TMP_Text _lastText;
-        private Toggle _autoToggle;
-        private Toggle _pressureToggle;
-        private GameObject _deadWarning;
-
-        private float _shownHp = float.NaN;
-        private float _shownMaxHp = float.NaN;
-        private int _shownLevel = int.MinValue;
-        private bool _shownDead;
-        private bool _shownMissing;
         private int _shownLiving = -1;
         private int _shownTotal = -1;
         private int _shownDeaths = -1;
@@ -63,16 +65,28 @@ namespace Neo.Rpg.Demo
         public int LivingEnemyCount => CountLivingEnemies();
         public bool PlayerDead => _player != null && _player.IsDead;
         public string LastEvent => _lastEvent;
+        public bool AutoDemoLoop => _autoDemoLoop;
+        public bool EnemyPressureEnabled => _enemyPressureEnabled;
+
+        /// <summary>True when the authored HUD references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _enemiesValue != null && _lastEventValue != null && _log != null;
 
         private void Awake()
         {
             AutoResolve();
             RegisterDeathListeners();
+            SubscribePlayerDamage();
         }
 
         private void Start()
         {
-            BuildHud();
+            if (!IsSceneBuilt)
+            {
+                WarnUnbuilt();
+            }
+
+            SyncToggles();
+            Log("Combat loop · player " + Describe(_player) + " vs " + EnemyCount + " enemies");
         }
 
         private void OnDestroy()
@@ -91,6 +105,12 @@ namespace Neo.Rpg.Demo
             }
 
             _enemyDeathListeners.Clear();
+            if (_damageSource != null)
+            {
+                _damageSource.DamageApplied -= _playerDamageListener;
+            }
+
+            _damageSource = null;
         }
 
         private void Update()
@@ -107,7 +127,7 @@ namespace Neo.Rpg.Demo
                 if (_restoreAtTime < 0f)
                 {
                     _restoreAtTime = Time.time + _restoreAfterClearDelay;
-                    _lastEvent = "Wave cleared; restoring soon";
+                    SetEvent("Wave cleared · restoring soon", true);
                 }
                 else if (Time.time >= _restoreAtTime)
                 {
@@ -118,20 +138,28 @@ namespace Neo.Rpg.Demo
             }
 
             _restoreAtTime = -1f;
-
-            if (Time.time >= _nextPlayerAttackTime)
+            _loopCall = true;
+            try
             {
-                DamageNearestEnemy();
-                _nextPlayerAttackTime = Time.time + _playerAttackInterval;
+                if (Time.time >= _nextPlayerAttackTime)
+                {
+                    DamageNearestEnemy();
+                    _nextPlayerAttackTime = Time.time + _playerAttackInterval;
+                }
+
+                if (_enemyPressureEnabled && Time.time >= _nextEnemyPressureTime)
+                {
+                    PressurePlayer();
+                    _nextEnemyPressureTime = Time.time + _enemyPressureInterval;
+                }
             }
-
-            if (_enemyPressureEnabled && Time.time >= _nextEnemyPressureTime)
+            finally
             {
-                PressurePlayer();
-                _nextEnemyPressureTime = Time.time + _enemyPressureInterval;
+                _loopCall = false;
             }
         }
 
+        /// <summary>Fallback scene search for references the scene builder did not assign.</summary>
         [Button]
         public void AutoResolve()
         {
@@ -140,8 +168,11 @@ namespace Neo.Rpg.Demo
                 GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
                 if (playerObject != null)
                 {
-                    _player = playerObject.GetComponentInChildren<RpgCharacter>(true) ??
-                              playerObject.GetComponentInParent<RpgCharacter>();
+                    _player = playerObject.GetComponentInChildren<RpgCharacter>(true);
+                    if (_player == null)
+                    {
+                        _player = playerObject.GetComponentInParent<RpgCharacter>();
+                    }
                 }
             }
 
@@ -158,11 +189,14 @@ namespace Neo.Rpg.Demo
                 }
             }
 
-            _playerAttack ??= _player != null ? _player.GetComponent<RpgAttackController>() : null;
+            if (_playerAttack == null && _player != null)
+            {
+                _playerAttack = _player.GetComponent<RpgAttackController>();
+            }
 
             if (_enemies == null || _enemies.Length == 0)
             {
-                var found = new System.Collections.Generic.List<RpgCharacter>();
+                List<RpgCharacter> found = new();
                 foreach (RpgCharacter character in FindObjectsByType<RpgCharacter>(FindObjectsInactive.Include,
                              FindObjectsSortMode.None))
                 {
@@ -176,25 +210,30 @@ namespace Neo.Rpg.Demo
             }
         }
 
+        /// <summary>Button target: the player swings at the nearest living enemy (typed hit with a source).</summary>
         [Button]
         public void DamageNearestEnemy()
         {
             RpgCharacter target = FindNearestLivingEnemy();
             if (target == null)
             {
-                _lastEvent = "No living enemy";
+                SetEvent("No living enemy", !_loopCall);
                 return;
             }
 
             FaceTarget(_player != null ? _player.transform : transform, target.transform);
-            _playerAttack?.UsePrimaryAttack();
+            if (_playerAttack != null)
+            {
+                _playerAttack.UsePrimaryAttack();
+            }
 
-            float dealt = target.DamageType("Demo", _playerDemoDamage);
-            _lastEvent = dealt > 0f
-                ? $"Player dealt {dealt:0} to {target.name}"
-                : $"Player attack did not affect {target.name}";
+            float dealt = target.ApplyDamage(new RpgDamageInfo(_playerDemoDamage, PlayerDamageType, _player));
+            SetEvent(dealt > 0f
+                ? "Player dealt " + Format(dealt) + " to " + target.name
+                : "Player attack did not affect " + target.name, !_loopCall);
         }
 
+        /// <summary>Button target: the nearest living enemy hits the player (reported through DamageApplied).</summary>
         [Button]
         public void PressurePlayer()
         {
@@ -206,22 +245,26 @@ namespace Neo.Rpg.Demo
             RpgCharacter attacker = FindNearestLivingEnemy();
             if (attacker == null)
             {
-                _lastEvent = "No enemy pressure";
+                SetEvent("No enemy pressure", !_loopCall);
                 return;
             }
 
-            float dealt = _player.DamageType("Enemy", _enemyPressureDamage);
-            _lastEvent = dealt > 0f
-                ? $"{attacker.name} dealt {dealt:0} to player"
-                : "Enemy pressure did not affect player";
+            if (_player.ApplyDamage(new RpgDamageInfo(_enemyPressureDamage, PressureDamageType, attacker)) <= 0f)
+            {
+                SetEvent("Enemy pressure did not affect player", !_loopCall);
+            }
         }
 
+        /// <summary>Button target: restores the player and every enemy (revives the dead).</summary>
         [Button]
         public void RestoreAll()
         {
             _enemyDeaths = 0;
             _restoreAtTime = -1f;
-            _player?.Restore();
+            if (_player != null)
+            {
+                _player.Restore();
+            }
 
             if (_enemies != null)
             {
@@ -238,7 +281,31 @@ namespace Neo.Rpg.Demo
                 }
             }
 
-            _lastEvent = "Restored all combatants";
+            SetEvent("Restored all combatants · Restore()", true);
+        }
+
+        /// <summary>Toggle target: runs or pauses the automatic attack loop.</summary>
+        public void SetAutoDemoLoop(bool enabled)
+        {
+            if (_autoDemoLoop == enabled)
+            {
+                return;
+            }
+
+            _autoDemoLoop = enabled;
+            Log(enabled ? "Auto loop on" : "Auto loop off · move with WASD, attack with the left mouse button");
+        }
+
+        /// <summary>Toggle target: enables or disables the scripted enemy pressure.</summary>
+        public void SetEnemyPressure(bool enabled)
+        {
+            if (_enemyPressureEnabled == enabled)
+            {
+                return;
+            }
+
+            _enemyPressureEnabled = enabled;
+            Log(enabled ? "Enemy pressure on" : "Enemy pressure off · only the NPC components hit now");
         }
 
         private void RegisterDeathListeners()
@@ -269,15 +336,34 @@ namespace Neo.Rpg.Demo
             }
         }
 
+        private void SubscribePlayerDamage()
+        {
+            if (_player == null || _damageSource == _player)
+            {
+                return;
+            }
+
+            _playerDamageListener ??= HandlePlayerDamaged;
+            _player.DamageApplied += _playerDamageListener;
+            _damageSource = _player;
+        }
+
+        private void HandlePlayerDamaged(RpgDamageInfo info, float applied)
+        {
+            string source = info.Source is Component component ? component.name : "Unknown";
+            string type = string.IsNullOrEmpty(info.DamageType) ? "untyped" : info.DamageType;
+            SetEvent(source + " hit Player for " + Format(applied) + " (" + type + ")", !_loopCall);
+        }
+
         private void HandlePlayerDeath()
         {
-            _lastEvent = "Player died";
+            SetEvent("Player died · press Restore All", true);
         }
 
         private void HandleEnemyDeath(RpgCharacter enemy)
         {
             _enemyDeaths++;
-            _lastEvent = $"{enemy.name} died";
+            SetEvent(enemy.name + " died", true);
 
             if (_hideEnemiesOnDeath)
             {
@@ -335,235 +421,81 @@ namespace Neo.Rpg.Demo
             return count;
         }
 
-        /// <summary>
-        ///     Builds the corner HUD in code: overlay canvas + a rounded auto-sizing panel with the same
-        ///     controls the old IMGUI window had (stats, HP bar, hit buttons, toggles, restore).
-        /// </summary>
-        private void BuildHud()
-        {
-            var canvasGo = new GameObject("Combat HUD", typeof(Canvas), typeof(CanvasScaler),
-                typeof(GraphicRaycaster));
-            canvasGo.transform.SetParent(transform, false);
-            var canvas = canvasGo.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
-            var scaler = canvasGo.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            EnsureEventSystem();
-
-            Image panel = SurvivorUI.Image("Panel", canvas.transform, SurvivorUI.Panel);
-            RectTransform panelRt = panel.rectTransform;
-            SurvivorUI.Anchor(panelRt, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(16f, -16f), new Vector2(360f, 0f));
-
-            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(14, 14, 12, 14);
-            layout.spacing = 8f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            var fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            SurvivorUI.Label("Title", panel.transform, "RPG Combat Demo", 22f, SurvivorUI.Text,
-                TextAlignmentOptions.Left, FontStyles.Bold);
-
-            Image underline = SurvivorUI.Image("Underline", panel.transform, SurvivorUI.Accent);
-            underline.raycastTarget = false;
-            underline.gameObject.AddComponent<LayoutElement>().preferredHeight = 3f;
-
-            _playerText = SurvivorUI.Label("PlayerStats", panel.transform, "Player: missing", 17f,
-                SurvivorUI.Text, TextAlignmentOptions.Left, FontStyles.Bold);
-
-            _hpFill = SurvivorUI.Bar("HPBar", panel.transform, SurvivorUI.Good, out RectTransform hpTrack);
-            hpTrack.gameObject.AddComponent<LayoutElement>().preferredHeight = 16f;
-
-            _enemiesText = SurvivorUI.Label("Enemies", panel.transform, "Enemies: 0/0 alive | Deaths: 0",
-                16f, SurvivorUI.Muted);
-
-            _lastText = SurvivorUI.Label("LastEvent", panel.transform, "Last: Ready", 16f, SurvivorUI.Cyan);
-
-            RectTransform actions = BuildRow("Actions", panel.transform, 40f);
-            AddButton(actions, "Player Hit", SurvivorUI.Accent, DamageNearestEnemy);
-            AddButton(actions, "Enemy Hit", SurvivorUI.Danger, PressurePlayer);
-
-            RectTransform toggles = BuildRow("Toggles", panel.transform, 32f);
-            _autoToggle = AddToggle(toggles, "Auto loop", _autoDemoLoop, value => _autoDemoLoop = value);
-            _pressureToggle = AddToggle(toggles, "Enemy pressure", _enemyPressureEnabled,
-                value => _enemyPressureEnabled = value);
-
-            Button restore = AddButton(panel.transform, "Restore All", SurvivorUI.Good, RestoreAll);
-            restore.gameObject.AddComponent<LayoutElement>().preferredHeight = 40f;
-
-            _deadWarning = SurvivorUI.Label("DeadWarning", panel.transform, "Player dead. Press Restore All.",
-                16f, SurvivorUI.Danger, TextAlignmentOptions.Center, FontStyles.Bold).gameObject;
-            _deadWarning.SetActive(false);
-        }
-
-        private void EnsureEventSystem()
-        {
-            if (UnityEngine.Object.FindFirstObjectByType<EventSystem>() != null)
-            {
-                return;
-            }
-
-            var go = new GameObject("EventSystem", typeof(EventSystem));
-            go.transform.SetParent(transform, false);
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            Type moduleType = Type.GetType(
-                "UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
-            if (moduleType != null)
-            {
-                go.AddComponent(moduleType);
-            }
-            else
-            {
-                go.AddComponent<StandaloneInputModule>();
-            }
-#else
-            go.AddComponent<StandaloneInputModule>();
-#endif
-        }
-
-        private static RectTransform BuildRow(string name, Transform parent, float height)
-        {
-            RectTransform row = SurvivorUI.Rect(name, parent);
-            var rowLayout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            rowLayout.spacing = 8f;
-            rowLayout.childControlWidth = true;
-            rowLayout.childControlHeight = true;
-            rowLayout.childForceExpandWidth = true;
-            rowLayout.childForceExpandHeight = true;
-            row.gameObject.AddComponent<LayoutElement>().preferredHeight = height;
-            return row;
-        }
-
-        private static Button AddButton(Transform parent, string label, Color color, UnityAction onClick)
-        {
-            Button button = SurvivorUI.Button(label, parent, color);
-            TMP_Text text = SurvivorUI.Label("Label", button.transform, label, 17f, Color.white,
-                TextAlignmentOptions.Center, FontStyles.Bold);
-            SurvivorUI.Stretch(text.rectTransform);
-            button.onClick.AddListener(onClick);
-            return button;
-        }
-
-        private static Toggle AddToggle(Transform parent, string label, bool initial, UnityAction<bool> onChanged)
-        {
-            Image background = SurvivorUI.Image(label, parent, SurvivorUI.Track);
-            var toggle = background.gameObject.AddComponent<Toggle>();
-            toggle.targetGraphic = background;
-
-            Image box = SurvivorUI.Image("Box", background.transform, new Color(0f, 0f, 0f, 0.35f));
-            RectTransform boxRt = box.rectTransform;
-            boxRt.anchorMin = new Vector2(0f, 0.5f);
-            boxRt.anchorMax = new Vector2(0f, 0.5f);
-            boxRt.pivot = new Vector2(0f, 0.5f);
-            boxRt.anchoredPosition = new Vector2(7f, 0f);
-            boxRt.sizeDelta = new Vector2(18f, 18f);
-
-            Image check = SurvivorUI.Image("Check", box.transform, SurvivorUI.Accent);
-            check.raycastTarget = false;
-            SurvivorUI.Stretch(check.rectTransform, 3f);
-            toggle.graphic = check;
-
-            TMP_Text text = SurvivorUI.Label("Label", background.transform, label, 14f, SurvivorUI.Text,
-                TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            RectTransform textRt = text.rectTransform;
-            textRt.anchorMin = Vector2.zero;
-            textRt.anchorMax = Vector2.one;
-            textRt.offsetMin = new Vector2(30f, 0f);
-            textRt.offsetMax = new Vector2(-4f, 0f);
-
-            toggle.SetIsOnWithoutNotify(initial);
-            toggle.onValueChanged.AddListener(onChanged);
-            return toggle;
-        }
-
         // WHY: labels rebuild only when a value actually changes to avoid per-frame string garbage.
         private void RefreshHud()
         {
-            if (_hpFill == null)
+            if (_enemiesValue != null)
             {
-                return;
+                int living = LivingEnemyCount;
+                int total = EnemyCount;
+                if (living != _shownLiving || total != _shownTotal || _enemyDeaths != _shownDeaths)
+                {
+                    _shownLiving = living;
+                    _shownTotal = total;
+                    _shownDeaths = _enemyDeaths;
+                    _enemiesValue.text = living + " / " + total + " · deaths " + _enemyDeaths;
+                }
             }
 
-            RefreshPlayerLine();
-
-            int living = LivingEnemyCount;
-            int total = EnemyCount;
-            if (living != _shownLiving || total != _shownTotal || _enemyDeaths != _shownDeaths)
-            {
-                _shownLiving = living;
-                _shownTotal = total;
-                _shownDeaths = _enemyDeaths;
-                _enemiesText.text = $"Enemies: {living}/{total} alive | Deaths: {_enemyDeaths}";
-            }
-
-            if (!ReferenceEquals(_lastEvent, _shownEvent))
+            if (_lastEventValue != null && !ReferenceEquals(_lastEvent, _shownEvent))
             {
                 _shownEvent = _lastEvent;
-                _lastText.text = "Last: " + _lastEvent;
+                _lastEventValue.text = _lastEvent;
             }
 
-            if (_autoToggle.isOn != _autoDemoLoop)
+            SyncToggles();
+        }
+
+        private void SyncToggles()
+        {
+            if (_autoToggle != null && _autoToggle.isOn != _autoDemoLoop)
             {
                 _autoToggle.SetIsOnWithoutNotify(_autoDemoLoop);
             }
 
-            if (_pressureToggle.isOn != _enemyPressureEnabled)
+            if (_pressureToggle != null && _pressureToggle.isOn != _enemyPressureEnabled)
             {
                 _pressureToggle.SetIsOnWithoutNotify(_enemyPressureEnabled);
             }
+        }
 
-            bool dead = PlayerDead;
-            if (_deadWarning.activeSelf != dead)
+        private void SetEvent(string message, bool log)
+        {
+            _lastEvent = message;
+            if (log)
             {
-                _deadWarning.SetActive(dead);
+                Log(message);
             }
         }
 
-        private void RefreshPlayerLine()
+        private void Log(string message)
         {
-            if (_player == null)
+            if (_log != null)
             {
-                if (!_shownMissing)
-                {
-                    _shownMissing = true;
-                    _shownHp = float.NaN;
-                    _playerText.text = "Player: missing";
-                    SurvivorUI.SetFill(_hpFill, 0f);
-                }
-
-                return;
+                _log.Log(message);
             }
+        }
 
-            _shownMissing = false;
-            float hp = _player.HpValue;
-            float max = _player.MaxHpValue;
-            int level = _player.LevelValue;
-            bool dead = _player.IsDead;
-
-            if (Mathf.Approximately(hp, _shownHp) && Mathf.Approximately(max, _shownMaxHp) &&
-                level == _shownLevel && dead == _shownDead)
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
             {
                 return;
             }
 
-            _shownHp = hp;
-            _shownMaxHp = max;
-            _shownLevel = level;
-            _shownDead = dead;
-            _playerText.text = $"Player: HP {hp:0}/{max:0} | Level {level} | Dead {dead}";
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[RpgCombatDemoController] The HUD is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+        }
 
-            float percent = Mathf.Clamp01(_player.HpPercentValue);
-            SurvivorUI.SetFill(_hpFill, percent);
-            _hpFill.color = Color.Lerp(SurvivorUI.Danger, SurvivorUI.Good, percent);
+        private static string Describe(Component component)
+        {
+            return component != null ? component.name : "missing";
+        }
+
+        private static string Format(float value)
+        {
+            return value.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private static void FaceTarget(Transform actor, Transform target)

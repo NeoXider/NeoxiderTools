@@ -87,6 +87,9 @@ namespace Neo.UI
         public Vector3 RestScale => _restScale;
         internal bool HasProceduralPose => _hasProceduralPose;
 
+        /// <summary>The live owner this point notifies about pose and binding changes, or null.</summary>
+        internal IUIMeshRigOwner BoundOwner => TryGetLiveOwner(out IUIMeshRigOwner owner) ? owner : null;
+
         public float Strength
         {
             get => _strength;
@@ -397,20 +400,43 @@ namespace Neo.UI
             _owner = nextOwner;
         }
 
+        // WHY: adding or removing an owner component between a point and its rig changes the nearest owner
+        // without any parent change, so the point never re-resolved and kept sending its procedural pose to
+        // the previous rig. The owner that collects the point rebinds it; nothing is notified from here
+        // because collection can run inside a canvas rebuild.
+        internal void BindOwner(IUIMeshRigOwner owner)
+        {
+            _owner = owner;
+        }
+
         private void NotifyBindingChanged()
         {
-            if (_owner != null)
+            if (TryGetLiveOwner(out IUIMeshRigOwner owner))
             {
-                _owner.NotifyBindingChanged();
+                owner.NotifyBindingChanged();
             }
         }
 
         private void NotifyPoseChanged()
         {
-            if (_owner != null)
+            if (TryGetLiveOwner(out IUIMeshRigOwner owner))
             {
-                _owner.NotifyPoseChanged();
+                owner.NotifyPoseChanged();
             }
+        }
+
+        // WHY: the owner component can be destroyed while its points live on (component removed, runtime
+        // Destroy of the rig). Notifying the destroyed uGUI graphic threw from OnDisable and motion cleanup.
+        private bool TryGetLiveOwner(out IUIMeshRigOwner owner)
+        {
+            owner = _owner;
+            if (owner is Object unityOwner && unityOwner == null)
+            {
+                _owner = null;
+                owner = null;
+            }
+
+            return owner != null;
         }
 
         private void NormalizeDirectChildAnchor(UIMeshRigGraphic owner, Vector2 normalizedCenter)

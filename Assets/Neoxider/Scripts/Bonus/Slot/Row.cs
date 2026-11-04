@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
@@ -79,6 +78,15 @@ namespace Neo.Bonus
         /// <summary>Desired visible symbol ids bottom -> top when the reel stops; cleared after apply.</summary>
         private int[] _spinTargetIdsBottomUp;
 
+        /// <summary>Reused storage behind <see cref="_spinTargetIdsBottomUp"/> so a spin does not clone the caller's array.</summary>
+        private int[] _spinTargetBuffer;
+
+        /// <summary>Reused visible-window classification buffers (bottom-up buckets, their errors, top-down result).</summary>
+        private SlotElement[] _visibleBuckets;
+
+        private float[] _visibleBucketErrors;
+        private SlotElement[] _visibleTopDownBuffer;
+
         /// <summary>Per physical-element preassigned id (used on wrap or directly when hidden); -1 = random.</summary>
         private int[] _pendingTargetIdByIndex;
 
@@ -145,6 +153,13 @@ namespace Neo.Bonus
 
         private void Awake()
         {
+            // WHY: a reel spun before Awake (inactive parent) already laid itself out in Spin; ApplyLayout would reset
+            // that in-flight spin to Idle without OnStop or its target symbols, so Update finishes it instead.
+            if (is_spinning)
+            {
+                return;
+            }
+
             ApplyLayout();
         }
 
@@ -327,11 +342,29 @@ namespace Neo.Bonus
         {
             // WHY: guards against a leftover coroutine from a previous Spin/Stop call.
             StopAllCoroutines();
+            if (SlotElements == null || _prevY == null)
+            {
+                // WHY: a reel spun before Awake (inactive parent, edit-mode tooling) has no layout yet.
+                ApplyLayout();
+            }
+
             _allSpritesData = allSpritesData;
 
-            _spinTargetIdsBottomUp = targetVisibleIdsBottomUp != null && targetVisibleIdsBottomUp.Length > 0
-                ? (int[])targetVisibleIdsBottomUp.Clone()
-                : null;
+            if (targetVisibleIdsBottomUp != null && targetVisibleIdsBottomUp.Length > 0)
+            {
+                // WHY: copy into a buffer owned by the reel; the caller may reuse its array for the next column.
+                if (_spinTargetBuffer == null || _spinTargetBuffer.Length != targetVisibleIdsBottomUp.Length)
+                {
+                    _spinTargetBuffer = new int[targetVisibleIdsBottomUp.Length];
+                }
+
+                Array.Copy(targetVisibleIdsBottomUp, _spinTargetBuffer, targetVisibleIdsBottomUp.Length);
+                _spinTargetIdsBottomUp = _spinTargetBuffer;
+            }
+            else
+            {
+                _spinTargetIdsBottomUp = null;
+            }
 
             if (_pendingTargetIdByIndex == null || _pendingTargetIdByIndex.Length != SlotElements.Length)
             {
@@ -449,8 +482,6 @@ namespace Neo.Bonus
                 int kNeeded = Mathf.CeilToInt(Mathf.Max(0f, (sNeeded - dSnapForward) / _step));
                 k = Mathf.Max(minK, kNeeded);
                 sGrid = dSnapForward + k * _step;
-                // WHY: written in the expanded kinematic form first as a derivation hint before the simplified line below.
-                aMag = (v0 * 0f + v0 * v0) / (2f * sGrid);
                 aMag = v0 * v0 / (2f * sGrid);
             }
 
@@ -641,8 +672,8 @@ namespace Neo.Bonus
                 return;
             }
 
-            SlotElement[] topDown = GetVisibleTopDown();
-            if (topDown == null || topDown.Length != countSlotElement)
+            SlotElement[] topDown = FillVisibleTopDown();
+            if (topDown.Length != countSlotElement)
             {
                 _spinTargetIdsBottomUp = null;
                 return;
@@ -699,8 +730,8 @@ namespace Neo.Bonus
                 return false;
             }
 
-            SlotElement[] topDown = GetVisibleTopDown();
-            if (topDown == null || topDown.Length != countSlotElement)
+            SlotElement[] topDown = FillVisibleTopDown();
+            if (topDown.Length != countSlotElement)
             {
                 return false;
             }
@@ -715,6 +746,22 @@ namespace Neo.Bonus
             }
 
             return false;
+        }
+
+        /// <summary>
+        ///     Element currently locked to window row <paramref name="rowFromBottom"/> (0 = bottom), or null when the
+        ///     row is outside the window or no element occupies it. Does not allocate.
+        /// </summary>
+        public SlotElement GetVisibleElement(int rowFromBottom)
+        {
+            if (SlotElements == null || SlotElements.Length == 0 || countSlotElement <= 0 ||
+                rowFromBottom < 0 || rowFromBottom >= countSlotElement)
+            {
+                return null;
+            }
+
+            SlotElement[] topDown = FillVisibleTopDown();
+            return topDown.Length == countSlotElement ? topDown[countSlotElement - 1 - rowFromBottom] : null;
         }
 
         private float ResolveY(int index, float offset)
@@ -782,18 +829,36 @@ namespace Neo.Bonus
         /// </summary>
         public SlotElement[] GetVisibleTopDown()
         {
+            SlotElement[] topDown = FillVisibleTopDown();
+            return topDown.Length == 0 ? Array.Empty<SlotElement>() : (SlotElement[])topDown.Clone();
+        }
+
+        /// <summary>
+        ///     Non-allocating core of <see cref="GetVisibleTopDown"/>: fills and returns a buffer owned by this reel.
+        ///     The buffer is overwritten by the next call, so callers must not keep it.
+        /// </summary>
+        private SlotElement[] FillVisibleTopDown()
+        {
             if (SlotElements == null || SlotElements.Length == 0 || countSlotElement <= 0)
             {
-                return new SlotElement[0];
+                return Array.Empty<SlotElement>();
             }
 
             float step = _step;
             float viewBottom = _viewBottom;
 
-            var buckets = new SlotElement[countSlotElement];
-            float[] bucketErr = new float[countSlotElement];
+            if (_visibleBuckets == null || _visibleBuckets.Length != countSlotElement)
+            {
+                _visibleBuckets = new SlotElement[countSlotElement];
+                _visibleBucketErrors = new float[countSlotElement];
+                _visibleTopDownBuffer = new SlotElement[countSlotElement];
+            }
+
+            SlotElement[] buckets = _visibleBuckets;
+            float[] bucketErr = _visibleBucketErrors;
             for (int k = 0; k < countSlotElement; k++)
             {
+                buckets[k] = null;
                 bucketErr[k] = float.PositiveInfinity;
             }
 
@@ -826,30 +891,45 @@ namespace Neo.Bonus
             // Bucket indices run bottom-up (k = 0 is the lowest visible slot), so the leftovers are taken
             // in ascending Y — descending order would hand the reel column back vertically flipped and the
             // payline evaluation would read it upside-down.
-            if (buckets.Any(b => b == null))
+            for (int k = 0; k < countSlotElement; k++)
             {
-                System.Collections.Generic.List<SlotElement> byY = SlotElements
-                    .Where(se => se != null).OrderBy(se => GetLocalY(se.transform)).ToList();
-                foreach (int k in Enumerable.Range(0, countSlotElement).Where(x => buckets[x] == null))
+                if (buckets[k] == null)
                 {
-                    foreach (SlotElement se in byY)
-                    {
-                        if (!buckets.Contains(se))
-                        {
-                            buckets[k] = se;
-                            break;
-                        }
-                    }
+                    buckets[k] = FindLowestUnassignedElement(buckets);
                 }
             }
 
-            var result = new SlotElement[countSlotElement];
+            SlotElement[] result = _visibleTopDownBuffer;
             for (int dst = 0, k = countSlotElement - 1; k >= 0; k--, dst++)
             {
                 result[dst] = buckets[k];
             }
 
             return result;
+        }
+
+        /// <summary>Lowest-Y element not yet placed in a bucket; ties keep the serialized element order.</summary>
+        private SlotElement FindLowestUnassignedElement(SlotElement[] buckets)
+        {
+            SlotElement best = null;
+            float bestY = float.PositiveInfinity;
+            for (int i = 0; i < SlotElements.Length; i++)
+            {
+                SlotElement se = SlotElements[i];
+                if (se == null || Array.IndexOf(buckets, se) >= 0)
+                {
+                    continue;
+                }
+
+                float y = GetLocalY(se.transform);
+                if (best == null || y < bestY)
+                {
+                    best = se;
+                    bestY = y;
+                }
+            }
+
+            return best;
         }
 
         private static float PositiveMod(float a, float m)

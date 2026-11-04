@@ -9,7 +9,7 @@ using UnityEngine.TestTools;
 
 namespace Neo.NPC.Tests
 {
-    // Discovered in the Edit assembly; EnterPlayMode gives these tests real Awake/OnEnable callbacks.
+    // WHY: discovered in the Edit assembly; EnterPlayMode gives these tests real Awake/OnEnable callbacks.
     public sealed class Audit20261023NeoNPCLifecycleTests
     {
         private static readonly Vector3 Origin = new(12000f, 1200f, -12000f);
@@ -91,7 +91,7 @@ namespace Neo.NPC.Tests
             navigation.onTargetChanged.AddListener(_ => followEntries++);
             navigation.onPathUpdated.AddListener(_ => followPaths++);
 
-            // Activation, rather than reflection, drives Awake followed by the first OnEnable.
+            // WHY: activation, rather than reflection, drives Awake followed by the first OnEnable.
             navigation.gameObject.SetActive(true);
 
             Assert.That(navigation.Mode, Is.EqualTo(NpcNavigation.NavigationMode.Patrol));

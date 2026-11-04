@@ -1,6 +1,20 @@
 ﻿# TimeToText
 
-**Purpose:** A component for formatting and displaying time values (in seconds) on a `TMP_Text`. Supports two modes: `Clock` (05:30, 01:05:30) and `Compact` (1d 5h 30m). Ideal for timers, countdowns, and elapsed time displays.
+**What it is:** a `MonoBehaviour` that formats a time value in seconds onto a `TMP_Text`, in `Clock` (05:30,
+01:05:30) or `Compact` (1d 5h 30m) mode, for timers, countdowns and elapsed time. Script:
+`Scripts/Tools/Text/TimeToText.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Text`.
+
+**How to use:**
+1. Add **Neoxider / Tools / TimeToText** beside a TextMeshPro label (or assign **Text**).
+2. Choose **Display Mode** and **Time Format**.
+3. Call `Set(seconds)` every frame from a timer, or wire a float UnityEvent (for example a timer's time event) to it.
+
+---
+
+Calling `Set` every frame is cheap: while the visible unit does not change (a whole second for formats without
+milliseconds), the component reassigns the same cached string, so a per-frame countdown allocates nothing between
+visible changes. Formats with milliseconds, and any format not on the whole-second list, reuse the string only
+for an identical value.
 
 ## Fields (Inspector)
 
@@ -27,6 +41,7 @@
 | `float CurrentTime { get; }` | The currently displayed time value. |
 | `static string FormatTime(float time, TimeFormat format, string separator)` | Static formatting method. |
 | `TimeFormat`, `ZeroText`, `AllowNegative`, `Separator` | Update formatting and redraw `CurrentTime`. |
+| `Prefix`, `Suffix` | Text before/after the formatted time (Inspector **Start / End Add Text**); redraw immediately. |
 | `DisplayMode` | Redraw in the requested mode if it supports `CurrentTime`; otherwise preserve the previous mode, time, text and events. |
 | `CompactUseTimeFormat`, `CompactIncludeSeconds`, `CompactMaxParts` | Configure Compact output and redraw immediately. |
 

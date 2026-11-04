@@ -1,440 +1,368 @@
 using System;
-using System.Reflection;
+using System.Globalization;
+using Neo.Core.Resources;
 using Neo.Rpg.Components;
-using Neo.Samples.Survivor;
+using Neo.Samples;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Neo.Rpg.Demo
 {
     /// <summary>
-    ///     Self-contained smoke demo for RpgCharacter.
-    ///     Open the scene, press Play, then use the on-screen buttons to exercise the universal API.
-    ///     The control panel is built in code with uGUI (no prefabs, no IMGUI).
+    ///     Controller of the authored RpgCharacter quick demo (Scenes/RpgCharacterQuickDemo.unity). The scene builder
+    ///     saves everything the demo shows: both characters with their RpgCharacterTemplate assets, the cards, the
+    ///     RpgResourceBinding / RpgStatBinding rows, the RpgNoCodeAction buttons, the NeoCondition low-HP row, the log
+    ///     feed and the info card. Buttons call the public methods below through persistent UnityEvents; each method
+    ///     forwards to the real <see cref="RpgCharacter" /> API and logs the C# call. Nothing is built at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Demo/" + nameof(RpgCharacterQuickDemo))]
     public sealed class RpgCharacterQuickDemo : MonoBehaviour
     {
-        private const float PanelWidth = 430f;
-        private const int SortingOrder = 25000;
-
+        [Header("Characters")]
         [SerializeField] private RpgCharacter _player;
         [SerializeField] private RpgCharacter _enemy;
-        [SerializeField] private bool _configureOnAwake = true;
+
+        [Tooltip("Custom resource id (RpgStatId preset Custom) refilled by RefillPlayerCustomResource.")]
         [SerializeField] private string _customManaId = "DarkMana";
 
-        private RpgCharacterTemplate _playerTemplate;
-        private RpgCharacterTemplate _enemyTemplate;
-        private RpgProgressionDefinition _progression;
+        [Tooltip("RpgDamageInfo.DamageType used by HitEnemy.")]
+        [SerializeField] private string _enemyHitType = "Fire";
 
-        private TMP_Text _playerResources;
-        private TMP_Text _playerProgress;
-        private TMP_Text _enemyResources;
-        private TMP_Text _enemyProgress;
-        private TMP_Text _noCodeStatus;
+        [Tooltip("Incoming damage multiplier of the guard IRpgDamageModifier toggled by SetPlayerGuard.")]
+        [SerializeField] [Range(0f, 1f)] private float _guardDamageScale = 0.5f;
 
-        private void Awake()
+        [Header("Authored UI")]
+        [Tooltip("Label refreshed from the code-side reactive XpState / UpgradePointsState.")]
+        [SerializeField] private TMP_Text _progressValue;
+
+        [SerializeField] private Toggle _guardToggle;
+        [SerializeField] private DemoLogFeed _log;
+
+        private readonly GuardModifier _guard = new();
+        private UnityAction<float> _xpListener;
+        private UnityAction<int> _pointsListener;
+        private Action<RpgDamageInfo, float> _enemyDamageListener;
+        private RpgCharacter _progressSource;
+        private RpgCharacter _damageSource;
+        private bool _guardActive;
+        private bool _warnedUnbuilt;
+        private bool _warnedMissingCharacters;
+
+        public RpgCharacter Player => _player;
+        public RpgCharacter Enemy => _enemy;
+        public bool GuardActive => _guardActive;
+
+        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _player != null && _enemy != null && _progressValue != null && _log != null;
+
+        private void OnEnable()
         {
-            EnsureCharacters();
-            if (_configureOnAwake) ConfigureCharacters();
+            Subscribe();
+        }
+
+        private void OnDisable()
+        {
+            Unsubscribe();
+            SetPlayerGuard(false);
         }
 
         private void Start()
         {
-            BuildUi();
+            if (!IsSceneBuilt)
+            {
+                WarnUnbuilt();
+            }
+
+            RefreshProgress();
+            if (_guardToggle != null)
+            {
+                _guardToggle.SetIsOnWithoutNotify(_guardActive);
+            }
+
+            Log("RpgCharacter live · both characters use RpgCharacterTemplate assets");
         }
 
-        private void Update()
+        /// <summary>Button target: <c>player.Damage(amount)</c>.</summary>
+        public void DamagePlayer(float amount)
         {
-            if (_player == null || _enemy == null || _playerResources == null) return;
+            if (!RequireCharacters())
+            {
+                return;
+            }
 
-            // WHY: labels refresh every frame to mirror the old immediate-mode readout (regen ticks live).
-            RefreshCharacter(_playerResources, _playerProgress, "Player", _player);
-            RefreshCharacter(_enemyResources, _enemyProgress, "Enemy", _enemy);
+            float removed = _player.Damage(amount);
+            Log("player.Damage(" + Format(amount) + ") -> -" + Format(removed) + " HP" + (_guardActive ? " (guard)" : string.Empty));
         }
 
-        private void OnDestroy()
+        /// <summary>Button target: <c>player.Heal(amount)</c>.</summary>
+        public void HealPlayer(float amount)
         {
-            DestroyRuntimeAsset(_playerTemplate);
-            DestroyRuntimeAsset(_enemyTemplate);
-            DestroyRuntimeAsset(_progression);
+            if (!RequireCharacters())
+            {
+                return;
+            }
+
+            float healed = _player.Heal(amount);
+            Log("player.Heal(" + Format(amount) + ") -> +" + Format(healed) + " HP");
         }
 
-        private void BuildUi()
+        /// <summary>Button target: <c>player.Spend("Stamina", amount)</c>; fails when the pool is too low.</summary>
+        public void SpendPlayerStamina(float amount)
         {
-            if (_player == null || _enemy == null) return;
+            if (!RequireCharacters())
+            {
+                return;
+            }
 
-            EnsureEventSystem();
-
-            var canvasGo = new GameObject("[RpgCharacterQuickDemo] UI", typeof(RectTransform));
-            var canvas = canvasGo.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = SortingOrder;
-            var scaler = canvasGo.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-            canvasGo.AddComponent<GraphicRaycaster>();
-
-            RectTransform panel = BuildPanel(canvas.transform);
-            BuildTitle(panel);
-
-            (_playerResources, _playerProgress) = BuildCharacterBlock(panel, "PLAYER", SurvivorUI.Good);
-            (_enemyResources, _enemyProgress) = BuildCharacterBlock(panel, "ENEMY", SurvivorUI.Danger);
-
-            AddButtonRow(panel,
-                ("Damage Player 25", () => _player.Damage(25f)),
-                ("Heal Player 15", () => _player.Heal(15f)));
-            AddButtonRow(panel,
-                ("Spend Stamina 30", () => _player.Spend("Stamina", 30f)),
-                ("Refill DarkMana 15", () => _player.Refill(_customManaId, 15f)));
-            AddButtonRow(panel,
-                ("Add Level", () => _player.AddLevel(1)),
-                ("Upgrade Vitality", UpgradeVitality));
-            AddButtonRow(panel,
-                ("Damage Enemy 40", () => _enemy.DamageType("Fire", 40f)),
-                ("Restore All", RestoreAll));
-
-            BuildNoCodeRow(panel);
-            BuildChecklist(panel);
+            bool spent = _player.Spend(RpgResourceId.Stamina, amount);
+            Log("player.Spend(\"Stamina\", " + Format(amount) + ") -> " + (spent ? "spent" : "not enough Stamina"));
         }
 
-        private void UpgradeVitality()
+        /// <summary>Button target: <c>player.Refill(customId, amount)</c> on the custom resource.</summary>
+        public void RefillPlayerCustomResource(float amount)
         {
-            _player.AddUpgradePoints(1);
-            _player.UpgradeStat(nameof(RpgStatPreset.Vitality));
+            if (!RequireCharacters())
+            {
+                return;
+            }
+
+            float added = _player.Refill(_customManaId, amount);
+            Log("player.Refill(\"" + _customManaId + "\", " + Format(amount) + ") -> +" + Format(added));
         }
 
-        private void RestoreAll()
+        /// <summary>Button target: <c>player.AddXp(amount)</c> (shown through the reactive XpState).</summary>
+        public void AddPlayerXp(float amount)
         {
+            if (!RequireCharacters())
+            {
+                return;
+            }
+
+            _player.AddXp(amount);
+            Log("player.AddXp(" + Format(amount) + ") -> XP " + Format(_player.XpValue));
+        }
+
+        /// <summary>Button target: <c>player.AddLevel(levels)</c>; every level grants an upgrade point.</summary>
+        public void AddPlayerLevel(int levels)
+        {
+            if (!RequireCharacters())
+            {
+                return;
+            }
+
+            _player.AddLevel(levels);
+            Log("player.AddLevel(" + levels + ") -> level " + _player.LevelValue + ", points " + _player.UpgradePointsValue);
+        }
+
+        /// <summary>Button target: <c>player.UpgradeStat(statId)</c>; needs an upgrade point.</summary>
+        public void UpgradePlayerStat(string statId)
+        {
+            if (!RequireCharacters() || string.IsNullOrWhiteSpace(statId))
+            {
+                return;
+            }
+
+            if (!_player.CanUpgradeStat(statId))
+            {
+                Log("player.CanUpgradeStat(\"" + statId + "\") = false · press Level Up for a point");
+                return;
+            }
+
+            _player.UpgradeStat(statId);
+            Log("player.UpgradeStat(\"" + statId + "\") -> " + statId + " " + Format(_player.GetStat(statId)) +
+                ", Max HP " + Format(_player.MaxHpValue));
+        }
+
+        /// <summary>Button target: typed hit with a source, <c>enemy.ApplyDamage(new RpgDamageInfo(...))</c>.</summary>
+        public void HitEnemy(float amount)
+        {
+            if (!RequireCharacters())
+            {
+                return;
+            }
+
+            _enemy.ApplyDamage(new RpgDamageInfo(amount, _enemyHitType, _player));
+        }
+
+        /// <summary>Button target: <c>Restore()</c> on both characters (revives a dead one).</summary>
+        public void RestoreAll()
+        {
+            if (!RequireCharacters())
+            {
+                return;
+            }
+
             _player.Restore();
             _enemy.Restore();
+            Log("player.Restore() + enemy.Restore() -> full resources");
         }
 
         /// <summary>
-        ///     Exercises the <see cref="RpgNoCodeAction" /> inspector bridge exactly as a designer would:
-        ///     serialized action components drive Heal/Damage with no gameplay C#, and their result message
-        ///     event paints the status line.
+        ///     Toggle target: registers or removes an <see cref="IRpgDamageModifier" /> that scales the player's
+        ///     incoming damage by <c>Guard Damage Scale</c>.
         /// </summary>
-        private void BuildNoCodeRow(RectTransform panel)
+        public void SetPlayerGuard(bool on)
         {
-            TMP_Text head = SurvivorUI.Label("NoCodeHeader", panel, "RpgNoCodeAction bridge:", 14f,
-                SurvivorUI.Cyan, TextAlignmentOptions.Left, FontStyles.Bold);
-            head.raycastTarget = false;
-
-            _noCodeStatus = SurvivorUI.Label("NoCodeStatus", panel, "NoCode: idle", 13f, SurvivorUI.Muted);
-            _noCodeStatus.raycastTarget = false;
-
-            RpgNoCodeAction healAction = MakeNoCodeAction(_player, RpgNoCodeActionType.Heal, 20f);
-            RpgNoCodeAction damageEnemy = MakeNoCodeAction(_enemy, RpgNoCodeActionType.TakeDamage, 30f);
-
-            AddButtonRow(panel,
-                ("NoCode Heal Player 20", () => healAction.Execute()),
-                ("NoCode Damage Enemy 30", () => damageEnemy.Execute()));
-        }
-
-        private RpgNoCodeAction MakeNoCodeAction(RpgCharacter target, RpgNoCodeActionType actionType, float amount)
-        {
-            var action = target.gameObject.AddComponent<RpgNoCodeAction>();
-            SetField(action, "_actionType", actionType);
-            SetField(action, "_character", target);
-            SetField(action, "_amount", amount);
-
-            if (GetField(action, "_onResultMessage") is UnityEvent<string> message)
+            if (on == _guardActive)
             {
-                message.AddListener(msg =>
-                {
-                    if (_noCodeStatus != null)
-                    {
-                        _noCodeStatus.text = "NoCode: " + msg;
-                    }
-                });
+                return;
             }
 
-            return action;
-        }
-
-        private static void SetField(object target, string field, object value)
-        {
-            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            info?.SetValue(target, value);
-        }
-
-        private static object GetField(object target, string field)
-        {
-            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            return info?.GetValue(target);
-        }
-
-        /// <summary>Compact rounded corner card (top-left) that auto-sizes to its rows.</summary>
-        private static RectTransform BuildPanel(Transform parent)
-        {
-            Image card = SurvivorUI.Image("Panel", parent, new Color(0.11f, 0.12f, 0.17f, 0.96f));
-            RectTransform rt = card.rectTransform;
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(0f, 1f);
-            rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(16f, -16f);
-            rt.sizeDelta = new Vector2(PanelWidth, 0f);
-
-            var shadow = card.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.4f);
-            shadow.effectDistance = new Vector2(0f, -4f);
-
-            var layout = card.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(16, 16, 14, 14);
-            layout.spacing = 8f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.childAlignment = TextAnchor.UpperLeft;
-
-            var fitter = card.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            return rt;
-        }
-
-        private static void BuildTitle(RectTransform panel)
-        {
-            TMP_Text title = SurvivorUI.Label("Title", panel, "RpgCharacter Quick Demo", 22f,
-                SurvivorUI.Text, TextAlignmentOptions.Left, FontStyles.Bold);
-            title.raycastTarget = false;
-
-            Image underline = SurvivorUI.Image("Underline", panel, SurvivorUI.Accent);
-            underline.raycastTarget = false;
-            var line = underline.gameObject.AddComponent<LayoutElement>();
-            line.minHeight = 3f;
-            line.preferredHeight = 3f;
-        }
-
-        /// <summary>Accent header + two live stat lines for one character; returns the lines to update.</summary>
-        private static (TMP_Text resources, TMP_Text progress) BuildCharacterBlock(
-            RectTransform panel, string header, Color accent)
-        {
-            TMP_Text head = SurvivorUI.Label("Header_" + header, panel, header, 14f, accent,
-                TextAlignmentOptions.Left, FontStyles.Bold);
-            head.characterSpacing = 6f;
-
-            TMP_Text resources = SurvivorUI.Label("Resources", panel, "-", 15f, SurvivorUI.Text);
-            TMP_Text progress = SurvivorUI.Label("Progress", panel, "-", 15f, SurvivorUI.Muted);
-            return (resources, progress);
-        }
-
-        private static void RefreshCharacter(TMP_Text resources, TMP_Text progress, string label,
-            RpgCharacter character)
-        {
-            resources.text = $"{label}: HP {character.HpValue:0}/{character.MaxHpValue:0} | " +
-                             $"Stamina {character.GetResource("Stamina"):0}/{character.GetResourceMax("Stamina"):0} | " +
-                             $"DarkMana {character.GetResource("DarkMana"):0}/{character.GetResourceMax("DarkMana"):0}";
-            progress.text = $"Level {character.LevelValue} | XP {character.XpValue:0} | " +
-                            $"Upgrade Points {character.UpgradePointsValue} | " +
-                            $"Vitality {character.GetStat(nameof(RpgStatPreset.Vitality)):0}";
-        }
-
-        private static void AddButtonRow(RectTransform panel, params (string label, Action onClick)[] buttons)
-        {
-            RectTransform row = SurvivorUI.Rect("Row", panel);
-            var element = row.gameObject.AddComponent<LayoutElement>();
-            element.minHeight = 42f;
-            element.preferredHeight = 42f;
-
-            var group = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            group.spacing = 8f;
-            group.childControlWidth = true;
-            group.childControlHeight = true;
-            group.childForceExpandWidth = true;
-            group.childForceExpandHeight = true;
-
-            foreach ((string label, Action onClick) in buttons)
+            if (_player == null)
             {
-                Button btn = SurvivorUI.Button("Btn_" + label, row, SurvivorUI.Accent);
-                TMP_Text txt = SurvivorUI.Label("Label", btn.transform, label, 16f, SurvivorUI.Ink,
-                    TextAlignmentOptions.Center, FontStyles.Bold);
-                SurvivorUI.Stretch(txt.rectTransform, 2f);
-                Action click = onClick;
-                btn.onClick.AddListener(() => click?.Invoke());
+                _guardActive = false;
+                return;
             }
-        }
 
-        private static void BuildChecklist(RectTransform panel)
-        {
-            TMP_Text head = SurvivorUI.Label("ChecksHeader", panel, "Inspector/NoCode checks:", 14f,
-                SurvivorUI.Muted, TextAlignmentOptions.Left, FontStyles.Bold);
-            head.raycastTarget = false;
-
-            TMP_Text body = SurvivorUI.Label("ChecksBody", panel,
-                "- RpgCharacter public API works offline and routes to server when networked.\n" +
-                "- Resources use preset IDs or custom strings.\n" +
-                "- Upgrade Vitality increases stat and Max HP.",
-                13f, SurvivorUI.Muted);
-            body.raycastTarget = false;
-        }
-
-        private static void EnsureEventSystem()
-        {
-            if (UnityEngine.Object.FindFirstObjectByType<EventSystem>() != null) return;
-
-            var go = new GameObject("EventSystem");
-            go.AddComponent<EventSystem>();
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            Type moduleType = Type.GetType(
-                "UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
-            if (moduleType != null)
+            _guardActive = on;
+            _guard.Scale = _guardDamageScale;
+            if (on)
             {
-                go.AddComponent(moduleType);
+                _player.AddDamageModifier(_guard);
+                Log("player.AddDamageModifier(guard ×" + _guardDamageScale.ToString("0.##", CultureInfo.InvariantCulture) + ")");
             }
             else
             {
-                go.AddComponent<StandaloneInputModule>();
+                _player.RemoveDamageModifier(_guard);
+                Log("player.RemoveDamageModifier(guard)");
             }
-#else
-            go.AddComponent<StandaloneInputModule>();
-#endif
-        }
 
-        private void EnsureCharacters()
-        {
-            if (_player == null) _player = FindOrCreate("Rpg Demo Player", PrimitiveType.Capsule, new Vector3(-1.4f, 1.5f, -3.2f));
-            if (_enemy == null) _enemy = FindOrCreate("Rpg Demo Enemy", PrimitiveType.Cube, new Vector3(1.4f, 1f, -3.2f));
-        }
-
-        private static RpgCharacter FindOrCreate(string objectName, PrimitiveType primitive, Vector3 position)
-        {
-            GameObject existing = GameObject.Find(objectName);
-            GameObject go = existing != null ? existing : GameObject.CreatePrimitive(primitive);
-            go.name = objectName;
-            go.transform.position = position;
-            if (go.TryGetComponent(out RpgCharacter character)) return character;
-            character = go.AddComponent<RpgCharacter>();
-            character.enabled = false;
-            return character;
-        }
-
-        private void ConfigureCharacters()
-        {
-            _progression = ScriptableObject.CreateInstance<RpgProgressionDefinition>();
-            _progression.growthMode = RpgLevelGrowthMode.Hybrid;
-            _progression.upgradePointsPerLevel = 1;
-            _progression.autoApplyGrowthOnLevelUp = true;
-            _progression.upgradeRules = new[]
+            if (_guardToggle != null && _guardToggle.isOn != on)
             {
-                new RpgStatUpgradeRule
-                {
-                    statId = new RpgStatId(RpgStatPreset.Vitality),
-                    increasePerPoint = 1f,
-                    costPerUpgrade = 1,
-                    maxUpgradeCount = -1,
-                    derivedResourceModifiers = new[]
-                    {
-                        new RpgResourceModifier
-                        {
-                            resourceId = new RpgStatId(RpgStatPreset.Hp),
-                            kind = RpgResourceModifierKind.AddMaxFlat,
-                            value = 15f
-                        }
-                    }
-                }
-            };
-
-            _playerTemplate = BuildTemplate("Demo Player", 100f, 100f, 40f, 12f, 10f);
-            _enemyTemplate = BuildTemplate("Demo Enemy", 80f, 40f, 0f, 8f, 6f);
-
-            _player.ApplyTemplate(_playerTemplate);
-            _enemy.ApplyTemplate(_enemyTemplate);
+                _guardToggle.SetIsOnWithoutNotify(on);
+            }
         }
 
-        private RpgCharacterTemplate BuildTemplate(
-            string displayName,
-            float hp,
-            float stamina,
-            float darkMana,
-            float strength,
-            float vitality)
+        private void Subscribe()
         {
-            RpgCharacterTemplate template = ScriptableObject.CreateInstance<RpgCharacterTemplate>();
-            template.displayName = displayName;
-            template.resources = new[]
+            if (_player != null && _progressSource != _player)
             {
-                Resource(RpgStatPreset.Hp, hp, hp, regen: 1f),
-                Resource(RpgStatPreset.Stamina, stamina, stamina, regen: 15f, pauseAfterSpend: 1f),
-                Resource(_customManaId, darkMana, darkMana, regen: 2f)
-            };
-            template.stats = new[]
+                UnsubscribeProgress();
+                _xpListener ??= OnXpChanged;
+                _pointsListener ??= OnPointsChanged;
+                _player.XpState.AddListener(_xpListener);
+                _player.UpgradePointsState.AddListener(_pointsListener);
+                _progressSource = _player;
+            }
+
+            if (_enemy != null && _damageSource != _enemy)
             {
-                Stat(RpgStatPreset.Strength, strength, affectedByLevel: true),
-                Stat(RpgStatPreset.Vitality, vitality, affectedByLevel: false),
-                Stat(RpgStatPreset.Defense, 5f, affectedByLevel: true)
-            };
-            template.progression = _progression;
-            return template;
+                UnsubscribeDamage();
+                _enemyDamageListener ??= OnEnemyDamaged;
+                _enemy.DamageApplied += _enemyDamageListener;
+                _damageSource = _enemy;
+            }
         }
 
-        private static RpgResourceDefinition Resource(
-            RpgStatPreset preset,
-            float current,
-            float max,
-            float regen = 0f,
-            float pauseAfterSpend = 0f)
+        private void Unsubscribe()
         {
-            return Resource(new RpgStatId(preset), current, max, regen, pauseAfterSpend);
+            UnsubscribeProgress();
+            UnsubscribeDamage();
         }
 
-        private static RpgResourceDefinition Resource(
-            string customId,
-            float current,
-            float max,
-            float regen = 0f,
-            float pauseAfterSpend = 0f)
+        private void UnsubscribeProgress()
         {
-            return Resource(new RpgStatId(customId), current, max, regen, pauseAfterSpend);
-        }
-
-        private static RpgResourceDefinition Resource(
-            RpgStatId id,
-            float current,
-            float max,
-            float regen,
-            float pauseAfterSpend)
-        {
-            return new RpgResourceDefinition
+            if (_progressSource != null)
             {
-                id = id,
-                startCurrent = current,
-                startMax = max,
-                restoreOnAwake = true,
-                restoreToFull = false,
-                regen = new RpgRegenDefinition
-                {
-                    enabled = regen > 0f,
-                    mode = RpgRegenMode.FlatPerSecond,
-                    value = regen,
-                    pauseAfterSpend = pauseAfterSpend > 0f,
-                    pauseAfterSpendSeconds = pauseAfterSpend
-                }
-            };
+                _progressSource.XpState.RemoveListener(_xpListener);
+                _progressSource.UpgradePointsState.RemoveListener(_pointsListener);
+            }
+
+            _progressSource = null;
         }
 
-        private static RpgStatDefinition Stat(RpgStatPreset preset, float value, bool affectedByLevel)
+        private void UnsubscribeDamage()
         {
-            return new RpgStatDefinition
+            if (_damageSource != null)
             {
-                id = new RpgStatId(preset),
-                baseValue = value,
-                affectedByLevel = affectedByLevel,
-                growth = new RpgStatGrowthRule { BaseValue = 0f, AddPerLevel = 1f }
-            };
+                _damageSource.DamageApplied -= _enemyDamageListener;
+            }
+
+            _damageSource = null;
         }
 
-        private static void DestroyRuntimeAsset(UnityEngine.Object asset)
+        private void OnXpChanged(float xp)
         {
-            if (asset == null) return;
-            if (Application.isPlaying) Destroy(asset);
-            else DestroyImmediate(asset);
+            RefreshProgress();
+        }
+
+        private void OnPointsChanged(int points)
+        {
+            RefreshProgress();
+        }
+
+        private void OnEnemyDamaged(RpgDamageInfo info, float applied)
+        {
+            string source = info.Source is Component component ? component.name : "no source";
+            string type = string.IsNullOrEmpty(info.DamageType) ? "untyped" : info.DamageType;
+            Log("enemy.DamageApplied -> -" + Format(applied) + " HP · " + type + " from " + source);
+        }
+
+        private void RefreshProgress()
+        {
+            if (_progressValue == null || _player == null)
+            {
+                return;
+            }
+
+            _progressValue.text = Format(_player.XpValue) + " XP · " + _player.UpgradePointsValue + " pts";
+        }
+
+        private bool RequireCharacters()
+        {
+            if (_player != null && _enemy != null)
+            {
+                return true;
+            }
+
+            if (!_warnedMissingCharacters)
+            {
+                _warnedMissingCharacters = true;
+                global::Neo.Demo.SampleDiagnostics.Warn(
+                    "[RpgCharacterQuickDemo] Player or Enemy is not assigned. Rebuild the scene with " +
+                    "Neoxider/Demo/Rebuild Active Demo Scene.", this);
+            }
+
+            return false;
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[RpgCharacterQuickDemo] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                this);
+        }
+
+        private static string Format(float value)
+        {
+            return value.ToString("0.#", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>Scales every incoming hit; the guard toggle registers it on the player.</summary>
+        private sealed class GuardModifier : IRpgDamageModifier
+        {
+            public float Scale = 0.5f;
+
+            public float ModifyIncomingDamage(RpgCharacter target, RpgDamageInfo info, float amount)
+            {
+                return amount * Scale;
+            }
         }
     }
 }

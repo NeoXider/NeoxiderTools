@@ -1,5 +1,11 @@
 ﻿# PrefabPreviewExtensions
 
+**What it is:** helpers that obtain a display preview for a GameObject or prefab (`GetPreviewSprite`, `GetPreviewTexture`): its own sprite, or an Editor-only AssetPreview thumbnail. File: `Scripts/Extensions/PrefabPreviewExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** call `prefab.GetPreviewSprite()` for an inventory/shop icon and treat generated Editor thumbnails as temporary (see below).
+
+---
+
 Use `using Neo.Extensions;` to obtain a display preview from a GameObject/prefab. Existing sprites work in players; the AssetPreview thumbnail fallback is Editor-only. See [Lifecycle and ownership](LifecycleAndOwnership.md) for the shared resource contract.
 
 ## API and ownership

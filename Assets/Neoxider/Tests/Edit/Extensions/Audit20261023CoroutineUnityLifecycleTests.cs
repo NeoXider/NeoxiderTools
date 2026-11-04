@@ -22,7 +22,7 @@ namespace Neo.Editor.Tests
         [UnitySetUp]
         public IEnumerator EnterRuntime()
         {
-            // Keep the mode transition in this top-level UnitySetUp enumerator.
+            // WHY: Keep the mode transition in this top-level UnitySetUp enumerator.
             yield return new EnterPlayMode();
             Assert.IsTrue(Application.isPlaying);
             _tearingDown = false;
@@ -287,7 +287,7 @@ namespace Neo.Editor.Tests
             Assert.IsNotNull(_frameProbe);
             int lastRequiredFrame = Time.frameCount + frameCount;
             double deadline = Time.realtimeSinceStartupAsDouble + 2d;
-            // EditMode UnityTests still advance on EditorApplication.update in Play Mode.
+            // WHY: EditMode UnityTests still advance on EditorApplication.update in Play Mode.
             // A null yield alone does not establish a native PlayerLoop frame.
             while (_frameProbe.LateUpdateFrame < lastRequiredFrame &&
                    Time.realtimeSinceStartupAsDouble < deadline)

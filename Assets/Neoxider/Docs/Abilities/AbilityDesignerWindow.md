@@ -2,7 +2,7 @@
 
 **What it is:** a UI Toolkit editor window for browsing, authoring, and validating [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets in one place — the authoring hub for the Abilities module.
 
-**How to open:** menu `Neoxider > Windows > Ability Designer`, or the **Open in Ability Designer** flow from an ability/modifier asset inspector.
+**How to use:** open it from the menu `Neoxider > Windows > Ability Designer`, or the **Open in Ability Designer** flow from an ability/modifier asset inspector.
 
 - Namespace: `Neo.Abilities.Editor`
 - File: `Assets/Neoxider/Scripts/Abilities/Editor/AbilityDesignerWindow.cs`
@@ -38,6 +38,7 @@ See [Editor API and authoring contracts](./Editor.md) for case-insensitive built
 
 - The window edits assets through `SerializedObject`, so undo/redo works and dirty assets save with the project as usual.
 - The library scans the whole project via the asset database; assets inside `Samples~` (hidden) folders are not imported and will not appear.
+- The scan runs when the window opens and again after the project changes (an asset was created, deleted, moved or re-imported). Focusing the window otherwise re-runs validation and rebuilds the effect board only when the selected asset was changed elsewhere (for example an effect added or reordered in the regular Inspector), so the inspector pane keeps its scroll position and an active text field. The selected asset and the search text survive script reloads and editor restarts.
 - Validation is advisory — the runtime does not refuse to register "invalid" data.
 
 ## See also

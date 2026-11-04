@@ -82,15 +82,15 @@ namespace Neo.Editor.Tests.Edit
 
             try
             {
-                var options = new FileSaveProviderOptions { PersistenceRoot = tempDir, Encryption = cfg };
-                var p1 = new FileSaveProvider(fileName, options);
+                FileSaveProviderOptions options = new FileSaveProviderOptions { PersistenceRoot = tempDir, Encryption = cfg };
+                FileSaveProvider p1 = new FileSaveProvider(fileName, options);
                 p1.SetInt("slot", 99);
                 p1.Save();
 
                 string raw = File.ReadAllText(Path.Combine(tempDir, fileName));
                 Assert.That(raw.TrimStart(), Does.Not.StartWith("{"));
 
-                var p2 = new FileSaveProvider(fileName, options);
+                FileSaveProvider p2 = new FileSaveProvider(fileName, options);
                 Assert.That(p2.GetInt("slot"), Is.EqualTo(99));
             }
             finally
@@ -155,13 +155,13 @@ namespace Neo.Editor.Tests.Edit
 
             try
             {
-                var options = new FileSaveProviderOptions
+                FileSaveProviderOptions options = new FileSaveProviderOptions
                 {
                     PersistenceRoot = tempDir,
                     Encryption = cfg
                 };
 
-                var provider = new FileSaveProvider(fileName, options);
+                FileSaveProvider provider = new FileSaveProvider(fileName, options);
                 provider.SetInt("gold", 42);
                 provider.SetString("hero", "Neo");
                 provider.Save();
@@ -169,7 +169,7 @@ namespace Neo.Editor.Tests.Edit
                 string raw = File.ReadAllText(Path.Combine(tempDir, fileName));
                 Assert.That(raw.TrimStart(), Does.Not.StartWith("{"));
 
-                var provider2 = new FileSaveProvider(fileName, options);
+                FileSaveProvider provider2 = new FileSaveProvider(fileName, options);
                 Assert.That(provider2.GetInt("gold"), Is.EqualTo(42));
                 Assert.That(provider2.GetString("hero"), Is.EqualTo("Neo"));
             }
@@ -191,11 +191,11 @@ namespace Neo.Editor.Tests.Edit
 
             try
             {
-                var plain = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
+                FileSaveProvider plain = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 plain.SetInt("migrated", 7);
                 plain.Save();
 
-                var withEnc = new FileSaveProvider(fileName, new FileSaveProviderOptions
+                FileSaveProvider withEnc = new FileSaveProvider(fileName, new FileSaveProviderOptions
                 {
                     PersistenceRoot = tempDir,
                     Encryption = cfg
@@ -220,11 +220,11 @@ namespace Neo.Editor.Tests.Edit
 
             try
             {
-                var plain = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
+                FileSaveProvider plain = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 plain.SetInt("migrated", 8);
                 plain.Save();
 
-                var withEnc = new FileSaveProvider(fileName, new FileSaveProviderOptions
+                FileSaveProvider withEnc = new FileSaveProvider(fileName, new FileSaveProviderOptions
                 {
                     PersistenceRoot = tempDir,
                     Encryption = cfg
@@ -250,7 +250,7 @@ namespace Neo.Editor.Tests.Edit
                 // WHY: an existing but unreadable save is reported unconditionally since 10.14.0 -
                 // losing a profile silently is never an acceptable default.
                 LogAssert.Expect(UnityEngine.LogType.Error, new Regex("unreadable; starting from empty data"));
-                var provider =
+                FileSaveProvider provider =
                     new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 Assert.That(provider.HasKey("any"), Is.False);
                 Assert.That(provider.GetInt("k", 7), Is.EqualTo(7));
@@ -272,7 +272,7 @@ namespace Neo.Editor.Tests.Edit
             {
                 File.WriteAllText(Path.Combine(tempDir, fileName), "{not valid json");
                 LogAssert.Expect(UnityEngine.LogType.Error, new Regex("unreadable; starting from empty data"));
-                var provider =
+                FileSaveProvider provider =
                     new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 Assert.That(provider.HasKey("gold"), Is.False);
                 Assert.That(provider.GetFloat("gold", 3.5f), Is.EqualTo(3.5f));

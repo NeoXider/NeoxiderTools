@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Neo.Condition;
 using Neo.Reactive;
 using ConditionValueType = Neo.Condition.ValueType;
@@ -151,8 +152,12 @@ namespace Neo.Editor.Binding
                 return;
             }
 
-            Component[] components = targetObj.GetComponents<Component>();
-            for (int i = 0; i < components.Length; i++)
+            List<Component> components = s_componentBuffer;
+            Dictionary<Type, int> seen = s_typeCounts;
+            components.Clear();
+            seen.Clear();
+            targetObj.GetComponents(components);
+            for (int i = 0; i < components.Count; i++)
             {
                 Component c = components[i];
                 if (c == null)
@@ -161,31 +166,28 @@ namespace Neo.Editor.Binding
                 }
 
                 Type t = c.GetType();
+                // WHY: one running count per type instead of rescanning every earlier component (was O(C^2)).
+                seen.TryGetValue(t, out int duplicateCount);
+                seen[t] = duplicateCount + 1;
                 if (t == typeof(Transform))
                 {
                     continue;
                 }
 
-                string displayName = t.Name;
-                int duplicateCount = 0;
-                for (int j = 0; j < i; j++)
-                {
-                    if (components[j] != null && components[j].GetType() == t)
-                    {
-                        duplicateCount++;
-                    }
-                }
-
-                if (duplicateCount > 0)
-                {
-                    displayName += $" ({duplicateCount + 1})";
-                }
-
-                displayNames.Add(displayName);
+                displayNames.Add(duplicateCount > 0 ? $"{t.Name} ({duplicateCount + 1})" : t.Name);
                 fullTypeNames.Add(t.FullName);
             }
+
+            components.Clear();
+            seen.Clear();
         }
 
+        // WHY: editor pickers are rebuilt on every IMGUI event; one reused buffer replaces a GetComponents array per call.
+        // Editor IMGUI is single-threaded and none of these helpers call back into each other while iterating.
+        private static readonly List<Component> s_componentBuffer = new();
+        private static readonly Dictionary<Type, int> s_typeCounts = new();
+
+        /// <summary>First component of <paramref name="obj" /> whose full or short type name is <paramref name="typeName" />.</summary>
         public static Component FindComponentByTypeName(GameObject obj, string typeName)
         {
             return FindComponentByTypeName(obj, typeName, 0);
@@ -199,8 +201,13 @@ namespace Neo.Editor.Binding
                 return null;
             }
 
-            foreach (Component comp in obj.GetComponents<Component>())
+            List<Component> components = s_componentBuffer;
+            components.Clear();
+            obj.GetComponents(components);
+            Component found = null;
+            for (int i = 0; i < components.Count; i++)
             {
+                Component comp = components[i];
                 if (comp == null)
                 {
                     continue;
@@ -211,14 +218,16 @@ namespace Neo.Editor.Binding
                 {
                     if (occurrence == 0)
                     {
-                        return comp;
+                        found = comp;
+                        break;
                     }
 
                     occurrence--;
                 }
             }
 
-            return null;
+            components.Clear();
+            return found;
         }
 
         /// <summary>Returns the popup row for the requested type occurrence, without clamping or fallback.</summary>
@@ -345,8 +354,219 @@ namespace Neo.Editor.Binding
             labels.Clear();
             isMethodList.Clear();
             argKinds.Clear();
-            Type compType = comp.GetType();
+            if (comp == null)
+            {
+                return;
+            }
 
+            ConditionMember[] members = GetConditionMembers(comp.GetType(), includeMethods);
+            for (int i = 0; i < members.Length; i++)
+            {
+                ConditionMember member = members[i];
+                names.Add(member.Name);
+                types.Add(member.ValueType);
+                labels.Add(member.Label);
+                isMethodList.Add(member.IsMethod);
+                argKinds.Add(member.ArgumentKind);
+            }
+        }
+
+        private readonly struct ConditionMember
+        {
+            public readonly string Name;
+            public readonly ConditionValueType ValueType;
+            public readonly string Label;
+            public readonly bool IsMethod;
+            public readonly ArgumentKind ArgumentKind;
+
+            public ConditionMember(string name, ConditionValueType valueType, string label, bool isMethod,
+                ArgumentKind argumentKind)
+            {
+                Name = name;
+                ValueType = valueType;
+                Label = label;
+                IsMethod = isMethod;
+                ArgumentKind = argumentKind;
+            }
+        }
+
+        private readonly struct FloatBindingMember
+        {
+            public readonly string Key;
+            public readonly string Label;
+
+            public FloatBindingMember(string key, string label)
+            {
+                Key = key;
+                Label = label;
+            }
+        }
+
+        // WHY: member pickers are rebuilt on every IMGUI event, but a type's members only change with a domain
+        // reload; reflect and format the labels once per type instead of per draw.
+        private static readonly Dictionary<(Type, bool), ConditionMember[]> s_conditionMembers = new();
+        private static readonly Dictionary<Type, FloatBindingMember[]> s_floatBindingMembers = new();
+        private static readonly Dictionary<(Type, bool), string[]> s_conditionMemberLabels = new();
+        private static readonly Dictionary<Type, string[]> s_floatBindingMemberLabels = new();
+
+        /// <summary>
+        ///     Popup labels of <see cref="BuildConditionMemberLists" /> for <paramref name="compType" />, in the same
+        ///     order. The array is cached per type and shared; callers must not modify it.
+        /// </summary>
+        internal static string[] GetConditionMemberLabels(Type compType, bool includeMethods)
+        {
+            if (compType == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            if (s_conditionMemberLabels.TryGetValue((compType, includeMethods), out string[] cached))
+            {
+                return cached;
+            }
+
+            ConditionMember[] members = GetConditionMembers(compType, includeMethods);
+            string[] labels = new string[members.Length];
+            for (int i = 0; i < members.Length; i++)
+            {
+                labels[i] = members[i].Label;
+            }
+
+            s_conditionMemberLabels[(compType, includeMethods)] = labels;
+            return labels;
+        }
+
+        /// <summary>
+        ///     Popup labels of <see cref="BuildFloatBindingMemberLists" /> for <paramref name="compType" />, in the
+        ///     same order. The array is cached per type and shared; callers must not modify it.
+        /// </summary>
+        internal static string[] GetFloatBindingMemberLabels(Type compType)
+        {
+            if (compType == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            if (s_floatBindingMemberLabels.TryGetValue(compType, out string[] cached))
+            {
+                return cached;
+            }
+
+            FloatBindingMember[] members = GetFloatBindingMembers(compType);
+            string[] labels = new string[members.Length];
+            for (int i = 0; i < members.Length; i++)
+            {
+                labels[i] = members[i].Label;
+            }
+
+            s_floatBindingMemberLabels[compType] = labels;
+            return labels;
+        }
+
+        // WHY: weak keys. The owners are scene GameObject wrappers and other short-lived objects; a plain
+        // dictionary kept them (and destroyed objects' wrappers) alive for as long as the editor ran.
+        private static ConditionalWeakTable<object, string[]> s_popupOptions = new();
+
+        /// <summary>
+        ///     Returns popup options equal to <paramref name="items" />, reusing the array handed out last time for
+        ///     the same <paramref name="owner" /> while the text is unchanged. Pickers call this on every IMGUI event;
+        ///     a new array is only allocated when the options actually change. The returned array is shared and
+        ///     must not be modified. The owner is held weakly, so caching never keeps it alive.
+        /// </summary>
+        /// <param name="owner">Stable key for one picker, e.g. the GameObject whose components are listed.</param>
+        /// <param name="items">Current option text.</param>
+        internal static string[] GetPopupOptions(object owner, IReadOnlyList<string> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            if (owner == null)
+            {
+                return CopyOptions(items);
+            }
+
+            if (s_popupOptions.TryGetValue(owner, out string[] cached))
+            {
+                if (SameOptions(cached, items))
+                {
+                    return cached;
+                }
+
+                s_popupOptions.Remove(owner);
+            }
+
+            string[] fresh = CopyOptions(items);
+            s_popupOptions.Add(owner, fresh);
+            return fresh;
+        }
+
+        /// <summary>
+        ///     Per-picker variant of <see cref="GetPopupOptions" /> for callers that own the cache slot, such as an
+        ///     inspector keeping the array in an instance field: returns <paramref name="cached" /> while it still
+        ///     equals <paramref name="items" />, otherwise stores and returns a fresh copy. Never rewrites an array
+        ///     that was handed out.
+        /// </summary>
+        internal static string[] ReuseOptions(ref string[] cached, IReadOnlyList<string> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                cached = Array.Empty<string>();
+                return cached;
+            }
+
+            if (cached == null || !SameOptions(cached, items))
+            {
+                cached = CopyOptions(items);
+            }
+
+            return cached;
+        }
+
+        /// <summary>Forgets every array handed out by <see cref="GetPopupOptions" />.</summary>
+        internal static void ClearPopupOptionsCache()
+        {
+            s_popupOptions = new ConditionalWeakTable<object, string[]>();
+        }
+
+        private static string[] CopyOptions(IReadOnlyList<string> items)
+        {
+            string[] copy = new string[items.Count];
+            for (int i = 0; i < copy.Length; i++)
+            {
+                copy[i] = items[i];
+            }
+
+            return copy;
+        }
+
+        private static bool SameOptions(string[] cached, IReadOnlyList<string> items)
+        {
+            if (cached.Length != items.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < cached.Length; i++)
+            {
+                if (!string.Equals(cached[i], items[i], StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static ConditionMember[] GetConditionMembers(Type compType, bool includeMethods)
+        {
+            if (s_conditionMembers.TryGetValue((compType, includeMethods), out ConditionMember[] cached))
+            {
+                return cached;
+            }
+
+            List<ConditionMember> members = new();
             foreach (PropertyInfo prop in compType.GetProperties(ConditionMemberFlags))
             {
                 if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
@@ -360,11 +580,8 @@ namespace Neo.Editor.Binding
                     continue;
                 }
 
-                names.Add(prop.Name);
-                types.Add(vt.Value);
-                labels.Add($"{prop.Name}  ({FormatConditionValueTypeKeyword(vt.Value)})  [prop]");
-                isMethodList.Add(false);
-                argKinds.Add(ArgumentKind.Int);
+                members.Add(new ConditionMember(prop.Name, vt.Value,
+                    $"{prop.Name}  ({FormatConditionValueTypeKeyword(vt.Value)})  [prop]", false, ArgumentKind.Int));
             }
 
             foreach (FieldInfo field in compType.GetFields(ConditionMemberFlags))
@@ -375,57 +592,53 @@ namespace Neo.Editor.Binding
                     continue;
                 }
 
-                names.Add(field.Name);
-                types.Add(vt.Value);
-                labels.Add($"{field.Name}  ({FormatConditionValueTypeKeyword(vt.Value)})");
-                isMethodList.Add(false);
-                argKinds.Add(ArgumentKind.Int);
+                members.Add(new ConditionMember(field.Name, vt.Value,
+                    $"{field.Name}  ({FormatConditionValueTypeKeyword(vt.Value)})", false, ArgumentKind.Int));
             }
 
-            if (!includeMethods)
+            if (includeMethods)
             {
-                return;
+                foreach (MethodInfo method in compType.GetMethods(ConditionMemberFlags))
+                {
+                    if (method.IsGenericMethod || IsUnityNoiseMember(method.Name))
+                    {
+                        continue;
+                    }
+
+                    ParameterInfo[] parameters = method.GetParameters();
+                    if (parameters.Length != 1)
+                    {
+                        continue;
+                    }
+
+                    ArgumentKind? argKind = TryGetConditionArgumentKind(parameters[0].ParameterType);
+                    if (argKind == null)
+                    {
+                        continue;
+                    }
+
+                    ConditionValueType? returnVt = TryGetConditionValueType(method.ReturnType);
+                    if (returnVt == null)
+                    {
+                        continue;
+                    }
+
+                    string paramLabel = argKind.Value switch
+                    {
+                        ArgumentKind.Int => "int",
+                        ArgumentKind.Float => "float",
+                        ArgumentKind.String => "string",
+                        _ => "?"
+                    };
+                    members.Add(new ConditionMember(method.Name, returnVt.Value,
+                        $"{method.Name} ({paramLabel}) → {FormatConditionValueTypeKeyword(returnVt.Value)} [method]",
+                        true, argKind.Value));
+                }
             }
 
-            foreach (MethodInfo method in compType.GetMethods(ConditionMemberFlags))
-            {
-                if (method.IsGenericMethod || IsUnityNoiseMember(method.Name))
-                {
-                    continue;
-                }
-
-                ParameterInfo[] parameters = method.GetParameters();
-                if (parameters.Length != 1)
-                {
-                    continue;
-                }
-
-                ArgumentKind? argKind = TryGetConditionArgumentKind(parameters[0].ParameterType);
-                if (argKind == null)
-                {
-                    continue;
-                }
-
-                ConditionValueType? returnVt = TryGetConditionValueType(method.ReturnType);
-                if (returnVt == null)
-                {
-                    continue;
-                }
-
-                string paramLabel = argKind.Value switch
-                {
-                    ArgumentKind.Int => "int",
-                    ArgumentKind.Float => "float",
-                    ArgumentKind.String => "string",
-                    _ => "?"
-                };
-                names.Add(method.Name);
-                types.Add(returnVt.Value);
-                labels.Add(
-                    $"{method.Name} ({paramLabel}) → {FormatConditionValueTypeKeyword(returnVt.Value)} [method]");
-                isMethodList.Add(true);
-                argKinds.Add(argKind.Value);
-            }
+            ConditionMember[] result = members.ToArray();
+            s_conditionMembers[(compType, includeMethods)] = result;
+            return result;
         }
 
         /// <summary>
@@ -472,7 +685,7 @@ namespace Neo.Editor.Binding
             if (useSearch != null && useSearch.boolValue && searchName != null &&
                 !string.IsNullOrEmpty(searchName.stringValue))
             {
-                var found = GameObject.Find(searchName.stringValue);
+                GameObject found = FindSceneObject(searchName.stringValue);
                 if (found != null)
                 {
                     return found;
@@ -487,7 +700,7 @@ namespace Neo.Editor.Binding
             }
 
             SerializedProperty sourceProp = bindingProperty.FindPropertyRelative("_sourceRoot");
-            var root = sourceProp.objectReferenceValue as GameObject;
+            GameObject root = sourceProp.objectReferenceValue as GameObject;
             if (root != null)
             {
                 return root;
@@ -499,6 +712,64 @@ namespace Neo.Editor.Binding
             }
 
             return null;
+        }
+
+        private readonly struct SceneLookup
+        {
+            public readonly GameObject Result;
+            public readonly bool Found;
+            public readonly double At;
+
+            public SceneLookup(GameObject result, bool found, double at)
+            {
+                Result = result;
+                Found = found;
+                At = at;
+            }
+        }
+
+        /// <summary>How long a by-name scene lookup answer is reused by the pickers, in seconds.</summary>
+        public const double SceneLookupCacheSeconds = 0.5;
+
+        private const int MaxSceneLookups = 64;
+        private static readonly Dictionary<string, SceneLookup> s_sceneLookups = new(StringComparer.Ordinal);
+
+        /// <summary>
+        ///     <see cref="GameObject.Find" /> for inspector pickers. One drawer used to search the whole scene up to
+        ///     four times per IMGUI event (height and draw, each twice); an answer is now reused for
+        ///     <see cref="SceneLookupCacheSeconds" />, and a found object that has been destroyed is searched again
+        ///     right away. Editor UI only: runtime code keeps its own lookup policy.
+        /// </summary>
+        /// <param name="objectName">Name or path accepted by <see cref="GameObject.Find" />.</param>
+        public static GameObject FindSceneObject(string objectName)
+        {
+            if (string.IsNullOrEmpty(objectName))
+            {
+                return null;
+            }
+
+            double now = EditorApplication.timeSinceStartup;
+            if (s_sceneLookups.TryGetValue(objectName, out SceneLookup cached) &&
+                now >= cached.At && now - cached.At < SceneLookupCacheSeconds &&
+                (!cached.Found || cached.Result != null))
+            {
+                return cached.Found ? cached.Result : null;
+            }
+
+            GameObject found = GameObject.Find(objectName);
+            if (s_sceneLookups.Count >= MaxSceneLookups)
+            {
+                s_sceneLookups.Clear();
+            }
+
+            s_sceneLookups[objectName] = new SceneLookup(found, found != null, now);
+            return found;
+        }
+
+        /// <summary>Forgets every cached <see cref="FindSceneObject" /> answer.</summary>
+        public static void ClearSceneLookupCache()
+        {
+            s_sceneLookups.Clear();
         }
 
         /// <summary>
@@ -587,8 +858,27 @@ namespace Neo.Editor.Binding
         {
             keys.Clear();
             labels.Clear();
-            Type t = comp.GetType();
+            if (comp == null)
+            {
+                return;
+            }
 
+            FloatBindingMember[] members = GetFloatBindingMembers(comp.GetType());
+            for (int i = 0; i < members.Length; i++)
+            {
+                keys.Add(members[i].Key);
+                labels.Add(members[i].Label);
+            }
+        }
+
+        private static FloatBindingMember[] GetFloatBindingMembers(Type t)
+        {
+            if (s_floatBindingMembers.TryGetValue(t, out FloatBindingMember[] cached))
+            {
+                return cached;
+            }
+
+            List<FloatBindingMember> members = new();
             foreach (PropertyInfo pi in t.GetProperties(InstanceMembers))
             {
                 if (!pi.CanRead || pi.GetIndexParameters().Length > 0 || IsUnityNoiseMember(pi.Name))
@@ -601,8 +891,8 @@ namespace Neo.Editor.Binding
                     continue;
                 }
 
-                keys.Add(pi.Name);
-                labels.Add($"{pi.Name}  ({FormatClrTypeDisplayName(pi.PropertyType)})  [prop]");
+                members.Add(new FloatBindingMember(pi.Name,
+                    $"{pi.Name}  ({FormatClrTypeDisplayName(pi.PropertyType)})  [prop]"));
             }
 
             foreach (FieldInfo fi in t.GetFields(InstanceMembers))
@@ -617,9 +907,12 @@ namespace Neo.Editor.Binding
                     continue;
                 }
 
-                keys.Add(fi.Name);
-                labels.Add($"{fi.Name}  ({FormatClrTypeDisplayName(fi.FieldType)})");
+                members.Add(new FloatBindingMember(fi.Name, $"{fi.Name}  ({FormatClrTypeDisplayName(fi.FieldType)})"));
             }
+
+            FloatBindingMember[] result = members.ToArray();
+            s_floatBindingMembers[t] = result;
+            return result;
         }
 
         public static bool TryGetFloatBindingMemberType(Component comp, string memberName, out Type memberType)

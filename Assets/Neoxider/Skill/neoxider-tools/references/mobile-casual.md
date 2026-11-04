@@ -10,12 +10,16 @@ Use it as the checklist of *which Neo piece does what*, and which small pieces s
   the age question if enabled, then activates the preloaded Game scene. Preload with
   `SceneManager.LoadSceneAsync(name)` + `allowSceneActivation = false`, and report
   `min(real progress / 0.9, elapsed / minimumSeconds)` so the bar never lies and never flashes past.
-  `FakeLoad` (NeoxiderPages) is for mock loading only — do not drive a real scene switch from it.
+  `FakeLoad` (`Neo.UI`; NeoxiderPages ships its own) is for mock loading only — do not drive a real scene
+  switch from it.
   Start the async load one frame after `OnEnable` (a synchronous scene activation can flush pending
   async operations).
 - **Pages:** one `PM` root, every `UIPage` below it, `PageId` assets per page, `PM.I.ChangePage(id)`.
   Popups (`UIPage` marked popup) stack over the exclusive page and close on the next exclusive switch
-  (`closePopupsOnExclusivePageChange`). Read `PM.I.currentUiPage.PageId` for Back handling.
+  (`closePopupsOnExclusivePageChange`, also `PM.ClosePopupsOnExclusivePageChange`). Read
+  `PM.I.currentUiPage.PageId` for Back handling. `CloseCurrentPage` on a popup makes the page below current again,
+  and reopening the current page keeps the Back history. `PM.DebugLogs` logs page switches;
+  `PM.TryGetPageIdByName` resolves a name without throwing.
 - **Back (Android):** one handler maps the current page to the same action as its on-screen back/close
   button; result screens ignore Back; the root menu minimises the app. With the Input System, check
   Escape on every `Keyboard` device and treat `Application.wantsToQuit` as Back on Android, handled
@@ -53,8 +57,10 @@ solved board, `Selection` on a grab, `Warning` on a locked tap. The module throt
 ## Save
 
 Small flags go through `SaveProvider` (`GetInt`/`SetInt`/`Save`, namespace `Neo.Save`) — for example
-the age-gate answer read by the Loading scene before `Game` exists. Keep the game's profile (wallet,
-progress, hints per board) in one serialised model with repair-on-load for corrupted or old saves.
+the age-gate answer read by the Loading scene before `Game` exists. A wallet in cents or a counter above
+`int.MaxValue` uses `SaveProvider.GetLong`/`SetLong`. `SaveProvider.Save()` is cheap to call on every
+background/pause: `FileSaveProvider` skips the disk write when nothing changed. Keep the game's profile
+(wallet, progress, hints per board) in one serialised model with repair-on-load for corrupted or old saves.
 
 ## Reward flights — `AnimationFly`
 
@@ -83,6 +89,8 @@ AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
 - Rewards collected on the page that shows the counter (map pins, shop) fly immediately, from the
   collected object.
 - The counter starts at the old balance and lands exactly on the real one; the save is written first.
+- `Play` copies the request, so set every field and callback before calling it. A throwing callback is
+  logged and the coins are still released; `AnimationFly.I.OwnedVisualCount` shows leaked visuals in tests.
 
 ## Motion that is not in the package (keep it in the game)
 
@@ -90,7 +98,8 @@ These are small, game-level components; write them once per project:
 
 - **Press feedback on every button** (scale 0.93 on down, `OutBack` back to the rest scale taken in
   `Awake`; release on up and on exit; restore on disable) — injected at start by walking the `PM`
-  root, skipping objects that are not real buttons.
+  root, skipping objects that are not real buttons. For a single button, `Neo.UI.ButtonScale` does this
+  in unscaled time (works while a pause sets `Time.timeScale` to 0).
 - **Staggered page entrance** (alpha + scale per item, `blocksRaycasts` off until each item starts
   to appear, `SetUpdate(true)`, `SetLink`).
 - **Result-screen reveal order**: headline → earned → progress → rewarded offer (with an

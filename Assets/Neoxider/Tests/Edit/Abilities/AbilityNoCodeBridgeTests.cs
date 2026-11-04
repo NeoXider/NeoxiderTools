@@ -29,12 +29,12 @@ namespace Neo.Editor.Tests.Abilities
             _caster = _player.gameObject.AddComponent<AbilityCasterBehaviour>();
             _enemy = _rig.AddUnit("enemy", team: 2, new Vector3(3f, 0f, 0f));
 
-            var blast = new AbilityBlueprint { Id = "blast", Targeting = TargetingMode.NoTarget, Cooldown = 1f };
+            AbilityBlueprint blast = new AbilityBlueprint { Id = "blast", Targeting = TargetingMode.NoTarget, Cooldown = 1f };
             blast.ImpactEffects.Add(AbilityTestSupport.DamageNode(10f));
             _rig.System.RegisterAbility(blast);
             _rig.System.GrantAbility(_player.UnitId, "blast");
 
-            var bolt = new AbilityBlueprint
+            AbilityBlueprint bolt = new AbilityBlueprint
             {
                 Id = "bolt",
                 Targeting = TargetingMode.Unit,
@@ -135,7 +135,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void GrantAbility_ByDefinition_RegistersAndGrants()
         {
-            var definition = ScriptableObject.CreateInstance<AbilityDefinition>();
+            AbilityDefinition definition = ScriptableObject.CreateInstance<AbilityDefinition>();
             _definitionToDestroy = definition;
             definition.Blueprint.Id = "gift";
             definition.Blueprint.Targeting = TargetingMode.NoTarget;
@@ -227,7 +227,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void ApplyModifier_ByDefinition_AppliesToTarget()
         {
-            var definition = ScriptableObject.CreateInstance<ModifierDefinition>();
+            ModifierDefinition definition = ScriptableObject.CreateInstance<ModifierDefinition>();
             _definitionToDestroy = definition;
             definition.Blueprint.Id = "haste";
             definition.Blueprint.Duration = 5f;
@@ -255,7 +255,7 @@ namespace Neo.Editor.Tests.Abilities
             AbilityUnitBehaviour targetUnit = null, AbilityDefinition ability = null,
             ModifierDefinition modifier = null, int level = 1, float amount = 25f)
         {
-            var serialized = new SerializedObject(_action);
+            SerializedObject serialized = new SerializedObject(_action);
             serialized.FindProperty("_actionType").enumValueIndex = (int)actionType;
             serialized.FindProperty("_abilityId").stringValue = abilityId ?? string.Empty;
             serialized.FindProperty("_modifierId").stringValue = modifierId ?? string.Empty;

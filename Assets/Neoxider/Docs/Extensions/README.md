@@ -1,6 +1,10 @@
 ﻿# Extensions module
 
-Reusable helpers for C# and Unity, in assembly `Neo.Extensions`. Add `using Neo.Extensions;` and, for a custom assembly definition, reference `Neo.Extensions`. Source: `Scripts/Extensions/`. This is the canonical module entry point.
+**What it is:** reusable helpers for C# and Unity, in assembly `Neo.Extensions` (source: `Scripts/Extensions/`). Add `using Neo.Extensions;` and, for a custom assembly definition, reference `Neo.Extensions`. This is the canonical module entry point.
+
+**Contents:** the topic list under [Runtime API](#runtime-api) and the two [contract guides](#contract-guides).
+
+---
 
 ## Runtime API
 
@@ -19,7 +23,16 @@ using Neo.Extensions;
 int index = (-1).Wrap(0, 5); // 4; full int bounds are supported.
 string score = 1234567L.ToIdleString(); // "1.2M"
 bool valid = TimeParsingExtensions.TryParseDuration("02:30", out float seconds); // 150
+int[] deck = { 1, 2, 3, 4 };
+deck.Shuffle(new System.Random(42)); // same seed, same order: replays and deterministic tests
 ```
+
+Hot helpers avoid per-call garbage: list/array overloads of `FindClosest`, `GetClosest`, `GetAveragePosition`,
+`SetActiveAll`, `GetCombinedBounds`, `GetRandomWeightedIndex`, `GetRandomEnumValue`, `IsNullOrEmpty`, `IsNumeric`/`IsNullOrEmptyAfterTrim` do
+not allocate after warm-up (EditMode tests count `GC.Alloc` calls). `UIUtils.IsPointerOverUI(screenPosition)` and
+`UIUtils.GetUIElementsAtPosition(screenPosition, results)` with a retained list add no allocation of their own; what
+Unity's raycasters allocate inside `EventSystem.RaycastAll` (sorting hits while the pointer is over UI) remains.
+Camera parameters treat a destroyed `Camera` like `null` and fall back to `Camera.main`.
 
 ## Contract guides
 
@@ -34,11 +47,13 @@ bool valid = TimeParsingExtensions.TryParseDuration("02:30", out float seconds);
 
 ## Scene and NoCode workflow
 
-Call the typed APIs from ordinary C# components. There is no Inspector action graph to configure. Coroutine methods attach hidden lifecycle helpers as needed; `CreateFromMenuAttribute` and `LegacyComponentAttribute` are metadata for editor authoring, in namespace `Neo`. UI button code can use `UnityEventDelegateCache.SubscribeAt` and `UnsubscribeAt` to retain matching delegates. Reusing a slot detaches its previous tracked subscription, including when changing the event source; `Clear()` only clears the cache.
+Call the typed APIs from ordinary C# components. There is no Inspector action graph to configure. Coroutine methods attach hidden lifecycle helpers as needed; `CreateFromMenuAttribute` and `LegacyComponentAttribute` are metadata for editor authoring, in namespace `Neo`. UI button code can use `UnityEventDelegateCache.SubscribeAt` and `UnsubscribeAt` to retain matching delegates. Reusing a slot detaches its previous tracked subscription, including when changing the event source; `UnsubscribeAll()` detaches every tracked slot and clears the cache, while `Clear()` only clears the cache.
 
 Layout collection methods consume the source once and position the resulting transforms in order. `GetCombinedBounds` also supports a one-shot `IEnumerable`. `WorldToCanvasPoint` returns local canvas coordinates for every render mode; Overlay Canvas conversion uses a null UI camera.
 
-For EventSystem picking, `UIUtils.GetUIElementsAtPosition(screenPosition, results)` accepts explicit pixels and clears/refills a caller-owned result list. For a compatible mouse in Both/New-only projects, use `Neo.Tools.UIInputCompat` from `Neo.Tools.Input`. The original UIUtils cursor methods retain legacy input semantics. List reuse still creates PointerEventData per query with an EventSystem; see [UIUtils](UIUtils.md) for exact overloads, missing-input behavior and raycaster boundaries.
+For EventSystem picking, `UIUtils.GetUIElementsAtPosition(screenPosition, results)` accepts explicit pixels and clears/refills a caller-owned result list; `UIUtils.IsPointerOverUI(screenPosition)` answers yes/no. Both reuse one shared PointerEventData, so neither adds an allocation of its own to the raycast. For a compatible mouse in Both/New-only projects, use `Neo.Tools.UIInputCompat` from `Neo.Tools.Input`. The original UIUtils cursor methods retain legacy input semantics. See [UIUtils](UIUtils.md) for exact overloads, missing-input behavior and raycaster boundaries.
+
+`NeoDiagnostics.LogWarningThrottled(key, message, context, seconds)` repeats a warning at most once per window and key. At most `NeoDiagnostics.MaxThrottleKeys` (1024) keys get their own window, and a running window is never forgotten: a new key at the bound takes an elapsed window's slot, otherwise it shares one overflow window with every other such key and the suppressed count is appended to the next throttled warning that logs. See [Diagnostics](../Core/Diagnostics.md).
 
 ## Diagnostics
 

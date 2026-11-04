@@ -6,15 +6,30 @@ using UnityEngine;
 
 namespace Neo.Pages.Editor
 {
+    /// <summary>
+    ///     Creates <see cref="PageId" /> assets for the Pages inspectors ("Generate &amp; Assign") and the
+    ///     <c>Neoxider &gt; Samples &gt; Generate Default PageIds</c> menu.
+    /// </summary>
     internal static class PageIdGenerator
     {
-        private const string DefaultFolder = "Assets/Neoxider/NeoxiderPages/Pages";
+        private const string LegacyFolder = "Assets/Neoxider/NeoxiderPages/Pages";
+        private const string DefaultFolder = "Assets/Pages";
 
+        /// <summary>The PageIds the Pages runtime looks up by name (PM, PageSubscriber) plus common screens.</summary>
+        internal static readonly string[] DefaultPageNames =
+        {
+            "PageMenu", "PageGame", "PagePause", "PageSettings", "PageShop", "PageWin", "PageLose", "PageEnd"
+        };
+
+        /// <summary>
+        ///     Folder for new PageIds: the legacy sample folder when present, otherwise the folder of an existing
+        ///     PageId, otherwise <c>Assets/Pages</c>.
+        /// </summary>
         public static string GetPreferredFolder()
         {
-            if (AssetDatabase.IsValidFolder(DefaultFolder))
+            if (AssetDatabase.IsValidFolder(LegacyFolder))
             {
-                return DefaultFolder;
+                return LegacyFolder;
             }
 
             string[] guids = AssetDatabase.FindAssets("t:PageId", new[] { "Assets" });
@@ -31,6 +46,24 @@ namespace Neo.Pages.Editor
             return DefaultFolder;
         }
 
+        /// <summary>Asset name for a page name: "Menu" -> "PageMenu"; names already starting with "Page" are kept.</summary>
+        public static string ToAssetName(string displayName)
+        {
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                return string.Empty;
+            }
+
+            string normalized = displayName.Trim();
+            return normalized.StartsWith("Page", StringComparison.OrdinalIgnoreCase) ? normalized : "Page" + normalized;
+        }
+
+        /// <summary>Asset path <see cref="GetOrCreate" /> uses for <paramref name="displayName" /> in <paramref name="folder" />.</summary>
+        public static string GetAssetPath(string displayName, string folder)
+        {
+            return $"{folder}/{ToAssetName(displayName)}.asset";
+        }
+
         public static PageId GetOrCreate(string displayName, string folder)
         {
             if (string.IsNullOrWhiteSpace(displayName))
@@ -40,12 +73,7 @@ namespace Neo.Pages.Editor
 
             EnsureFolder(folder);
 
-            string normalized = displayName.Trim();
-            string assetName = normalized.StartsWith("Page", StringComparison.OrdinalIgnoreCase)
-                ? normalized
-                : "Page" + normalized;
-
-            string assetPath = $"{folder}/{assetName}.asset";
+            string assetPath = GetAssetPath(displayName, folder);
             PageId existing = AssetDatabase.LoadAssetAtPath<PageId>(assetPath);
             if (existing != null)
             {
@@ -55,8 +83,27 @@ namespace Neo.Pages.Editor
             PageId instance = ScriptableObject.CreateInstance<PageId>();
             AssetDatabase.CreateAsset(instance, assetPath);
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            PageIdEditorCache.MarkDirty();
             return instance;
+        }
+
+        [MenuItem("Neoxider/Samples/Generate Default PageIds", false, 302)]
+        private static void GenerateDefaultPageIds()
+        {
+            string folder = GetPreferredFolder();
+            int created = 0;
+            foreach (string pageName in DefaultPageNames)
+            {
+                bool existed = AssetDatabase.LoadAssetAtPath<PageId>(GetAssetPath(pageName, folder)) != null;
+                if (GetOrCreate(pageName, folder) != null && !existed)
+                {
+                    created++;
+                }
+            }
+
+            Debug.Log("[Pages] Default PageIds in " + folder + ": " + created.ToString() + " created, " +
+                      (DefaultPageNames.Length - created).ToString() + " already existed.");
+            EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<DefaultAsset>(folder));
         }
 
         private static void EnsureFolder(string folder)

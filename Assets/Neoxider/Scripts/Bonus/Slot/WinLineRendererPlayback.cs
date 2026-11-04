@@ -99,6 +99,17 @@ namespace Neo.Bonus
         [Tooltip("Smoothing of the polyline curves.")] [Min(0)]
         public int cornerVertices = 4;
 
+        // WHY: LineRenderer.colorGradient copies the gradient, so one scratch gradient and fixed key arrays serve
+        // every renderer and frame; the travel animation used to allocate a Gradient plus two arrays per frame.
+        [NonSerialized] private Gradient _scratchGradient;
+        [NonSerialized] private GradientColorKey[] _travelColorKeys;
+        [NonSerialized] private GradientAlphaKey[] _travelAlphaKeys;
+        [NonSerialized] private GradientColorKey[] _twoColorKeys;
+        [NonSerialized] private GradientAlphaKey[] _twoAlphaKeys;
+        [NonSerialized] private GradientColorKey[] _threeColorKeys;
+        [NonSerialized] private GradientAlphaKey[] _threeAlphaKeys;
+        [NonSerialized] private bool _customGradientUsable;
+
         public bool IsActive
         {
             get
@@ -219,6 +230,9 @@ namespace Neo.Bonus
             lr.endWidth = width * 1.05f;
             lr.enabled = true;
 
+            // WHY: Gradient.colorKeys allocates, so the custom-gradient check runs once per configured line, not per frame.
+            _customGradientUsable = IsCustomGradientUsable();
+
             if (travelSpeed <= 0f)
             {
                 ApplyStaticColors(lr);
@@ -266,7 +280,7 @@ namespace Neo.Bonus
                     break;
 
                 case WinLineColorStyle.CustomGradient:
-                    if (IsCustomGradientUsable())
+                    if (_customGradientUsable)
                     {
                         lr.colorGradient = customLineGradient;
                     }
@@ -291,12 +305,12 @@ namespace Neo.Bonus
 
                 case WinLineColorStyle.LinearGradient:
                     bright = Color.Lerp(colorLineStart, colorLineEnd, phase);
-                    var baseDim = Color.Lerp(colorLineStart, colorLineEnd, Mathf.Repeat(phase + 0.5f, 1f));
+                    Color baseDim = Color.Lerp(colorLineStart, colorLineEnd, Mathf.Repeat(phase + 0.5f, 1f));
                     dim = DarkenRgbKeepAlpha(baseDim, 0.55f);
                     break;
 
                 case WinLineColorStyle.CustomGradient:
-                    if (!IsCustomGradientUsable())
+                    if (!_customGradientUsable)
                     {
                         bright = color;
                         dim = DarkenRgbKeepAlpha(color, 0.48f);
@@ -314,57 +328,55 @@ namespace Neo.Bonus
             }
         }
 
-        private static void ApplyTravelSpotlightGradient(LineRenderer lr, float phase, Color dim, Color bright,
+        private void ApplyTravelSpotlightGradient(LineRenderer lr, float phase, Color dim, Color bright,
             float band = 0.14f)
         {
-            var travelGrad = new Gradient();
-            travelGrad.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(dim, 0f),
-                    new GradientColorKey(dim, Mathf.Clamp01(phase - band)),
-                    new GradientColorKey(bright, Mathf.Clamp01(phase)),
-                    new GradientColorKey(dim, Mathf.Clamp01(phase + band)),
-                    new GradientColorKey(dim, 1f)
-                },
-                new[]
-                {
-                    new GradientAlphaKey(dim.a, 0f),
-                    new GradientAlphaKey(dim.a, Mathf.Clamp01(phase - band)),
-                    new GradientAlphaKey(bright.a, Mathf.Clamp01(phase)),
-                    new GradientAlphaKey(dim.a, Mathf.Clamp01(phase + band)),
-                    new GradientAlphaKey(dim.a, 1f)
-                });
-            lr.colorGradient = travelGrad;
+            _travelColorKeys ??= new GradientColorKey[5];
+            _travelAlphaKeys ??= new GradientAlphaKey[5];
+
+            float before = Mathf.Clamp01(phase - band);
+            float center = Mathf.Clamp01(phase);
+            float after = Mathf.Clamp01(phase + band);
+
+            _travelColorKeys[0] = new GradientColorKey(dim, 0f);
+            _travelColorKeys[1] = new GradientColorKey(dim, before);
+            _travelColorKeys[2] = new GradientColorKey(bright, center);
+            _travelColorKeys[3] = new GradientColorKey(dim, after);
+            _travelColorKeys[4] = new GradientColorKey(dim, 1f);
+
+            _travelAlphaKeys[0] = new GradientAlphaKey(dim.a, 0f);
+            _travelAlphaKeys[1] = new GradientAlphaKey(dim.a, before);
+            _travelAlphaKeys[2] = new GradientAlphaKey(bright.a, center);
+            _travelAlphaKeys[3] = new GradientAlphaKey(dim.a, after);
+            _travelAlphaKeys[4] = new GradientAlphaKey(dim.a, 1f);
+
+            ApplyScratchGradient(lr, _travelColorKeys, _travelAlphaKeys);
         }
 
-        private static void ApplyUniformColorGradient(LineRenderer lr, Color c)
+        private void ApplyUniformColorGradient(LineRenderer lr, Color c)
         {
-            var g = new Gradient();
-            g.SetKeys(
-                new[] { new GradientColorKey(c, 0f), new GradientColorKey(c, 1f) },
-                new[] { new GradientAlphaKey(c.a, 0f), new GradientAlphaKey(c.a, 1f) });
-            lr.colorGradient = g;
+            ApplyLinearColorGradient(lr, c, c);
         }
 
         private void ApplyAccentGlowStatic(LineRenderer lr)
         {
             Color edge = DarkenRgbKeepAlpha(color, 0.52f);
-            var g = new Gradient();
-            g.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(edge, 0f),
-                    new GradientColorKey(color, 0.5f),
-                    new GradientColorKey(edge, 1f)
-                },
-                new[]
-                {
-                    new GradientAlphaKey(edge.a, 0f),
-                    new GradientAlphaKey(color.a, 0.5f),
-                    new GradientAlphaKey(edge.a, 1f)
-                });
-            lr.colorGradient = g;
+            _threeColorKeys ??= new GradientColorKey[3];
+            _threeAlphaKeys ??= new GradientAlphaKey[3];
+            _threeColorKeys[0] = new GradientColorKey(edge, 0f);
+            _threeColorKeys[1] = new GradientColorKey(color, 0.5f);
+            _threeColorKeys[2] = new GradientColorKey(edge, 1f);
+            _threeAlphaKeys[0] = new GradientAlphaKey(edge.a, 0f);
+            _threeAlphaKeys[1] = new GradientAlphaKey(color.a, 0.5f);
+            _threeAlphaKeys[2] = new GradientAlphaKey(edge.a, 1f);
+            ApplyScratchGradient(lr, _threeColorKeys, _threeAlphaKeys);
+        }
+
+        private void ApplyScratchGradient(LineRenderer lr, GradientColorKey[] colorKeys, GradientAlphaKey[] alphaKeys)
+        {
+            _scratchGradient ??= new Gradient();
+            _scratchGradient.SetKeys(colorKeys, alphaKeys);
+            lr.colorGradient = _scratchGradient;
         }
 
         /// <summary>RGB darkening only; alpha same as the original color (code does not reduce opacity).</summary>
@@ -377,17 +389,24 @@ namespace Neo.Bonus
             return d;
         }
 
-        private static void ApplyLinearColorGradient(LineRenderer lr, Color lineStart, Color lineEnd)
+        private void ApplyLinearColorGradient(LineRenderer lr, Color lineStart, Color lineEnd)
         {
-            var g = new Gradient();
-            g.SetKeys(
-                new[] { new GradientColorKey(lineStart, 0f), new GradientColorKey(lineEnd, 1f) },
-                new[] { new GradientAlphaKey(lineStart.a, 0f), new GradientAlphaKey(lineEnd.a, 1f) });
-            lr.colorGradient = g;
+            _twoColorKeys ??= new GradientColorKey[2];
+            _twoAlphaKeys ??= new GradientAlphaKey[2];
+            _twoColorKeys[0] = new GradientColorKey(lineStart, 0f);
+            _twoColorKeys[1] = new GradientColorKey(lineEnd, 1f);
+            _twoAlphaKeys[0] = new GradientAlphaKey(lineStart.a, 0f);
+            _twoAlphaKeys[1] = new GradientAlphaKey(lineEnd.a, 1f);
+            ApplyScratchGradient(lr, _twoColorKeys, _twoAlphaKeys);
         }
 
         private bool IsCustomGradientUsable()
         {
+            if (customLineGradient == null)
+            {
+                return false;
+            }
+
             GradientColorKey[] keys = customLineGradient.colorKeys;
             return keys != null && keys.Length >= 2;
         }

@@ -239,7 +239,7 @@ namespace Neo.Tests.Edit
             Assert.That(original.Slots[1].Instance, Is.Null);
             Assert.That(original.Records[0].Instance, Is.Null);
             string domainJson = JsonUtility.ToJson(original);
-            // P5 observed Count=1 in this callback-free domain probe on both engines.
+            // WHY: P5 observed Count=1 in this callback-free domain probe on both engines.
             // It is a serialization observation, not a safe rule for deleting an instance.
             RawSaveDataProbe raw = JsonUtility.FromJson<RawSaveDataProbe>(domainJson);
             Assert.That(raw.Slots[0].ItemId, Is.EqualTo(-1));

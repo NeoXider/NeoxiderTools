@@ -18,7 +18,7 @@
 | **Wait For Object** | Suppress the "object not found" warning — useful for prefabs or objects that spawn later. |
 | **Find Retry Interval Seconds** | Throttle between `GameObject.Find` retries while the object is missing. `0` = retry every check. |
 | **Prefab Preview** | Editor-only prefab used to preview available components/members when the target isn't in the scene. |
-| **Source Root** | The GameObject to read the member from (when not using scene search). If unassigned, the current host's GameObject is used. A destroyed explicit root fails to resolve until replaced or explicitly cleared. |
+| **Source Root** | The GameObject to read the member from (when not using scene search). If unassigned (also an empty field saved in a scene or prefab, in Editor Play Mode), the current host's GameObject is used. A destroyed explicit root fails to resolve until replaced or explicitly cleared. |
 | **Component Occurrence** | Zero-based occurrence among components matching **Component Type Name**, in `GetComponents` order. `0` selects the first match. Unrelated component types do not consume an occurrence. Negative/missing occurrences fail resolution; they do not select the first component. |
 
 ## API
@@ -29,6 +29,9 @@
 | `TryReadRaw(MonoBehaviour host, out object raw)` | Reads the field/property without numeric conversion. A null member value can be a successful raw read but fails numeric conversion. |
 | `EnsureCache(MonoBehaviour host, out string error)` | Resolves the component/member and reports a resolution error without throwing for an ordinary missing source. A null/destroyed host fails. |
 | `TryGetReactiveProperty(MonoBehaviour host, out ReactivePropertyFloat, out ReactivePropertyInt, out ReactivePropertyBool)` | Returns the underlying reactive property, if the bound member is one, so the caller can subscribe instead of polling. |
+| `TryConvertToFloat(object raw, out float)` (static) | Converts a value from `TryReadRaw` (numbers, reactive current values; bool maps to 1/0). |
+| `TryGetReactivePropertyFromValue(object raw, out ...)` (static) | Classifies a value from `TryReadRaw` as a reactive property, so one read can serve both subscription and display. |
+| `UseSceneSearch`, `SearchObjectName`, `WaitForObject` | Find By Name configuration; the first two invalidate cached resolution on change. |
 | `SourceRoot`, `ComponentTypeName`, `MemberName` | Source configuration; each setter invalidates cached member resolution on change. |
 | `ComponentOccurrence` | Selects a matching component instance, default `0`. The setter invalidates cached resolution. Invalid values are retained and explicitly rejected by `EnsureCache`/read methods. |
 | `TryResolveSupportedSourceMember(Type, string, out MemberInfo)` | Resolves readable fields/non-indexed properties. Methods, write-only properties and indexers, including overloaded indexers, are rejected. |
@@ -53,7 +56,22 @@ if (binding.TryReadFloat(this, out float volume))
 }
 ```
 
-The example returns `false` if `sourceObject` has fewer than two AudioSources. Use `ComponentOccurrence = 0` for the first. For a live `NoCodeBindText` or `SetProgress`, change `view.Binding.ComponentOccurrence`, then refresh from a subclass or disable/re-enable the view to transfer its reactive subscription.
+The example returns `false` if `sourceObject` has fewer than two AudioSources. Use `ComponentOccurrence = 0` for the first. For a live `NoCodeBindText` or `SetProgress`, change `view.Binding.ComponentOccurrence`, then call `view.RefreshBinding()` (or disable/re-enable the view) to transfer its reactive subscription.
+
+Find By Name from code:
+
+```csharp
+ComponentFloatBinding score = new()
+{
+    UseSceneSearch = true,
+    SearchObjectName = "ScoreKeeper",
+    WaitForObject = true, // spawned later; no warning while missing
+    ComponentTypeName = "ScoreKeeper",
+    MemberName = "Score"
+};
+```
+
+Unresolved bindings are retried without allocations (the component lookup uses a shared scratch list and diagnostic strings are only built for `EnsureCache(host, out error)`); the missing-source warning is logged once per binding. Reading a plain value-type member boxes it once per read; reactive members are returned without boxing.
 
 Supported numeric reads include float, int, double, supported reactive values (bool maps to 0/1), and values accepted by `Convert.ToSingle`. Conversion or getter failures return `false`; the float output remains zero. Large integers lose precision when converted to float, so use a typed API for exact currency/count values. Reflection-only members need preservation in stripped/IL2CPP builds; verify the consuming project's player build.
 

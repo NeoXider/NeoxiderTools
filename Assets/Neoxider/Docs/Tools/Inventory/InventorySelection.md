@@ -1,5 +1,16 @@
 # Exact item selection / Выбор конкретного предмета
 
+**What it is:** `InventorySelection`, a plain C# capture of one stack or unique instance (storage owner, index,
+item identity) used to use, take or transfer exactly that item. `Scripts/Tools/Inventory/Core/InventorySelection.cs`,
+namespace `Neo.Tools`.
+
+**How to use:**
+1. Capture with `InventoryComponent.TryCaptureSelection(index, out selection)` or `InventorySelection.TryCapture(storage, ...)`.
+2. Check `IsSelectionCurrent` / `TryGetSelectionRecord`, then `TryTakeSelection` or `TryConsumeSelection`.
+3. In scenes, `InventoryHand.OnUseSelectionRequested` delivers it and [InventoryUseAction](InventoryUseAction.md) consumes it.
+
+---
+
 `InventorySelection` captures a storage owner, an index and item identity. It supports plain C#
 `IInventoryStorage` implementations and the optional `InventoryComponent` scene facade.
 
@@ -69,7 +80,7 @@ nine physical hotbar slots, a one-slot podium, two same-type unique specimens, a
 cells. It keeps UID/level/mutation through deposit, placement and recall; full destinations reject without
 losing items. Select a slot with a button or 1–9, then press E / **Use selected**. **Reset demo** starts over.
 Sample source is under `Assets/Neoxider/Samples~` in release layout, `Assets/Neoxider/Samples` in developer
-layout, or `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes` after Package Manager import.
+layout, or `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` after Package Manager import.
 
 ## По-русски
 

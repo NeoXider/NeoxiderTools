@@ -47,7 +47,7 @@ namespace Neo.Editor.Tests.Abilities
 
         private void GrantZap(float range = 10f)
         {
-            var zap = new AbilityBlueprint
+            AbilityBlueprint zap = new AbilityBlueprint
             {
                 Id = "zap",
                 Targeting = TargetingMode.Unit,
@@ -98,8 +98,8 @@ namespace Neo.Editor.Tests.Abilities
             // caster reference; target search must center on the caster unit, not the manager.
             GameObject manager = _rig.Own(new GameObject("manager"));
             manager.transform.position = new Vector3(500f, 0f, 0f);
-            var remote = manager.AddComponent<AbilityAutoCaster>();
-            var serialized = new SerializedObject(remote);
+            AbilityAutoCaster remote = manager.AddComponent<AbilityAutoCaster>();
+            SerializedObject serialized = new SerializedObject(remote);
             serialized.FindProperty("_caster").objectReferenceValue = _caster;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
@@ -128,7 +128,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void CastPass_NoTargetAbility_CastsWithoutEnemies()
         {
-            var nova = new AbilityBlueprint { Id = "nova", Targeting = TargetingMode.NoTarget, Cooldown = 2f };
+            AbilityBlueprint nova = new AbilityBlueprint { Id = "nova", Targeting = TargetingMode.NoTarget, Cooldown = 2f };
             _rig.System.RegisterAbility(nova);
             _rig.System.GrantAbility(_player.UnitId, "nova");
 
@@ -141,7 +141,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void CastPass_FailedCast_FiresOnCastFailed_AndBacksOff()
         {
-            var costly = new AbilityBlueprint
+            AbilityBlueprint costly = new AbilityBlueprint
             {
                 Id = "costly",
                 Targeting = TargetingMode.NoTarget,
@@ -161,7 +161,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void CooldownSource_UnknownId_ReadsReady()
         {
-            var source = _player.gameObject.AddComponent<AbilityCooldownSource>();
+            AbilityCooldownSource source = _player.gameObject.AddComponent<AbilityCooldownSource>();
             source.AbilityId = "missing";
 
             Assert.That(source.CooldownNormalized, Is.Zero);
@@ -175,7 +175,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             GrantZap();
             _rig.AddUnit("enemy", team: 2, new Vector3(3f, 0f, 0f));
-            var source = _player.gameObject.AddComponent<AbilityCooldownSource>();
+            AbilityCooldownSource source = _player.gameObject.AddComponent<AbilityCooldownSource>();
             source.AbilityId = "zap";
 
             Assert.That(source.IsReady, Is.True);

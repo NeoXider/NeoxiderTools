@@ -52,6 +52,10 @@ namespace Neo.UI
     /// </summary>
     public static class UIMeshRigLayoutPresets
     {
+        // WHY: GetPoint runs per point per frame in the UI Toolkit element; concatenating the name there
+        // allocated a string every call.
+        private static readonly string[] FlagPointNames = { "Cloth 1", "Cloth 2", "Cloth 3", "Cloth 4" };
+
         public static int GetPointCount(UIMeshRigLayoutPreset preset)
         {
             switch (preset)
@@ -124,7 +128,7 @@ namespace Neo.UI
 
             float x = 0.18f + index * 0.22f;
             return new UIMeshRigPointLayout(
-                "Cloth " + (index + 1),
+                FlagPointNames[index],
                 new Vector2(x, 0.5f),
                 new Vector2(0.07f, 0.12f),
                 new Vector2(0.28f, 0.58f),
@@ -338,7 +342,7 @@ namespace Neo.UI
         private static void RemoveExistingPoints(IUIMeshRigOwner rig)
         {
             UIMeshRigPoint[] points = rig.RigTransform.GetComponentsInChildren<UIMeshRigPoint>(true);
-            // Validate the complete removal set before even scheduling a deferred Destroy.
+            // WHY: Validate the complete removal set before even scheduling a deferred Destroy.
             for (int index = 0; index < points.Length; index++)
             {
                 UIMeshRigPoint point = points[index];

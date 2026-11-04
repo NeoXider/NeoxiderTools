@@ -1,6 +1,13 @@
 ﻿# ChanceManager
 
-Serializable C# weighted table used by `ChanceSystemBehaviour` and `ChanceData`. It can also be constructed directly without scene objects. Reference assembly `Neo.Tools.Random` and use namespace `Neo.Tools`.
+**What it is:** A serializable plain C# weighted table (`Scripts/Tools/Random/ChanceManager.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Random`) with float weights, locks and normalization. `ChanceSystemBehaviour` and `ChanceData` wrap it; it can also be constructed directly without scene objects. For exact integer odds use [IntegerChanceTable](IntegerChanceTable.md).
+
+**How to use:**
+1. Construct it (`new ChanceManager(60f, 30f, 10f)`) or embed it as a serialized field.
+2. Roll with `GetChanceId()` / `TryEvaluate(...)`, or pass your own value to `GetId(float)`.
+3. Change weights through `SetChanceValue` / `SetLocked` so totals and normalization stay consistent.
+
+---
 
 ## Selection and deterministic use
 
@@ -60,7 +67,9 @@ Normalization refreshes the cached total, including when called directly or thro
 
 The constructor and `AddChances` apply a batch before normalizing. Repeated `AddEntry` / `AddChance` calls normalize and repair IDs after each addition, so filling a large table this way can accumulate quadratic work. Use the existing bulk API when adding a complete set of relative weights. Bulk additions still include ID repair; they do not guarantee linear construction time.
 
-Each selection walks the entries. `Normalize` creates a temporary list of unlocked entries. Configure or normalize when the weights change, then reuse the table for repeated rolls. Measure construction and roll costs in the consuming system before choosing a different sampling representation.
+Each selection walks the entries (O(n), no allocation). `Normalize`, `SetChanceValue`, `SetLocked` and `EnsureUniqueIds` reuse internal buffers and do not allocate once warm. For large tables rolled very often, [IntegerChanceTable](IntegerChanceTable.md) maps rolls in O(log n).
+
+In the Inspector, entry weights accept any non-negative value (no 0–1 slider), because raw weights above 1 are valid when `AutoNormalize` is off or `NormalizeTarget` exceeds 1.
 
 ## Entry mutation and custom IDs
 
@@ -79,4 +88,5 @@ Collection mutation methods repair custom IDs. Call `EnsureUniqueIds()` when con
 ## See Also
 
 - [ChanceSystemBehaviour](ChanceSystemBehaviour.md)
+- [IntegerChanceTable](IntegerChanceTable.md)
 - ← [Tools/Random](README.md)

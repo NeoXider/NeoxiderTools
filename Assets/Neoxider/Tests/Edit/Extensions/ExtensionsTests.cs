@@ -98,12 +98,12 @@ namespace Neo.Editor.Tests
         [Test]
         public void StringExtension_ToColor()
         {
-            var red = "#FF0000".ToColor();
+            Color red = "#FF0000".ToColor();
             Assert.AreEqual(1f, red.r, 0.01f);
             Assert.AreEqual(0f, red.g, 0.01f);
             Assert.AreEqual(0f, red.b, 0.01f);
 
-            var blue = "0000FF".ToColor();
+            Color blue = "0000FF".ToColor();
             Assert.AreEqual(0f, blue.r, 0.01f);
             Assert.AreEqual(0f, blue.g, 0.01f);
             Assert.AreEqual(1f, blue.b, 0.01f);
@@ -132,7 +132,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void TimeSpanExtension_CompactString()
         {
-            var ts = new TimeSpan(1, 2, 30, 45);
+            TimeSpan ts = new TimeSpan(1, 2, 30, 45);
             Assert.AreEqual("1d 02h 30m", ts.ToCompactString(false, 3));
             Assert.AreEqual("1d 02h 30m 45s", ts.ToCompactString(true, 4));
         }
@@ -146,14 +146,14 @@ namespace Neo.Editor.Tests
         [Test]
         public void TimeSpanExtension_ClockString()
         {
-            var ts = new TimeSpan(0, 3, 15, 27);
+            TimeSpan ts = new TimeSpan(0, 3, 15, 27);
             Assert.AreEqual("03:15:27", ts.ToClockString());
         }
 
         [Test]
         public void TimeSpanExtension_ClockString_WithDays()
         {
-            var ts = new TimeSpan(2, 3, 15, 27);
+            TimeSpan ts = new TimeSpan(2, 3, 15, 27);
             Assert.AreEqual("02:03:15:27", ts.ToClockString(true));
         }
 
@@ -201,7 +201,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_Grouped()
         {
-            var opts = new NumberFormatOptions(NumberNotation.Grouped, 0);
+            NumberFormatOptions opts = new NumberFormatOptions(NumberNotation.Grouped, 0);
             string result = 1234567.ToPrettyString(opts);
             Assert.AreEqual("1,234,567", result);
         }
@@ -209,7 +209,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_WithPrefixSuffix()
         {
-            var opts = new NumberFormatOptions(NumberNotation.Plain, 2,
+            NumberFormatOptions opts = new NumberFormatOptions(NumberNotation.Plain, 2,
                 trimTrailingZeros: false, prefix: "$", suffix: " USD");
             string result = 100.ToPrettyString(opts);
             Assert.AreEqual("$100.00 USD", result);
@@ -218,7 +218,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_Scientific()
         {
-            var opts = new NumberFormatOptions(NumberNotation.Scientific, 2);
+            NumberFormatOptions opts = new NumberFormatOptions(NumberNotation.Scientific, 2);
             string result = 1234567.ToPrettyString(opts);
             Assert.AreEqual("1.23e6", result);
 
@@ -229,19 +229,19 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_RoundingModes()
         {
-            var optsFloor = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToNegativeInfinity);
+            NumberFormatOptions optsFloor = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToNegativeInfinity);
             Assert.AreEqual("3", 3.7.ToPrettyString(optsFloor));
             Assert.AreEqual("-4", (-3.7).ToPrettyString(optsFloor));
 
-            var optsCeil = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToPositiveInfinity);
+            NumberFormatOptions optsCeil = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToPositiveInfinity);
             Assert.AreEqual("4", 3.2.ToPrettyString(optsCeil));
             Assert.AreEqual("-3", (-3.2).ToPrettyString(optsCeil));
 
-            var optsToZero = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToZero);
+            NumberFormatOptions optsToZero = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToZero);
             Assert.AreEqual("3", 3.7.ToPrettyString(optsToZero));
             Assert.AreEqual("-3", (-3.7).ToPrettyString(optsToZero));
 
-            var optsAway = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.AwayFromZero);
+            NumberFormatOptions optsAway = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.AwayFromZero);
             Assert.AreEqual("4", 3.5.ToPrettyString(optsAway));
             Assert.AreEqual("-4", (-3.5).ToPrettyString(optsAway));
         }
@@ -249,8 +249,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_TrimTrailingZeros()
         {
-            var trimTrue = new NumberFormatOptions(NumberNotation.Plain, 4, trimTrailingZeros: true);
-            var trimFalse = new NumberFormatOptions(NumberNotation.Plain, 4, trimTrailingZeros: false);
+            NumberFormatOptions trimTrue = new NumberFormatOptions(NumberNotation.Plain, 4, trimTrailingZeros: true);
+            NumberFormatOptions trimFalse = new NumberFormatOptions(NumberNotation.Plain, 4, trimTrailingZeros: false);
 
             Assert.AreEqual("1.5", 1.5000.ToPrettyString(trimTrue));
             Assert.AreEqual("1.5000", 1.5000.ToPrettyString(trimFalse));
@@ -262,27 +262,25 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_NegativeValues()
         {
-            var opts = new NumberFormatOptions(NumberNotation.IdleShort, 1);
+            NumberFormatOptions opts = new NumberFormatOptions(NumberNotation.IdleShort, 1);
             Assert.AreEqual("-1.5K", (-1500).ToPrettyString(opts));
 
-            var optsGrouped = new NumberFormatOptions(NumberNotation.Grouped, 0);
+            NumberFormatOptions optsGrouped = new NumberFormatOptions(NumberNotation.Grouped, 0);
             Assert.AreEqual("-1,234,567", (-1234567).ToPrettyString(optsGrouped));
         }
 
         [Test]
         public void NumberFormat_FloatAndDouble()
         {
-            var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
+            NumberFormatOptions optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
             // WHY: Default trimTrailingZeros is true, so "4.56e-4" instead of "4.560e-4"
-            var optsSci = new NumberFormatOptions(NumberNotation.Scientific, 3);
-            var optsSciNoTrim = new NumberFormatOptions(NumberNotation.Scientific, 3, trimTrailingZeros: false);
-            var optsPlain = new NumberFormatOptions(NumberNotation.Plain, 5, trimTrailingZeros: false);
+            NumberFormatOptions optsSci = new NumberFormatOptions(NumberNotation.Scientific, 3);
+            NumberFormatOptions optsSciNoTrim = new NumberFormatOptions(NumberNotation.Scientific, 3, trimTrailingZeros: false);
+            NumberFormatOptions optsPlain = new NumberFormatOptions(NumberNotation.Plain, 5, trimTrailingZeros: false);
 
             float tinyFloat = 0.000456f;
             Assert.AreEqual("4.56e-4", tinyFloat.ToPrettyString(optsSci));
-            // WHY: Due to floating point precision and decimal casting rules, this formats as 4.56e-4
-            Assert.AreEqual("4.560e-4",
-                tinyFloat.ToPrettyString(optsSciNoTrim).PadRight(8, '0').Replace("0e", "0e")); // WHY: temp fix
+            Assert.AreEqual("4.560e-4", tinyFloat.ToPrettyString(optsSciNoTrim));
             Assert.AreEqual("0.00046", tinyFloat.ToPrettyString(optsPlain));
 
             double largeDouble = 123456789.12345;
@@ -292,7 +290,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_ExtremeDoubles_NaN_Infinity()
         {
-            var opts = new NumberFormatOptions(NumberNotation.Grouped, 2);
+            NumberFormatOptions opts = new NumberFormatOptions(NumberNotation.Grouped, 2);
 
             double nan = double.NaN;
             double posInf = double.PositiveInfinity;
@@ -305,18 +303,18 @@ namespace Neo.Editor.Tests
 
             // WHY: Decimals are clamped to 12 maximum in ClampDecimals!
             double verySmall = 1e-12;
-            var optsDec = new NumberFormatOptions(NumberNotation.Plain, 12, trimTrailingZeros: false);
+            NumberFormatOptions optsDec = new NumberFormatOptions(NumberNotation.Plain, 12, trimTrailingZeros: false);
             Assert.AreEqual("0.000000000001", verySmall.ToPrettyString(optsDec));
         }
 
         [Test]
         public void NumberFormat_BigInteger_VeryLarge()
         {
-            var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 1);
+            NumberFormatOptions optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 1);
 
-            var oneThousand = new System.Numerics.BigInteger(1000);
-            var oneMillion = new System.Numerics.BigInteger(1_000_000);
-            var oneBillion = new System.Numerics.BigInteger(1_000_000_000);
+            System.Numerics.BigInteger oneThousand = new System.Numerics.BigInteger(1000);
+            System.Numerics.BigInteger oneMillion = new System.Numerics.BigInteger(1_000_000);
+            System.Numerics.BigInteger oneBillion = new System.Numerics.BigInteger(1_000_000_000);
 
             Assert.AreEqual("1K", oneThousand.ToPrettyString(optsIdle));
             Assert.AreEqual("1M", oneMillion.ToPrettyString(optsIdle));
@@ -325,10 +323,10 @@ namespace Neo.Editor.Tests
             // WHY: BaseSuffixes.Length = 12 (Tiers 0 to 11). Tier 11 is "Dc" (10^33)
             // Tier 12 is 10^36 -> 'a'.
             // Tier 13 is 10^39 -> 'b'.
-            var massive = System.Numerics.BigInteger.Pow(10, 36);
+            System.Numerics.BigInteger massive = System.Numerics.BigInteger.Pow(10, 36);
             Assert.AreEqual("1a", massive.ToPrettyString(optsIdle));
 
-            var evenBigger = System.Numerics.BigInteger.Pow(10, 39);
+            System.Numerics.BigInteger evenBigger = System.Numerics.BigInteger.Pow(10, 39);
             Assert.AreEqual("1b", evenBigger.ToPrettyString(optsIdle));
         }
 
@@ -336,10 +334,10 @@ namespace Neo.Editor.Tests
         public void NumberFormat_Long_EdgeCases()
         {
             long max = long.MaxValue;
-            var optsGroup = new NumberFormatOptions(NumberNotation.Grouped, 0);
+            NumberFormatOptions optsGroup = new NumberFormatOptions(NumberNotation.Grouped, 0);
             Assert.AreEqual("9,223,372,036,854,775,807", max.ToPrettyString(optsGroup));
 
-            var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
+            NumberFormatOptions optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
             // WHY: 9,223,372 = 9.22e18 => 10^18 is Quintillion ('Qi' suffix is Tier 6)
             Assert.AreEqual("9.22Qi", max.ToPrettyString(optsIdle));
 
@@ -363,7 +361,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Enumerable_GetSafe_ReturnsDefault_WhenOutOfRange()
         {
-            var list = new List<int> { 10, 20, 30 };
+            List<int> list = new List<int> { 10, 20, 30 };
             Assert.AreEqual(20, list.GetSafe(1));
             Assert.AreEqual(0, list.GetSafe(100));
             Assert.AreEqual(-1, list.GetSafe(-1, -1));
@@ -372,7 +370,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Enumerable_GetWrapped()
         {
-            var list = new List<string> { "a", "b", "c" };
+            List<string> list = new List<string> { "a", "b", "c" };
             Assert.AreEqual("a", list.GetWrapped(3)); // WHY: wraps to 0
             Assert.AreEqual("b", list.GetWrapped(4)); // WHY: wraps to 1
         }
@@ -380,7 +378,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Enumerable_IsValidIndex()
         {
-            var list = new List<int> { 1, 2, 3 };
+            List<int> list = new List<int> { 1, 2, 3 };
             Assert.IsTrue(list.IsValidIndex(0));
             Assert.IsTrue(list.IsValidIndex(2));
             Assert.IsFalse(list.IsValidIndex(3));
@@ -390,8 +388,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void Enumerable_FindDuplicates()
         {
-            var list = new List<int> { 1, 2, 3, 2, 4, 3 };
-            var duplicates = list.FindDuplicates().ToList();
+            List<int> list = new List<int> { 1, 2, 3, 2, 4, 3 };
+            List<int> duplicates = list.FindDuplicates().ToList();
             Assert.Contains(2, duplicates);
             Assert.Contains(3, duplicates);
             Assert.AreEqual(2, duplicates.Count);
@@ -400,7 +398,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Enumerable_ToStringJoined()
         {
-            var list = new List<int> { 1, 2, 3 };
+            List<int> list = new List<int> { 1, 2, 3 };
             Assert.AreEqual("1, 2, 3", list.ToStringJoined());
             Assert.AreEqual("1|2|3", list.ToStringJoined("|"));
         }
@@ -415,7 +413,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Enumerable_ForEach_ExecutesAction()
         {
-            var list = new List<int> { 1, 2, 3 };
+            List<int> list = new List<int> { 1, 2, 3 };
             int sum = 0;
             list.ForEach(x => sum += x);
             Assert.AreEqual(6, sum);
@@ -591,7 +589,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void DateTime_EnsureUtc_KeepsUtcUnchanged()
         {
-            var utc = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+            DateTime utc = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
             Assert.AreEqual(DateTimeKind.Utc, utc.EnsureUtc().Kind);
             Assert.AreEqual(utc, utc.EnsureUtc());
         }
@@ -599,7 +597,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void DateTime_EnsureUtc_ConvertsUnspecifiedToUtc()
         {
-            var unspec = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Unspecified);
+            DateTime unspec = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Unspecified);
             DateTime result = unspec.EnsureUtc();
             Assert.AreEqual(DateTimeKind.Utc, result.Kind);
             Assert.AreEqual(unspec.Ticks, result.Ticks);
@@ -631,8 +629,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void DateTime_GetSecondsSinceUtc()
         {
-            var start = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var end = new DateTime(2024, 1, 1, 0, 1, 0, DateTimeKind.Utc);
+            DateTime start = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime end = new DateTime(2024, 1, 1, 0, 1, 0, DateTimeKind.Utc);
             float seconds = start.GetSecondsSinceUtc(end);
             Assert.AreEqual(60f, seconds, 0.1f);
         }
@@ -640,8 +638,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void DateTime_GetSecondsUntilUtc()
         {
-            var now = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var target = new DateTime(2024, 1, 1, 0, 5, 0, DateTimeKind.Utc);
+            DateTime now = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime target = new DateTime(2024, 1, 1, 0, 5, 0, DateTimeKind.Utc);
             float seconds = target.GetSecondsUntilUtc(now);
             Assert.AreEqual(300f, seconds, 0.1f);
         }
@@ -653,8 +651,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void Cooldown_GetAccumulatedClaimCount()
         {
-            var last = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var now = new DateTime(2024, 1, 1, 0, 5, 0, DateTimeKind.Utc); // WHY: 300s elapsed
+            DateTime last = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime now = new DateTime(2024, 1, 1, 0, 5, 0, DateTimeKind.Utc); // WHY: 300s elapsed
             int count = last.GetAccumulatedClaimCount(60f, now); // WHY: cooldown=60s → 5 claims
             Assert.AreEqual(5, count);
         }
@@ -677,7 +675,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Cooldown_AdvanceLastClaimTime()
         {
-            var last = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime last = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime advanced = last.AdvanceLastClaimTime(3, 60f); // WHY: +3*60=180s
             Assert.AreEqual(new DateTime(2024, 1, 1, 0, 3, 0, DateTimeKind.Utc), advanced);
         }
@@ -739,7 +737,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_Double_RoundsCorrectly()
         {
-            var opts = new NumberFormatOptions(NumberNotation.IdleShort, 2, NumberRoundingMode.ToEven, false);
+            NumberFormatOptions opts = new NumberFormatOptions(NumberNotation.IdleShort, 2, NumberRoundingMode.ToEven, false);
 
             string val1 = 999.995d.ToPrettyString(opts);
             string val2 = 999.999d.ToPrettyString(opts);
@@ -854,7 +852,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Random_GetRandomElement_EmptyList_Throws()
         {
-            var list = new List<int>();
+            List<int> list = new List<int>();
             Assert.Throws<ArgumentException>(() => list.GetRandomElement());
         }
 
@@ -868,7 +866,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Random_GetRandomElements_CountExceedsSize_Throws()
         {
-            var list = new List<int> { 1, 2 };
+            List<int> list = new List<int> { 1, 2 };
             Assert.Throws<ArgumentException>(() => list.GetRandomElements(5).ToList());
         }
 
@@ -882,7 +880,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Random_GetRandomWeightedIndex_EmptyList_ReturnsMinusOne()
         {
-            var weights = new List<float>();
+            List<float> weights = new List<float>();
             Assert.AreEqual(-1, weights.GetRandomWeightedIndex());
         }
 
@@ -890,7 +888,7 @@ namespace Neo.Editor.Tests
         public void Random_GetRandomWeightedIndex_NeverReturnsZeroWeightIndex()
         {
             // WHY: regression — the Random.value == 1.0 fallback could return a trailing zero-weight index.
-            var weights = new List<float> { 1f, 0f, 0f };
+            List<float> weights = new List<float> { 1f, 0f, 0f };
             for (int i = 0; i < 1000; i++)
             {
                 Assert.AreEqual(0, weights.GetRandomWeightedIndex());
@@ -900,7 +898,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Random_Shuffle_PreservesElements()
         {
-            var list = new List<int> { 1, 2, 3, 4, 5 };
+            List<int> list = new List<int> { 1, 2, 3, 4, 5 };
             IList<int> shuffled = list.Shuffle(false);
             Assert.AreEqual(5, shuffled.Count);
             CollectionAssert.AreEquivalent(list, shuffled);

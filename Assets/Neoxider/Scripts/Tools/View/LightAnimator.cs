@@ -51,6 +51,13 @@ namespace Neo.Tools.View
         [Header("Control")] [Tooltip("Auto-start animation on Start")]
         public bool playOnStart = true;
 
+        [Tooltip("Randomize the clock and noise offset in Start so several lights do not flicker in sync. " +
+                 "Off = deterministic start at time 0, or at the time set by ResetTime before Start.")]
+        [SerializeField] private bool _randomizeStartTime = true;
+
+        [Tooltip("Advance on unscaled time (ignores Time.timeScale), e.g. for lights in a pause menu.")]
+        [SerializeField] private bool _useUnscaledTime;
+
         [Header("Debug Settings")] [Tooltip("Enable debug messages")]
         public bool enableDebugging;
 
@@ -69,13 +76,22 @@ namespace Neo.Tools.View
         [Tooltip("Invoked when animation is paused")]
         public UnityEvent OnAnimationPaused;
 
+        // WHY cached once per domain: the Light2D type and its properties are looked up by reflection, and every
+        // LightAnimator in a scene used to repeat the two Type.GetType scans in its own Awake.
+        private static bool _light2DResolved;
+        private static Type _light2DType;
+        private static PropertyInfo _light2DIntensity;
+        private static PropertyInfo _light2DColor;
+
         private ILightAccessor _light;
+        private Component _lightComponent;
         private float animationTime;
         private Color lastColor;
         private float lastIntensity;
         private Color originalColor;
         private float originalIntensity;
         private Vector2 randomOffset;
+        private bool _disabled;
 
         /// <summary>Current intensity (for NeoCondition and reflection).</summary>
         public float IntensityValue => Intensity.CurrentValue;
@@ -99,6 +115,29 @@ namespace Neo.Tools.View
         ///     Whether the animation is paused.
         /// </summary>
         public bool IsPaused { get; private set; }
+
+        /// <summary>
+        ///     When true, <c>Update</c> does nothing and the owner advances the animation through <see cref="Tick" />.
+        ///     Not serialized.
+        /// </summary>
+        public bool ManualUpdate { get; set; }
+
+        /// <summary>Whether <c>Start</c> randomizes the clock and noise offset (the legacy default).</summary>
+        public bool RandomizeStartTime
+        {
+            get => _randomizeStartTime;
+            set => _randomizeStartTime = value;
+        }
+
+        /// <summary>Whether <c>Update</c> advances on <see cref="Time.unscaledDeltaTime" />.</summary>
+        public bool UseUnscaledTime
+        {
+            get => _useUnscaledTime;
+            set => _useUnscaledTime = value;
+        }
+
+        /// <summary>The animated Light or Light2D component, or null when none was found or it was destroyed.</summary>
+        public Component LightComponent => _lightComponent;
 
         /// <summary>
         ///     Minimum intensity (mutable from outside).
@@ -157,9 +196,12 @@ namespace Neo.Tools.View
                 return;
             }
 
-            animationTime = Random.Range(0f, 1000f);
-            randomOffset = new Vector2(Random.Range(-1000f, 1000f),
-                Random.Range(-1000f, 1000f));
+            if (_randomizeStartTime)
+            {
+                animationTime = Random.Range(0f, 1000f);
+                randomOffset = new Vector2(Random.Range(-1000f, 1000f),
+                    Random.Range(-1000f, 1000f));
+            }
 
             Intensity.Value = originalIntensity;
             CurrentColor = originalColor;
@@ -174,12 +216,40 @@ namespace Neo.Tools.View
 
         private void Update()
         {
-            if (_light == null || !IsPlaying || IsPaused)
+            if (ManualUpdate)
             {
                 return;
             }
 
-            animationTime += Time.deltaTime;
+            Tick(_useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+        }
+
+        /// <summary>
+        ///     Advances the clock by <paramref name="deltaTime" /> seconds and applies intensity (and color when
+        ///     <see cref="changeColor" /> is on) to the light. Does nothing while stopped, paused or disabled (a
+        ///     disabled animator keeps the baseline its <c>OnDisable</c> restored). If the light component was
+        ///     destroyed, the animator stops instead of throwing every frame.
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            // WHY the disable flag: OnDisable restores the light's baseline, and a manual clock that kept ticking
+            // a disabled animator overwrote it at once, so the disabled light went on flickering.
+            if (_light == null || _disabled || !IsPlaying || IsPaused)
+            {
+                return;
+            }
+
+            if (_lightComponent == null)
+            {
+                // WHY: the Light/Light2D was destroyed under the animator; every accessor call would throw a
+                // MissingReferenceException on each following frame.
+                _light = null;
+                IsPlaying = false;
+                IsPaused = false;
+                return;
+            }
+
+            animationTime += AnimationUtils.SanitizeDeltaTime(deltaTime);
 
             float targetIntensity = AnimationUtils.GetTargetValue(
                 animationType,
@@ -198,18 +268,24 @@ namespace Neo.Tools.View
                 targetColor,
                 colorBlendFactor);
 
-            if (Mathf.Abs(_light.Intensity - lastIntensity) > 0.001f)
+            // WHY one readback each: the light may clamp what it accepts, and every accessor call is a native
+            // (or reflected) call, so the values are read once instead of once per use.
+            float appliedIntensity = _light.Intensity;
+            Color appliedColor = _light.Color;
+
+            if (Mathf.Abs(appliedIntensity - lastIntensity) > AnimationUtils.ChangeThreshold)
             {
-                Intensity.Value = _light.Intensity;
-                lastIntensity = _light.Intensity;
+                Intensity.Value = appliedIntensity;
+                lastIntensity = appliedIntensity;
             }
 
-            CurrentColor = _light.Color;
+            CurrentColor = appliedColor;
 
-            if (changeColor && ColorDistance(_light.Color, lastColor) > 0.001f)
+            if (changeColor &&
+                AnimationUtils.ColorDistanceSquared(appliedColor, lastColor) > AnimationUtils.ChangeThresholdSquared)
             {
-                OnColorChanged?.Invoke(_light.Color);
-                lastColor = _light.Color;
+                OnColorChanged?.Invoke(appliedColor);
+                lastColor = appliedColor;
             }
 
             if (enableDebugging)
@@ -219,12 +295,18 @@ namespace Neo.Tools.View
                         randomOffset, noiseOffset, noiseScale, use2DNoise)
                     : 0f;
                 NeoDiagnostics.Log(
-                    $"[{gameObject.name}] Impl: {_light.ImplName}, Intensity: {_light.Intensity:F2}, Time: {animationTime:F2}, Speed: {animationSpeed:F2}, Noise: {dbgNoise:F2}");
+                    $"[{gameObject.name}] Impl: {_light.ImplName}, Intensity: {appliedIntensity:F2}, Time: {animationTime:F2}, Speed: {animationSpeed:F2}, Noise: {dbgNoise:F2}");
             }
+        }
+
+        private void OnEnable()
+        {
+            _disabled = false;
         }
 
         private void OnDisable()
         {
+            _disabled = true;
             ResetToOriginal();
         }
 
@@ -289,7 +371,7 @@ namespace Neo.Tools.View
         /// </summary>
         public void ResetToOriginal()
         {
-            if (_light != null)
+            if (_light != null && _lightComponent != null)
             {
                 _light.Intensity = originalIntensity;
                 _light.Color = originalColor;
@@ -316,29 +398,49 @@ namespace Neo.Tools.View
             animationTime = Random.Range(0f, 1000f);
         }
 
-        private void InitializeLight()
+        private static void ResolveLight2DType()
         {
-            // Unity 6 URP separates 2D runtime; older URP keeps Light2D in the main runtime assembly.
+            if (_light2DResolved)
+            {
+                return;
+            }
+
+            _light2DResolved = true;
+            // WHY two lookups: Unity 6 URP separates the 2D runtime; older URP keeps Light2D in the main
+            // runtime assembly.
             Type light2DType = Type.GetType(
                 "UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.2D.Runtime",
                 false) ?? Type.GetType(
                 "UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime",
                 false);
-
-            if (light2DType != null)
+            if (light2DType == null)
             {
-                Component comp = GetComponent(light2DType);
+                return;
+            }
+
+            PropertyInfo pIntensity = light2DType.GetProperty("intensity", BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo pColor = light2DType.GetProperty("color", BindingFlags.Instance | BindingFlags.Public);
+            if (pIntensity != null && pIntensity.CanRead && pIntensity.CanWrite &&
+                pColor != null && pColor.CanRead && pColor.CanWrite)
+            {
+                _light2DType = light2DType;
+                _light2DIntensity = pIntensity;
+                _light2DColor = pColor;
+            }
+        }
+
+        private void InitializeLight()
+        {
+            _light = null;
+            _lightComponent = null;
+            ResolveLight2DType();
+            if (_light2DType != null)
+            {
+                Component comp = GetComponent(_light2DType);
                 if (comp != null)
                 {
-                    PropertyInfo pIntensity =
-                        light2DType.GetProperty("intensity", BindingFlags.Instance | BindingFlags.Public);
-                    PropertyInfo pColor = light2DType.GetProperty("color", BindingFlags.Instance | BindingFlags.Public);
-
-                    if (pIntensity != null && pIntensity.CanRead && pIntensity.CanWrite &&
-                        pColor != null && pColor.CanRead && pColor.CanWrite)
-                    {
-                        _light = new URPLight2DAccessor(comp, pIntensity, pColor);
-                    }
+                    _light = new URPLight2DAccessor(comp, _light2DIntensity, _light2DColor);
+                    _lightComponent = comp;
                 }
             }
 
@@ -348,6 +450,7 @@ namespace Neo.Tools.View
                 if (l != null)
                 {
                     _light = new UnityLightAccessor(l);
+                    _lightComponent = l;
                 }
             }
 
@@ -366,19 +469,6 @@ namespace Neo.Tools.View
                 NeoDiagnostics.LogError("No Light or Light2D component found on this GameObject!", this);
                 enabled = false;
             }
-        }
-
-        /// <summary>
-        ///     Computes distance between two colors.
-        /// </summary>
-        private float ColorDistance(Color a, Color b)
-        {
-            return Mathf.Sqrt(
-                Mathf.Pow(a.r - b.r, 2) +
-                Mathf.Pow(a.g - b.g, 2) +
-                Mathf.Pow(a.b - b.b, 2) +
-                Mathf.Pow(a.a - b.a, 2)
-            );
         }
 
         private sealed class UnityLightAccessor : ILightAccessor

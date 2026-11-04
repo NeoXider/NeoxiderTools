@@ -1,6 +1,13 @@
 ﻿# CardData
 
-`CardData` is a readonly value type that represents a single playing card. It stores suit, rank, joker flags, and comparison helpers for common card-game logic. File location is within the `Cards` module, namespace `Neo.Cards`.
+**What it is:** readonly value type (`struct`, `Scripts/Cards/Core/Data/CardData.cs`, namespace `Neo.Cards`) for one card: a standard suit/rank card, a joker, or a custom card with id, display name, sort value and group. It carries the comparison helpers used by models, comparers and rules.
+
+**How to use:**
+1. Create standard cards with `new CardData(suit, rank)`, jokers with `CardData.CreateJoker(isRed)`, and any other card with `CardData.CreateCustom(id, displayName, sortValue, group)`.
+2. Store them in `DeckModel`/`HandModel` or assign them to views with `SetData(...)`.
+3. Compare with `CompareTo`, `Beats`, `HasSameRank`/`HasSameSuit`, or sort with `CardComparer`.
+
+---
 
 ## Data it stores
 
@@ -19,11 +26,13 @@
 ## Creating cards
 
 ```csharp
-var aceOfSpades = new CardData(Suit.Spades, Rank.Ace);
-var redJoker = CardData.CreateJoker(isRed: true);
-var blackJoker = CardData.CreateJoker(isRed: false);
-var minion = CardData.CreateCustom("neutral_minion_01", "Neutral Minion", sortValue: 3, group: "Neutral");
+CardData aceOfSpades = new CardData(Suit.Spades, Rank.Ace);
+CardData redJoker = CardData.CreateJoker(isRed: true);
+CardData blackJoker = CardData.CreateJoker(isRed: false);
+CardData minion = CardData.CreateCustom("neutral_minion_01", "Neutral Minion", sortValue: 3, group: "Neutral");
 ```
+
+Standard cards get `SortValue = (int)Rank` and `Group` = the English suit name (`"Hearts"`, ...); jokers get `SortValue = int.MaxValue` and `Group = "Joker"`. Creating standard cards allocates nothing, so decks, AI search and poker outs can build cards in bulk.
 
 Custom cards compare by `SortValue`, then by `CustomId`. `HasSameRank(...)` maps to equal `SortValue`, and `HasSameSuit(...)` maps to equal non-empty `Group`.
 
@@ -33,11 +42,13 @@ Custom cards compare by `SortValue`, then by `CustomId`. `HasSameRank(...)` maps
 
 | API | Description |
 |-----|-------------|
-| `CompareTo(CardData other)` | Rank-based comparison useful for games like War/Drunkard. |
-| `Beats(CardData other, Suit trump)` | Trump-aware comparison for games like Durak. |
-| `CanCover(CardData other, Suit trump)` | Alias of `Beats(...)`. |
-| `HasSameRank(CardData other)` | Checks matching ranks. |
-| `HasSameSuit(CardData other)` | Checks matching suits. |
+| `CompareTo(CardData other)` | Rank-based comparison (jokers above every rank; custom cards by `SortValue`, then `CustomId`). Useful for War/Drunkard. |
+| `Beats(CardData other, Suit? trump)` | Trump-aware comparison for games like Durak; custom cards beat lower `SortValue` in the same (or empty) group. |
+| `CanCover(CardData other, Suit? trump)` | Alias of `Beats(...)`. |
+| `HasSameRank(CardData other)` | Checks matching ranks (custom: equal `SortValue`). |
+| `HasSameSuit(CardData other)` | Checks matching suits (custom: equal non-empty `Group`). |
+
+Equality: standard cards by suit and rank, jokers by color, custom cards by `CustomId` only. Two equal values are interchangeable copies; scene components distinguish physical copies by object identity.
 
 ## Operators
 
@@ -50,6 +61,6 @@ Custom cards compare by `SortValue`, then by `CustomId`. `HasSameRank(...)` maps
 
 ## See also
 
-- [README](./README.md)
-- [Cards docs](./README.md)
-- [Tools/Components](../Tools/Components/README.md)
+- [Cards README](./README.md)
+- [CardComparer and sorting](./README.md#deterministic-shuffling-and-sorting)
+- [DeckConfig](./DeckConfig.md)

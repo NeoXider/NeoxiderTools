@@ -259,7 +259,7 @@ namespace Neo.Editor.Tests
                     return;
                 }
 
-                // Choose the other pool at runtime; dictionary enumeration order is irrelevant.
+                // WHY: Choose the other pool at runtime; dictionary enumeration order is irrelevant.
                 firstId = id;
                 replacedId = id == "HP" ? "Mana" : "HP";
                 ResourcePoolEntry replacement = replacedId == "HP" ? hp : mana;

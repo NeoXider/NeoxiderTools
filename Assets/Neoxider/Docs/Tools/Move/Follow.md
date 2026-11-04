@@ -1,8 +1,29 @@
 # Follow Component
 
-**What it is:** Used for cameras following the player, pets, homing objects, and other follow mechanics.
+**What it is:** a `MonoBehaviour` (`Scripts/Tools/Move/Follow.cs`, namespace `Neo.Tools`) that makes its object follow a target's position and rotation in `LateUpdate`. Used for cameras following the player, pets, homing objects, and other follow mechanics.
 
-**How to use:** see the sections below.
+**How to use:**
+1. Add **Neoxider > Tools > Follow** to the follower and assign `target` (or enable **Find Target By Tag**).
+2. Pick `followMode` (`ThreeD` / `TwoD`), the position and rotation smoothing modes and their speeds, and an `offset`.
+3. Optionally enable the deadzone, distance control, position limits and rotation limits.
+4. Change the behaviour from code with `SetTarget`, `SetOffset`, `SetPositionSpeed`, `TeleportToTarget` and the other setters below; react to `onStartFollowing`, `onStopFollowing` and `onTargetLost`.
+
+## Demo scene
+
+`Scenes/Tools/Move/Follow.unity` in the Demo sample (`Assets/Neoxider/Samples~/Demo` in the package,
+`Assets/Neoxider/Samples/Demo` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`
+after importing the sample). Everything is saved in the scene, so the wiring is visible without Play Mode:
+
+| Object | What to look at |
+|--------|-----------------|
+| `Target` | The object every follower chases. Its `MouseMover2D` (**Move To Point Hold**) drags it to the cursor while the left button is held; otherwise the demo controller moves it along a figure-eight. |
+| `Follow`, `Follow (1)`, `Follow (2)` | The original capsules: MoveTowards with aiming, Lerp position only, aiming only. Their `onStartFollowing` / `onTargetLost` events write to the log. |
+| `[Demo] World/Rail Follower` | `limitX` + `limitY` keep it on the rail; **Teleport** shows that `TeleportToTarget()` respects position limits. |
+| `[Demo] World/Turret` | Rotation only, `rotationLimitZ` = -70..70: when the Target goes below, the aim stays at the nearer edge of the sector. |
+| `[Demo] Frame/Content` | **Position speed** and **Deadzone** call `Follow.SetPositionSpeed` / `SetDeadzoneEnabled` directly (persistent UnityEvents); **Teleport** calls `TeleportToTarget` on every position follower. The smoothing dropdown, **Drop target** / **Restore target** and **Reset layout** go through `FollowDemoController`. |
+| `[Demo] Frame/Live Followers` | `IsFollowing()` and `GetDistanceToTarget()` of every follower, left to right. |
+
+The scene is authored by the editor builder `FollowBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
 
 ---
 
@@ -72,6 +93,11 @@ A universal follow component with a professional smoothing implementation. Place
 ### Events
 - `onStartFollowing`: Invoked when following starts (target moves beyond activationDistance)
 - `onStopFollowing`: Invoked when following stops (target enters the activationDistance zone)
+- `onTargetLost`: Invoked once when the target becomes null (destroyed or cleared)
+
+A follow-state listener may move the follower (for example call `TeleportToTarget()`), replace the target, clear it or destroy the follower:
+- after `onStartFollowing`, the frame continues from the follower's current position toward the current target (a replaced target is used right away, and a listener's teleport is not overwritten);
+- if the target was cleared or the follower destroyed, the remaining position and rotation work for that frame is skipped.
 
 ---
 
@@ -85,8 +111,15 @@ A universal follow component with a professional smoothing implementation. Place
 - `rotationOffset2D`: Additional angle for 2D (degrees)
 
 ### Rotation Limits
-- **3D mode**: `rotationLimitX`, `rotationLimitY` for limiting Euler angles
-- **2D mode**: `rotationLimitZ` for limiting the rotation angle around the Z axis
+- **3D mode**: `rotationLimitX` (pitch) and `rotationLimitY` (yaw) limit the Euler angles of the look rotation. Yaw `0` faces +Z and `90` faces +X.
+- **2D mode**: `rotationLimitZ` for limiting the rotation angle around the Z axis. The aim angle is `0` when the target is straight up and grows counter-clockwise (`-90` = right, `90` = left, `-180` / `180` = down), plus `rotationOffset2D`.
+
+All three limits use the same sector rules, shared with [UniversalRotator](UniversalRotator.md) `limitRange`, so one authored range means the same thing on both components:
+- A sector runs from `min` to `max` in increasing angle. An angle outside the sector snaps to the **nearer** edge (by angular distance), so a target crossing behind the sector (the -X axis in 2D, the back in 3D) no longer jumps to the opposite limit. The aim angle may be in any representation (the raw 2D aim angle is not normalized); only its direction counts.
+- Limits beyond [-180, 180] stay valid: `[-225, -135]` is a downward-facing 2D sector, and `[135, 225]` is the same sector; for 3D yaw, `[135, 225]` keeps a turret looking backwards. A sector of 360 degrees or more does not limit anything.
+- A range whose `max` is below its `min` wraps through 180: `[90, -90]` is the rear half (from 90 through 180 to 270) and `[-10, -20]` is the 350-degree sector that leaves out only the gap between -20 and -10. Write `[-90, 90]` for the front half. Before 12.0 an inverted range was passed to `Mathf.Clamp` and pinned the aim to one of its ends.
+
+When the follower sits exactly on the target (for example a 2D follower with zero offset that reached it), there is no direction to aim along: the follower keeps its current rotation for that frame instead of snapping to a fixed angle.
 
 ---
 
@@ -218,7 +251,7 @@ positionSpeed = 5  // speed from 3 to 8
 ### Target Control
 - `SetTarget(Transform newTarget)`: Sets a new target
 - `GetTarget()`: Returns the current target
-- `TeleportToTarget()`: Instant teleport to the target (no smoothing)
+- `TeleportToTarget()`: Instant snap to the target (no smoothing, deadzone or stopping distance) on the channels the follower follows. With `followPosition` it moves to the target position (position limits still apply, the SmoothDamp velocity is reset); with rotation following it turns straight to the aim from the new position. A rotation-only follower (such as a turret) keeps its position, and a position-only follower keeps its rotation.
 
 ### Follow Control
 - `SetFollowPosition(bool enabled)`: Enable/disable position following
@@ -310,6 +343,7 @@ When enabled, displays:
 - ✅ **After**: Explicit `limit.enabled` check
 
 ### Performance
-- Component reference caching
 - Early exit when there is no target
-- Optimized distance calculations
+- The follower's position is read once per frame and written only when it actually changes
+- The rotation is written only when it changes: a frame that computes the same rotation as the last write, while the transform still holds what that write stored, is skipped. With `None` rotation smoothing (or `MoveTowards` once the aim is reached) an aligned follower, including one with a non-zero offset, stops dirtying its transform hierarchy; `Lerp`, `SmoothDamp` and `Exponential` keep writing while their step still changes the result. A rotation changed from outside is always corrected on the next frame.
+- No per-frame allocations (guarded by the EditMode tests `Follow_WarmLateUpdate_DoesNotAllocateAndAnIdleFollowerDoesNotRewriteItsTransform` and `Follow_AlignedFollowerWithAnOffset_StopsRewritingItsRotationButFixesExternalTurns`)

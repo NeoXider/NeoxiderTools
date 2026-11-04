@@ -184,7 +184,7 @@ namespace Neo.Extensions
             {
                 if (advancing)
                 {
-                    // Native cancellation may finalize a wrapper inside MoveNext/Current.
+                    // WHY: Native cancellation may finalize a wrapper inside MoveNext/Current.
                     // Keep its iterators tracked until Advance unwinds before disposing them.
                     Complete();
                     return;
@@ -453,7 +453,7 @@ namespace Neo.Extensions
                 {
                     if (current is CustomYieldInstruction instruction)
                     {
-                        // Keep Unity's polling phase while tracking predicate faults and disposal.
+                        // WHY: Keep Unity's polling phase while tracking predicate faults and disposal.
                         yield return new TrackedYieldInstruction(instruction, handle);
                     }
                     else
@@ -466,7 +466,7 @@ namespace Neo.Extensions
             {
                 if (completeHandle)
                 {
-                    // A native stop may finalize the root before its nested wrappers.
+                    // WHY: A native stop may finalize the root before its nested wrappers.
                     // Complete the tracked tree first so cleanup keeps child-to-parent order.
                     handle.Complete();
                 }

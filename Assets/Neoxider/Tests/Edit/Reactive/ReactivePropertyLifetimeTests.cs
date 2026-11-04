@@ -53,7 +53,7 @@ namespace Neo.Editor.Tests
 
             property.Value = 1;
 
-            // Outer notification for 1 plus the nested notification for 2 = two calls each.
+            // WHY: Outer notification for 1 plus the nested notification for 2 = two calls each.
             Assert.AreEqual(2, firstCalls, "first listener");
             Assert.AreEqual(2, secondCalls, "re-entrant listener");
             Assert.AreEqual(2, thirdCalls, "listener registered after the re-entrant one");
@@ -76,7 +76,7 @@ namespace Neo.Editor.Tests
 
             property.Value = 1;
 
-            // The nested notification runs first and delivers 2; the outer one must still deliver its own value.
+            // WHY: The nested notification runs first and delivers 2; the outer one must still deliver its own value.
             Assert.AreEqual(1, observedByLast);
         }
 
@@ -249,7 +249,7 @@ namespace Neo.Editor.Tests
 
             property.Value = 1;
 
-            // The snapshot guarantees the second listener still receives the notification it was registered for.
+            // WHY: The snapshot guarantees the second listener still receives the notification it was registered for.
             Assert.AreEqual(1, secondCalls);
             Assert.AreEqual(0, property.ListenerCount);
         }

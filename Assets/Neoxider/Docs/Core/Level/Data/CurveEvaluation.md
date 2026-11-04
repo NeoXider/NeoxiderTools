@@ -1,6 +1,8 @@
 # Level curve evaluation boundaries
 
-This is the API and evaluation-boundary reference for the `Neo.Core.Level.Data` assembly, opened by the asset's documentation link. Start with [Level Curve Definition](../../LevelCurveDefinition.md) for the Formula, Curve and Custom authoring guide. `LevelCurveDefinition` implements `ILevelCurveDefinition`; `LevelCurveEntry` implements `ILevelCurveEntry`. Both types use the `Neo.Core.Level` namespace. Projects with their own asmdef need a reference to `Neo.Core.Level.Data`; pure interfaces and the domain evaluator belong to `Neo.Core`.
+**What it is:** This is the API and evaluation-boundary reference for the `Neo.Core.Level.Data` assembly, opened by the asset's documentation link. Start with [Level Curve Definition](../../LevelCurveDefinition.md) for the Formula, Curve and Custom authoring guide. `LevelCurveDefinition` implements `ILevelCurveDefinition`; `LevelCurveEntry` implements `ILevelCurveEntry`. Both types use the `Neo.Core.Level` namespace. Projects with their own asmdef need a reference to `Neo.Core.Level.Data`; pure interfaces and the domain evaluator belong to `Neo.Core`. Script: `Scripts/Core/Level/Data/LevelCurveDefinition.cs`.
+
+**How to use:** read it when you call `LevelCurveDefinition` from C# or need exact results at the curve ends.
 
 ## Types and configuration
 

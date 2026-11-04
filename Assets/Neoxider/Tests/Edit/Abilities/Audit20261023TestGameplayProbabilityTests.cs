@@ -47,7 +47,7 @@ namespace Neo.Editor.Tests.Abilities
                 "Without shields, healing or reactions, damage receipts must account for the exact health removed.");
         }
 
-        // A deterministic adapter for the existing injection seam; no global random state is changed.
+        // WHY: A deterministic adapter for the existing injection seam; no global random state is changed.
         private sealed class FixedRandomSource : IRandomSource
         {
             private readonly float _roll;

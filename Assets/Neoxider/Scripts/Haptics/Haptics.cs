@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 #if NEO_MOBILE_HAPTICS
 using Native = tsyk5.MobileHapticFeedback.MobileHapticFeedback;
@@ -63,8 +62,17 @@ namespace Neo.Haptics
     {
         private const float DefaultMinRepeatInterval = 0.035f;
 
-        private static readonly Dictionary<HapticType, float> LastPlayTimes = new Dictionary<HapticType, float>();
+        // WHY: indexed by HapticType; an array lookup is cheaper than an enum-keyed dictionary on the pulse path.
+        private static readonly float[] LastPlayTimes = CreateThrottleTable();
         private static bool _enabled = true;
+
+        private static readonly object ObserverGate = new();
+
+        /// <summary>Backing delegate of <see cref="Played" />.</summary>
+        private static Action<HapticType> _played;
+
+        /// <summary>Invocation list of <see cref="_played" />; null after every subscriber change until the next pulse.</summary>
+        private static Delegate[] _observers;
 
         // WHY: with Enter Play Mode domain reload disabled these statics survive into the next session, where
         // Time.unscaledTime restarts near zero, so stale timestamps would throttle pulses.
@@ -75,7 +83,11 @@ namespace Neo.Haptics
             ResetThrottle();
             EnabledProvider = null;
             MinRepeatInterval = DefaultMinRepeatInterval;
-            Played = null;
+            lock (ObserverGate)
+            {
+                _played = null;
+                _observers = null;
+            }
         }
 
         /// <summary>Master switch, typically bound to a "Vibration" setting. On by default.</summary>
@@ -98,8 +110,33 @@ namespace Neo.Haptics
         /// </summary>
         public static float MinRepeatInterval { get; set; } = DefaultMinRepeatInterval;
 
-        /// <summary>Raised for every pulse that passed the gates, on every platform including the editor.</summary>
-        public static event Action<HapticType> Played;
+        /// <summary>
+        ///     Raised for every pulse that passed the gates, on every platform including the editor. Each observer
+        ///     runs in isolation: an exception it throws is logged through <see cref="NeoDiagnostics" />, and it
+        ///     neither skips the observers after it, nor cancels the pulse, nor reaches the caller of
+        ///     <see cref="Play(HapticType)" />. Unsubscribing releases the observer at once.
+        /// </summary>
+        public static event Action<HapticType> Played
+        {
+            add
+            {
+                lock (ObserverGate)
+                {
+                    _played += value;
+                    _observers = null;
+                }
+            }
+            remove
+            {
+                // WHY: drop the cached invocation list together with the delegate, so a static cache never keeps
+                // an unsubscribed observer (and the overlay that owns it) alive until the next pulse.
+                lock (ObserverGate)
+                {
+                    _played -= value;
+                    _observers = null;
+                }
+            }
+        }
 
         /// <summary>Backend capability, or iOS/Android platform availability without a backend. False in the editor.</summary>
         public static bool IsSupported
@@ -139,7 +176,7 @@ namespace Neo.Haptics
                 return;
             }
 
-            Played?.Invoke(type);
+            NotifyPlayed(type);
             if (!IsSupported)
             {
                 return;
@@ -181,7 +218,7 @@ namespace Neo.Haptics
                 return;
             }
 
-            Played?.Invoke(HapticType.Medium);
+            NotifyPlayed(HapticType.Medium);
 #if NEO_MOBILE_HAPTICS
             if (IsSupported)
             {
@@ -221,7 +258,7 @@ namespace Neo.Haptics
                 return;
             }
 
-            Played?.Invoke(HapticType.Heavy);
+            NotifyPlayed(HapticType.Heavy);
 #if NEO_MOBILE_HAPTICS
             if (!IsSupported)
             {
@@ -253,7 +290,49 @@ namespace Neo.Haptics
         /// <summary>Forgets all pulse timestamps, e.g. between test cases or after a scene reset.</summary>
         public static void ResetThrottle()
         {
-            LastPlayTimes.Clear();
+            for (int i = 0; i < LastPlayTimes.Length; i++)
+            {
+                LastPlayTimes[i] = float.NegativeInfinity;
+            }
+        }
+
+        private static float[] CreateThrottleTable()
+        {
+            float[] table = new float[(int)HapticType.Error + 1];
+            for (int i = 0; i < table.Length; i++)
+            {
+                table[i] = float.NegativeInfinity;
+            }
+
+            return table;
+        }
+
+        private static void NotifyPlayed(HapticType type)
+        {
+            Delegate[] observers = _observers;
+            if (observers == null)
+            {
+                // WHY: one invocation-list copy per subscriber change instead of one per pulse; no observers caches
+                // the shared empty array, so a pulse with nobody listening takes no lock either.
+                lock (ObserverGate)
+                {
+                    observers = _observers ??= _played?.GetInvocationList() ?? Array.Empty<Delegate>();
+                }
+            }
+
+            for (int i = 0; i < observers.Length; i++)
+            {
+                try
+                {
+                    ((Action<HapticType>)observers[i])(type);
+                }
+                catch (Exception exception)
+                {
+                    // WHY: observers are debug overlays and tests; a faulty one must not swallow the device pulse
+                    // or silence the observers subscribed after it.
+                    NeoDiagnostics.LogException(exception);
+                }
+            }
         }
 
         private static bool IsFinite(float value)
@@ -269,12 +348,14 @@ namespace Neo.Haptics
             }
 
             float now = Time.unscaledTime;
-            if (LastPlayTimes.TryGetValue(type, out float lastPlayTime) && now - lastPlayTime < MinRepeatInterval)
+            int index = (int)type;
+            // WHY: a never-played type holds -Infinity, so the elapsed time is +Infinity and always passes.
+            if (now - LastPlayTimes[index] < MinRepeatInterval)
             {
                 return false;
             }
 
-            LastPlayTimes[type] = now;
+            LastPlayTimes[index] = now;
             return true;
         }
     }

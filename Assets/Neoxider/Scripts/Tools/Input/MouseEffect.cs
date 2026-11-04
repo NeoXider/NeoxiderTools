@@ -91,10 +91,19 @@ namespace Neo.Tools
         private float _nextCameraFallbackTime;
         private bool _missingCameraWarningShown;
         private bool _missingManagerWarningShown;
+        private bool _holdDisabledWarningShown;
         private MouseInputManager _mim;
         private uint _followGeneration;
 
         public Camera TargetCamera => targetCamera;
+
+        /// <summary>
+        ///     True when the current settings spawn from Hold events: a prefab with the Hold trigger or with
+        ///     <see cref="spawnDuringHold" />. Hold events arrive only while <see cref="MouseInputManager.enableHold" />
+        ///     is on, and an auto-created manager has it off.
+        /// </summary>
+        public bool RequiresHoldEvents =>
+            spawnPrefab != null && (spawnTrigger == SpawnTrigger.Hold || spawnDuringHold);
 
         public void SetTargetCamera(Camera camera)
         {
@@ -171,6 +180,7 @@ namespace Neo.Tools
                 _mim.OnClick += OnClick;
                 _mim.OnHold += OnHold;
                 _mim.OnCanceled += OnCanceled;
+                WarnIfHoldEventsDisabled();
             }
             else
             {
@@ -180,6 +190,21 @@ namespace Neo.Tools
                     NeoDiagnostics.LogWarning("[MouseEffect] MouseInputManager is missing.", this);
                 }
             }
+        }
+
+        private void WarnIfHoldEventsDisabled()
+        {
+            if (_holdDisabledWarningShown || _mim.enableHold || !RequiresHoldEvents ||
+                !NeoDiagnostics.RuntimeWarningsEnabled)
+            {
+                return;
+            }
+
+            _holdDisabledWarningShown = true;
+            NeoDiagnostics.LogWarning(
+                "[MouseEffect] Hold spawning (Hold trigger or Spawn During Hold) needs MouseInputManager Enable Hold, " +
+                "which is off: place a MouseInputManager with Enable Hold on, or set MouseInputManager.I.enableHold = true.",
+                this);
         }
 
         private void OnDisable()

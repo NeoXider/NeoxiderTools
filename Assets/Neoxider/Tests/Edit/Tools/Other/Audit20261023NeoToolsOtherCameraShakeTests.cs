@@ -210,7 +210,7 @@ namespace Neo.Editor.Tests.Tools
                 shake.OnShakeComplete.AddListener(() => completed++);
                 shake.OnShakeStart.AddListener(() => started++);
                 shake.OnShakeStop.AddListener(() => stopped++);
-                // The SDK retains its quitting flag until a later native frame after leaving Play.
+                // WHY: The SDK retains its quitting flag until a later native frame after leaving Play.
                 // Public initialization is only admitted after that boundary, never by changing SDK flags.
                 double deadline = Time.realtimeSinceStartupAsDouble + 1d;
                 int initializationFrame = Time.frameCount;
@@ -237,7 +237,7 @@ namespace Neo.Editor.Tests.Tools
                 Assert.That(Time.realtimeSinceStartupAsDouble, Is.LessThanOrEqualTo(deadline), initializationTrace);
                 Time.timeScale = 0f;
 
-                // Initialize through a separate owned control before testing CameraShake's root.
+                // WHY: Initialize through a separate owned control before testing CameraShake's root.
                 // Neither a sequence seek nor a manual DOTween update supplies this clock.
                 _nativeClockProbe = DOTween.Sequence().SetUpdate(UpdateType.Normal, true)
                     .SetRecyclable(false).SetAutoKill(false).AppendInterval(1f)
@@ -259,7 +259,7 @@ namespace Neo.Editor.Tests.Tools
                 Assert.That(DOTween.unscaledTimeScale, Is.GreaterThan(0f).And.LessThan(float.PositiveInfinity));
                 Assert.That(probe.timeScale, Is.GreaterThan(0f).And.LessThan(float.PositiveInfinity));
 
-                // One unchanged one-second budget includes native readiness and the shake itself.
+                // WHY: One unchanged one-second budget includes native readiness and the shake itself.
                 int admissionFrame = Time.frameCount;
                 double admissionUnscaledTime = Time.unscaledTimeAsDouble;
                 probe.Play();
@@ -357,7 +357,7 @@ namespace Neo.Editor.Tests.Tools
 
         private Sequence ObserveSequence(bool required = true)
         {
-            // Only access needed for deterministic seeking; assertions observe transforms/events/public state.
+            // WHY: Only access needed for deterministic seeking; assertions observe transforms/events/public state.
             FieldInfo field = typeof(CameraShake).GetField("_sequence", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null);
             _observedSequence = field.GetValue(_shake) as Sequence;

@@ -133,7 +133,8 @@ namespace Neo.Editor.Tests
             SlotElement destroyed = row.SlotElements[0];
             SlotElement live = row.SlotElements[1];
             Object.DestroyImmediate(destroyed.gameObject);
-            live.transform.localPosition = Vector3.up * 100f; // Force visible-bucket recovery.
+            // WHY: moves the element out of the window to force visible-bucket recovery.
+            live.transform.localPosition = Vector3.up * 100f;
             SlotVisualData visual = new() { id = 9 };
             row.SetVisuals(visual);
             Assert.That(live.id, Is.EqualTo(9));
@@ -159,7 +160,7 @@ namespace Neo.Editor.Tests
             SetField(multipliers, "_minCount", 3);
             SetField(multipliers, "_maxCount", 4);
             SetField(multipliers, "_generate", true);
-            // OnValidate is the existing authoring entry point; inspect its generated public data.
+            // WHY: OnValidate is the existing authoring entry point; inspect its generated public data.
             MethodInfo validate = typeof(SpriteMultiplayerData).GetMethod("OnValidate",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(validate, Is.Not.Null);

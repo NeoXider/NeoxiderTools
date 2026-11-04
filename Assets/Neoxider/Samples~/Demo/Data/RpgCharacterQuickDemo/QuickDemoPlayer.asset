@@ -1,0 +1,166 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53633ec5c08ead847945f0aefb93fa48, type: 3}
+  m_Name: QuickDemoPlayer
+  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.RpgCharacterTemplate
+  resources:
+  - id:
+      preset: 1
+      customId: 
+    displayName: 
+    startCurrent: 100
+    startMax: 100
+    restoreOnAwake: 1
+    restoreToFull: 1
+    regen:
+      enabled: 1
+      mode: 1
+      value: 1
+      tickInterval: 1
+      scalingStat:
+        preset: 0
+        customId: 
+      scalingMultiplier: 1
+      onlyWhenNotFull: 1
+      onlyWhenAlive: 1
+      pauseAfterSpend: 0
+      pauseAfterSpendSeconds: 0
+      pauseAfterDamage: 1
+      pauseAfterDamageSeconds: 3
+    canGoBelowZero: 0
+    canOverfill: 0
+    minValue: 0
+    maxCap: -1
+  - id:
+      preset: 3
+      customId: 
+    displayName: 
+    startCurrent: 100
+    startMax: 100
+    restoreOnAwake: 1
+    restoreToFull: 1
+    regen:
+      enabled: 1
+      mode: 1
+      value: 15
+      tickInterval: 1
+      scalingStat:
+        preset: 0
+        customId: 
+      scalingMultiplier: 1
+      onlyWhenNotFull: 1
+      onlyWhenAlive: 1
+      pauseAfterSpend: 1
+      pauseAfterSpendSeconds: 1
+      pauseAfterDamage: 0
+      pauseAfterDamageSeconds: 3
+    canGoBelowZero: 0
+    canOverfill: 0
+    minValue: 0
+    maxCap: -1
+  - id:
+      preset: 0
+      customId: DarkMana
+    displayName: 
+    startCurrent: 40
+    startMax: 40
+    restoreOnAwake: 1
+    restoreToFull: 1
+    regen:
+      enabled: 1
+      mode: 1
+      value: 2
+      tickInterval: 1
+      scalingStat:
+        preset: 0
+        customId: 
+      scalingMultiplier: 1
+      onlyWhenNotFull: 1
+      onlyWhenAlive: 1
+      pauseAfterSpend: 0
+      pauseAfterSpendSeconds: 0
+      pauseAfterDamage: 0
+      pauseAfterDamageSeconds: 3
+    canGoBelowZero: 0
+    canOverfill: 0
+    minValue: 0
+    maxCap: -1
+  stats:
+  - id:
+      preset: 9
+      customId: 
+    displayName: 
+    baseValue: 12
+    minValue: -1
+    maxValue: -1
+    affectedByLevel: 1
+    growth:
+      Mode: 0
+      FormulaType: 0
+      BaseValue: 0
+      AddPerLevel: 1
+      MultiplierPerLevel: 0
+      UseCurve: 0
+      Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - id:
+      preset: 12
+      customId: 
+    displayName: 
+    baseValue: 10
+    minValue: -1
+    maxValue: -1
+    affectedByLevel: 0
+    growth:
+      Mode: 0
+      FormulaType: 0
+      BaseValue: 0
+      AddPerLevel: 1
+      MultiplierPerLevel: 0
+      UseCurve: 0
+      Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - id:
+      preset: 16
+      customId: 
+    displayName: 
+    baseValue: 5
+    minValue: -1
+    maxValue: -1
+    affectedByLevel: 1
+    growth:
+      Mode: 0
+      FormulaType: 0
+      BaseValue: 0
+      AddPerLevel: 1
+      MultiplierPerLevel: 0
+      UseCurve: 0
+      Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  knownBuffs: []
+  knownStatuses: []
+  progression: {fileID: 11400000, guid: aec18eabe0241144f841fda1d1961498, type: 2}
+  displayName: Demo Player
+  description: 'Quick demo player: HP, Stamina and the custom DarkMana resource.'
+  icon: {fileID: 0}

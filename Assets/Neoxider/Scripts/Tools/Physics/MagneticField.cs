@@ -117,7 +117,9 @@ namespace Neo.Tools
         [Tooltip("Invoked when mode changes (for Toggle)")]
         public UnityEvent<bool> OnModeChanged = new();
 
-        [Header("Performance")] [Tooltip("Maximum colliders detected per overlap query (reusable buffer size).")]
+        [Header("Performance")]
+        [Tooltip("Initial size of the reusable overlap buffer. It doubles automatically when a query fills it, " +
+                 "so every collider in range is processed; set it near the usual count to avoid regrowth.")]
         [Min(1)] [SerializeField]
         private int _maxOverlapColliders = 64;
 
@@ -128,7 +130,9 @@ namespace Neo.Tools
         private readonly HashSet<Rigidbody> affectedBodies = new();
         private readonly List<GameObject> toRemove = new();
         private Collider[] _colliderBuffer;
-        private float lastUpdateTime;
+
+        // WHY: like after OnDisable, the first update after creation runs at once instead of waiting one Update Interval.
+        private float lastUpdateTime = float.NegativeInfinity;
         private float toggleStartTime;
 
         /// <summary>
@@ -145,6 +149,15 @@ namespace Neo.Tools
         ///     Number of objects currently inside the field.
         /// </summary>
         public int ObjectsInFieldCount => objectsInField.Count;
+
+        /// <summary>
+        ///     Layers queried by the field. Changes apply to the next field update.
+        /// </summary>
+        public LayerMask AffectedLayers
+        {
+            get => affectedLayers;
+            set => affectedLayers = value;
+        }
 
         /// <summary>
         ///     Current toggle phase (true = attract, false = repel) when Toggle is enabled.
@@ -252,12 +265,27 @@ namespace Neo.Tools
             mode = mode == FieldMode.Attract ? FieldMode.Repel : FieldMode.Attract;
         }
 
+        /// <summary>Current field mode.</summary>
+        public FieldMode CurrentMode => mode;
+
         /// <summary>
         ///     Sets field mode.
         /// </summary>
         public void SetMode(FieldMode newMode)
         {
             mode = newMode;
+        }
+
+        /// <summary>
+        ///     Sets the mode by its <see cref="FieldMode" /> index, for UnityEvents, which cannot pass an enum.
+        ///     An undefined index is ignored.
+        /// </summary>
+        public void SetModeIndex(int modeIndex)
+        {
+            if (System.Enum.IsDefined(typeof(FieldMode), modeIndex))
+            {
+                SetMode((FieldMode)modeIndex);
+            }
         }
 
         /// <summary>
@@ -366,13 +394,9 @@ namespace Neo.Tools
 
             Vector3 fieldCenter = GetFieldCenter();
             Rigidbody sourceBody = GetComponentInParent<Rigidbody>();
-            int bufferSize = Mathf.Max(1, _maxOverlapColliders);
-            if (_colliderBuffer == null || _colliderBuffer.Length != bufferSize)
-            {
-                _colliderBuffer = new Collider[bufferSize];
-            }
-
-            int colliderCount = Physics.OverlapSphereNonAlloc(fieldCenter, radius, _colliderBuffer, affectedLayers);
+            // WHY: a saturated buffer used to drop arbitrary colliders, churning enter/exit events every update.
+            int colliderCount = PhysicsOverlap.OverlapSphereComplete(fieldCenter, radius, affectedLayers,
+                ref _colliderBuffer, _maxOverlapColliders);
             currentObjects.Clear();
             affectedBodies.Clear();
 

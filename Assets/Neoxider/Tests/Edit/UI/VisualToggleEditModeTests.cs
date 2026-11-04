@@ -9,7 +9,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void VisualToggle_Set_UpdatesReactiveValue()
         {
-            var go = new GameObject("VT");
+            GameObject go = new GameObject("VT");
             try
             {
                 VisualToggle vt = go.AddComponent<VisualToggle>();

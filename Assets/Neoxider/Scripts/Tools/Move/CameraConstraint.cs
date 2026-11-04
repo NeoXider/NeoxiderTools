@@ -75,18 +75,23 @@ namespace Neo.Tools
 
         private void LateUpdate()
         {
-            if (!TryInitialize())
+            if (!TryResolveCamera())
             {
+                TryInitialize();
                 return;
             }
 
+            // WHY: a source that disappears at runtime (level swap, pooled bounds) only pauses clamping; disabling
+            // here would keep the constraint off after SetBoundsSource assigns the next source.
             if (!ValidateBoundsSource())
             {
                 _boundsValid = false;
                 return;
             }
 
-            if (autoUpdateBounds || ShouldRecalculateBounds())
+            // WHY: invalid bounds are recalculated as soon as a source exists again, so a source reassigned in the
+            // Inspector (or by any path other than SetBoundsSource) resumes clamping even with autoUpdateBounds off.
+            if (!_boundsValid || autoUpdateBounds || ShouldRecalculateBounds())
             {
                 CalculateBounds();
             }
@@ -298,7 +303,12 @@ namespace Neo.Tools
             }
 
             _lastConstrainedPosition = position;
-            transform.position = position;
+            Vector3 current = transform.position;
+            // WHY: exact comparison; an in-bounds camera is not rewritten (and its hierarchy not dirtied) every frame.
+            if (position.x != current.x || position.y != current.y || position.z != current.z)
+            {
+                transform.position = position;
+            }
         }
 
         private bool ShouldRecalculateBounds()
@@ -468,6 +478,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
+        ///     True once bounds were calculated from a valid camera and bounds source, and the source still exists.
+        ///     <see cref="GetConstraintBounds" /> and <see cref="IsAtEdge" /> are meaningful only while this is true.
+        /// </summary>
+        public bool HasValidBounds => _boundsValid && ValidateBoundsSource();
+
+        /// <summary>
         ///     Get current calculated bounds.
         /// </summary>
         public void GetConstraintBounds(out Vector3 min, out Vector3 max)
@@ -477,17 +493,25 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Check if camera is at edge of bounds.
+        ///     Check if camera is at edge of bounds. Only constrained axes are reported, and every flag is false while
+        ///     <see cref="HasValidBounds" /> is false. When the view is wider (or taller) than the bounds, the camera is
+        ///     pinned to the centre and both edges of that axis report true: it cannot move either way.
         /// </summary>
         public bool IsAtEdge(out bool atMinX, out bool atMaxX, out bool atMinY, out bool atMaxY)
         {
+            if (!HasValidBounds)
+            {
+                atMinX = atMaxX = atMinY = atMaxY = false;
+                return false;
+            }
+
             Vector3 pos = transform.position;
             float threshold = 0.01f;
 
-            atMinX = Mathf.Abs(pos.x - _minBounds.x) < threshold;
-            atMaxX = Mathf.Abs(pos.x - _maxBounds.x) < threshold;
-            atMinY = Mathf.Abs(pos.y - _minBounds.y) < threshold;
-            atMaxY = Mathf.Abs(pos.y - _maxBounds.y) < threshold;
+            atMinX = constraintX && Mathf.Abs(pos.x - _minBounds.x) < threshold;
+            atMaxX = constraintX && Mathf.Abs(pos.x - _maxBounds.x) < threshold;
+            atMinY = constraintY && Mathf.Abs(pos.y - _minBounds.y) < threshold;
+            atMaxY = constraintY && Mathf.Abs(pos.y - _maxBounds.y) < threshold;
 
             return atMinX || atMaxX || atMinY || atMaxY;
         }

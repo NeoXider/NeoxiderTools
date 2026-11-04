@@ -84,6 +84,34 @@ namespace Neo.Editor
         }
 
         /// <summary>
+        ///     Records the active scene's dirty flag without deciding anything. Lets a caller keep the dirty
+        ///     epoch exact on every tick while it skips <see cref="ShouldSave" /> (and the cost of collecting
+        ///     a full <see cref="SceneSaverCheckContext" />) until <see cref="IsIntervalElapsed" /> says a save
+        ///     could be due. Observing the same flag twice counts nothing extra.
+        /// </summary>
+        /// <param name="isDirty">Whether the active scene currently has unsaved changes.</param>
+        public void ObserveDirty(bool isDirty)
+        {
+            TrackDirtyTransition(isDirty);
+        }
+
+        /// <summary>
+        ///     Whether the interval since the last handled save has elapsed - the same time test
+        ///     <see cref="ShouldSave" /> applies. When this is false, <see cref="ShouldSave" /> is false too.
+        /// </summary>
+        /// <param name="now">Current editor time, in seconds.</param>
+        /// <param name="intervalSeconds">Configured interval between two backup copies, in seconds.</param>
+        public bool IsIntervalElapsed(double now, double intervalSeconds)
+        {
+            if (now < _lastHandledTime)
+            {
+                _lastHandledTime = now;
+            }
+
+            return now - _lastHandledTime >= intervalSeconds;
+        }
+
+        /// <summary>
         ///     Whether this exact scene revision was already handled and must not be written again.
         /// </summary>
         /// <param name="scenePath">Asset path of the scene.</param>

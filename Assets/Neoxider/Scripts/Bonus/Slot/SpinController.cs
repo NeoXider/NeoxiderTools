@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -31,8 +30,10 @@ namespace Neo.Bonus
     public class SpinController : MonoBehaviour
     {
         [SerializeField] public CheckSpin checkSpin = new();
-        [SerializeField] public BetsData betsData; // may be null
-        [SerializeField] public SpritesData allSpritesData; // may be null
+        /// <summary>Optional bet table; may be null.</summary>
+        [SerializeField] public BetsData betsData;
+        /// <summary>Optional symbol sprite set; may be null.</summary>
+        [SerializeField] public SpritesData allSpritesData;
 
         [Tooltip("Optional shared symbol economy used by PickEconomySymbolId (weights, payouts).")]
         [SerializeField]
@@ -100,19 +101,19 @@ namespace Neo.Bonus
         [Space] [Header("Text")] [SerializeField]
         private TMP_Text _textCountLine;
 
-        [Space] public UnityEvent OnStartSpin;
+        [Space] public UnityEvent OnStartSpin = new();
 
-        public UnityEvent OnEndSpin;
+        public UnityEvent OnEndSpin = new();
 
         /// <summary>Invoked with true when the spin is a win.</summary>
-        public UnityEvent<bool> OnEnd;
+        public UnityEvent<bool> OnEnd = new();
 
-        [Space] public UnityEvent<int> OnWin;
-        public UnityEvent<int[]> OnWinLines;
-        public UnityEvent OnLose;
+        [Space] public UnityEvent<int> OnWin = new();
+        public UnityEvent<int[]> OnWinLines = new();
+        public UnityEvent OnLose = new();
 
-        [Space] public UnityEvent<string> OnChangeBet;
-        public UnityEvent<string> OnChangeMoneyWin;
+        [Space] public UnityEvent<string> OnChangeBet = new();
+        public UnityEvent<string> OnChangeMoneyWin = new();
 
         [Space] [Header("Debug")] [SerializeField]
         private bool _firstWin;
@@ -172,7 +173,8 @@ namespace Neo.Bonus
         [Tooltip("Warning label offset below banner x GetHandleSize(SpinController).")] [SerializeField] [Min(0.05f)]
         private float _gizmoBannerWarningDownHandles = 0.7f;
 
-        public SlotVisualData[,] finalVisuals; // filled from the screen after stop
+        /// <summary>Symbols read back from the screen after the reels stop.</summary>
+        public SlotVisualData[,] finalVisuals;
         public IMoneySpend moneySpend;
 
         /// <summary>
@@ -217,6 +219,10 @@ namespace Neo.Bonus
         private bool[] _activeRowsStarted;
 
         private int[] _lastWinningPaylineIndices = Array.Empty<int>();
+        private int[] _lastWinningReadOnlySource;
+        private IReadOnlyList<int> _lastWinningReadOnly;
+        private int[] _columnTargetBuffer;
+        private int[] _activeLineIndices;
 
         private int _lastPayout;
 
@@ -257,7 +263,20 @@ namespace Neo.Bonus
         ///     Definition indices that won on the last completed spin (empty after a new spin starts or on lose).
         ///     Matches indices into <see cref="GetPaylineDefinitionsSnapshot"/>.
         /// </summary>
-        public IReadOnlyList<int> LastWinningPaylineIndices => Array.AsReadOnly(_lastWinningPaylineIndices);
+        public IReadOnlyList<int> LastWinningPaylineIndices
+        {
+            get
+            {
+                // WHY: cache the read-only wrapper per result array; the getter is typically polled by UI.
+                if (!ReferenceEquals(_lastWinningReadOnlySource, _lastWinningPaylineIndices))
+                {
+                    _lastWinningReadOnlySource = _lastWinningPaylineIndices;
+                    _lastWinningReadOnly = Array.AsReadOnly(_lastWinningPaylineIndices);
+                }
+
+                return _lastWinningReadOnly;
+            }
+        }
 
         /// <summary>
         ///     Coin payout awarded on the last completed spin (0 after a new spin starts or on lose).
@@ -489,7 +508,8 @@ namespace Neo.Bonus
 
             ForceNextOutcome(outcome);
             StartSpin();
-            return HasForcedNextOutcome == false; // StartSpin consumed the queued outcome
+            // WHY: StartSpin consumes the queued outcome, so one still queued means the spin did not start.
+            return HasForcedNextOutcome == false;
         }
 
         /// <summary>
@@ -513,7 +533,7 @@ namespace Neo.Bonus
             }
 
             int cols = ids.GetLength(1);
-            var results = new SlotEconomyDefinition.LineResult[lineCount];
+            SlotEconomyDefinition.LineResult[] results = new SlotEconomyDefinition.LineResult[lineCount];
             int[] buffer = new int[cols];
             for (int li = 0; li < lineCount; li++)
             {
@@ -726,8 +746,7 @@ namespace Neo.Bonus
                 return;
             }
 
-            if (allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0 ||
-                allSpritesData.visuals.Any(visual => visual == null))
+            if (!HasCompleteVisuals())
             {
                 LogWarning($"{nameof(SpritesData)} or visuals missing; every visual entry must be assigned.");
                 return;
@@ -838,13 +857,7 @@ namespace Neo.Bonus
                     continue;
                 }
 
-                int[] columnTargets = new int[v];
-                for (int y = 0; y < v; y++)
-                {
-                    columnTargets[y] = _activeSpinPlanIds[x, y];
-                }
-
-                row.Spin(allSpritesData, columnTargets);
+                row.Spin(allSpritesData, FillColumnTargets(x, v));
                 _activeRowsStarted[x] = true;
                 yield return delay;
             }
@@ -960,13 +973,7 @@ namespace Neo.Bonus
                                   _activeRowsStarted[x];
                 if (!wasStarted)
                 {
-                    int[] columnTargets = new int[v];
-                    for (int y = 0; y < v; y++)
-                    {
-                        columnTargets[y] = _activeSpinPlanIds[x, y];
-                    }
-
-                    row.Spin(allSpritesData, columnTargets);
+                    row.Spin(allSpritesData, FillColumnTargets(x, v));
                     if (_activeRowsStarted != null && x < _activeRowsStarted.Length)
                     {
                         _activeRowsStarted[x] = true;
@@ -1040,13 +1047,7 @@ namespace Neo.Bonus
                     SlotElement se = y < take ? visibleTopDown[take - 1 - y] : null;
                     Elements[x, y] = se;
 
-                    SlotVisualData v = null;
-                    if (se != null && allSpritesData?.visuals != null && allSpritesData.visuals.Length > 0)
-                    {
-                        v = allSpritesData.visuals.FirstOrDefault(t => t != null && t.id == se.id);
-                    }
-
-                    finalVisuals[x, y] = v;
+                    finalVisuals[x, y] = se != null ? FindVisualById(se.id) : null;
                 }
             }
         }
@@ -1222,7 +1223,7 @@ namespace Neo.Bonus
                 return Array.Empty<SlotElement[]>();
             }
 
-            var rows = new SlotElement[_lastWinningPaylineIndices.Length][];
+            SlotElement[][] rows = new SlotElement[_lastWinningPaylineIndices.Length][];
             for (int i = 0; i < _lastWinningPaylineIndices.Length; i++)
             {
                 int defIx = _lastWinningPaylineIndices[i];
@@ -1392,8 +1393,7 @@ namespace Neo.Bonus
         {
             int cols = _rows?.Length ?? 0;
             int rows = WindowHeight;
-            if (cols <= 0 || rows <= 0 || allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0 ||
-                allSpritesData.visuals.Any(visual => visual == null))
+            if (cols <= 0 || rows <= 0 || !HasCompleteVisuals())
             {
                 return false;
             }
@@ -1597,7 +1597,22 @@ namespace Neo.Bonus
 
         public bool IsStop()
         {
-            return _rows == null || _rows.All(row => row == null || !row.is_spinning);
+            if (_rows == null)
+            {
+                return true;
+            }
+
+            // WHY: polled every frame while a spin settles; LINQ All over the array allocated on each poll.
+            for (int i = 0; i < _rows.Length; i++)
+            {
+                Row row = _rows[i];
+                if (row != null && row.is_spinning)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void Win(int[] lines, float[] mult)
@@ -1611,7 +1626,6 @@ namespace Neo.Bonus
                 _winLineCoroutine = StartCoroutine(WinLinePlaybackRoutine(lines));
             }
 
-            double moneyWin = 0d;
             int linePrice = 0;
 
             if (betsData?.bets != null && betsData.bets.Length > 0 && _betsId >= 0 && _betsId < betsData.bets.Length)
@@ -1619,15 +1633,7 @@ namespace Neo.Bonus
                 linePrice = betsData.bets[_betsId];
             }
 
-            foreach (float t in mult)
-            {
-                if (float.IsFinite(t) && t > 0f)
-                {
-                    moneyWin += (double)t * Mathf.Max(0, linePrice);
-                }
-            }
-
-            int payout = (int)Math.Min(int.MaxValue, Math.Round(moneyWin, MidpointRounding.ToEven));
+            int payout = SlotSpinMath.ComputePayout(mult, linePrice);
             _lastPayout = payout;
             _paidForActiveSpin = 0;
 
@@ -1663,10 +1669,7 @@ namespace Neo.Bonus
                 linePrice = betsData.bets[_betsId];
             }
 
-            long totalPrice = _priceOnLine
-                ? (long)Mathf.Max(1, _countLine) * Mathf.Max(0, linePrice)
-                : Mathf.Max(0, linePrice);
-            price = (int)Math.Min(int.MaxValue, totalPrice);
+            price = SlotSpinMath.ComputeSpinPrice(linePrice, _countLine, _priceOnLine);
 
             if (_textCountLine != null)
             {
@@ -1690,14 +1693,22 @@ namespace Neo.Bonus
                 ? checkSpin.GetPaylineDefinitionCount(_rows.Length, WindowHeight)
                 : 1;
 
-            int active = Mathf.Min(_countLine, defCount, _lineSlot.lines.Length);
+            int active = Mathf.Min(_countLine, Mathf.Min(defCount, _lineSlot.lines.Length));
             if (active <= 0)
             {
                 return;
             }
 
-            int[] seq = Enumerable.Range(0, active).ToArray();
-            _lineSlot.LineActiv(seq);
+            if (_activeLineIndices == null || _activeLineIndices.Length != active)
+            {
+                _activeLineIndices = new int[active];
+                for (int i = 0; i < active; i++)
+                {
+                    _activeLineIndices[i] = i;
+                }
+            }
+
+            _lineSlot.LineActiv(_activeLineIndices);
         }
 
         [Button(PlayModeOnly = true)]
@@ -2002,7 +2013,7 @@ namespace Neo.Bonus
         private IEnumerator PlayWinLinesParallel(int[] winningLineIndices, LinesData.InnerArray[] defs)
         {
             int n = winningLineIndices.Length;
-            var active = new LineRenderer[n];
+            LineRenderer[] active = new LineRenderer[n];
             float phaseSkew = 0.09f;
 
             for (int i = 0; i < n; i++)
@@ -2051,7 +2062,7 @@ namespace Neo.Bonus
                 return null;
             }
 
-            var pts = new Vector3[line.corY.Length];
+            Vector3[] pts = new Vector3[line.corY.Length];
             Vector3 off = _winLinePlayback.worldOffset;
 
             for (int col = 0; col < line.corY.Length; col++)
@@ -2066,6 +2077,61 @@ namespace Neo.Bonus
             }
 
             return pts;
+        }
+
+        private bool HasCompleteVisuals()
+        {
+            SlotVisualData[] visuals = allSpritesData != null ? allSpritesData.visuals : null;
+            if (visuals == null || visuals.Length == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < visuals.Length; i++)
+            {
+                if (visuals[i] == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private SlotVisualData FindVisualById(int id)
+        {
+            SlotVisualData[] visuals = allSpritesData != null ? allSpritesData.visuals : null;
+            if (visuals == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < visuals.Length; i++)
+            {
+                SlotVisualData visual = visuals[i];
+                if (visual != null && visual.id == id)
+                {
+                    return visual;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Copies one plan column into a reused buffer; <see cref="Row.Spin"/> copies it into its own storage.</summary>
+        private int[] FillColumnTargets(int column, int windowHeight)
+        {
+            if (_columnTargetBuffer == null || _columnTargetBuffer.Length != windowHeight)
+            {
+                _columnTargetBuffer = new int[windowHeight];
+            }
+
+            for (int y = 0; y < windowHeight; y++)
+            {
+                _columnTargetBuffer[y] = _activeSpinPlanIds[column, y];
+            }
+
+            return _columnTargetBuffer;
         }
 
         private void LogWarning(string message, UnityEngine.Object context = null)
@@ -2163,7 +2229,7 @@ namespace Neo.Bonus
                     continue;
                 }
 
-                var hsl = Color.HSVToRGB(li * 0.17f % 1f, 0.92f, 1f);
+                Color hsl = Color.HSVToRGB(li * 0.17f % 1f, 0.92f, 1f);
                 Color lineCol = _gizmoPaylineColor;
                 lineCol.r = hsl.r;
                 lineCol.g = hsl.g;
@@ -2206,7 +2272,7 @@ namespace Neo.Bonus
 
                 mid /= pts.Count;
 
-                string corDesc = string.Join(", ", line.corY.Select(y => y.ToString()));
+                string corDesc = string.Join(", ", line.corY);
                 string hex = ColorUtility.ToHtmlStringRGBA(lineCol);
                 string caption = "<color=#" + hex + ">Line " + li + "</color>\n" + "corY: [" + corDesc + "]";
                 if (fbOnly && defs.Length == 1 && li == 0)

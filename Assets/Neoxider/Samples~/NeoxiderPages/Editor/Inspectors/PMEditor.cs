@@ -1,23 +1,43 @@
-using System;
-using System.Linq;
 using Neo.Editor;
 using Neo.Pages;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Neo.Pages.Editor
 {
     [CustomEditor(typeof(PM))]
     public sealed class PMEditor : CustomEditorBase
     {
-        private const float ModeButtonHeight = 22f;
-        private const string SourceLabelAll = "Source: all project folders";
+        private const float PageButtonWidth = 110f;
+        private const float PageButtonHeight = 22f;
+
+        private static readonly GUIContent IntegrateWithGMContent = new("Integrate With GM",
+            "Open PageWin/PageLose/PageEnd when GM reports Win, Lose or End.");
+        private static readonly GUIContent ClosePopupsContent = new("Close Popups On Exclusive Change",
+            "Opening a non-popup page closes active popup pages.");
+        private static readonly GUIContent DontDestroyOnLoadContent = new("Dont Destroy On Load");
+        private static readonly GUIContent SetInstanceOnAwakeContent = new("Set Instance On Awake");
+        private static readonly GUIContent SelectInstanceContent = new("Select Instance", "Select and ping the PM singleton.");
+        private static readonly GUIContent DestroyInstanceContent = new("Destroy (Play Mode)");
+        private static readonly GUIContent StartupPageContent = new("Startup Page");
+        private static readonly GUIContent StartupPageAssetContent = new("Startup Page (asset)");
+        private static readonly GUIContent EditorActivePageContent = new("Editor Active Page");
+        private static readonly GUIContent EditorActiveAssetContent = new("Editor Active (asset)");
+        private static readonly GUIContent DebugLogsContent = new("Debug Logs",
+            "Log page switches and setup warnings of this PM. Errors log unless NeoDiagnostics errors are off.");
+        private static readonly GUILayoutOption[] SmallButtonOptions = { GUILayout.Height(20f) };
+        private static readonly GUILayoutOption[] PageButtonOptions =
+        {
+            GUILayout.Width(PageButtonWidth), GUILayout.Height(PageButtonHeight), GUILayout.ExpandWidth(false)
+        };
+
         private SerializedProperty allPagesProp;
         private SerializedProperty autoSelectEditorPageProp;
+        private SerializedProperty closePopupsProp;
 
         private SerializedProperty currentUiPageProp;
+        private SerializedProperty debugLogsProp;
 
         private SerializedProperty dontDestroyOnLoadProp;
         private SerializedProperty editorActivePageIdProp;
@@ -48,15 +68,16 @@ namespace Neo.Pages.Editor
             allPagesProp = serializedObject.FindProperty("allPages");
             startupPageProp = serializedObject.FindProperty("startupPage");
             ignoredPageIdsProp = serializedObject.FindProperty("ignoredPageIds");
+            closePopupsProp = serializedObject.FindProperty("closePopupsOnExclusivePageChange");
             onPageChangedProp = serializedObject.FindProperty("OnPageChanged");
             refreshPagesInEditorProp = serializedObject.FindProperty("refreshPagesInEditor");
             editorActivePageIdProp = serializedObject.FindProperty("editorActivePageId");
             autoSelectEditorPageProp = serializedObject.FindProperty("autoSelectEditorPage");
             integrateWithGMProp = serializedObject.FindProperty("integrateWithGM");
+            debugLogsProp = serializedObject.FindProperty("debugLogs");
 
             ignoredList = new ReorderableList(serializedObject, ignoredPageIdsProp, true, true, true, true);
-            ignoredList.drawHeaderCallback =
-                rect => EditorGUI.LabelField(rect, "Ignored Pages (do not change active state)");
+            ignoredList.drawHeaderCallback = DrawIgnoredHeader;
             ignoredList.drawElementCallback = DrawIgnoredElement;
         }
 
@@ -68,28 +89,25 @@ namespace Neo.Pages.Editor
             EditorGUILayout.Space(8);
 
             EditorGUILayout.LabelField("Runtime", EditorStyles.boldLabel);
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                if (integrateWithGMProp != null)
-                {
-                    EditorGUILayout.PropertyField(integrateWithGMProp, new GUIContent("Integrate With GM"));
-                    EditorGUILayout.Space(4);
-                }
-
-                EditorGUILayout.LabelField("Startup Page", EditorStyles.miniBoldLabel);
-                DrawStartupSelector();
-            }
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            DrawOptionalProperty(integrateWithGMProp, IntegrateWithGMContent);
+            DrawOptionalProperty(closePopupsProp, ClosePopupsContent);
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Startup Page", EditorStyles.miniBoldLabel);
+            DrawStartupSelector();
+            EditorGUILayout.EndVertical();
 
             EditorGUILayout.Space(6);
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.LabelField("Ignored Pages", EditorStyles.miniBoldLabel);
-                DrawIgnoredSelectorMode();
-                ignoredList.DoLayoutList();
-            }
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Ignored Pages", EditorStyles.miniBoldLabel);
+            ignoredSelectMode = PagesEditorGUI.SegmentedMode(ignoredSelectMode, PagesEditorGUI.DropdownOrAsset);
+            EditorGUILayout.Space(2);
+            ignoredList.DoLayoutList();
+            EditorGUILayout.EndVertical();
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Debug", EditorStyles.boldLabel);
+            DrawOptionalProperty(debugLogsProp, DebugLogsContent);
             EditorGUILayout.PropertyField(currentUiPageProp);
             EditorGUILayout.PropertyField(previousUiPageProp);
             EditorGUILayout.PropertyField(allPagesProp, true);
@@ -97,15 +115,13 @@ namespace Neo.Pages.Editor
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Editor Preview", EditorStyles.boldLabel);
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.PropertyField(refreshPagesInEditorProp);
-                EditorGUILayout.PropertyField(autoSelectEditorPageProp);
-
-                EditorGUILayout.Space(6);
-                EditorGUILayout.LabelField("Editor Active Page", EditorStyles.miniBoldLabel);
-                DrawEditorActiveSelector();
-            }
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.PropertyField(refreshPagesInEditorProp);
+            EditorGUILayout.PropertyField(autoSelectEditorPageProp);
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField("Editor Active Page", EditorStyles.miniBoldLabel);
+            DrawEditorActiveSelector();
+            EditorGUILayout.EndVertical();
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -115,81 +131,89 @@ namespace Neo.Pages.Editor
             // WHY: Pages inspectors do not use auto-assign from NeoCustomEditor.
         }
 
+        private static void DrawOptionalProperty(SerializedProperty property, GUIContent label)
+        {
+            if (property != null)
+            {
+                EditorGUILayout.PropertyField(property, label);
+            }
+        }
+
         private void DrawSingletonSection()
         {
             EditorGUILayout.LabelField("Singleton", EditorStyles.boldLabel);
+            DrawOptionalProperty(dontDestroyOnLoadProp, DontDestroyOnLoadContent);
+            DrawOptionalProperty(setInstanceOnAwakeProp, SetInstanceOnAwakeContent);
 
-            if (dontDestroyOnLoadProp != null)
+            EditorGUILayout.BeginHorizontal();
+            // WHY: the instance is resolved on click only; a scene search per repaint made the inspector slow.
+            bool selectInstance = GUILayout.Button(SelectInstanceContent, SmallButtonOptions);
+            bool destroyInstance;
+            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying))
             {
-                EditorGUILayout.PropertyField(dontDestroyOnLoadProp, new GUIContent("Dont Destroy On Load"));
+                destroyInstance = GUILayout.Button(DestroyInstanceContent, SmallButtonOptions);
             }
 
-            if (setInstanceOnAwakeProp != null)
-            {
-                EditorGUILayout.PropertyField(setInstanceOnAwakeProp, new GUIContent("Set Instance On Awake"));
-            }
+            EditorGUILayout.EndHorizontal();
 
-            PM instance = FindInstanceInScene();
-            using (new EditorGUI.DisabledScope(instance == null))
+            if (selectInstance)
             {
-                using (new EditorGUILayout.HorizontalScope())
+                PM instance = FindInstanceInScene();
+                if (instance != null)
                 {
-                    if (GUILayout.Button("Select Instance", GUILayout.Height(20)))
-                    {
-                        Selection.activeObject = instance;
-                        EditorGUIUtility.PingObject(instance);
-                    }
-
-                    using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying))
-                    {
-                        if (GUILayout.Button("Destroy (Play Mode)", GUILayout.Height(20)))
-                        {
-                            PM.DestroyInstance();
-                        }
-                    }
+                    Selection.activeObject = instance;
+                    EditorGUIUtility.PingObject(instance);
                 }
+            }
+
+            if (destroyInstance)
+            {
+                PM.DestroyInstance();
             }
         }
 
         private static PM FindInstanceInScene()
         {
+            if (PM.TryGetInstance(out PM instance))
+            {
+                return instance;
+            }
+
             return FindAnyObjectByType<PM>(FindObjectsInactive.Include);
         }
 
         private void DrawStartupSelector()
         {
-            startupSelectMode = DrawSegmentedMode(startupSelectMode,
-                new GUIContent("Dropdown", "Pick from PageId assets in the folder"),
-                new GUIContent("Asset", "Manually pick a specific PageId asset"));
+            startupSelectMode = PagesEditorGUI.SegmentedMode(startupSelectMode, PagesEditorGUI.DropdownOrAsset);
             EditorGUILayout.Space(2);
 
             if (startupSelectMode == 0)
             {
-                DrawPageIdDropdown(startupPageProp, "Startup Page");
-                EditorGUILayout.LabelField(SourceLabelAll, EditorStyles.miniLabel);
+                if (PagesEditorGUI.PageIdPopup(startupPageProp, StartupPageContent))
+                {
+                    EditorGUILayout.LabelField(PagesEditorGUI.SourceLabelAll, EditorStyles.miniLabel);
+                }
             }
             else
             {
-                EditorGUILayout.PropertyField(startupPageProp, new GUIContent("Startup Page (asset)"));
+                EditorGUILayout.PropertyField(startupPageProp, StartupPageAssetContent);
             }
         }
 
-        private void DrawIgnoredSelectorMode()
+        private static void DrawIgnoredHeader(Rect rect)
         {
-            ignoredSelectMode = DrawSegmentedMode(ignoredSelectMode,
-                new GUIContent("Dropdown", "Pick from PageId assets in the folder"),
-                new GUIContent("Asset", "Manually pick a specific PageId asset"));
-            EditorGUILayout.Space(2);
+            EditorGUI.LabelField(rect, "Ignored Pages (do not change active state)");
         }
 
         private void DrawIgnoredElement(Rect rect, int index, bool isActive, bool isFocused)
         {
             SerializedProperty element = ignoredPageIdsProp.GetArrayElementAtIndex(index);
             rect.y += 1;
+            rect.height = EditorGUIUtility.singleLineHeight;
 
             if (ignoredSelectMode == 0)
             {
-                DrawPageIdDropdown(element, GUIContent.none, rect);
+                PagesEditorGUI.PageIdPopup(rect, element);
             }
             else
             {
@@ -199,106 +223,38 @@ namespace Neo.Pages.Editor
 
         private void DrawEditorActiveSelector()
         {
-            editorSelectMode = DrawSegmentedMode(editorSelectMode,
-                new GUIContent("Buttons", "Quick buttons for all PageId assets in the folder"),
-                new GUIContent("Dropdown", "Pick from the list of PageId assets in the folder"),
-                new GUIContent("Asset", "Manually pick a specific PageId asset"));
+            editorSelectMode = PagesEditorGUI.SegmentedMode(editorSelectMode, PagesEditorGUI.ButtonsDropdownOrAsset);
             EditorGUILayout.Space(2);
 
             if (editorSelectMode == 0)
             {
                 DrawEditorButtons();
-                EditorGUILayout.PropertyField(editorActivePageIdProp, new GUIContent("Editor Active (asset)"));
+                EditorGUILayout.PropertyField(editorActivePageIdProp, EditorActiveAssetContent);
             }
             else if (editorSelectMode == 1)
             {
-                DrawPageIdDropdown(editorActivePageIdProp, "Editor Active Page");
-                EditorGUILayout.LabelField(SourceLabelAll, EditorStyles.miniLabel);
+                if (PagesEditorGUI.PageIdPopup(editorActivePageIdProp, EditorActivePageContent))
+                {
+                    EditorGUILayout.LabelField(PagesEditorGUI.SourceLabelAll, EditorStyles.miniLabel);
+                }
             }
             else
             {
-                EditorGUILayout.PropertyField(editorActivePageIdProp, new GUIContent("Editor Active Page"));
+                EditorGUILayout.PropertyField(editorActivePageIdProp, EditorActivePageContent);
             }
-        }
-
-        private static int DrawSegmentedMode(int value, GUIContent a, GUIContent b)
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                int selected = value;
-
-                Color prevBg = GUI.backgroundColor;
-                Color prevContent = GUI.contentColor;
-
-                DrawModeButton(0, a, ref selected, EditorStyles.miniButtonLeft);
-                DrawModeButton(1, b, ref selected, EditorStyles.miniButtonRight);
-
-                GUI.backgroundColor = prevBg;
-                GUI.contentColor = prevContent;
-
-                return selected;
-            }
-        }
-
-        private static int DrawSegmentedMode(int value, GUIContent a, GUIContent b, GUIContent c)
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                int selected = value;
-
-                Color prevBg = GUI.backgroundColor;
-                Color prevContent = GUI.contentColor;
-
-                DrawModeButton(0, a, ref selected, EditorStyles.miniButtonLeft);
-                DrawModeButton(1, b, ref selected, EditorStyles.miniButtonMid);
-                DrawModeButton(2, c, ref selected, EditorStyles.miniButtonRight);
-
-                GUI.backgroundColor = prevBg;
-                GUI.contentColor = prevContent;
-
-                return selected;
-            }
-        }
-
-        private static void DrawModeButton(int index, GUIContent content, ref int selected, GUIStyle style)
-        {
-            bool isSelected = selected == index;
-            GUI.backgroundColor = isSelected ? GetSelectedBackgroundColor() : Color.white;
-            GUI.contentColor = isSelected ? GetSelectedContentColor() : Color.white;
-
-            if (GUILayout.Button(content, style, GUILayout.Height(ModeButtonHeight)))
-            {
-                selected = index;
-            }
-        }
-
-        private static Color GetSelectedBackgroundColor()
-        {
-            return EditorGUIUtility.isProSkin
-                ? new Color(0.25f, 0.55f, 0.95f, 1f)
-                : new Color(0.20f, 0.45f, 0.90f, 1f);
-        }
-
-        private static Color GetSelectedContentColor()
-        {
-            return Color.white;
         }
 
         private void DrawEditorButtons()
         {
-            PageId[] ids = FindAllPageIds(null);
+            PageId[] ids = PageIdEditorCache.GetIds();
             if (ids.Length == 0)
             {
-                EditorGUILayout.HelpBox(
-                    "There are no PageId assets in the project.\nCreate a PageId manually or generate one via menu: Tools → Neo → Pages → Generate Default PageIds.",
-                    MessageType.Warning);
+                EditorGUILayout.HelpBox(PagesEditorGUI.NoPageIdsMessage, MessageType.Warning);
                 return;
             }
 
-            const float buttonWidth = 110f;
-            const float buttonHeight = 22f;
-
-            int columns = Mathf.Clamp(Mathf.FloorToInt((EditorGUIUtility.currentViewWidth - 40) / buttonWidth), 2, 6);
+            GUIContent[] labels = PageIdEditorCache.GetLabelContents();
+            int columns = Mathf.Clamp(Mathf.FloorToInt((EditorGUIUtility.currentViewWidth - 40) / PageButtonWidth), 2, 6);
             int i = 0;
 
             while (i < ids.Length)
@@ -309,8 +265,7 @@ namespace Neo.Pages.Editor
                     PageId id = ids[i];
                     using (new EditorGUI.DisabledScope(id == null))
                     {
-                        if (GUILayout.Button(id.DisplayName, GUILayout.Width(buttonWidth),
-                                GUILayout.Height(buttonHeight), GUILayout.ExpandWidth(false)))
+                        if (GUILayout.Button(labels[i + 1], PageButtonOptions))
                         {
                             editorActivePageIdProp.objectReferenceValue = id;
                             ApplyAndPreview(id);
@@ -331,89 +286,15 @@ namespace Neo.Pages.Editor
                 return;
             }
 
-            var pm = (PM)target;
+            PM pm = (PM)target;
             if (pm == null || id == null)
             {
                 return;
             }
 
-            // WHY: mirrors OnValidate's deactivate-then-activate behavior, but without waiting for it.
-            pm.ActivateAll(false);
-            pm.ActivatePages(id, true, GetIgnoredArray(pm));
-        }
-
-        private static PageId[] GetIgnoredArray(PM pm)
-        {
-            // WHY: reads current serialized values from the object; returns empty when the array prop is missing.
-            SerializedObject so = new(pm);
-            SerializedProperty prop = so.FindProperty("ignoredPageIds");
-            if (prop == null || !prop.isArray)
-            {
-                return new PageId[] { };
-            }
-
-            var result = new PageId[prop.arraySize];
-            for (int i = 0; i < prop.arraySize; i++)
-            {
-                result[i] = prop.GetArrayElementAtIndex(i).objectReferenceValue as PageId;
-            }
-
-            return result.Where(x => x != null).ToArray();
-        }
-
-        private static void DrawPageIdDropdown(SerializedProperty prop, string label)
-        {
-            DrawPageIdDropdown(prop, new GUIContent(label));
-        }
-
-        private static void DrawPageIdDropdown(SerializedProperty prop, GUIContent label, Rect? rectOverride = null)
-        {
-            PageId[] ids = FindAllPageIds(null);
-            if (ids.Length == 0)
-            {
-                if (rectOverride.HasValue)
-                {
-                    return;
-                }
-
-                EditorGUILayout.HelpBox(
-                    "There are no PageId assets in the project.\nCreate a PageId manually or generate one via menu: Tools → Neo → Pages → Generate Default PageIds.",
-                    MessageType.Warning);
-                return;
-            }
-
-            string[] labels = PageIdEditorCache.GetLabels(null);
-
-            var current = prop.objectReferenceValue as PageId;
-            int currentIdx = current == null ? 0 : Array.FindIndex(ids, x => x == current) + 1;
-            if (currentIdx < 0)
-            {
-                currentIdx = 0;
-            }
-
-            int newIdx;
-            if (rectOverride.HasValue)
-            {
-                newIdx = EditorGUI.Popup(rectOverride.Value, currentIdx, labels);
-            }
-            else
-            {
-                newIdx = EditorGUILayout.Popup(label, currentIdx, labels);
-            }
-
-            if (newIdx == 0)
-            {
-                prop.objectReferenceValue = null;
-            }
-            else if (newIdx > 0 && newIdx <= ids.Length)
-            {
-                prop.objectReferenceValue = ids[newIdx - 1];
-            }
-        }
-
-        private static PageId[] FindAllPageIds(string folder = null)
-        {
-            return PageIdEditorCache.GetIds(folder);
+            // WHY: shows the page now instead of waiting for OnValidate's deferred refresh, through the same
+            // event-free path: an edit-time preview must not raise OnPageChanged.
+            pm.PreviewPageInEditor(id);
         }
     }
 }

@@ -297,7 +297,7 @@ namespace Neo.Network.Realtime
                 return new PredictionReport(PredictionOutcome.Snapped, error, replayed);
             }
 
-            // Keep what is drawn continuous: whatever the corrected state moves by, the offset takes the other way.
+            // WHY: keep what is drawn continuous: whatever the corrected state moves by, the offset takes the other way.
             float drawnX = X + OffsetX;
             float drawnY = Y + OffsetY;
             previousX += targetX - X;
@@ -308,8 +308,6 @@ namespace Neo.Network.Realtime
             OffsetY = drawnY - Y;
             return new PredictionReport(PredictionOutcome.Corrected, error, replayed);
         }
-
-        // ---- internals -----------------------------------------------------------------------
 
         private void Advance(float dirX, float dirY, float speed)
         {

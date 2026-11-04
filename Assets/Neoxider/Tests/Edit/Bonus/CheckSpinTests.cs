@@ -92,7 +92,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void GetWinningLines_ContiguousRunAtLineEnd_IsAWin()
         {
-            // Bottom line reads [1,7,7,7]: a contiguous 3-run not starting at column 0 must pay.
+            // WHY: bottom line reads [1,7,7,7]: a contiguous 3-run not starting at column 0 must pay.
             int[,] ids =
             {
                 { 1, 0, 0 },
@@ -160,7 +160,7 @@ namespace Neo.Editor.Tests
             try
             {
                 SpinController controller = go.AddComponent<SpinController>();
-                var money = new FakeMoneySpend();
+                FakeMoneySpend money = new FakeMoneySpend();
                 controller.moneySpend = money;
                 SetSpinPrice(controller, 15);
 

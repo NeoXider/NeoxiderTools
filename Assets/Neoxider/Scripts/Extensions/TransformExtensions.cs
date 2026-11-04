@@ -1,7 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Neo.Extensions
 {
@@ -367,10 +368,24 @@ namespace Neo.Extensions
         /// <summary>
         ///     Rotates the transform to look at a specified position in 2D space (on the XY plane).
         /// </summary>
+        /// <remarks>
+        ///     The sprite's "up" faces the target (angle - 90). A null transform or a target on the transform's
+        ///     XY position leaves the rotation unchanged instead of snapping to an arbitrary angle.
+        /// </remarks>
         /// <param name="offset">Additional rotation angle in degrees applied to the final Z rotation.</param>
         public static void LookAt2D(this Transform transform, Vector3 targetPosition, float offset = 0f)
         {
-            Vector3 direction = (targetPosition - transform.position).normalized;
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 direction = targetPosition - transform.position;
+            if (direction.x * direction.x + direction.y * direction.y <= Mathf.Epsilon)
+            {
+                return;
+            }
+
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             transform.rotation = Quaternion.Euler(0f, 0f, angle - 90 + offset);
         }
@@ -415,28 +430,55 @@ namespace Neo.Extensions
         ///     Finds the closest Transform from a collection of other transforms.
         /// </summary>
         /// <param name="others">A collection of transforms to compare against.</param>
-        /// <returns>The closest transform, or null if the collection is empty.</returns>
+        /// <returns>
+        ///     The closest transform, or null if the collection is empty, contains only null/destroyed entries and
+        ///     the transform itself, or when <paramref name="transform" /> is null.
+        /// </returns>
+        /// <remarks>Lists and arrays are scanned by index without allocating; the transform itself is skipped.</remarks>
         public static Transform GetClosest(this Transform transform, IEnumerable<Transform> others)
         {
-            Transform closest = null;
-            float minDistanceSqr = float.MaxValue;
-
-            if (others == null)
+            if (transform == null || others == null)
             {
                 return null;
             }
 
-            foreach (Transform other in others.Where(t => t != null && t != transform))
+            Vector3 origin = transform.position;
+            Transform closest = null;
+            float minDistanceSqr = float.PositiveInfinity;
+
+            if (others is IList<Transform> list)
             {
-                float distSqr = (transform.position - other.position).sqrMagnitude;
-                if (distSqr < minDistanceSqr)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    minDistanceSqr = distSqr;
-                    closest = other;
+                    ConsiderClosest(list[i], transform, origin, ref closest, ref minDistanceSqr);
                 }
+
+                return closest;
+            }
+
+            foreach (Transform other in others)
+            {
+                ConsiderClosest(other, transform, origin, ref closest, ref minDistanceSqr);
             }
 
             return closest;
+        }
+
+        private static void ConsiderClosest(Transform candidate, Transform self, Vector3 origin, ref Transform closest,
+            ref float minDistanceSqr)
+        {
+            if (candidate == null || ReferenceEquals(candidate, self))
+            {
+                return;
+            }
+
+            float distSqr = (origin - candidate.position).sqrMagnitude;
+            // WHY: the equality branch keeps a result when every candidate is so far away that the square overflows.
+            if (distSqr < minDistanceSqr || (ReferenceEquals(closest, null) && distSqr == minDistanceSqr))
+            {
+                minDistanceSqr = distSqr;
+                closest = candidate;
+            }
         }
 
         /// <summary>
@@ -446,7 +488,7 @@ namespace Neo.Extensions
         {
             if (transform == null)
             {
-                return new Transform[0];
+                return Array.Empty<Transform>();
             }
 
             Transform[] children = new Transform[transform.childCount];

@@ -20,7 +20,7 @@ namespace Neo.Editor.Tests
         private const BindingFlags AllMembers = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
                                                 | BindingFlags.Static | BindingFlags.FlattenHierarchy;
 
-        // "Type.Member" pairs the docs name as API. Members are looked up as methods, properties, fields or events.
+        /// <summary>"Type.Member" pairs the docs name as API, looked up as methods, properties, fields or events.</summary>
         private static readonly string[] DocumentedMembers =
         {
             "Neo.Network.NeoNetworkManager.StartAsHost",
@@ -83,7 +83,35 @@ namespace Neo.Editor.Tests
             "Neo.Network.NeoNetworkTelemetry.SetTimeline",
             "Neo.Network.NeoNetworkTelemetry.RttMs",
             "Neo.Network.NetTelemetry.RttMilliseconds",
+            "Neo.Network.NeoNetworkDiscovery.StartAdvertising",
+            "Neo.Network.NeoNetworkDiscovery.StartDiscovery",
+            "Neo.Network.NeoNetworkDiscovery.StopDiscovery",
+            "Neo.Network.NeoNetworkDiscovery.ConnectToFirstServer",
+            "Neo.Network.NeoNetworkDiscovery.ConnectToServer",
+            "Neo.Network.NeoNetworkDiscovery.QuickPlay",
+            "Neo.Network.NeoNetworkDiscovery.CancelQuickPlay",
+            "Neo.Network.NeoNetworkDiscovery.IsAdvertising",
+            "Neo.Network.NeoNetworkDiscovery.AutoAdvertiseOnHost",
+            "Neo.Network.NeoNetworkDiscovery.AutoDiscoverOnClient",
+            "Neo.Network.NeoNetworkDiscovery.IsSearching",
+            "Neo.Network.NeoLobbyPlayer.ConnectionId",
+            "Neo.Network.NeoLobbyPlayer.PlayerId",
 #endif
+            "Neo.Network.NetworkActionRelay.TriggerByName",
+            "Neo.Network.NetworkActionRelay.TriggerFloatByName",
+            "Neo.Network.NetworkActionRelay.TriggerStringByName",
+            "Neo.Network.NetworkActionRelay.TryGetChannelIndex",
+            "Neo.Network.NetworkActionRelay.GetChannel",
+            "Neo.Network.NetworkActionRelay.ChannelCount",
+            "Neo.Network.NeoNetworkSpawner.Spawn",
+            "Neo.Network.NeoNetworkSpawner.Despawn",
+            "Neo.Network.NeoNetworkSpawner.CanSpawn",
+            "Neo.Network.NeoNetworkPlayer.IsLocalPlayer",
+            "Neo.Network.NeoNetworkPlayer.HasAuthority",
+            "Neo.Network.NeoNetworkPlayer.OnLocalPlayerStarted",
+            "Neo.Network.NeoNetworkPlayer.OnRemotePlayerStarted",
+            "Neo.Network.NetworkPlayerName.SetLocalName",
+            "Neo.Network.NetworkPlayerName.PlayerName",
             "Neo.Network.NeoNetworkBootstrap.StartNetwork",
             "Neo.Network.NeoNetworkBootstrap.StartAs",
             "Neo.Network.NeoNetworkBootstrap.StartAsHost",
@@ -193,23 +221,19 @@ namespace Neo.Editor.Tests
         [Test]
         public void EveryNetworkPage_OpensWithWhatItIsAndHowToUse_OrContents()
         {
-            string[] pages =
-            {
-                "NeoNetworkBootstrap.md", "NeoNetworkTelemetry.md", "NeoNetworkManager.md", "NetworkSingleton.md",
-                "Realtime_IO_Guide.md", "Realtime/README.md", "Realtime/SnapshotInterpolation.md",
-                "Realtime/LocalPredictionModel.md", "Realtime/NetQuantization.md", "Realtime/NetFraming.md",
-                "Realtime/NetMessaging.md"
-            };
+            List<string> pages = new List<string>(Directory.GetFiles(DocsRoot, "*.md", SearchOption.AllDirectories));
+            pages.Add("Assets/Neoxider/Docs/Tools/Network/NetworkEventDispatcher.md");
+            Assert.That(pages.Count, Is.GreaterThan(20), "the Network docs folder was not found");
 
             List<string> offenders = new List<string>();
-            for (int i = 0; i < pages.Length; i++)
+            for (int i = 0; i < pages.Count; i++)
             {
-                string text = File.ReadAllText(Path.Combine(DocsRoot, pages[i]));
+                string text = File.ReadAllText(pages[i]);
                 bool hasWhat = text.Contains("**What it is:**");
                 bool hasHow = text.Contains("**How to use:**") || text.Contains("**Contents:**");
                 if (!hasWhat || !hasHow)
                 {
-                    offenders.Add(pages[i]);
+                    offenders.Add(pages[i].Replace('\\', '/'));
                 }
             }
 

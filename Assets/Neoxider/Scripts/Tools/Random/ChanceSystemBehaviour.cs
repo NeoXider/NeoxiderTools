@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -51,6 +50,7 @@ namespace Neo.Tools
         /// <summary>Events invoked by selected index: when index i is chosen, eventsByIndex[i] is invoked (if present).</summary>
         public IReadOnlyList<UnityEvent> EventsByIndex => eventsByIndex;
 
+        /// <summary>Inline chance table rolled by this component.</summary>
         public ChanceManager Manager => manager;
 
         /// <summary>Last selected index after GenerateId() / EvaluateAndNotify(); -1 if not rolled yet.</summary>
@@ -79,7 +79,7 @@ namespace Neo.Tools
                 ChanceManager.Entry entry = manager?.Evaluate();
                 if (entry != null)
                 {
-                    int index = manager.Entries.ToList().IndexOf(entry);
+                    int index = IndexOfEntry(entry);
                     float normalized = index >= 0 ? manager.GetNormalizedWeight(index) : 0f;
                     NeoDiagnostics.Log(
                         $"[ChanceSystem] Sampled entry id={entry.CustomId}, weight={entry.Weight:F4}, normalized={normalized:F4}",
@@ -99,6 +99,20 @@ namespace Neo.Tools
 
             manager.Sanitize();
             manager.EnsureUniqueIds();
+        }
+
+        private int IndexOfEntry(ChanceManager.Entry entry)
+        {
+            IReadOnlyList<ChanceManager.Entry> entries = manager.Entries;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (ReferenceEquals(entries[i], entry))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         /// <summary>Calls GenerateId() (for use from UnityEvent/Button with no return value).</summary>

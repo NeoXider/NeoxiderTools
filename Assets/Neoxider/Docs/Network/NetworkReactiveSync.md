@@ -2,7 +2,14 @@
 
 **What it is:** `Neo.Network.NetworkReactiveSync` — NoCode replication for `ReactivePropertyFloat/Int/Bool` (the inspector counterpart of `NetworkReactivePropertyBridge`, which needs hand-written SyncVar code). The value replicates and every local binding (`TextMoney`, UI, UnityEvents) fires on all clients.
 
-**Usage:** put on a `NetworkIdentity` object; reference the component (e.g. `Money`) and the reactive field name (`CurrentMoney`), pick value type and direction (`ServerToClients` / `OwnerToServer`). `Sync Interval` ≥ 0.1 s. Without Mirror the component is inert — the reactive property keeps working locally.
+**How to use:**
+1. Put it on a `NetworkIdentity` object (`Scripts/Network/Core/NetworkReactiveSync.cs`) and tick **Is Networked**.
+2. Reference the component (e.g. `Money`) and the reactive field name (`CurrentMoney`).
+3. Pick **Value Type** and direction (`ServerToClients` / `OwnerToServer`); `Sync Interval` ≥ 0.1 s.
+
+Without Mirror the component is inert — the reactive property keeps working locally.
+
+---
 
 In `OwnerToServer` mode, accepted values update the dedicated server's reactive property and notify
 its listeners as well as replicating to clients. A host uses Mirror's normal hook once; the explicit

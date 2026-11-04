@@ -16,7 +16,8 @@ namespace Neo.Rpg
     public sealed class RpgContactDamage : MonoBehaviour
     {
         [Header("Targeting")]
-        [Tooltip("Tag of the target to damage. Leave empty to damage any RpgCharacter in range.")]
+        [Tooltip("Tag of the target searched when no override is set. Empty disables the search, so only " +
+                 "Target Override or Target Receiver Override is damaged.")]
         [SerializeField]
         private string targetTag = "Player";
 
@@ -72,6 +73,9 @@ namespace Neo.Rpg
         private Transform _cachedTarget;
         private IRpgCombatReceiver _cachedTargetCombatant;
         private float _lastHitTime = -999f;
+
+        // WHY: true only after OnTargetFound was raised for the current target; caching a target must not set it,
+        // otherwise OnTargetFound never fires and an inactive cached target re-raises OnTargetLost on every retry.
         private bool _hadTarget;
         private float _nextTargetFindTime = -1f;
 
@@ -151,7 +155,9 @@ namespace Neo.Rpg
                 return;
             }
 
-            if (_cachedTargetCombatant == null || _cachedTargetCombatant.IsDead)
+            if (_cachedTargetCombatant == null ||
+                _cachedTargetCombatant is Object combatantObject && combatantObject == null ||
+                _cachedTargetCombatant.IsDead)
             {
                 return;
             }
@@ -194,35 +200,75 @@ namespace Neo.Rpg
         /// <summary>Gets the current damage range.</summary>
         public float DamageRange => damageRange;
 
+        /// <summary>Gets the cooldown between hits in seconds.</summary>
+        public float Cooldown => cooldown;
+
+        /// <summary>Gets the damage type passed to the receiver.</summary>
+        public string DamageType => damageType;
+
+        /// <summary>Sets the damage range at runtime (minimum 0.1).</summary>
+        public void SetDamageRange(float range)
+        {
+            damageRange = Mathf.Max(0.1f, range);
+        }
+
+        /// <summary>Sets the cooldown between hits at runtime (minimum 0.1 seconds).</summary>
+        public void SetCooldown(float seconds)
+        {
+            cooldown = Mathf.Max(0.1f, seconds);
+        }
+
+        /// <summary>Sets the damage type passed to the receiver for resist calculations.</summary>
+        public void SetDamageType(string type)
+        {
+            damageType = type ?? string.Empty;
+        }
+
+        /// <summary>Currently cached target transform (null when none).</summary>
+        public Transform CurrentTarget => _cachedTarget;
+
         private void CacheTarget()
         {
+            Transform previousTarget = _cachedTarget;
             _cachedTarget = null;
             _cachedTargetCombatant = null;
             if (targetReceiverOverride != null && targetReceiverOverride is IRpgCombatReceiver rc)
             {
                 _cachedTargetCombatant = rc;
                 _cachedTarget = targetReceiverOverride.transform;
-                _hadTarget = true;
-                return;
             }
-
-            if (targetOverride != null)
+            else
             {
-                _cachedTarget = targetOverride;
+                if (targetOverride != null)
+                {
+                    _cachedTarget = targetOverride;
+                }
+                else if (!string.IsNullOrEmpty(targetTag))
+                {
+                    GameObject go = GameObject.FindGameObjectWithTag(targetTag);
+                    _cachedTarget = go != null ? go.transform : null;
+                }
+
+                _cachedTargetCombatant = _cachedTarget != null ? ResolveCombatant(_cachedTarget) : null;
             }
-            else if (!string.IsNullOrEmpty(targetTag))
+
+            if (_cachedTarget != previousTarget)
             {
-                GameObject go = GameObject.FindGameObjectWithTag(targetTag);
-                _cachedTarget = go != null ? go.transform : null;
+                // WHY: a different target must be found (in range) again before OnTargetFound fires for it.
+                _hadTarget = false;
+            }
+        }
+
+        private static IRpgCombatReceiver ResolveCombatant(Transform target)
+        {
+            // WHY: TryGetComponent avoids the editor fake-null that would short-circuit the ?? fallbacks.
+            if (target.TryGetComponent(out IRpgCombatReceiver direct))
+            {
+                return direct;
             }
 
-            _cachedTargetCombatant = _cachedTarget != null
-                ? _cachedTarget.GetComponent<IRpgCombatReceiver>()
-                  ?? _cachedTarget.GetComponentInChildren<IRpgCombatReceiver>()
-                  ?? _cachedTarget.GetComponentInParent<IRpgCombatReceiver>()
-                : null;
-
-            _hadTarget = _cachedTarget != null && _cachedTargetCombatant != null;
+            return target.GetComponentInChildren<IRpgCombatReceiver>() ??
+                   target.GetComponentInParent<IRpgCombatReceiver>();
         }
 
         private void OnDrawGizmosSelected()

@@ -35,6 +35,15 @@ namespace Neo.Tools
     [Serializable]
     public class TypewriterEffect
     {
+        // WHY: the former whole-millisecond rounding skipped a wait below 0.5 ms; very fast runs (and tests) rely on
+        // completing synchronously.
+        private const float MinimumWaitSeconds = 0.0005f;
+
+        // WHY: the carried overshoot keeps the rate when a character's delay is shorter than a frame, but one long
+        // frame (a loading hitch, a GC spike, an app resume on unscaled time) must not reveal the rest of the line
+        // at once. 0.1 s keeps the configured rate down to 10 fps and bounds a catch-up burst to that much typing.
+        internal const float MaxCatchUpSeconds = 0.1f;
+
         /// <summary>
         ///     Default predefined list of punctuation pauses.
         /// </summary>
@@ -137,7 +146,10 @@ namespace Neo.Tools
         public float Progress =>
             _visibleCharacterCount <= 0 ? 0f : (float)_typedVisibleCharacters / _visibleCharacterCount;
 
-        public string CurrentText => _builder.ToString();
+        /// <summary>The typed prefix of <see cref="FullText" />, rich-text tags included.</summary>
+        public string CurrentText =>
+            _currentIndex >= _fullText.Length ? _fullText : _fullText.Substring(0, _currentIndex);
+
         public string FullText => _fullText;
 
         public event Action OnStart;
@@ -241,15 +253,45 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Starts the typewriter effect.
+        ///     Starts the typewriter effect, passing the typed prefix (rich-text tags included) after every step.
         /// </summary>
-        public async UniTask PlayAsync(string text, Action<string> onTextChanged,
+        /// <param name="text">Full text to type; null is treated as empty.</param>
+        /// <param name="onTextChanged">Receives the typed prefix; a new string is built for every step.</param>
+        /// <param name="externalToken">Cancels the run (the text stays as typed so far).</param>
+        public UniTask PlayAsync(string text, Action<string> onTextChanged,
             CancellationToken externalToken = default)
+        {
+            return RunAsync(text, onTextChanged, null, externalToken);
+        }
+
+        /// <summary>
+        ///     Starts the typewriter effect without building intermediate strings: reports how many visible
+        ///     (non-tag) characters are revealed. Pair it with <c>TMP_Text.maxVisibleCharacters</c> on a label that
+        ///     already shows the full text: no per-character allocation and no word-wrap jumps.
+        /// </summary>
+        /// <param name="text">Full text to type; null is treated as empty.</param>
+        /// <param name="onVisibleCharactersChanged">Receives the revealed visible-character count (0 first).</param>
+        /// <param name="externalToken">Cancels the run (the reveal stays where it is).</param>
+        public UniTask PlayRevealAsync(string text, Action<int> onVisibleCharactersChanged,
+            CancellationToken externalToken = default)
+        {
+            return RunAsync(text, null, onVisibleCharactersChanged, externalToken);
+        }
+
+        private async UniTask RunAsync(string text, Action<string> onTextChanged,
+            Action<int> onVisibleCharactersChanged, CancellationToken externalToken)
         {
             Stop();
 
+            // WHY: the prefix builder only feeds onTextChanged; a reveal run never touches it, so it costs
+            // nothing per character (CurrentText is derived from FullText and the typed index).
+            bool buildText = onTextChanged != null;
             _fullText = text ?? string.Empty;
-            _builder.Clear();
+            if (buildText)
+            {
+                _builder.Clear();
+            }
+
             _currentIndex = 0;
             _typedVisibleCharacters = 0;
             _visibleCharacterCount = CountVisibleCharacters(_fullText);
@@ -257,6 +299,7 @@ namespace Neo.Tools
             if (string.IsNullOrEmpty(_fullText))
             {
                 onTextChanged?.Invoke(string.Empty);
+                onVisibleCharactersChanged?.Invoke(0);
                 return;
             }
 
@@ -266,34 +309,57 @@ namespace Neo.Tools
             int generation = _runGeneration;
             CancellationToken token = _cts.Token;
 
+            // WHY: A wait resumes on the first frame at or past its due time; carrying that overshoot into the next
+            // character keeps the average rate at CharactersPerSecond instead of capping it at one character per
+            // frame (70 cps typed about 60 cps at 60 fps). The carry is capped by MaxCatchUpSeconds.
+            float overshoot = 0f;
+
             try
             {
                 token.ThrowIfCancellationRequested();
                 OnStart?.Invoke();
                 token.ThrowIfCancellationRequested();
                 onTextChanged?.Invoke(string.Empty);
+                onVisibleCharactersChanged?.Invoke(0);
                 token.ThrowIfCancellationRequested();
 
                 for (int i = 0; i < _fullText.Length; i++)
                 {
                     token.ThrowIfCancellationRequested();
 
-                    if (TryReadRichTextTag(_fullText, i, out string richTextTag, out int richTextTagLength))
+                    if (TryReadRichTextTag(_fullText, i, out int richTextTagLength))
                     {
-                        _builder.Append(richTextTag);
+                        if (buildText)
+                        {
+                            _builder.Append(_fullText, i, richTextTagLength);
+                        }
+
                         _currentIndex += richTextTagLength;
                         i += richTextTagLength - 1;
-                        onTextChanged?.Invoke(_builder.ToString());
+                        if (buildText)
+                        {
+                            onTextChanged(_builder.ToString());
+                        }
+
                         token.ThrowIfCancellationRequested();
                         continue;
                     }
 
                     char c = _fullText[i];
-                    _builder.Append(c);
+                    if (buildText)
+                    {
+                        _builder.Append(c);
+                    }
+
                     _currentIndex = i + 1;
                     _typedVisibleCharacters++;
 
-                    onTextChanged?.Invoke(_builder.ToString());
+                    if (buildText)
+                    {
+                        onTextChanged(_builder.ToString());
+                    }
+
+                    onVisibleCharactersChanged?.Invoke(_typedVisibleCharacters);
                     token.ThrowIfCancellationRequested();
                     OnCharacterTyped?.Invoke(c);
                     token.ThrowIfCancellationRequested();
@@ -307,10 +373,13 @@ namespace Neo.Tools
                         totalDelay += punctuationPause;
                     }
 
-                    int delayMs = Mathf.RoundToInt(totalDelay * 1000f);
-                    if (delayMs > 0)
+                    float wait = TakeWait(totalDelay, ref overshoot);
+                    if (wait > 0f)
                     {
-                        await UniTask.Delay(delayMs, _useUnscaledTime, PlayerLoopTiming.Update, token);
+                        bool unscaled = _useUnscaledTime;
+                        double waitStart = ReadClock(unscaled);
+                        await UniTask.Delay(TimeSpan.FromSeconds(wait), unscaled, PlayerLoopTiming.Update, token);
+                        overshoot = OvershootAfterWait(wait, (float)(ReadClock(unscaled) - waitStart));
                     }
                 }
 
@@ -361,8 +430,6 @@ namespace Neo.Tools
             int generation = _runGeneration;
             _currentIndex = _fullText.Length;
             _typedVisibleCharacters = _visibleCharacterCount;
-            _builder.Clear();
-            _builder.Append(_fullText);
             OnProgressChanged?.Invoke(1f);
             if (generation == _runGeneration)
             {
@@ -385,6 +452,47 @@ namespace Neo.Tools
             _visibleCharacterCount = 0;
         }
 
+        /// <summary>
+        ///     Seconds to wait after a character whose delay is <paramref name="delay" />, after spending the time a
+        ///     previous wait overshot. Returns 0 when the rest is below <see cref="MinimumWaitSeconds" />: the next
+        ///     character is then typed in the same frame.
+        /// </summary>
+        internal static float TakeWait(float delay, ref float overshoot)
+        {
+            float due = delay - overshoot;
+            if (due < MinimumWaitSeconds)
+            {
+                overshoot = Mathf.Max(0f, -due);
+                return 0f;
+            }
+
+            overshoot = 0f;
+            return due;
+        }
+
+        /// <summary>
+        ///     Time a wait of <paramref name="wait" /> seconds overshot, measured on the clock the delay used, capped
+        ///     at <see cref="MaxCatchUpSeconds" />.
+        /// </summary>
+        /// <remarks>
+        ///     WHY: never negative, so a clock that does not advance (Edit Mode) falls back to one plain delay per
+        ///     character instead of stretching later waits; capped, so a stalled frame types at most
+        ///     <see cref="MaxCatchUpSeconds" /> worth of extra characters and shortens a punctuation pause by at
+        ///     most that much.
+        /// </remarks>
+        internal static float OvershootAfterWait(float wait, float elapsed)
+        {
+            return Mathf.Clamp(elapsed - wait, 0f, MaxCatchUpSeconds);
+        }
+
+        // WHY: UniTask.Delay sums Time.deltaTime (or unscaledDeltaTime) per frame, and the difference of the frame
+        // start times below equals that sum, so the overshoot is measured on the same clock. The double clocks keep
+        // that difference exact in long sessions, where a float clock's step nears a fast character's delay.
+        private static double ReadClock(bool unscaled)
+        {
+            return unscaled ? Time.unscaledTimeAsDouble : Time.timeAsDouble;
+        }
+
         private static int CountVisibleCharacters(string text)
         {
             if (string.IsNullOrEmpty(text))
@@ -395,7 +503,7 @@ namespace Neo.Tools
             int count = 0;
             for (int i = 0; i < text.Length; i++)
             {
-                if (TryReadRichTextTag(text, i, out _, out int tagLength))
+                if (TryReadRichTextTag(text, i, out int tagLength))
                 {
                     i += tagLength - 1;
                     continue;
@@ -429,9 +537,11 @@ namespace Neo.Tools
             _typingAudioSource.Play();
         }
 
-        private static bool TryReadRichTextTag(string text, int startIndex, out string tag, out int tagLength)
+        /// <summary>
+        ///     Measures a rich-text tag starting at <paramref name="startIndex" /> without allocating a substring.
+        /// </summary>
+        private static bool TryReadRichTextTag(string text, int startIndex, out int tagLength)
         {
-            tag = string.Empty;
             tagLength = 0;
 
             if (string.IsNullOrEmpty(text) || startIndex < 0 || startIndex >= text.Length || text[startIndex] != '<')
@@ -446,7 +556,6 @@ namespace Neo.Tools
             }
 
             tagLength = endIndex - startIndex + 1;
-            tag = text.Substring(startIndex, tagLength);
             return true;
         }
     }

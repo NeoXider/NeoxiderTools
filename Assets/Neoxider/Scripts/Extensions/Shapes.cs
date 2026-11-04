@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Extensions
@@ -5,6 +6,7 @@ namespace Neo.Extensions
     /// <summary>
     ///     Defines a 2D Circle with a center and radius.
     /// </summary>
+    [Serializable]
     public struct Circle
     {
         /// <summary>
@@ -30,6 +32,7 @@ namespace Neo.Extensions
     /// <summary>
     ///     Defines a 3D Sphere with a center and radius.
     /// </summary>
+    [Serializable]
     public struct Sphere
     {
         /// <summary>

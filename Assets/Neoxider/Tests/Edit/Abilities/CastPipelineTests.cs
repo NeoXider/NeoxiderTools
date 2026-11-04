@@ -25,7 +25,7 @@ namespace Neo.Editor.Tests.Abilities
             float cooldown = 0f, int maxCharges = 1, float chargeRestore = 0f, float range = 0f,
             AbilityTeamFilter teamFilter = AbilityTeamFilter.Enemies, params AbilityCost[] costs)
         {
-            var ability = new AbilityBlueprint
+            AbilityBlueprint ability = new AbilityBlueprint
             {
                 Id = id,
                 Targeting = targeting,
@@ -119,7 +119,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void OutOfRange_Fails()
         {
-            var world = new FakeWorldAdapter();
+            FakeWorldAdapter world = new FakeWorldAdapter();
             _system.World = world;
             AbilityUnit target = AbilityTestSupport.CreateUnit(_system, team: 2);
             world.SetPosition(_caster.Id, Vector3.zero);
@@ -135,7 +135,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void InRange_WithCastRangeBonus_Succeeds()
         {
-            var world = new FakeWorldAdapter();
+            FakeWorldAdapter world = new FakeWorldAdapter();
             _system.World = world;
             AbilityUnit target = AbilityTestSupport.CreateUnit(_system, team: 2);
             world.SetPosition(_caster.Id, Vector3.zero);
@@ -200,7 +200,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void Success_PaysCostOnce_SetsCooldown_FiresAbilityCast()
         {
-            var log = new EventLog(_system);
+            EventLog log = new EventLog(_system);
             Ability("blast", cooldown: 10f, costs: new AbilityCost(AbilityResourceIds.Mana, 30f));
             Grant("blast");
 

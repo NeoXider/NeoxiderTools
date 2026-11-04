@@ -1,8 +1,15 @@
 ﻿# FindInSceneAttribute
 
-**Namespace:** `Neo`. **Assembly:** `Neo.PropertyAttribute`.
+**What it is:** `[FindInScene]` (`Scripts/PropertyAttribute/InjectAttribute/FindInSceneAttribute.cs`, namespace
+`Neo`, assembly `Neo.PropertyAttribute`) marks a Component or GameObject field for editor scene lookup by its
+field type.
 
-`[FindInScene]` marks a Component or GameObject field for scene lookup by its field type.
+**How to use:**
+1. Add `using Neo;` and put `[FindInScene]` on a serialized Component or GameObject field.
+2. Select the component with attribute search enabled; a missing reference is filled from the open scene.
+3. Stack `[RequireInterface(typeof(IMyContract))]` when the candidate must implement an interface.
+
+---
 
 The attribute has no configuration. The `Neo.Editor` Inspector processor assigns a candidate only when the reference is missing and attribute search is enabled. Selection among multiple candidates is not an application-level ordering contract. Prefer an explicit reference when identity matters.
 

@@ -19,7 +19,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void WireFindByName(NoCodeFloatBindingBehaviour target, string searchName, string member)
         {
-            var so = new SerializedObject(target);
+            SerializedObject so = new SerializedObject(target);
             SerializedProperty binding = so.FindProperty("_binding");
             binding.FindPropertyRelative("_useSceneSearch").boolValue = true;
             binding.FindPropertyRelative("_searchObjectName").stringValue = searchName;
@@ -44,7 +44,7 @@ namespace Neo.Editor.Tests.Edit
         public void Reactive_FindByName_LateSpawn_ResolvesOnNextPoll()
         {
             const string targetName = "LateSpawnedSource";
-            var dst = new GameObject("dst");
+            GameObject dst = new GameObject("dst");
             dst.SetActive(false);
             GameObject src = null;
             try
@@ -53,13 +53,13 @@ namespace Neo.Editor.Tests.Edit
                 NoCodeBindText bind = dst.AddComponent<NoCodeBindText>();
                 WireFindByName(bind, targetName, nameof(NoCodeBindEditModeFloatSource.Score));
 
-                // Object does not exist yet: first refresh finds no source and must arm the poll fallback.
+                // WHY: the object does not exist yet, so the first refresh finds no source and must arm the poll fallback.
                 dst.SetActive(true);
                 bind.EditorInvokeRefreshFromSource();
                 // WHY: a code-added TMP_Text starts null; the point is the binding wrote nothing yet.
                 Assert.IsTrue(string.IsNullOrEmpty(tmp.text), "No source yet: text stays untouched.");
 
-                // Source appears later.
+                // WHY: the source appears later (late spawn).
                 src = new GameObject(targetName);
                 src.AddComponent<NoCodeBindEditModeFloatSource>().Score = 42f;
 

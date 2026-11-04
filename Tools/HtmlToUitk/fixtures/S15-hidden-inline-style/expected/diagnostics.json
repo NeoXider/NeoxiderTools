@@ -1,9 +1,0 @@
-[
-  {
-    "rule": "D011",
-    "severity": "Error",
-    "tier": "Reject",
-    "file": "page.html",
-    "line": 17
-  }
-]

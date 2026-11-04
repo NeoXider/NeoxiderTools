@@ -376,6 +376,15 @@ namespace Neo.UI.Editor
     [CustomEditor(typeof(UIMeshRigPoint))]
     public sealed class UIMeshRigPointEditor : CustomEditorBase
     {
+        private static readonly GUIContent ApplyFalloffPresetContent = new GUIContent("Apply Falloff Preset",
+            "Rebuilds the Falloff Curve from the preset chosen above.");
+
+        private static readonly GUIContent FullSmoothContent = new GUIContent("Full Smooth From Center",
+            "Inner = 0, smooth falloff.");
+
+        private static readonly GUIContent HalfInnerContent = new GUIContent("Inner = 50% of Outer",
+            "Balanced solid core plus soft edge.");
+
         protected override string NeoxiderModuleName => "UI Mesh Rig";
 
         protected override void ProcessAttributeAssignments()
@@ -401,22 +410,21 @@ namespace Neo.UI.Editor
                 MessageType.Info);
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Apply Falloff Preset",
-                    "Rebuilds the Falloff Curve from the preset chosen above.")))
+            if (GUILayout.Button(ApplyFalloffPresetContent))
             {
                 Undo.RecordObject(point, "Apply UI mesh rig falloff preset");
                 point.ApplyFalloffPreset(point.FalloffPreset);
                 UIMeshRigEditorUtility.MarkChanged(point);
             }
 
-            if (GUILayout.Button(new GUIContent("Full Smooth From Center", "Inner = 0, smooth falloff.")))
+            if (GUILayout.Button(FullSmoothContent))
             {
                 Undo.RecordObject(point, "Use full smooth UI mesh rig falloff");
                 point.UseFullSmoothFalloff();
                 UIMeshRigEditorUtility.MarkChanged(point);
             }
 
-            if (GUILayout.Button(new GUIContent("Inner = 50% of Outer", "Balanced solid core plus soft edge.")))
+            if (GUILayout.Button(HalfInnerContent))
             {
                 Undo.RecordObject(point, "Set UI mesh rig inner radius");
                 point.SetInfluenceRadii(point.OuterRadiusNormalized * 0.5f, point.OuterRadiusNormalized);
@@ -432,21 +440,24 @@ namespace Neo.UI.Editor
                 return;
             }
 
-            // WHY: no SceneView.RepaintAll() from OnInspectorGUI. Combined with RequiresConstantRepaint it
+            // WHY: no SceneView.RepaintAll() from OnInspectorGUI. While this inspector kept redrawing itself it
             // made the Inspector and the Scene view repaint each other for as long as a motion component
-            // existed — including while the preview was paused or stopped. The preview driver repaints
-            // exactly on the frames it actually advanced.
+            // existed — including while the preview was paused or stopped. The preview driver repaints the
+            // Scene view exactly on the frames it actually advanced; the inspector only takes the capped
+            // EnsureLiveRepaint lease below while a preview plays.
             UIMeshRigMotionInspector.Draw(point);
 
             UIMeshRigOwnerInspector.DrawAuthoringControls(owner);
             UnityEditor.Tools.hidden = owner.AuthoringMode == UIMeshRigAuthoringMode.Setup;
             UIMeshRigOwnerInspector.DrawPointActions(owner, point);
-        }
 
-        public override bool RequiresConstantRepaint()
-        {
-            UIMeshRigPoint point = target as UIMeshRigPoint;
-            return point != null && UIMeshRigMotionInspector.IsPreviewPlaying(point);
+            if (UIMeshRigMotionInspector.IsPreviewPlaying(point))
+            {
+                // WHY: the Inspector only shows the preview clock; the Scene view is animated by the driver.
+                // RequiresConstantRepaint redrew this whole inspector on every editor tick for that one
+                // label, while the shared live lease refreshes it at a capped rate and stops when hidden.
+                EnsureLiveRepaint();
+            }
         }
 
         private void OnSceneGUI()
@@ -488,13 +499,12 @@ namespace Neo.UI.Editor
                 Selection.activeGameObject = point.gameObject;
                 EditorGUIUtility.PingObject(point);
             }
-        }
 
-        public override bool RequiresConstantRepaint()
-        {
-            UIMeshRigPointMotion motion = target as UIMeshRigPointMotion;
-            return motion != null && !Application.isPlaying && motion.PreviewInEditMode &&
-                   motion.IsPlaying && !motion.IsPaused;
+            if (!Application.isPlaying && motion.PreviewInEditMode && motion.IsPlaying && !motion.IsPaused)
+            {
+                // WHY: see UIMeshRigPointEditor - a capped live lease instead of a per-tick constant repaint.
+                EnsureLiveRepaint();
+            }
         }
     }
 
@@ -504,17 +514,25 @@ namespace Neo.UI.Editor
     /// </summary>
     internal static class UIMeshRigOwnerInspector
     {
+        private static readonly GUIContent LayoutContent = new GUIContent("Layout",
+            "Simple Bounce uses one point; Character adds Root/Torso/Chest/Head; Flag / Cloth adds a travelling wave.");
+
+        // WHY: the duplicate-key check runs on every inspector event; one reused set replaces a new HashSet per draw.
+        private static readonly HashSet<string> BindingKeyBuffer = new HashSet<string>();
+
+        // WHY: shared by the Inspector toolbar and the Scene overlay, which used to allocate both label
+        // arrays on every event.
+        internal static readonly string[] ModeToolbarLabels = { "Setup", "Pose / Animate" };
+        internal static readonly string[] PoseToolLabels = { "Move", "Rotate", "Scale" };
+
         public static void DrawQuickStart(IUIMeshRigOwner rig, ref UIMeshRigLayoutPreset preset)
         {
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Ready-Made Rig", EditorStyles.boldLabel);
-            preset = (UIMeshRigLayoutPreset)EditorGUILayout.EnumPopup(
-                new GUIContent("Layout",
-                    "Simple Bounce uses one point; Character adds Root/Torso/Chest/Head; Flag / Cloth adds a travelling wave."),
-                preset);
+            preset = (UIMeshRigLayoutPreset)EditorGUILayout.EnumPopup(LayoutContent, preset);
             if (GUILayout.Button("Apply Layout & Preview", GUILayout.Height(28f)))
             {
-                UIMeshRigEditorUtility.ApplyLayout(rig, preset, true);
+                UIMeshRigEditorUtility.ApplyLayoutAsUndoStep(rig, preset, true);
                 Selection.activeGameObject = rig.RigTransform.gameObject;
                 GUIUtility.ExitGUI();
             }
@@ -551,7 +569,8 @@ namespace Neo.UI.Editor
                 EditorGUILayout.HelpBox("This is a dense UI mesh. Reduce the grid unless the silhouette needs this detail.", MessageType.Info);
             }
 
-            HashSet<string> bindingKeys = new HashSet<string>();
+            HashSet<string> bindingKeys = BindingKeyBuffer;
+            bindingKeys.Clear();
             IReadOnlyList<UIMeshRigPoint> points = rig.RigPoints;
             for (int index = 0; index < points.Count; index++)
             {
@@ -573,7 +592,7 @@ namespace Neo.UI.Editor
             EditorGUILayout.LabelField("Authoring", EditorStyles.boldLabel);
             UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
                 (int)rig.AuthoringMode,
-                new[] { "Setup", "Pose / Animate" });
+                UIMeshRigOwnerInspector.ModeToolbarLabels);
             if (requestedMode != rig.AuthoringMode)
             {
                 UIMeshRigEditorUtility.RecordRig(rig, "Change UI mesh rig mode");
@@ -586,7 +605,7 @@ namespace Neo.UI.Editor
                 UIMeshRigSceneTool currentTool = UIMeshRigEditorUtility.GetSceneTool(rig);
                 UIMeshRigSceneTool requestedTool = (UIMeshRigSceneTool)GUILayout.Toolbar(
                     (int)currentTool,
-                    new[] { "Move", "Rotate", "Scale" });
+                    UIMeshRigOwnerInspector.PoseToolLabels);
                 if (requestedTool != currentTool)
                 {
                     Undo.RecordObject(rigObject, "Change UI mesh rig scene tool");
@@ -721,6 +740,21 @@ namespace Neo.UI.Editor
         private static GUIStyle _selectedLabelStyle;
         private static GUIStyle _idleLabelStyle;
 
+        // WHY: every Scene view event used to allocate a 65-point array per ellipse (two per point) and two
+        // toolbar label arrays. The ellipse is written into one shared buffer; Handles copies it on draw.
+        private static readonly Vector3[] EllipseBuffer = new Vector3[EllipseSegments + 1];
+
+        private static readonly GUIContent LabelsToggleContent = new GUIContent("Labels",
+            "Off: only the selected point is named, so a dense rig stays readable.");
+
+        private static readonly GUIContent RingsToggleContent = new GUIContent("All rings",
+            "Off: unselected points draw one faint outer ring instead of two solid ellipses.");
+
+        // WHY: EditorPrefs is backed by the registry on Windows, and these two flags were read once per point
+        // per Scene view event. They are read once per domain and written only when toggled.
+        private static bool? _showAllLabels;
+        private static bool? _showAllRings;
+
         public static UIMeshRigPoint Draw(IUIMeshRigOwner rig, UIMeshRigPoint selectedPoint)
         {
             if (rig == null || rig.RigTransform == null)
@@ -778,16 +812,49 @@ namespace Neo.UI.Editor
             return selectedPoint;
         }
 
-        private static bool ShowAllLabels
+        internal static bool ShowAllLabels
         {
-            get => EditorPrefs.GetBool(ShowAllLabelsKey, false);
-            set => EditorPrefs.SetBool(ShowAllLabelsKey, value);
+            get
+            {
+                _showAllLabels ??= EditorPrefs.GetBool(ShowAllLabelsKey, false);
+                return _showAllLabels.Value;
+            }
+            set
+            {
+                if (_showAllLabels == value)
+                {
+                    return;
+                }
+
+                _showAllLabels = value;
+                EditorPrefs.SetBool(ShowAllLabelsKey, value);
+            }
         }
 
-        private static bool ShowAllRings
+        internal static bool ShowAllRings
         {
-            get => EditorPrefs.GetBool(ShowAllRingsKey, false);
-            set => EditorPrefs.SetBool(ShowAllRingsKey, value);
+            get
+            {
+                _showAllRings ??= EditorPrefs.GetBool(ShowAllRingsKey, false);
+                return _showAllRings.Value;
+            }
+            set
+            {
+                if (_showAllRings == value)
+                {
+                    return;
+                }
+
+                _showAllRings = value;
+                EditorPrefs.SetBool(ShowAllRingsKey, value);
+            }
+        }
+
+        /// <summary>Drops the cached Scene-overlay toggles so the next read comes from <see cref="EditorPrefs" />.</summary>
+        internal static void ReloadOverlayPreferences()
+        {
+            _showAllLabels = null;
+            _showAllRings = null;
         }
 
         /// <summary>Mode switch and clutter toggles, on the Scene view where the handles actually are.</summary>
@@ -803,7 +870,7 @@ namespace Neo.UI.Editor
 
             UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
                 (int)rig.AuthoringMode,
-                new[] { "Setup", "Pose / Animate" });
+                UIMeshRigOwnerInspector.ModeToolbarLabels);
             if (requestedMode != rig.AuthoringMode)
             {
                 UIMeshRigEditorUtility.RecordRig(rig, "Change UI mesh rig mode");
@@ -816,7 +883,7 @@ namespace Neo.UI.Editor
                 UIMeshRigSceneTool currentTool = UIMeshRigEditorUtility.GetSceneTool(rig);
                 UIMeshRigSceneTool requestedTool = (UIMeshRigSceneTool)GUILayout.Toolbar(
                     (int)currentTool,
-                    new[] { "Move", "Rotate", "Scale" });
+                    UIMeshRigOwnerInspector.PoseToolLabels);
                 if (requestedTool != currentTool)
                 {
                     Undo.RecordObject(rig as Object, "Change UI mesh rig scene tool");
@@ -826,11 +893,8 @@ namespace Neo.UI.Editor
             }
 
             GUILayout.BeginHorizontal();
-            ShowAllLabels = GUILayout.Toggle(ShowAllLabels, new GUIContent("Labels",
-                "Off: only the selected point is named, so a dense rig stays readable."), EditorStyles.miniButton);
-            ShowAllRings = GUILayout.Toggle(ShowAllRings, new GUIContent("All rings",
-                "Off: unselected points draw one faint outer ring instead of two solid ellipses."),
-                EditorStyles.miniButton);
+            ShowAllLabels = GUILayout.Toggle(ShowAllLabels, LabelsToggleContent, EditorStyles.miniButton);
+            ShowAllRings = GUILayout.Toggle(ShowAllRings, RingsToggleContent, EditorStyles.miniButton);
             GUILayout.EndHorizontal();
 
             GUILayout.EndArea();
@@ -866,7 +930,7 @@ namespace Neo.UI.Editor
 
         private static void DrawEllipse(IUIMeshRigOwner rig, Vector2 center, Vector2 radius, Color color, float width)
         {
-            Vector3[] ellipsePoints = new Vector3[EllipseSegments + 1];
+            Vector3[] ellipsePoints = EllipseBuffer;
             for (int index = 0; index <= EllipseSegments; index++)
             {
                 float angle = index * Mathf.PI * 2f / EllipseSegments;
@@ -1085,6 +1149,26 @@ namespace Neo.UI.Editor
             return ApplyLayout((IUIMeshRigOwner)rig, preset, previewInEditMode);
         }
 
+        /// <summary>
+        /// Applies a layout as a standalone authoring command: it opens a new Undo group first, so it never
+        /// absorbs an earlier unrelated edit. Used by the inspector's Apply Layout button.
+        /// </summary>
+        public static UIMeshRigPoint ApplyLayoutAsUndoStep(
+            IUIMeshRigOwner rig,
+            UIMeshRigLayoutPreset preset,
+            bool previewInEditMode)
+        {
+            Undo.IncrementCurrentGroup();
+            return ApplyLayout(rig, preset, previewInEditMode);
+        }
+
+        /// <summary>
+        /// Replaces the rig's points with a preset layout inside the caller's current Undo group, so a menu command
+        /// that creates or converts a rig and then applies its starter layout is reverted by a single Undo.
+        /// </summary>
+        /// <remarks>
+        /// Standalone callers that must not merge with a preceding edit use <see cref="ApplyLayoutAsUndoStep" />.
+        /// </remarks>
         public static UIMeshRigPoint ApplyLayout(
             IUIMeshRigOwner rig,
             UIMeshRigLayoutPreset preset,
@@ -1145,6 +1229,12 @@ namespace Neo.UI.Editor
             Undo.RegisterCreatedObjectUndo(pointObject, "Add UI mesh rig point");
             Undo.SetTransformParent(pointObject.transform, rig.RigTransform, "Parent UI mesh rig point");
             RectTransform pointRect = (RectTransform)pointObject.transform;
+            UIMeshRigPoint point = pointObject.GetComponent<UIMeshRigPoint>();
+            // WHY: Redo restores a created object from its registration snapshot; placement, key and rest pose
+            // assigned afterwards must be recorded or Redo brings back the default "Point" key and pose.
+            Undo.RecordObjects(
+                new UnityEngine.Object[] { pointObject, pointRect, point },
+                "Configure UI mesh rig point");
             UIMeshRigLayoutBuilder.ApplyPointTransform(
                 rig,
                 pointRect,
@@ -1157,7 +1247,6 @@ namespace Neo.UI.Editor
                     0f,
                     0));
             pointObject.layer = rig.RigTransform.gameObject.layer;
-            UIMeshRigPoint point = pointObject.GetComponent<UIMeshRigPoint>();
             point.SetBindingKey(GetUniqueBindingKey(rig, point, pointName));
             point.CaptureRestPose(rig);
             rig.NotifyPointChanged();
@@ -1174,15 +1263,20 @@ namespace Neo.UI.Editor
             Undo.RegisterCreatedObjectUndo(pointObject, "Add UI mesh rig preset point");
             Undo.SetTransformParent(pointObject.transform, rig.RigTransform, "Parent UI mesh rig preset point");
             RectTransform pointRect = (RectTransform)pointObject.transform;
+            Undo.RecordObjects(
+                new UnityEngine.Object[] { pointObject, pointRect },
+                "Configure UI mesh rig preset point");
             UIMeshRigLayoutBuilder.ApplyPointTransform(rig, pointRect, layout);
             pointObject.layer = rig.RigTransform.gameObject.layer;
 
             UIMeshRigPoint point = Undo.AddComponent<UIMeshRigPoint>(pointObject);
+            Undo.RecordObject(point, "Configure UI mesh rig preset point");
             UIMeshRigLayoutBuilder.ConfigurePointOnOwner(rig, point, layout);
             point.SetBindingKey(GetUniqueBindingKey(rig, point, layout.Name));
             if (layout.MotionPreset != UIMeshRigMotionPreset.Custom)
             {
                 UIMeshRigPointMotion motion = Undo.AddComponent<UIMeshRigPointMotion>(pointObject);
+                Undo.RecordObject(motion, "Configure UI mesh rig preset motion");
                 motion.ApplyPreset(layout.MotionPreset);
                 motion.Phase = layout.Phase;
                 motion.Seed = layout.Seed;
@@ -1235,6 +1329,7 @@ namespace Neo.UI.Editor
                 if (UIMeshRigOwnerResolver.OwnsPoint(rig, duplicatedPoint))
                 {
                     string requestedKey = duplicatedPoint == duplicate ? duplicateObject.name : duplicatedPoint.BindingKey;
+                    Undo.RecordObject(duplicatedPoint, "Assign UI mesh rig binding key");
                     duplicatedPoint.SetBindingKey(GetUniqueBindingKey(rig, duplicatedPoint, requestedKey));
                     MarkChanged(duplicatedPoint);
                 }

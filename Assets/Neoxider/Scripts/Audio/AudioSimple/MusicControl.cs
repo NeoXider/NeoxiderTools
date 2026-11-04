@@ -42,6 +42,7 @@ namespace Neo.Audio
         [SerializeField]
         private TransitionMode _transition = TransitionMode.Default;
 
+        [Tooltip("Crossfade length in seconds, used when Transition is Fade.")]
         [Range(0f, 10f)]
         [SerializeField]
         private float _fadeSeconds = 0.8f;

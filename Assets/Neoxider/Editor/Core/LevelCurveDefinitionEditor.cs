@@ -25,6 +25,37 @@ namespace Neo.Editor.Core
         private SerializedProperty _quadraticBase;
         private SerializedProperty _xpPerLevel;
 
+        // WHY: EditorPrefs is registry-backed on Windows and the preview count was read on every inspector
+        // event; it is read once per domain and written only when the slider moves.
+        private static int? s_previewCount;
+
+        // WHY: a Custom table is walked per level, so the preview cost grows with entries x levels. The
+        // computed rows are kept until the asset changes or the row count changes.
+        private string[] _previewXp = System.Array.Empty<string>();
+        private int _previewDirtyCount = -1;
+        private LevelCurveDefinition _previewSource;
+
+        private static int PreviewCount
+        {
+            get
+            {
+                s_previewCount ??= Mathf.Clamp(EditorPrefs.GetInt(PreviewCountKey, PreviewCountDefault),
+                    PreviewCountMin, PreviewCountMax);
+                return s_previewCount.Value;
+            }
+            set
+            {
+                int clamped = Mathf.Clamp(value, PreviewCountMin, PreviewCountMax);
+                if (s_previewCount == clamped)
+                {
+                    return;
+                }
+
+                s_previewCount = clamped;
+                EditorPrefs.SetInt(PreviewCountKey, clamped);
+            }
+        }
+
         private void OnEnable()
         {
             _mode = serializedObject.FindProperty("_mode");
@@ -47,7 +78,7 @@ namespace Neo.Editor.Core
             EditorGUILayout.PropertyField(_mode);
             EditorGUILayout.Space(4f);
 
-            var mode = (LevelCurveMode)_mode.enumValueIndex;
+            LevelCurveMode mode = (LevelCurveMode)_mode.enumValueIndex;
 
             switch (mode)
             {
@@ -108,9 +139,8 @@ namespace Neo.Editor.Core
                 return;
             }
 
-            var definition = (LevelCurveDefinition)target;
-            int previewCount = EditorPrefs.GetInt(PreviewCountKey, PreviewCountDefault);
-            previewCount = Mathf.Clamp(previewCount, PreviewCountMin, PreviewCountMax);
+            LevelCurveDefinition definition = (LevelCurveDefinition)target;
+            int previewCount = PreviewCount;
 
             EditorGUILayout.Space(8f);
             EditorGUILayout.LabelField("Level preview", EditorStyles.boldLabel);
@@ -119,10 +149,11 @@ namespace Neo.Editor.Core
             int newCount = EditorGUILayout.IntSlider(previewCount, PreviewCountMin, PreviewCountMax);
             if (newCount != previewCount)
             {
-                EditorPrefs.SetInt(PreviewCountKey, newCount);
+                PreviewCount = newCount;
             }
 
             EditorGUILayout.EndHorizontal();
+            RefreshPreview(definition, previewCount);
 
             Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(new Rect(headerRect.x, headerRect.y, 60f, headerRect.height), "Level");
@@ -132,11 +163,51 @@ namespace Neo.Editor.Core
             for (int level = 1; level <= previewCount; level++)
             {
                 Rect lineRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                int requiredXp = definition.GetRequiredXpForLevel(level);
-                EditorGUI.LabelField(new Rect(lineRect.x, lineRect.y, 60f, lineRect.height), level.ToString());
+                EditorGUI.LabelField(new Rect(lineRect.x, lineRect.y, 60f, lineRect.height), LevelLabel(level));
                 EditorGUI.LabelField(new Rect(lineRect.x + 70f, lineRect.y, lineRect.width - 70f, lineRect.height),
-                    requiredXp.ToString());
+                    _previewXp[level - 1]);
             }
+        }
+
+        private void RefreshPreview(LevelCurveDefinition definition, int previewCount)
+        {
+            int dirtyCount = EditorUtility.GetDirtyCount(definition);
+            if (ReferenceEquals(definition, _previewSource) && dirtyCount == _previewDirtyCount &&
+                _previewXp.Length == previewCount)
+            {
+                return;
+            }
+
+            if (_previewXp.Length != previewCount)
+            {
+                _previewXp = new string[previewCount];
+            }
+
+            for (int level = 1; level <= previewCount; level++)
+            {
+                _previewXp[level - 1] = definition.GetRequiredXpForLevel(level).ToString();
+            }
+
+            _previewSource = definition;
+            _previewDirtyCount = dirtyCount;
+        }
+
+        private static readonly string[] LevelLabels = BuildLevelLabels();
+
+        private static string[] BuildLevelLabels()
+        {
+            string[] labels = new string[PreviewCountMax];
+            for (int i = 0; i < labels.Length; i++)
+            {
+                labels[i] = (i + 1).ToString();
+            }
+
+            return labels;
+        }
+
+        private static string LevelLabel(int level)
+        {
+            return level >= 1 && level <= LevelLabels.Length ? LevelLabels[level - 1] : level.ToString();
         }
     }
 }

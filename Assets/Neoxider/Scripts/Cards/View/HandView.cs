@@ -33,6 +33,8 @@ namespace Neo.Cards
         [SerializeField] private Ease _arrangeEase = Ease.OutQuad;
 
         private readonly List<ICardView> _cardViews = new();
+        private readonly List<Vector3> _layoutPositions = new();
+        private readonly List<Quaternion> _layoutRotations = new();
 
         private CancellationToken _ct;
         private CancellationTokenSource _layoutCancellation;
@@ -152,8 +154,13 @@ namespace Neo.Cards
 
             int revision = _layoutRevision;
             ICardView[] cards = _cardViews.ToArray();
-            List<Vector3> positions = CalculatePositions();
-            List<Quaternion> rotations = CalculateRotations();
+            // WHY: the reused buffers are only read before the first await; a re-entrant layout bumps the
+            // revision, and the loop below stops before touching overwritten entries.
+            CardLayoutSettings settings = BuildLayoutSettings();
+            CardLayoutCalculator.CalculatePositions(_layoutType, cards.Length, settings, _layoutPositions);
+            CardLayoutCalculator.CalculateRotations(_layoutType, cards.Length, settings, _layoutRotations);
+            List<Vector3> positions = _layoutPositions;
+            List<Quaternion> rotations = _layoutRotations;
             using CancellationTokenSource layout = CancellationTokenSource.CreateLinkedTokenSource(_ct, cancellation);
             _layoutCancellation = layout;
             try
@@ -167,6 +174,12 @@ namespace Neo.Cards
                     }
 
                     ICardView cardView = cards[i];
+                    // WHY: a destroyed MonoBehaviour view is not C#-null, but its Transform getter throws.
+                    if (cardView is UnityEngine.Object unityView && unityView == null)
+                    {
+                        continue;
+                    }
+
                     Transform cardTransform = cardView?.Transform;
                     if (revision != _layoutRevision || cardTransform == null || cardTransform.parent != transform)
                     {
@@ -197,7 +210,7 @@ namespace Neo.Cards
             }
             catch (OperationCanceledException) when (!cancellation.IsCancellationRequested && !_ct.IsCancellationRequested)
             {
-                // A later membership/order change owns the replacement layout.
+                // WHY: a later membership/order change owns the replacement layout.
             }
             finally
             {
@@ -221,16 +234,6 @@ namespace Neo.Cards
             CancellationTokenSource previous = _layoutCancellation;
             _layoutCancellation = null;
             previous?.Cancel();
-        }
-
-        private List<Vector3> CalculatePositions()
-        {
-            return CardLayoutCalculator.CalculatePositions(_layoutType, _cardViews.Count, BuildLayoutSettings());
-        }
-
-        private List<Quaternion> CalculateRotations()
-        {
-            return CardLayoutCalculator.CalculateRotations(_layoutType, _cardViews.Count, BuildLayoutSettings());
         }
 
         private CardLayoutSettings BuildLayoutSettings()

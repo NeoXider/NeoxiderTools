@@ -1,4 +1,4 @@
-using System.IO;
+using System.Collections.Generic;
 using Neo.Editor.Windows;
 using UnityEditor;
 using UnityEngine;
@@ -12,13 +12,18 @@ namespace Neo
     {
         private const string MenuPath = "Neoxider/Settings";
         private const string WindowTitle = "Neoxider Settings";
+        internal const string FoldersValidatedSessionKey = "Neo.NeoxiderSettingsWindow.FoldersValidated";
         private NeoxiderSettingsWindowGUI _gui;
 
         private void OnEnable()
         {
             NeoxiderSettings.LoadSettings();
-            if (NeoxiderSettings.Current.validateFoldersOnStart)
+            // WHY: OnEnable also runs after every domain reload while the window is open; the check is meant for
+            // editor start, so it runs once per editor session instead of logging again on each recompile.
+            if (NeoxiderSettings.Current.validateFoldersOnStart &&
+                !SessionState.GetBool(FoldersValidatedSessionKey, false))
             {
+                SessionState.SetBool(FoldersValidatedSessionKey, true);
                 ValidateFolders();
             }
 
@@ -47,29 +52,16 @@ namespace Neo
             window.Show();
         }
 
-        private void ValidateFolders()
+        // WHY: one aggregated warning instead of one line per folder, and nothing at all when the structure is
+        // complete; "Create Missing Folders" in the window fixes what is listed.
+        private static void ValidateFolders()
         {
-            string sourcePath = NeoxiderSettings.RootFolderPath;
-            bool hasErrors = false;
-
-            if (!Directory.Exists(sourcePath))
+            List<string> missing = NeoxiderSettings.FindMissingFolders();
+            if (missing.Count > 0)
             {
-                Debug.LogWarning($"Root folder missing: {NeoxiderSettings.Current.rootFolder}");
-                hasErrors = true;
-            }
-
-            foreach (string folder in NeoxiderSettings.Current.folders)
-            {
-                if (!NeoxiderSettings.FolderExists(folder))
-                {
-                    Debug.LogWarning($"Missing folder: {folder}");
-                    hasErrors = true;
-                }
-            }
-
-            if (!hasErrors)
-            {
-                Debug.Log("All folders exist");
+                Debug.LogWarning(
+                    $"[Neoxider] Missing project folders under '{NeoxiderSettings.Current.rootFolder}': " +
+                    string.Join(", ", missing) + ". Use Neoxider/Settings > Create Missing Folders.");
             }
         }
     }

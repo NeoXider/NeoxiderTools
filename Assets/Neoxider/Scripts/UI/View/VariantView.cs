@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Neo.UI
@@ -68,6 +69,9 @@ namespace Neo.UI
 
         [SerializeField] private int _maxStates;
 
+        [Tooltip("Raised with the new index when SetCurrentState/NextState/PreviousState change the state.")]
+        public UnityEvent<int> OnStateChanged = new();
+
         #endregion
 
         #region PROPERTIES
@@ -75,7 +79,19 @@ namespace Neo.UI
         /// <summary>
         ///     Current state index.
         /// </summary>
+        public int CurrentStateIndex => _currentStateIndex;
+
+        /// <summary>Legacy camelCase alias of <see cref="CurrentStateIndex" />.</summary>
+        [Obsolete("Use CurrentStateIndex.")]
         public int currentStateIndex => _currentStateIndex;
+
+        /// <summary>
+        ///     Typed counterpart of <see cref="OnStateChanged" />: raised with the new index, before the UnityEvent,
+        ///     when <see cref="SetCurrentState" />, <see cref="NextState" /> or <see cref="PreviousState" /> change
+        ///     the state. Applying the same index again only refreshes the visuals. The authoring helpers
+        ///     <see cref="AddState" /> and <see cref="ClearAllStates" /> move the index silently.
+        /// </summary>
+        public event Action<int> StateChanged;
 
         /// <summary>
         ///     Total maximum number of states (computed in OnValidate).
@@ -107,11 +123,7 @@ namespace Neo.UI
         /// </summary>
         public void SetCurrentState(int index)
         {
-            if (index >= 0 && index < _maxStates)
-            {
-                _currentStateIndex = index;
-                Visual();
-            }
+            ChangeState(index);
         }
 
         /// <summary>
@@ -216,12 +228,25 @@ namespace Neo.UI
 
         #region PRIVATE_METHODS
 
+        private void Awake()
+        {
+            // WHY: OnValidate applies the saved index only in the Editor; an instance spawned or loaded in a
+            // player showed whatever its parts were saved with until the first state change.
+            Visual();
+        }
+
         private void ChangeState(int newIndex)
         {
             if (newIndex >= 0 && newIndex < _maxStates)
             {
+                bool changed = _currentStateIndex != newIndex;
                 _currentStateIndex = newIndex;
                 Visual();
+                if (changed)
+                {
+                    StateChanged?.Invoke(_currentStateIndex);
+                    OnStateChanged?.Invoke(_currentStateIndex);
+                }
             }
         }
 
@@ -392,15 +417,21 @@ namespace Neo.UI
                 return;
             }
 
+            if (array != null && array.Length == newSize)
+            {
+                return;
+            }
+
             T[] newArray = new T[newSize];
-            for (int i = 0; i < Math.Min(array.Length, newSize); i++)
+            int copyCount = array != null ? Math.Min(array.Length, newSize) : 0;
+            for (int i = 0; i < copyCount; i++)
             {
                 newArray[i] = array[i];
             }
 
             array = newArray;
         }
-    }
 
-    #endregion
+        #endregion
+    }
 }

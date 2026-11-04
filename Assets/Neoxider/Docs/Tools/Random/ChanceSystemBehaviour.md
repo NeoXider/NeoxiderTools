@@ -1,13 +1,14 @@
 ﻿# ChanceSystemBehaviour
 
-Scene adapter for [ChanceManager](ChanceManager.md), with result state and UnityEvents. Use namespace `Neo.Tools` and assembly `Neo.Tools.Random` from C#.
+**What it is:** Scene adapter for [ChanceManager](ChanceManager.md), with result state and UnityEvents. Use namespace `Neo.Tools` and assembly `Neo.Tools.Random` from C#. Script: `Scripts/Tools/Random/ChanceSystemBehaviour.cs`.
 
-## Setup
-
+**How to use:**
 1. Add **Component > Neoxider > Tools > ChanceSystemBehaviour**.
 2. Configure the inline **Manager**, or assign a [ChanceData](Data/ChanceData.md) asset. At `Awake`, the asset's entries and normalization settings are copied into the inline manager, then sanitized and assigned unique custom IDs. The scene table is independent of the asset afterward.
 3. Connect a Button or another UnityEvent to `GenerateVoid()` to roll and notify listeners.
 4. Configure the result events on the component. Put scene object references here rather than in the data asset.
+
+---
 
 ## Events and result state
 

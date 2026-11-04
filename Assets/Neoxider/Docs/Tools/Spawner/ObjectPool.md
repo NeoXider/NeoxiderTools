@@ -1,6 +1,6 @@
 # ObjectPool (Legacy Documentation)
 
-**Purpose:** A generic `ObjectPool<T>` class existed in earlier versions of the project. Pools are now implemented via [NeoObjectPool](./NeoObjectPool.md) and [PoolManager](PoolManager.md). The `ObjectPool.cs` script no longer exists.
+**What it is:** Legacy page. A generic `ObjectPool<T>` class existed in earlier versions; the `ObjectPool.cs` script no longer exists. Pools are now [NeoObjectPool](./NeoObjectPool.md) and [PoolManager](PoolManager.md).
 
 **How to use:** See [Spawner README](./README.md), [PoolManager](PoolManager.md), [Spawner](Spawner.md).
 

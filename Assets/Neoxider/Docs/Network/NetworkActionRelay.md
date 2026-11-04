@@ -40,6 +40,24 @@
 | **TriggerString(string value)** | Fires channel 0 with a string. |
 | **TriggerStringAt(int index, string value)** | Fires the channel at the given index with a string. |
 | **TriggerByName(string name)** | Finds a channel by name and fires it. |
+| **TriggerFloatByName(string name, float value)** | Finds a channel by name and fires it with a float. |
+| **TriggerStringByName(string name, string value)** | Finds a channel by name and fires it with a string. |
+| **TryGetChannelIndex(string name, out int index)** | Ordinal name lookup without a warning; keep the index for repeated triggers. |
+| **GetChannel(int index)** | The configured `NetworkActionChannel` (or `null`), e.g. to subscribe to its events from code. |
+| **ChannelCount**, **AuthorityMode** | Number of channels; who may trigger remotely. |
+
+C# equivalent of the NoCode wiring:
+
+```csharp
+NetworkActionRelay relay = door.GetComponent<NetworkActionRelay>();
+if (relay.TryGetChannelIndex("open", out int open))
+{
+    relay.GetChannel(open).onTriggered.AddListener(PlayDoorAnimation);
+    relay.Trigger(open);
+}
+
+relay.TriggerFloatByName("damage", 12.5f);
+```
 
 ## Examples
 
@@ -92,4 +110,6 @@ uses unscaled double time; gameplay pause does not permanently exhaust a peer's 
 Scope behavior:
 - `AllClients`: sends the channel event to every client; dedicated server also invokes locally.
 - `ServerOnly`: invokes only on the server/host and does not RPC.
-- `OthersOnly`: sends `TargetRpc` to every client except the sender; host-local is excluded when the host triggered it.
+- `OthersOnly`: sends `TargetRpc` to every observer of the relay except the sender (the same audience as the
+  `AllClients` RPC); host-local is excluded when the host triggered it. A connection that does not observe the
+  relay yet (still loading, filtered by interest management) is skipped instead of receiving an RPC it cannot run.

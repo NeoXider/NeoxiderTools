@@ -1,6 +1,9 @@
 # Extension lifecycle and ownership
 
-This companion to the [Extensions entry point](README.md) describes cancellation, native-object ownership and coordinate contracts. Reference `Neo.Extensions` and use `using Neo.Extensions;` from C#.
+**What it is:** This companion to the [Extensions entry point](README.md) describes cancellation, native-object ownership and coordinate contracts. Reference `Neo.Extensions` and use `using Neo.Extensions;` from C#.
+
+**How to use:** find the helper you call in the sections below to see who owns its coroutine, object or
+subscription, and when it is cancelled.
 
 ## Coroutine ownership
 

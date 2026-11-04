@@ -49,7 +49,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void AllDefaultNode_ResolvesToFlatAmount_BackwardCompatible()
         {
-            var node = new EffectNodeData { Amount = 7f };
+            EffectNodeData node = new EffectNodeData { Amount = 7f };
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id);
 
             Assert.That(LeveledValueResolver.ResolveAmount(node, ctx, _caster.Id), Is.EqualTo(7f).Within(0.001f));
@@ -60,7 +60,7 @@ namespace Neo.Editor.Tests.Abilities
         public void PropertyScaling_FromCaster_AddsCoefficientTimesProperty()
         {
             _caster.SetBaseProperty(AbilityProperties.SpellPower, 50f);
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 Amount = 10f,
                 AmountScaleProperty = AbilityProperties.SpellPower,
@@ -78,7 +78,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             AbilityUnit target = AbilityTestSupport.CreateUnit(_system, team: 2);
             target.SetBaseProperty("bonus", 20f);
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 Amount = 10f,
                 AmountScaleProperty = "bonus",
@@ -111,7 +111,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void NamedSpecial_ResolvedByAmountKey()
         {
-            var node = new EffectNodeData { AmountKey = "dmg" };
+            EffectNodeData node = new EffectNodeData { AmountKey = "dmg" };
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id);
             ctx.Specials = new List<AbilitySpecialValue>
             {
@@ -133,7 +133,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
 
-            var ability = new AbilityBlueprint
+            AbilityBlueprint ability = new AbilityBlueprint
             {
                 Id = "leveled_bolt",
                 Targeting = TargetingMode.Unit,
@@ -156,11 +156,11 @@ namespace Neo.Editor.Tests.Abilities
         {
             AbilityUnit victim = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
 
-            var burn = new ModifierBlueprint { Id = "burn_lvl", Duration = 0f, TickInterval = 1f };
+            ModifierBlueprint burn = new ModifierBlueprint { Id = "burn_lvl", Duration = 0f, TickInterval = 1f };
             burn.TickEffects.Add(AmountNode(new[] { 4f, 9f }, LevelSource.AbilityLevel));
             _system.RegisterModifier(burn);
 
-            var ability = new AbilityBlueprint
+            AbilityBlueprint ability = new AbilityBlueprint
             {
                 Id = "ignite",
                 Targeting = TargetingMode.Unit,
@@ -194,13 +194,13 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void LeveledRadius_GrowsWithAbilityLevel()
         {
-            var world = new FakeWorldAdapter();
+            FakeWorldAdapter world = new FakeWorldAdapter();
             _system.World = world;
             AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
             world.SetPosition(_caster.Id, Vector3.zero);
             world.SetPosition(enemy.Id, new Vector3(4f, 0f, 0f));
 
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Damage,
                 Target = EffectTargetSelector.AreaAroundCaster,
@@ -226,7 +226,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             AbilityUnit a = AbilityTestSupport.CreateUnit(_system, team: 2);
             AbilityUnit b = AbilityTestSupport.CreateUnit(_system, team: 2);
-            var stun = new ModifierBlueprint { Id = "stun_lvl", DurationByLevel = new[] { 1f, 3f } };
+            ModifierBlueprint stun = new ModifierBlueprint { Id = "stun_lvl", DurationByLevel = new[] { 1f, 3f } };
 
             ModifierApplyResult r1 = _system.Modifiers.Apply(stun, _caster.Id, a.Id, "src", 1);
             Assert.That(r1.Instance.InitialDuration, Is.EqualTo(1f).Within(0.001f), "level 1 duration");
@@ -243,7 +243,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void SetAbilityLevel_ClampsToOne_AndFailsForUnknownSlot()
         {
-            var ability = new AbilityBlueprint { Id = "ab" };
+            AbilityBlueprint ability = new AbilityBlueprint { Id = "ab" };
             _system.RegisterAbility(ability);
             _system.GrantAbility(_caster.Id, ability.Id);
 

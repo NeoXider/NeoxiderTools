@@ -1,6 +1,14 @@
 # UnlockTreeDefinition
 
-`UnlockTreeDefinition` is a reusable ScriptableObject containing `UnlockNodeDefinition` entries. Create it with **Create > Neoxider > Progression > Unlock Tree Definition**, then assign it to `ProgressionManager.UnlockTree`.
+**What it is:** `UnlockTreeDefinition` is a reusable ScriptableObject containing `UnlockNodeDefinition` entries. Create it with **Create > Neoxider > Progression > Unlock Tree Definition**, then assign it to `ProgressionManager.UnlockTree`. Script: `Scripts/Progression/Data/UnlockTreeDefinition.cs`.
+
+**How to use:**
+1. Create the asset and add one node per unlock with a stable `Id`.
+2. Assign it to `ProgressionManager.UnlockTree`.
+3. Check `CanUnlockNode(id, out reason)` and unlock with `TryUnlockNode(id, out reason)`, or use
+   `ProgressionNoCodeAction` with `UnlockNode`.
+
+---
 
 | Entry field | Purpose |
 |-------------|---------|

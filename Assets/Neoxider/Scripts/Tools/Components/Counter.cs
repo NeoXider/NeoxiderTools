@@ -139,8 +139,18 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     Enabled counters grouped by save key (used by <see cref="ModifyCounterByKey" />). Cleared before each
+        ///     play session so domain-reload-disabled sessions never see destroyed counters.
+        /// </summary>
         public static readonly Dictionary<string, List<Counter>>
             Registry = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            Registry.Clear();
+        }
 
         private string _registeredSaveKey;
         private uint _valueRevision;
@@ -485,7 +495,7 @@ namespace Neo.Tools
         private void CmdApplyOperation(CounterModifyOperation operation, float operand,
             NetworkConnectionToClient sender = null)
         {
-            // Subtract uses a negative delta; Divide validates its divisor before sending a reciprocal.
+            // WHY: Subtract uses a negative delta; Divide validates its divisor before sending a reciprocal.
             // Only the server reads the balance, so independent clients cannot overwrite each other's delta.
             if (!isNetworked ||
                 (operation != CounterModifyOperation.Add && operation != CounterModifyOperation.Multiply) ||
@@ -494,7 +504,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Validate raw float arithmetic before Int rounding can disguise a non-finite result.
+            // WHY: Validate raw float arithmetic before Int rounding can disguise a non-finite result.
             float candidate = operation == CounterModifyOperation.Add
                 ? Value.CurrentValue + operand
                 : Value.CurrentValue * operand;

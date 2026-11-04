@@ -15,14 +15,14 @@ namespace Neo.Editor.Tests
         [Test]
         public void ReactivePropertyInt_Initialization_SetsValue()
         {
-            var prop = new ReactivePropertyInt(5);
+            ReactivePropertyInt prop = new ReactivePropertyInt(5);
             Assert.AreEqual(5, prop.CurrentValue);
         }
 
         [Test]
         public void ReactivePropertyInt_SetValue_FiresEvent()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
             int eventFiredCount = 0;
             int lastReceivedValue = -1;
 
@@ -45,7 +45,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ReactivePropertyInt_OnNext_FiresEvent()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
             bool fired = false;
             prop.AddListener(val => fired = true);
 
@@ -58,7 +58,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ReactivePropertyInt_SetValueWithoutNotify_DoesNotFire()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
             bool fired = false;
             prop.AddListener(val => fired = true);
 
@@ -71,7 +71,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ReactivePropertyInt_ForceNotify_FiresWithCurrentValue()
         {
-            var prop = new ReactivePropertyInt(5);
+            ReactivePropertyInt prop = new ReactivePropertyInt(5);
             int lastVal = 0;
             prop.AddListener(val => lastVal = val);
 
@@ -83,7 +83,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ReactivePropertyFloat_WorksLikeInt()
         {
-            var prop = new ReactivePropertyFloat(2.5f);
+            ReactivePropertyFloat prop = new ReactivePropertyFloat(2.5f);
             float lastVal = 0f;
             prop.AddListener(val => lastVal = val);
 
@@ -94,9 +94,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void ReactivePropertyGeneric_SupportsReferenceTypes()
         {
-            var initial = new TestPayload { Count = 1 };
-            var next = new TestPayload { Count = 2 };
-            var prop = new ReactiveProperty<TestPayload>(initial);
+            TestPayload initial = new TestPayload { Count = 1 };
+            TestPayload next = new TestPayload { Count = 2 };
+            ReactiveProperty<TestPayload> prop = new ReactiveProperty<TestPayload>(initial);
             TestPayload received = null;
 
             prop.AddListener(value => received = value);
@@ -109,7 +109,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ReactivePropertyGeneric_SupportsValueTypes()
         {
-            var prop = new ReactiveProperty<double>(1.5d);
+            ReactiveProperty<double> prop = new ReactiveProperty<double>(1.5d);
             double received = 0d;
 
             prop.AddListener(value => received = value);
@@ -122,7 +122,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NetworkReactivePropertyBridge_GenericOverload_UpdatesAndNotifies()
         {
-            var prop = new ReactiveProperty<string>("local");
+            ReactiveProperty<string> prop = new ReactiveProperty<string>("local");
             string received = null;
 
             prop.AddListener(value => received = value);

@@ -22,10 +22,10 @@ Docs: `Assets/Neoxider/Docs/Abilities/` (README + per-type pages). Source: `Asse
 
 | Component | Role / key API |
 |---|---|
-| `AbilitySystemBehaviour` | Scene hub, singleton `AbilitySystemBehaviour.I` (auto-creates; add manually to assign **Libraries** + **Archetypes**). `AbilitySystem System` (domain entry: `Cast`, `Events`, `GrantAbility`, `SetAbilityLevel`, `Ops`), `bool Paused` (freeze tick for menus/level-up), `AddLibrary(lib)`, `AddArchetype(id, prefab)`, `GetBehaviour(UnitId)`. Implements `IAbilityWorldAdapter` (positions, radius queries, `TryMoveUnit`, spawns via `PoolManager`) |
-| `AbilityUnitBehaviour` | A unit's scene presence. Assign **Template**; `AbilityUnit Unit` (domain: `GetProperty`, `HasState`, `Resources`, `SetLevel`), `CurrentHealth/MaxHealth/HealthNormalized/IsAlive`, `ApplyDamage(float)` (pure, no source), `ApplyHeal(float)`, `SetTemplate(...)`/`SetTeamOverride(...)` for pooled spawning. Receipt UnityEvents: `OnDamaged<float>`, `OnHealed<float>`, `OnDied`, `OnModifierApplied/Removed<string>`, `OnAbilityCast<string>` |
-| `AbilityCasterBehaviour` | The cast API (`[RequireComponent(AbilityUnitBehaviour)]`). `TryCast(id)`, `TryCastAtUnit(id, unit)`, `TryCastAtPoint(id, point)`, `TryCastTowards(id, dir)` — pick the one matching the ability's Targeting; `GetCooldownNormalized(id)` (1 = just used, 0 = ready); events `OnCastSuccess/OnCastFailed<string>` (`CastFailureReason` name) |
-| `AbilityProjectileBehaviour` | Pooled data-driven homing projectile; bind its prefab to the archetype id under the hub's **Archetypes** |
+| `AbilitySystemBehaviour` | Scene hub, singleton `AbilitySystemBehaviour.I` (auto-creates; add manually to assign **Libraries** + **Archetypes**). `AbilitySystem System` (domain entry: `Cast`, `Events`, `GrantAbility`, `SetAbilityLevel`, `Ops`), `bool Paused` (freeze tick for menus/level-up), `AddLibrary(lib)`, `AddArchetype(id, prefab)`, `GetBehaviour(UnitId)`, `RegisteredUnitCount`. **Spatial Cell Size** / `float SpatialCellSize` (0 = exact linear scan; set it for many units) + `InvalidateSpatialCache()` (after teleporting units by script when same-frame queries must see it). Implements `IAbilityWorldAdapter` (positions, radius queries, `TryMoveUnit`, spawns via `PoolManager`) |
+| `AbilityUnitBehaviour` | A unit's scene presence. Assign **Template**; `AbilityUnit Unit` (domain: `GetProperty`, `HasState`, `Resources`, `SetLevel`), `UnitId UnitId`, `CurrentHealth/MaxHealth/HealthNormalized/IsAlive`, `ApplyDamage(float)` (pure, no source), `ApplyHeal(float)`, `SetTemplate(...)`/`SetTeamOverride(...)` for pooled spawning. Receipt UnityEvents: `OnDamaged<float>`, `OnHealed<float>`, `OnDied`, `OnModifierApplied/Removed<string>`, `OnAbilityCast<string>` |
+| `AbilityCasterBehaviour` | The cast API (`[RequireComponent(AbilityUnitBehaviour)]`). `TryCast(id)`, `TryCastAtUnit(id, unit)`, `TryCastAtPoint(id, point)`, `TryCastTowards(id, dir)` — pick the one matching the ability's Targeting; `CastResult Cast(CastRequest)` for a custom seed (the request's caster is replaced by this unit); `CastResult LastCastResult` (typed `Success`/`Failure`/`CastId` of the latest call); `GetCooldownNormalized(id)` (1 = just used, 0 = ready); events `OnCastSuccess/OnCastFailed<string>` (`CastFailureReason` name) |
+| `AbilityProjectileBehaviour` | Pooled data-driven homing projectile; bind its prefab to the archetype id under the hub's **Archetypes**. `IsFlying`, `CastId`; releases its pending cast when disabled or destroyed and returns to the pool when the hub is gone |
 
 Units exist only between `OnEnable`/`OnDisable`. The minimum damageable unit = `AbilityUnitBehaviour` +
 template; add the caster only when it casts. Grant-at-runtime goes through
@@ -42,7 +42,7 @@ utility atoms: `knockback` (push from caster), `pull` (drag toward caster), `tel
 `chain` (nearest-first bounces, `MaxTargets` hops, falloff in `CustomParam`, deterministic). Motion routes
 through the world adapter's `TryMoveUnit` seam; `unmovable`/`invulnerable` units stay put. Custom op:
 implement `IEffectOperation`, `AbilitySystemBehaviour.I.System.Ops.Register(new MyOp())` once — then it's
-authorable in data.
+authorable in data (see the lifetime contract below).
 
 **Live combat properties** read by `DamageService` at damage time (default 0 — contribute via template or
 modifier, no wiring): `crit_chance`/`crit_multiplier` (attacker), `evasion_chance` (victim, physical only),
@@ -64,11 +64,14 @@ using Neo.Abilities;
 [SerializeField] private AbilityCasterBehaviour caster;
 [SerializeField] private AbilityUnitBehaviour target;
 
-if (!caster.TryCastAtUnit("firebolt", target)) { /* OnCastFailed carried the reason */ }
+if (!caster.TryCastAtUnit("firebolt", target))
+{
+    CastFailureReason why = caster.LastCastResult.Failure;   // OnCooldown, OutOfRange, NotEnoughResources, ...
+}
 cooldownImage.fillAmount = caster.GetCooldownNormalized("firebolt");
 
 // Receipts: per-unit UnityEvents, or the global stream:
-var system = AbilitySystemBehaviour.I.System;
+AbilitySystem system = AbilitySystemBehaviour.I.System;
 system.Events.Subscribe(AbilityEvents.TakeDamage, e => SpawnHitNumber(e.Target, e.Amount));
 system.Events.SubscribeAny(e => Log(e.EventId, e.Target, e.Amount));   // all events
 
@@ -84,6 +87,30 @@ world adapter (the hub in scenes; a fake `IAbilityWorldAdapter` headless). Resou
 `Neo.Core.Resources.ResourcePoolModel` (`AddPool`, `SetMax`, `Restore`; `SetCurrent(id, value)` is the
 direct clamped setter for loads/revives that bypasses the heal gate).
 
+## Performance and lifetime contracts (12.0.0)
+
+- **Allocation-free once warm:** casts (instant and projectile delivery, including costs), projectile hits
+  and releases, modifier ticks, event reactions, event publication, `chain`, `dispel`, `remove_modifier`.
+  Remaining allocation is per lifetime (creating a unit, applying a new modifier instance, subscribing).
+  Scene spawns of projectile/zone/summon prefabs go through `PoolManager` — give archetype prefabs a pool
+  with a suitable initial size.
+- **Many units:** set **Spatial Cell Size** (about the typical query radius, e.g. 3) so radius queries,
+  projectile hit tests, area effects and the auto-caster search visit only nearby cells (results identical
+  to the linear scan). Custom world adapters reuse `AbilitySpatialGrid` (`new AbilitySpatialGrid(cellSize)`,
+  `Clear()`, `Add(unitId, position)`, `Query(point, radius, results)` — insertion order, no allocation when
+  warm). Example adapter: `Docs/Abilities/README.md` → "Spatial queries for many units".
+- **Pooled `EffectContext`:** contexts the system creates for casts, projectile hits, modifier ticks and
+  reactions are recycled as soon as their effects finish. A custom `IEffectOperation` must not keep the
+  context, its `PrimaryTargets`, its `Random` or a `CreateNested` child after `Execute` returns — copy the
+  values and build a new `EffectContext` for delayed/coroutine effects. `IsReleased` reports an expired
+  context; `ExecuteEffects` ignores it with a gated warning. Keep `Execute` allocation-free.
+- **Determinism:** every modifier tick and event reaction rolls with its own derived seed (a 50% DoT node
+  fires on about half the ticks). Replays recorded before 12.0.0 diverge after a modifier's second
+  tick/reaction — re-record them.
+- `ModifierEngine.VersionOf` values come from one engine-wide counter: compare them for equality only;
+  they read 0 after `DestroyUnit` (which now forgets the unit's bookkeeping).
+- `AbilityEventBus.Publish` ignores an event without an id (it used to throw).
+
 ## NoCode trio (designer wiring — see avoid-nocode.md)
 
 `AbilityNoCodeAction` (enum-driven `Execute()` bridge: cast/grant/revoke/level/modifier/damage/heal from
@@ -91,17 +118,22 @@ UnityEvents), `AbilityAutoCaster` (auto-cast every ready ability with nearest-ta
 or `Interval` mode, failure backoff — real logic, fine to reuse from code-first survivor-style games
 instead of hand-rolling a fire-when-ready loop), `AbilityCooldownSource` (poll-friendly
 `CooldownNormalized`/`ReadyNormalized`/`SecondsRemaining`/`IsReady` for `SetProgress`/`NoCodeBindText`).
-When writing C#, call `TryCast*`/`GetCooldownNormalized` directly instead of the action/source bridges.
+When writing C#, call `TryCast*`/`GetCooldownNormalized`/`LastCastResult` directly instead of the
+action/source bridges.
 
 ## Survivor kit — the reference implementation
 
-`Samples~/Demo` ships **SurvivorDemo.unity**: a complete Vampire-Survivors game assembled at runtime from
-ONE `SurvivorConfig` ScriptableObject (player/enemy `UnitTemplate`s, auto-cast weapon `AbilityDefinition`s,
+`Samples~/Demo` ships **SurvivorDemo.unity**: a complete Vampire-Survivors game built from ONE
+`SurvivorConfig` ScriptableObject (player/enemy `UnitTemplate`s, auto-cast weapon `AbilityDefinition`s,
 slow/DoT/stat `ModifierDefinition`s, upgrade cards, spawn/health ramps, XP curve) on top of Neo.Abilities +
-Core resources. **Clip a similar game by authoring new data and swapping the config — never edit the kit
+Core resources. The scene is authored in the Editor by `SurvivorDemoBuilder` from that config (camera,
+`PoolManager`, the ability hub with **Spatial Cell Size** 3, arena, player, pooled templates, HUD); at
+runtime `SurvivorGame` only runs the loop (`RestartRun()`, `PickUpgrade(int)`, `GrantLevelUp()`). After
+changing the config's enemy list or projectile archetypes, re-run **Neoxider/Demo/Rebuild Active Demo
+Scene**. **Clip a similar game by authoring new data and swapping the config — never edit the kit
 scripts.** Read `Docs/Abilities/SurvivorDemo.md` before building any survivor-like/auto-battler game; copy
 its idioms (enemy-as-presentation: MonoBehaviour steers, the ability domain owns health/combat;
-config-driven bootstrap; upgrade kinds PermanentModifier/GrantAbility/MaxHealth).
+config-driven setup; upgrade kinds PermanentModifier/GrantAbility/MaxHealth).
 
 ## Pitfalls
 

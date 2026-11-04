@@ -1,13 +1,16 @@
 ﻿# SingletonById
 
-`SingletonById<T>` is a `MonoBehaviour` base for one live registered component per string Id and closed component type. Namespace: `Neo.Tools`; assembly: `Neo.Tools.Managers`.
+**What it is:** a generic `MonoBehaviour` base that keeps one live registered component per string Id (and per
+closed component type); a newer instance with the same Id replaces the older one. Script:
+`Scripts/Tools/Managers/SingletonById.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Managers`.
 
-## Scene setup
-
+**How to use:**
 1. Create a concrete component inheriting `SingletonById<YourType>`.
 2. Add it to the scene and set `_id` before activation / `Awake`.
 3. Enable `_dontDestroyOnLoad` for a persistent root GameObject when needed.
-4. Read it from C# with `YourType.Get(id)` or `YourType.Has(id)`.
+4. Read it from C# with `YourType.Get(id)`, `YourType.TryGet(id, out YourType value)` or `YourType.Has(id)`.
+
+---
 
 The generic base is not a concrete menu component. Scene scripts or UnityEvent adapters can use its typed C# lookup API; no NoCode bridge is required.
 
@@ -22,6 +25,9 @@ The generic base is not a concrete menu component. Scene scripts or UnityEvent a
 
 - `Id` is the read-only configured key.
 - `Get(string id)` returns the registered component or null; `Has(string id)` checks for a live component.
+- `TryGet(string id, out T instance)` returns `true` with a live component; a destroyed entry yields `false` and a
+  real `null` (never a destroyed reference).
+- `_dontDestroyOnLoad` only applies in Play Mode.
 - Null and empty lookup keys return null / false. A component with a null or empty configured Id is not registered; its warning goes through gated `NeoDiagnostics`.
 - Lookups do not scan the scene or create objects. An inactive object that has not run `Awake` is not registered; disabling an already registered object does not unregister it.
 - A newly awakened instance with the same Id replaces the old one and schedules the **old GameObject** for destruction. The old object's later `OnDestroy` does not remove the replacement.

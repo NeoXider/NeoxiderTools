@@ -23,6 +23,17 @@ namespace Neo.Editor
         [SerializeField]
         private int animationFps = NeoInspectorAnimation.DefaultFps;
 
+        [Tooltip("Eased transitions for sections opening and closing, hover highlights and switches. Follows the " +
+                 "master switch and the Play Mode rule.")]
+        [SerializeField]
+        private bool enableTransitions = true;
+
+        [Header("Banner")]
+        [Tooltip("With several Neo components on one GameObject only the first shows the full banner; the others " +
+                 "get the one-row compact header.")]
+        [SerializeField]
+        private bool compactRepeatedBanners = true;
+
         [Header("Rainbow Effects - Text")] [SerializeField]
         private bool enableRainbowSignature = true;
 
@@ -63,6 +74,8 @@ namespace Neo.Editor
         public bool EnableAnimations => enableAnimations;
         public bool AnimateInPlayMode => animateInPlayMode;
         public int AnimationFps => NeoInspectorAnimation.ClampFps(animationFps);
+        public bool EnableTransitions => enableTransitions;
+        public bool CompactRepeatedBanners => compactRepeatedBanners;
 
         public bool EnableRainbowSignature => enableRainbowSignature;
         public bool EnableRainbowSignatureAnimation => enableRainbowSignatureAnimation;
@@ -94,6 +107,30 @@ namespace Neo.Editor
         public void SetAnimationFps(int value)
         {
             animationFps = NeoInspectorAnimation.ClampFps(value);
+            Save(true);
+        }
+
+        public void SetEnableTransitions(bool value)
+        {
+            enableTransitions = value;
+            Save(true);
+        }
+
+        public void SetCompactRepeatedBanners(bool value)
+        {
+            compactRepeatedBanners = value;
+            Save(true);
+        }
+
+        public void SetRainbowSaturation(float value)
+        {
+            rainbowSaturation = Mathf.Clamp01(value);
+            Save(true);
+        }
+
+        public void SetRainbowBrightness(float value)
+        {
+            rainbowBrightness = Mathf.Clamp01(value);
             Save(true);
         }
 

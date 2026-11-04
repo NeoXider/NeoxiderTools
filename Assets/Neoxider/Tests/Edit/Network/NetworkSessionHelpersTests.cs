@@ -50,8 +50,6 @@ namespace Neo.Editor.Tests
             return go;
         }
 
-        // ---- NetworkSingleton.I ------------------------------------------------------------------------
-
         [Test]
         public void Singleton_MissIsTrustedForTheFrame_ButNotForever()
         {
@@ -63,7 +61,7 @@ namespace Neo.Editor.Tests
 
             Assert.That(RetrySingleton.I, Is.Null, "within the same frame the earlier miss is still trusted (no per-call scene search)");
 
-            NetworkSingletonSearchState.Epoch++; // what a scene load or unload does
+            NetworkSingletonSearchState.Epoch++; // WHY: what a scene load or unload does
             Assert.That(RetrySingleton.I, Is.Not.Null, "after a scene change the lookup searches again");
             Assert.That(RetrySingleton.HasInstance, Is.True);
         }
@@ -107,8 +105,6 @@ namespace Neo.Editor.Tests
 
             Assert.That(RetrySingleton.I, Is.Not.Null, "scene network objects start disabled until the session wakes them");
         }
-
-        // ---- scene object activation ---------------------------------------------------------------------
 
         [Test]
         public void ActivateNetworkedSceneObjects_WakesDisabledSceneIdentities()

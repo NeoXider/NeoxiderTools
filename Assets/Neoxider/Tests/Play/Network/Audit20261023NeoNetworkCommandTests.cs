@@ -120,7 +120,7 @@ namespace Neo.Tests.Play
             NetworkConnectionToClient first = new NetworkConnectionToClient(601);
             NetworkConnectionToClient second = new NetworkConnectionToClient(602);
             NetworkWriter payload = new NetworkWriter();
-            // Follow the registered wire serializer; this Mirror version weaves int as varint.
+            // WHY: follow the registered wire serializer; this Mirror version weaves int as varint.
             payload.Write<int>(0);
             string parameters = "System.Int32";
             if (kind == "Float")
@@ -140,6 +140,72 @@ namespace Neo.Tests.Play
             Assert.That(received, Is.EqualTo(1), "the same peer's immediate repeat must be dropped");
             Deliver(relay, "CmdTrigger" + kind, parameters, payload, second);
             Assert.That(received, Is.EqualTo(2), "another peer has an independent budget");
+        }
+
+        [TestCase("Void")]
+        [TestCase("Float")]
+        [TestCase("String")]
+        public void ActionRelay_OthersOnly_ReachesTheObserversExceptTheSender(string kind)
+        {
+            NetworkActionRelay relay = _subject.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
+            SetField(relay, "_channels",
+                new[] { new NetworkActionChannel { scope = NetworkActionScope.OthersOnly } });
+            _subject.SetActive(true);
+            NetworkServer.Spawn(_subject);
+            NetworkIdentity identity = _subject.GetComponent<NetworkIdentity>();
+            NetworkConnectionToClient sender = new NetworkConnectionToClient(641) { isReady = true, isAuthenticated = true };
+            NetworkConnectionToClient observer = new NetworkConnectionToClient(642) { isReady = true, isAuthenticated = true };
+            NetworkConnectionToClient hidden = new NetworkConnectionToClient(643) { isReady = true, isAuthenticated = true };
+            NetworkConnectionToClient[] peers = { sender, observer, hidden };
+            int targetRpcs = 0;
+            Action<Mirror.NetworkDiagnostics.MessageInfo> countRpcs = info =>
+            {
+                if (info.message is RpcMessage)
+                {
+                    targetRpcs += info.count;
+                }
+            };
+            try
+            {
+                foreach (NetworkConnectionToClient peer in peers)
+                {
+                    NetworkServer.connections[peer.connectionId] = peer;
+                }
+
+                // WHY: the hidden peer is connected but does not observe the relay (interest management), so it has
+                // not spawned the object and cannot run its TargetRpc.
+                identity.observers[sender.connectionId] = sender;
+                identity.observers[observer.connectionId] = observer;
+                NetworkWriter payload = new NetworkWriter();
+                payload.Write<int>(0);
+                string parameters = "System.Int32";
+                if (kind == "Float")
+                {
+                    payload.WriteFloat(3f);
+                    parameters += ",System.Single";
+                }
+                else if (kind == "String")
+                {
+                    payload.WriteString("others");
+                    parameters += ",System.String";
+                }
+
+                parameters += ",Mirror.NetworkConnectionToClient";
+                Mirror.NetworkDiagnostics.OutMessageEvent += countRpcs;
+                Deliver(relay, "CmdTrigger" + kind, parameters, payload, sender);
+
+                Assert.That(targetRpcs, Is.EqualTo(1), "only the observer that did not send the action gets it");
+            }
+            finally
+            {
+                Mirror.NetworkDiagnostics.OutMessageEvent -= countRpcs;
+                foreach (NetworkConnectionToClient peer in peers)
+                {
+                    identity.observers.Remove(peer.connectionId);
+                    NetworkServer.connections.Remove(peer.connectionId);
+                }
+            }
         }
 
         [TestCase(SyncValueType.Float)]
@@ -224,7 +290,7 @@ namespace Neo.Tests.Play
 
             Assert.That(target.Count, Is.EqualTo(2));
             Assert.That(notifications, Is.Zero);
-            // Observe the outbound snapshot as well: a rejected write must not be replicated to other peers.
+            // WHY: observe the outbound snapshot as well: a rejected write must not be replicated to other peers.
             Assert.That(CaptureInitialState(sync), Is.EqualTo(before));
         }
 
@@ -377,6 +443,52 @@ namespace Neo.Tests.Play
             Assert.That(count, Is.EqualTo(1), "the opted-out request must not spend the enabled request's budget");
         }
 
+        [TestCase("Event")]
+        [TestCase("Int")]
+        [TestCase("Float")]
+        [TestCase("String")]
+        public void DispatcherOptOut_RejectsQueuedIngressBeforeConsumingThePeerBudget(string kind)
+        {
+            Neo.Tools.NetworkEventDispatcher dispatcher = _subject.AddComponent<Neo.Tools.NetworkEventDispatcher>();
+            int count = 0;
+            dispatcher.onNetworkEvent.AddListener(() => count++);
+            dispatcher.onNetworkIntEvent.AddListener(_ => count++);
+            dispatcher.onNetworkFloatEvent.AddListener(_ => count++);
+            dispatcher.onNetworkStringEvent.AddListener(_ => count++);
+            _subject.SetActive(true);
+            NetworkServer.Spawn(_subject);
+            NetworkWriter payload = new NetworkWriter();
+            string parameters = "Mirror.NetworkConnectionToClient";
+            if (kind == "Int") { payload.Write<int>(5); parameters = "System.Int32," + parameters; }
+            if (kind == "Float") { payload.WriteFloat(5f); parameters = "System.Single," + parameters; }
+            if (kind == "String") { payload.WriteString("accepted"); parameters = "System.String," + parameters; }
+            NetworkConnectionToClient peer = new NetworkConnectionToClient(618);
+            dispatcher.isNetworked = false;
+            Deliver(dispatcher, "CmdDispatch" + kind, parameters, payload, peer);
+            Assert.That(count, Is.Zero, "a server-side opt-out must reject queued or crafted commands");
+            dispatcher.isNetworked = true;
+            Deliver(dispatcher, "CmdDispatch" + kind, parameters, payload, peer);
+            Assert.That(count, Is.EqualTo(1), "the opted-out request must not spend the enabled request's budget");
+        }
+
+        [Test]
+        public void PlayerNameOptOut_RejectsQueuedRenameBeforeConsumingTheBudget()
+        {
+            NetworkPlayerName playerName = _subject.AddComponent<NetworkPlayerName>();
+            _subject.SetActive(true);
+            NetworkServer.Spawn(_subject);
+            NetworkWriter payload = new NetworkWriter();
+            payload.WriteString("Renamed");
+            NetworkConnectionToClient owner = new NetworkConnectionToClient(619);
+            string before = playerName.PlayerName;
+            playerName.isNetworked = false;
+            Deliver(playerName, "CmdSetName", "System.String", payload, owner);
+            Assert.That(playerName.PlayerName, Is.EqualTo(before));
+            playerName.isNetworked = true;
+            Deliver(playerName, "CmdSetName", "System.String", payload, owner);
+            Assert.That(playerName.PlayerName, Is.EqualTo("Renamed"));
+        }
+
         [TestCase(-1)]
         [TestCase(3)]
         [TestCase(int.MaxValue)]
@@ -481,7 +593,7 @@ namespace Neo.Tests.Play
         private static void Deliver(NetworkBehaviour component, string method, string parameters,
             NetworkWriter payload, NetworkConnectionToClient sender)
         {
-            // Use Mirror's public profiler API to dispatch the actual woven receive handler.
+            // WHY: Mirror's public profiler API dispatches the actual woven receive handler.
             // This bypasses admission; reflection helpers configure settings and schedule polling callbacks.
             string signature = $"System.Void {component.GetType().FullName}::{method}({parameters})";
             ushort hash = signature.GetStableHashCode16();

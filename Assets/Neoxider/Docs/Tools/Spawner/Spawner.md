@@ -1,6 +1,13 @@
 ﻿# Spawner
 
-**Purpose:** A flexible object spawner component. Supports pooling (`PoolManager`), infinite loops, wave-based spawning (Waves), random delays, random rotation, and area spawning within a collider (2D/3D).
+**What it is:** Scene `MonoBehaviour` (a `NeoNetworkComponent`) that produces prefabs in a loop or in waves, with random delays/rotation, spawn points, 2D/3D spawn areas with deny zones, pooling and optional Mirror replication. `Scripts/Tools/Spawner/Spawner.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `Spawner`, fill **Prefabs** and choose **Spawn Mode** (`Loop` or `Waves`).
+2. Optionally assign **Spawn Points** or a **Spawn Area** collider, and **Deny Areas**.
+3. Enable **Spawn On Awake**, or call `StartSpawn()`/`StopSpawn()` from UnityEvents or C#; subscribe to `OnObjectSpawned` / `OnWaveStarted`.
+
+---
 
 ## Fields (Inspector)
 
@@ -21,7 +28,7 @@
 | **Max Rejection Tries** | How many times to re-roll a candidate that landed inside a deny zone before giving up and using the last candidate anyway (`Min(1)`). |
 | **Max Waves** | Maximum number of waves in `Waves` mode. `0` = infinite waves. |
 | **Spawn On Awake** | Starts spawning automatically from `Start()`. The serialized field name is retained for compatibility. |
-| **Parent Transform** | Optional parent for spawned objects. `null` = spawn without a parent. |
+| **Parent Transform** | Optional parent for spawned objects. `null` = spawn without a parent: unparented in the active scene through `PoolManager`, under the `[SpawnUtility Pools]` root on the fallback pool path, or at the scene root without pooling. |
 
 ## API
 
@@ -34,17 +41,19 @@
 | `GameObject SpawnById(int prefabId, Vector3 position)` | Instantly spawns a specific prefab by index at the given position. |
 | `GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)` | Direct typed spawn path with an explicit prefab, world pose and parent. Null prefab returns null. |
 | `Transform ResolveSpawnPoint()` | Returns the point for the current spawn: a random non-null entry from `Spawn Points`, or the spawner's own transform when the list is empty. |
-| `Vector3 GetSpawnPosition()` | Resolves the position for the current spawn: a random point inside `Spawn Area`/`Spawn Area 2D` (re-rolled against deny zones) when assigned, otherwise the active spawn point's position. |
+| `Vector3 GetSpawnPosition()` | Resolves the position for the current spawn: a random point inside `Spawn Area`/`Spawn Area 2D` (re-rolled against deny zones) when assigned, otherwise the active spawn point's position. Allocation-free. |
 | `bool IsPositionAllowed(Vector3 position)` | Returns `false` if the position is inside any configured `Deny Areas`/`Deny Areas 2D` collider. With no deny zones configured, always returns `true`. |
 | `void Clear()` | Stops spawning and destroys (or pools) all objects previously created by this spawner. |
-| `int GetActiveObjectCount()` | Prunes destroyed/returned/reissued rentals and counts the current objects active in the hierarchy. |
-| `List<GameObject> SpawnedObjects` | Current tracked object list; pooled instances are deduplicated by object and tracked by spawn generation. Counting and periodic spawn cleanup prune stale entries. |
+| `int GetActiveObjectCount()` | Prunes destroyed/returned/reissued rentals and counts the current objects active in the hierarchy. Allocation-free. |
+| `List<GameObject> SpawnedObjects` | Current tracked object list; pooled instances are deduplicated by object and tracked by spawn generation (a reused rental appears once). Counting and periodic spawn cleanup prune stale entries. Treat it as read-only. |
 
 `Clear()` returns only the generations issued to this spawner. If another spawner has already reused an old pooled instance, that newer rental remains active. Release callbacks may spawn new objects; those new objects remain tracked after the clear. An expired delay from an older generation cannot remove or despawn the newer rental.
 
 Spawn loops stop on disable and require `StartSpawn()` to resume. Delayed despawns run on this component: disabling its GameObject or destroying the spawner cancels those Unity coroutines, so keep the spawner active until they finish or call `Clear()` explicitly. Runtime Inspector buttons are Play Mode only.
 
 In 11.0, Stop/Start, Clear or disable during a spawn/wave callback invalidates the old producer immediately, including the synchronous first `StartCoroutine` step. A superseded producer cannot overwrite the newer handle, consume its limit, increment its wave, or clear its running flag. Its remaining callback/RPC tail is suppressed after invalidation; already-created objects remain tracked, and Stop still preserves their independent expiry. Public manually-started `SpawnObjects()` enumerators retain caller-owned coroutine cancellation.
+
+Fixed waits reuse one `WaitForSeconds` per spawner: equal **Min / Max Spawn Delay**, **Time Between Waves** and **Destroy Delay** allocate the wait once instead of on every spawn (a random delay still needs a new wait per spawn). Timing is unchanged.
 
 Capsule areas honor X/Y/Z direction, center, rotation and collider scale. Box/Sphere (3D) and Box/Circle (2D) areas are also supported. Deny-zone retries are bounded: if every candidate is rejected, the last candidate is still used as configured.
 

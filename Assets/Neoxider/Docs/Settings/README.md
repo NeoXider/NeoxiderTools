@@ -2,7 +2,13 @@
 
 **What it is:** runtime assembly **Neo.Settings**: static **`GameSettings`**, **`GameSettingsComponent`** singleton (persistence via **Neo.Save.SaveProvider**, `QualitySettings` presets), and UI binder **`SettingsView`**. Scripts live under `Assets/Neoxider/Scripts/Settings/`.
 
-Demo: `Samples~/Demo/Scenes/Settings/SettingsDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples~/Demo/Scripts/Shell/SettingsDemoController.cs` (paths relative to the package). The release layout uses `Samples~`; active sample development can use `Samples` instead. Package Manager imports samples into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`.
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SettingsDemo.jpg" alt="SettingsDemo: GameSettingsComponent with a deferred save" width="100%" /></p>
+
+*Demo scene: `Scenes/Settings/SettingsDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+Demo: `Samples~/Demo/Scenes/Settings/SettingsDemo.unity`, authored by the editor builder `Samples~/Demo/Editor/Builders/Settings/SettingsDemoBuilder.cs` (every control, label and persistent UnityEvent is saved in the scene; rebuild with **Neoxider/Demo/Rebuild Active Demo Scene**), controller `Samples~/Demo/Scripts/Shell/SettingsDemoController.cs` (paths relative to the package). The slider calls `GameSettingsComponent.SetMouseSensitivityForMenu` directly (NoCode, Deferred save); the **Deferred save** row follows `GameSettingsComponent.HasPendingDeferredSave` while a drag is collected into one write, and **Stored in SaveProvider** shows the value that landed. The demo service saves under the key prefix `Neo.Demo.Settings.`, so it never overwrites a game's settings. The release layout uses `Samples~`; active sample development can use `Samples` instead. Package Manager imports samples into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`.
 
 **Contents:**
 
@@ -13,6 +19,11 @@ Demo: `Samples~/Demo/Scenes/Settings/SettingsDemo.unity` — runtime-built UI vi
 | [SettingsView.md](./SettingsView.md) | UI binding |
 | [GraphicsPreset.md](./GraphicsPreset.md) | Named quality tiers |
 | [SettingsPersistMode.md](./SettingsPersistMode.md) | Immediate, debounced and explicit saving |
+| [SettingsGroup.md](./SettingsGroup.md) | Logical groups for persistence and reset |
+| [GameSettingsSaveKeys.md](./GameSettingsSaveKeys.md) | Save key suffixes |
+| [GraphicsPresetLevelMapping.md](./GraphicsPresetLevelMapping.md) | Preset to `QualitySettings` index mapping |
+| [ResolutionPresetEntry.md](./ResolutionPresetEntry.md) | Fixed resolution options |
+| [ISettingsLocalization.md](./ISettingsLocalization.md) | Localization hook for the settings UI |
 
 **How to use:**
 

@@ -19,7 +19,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void WireBinding(NoCodeFloatBindingBehaviour target, GameObject sourceRoot, string member)
         {
-            var so = new SerializedObject(target);
+            SerializedObject so = new SerializedObject(target);
             SerializedProperty binding = so.FindProperty("_binding");
             binding.FindPropertyRelative("_sourceRoot").objectReferenceValue = sourceRoot;
             binding.FindPropertyRelative("_componentTypeName").stringValue = SrcType;
@@ -29,7 +29,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void SetMode(NoCodeFloatBindingBehaviour target, NoCodeFloatUpdateMode mode)
         {
-            var so = new SerializedObject(target);
+            SerializedObject so = new SerializedObject(target);
             so.FindProperty("_updateMode").enumValueIndex = (int)mode;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -37,8 +37,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void LazyResolve_TMPAddedBeforeBind_StillFindsComponent()
         {
-            var src = new GameObject("src");
-            var dst = new GameObject("dst");
+            GameObject src = new GameObject("src");
+            GameObject dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -66,8 +66,8 @@ namespace Neo.Editor.Tests.Edit
         {
             // WHY: Bind added FIRST, TMP added AFTER → OnEnable won't find TMP
             // but lazy resolve in ApplyFloat should find it
-            var src = new GameObject("src");
-            var dst = new GameObject("dst");
+            GameObject src = new GameObject("src");
+            GameObject dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -94,8 +94,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void LazyResolve_ReactiveMode_UpdatesPushedValue()
         {
-            var src = new GameObject("src");
-            var dst = new GameObject("dst");
+            GameObject src = new GameObject("src");
+            GameObject dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {

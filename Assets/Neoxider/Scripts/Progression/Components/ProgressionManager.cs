@@ -31,30 +31,62 @@ namespace Neo.Progression
         [SerializeField]
         private LevelCurveDefinition _levelCurve;
 
-        [SerializeField] private UnlockTreeDefinition _unlockTree;
-        [SerializeField] private PerkTreeDefinition _perkTree;
+        [Tooltip("Unlock node graph (content gates). Nodes are unlocked with TryUnlockNode.")] [SerializeField]
+        private UnlockTreeDefinition _unlockTree;
 
-        [Header("Persistence")] [SerializeField]
+        [Tooltip("Perk graph bought with perk points via TryBuyPerk.")] [SerializeField]
+        private PerkTreeDefinition _perkTree;
+
+        [Header("Persistence")]
+        [Tooltip("SaveProvider key of the Progression profile (perk points, premium, unlocks, perks). Use a different key than the Core LevelComponent.")]
+        [SerializeField]
         private string _saveKey = DefaultSaveKey;
 
-        [SerializeField] private bool _loadOnAwake = true;
-        [SerializeField] private bool _autoSave = true;
+        [Tooltip("Load the saved profile during initialization; otherwise start from a fresh profile.")]
+        [SerializeField]
+        private bool _loadOnAwake = true;
 
-        [Header("Context")] [SerializeField] private GameObject _conditionContext;
+        [Tooltip("Save the profile after every change (unlock, purchase, perk points, premium, reset).")]
+        [SerializeField]
+        private bool _autoSave = true;
+
+        [Header("Context")]
+        [Tooltip("GameObject passed to ConditionEntry checks of nodes and perks. Defaults to this GameObject.")]
+        [SerializeField]
+        private GameObject _conditionContext;
 
         [Header("Reactive State")] public ReactivePropertyInt XpState = new();
         public ReactivePropertyInt LevelState = new(1);
         public ReactivePropertyInt PerkPointsState = new();
         public ReactivePropertyInt XpToNextLevelState = new();
 
-        [Header("Events")] [SerializeField] private UnityEventInt _onXpChanged = new();
-        [SerializeField] private UnityEventInt _onLevelChanged = new();
-        [SerializeField] private UnityEventInt _onPerkPointsChanged = new();
-        [SerializeField] private ProgressionStringEvent _onNodeUnlocked = new();
-        [SerializeField] private ProgressionStringEvent _onPerkPurchased = new();
-        [SerializeField] private UnityEvent _onProfileLoaded = new();
-        [SerializeField] private UnityEvent _onProfileSaved = new();
-        [SerializeField] private UnityEvent _onProfileReset = new();
+        [Header("Events")] [Tooltip("Total XP after a settled change.")] [SerializeField]
+        private UnityEventInt _onXpChanged = new();
+
+        [Tooltip("Resolved level after a settled change.")] [SerializeField]
+        private UnityEventInt _onLevelChanged = new();
+
+        [Tooltip("Unspent perk points after a settled change.")] [SerializeField]
+        private UnityEventInt _onPerkPointsChanged = new();
+
+        [Tooltip("Unlock node id, raised once per successful TryUnlockNode.")] [SerializeField]
+        private ProgressionStringEvent _onNodeUnlocked = new();
+
+        [Tooltip("Perk id, raised once per successful TryBuyPerk.")] [SerializeField]
+        private ProgressionStringEvent _onPerkPurchased = new();
+
+        [Tooltip("Raised after a profile was loaded and applied.")] [SerializeField]
+        private UnityEvent _onProfileLoaded = new();
+
+        [Tooltip("Raised after the profile was written to the SaveProvider.")] [SerializeField]
+        private UnityEvent _onProfileSaved = new();
+
+        [Tooltip("Raised after ResetProgression() cleared the profile.")] [SerializeField]
+        private UnityEvent _onProfileReset = new();
+
+        [Tooltip("Raised once when ActivatePremium() enables the premium track, after retroactive premium rewards.")]
+        [SerializeField]
+        private UnityEvent _onPremiumActivated = new();
         private readonly HashSet<string> _purchasedPerkIds = new(StringComparer.Ordinal);
 
         private readonly HashSet<string> _unlockedNodeIds = new(StringComparer.Ordinal);
@@ -225,6 +257,24 @@ namespace Neo.Progression
         /// </summary>
         public UnityEvent OnProfileLoaded => _onProfileLoaded;
 
+        /// <summary>Gets the Inspector UnityEvent raised after the profile was written to the SaveProvider.</summary>
+        public UnityEvent OnProfileSaved => _onProfileSaved;
+
+        /// <summary>Gets the Inspector UnityEvent raised after <see cref="ResetProgression" />.</summary>
+        public UnityEvent OnProfileReset => _onProfileReset;
+
+        /// <summary>Gets the Inspector UnityEvent raised once when the premium track is activated.</summary>
+        public UnityEvent OnPremiumActivated => _onPremiumActivated;
+
+        /// <summary>C# event: an unlock node was unlocked (node id). Raised after rewards and the settled state notification.</summary>
+        public event Action<string> NodeUnlocked;
+
+        /// <summary>C# event: a perk was purchased (perk id). Raised after rewards and the settled state notification.</summary>
+        public event Action<string> PerkPurchased;
+
+        /// <summary>C# event: the premium track was activated, after retroactive premium rewards were dispatched.</summary>
+        public event Action PremiumActivated;
+
         /// <summary>Current XP value (for NeoCondition and reactive state binding).</summary>
         public int XpStateValue => XpState.CurrentValue;
 
@@ -280,6 +330,9 @@ namespace Neo.Progression
         public ProgressionProfileData GetProfileSnapshot()
         {
             EnsureInitialized();
+            // WHY: the id lists are synced from the sets only where they are read (here and in SaveProfile), so a
+            // reward that snapshots mid-dispatch still sees the node or perk that triggered it.
+            SyncProfileListsFromSets();
             return _profile.Clone();
         }
 
@@ -467,6 +520,13 @@ namespace Neo.Progression
                 return false;
             }
 
+            // WHY: conditions run user code that may unlock this node re-entrantly.
+            if (_unlockedNodeIds.Contains(node.Id))
+            {
+                failReason = "Unlock node is already unlocked.";
+                return false;
+            }
+
             return true;
         }
 
@@ -480,16 +540,31 @@ namespace Neo.Progression
                 return false;
             }
 
-            _unlockedNodeIds.Add(nodeId);
-            SyncProfileListsFromSets();
-
-            if (_unlockTree != null && _unlockTree.TryGetNode(nodeId, out UnlockNodeDefinition node))
+            if (!_unlockedNodeIds.Add(nodeId))
             {
-                ProgressionRewardDispatcher.DispatchRewards(node.Rewards, this);
+                failReason = "Unlock node is already unlocked.";
+                return false;
             }
 
-            PersistAndNotify();
+            // WHY: rewards (XP, perk points) each persist and notify; one runtime update publishes a single settled
+            // snapshot instead of an intermediate batch per reward.
+            BeginRuntimeUpdate();
+            try
+            {
+                if (_unlockTree != null && _unlockTree.TryGetNode(nodeId, out UnlockNodeDefinition node))
+                {
+                    ProgressionRewardDispatcher.DispatchRewards(node.Rewards, this);
+                }
+
+                PersistAndNotify();
+            }
+            finally
+            {
+                EndRuntimeUpdate();
+            }
+
             _onNodeUnlocked?.Invoke(nodeId);
+            NodeUnlocked?.Invoke(nodeId);
             return true;
         }
 
@@ -553,6 +628,20 @@ namespace Neo.Progression
                 return false;
             }
 
+            // WHY: conditions run user code that may buy this perk or spend points re-entrantly; re-check the
+            // cheap invariants so TryBuyPerk charges the cost and dispatches rewards exactly once.
+            if (_purchasedPerkIds.Contains(perk.Id))
+            {
+                failReason = "Perk is already purchased.";
+                return false;
+            }
+
+            if (_profile.AvailablePerkPoints < perk.Cost)
+            {
+                failReason = "Not enough perk points.";
+                return false;
+            }
+
             return true;
         }
 
@@ -580,10 +669,19 @@ namespace Neo.Progression
 
             _profile.AvailablePerkPoints -= perk.Cost;
             _purchasedPerkIds.Add(perkId);
-            SyncProfileListsFromSets();
-            ProgressionRewardDispatcher.DispatchRewards(perk.Rewards, this);
-            PersistAndNotify();
+            BeginRuntimeUpdate();
+            try
+            {
+                ProgressionRewardDispatcher.DispatchRewards(perk.Rewards, this);
+                PersistAndNotify();
+            }
+            finally
+            {
+                EndRuntimeUpdate();
+            }
+
             _onPerkPurchased?.Invoke(perkId);
+            PerkPurchased?.Invoke(perkId);
             return true;
         }
 
@@ -638,15 +736,17 @@ namespace Neo.Progression
                     SaveProfile();
                 }
 
-                if (_levelProvider != null && _levelCurve != null)
+                if (_levelProvider != null)
                 {
                     // XP rewards can reach new levels; those are already rewarded by the level-up listener.
-                    for (long level = 1; level <= achievedLevel; level++)
+                    // WHY: walk defined entries only; iterating every numeric level stalls on very high levels.
+                    int replayedLevel = 0;
+                    RewardTrackWalk walk = default;
+                    while (walk.TryGetNext(_levelCurve, replayedLevel, achievedLevel,
+                               out ProgressionLevelDefinition definition))
                     {
-                        if (_levelCurve.TryGetDefinition((int)level, out ProgressionLevelDefinition definition))
-                        {
-                            ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this, true);
-                        }
+                        replayedLevel = definition.Level;
+                        ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this, true);
                     }
                 }
 
@@ -656,6 +756,9 @@ namespace Neo.Progression
             {
                 EndRuntimeUpdate();
             }
+
+            _onPremiumActivated?.Invoke();
+            PremiumActivated?.Invoke();
         }
 
         /// <summary>
@@ -853,11 +956,20 @@ namespace Neo.Progression
             {
                 // WHY: reward dispatch can add XP and re-enter this handler; re-reading _lastRewardedLevel
                 // each iteration prevents double-dispatching levels the nested call already rewarded.
+                // Only defined reward levels are visited, so the cost does not depend on the size of the level gap;
+                // an ascending track is walked in one pass (O(entries)).
+                RewardTrackWalk walk = default;
                 while (_lastRewardedLevel < level)
                 {
-                    int nextLevel = _lastRewardedLevel + 1;
-                    _lastRewardedLevel = nextLevel;
-                    DispatchRewardsForSingleLevel(nextLevel);
+                    if (!walk.TryGetNext(_levelCurve, _lastRewardedLevel, level,
+                            out ProgressionLevelDefinition definition))
+                    {
+                        _lastRewardedLevel = level;
+                        break;
+                    }
+
+                    _lastRewardedLevel = definition.Level;
+                    DispatchLevelDefinition(definition);
                 }
 
                 PersistAndNotify();
@@ -868,13 +980,8 @@ namespace Neo.Progression
             }
         }
 
-        private void DispatchRewardsForSingleLevel(int level)
+        private void DispatchLevelDefinition(ProgressionLevelDefinition definition)
         {
-            if (_levelCurve == null || !_levelCurve.TryGetDefinition(level, out ProgressionLevelDefinition definition))
-            {
-                return;
-            }
-
             if (definition.GrantedPerkPoints > 0)
             {
                 _profile.AvailablePerkPoints = (int)Math.Min(int.MaxValue,
@@ -909,7 +1016,8 @@ namespace Neo.Progression
             BeginRuntimeUpdate();
             try
             {
-                SyncProfileListsFromSets();
+                // WHY: the id lists are read only by SaveProfile and GetProfileSnapshot, and both sync them first;
+                // syncing per change as well copied every unlocked node and purchased perk again on each change.
                 if (_autoSave)
                 {
                     SaveProfile();
@@ -1097,6 +1205,68 @@ namespace Neo.Progression
             _runtimeNotificationPending = false;
             UnbindLevelProvider();
             base.OnDestroy();
+        }
+
+        /// <summary>
+        ///     Visits reward-track entries in ascending level order with the result of
+        ///     <see cref="LevelCurveDefinition.TryGetNextDefinition" />. On an ascending track it resumes from the
+        ///     previous position, so a whole walk is O(entries) instead of O(entries^2). An unsorted track keeps the
+        ///     full scan per step; a swapped track or a lowered start level restarts from the first entry.
+        /// </summary>
+        private struct RewardTrackWalk
+        {
+            private LevelCurveDefinition _track;
+            private bool _ascending;
+            private int _index;
+            private int _afterLevel;
+
+            public bool TryGetNext(LevelCurveDefinition track, int afterLevel, int maxLevel,
+                out ProgressionLevelDefinition definition)
+            {
+                definition = null;
+                if (track == null)
+                {
+                    return false;
+                }
+
+                if (!ReferenceEquals(track, _track))
+                {
+                    _track = track;
+                    _ascending = track.IsAscending();
+                    _index = 0;
+                }
+                else if (afterLevel < _afterLevel)
+                {
+                    // WHY: entries before the cursor were skipped for a higher start level and may qualify again.
+                    _index = 0;
+                }
+
+                _afterLevel = afterLevel;
+                if (!_ascending)
+                {
+                    return track.TryGetNextDefinition(afterLevel, maxLevel, out definition);
+                }
+
+                IReadOnlyList<ProgressionLevelDefinition> levels = track.Levels;
+                for (; _index < levels.Count; _index++)
+                {
+                    ProgressionLevelDefinition candidate = levels[_index];
+                    if (candidate == null || candidate.Level <= afterLevel)
+                    {
+                        continue;
+                    }
+
+                    if (candidate.Level > maxLevel)
+                    {
+                        return false;
+                    }
+
+                    definition = candidate;
+                    return true;
+                }
+
+                return false;
+            }
         }
     }
 }

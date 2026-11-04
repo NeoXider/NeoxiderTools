@@ -12,9 +12,13 @@ namespace Neo.NoCode
         private const float DefaultPollIntervalSeconds = 0.16f;
         private const float MinPollIntervalSeconds = 0.016f;
 
-        [SerializeField] private ComponentFloatBinding _binding = new();
+        [Tooltip("Source object, component and member to read.")] [SerializeField]
+        private ComponentFloatBinding _binding = new();
 
-        [SerializeField] private NoCodeFloatUpdateMode _updateMode = NoCodeFloatUpdateMode.Reactive;
+        [Tooltip(
+            "Once: apply on enable. Reactive: follow ReactiveProperty changes (ordinary fields fall back to polling). Poll: refresh every Poll Interval.")]
+        [SerializeField]
+        private NoCodeFloatUpdateMode _updateMode = NoCodeFloatUpdateMode.Reactive;
 
         [Tooltip("When Update Mode is Poll, refreshes in LateUpdate using Poll Interval.")] [SerializeField]
         private bool _pollInLateUpdate = true;
@@ -32,9 +36,8 @@ namespace Neo.NoCode
         private bool _useReactivePollFallback;
         private volatile bool _configurationDirty;
 
+        /// <summary>Source binding (object, component, member). Its setters take effect on the next refresh.</summary>
         public ComponentFloatBinding Binding => _binding;
-
-        private float PollIntervalSeconds => Mathf.Max(MinPollIntervalSeconds, _pollIntervalSeconds);
 
         private bool HasReactiveSubscription =>
             _subscribedFloat != null || _subscribedInt != null || _subscribedBool != null;
@@ -51,9 +54,9 @@ namespace Neo.NoCode
             _binding.Invalidate();
             _useReactivePollFallback = false;
             _nextPollTime = Time.unscaledTime + PollIntervalSeconds;
-            TrySubscribeReactive();
+            // WHY: RefreshFromSource subscribes before applying and re-syncs after the output callback, so the
+            // former extra subscribe passes only repeated the same reflective read.
             RefreshFromSource();
-            TrySubscribeReactive();
         }
 
         protected virtual void OnDisable()
@@ -114,7 +117,7 @@ namespace Neo.NoCode
                 return;
             }
 
-            // OnValidate may run off the main thread. Resolve sources only from refresh/LateUpdate.
+            // WHY: OnValidate may run off the main thread; resolve sources only from refresh/LateUpdate.
             _configurationDirty = false;
             _binding.Invalidate();
             bool reactive = TrySubscribeReactive();
@@ -154,8 +157,22 @@ namespace Neo.NoCode
                 return false;
             }
 
-            if (!_binding.TryGetReactiveProperty(this, out ReactivePropertyFloat reactiveFloat,
-                    out ReactivePropertyInt reactiveInt, out ReactivePropertyBool reactiveBool))
+            bool readable = _binding.TryReadRaw(this, out object raw);
+            return SyncReactiveSubscription(readable, raw);
+        }
+
+        /// <summary>Subscribes to the reactive instance in an already read value (no second reflective read).</summary>
+        private bool SyncReactiveSubscription(bool readable, object raw)
+        {
+            if (!isActiveAndEnabled || _updateMode != NoCodeFloatUpdateMode.Reactive)
+            {
+                UnsubscribeReactive();
+                return false;
+            }
+
+            if (!readable || !ComponentFloatBinding.TryGetReactivePropertyFromValue(raw,
+                    out ReactivePropertyFloat reactiveFloat, out ReactivePropertyInt reactiveInt,
+                    out ReactivePropertyBool reactiveBool))
             {
                 UnsubscribeReactive();
                 return false;
@@ -168,7 +185,7 @@ namespace Neo.NoCode
                 return true;
             }
 
-            // Binding setters and replacement reactive instances take effect on the next refresh.
+            // WHY: binding setters and replacement reactive instances take effect on the next refresh.
             UnsubscribeReactive();
             _useReactivePollFallback = false;
             if (reactiveFloat != null)
@@ -200,11 +217,19 @@ namespace Neo.NoCode
             _useReactivePollFallback = true;
         }
 
+        /// <summary>
+        ///     Reads the source, (re)subscribes to a reactive source, and applies the value through
+        ///     <see cref="ApplyFloat"/>. A rewire performed inside <see cref="ApplyFloat"/> is re-synchronised before
+        ///     returning; a subscribed reactive source is re-read once for that check.
+        /// </summary>
         protected void RefreshFromSource()
         {
             ReconcileDirtyConfiguration();
-            bool reactive = TrySubscribeReactive();
-            if (!_binding.TryReadFloat(this, out float value))
+            // WHY: one reflective read per poll of a plain source. Plain value-type members box on every read, and the
+            // former subscribe/read/subscribe sequence read (and boxed) the same member three times per poll.
+            bool readable = _binding.TryReadRaw(this, out object raw);
+            bool reactive = SyncReactiveSubscription(readable, raw);
+            if (!readable || !ComponentFloatBinding.TryConvertToFloat(raw, out float value))
             {
                 // WHY: source not resolvable yet (late spawn / Wait For Object / Find By Name). In Reactive mode with
                 // no subscription the LateUpdate poll is gated off, so without this the binding would freeze forever
@@ -217,12 +242,56 @@ namespace Neo.NoCode
                 return;
             }
 
+            int bindingVersion = _binding.InvalidationVersion;
             ApplyFloat(value);
-            reactive = TrySubscribeReactive();
+            // WHY: output callbacks (Slider.onValueChanged, SetText listeners) may rewire the binding, disable this
+            // view or replace a reactive instance; re-sync with the actual current state rather than the pre-apply one.
+            if (bindingVersion != _binding.InvalidationVersion || _configurationDirty || HasReactiveSubscription ||
+                !isActiveAndEnabled)
+            {
+                reactive = TrySubscribeReactive();
+            }
+
             if (!reactive)
             {
                 EnableReactivePollFallback();
             }
+        }
+
+        /// <summary>
+        ///     Reads the bound source now and pushes it to the output. Typed C# equivalent of the automatic
+        ///     Reactive/Poll refresh; also the way to refresh <see cref="NoCodeFloatUpdateMode.Once"/> bindings.
+        /// </summary>
+        public void RefreshBinding()
+        {
+            RefreshFromSource();
+        }
+
+        /// <summary>How the binding refreshes: once on enable, on reactive change (with poll fallback), or by polling.</summary>
+        public NoCodeFloatUpdateMode UpdateMode
+        {
+            get => _updateMode;
+            set
+            {
+                if (_updateMode == value)
+                {
+                    return;
+                }
+
+                _updateMode = value;
+                _configurationDirty = true;
+                if (isActiveAndEnabled)
+                {
+                    ReconcileDirtyConfiguration();
+                }
+            }
+        }
+
+        /// <summary>Seconds between refreshes in Poll mode and the Reactive fallback (clamped to at least 0.016).</summary>
+        public float PollIntervalSeconds
+        {
+            get => Mathf.Max(MinPollIntervalSeconds, _pollIntervalSeconds);
+            set => _pollIntervalSeconds = Mathf.Max(MinPollIntervalSeconds, value);
         }
 
         protected abstract void ApplyFloat(float value);

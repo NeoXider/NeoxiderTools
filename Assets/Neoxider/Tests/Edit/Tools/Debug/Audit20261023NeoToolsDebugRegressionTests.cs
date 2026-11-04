@@ -33,7 +33,7 @@ namespace Neo.Editor.Tests.Tools
         [TearDown]
         public void TearDown()
         {
-            // The injected output is owned by the fixture, rather than the runtime-built canvas.
+            // WHY: The injected output is owned by the fixture, rather than the runtime-built canvas.
             SetOverlayField("_root", null);
             Object.DestroyImmediate(_owner);
             Object.DestroyImmediate(_output);
@@ -49,7 +49,7 @@ namespace Neo.Editor.Tests.Tools
 
             InvokeOverlay("Update");
 
-            // In Input System-only projects, the former legacy input call threw before any text was built.
+            // WHY: In Input System-only projects, the former legacy input call threw before any text was built.
             Assert.That(_text.text, Does.Contain("FPS  "));
             Assert.That(_text.text, Does.Contain("Scene  " + SceneManager.GetActiveScene().name));
             Assert.That(_text.text, Does.Contain("TimeScale  "));
@@ -75,7 +75,7 @@ namespace Neo.Editor.Tests.Tools
             finally
             {
                 AM.CreateInstance = originalCreateInstance;
-                // Also clean up an instance created by the faulty implementation when this regression fails.
+                // WHY: Also clean up an instance created by the faulty implementation when this regression fails.
                 foreach (AM manager in Object.FindObjectsByType<AM>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 {
                     Object.DestroyImmediate(manager.gameObject);
@@ -154,7 +154,7 @@ namespace Neo.Editor.Tests.Tools
             logger.addText = false;
             MethodInfo callback = typeof(ErrorLogger).GetMethod("HandleLog", PrivateInstance);
 
-            // Exercise the Application callback with a deterministic Unity-formatted stack trace.
+            // WHY: Exercise the Application callback with a deterministic Unity-formatted stack trace.
             Assert.That(callback, Is.Not.Null);
             callback.Invoke(logger, new object[] { "audit warning", stackTrace, LogType.Warning });
 

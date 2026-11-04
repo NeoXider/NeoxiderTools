@@ -37,21 +37,29 @@ namespace Neo.Animations
         [Header("Control")] [Tooltip("Auto-start animation on Start")]
         public bool playOnStart = true;
 
+        [Tooltip("Randomize the clock and noise offset in Start so several animators do not move in sync. " +
+                 "Off = deterministic start at time 0, or at the time set by ResetTime before Start.")]
+        [SerializeField] private bool _randomizeStartTime = true;
+
+        [Tooltip("Advance on unscaled time (ignores Time.timeScale), e.g. for UI shown during pause.")]
+        [SerializeField] private bool _useUnscaledTime;
+
         [Tooltip("Invoked when vector changes")]
-        public UnityEvent<Vector3> OnVectorChanged;
+        public UnityEvent<Vector3> OnVectorChanged = new();
 
         [Tooltip("Invoked when animation starts")]
-        public UnityEvent OnAnimationStarted;
+        public UnityEvent OnAnimationStarted = new();
 
         [Tooltip("Invoked when animation stops")]
-        public UnityEvent OnAnimationStopped;
+        public UnityEvent OnAnimationStopped = new();
 
         [Tooltip("Invoked when animation is paused")]
-        public UnityEvent OnAnimationPaused;
+        public UnityEvent OnAnimationPaused = new();
 
         private float animationTime;
         private Vector3 lastVector;
         private Vector2 randomOffset;
+        private bool _disabled;
 
         /// <summary>Current animated vector (read-only).</summary>
         public Vector3 CurrentVector { get; private set; }
@@ -61,6 +69,29 @@ namespace Neo.Animations
 
         /// <summary>Whether the animation is paused.</summary>
         public bool IsPaused { get; private set; }
+
+        /// <summary>
+        ///     When true, <c>Update</c> does nothing and the owner advances the animation through <see cref="Tick" />
+        ///     (custom update loops, deterministic tests, frame-stepped replays). Not serialized.
+        /// </summary>
+        public bool ManualUpdate { get; set; }
+
+        /// <summary>Whether <c>Start</c> randomizes the clock and noise offset (the legacy default).</summary>
+        public bool RandomizeStartTime
+        {
+            get => _randomizeStartTime;
+            set => _randomizeStartTime = value;
+        }
+
+        /// <summary>Whether <c>Update</c> advances on <see cref="Time.unscaledDeltaTime" />.</summary>
+        public bool UseUnscaledTime
+        {
+            get => _useUnscaledTime;
+            set => _useUnscaledTime = value;
+        }
+
+        /// <summary>Current animation clock in seconds.</summary>
+        public float AnimationTime => animationTime;
 
         /// <summary>Start vector (writable from outside).</summary>
         public Vector3 StartVector
@@ -92,9 +123,12 @@ namespace Neo.Animations
 
         private void Start()
         {
-            animationTime = Random.Range(0f, 1000f);
-            randomOffset = new Vector2(Random.Range(-1000f, 1000f),
-                Random.Range(-1000f, 1000f));
+            if (_randomizeStartTime)
+            {
+                animationTime = Random.Range(0f, 1000f);
+                randomOffset = new Vector2(Random.Range(-1000f, 1000f),
+                    Random.Range(-1000f, 1000f));
+            }
 
             CurrentVector = startVector;
             lastVector = startVector;
@@ -105,14 +139,39 @@ namespace Neo.Animations
             }
         }
 
+        private void OnEnable()
+        {
+            _disabled = false;
+        }
+
+        private void OnDisable()
+        {
+            _disabled = true;
+        }
+
         private void Update()
         {
-            if (!IsPlaying || IsPaused)
+            if (ManualUpdate)
             {
                 return;
             }
 
-            animationTime += Time.deltaTime;
+            Tick(_useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+        }
+
+        /// <summary>
+        ///     Advances the clock by <paramref name="deltaTime" /> seconds, samples the vector and raises
+        ///     <see cref="OnVectorChanged" /> when it moved by more than 0.001. Does nothing while stopped, paused or
+        ///     disabled (like <c>Update</c>); a negative or non-finite delta samples without advancing.
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            if (_disabled || !IsPlaying || IsPaused)
+            {
+                return;
+            }
+
+            animationTime += AnimationUtils.SanitizeDeltaTime(deltaTime);
 
             Vector3 newVector = AnimationUtils.GetAnimatedVector3(
                 animationType,
@@ -123,7 +182,7 @@ namespace Neo.Animations
 
             CurrentVector = newVector;
 
-            if (Vector3.Distance(newVector, lastVector) > 0.001f)
+            if ((newVector - lastVector).sqrMagnitude > AnimationUtils.ChangeThresholdSquared)
             {
                 OnVectorChanged?.Invoke(newVector);
                 lastVector = newVector;

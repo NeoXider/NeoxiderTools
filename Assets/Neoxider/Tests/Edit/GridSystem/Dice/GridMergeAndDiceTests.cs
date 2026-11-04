@@ -110,7 +110,7 @@ namespace Neo.Editor.Tests.GridSystem
         {
             int[] rolls = { 1, 0, 0, 0, 0, 0 };
             int index = 0;
-            var generator = new DicePieceGenerator(max => rolls[index++ % rolls.Length] % max);
+            DicePieceGenerator generator = new DicePieceGenerator(max => rolls[index++ % rolls.Length] % max);
 
             DicePiece piece = generator.Generate(new[] { 1, 2, 3, 4, 5 }, true);
 
@@ -123,7 +123,7 @@ namespace Neo.Editor.Tests.GridSystem
         {
             int[] rolls = { 0, 2, 1, 0, 0 };
             int index = 0;
-            var generator = new DicePieceGenerator(max => rolls[index++ % rolls.Length] % max);
+            DicePieceGenerator generator = new DicePieceGenerator(max => rolls[index++ % rolls.Length] % max);
 
             DicePiece single = generator.Generate(new[] { 1, 2, 3, 4, 5 });
             DicePiece pair = generator.Generate(new[] { 1, 2, 3, 4, 5 });
@@ -151,7 +151,7 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void DicePieceGenerator_GenerateWeighted_UsesPositiveWeightsOnly()
         {
-            var generator = new DicePieceGenerator(_ => 0);
+            DicePieceGenerator generator = new DicePieceGenerator(_ => 0);
 
             DicePiece piece = generator.GenerateWeighted(new[]
             {
@@ -169,7 +169,7 @@ namespace Neo.Editor.Tests.GridSystem
         {
             int[] rolls = { 0, 0 };
             int index = 0;
-            var generator = new DicePieceGenerator(max => rolls[index++ % rolls.Length] % max);
+            DicePieceGenerator generator = new DicePieceGenerator(max => rolls[index++ % rolls.Length] % max);
 
             DicePiece piece = generator.GenerateWeighted(new[]
             {
@@ -185,7 +185,7 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void DicePieceGenerator_GenerateWeighted_RejectsMissingPositiveWeights()
         {
-            var generator = new DicePieceGenerator();
+            DicePieceGenerator generator = new DicePieceGenerator();
 
             Assert.Throws<System.ArgumentException>(() => generator.GenerateWeighted(null));
             Assert.Throws<System.ArgumentException>(() => generator.GenerateWeighted(new[]
@@ -375,7 +375,7 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void DicePiece_RotatesLargerFootprintAroundAnchor()
         {
-            var piece = new DicePiece(new[]
+            DicePiece piece = new DicePiece(new[]
             {
                 new DicePieceCell(Vector3Int.zero, 1),
                 new DicePieceCell(Vector3Int.right, 2),
@@ -470,7 +470,7 @@ namespace Neo.Editor.Tests.GridSystem
 
         private FieldGenerator CreateGenerator(int width, int height)
         {
-            var owner = new GameObject("GridMergeDiceTest");
+            GameObject owner = new GameObject("GridMergeDiceTest");
             _createdObjects.Add(owner);
             owner.AddComponent<Grid>();
             FieldGenerator generator = owner.AddComponent<FieldGenerator>();

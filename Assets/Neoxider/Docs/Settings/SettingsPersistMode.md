@@ -1,6 +1,8 @@
 ﻿# SettingsPersistMode
 
-**Purpose:** Enum defining how a settings change is written to `SaveProvider`.
+**What it is:** Enum defining how a settings change is written to `SaveProvider`.
+
+**How to use:** Pass it as the `mode` argument of any `GameSettings.Set…` method.
 
 ## Values
 

@@ -47,7 +47,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void AddThenMul_AppliesAddBeforeMul()
         {
-            // (100 + 20) * 1.5 = 180, NOT 100 + 20 * 1.5
+            // WHY: (100 + 20) * 1.5 = 180, NOT 100 + 20 * 1.5
             float result = PropertyAggregator.Compute(100f, Contributions(Add(20f), Mul(1.5f)));
             Assert.That(result, Is.EqualTo(180f).Within(0.0001f));
         }
@@ -62,7 +62,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void Max_NeverLowersResult()
         {
-            // Floor below the computed value must not pull it down.
+            // WHY: Floor below the computed value must not pull it down.
             float result = PropertyAggregator.Compute(100f, Contributions(Max(50f)));
             Assert.That(result, Is.EqualTo(100f).Within(0.0001f));
         }
@@ -77,7 +77,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void CombinedAddMulMax_AppliesInOrder()
         {
-            // (10 + 5) * 2 = 30, then floor 40 raises it to 40.
+            // WHY: (10 + 5) * 2 = 30, then floor 40 raises it to 40.
             float result = PropertyAggregator.Compute(10f, Contributions(Add(5f), Mul(2f), Max(40f)));
             Assert.That(result, Is.EqualTo(40f).Within(0.0001f));
         }
@@ -85,7 +85,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void ValueForStacks_ScalesPerStackBeyondFirst()
         {
-            var c = new PropertyContribution("armor", PropertyOp.Add, 5f, 3f);
+            PropertyContribution c = new PropertyContribution("armor", PropertyOp.Add, 5f, 3f);
             Assert.That(c.ValueForStacks(1), Is.EqualTo(5f).Within(0.0001f));
             Assert.That(c.ValueForStacks(2), Is.EqualTo(8f).Within(0.0001f));
             Assert.That(c.ValueForStacks(3), Is.EqualTo(11f).Within(0.0001f));
@@ -94,7 +94,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void ValueForStacks_ZeroOrOneStack_ReturnsBaseValue()
         {
-            var c = new PropertyContribution("armor", PropertyOp.Add, 5f, 3f);
+            PropertyContribution c = new PropertyContribution("armor", PropertyOp.Add, 5f, 3f);
             Assert.That(c.ValueForStacks(0), Is.EqualTo(5f).Within(0.0001f));
             Assert.That(c.ValueForStacks(1), Is.EqualTo(5f).Within(0.0001f));
         }

@@ -1,14 +1,15 @@
 ﻿# DeckConfig
 
-`DeckConfig` is a `ScriptableObject` that stores deck visuals and deck-generation settings for 36-, 52-, or 54-card sets. It provides card-face sprites, back sprite, optional jokers, validation helpers, and deck generation methods. Creation menu: `Create > Neoxider > Cards > Deck Config`.
+**What it is:** `ScriptableObject` (`Scripts/Cards/Config/DeckConfig.cs`, namespace `Neo.Cards`) that stores deck visuals and deck-generation settings for 36-, 52-, or 54-card sets or a custom card list. It provides card-face sprites, back sprite, optional jokers, validation helpers, and deck generation methods. Creation menu: `Create > Neoxider > Cards > Deck Config`.
 
-## Typical use
-
+**How to use:**
 1. Create a `DeckConfig` asset.
-2. Assign the card back sprite and per-suit face sprites (or use **Auto-Fill From Folder**).
+2. Assign the card back sprite and per-suit face sprites (or use **Auto-Fill From Folder**), or enable **Use Custom Deck** and fill **Custom Cards**.
 3. Choose `DeckType` for the available sprite set.
 4. Choose `GameDeckType` for the actual deck used in gameplay.
-5. Assign the config to `CardComponent` and `DeckComponent`.
+5. Assign the config to `CardComponent` and `DeckComponent` (or pass it to `DeckPresenter`).
+
+---
 
 See the [Cards editor guide](./Editor.md) for the custom Inspector, auto-fill rules, previews, and authoring validation. Runtime generation remains available through the C# APIs below.
 
@@ -69,6 +70,8 @@ This means the asset has enough visuals for a 52-card deck, but gameplay only us
 ## Custom decks
 
 Enable `Use Custom Deck` when a game is not based on classic suits and ranks. Each custom entry creates a `CardData.CreateCustom(...)` card and can optionally carry a face sprite. Missing custom face sprites are warnings, not hard errors, so external art pipelines can still provide sprites through `CardComponent.SetSpriteOverrides(...)` or a custom view.
+
+`GetSprite(...)` resolves custom cards through a cached id index: lookups cost one dictionary hit instead of a scan over the list, allocate nothing, and still follow Inspector, Undo and serialized edits (every hit is verified, a miss falls back to the list). With duplicate IDs the first entry wins.
 
 Custom IDs are trimmed and compared case-sensitively: `" wolf "` and `"wolf"` identify the same card, while `"Wolf"` is distinct. Sprite lookup and duplicate-ID validation use the same trimmed identity as `CardData`. Keep one definition per ID in the asset; for repeated copies, pass an explicit list containing duplicates to `DeckModel.Initialize(...)`.
 

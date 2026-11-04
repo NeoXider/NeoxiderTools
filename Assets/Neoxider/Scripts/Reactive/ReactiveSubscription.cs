@@ -111,7 +111,7 @@ namespace Neo.Reactive
         /// <summary>
         ///     The property keeps only a weak reference to the delegate target, so a forgotten
         ///     <see cref="IReactiveProperty{T}.RemoveListener" /> cannot leak the subscriber. The subscription drops
-        ///     itself once the target is collected.
+        ///     itself silently once the target is collected or, for a <see cref="UnityEngine.Object" /> target, destroyed.
         ///     WHY: only pass delegates whose target you keep alive yourself (a method group on a field/component).
         ///     A closure that captures locals has no other owner and may be collected immediately.
         ///     Multicast delegates and unsupported AOT invokers fall back to strong retention; unsubscribe explicitly.

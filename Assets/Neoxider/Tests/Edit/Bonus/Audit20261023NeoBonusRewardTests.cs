@@ -67,6 +67,22 @@ namespace Neo.Editor.Tests
 
         [TestCase(false)]
         [TestCase(true)]
+        public void SetRewardAvailableNow_RaisesRewardAvailableOnce(bool legacy)
+        {
+            RewardAccess reward = NewReward(legacy, true);
+            int available = 0;
+            reward.Available.AddListener(() => available++);
+
+            reward.MakeAvailable();
+            Assert.That(reward.CanTake(), Is.True);
+            Assert.That(available, Is.EqualTo(1), "Making the reward available is the available edge.");
+
+            reward.MakeAvailable();
+            Assert.That(available, Is.EqualTo(1), "An already available reward is not announced again.");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
         public void ManualRestartMode_RejectsRepeatedDirectClaims_UntilExplicitlyRearmed(bool legacy)
         {
             RewardAccess reward = NewReward(legacy, false);
@@ -166,7 +182,7 @@ namespace Neo.Editor.Tests
             reward.SetAdditionalKey("Audit20261023NeoBonusFractionalAdvance", false);
             SetField(reward, "_maxRewardsPerTake", 3);
             DateTime lastClaim = _clockScope.UtcNow.AddSeconds(-4.5d);
-            // 3 * (double)1.4f is 4.199999928474426 seconds: truncate to 41,999,999 ticks.
+            // WHY: 3 * (double)1.4f is 4.199999928474426 seconds: truncate to 41,999,999 ticks.
             DateTime expectedLastClaim = lastClaim.AddTicks(41_999_999L);
             SaveProvider.SetString(reward.RewardTimeKey, lastClaim.ToString("o"));
             int grants = 0;
@@ -206,7 +222,8 @@ namespace Neo.Editor.Tests
                 {
                     Take = reward.TakeReward, Count = reward.GetClaimableCount,
                     CanTake = reward.CanTakeReward, MakeAvailable = reward.SetRewardAvailableNow,
-                    Claimed = reward.OnRewardClaimed, TimestampKey = reward.RewardTimeKey
+                    Claimed = reward.OnRewardClaimed, Available = reward.OnRewardAvailable,
+                    TimestampKey = reward.RewardTimeKey
                 };
             }
 
@@ -220,7 +237,8 @@ namespace Neo.Editor.Tests
             {
                 Take = cooldown.TakeReward, Count = cooldown.GetClaimableCount,
                 CanTake = cooldown.CanTakeReward, MakeAvailable = cooldown.SetRewardAvailableNow,
-                Claimed = cooldown.OnRewardClaimed, TimestampKey = cooldown.RewardTimeKey + "_rt"
+                Claimed = cooldown.OnRewardClaimed, Available = cooldown.OnRewardAvailable,
+                TimestampKey = cooldown.RewardTimeKey + "_rt"
             };
         }
 
@@ -238,6 +256,7 @@ namespace Neo.Editor.Tests
             public Func<bool> CanTake;
             public Action MakeAvailable;
             public UnityEvent Claimed;
+            public UnityEvent Available;
             public string TimestampKey;
         }
     }

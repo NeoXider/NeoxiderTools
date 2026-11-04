@@ -7,7 +7,7 @@ namespace Neo.Tools
     ///     Pure C# storage: merges simple stacks by item id; keeps instance-based records separate.
     /// </summary>
     [Serializable]
-    public sealed class AggregatedInventory : IInventoryStorage
+    public sealed class AggregatedInventory : IInventoryStorage, IInventoryRecordReader
     {
         private readonly List<InventoryItemRecord> _records = new();
         private InventoryConstraints _constraints = new();
@@ -32,6 +32,8 @@ namespace Neo.Tools
         {
             get
             {
+                // WHY: A local set keeps this getter free of shared state, so concurrent readers stay safe; the Add
+                // path only reads it when a unique-item cap is configured.
                 HashSet<int> unique = new();
                 for (int i = 0; i < _records.Count; i++)
                 {
@@ -44,6 +46,117 @@ namespace Neo.Tools
 
                 return unique.Count;
             }
+        }
+
+        int IInventoryRecordReader.PackedRecordCount
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < _records.Count; i++)
+                {
+                    if (IsPacked(_records[i]))
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+        }
+
+        void IInventoryRecordReader.AccumulateCounts(Dictionary<int, int> counts)
+        {
+            for (int i = 0; i < _records.Count; i++)
+            {
+                InventoryItemRecord record = _records[i];
+                if (!IsPacked(record))
+                {
+                    continue;
+                }
+
+                counts.TryGetValue(record.EffectiveItemId, out int current);
+                counts[record.EffectiveItemId] = current + record.EffectiveCount;
+            }
+        }
+
+        void IInventoryRecordReader.AppendEntries(List<InventoryEntry> entries)
+        {
+            for (int i = 0; i < _records.Count; i++)
+            {
+                InventoryItemRecord record = _records[i];
+                if (IsPacked(record))
+                {
+                    entries.Add(new InventoryEntry(record.EffectiveItemId, record.EffectiveCount));
+                }
+            }
+        }
+
+        int IInventoryRecordReader.GetPackedItemId(int packedIndex)
+        {
+            if (packedIndex < 0)
+            {
+                return -1;
+            }
+
+            int current = 0;
+            for (int i = 0; i < _records.Count; i++)
+            {
+                InventoryItemRecord record = _records[i];
+                if (!IsPacked(record))
+                {
+                    continue;
+                }
+
+                if (current++ == packedIndex)
+                {
+                    return record.EffectiveItemId;
+                }
+            }
+
+            return -1;
+        }
+
+        int IInventoryRecordReader.FindPackedIndex(int itemId)
+        {
+            int current = 0;
+            for (int i = 0; i < _records.Count; i++)
+            {
+                InventoryItemRecord record = _records[i];
+                if (!IsPacked(record))
+                {
+                    continue;
+                }
+
+                if (record.EffectiveItemId == itemId)
+                {
+                    return current;
+                }
+
+                current++;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        ///     Appends the live (not cloned) non-empty records for read-only callers inside the assembly.
+        ///     Callers must not mutate or retain them.
+        /// </summary>
+        internal void AppendLiveRecords(List<InventoryItemRecord> records)
+        {
+            for (int i = 0; i < _records.Count; i++)
+            {
+                if (IsPacked(_records[i]))
+                {
+                    records.Add(_records[i]);
+                }
+            }
+        }
+
+        private static bool IsPacked(InventoryItemRecord record)
+        {
+            return record != null && record.EffectiveCount > 0;
         }
 
         /// <inheritdoc />
@@ -246,6 +359,21 @@ namespace Neo.Tools
 
             record = found.Clone();
             return true;
+        }
+
+        /// <summary>
+        ///     Effective item id that <see cref="TryGetRecordAtPackedIndex" /> reports for <paramref name="packedIndex" />,
+        ///     or -1, without cloning the record or its instance payload.
+        /// </summary>
+        internal int PeekItemIdAtPackedIndex(int packedIndex)
+        {
+            if (packedIndex < 0 || packedIndex >= _records.Count)
+            {
+                return -1;
+            }
+
+            InventoryItemRecord found = _records[packedIndex];
+            return found != null && found.EffectiveCount > 0 ? found.EffectiveItemId : -1;
         }
 
         /// <inheritdoc />

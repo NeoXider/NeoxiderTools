@@ -11,18 +11,32 @@ namespace Neo.Progression
     [AddComponentMenu("Neoxider/Progression/" + nameof(ProgressionNoCodeAction))]
     public sealed class ProgressionNoCodeAction : MonoBehaviour
     {
-        [Header("Action")] [SerializeField]
+        [Header("Action")] [Tooltip("Operation performed by Execute().")] [SerializeField]
         private ProgressionNoCodeActionType _actionType = ProgressionNoCodeActionType.AddXp;
 
-        [SerializeField] private ProgressionManager _manager;
-        [SerializeField] [Min(0)] private int _xpAmount = 25;
-        [SerializeField] [Min(0)] private int _perkPointsAmount = 1;
-        [SerializeField] private string _nodeId = string.Empty;
-        [SerializeField] private string _perkId = string.Empty;
+        [Tooltip("Explicit manager. Empty: ProgressionManager singleton.")] [SerializeField]
+        private ProgressionManager _manager;
 
-        [Header("Events")] [SerializeField] private UnityEvent _onSuccess = new();
-        [SerializeField] private ProgressionStringEvent _onFailed = new();
-        [SerializeField] private ProgressionStringEvent _onResultMessage = new();
+        [Tooltip("XP added by AddXp (must be positive).")] [SerializeField] [Min(0)]
+        private int _xpAmount = 25;
+
+        [Tooltip("Perk points granted by GrantPerkPoints.")] [SerializeField] [Min(0)]
+        private int _perkPointsAmount = 1;
+
+        [Tooltip("Unlock node id used by UnlockNode.")] [SerializeField]
+        private string _nodeId = string.Empty;
+
+        [Tooltip("Perk id used by BuyPerk.")] [SerializeField]
+        private string _perkId = string.Empty;
+
+        [Header("Events")] [Tooltip("Raised when the action was applied.")] [SerializeField]
+        private UnityEvent _onSuccess = new();
+
+        [Tooltip("Raised with a reason when the action was rejected.")] [SerializeField]
+        private ProgressionStringEvent _onFailed = new();
+
+        [Tooltip("Raised with a message for both success and failure (UI/log).")] [SerializeField]
+        private ProgressionStringEvent _onResultMessage = new();
 
         /// <summary>Gets or sets the explicit manager (falls back to the singleton).</summary>
         public ProgressionManager Manager
@@ -147,6 +161,17 @@ namespace Neo.Progression
                 case ProgressionNoCodeActionType.LoadProfile:
                     manager.LoadProfile();
                     EmitSuccess("Progression profile loaded.");
+                    break;
+                case ProgressionNoCodeActionType.ActivatePremium:
+                    manager.EnsureInitialized();
+                    if (manager.HasPremium)
+                    {
+                        EmitFailed("Premium track is already active.");
+                        break;
+                    }
+
+                    manager.ActivatePremium();
+                    EmitSuccess("Premium track activated.");
                     break;
                 default:
                     EmitFailed($"Unsupported progression action: {_actionType}.");

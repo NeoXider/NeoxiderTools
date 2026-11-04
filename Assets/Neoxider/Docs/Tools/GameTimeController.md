@@ -1,16 +1,9 @@
-﻿# GameTimeController
+﻿# GameTimeController (redirect)
 
-**Purpose:** See Inspector fields below for configuration.
+**What it is:** `GameTimeController` belongs to the **Time** section. Script: `Scripts/Tools/Time/GameTimeController.cs`,
+namespace `Neo.Tools`.
 
-## Setup
+**How to use:** see [GameTimeController in Tools / Time](Time/GameTimeController.md) (the page linked from the
+component's `[NeoDoc]` help button).
 
-- Add the component via the Unity menu.
-
-## Key Fields (Inspector)
-
-| Field | Description |
-|-------|-------------|
-
-## See Also
-
-- [Module Root](../README.md)
+---

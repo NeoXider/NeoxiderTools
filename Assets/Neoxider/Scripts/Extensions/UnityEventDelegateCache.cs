@@ -72,7 +72,7 @@ namespace Neo.Extensions
                 evt.RemoveListener(a);
                 if (_events[index] == null || ReferenceEquals(_events[index], evt))
                 {
-                    // Keep a tracked subscription recoverable if the caller supplied a different event.
+                    // WHY: Keep a tracked subscription recoverable if the caller supplied a different event.
                     _delegates[index] = null;
                     _events[index] = null;
                 }
@@ -84,6 +84,30 @@ namespace Neo.Extensions
         {
             _delegates.Clear();
             _events.Clear();
+        }
+
+        /// <summary>
+        ///     Removes every subscription made through <see cref="SubscribeAt" /> from its recorded event, then clears
+        ///     the cache. Delegates cached with <see cref="Add" /> have no recorded event, so remove those first with
+        ///     <see cref="UnsubscribeAt" />; they are only dropped from the cache here.
+        /// </summary>
+        /// <returns>The number of listeners removed from their events.</returns>
+        public int UnsubscribeAll()
+        {
+            int removed = 0;
+            for (int i = 0; i < _delegates.Count; i++)
+            {
+                UnityAction action = _delegates[i];
+                UnityEvent evt = _events[i];
+                if (action != null && evt != null)
+                {
+                    evt.RemoveListener(action);
+                    removed++;
+                }
+            }
+
+            Clear();
+            return removed;
         }
     }
 }

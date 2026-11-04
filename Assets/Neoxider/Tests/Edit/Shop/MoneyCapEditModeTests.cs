@@ -21,7 +21,7 @@ namespace Neo.Editor.Tests
             _go = new GameObject("MoneyCapEditModeTests");
             _money = _go.AddComponent<Money>();
 
-            // Session-only: keep tests away from real SaveProvider data.
+            // WHY: session-only: keep tests away from real SaveProvider data.
             FieldInfo persist = typeof(Money).GetField("_persistMoney",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsNotNull(persist, "Money._persistMoney field expected");

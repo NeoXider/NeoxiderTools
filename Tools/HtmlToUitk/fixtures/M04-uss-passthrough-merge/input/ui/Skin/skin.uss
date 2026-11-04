@@ -1,7 +1,0 @@
-:root {
-    --sk-ink: #101010;
-}
-
-.sk {
-    color: #ffffff;
-}

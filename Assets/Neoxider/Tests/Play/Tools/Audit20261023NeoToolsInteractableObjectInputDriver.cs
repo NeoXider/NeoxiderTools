@@ -106,7 +106,7 @@ namespace Neo.Tests.Play
             _afterUpdate = RecordAfterUpdate;
             try
             {
-                // Queued test devices must reach the game buffers even in an unfocused/hidden Game View.
+                // WHY: queued test devices must reach the game buffers even in an unfocused/hidden Game View.
                 // These public settings prevent InputManager's documented focus routing/flush paths;
                 // the next native run must still prove actual raw and compat edges in the consumer frame.
                 Application.runInBackground = true;
@@ -161,6 +161,30 @@ namespace Neo.Tests.Play
             _queuedMouseHeld = held;
             MakeCurrent(_mouse);
             _queueMouse.Invoke(null, new[] { _mouse, state, (object)(-1d) });
+        }
+
+        /// <summary>
+        ///     Queues one mouse state with a movement delta and a scroll value at the usual position, keeping the last
+        ///     queued button state; both become visible after the next Input System update.
+        /// </summary>
+        internal void QueueMouseMotion(Vector2 delta, Vector2 scroll)
+        {
+            object state = Activator.CreateInstance(_mouseStateType);
+            FieldInfo buttons = _mouseStateType.GetField("buttons");
+            buttons.SetValue(state, Convert.ChangeType(_queuedMouseHeld ? 1 : 0, buttons.FieldType));
+            _mouseStateType.GetField("position").SetValue(state, new Vector2(128f, 128f));
+            _mouseStateType.GetField("delta").SetValue(state, delta);
+            _mouseStateType.GetField("scroll").SetValue(state, scroll);
+            _mouseQueueFrame = Time.frameCount;
+            MakeCurrent(_mouse);
+            _queueMouse.Invoke(null, new[] { _mouse, state, (object)(-1d) });
+        }
+
+        /// <summary>Native <c>ReadValue()</c> of a Vector2 control of the owned mouse, read without the adapter.</summary>
+        internal Vector2 ReadNativeMouseVector(string controlName)
+        {
+            object control = _mouseType.GetProperty(controlName).GetValue(_mouse);
+            return (Vector2)control.GetType().GetMethod("ReadValue", Type.EmptyTypes).Invoke(control, null);
         }
 
         public void Dispose()

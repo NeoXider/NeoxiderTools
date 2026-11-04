@@ -46,9 +46,9 @@ namespace Neo.Abilities
                 return DamageResult.None(amount);
             }
 
-            bool isMagical = string.Equals(damageType, AbilityDamageTypes.Magical, StringComparison.OrdinalIgnoreCase);
-            bool isPhysical = string.Equals(damageType, AbilityDamageTypes.Physical, StringComparison.OrdinalIgnoreCase);
-            bool isPure = string.Equals(damageType, AbilityDamageTypes.Pure, StringComparison.OrdinalIgnoreCase);
+            bool isMagical = AbilityIdComparer.Same(damageType, AbilityDamageTypes.Magical);
+            bool isPhysical = AbilityIdComparer.Same(damageType, AbilityDamageTypes.Physical);
+            bool isPure = AbilityIdComparer.Same(damageType, AbilityDamageTypes.Pure);
 
             if (isMagical && targetUnit.HasState(AbilityStates.MagicImmune))
             {
@@ -121,7 +121,7 @@ namespace Neo.Abilities
             float healthDamage = 0f;
             if (damage > 0f)
             {
-                // The accepted operation delta stays valid when a resource callback changes health again.
+                // WHY: The accepted operation delta stays valid when a resource callback changes health again.
                 healthDamage = targetUnit.Resources.Decrease(AbilityResourceIds.Health, damage);
             }
 
@@ -258,6 +258,9 @@ namespace Neo.Abilities
             }
             finally
             {
+                // WHY: the pool is static; a filled scratch would keep the last victim's modifier graph
+                // (blueprints, owners) alive until the next shielded hit.
+                scratch.Clear();
                 _shieldDepth--;
             }
         }
@@ -280,7 +283,7 @@ namespace Neo.Abilities
             for (int i = 0; i < props.Count; i++)
             {
                 PropertyContribution c = props[i];
-                if (string.Equals(c.PropertyId, AbilityProperties.ShieldHp, StringComparison.OrdinalIgnoreCase))
+                if (AbilityIdComparer.Same(c.PropertyId, AbilityProperties.ShieldHp))
                 {
                     capacity += c.ValueForStacks(instance.Stacks);
                 }
@@ -289,9 +292,9 @@ namespace Neo.Abilities
             return capacity;
         }
 
-        // WHY: with Enter Play Mode Options disabling Domain Reload the scratch pool keeps the previous
-        // session's ModifierInstance graph alive (GetModifiers only clears on the next call), and a
-        // nesting depth left non-zero by an aborted session would misalign the per-level scratch lists.
+        // WHY: with Enter Play Mode Options disabling Domain Reload the static pool and nesting depth
+        // survive between sessions; a depth left non-zero by an aborted session would misalign the
+        // per-level scratch lists.
         // The lifecycle attribute is source-generated, so the containing class must stay partial.
 #if UNITY_6000_5_OR_NEWER
         [OnExitingPlayMode]

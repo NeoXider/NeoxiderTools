@@ -252,6 +252,9 @@ namespace Neo.Network
 
         private void Update()
         {
+            // WHY: every frame, not on the status tick: UI bound to HasStartedNetwork must not show a session that
+            // ended, even with the status log off. It is two bool reads.
+            ReleaseEndedSession();
             if (_statusLogIntervalSeconds <= 0f || !HasStartedNetwork)
             {
                 return;
@@ -287,6 +290,8 @@ namespace Neo.Network
                     "it cannot be started from the game.", this);
                 return false;
             }
+
+            ReleaseEndedSession();
 
             // WHY: checked before anything is overwritten, so a stray second request cannot flip the running
             // session's presentation flag or intent.
@@ -397,6 +402,18 @@ namespace Neo.Network
             }
         }
 
+        // WHY: a session can end without StopNetwork (the server closed, the connection failed or game code stopped
+        // the manager directly). Without this the bootstrap refused every later Host/Join request forever.
+        private void ReleaseEndedSession()
+        {
+#if MIRROR
+            if (HasStartedNetwork && !NeoNetworkState.IsNetworkActive)
+            {
+                HasStartedNetwork = false;
+            }
+#endif
+        }
+
         /// <summary>
         ///     Builds the one-line status string: role, connection counts, frame rate, uptime and the optional
         ///     <see cref="StatusExtraProvider"/> suffix. Public so a game can log or display it elsewhere.
@@ -476,7 +493,7 @@ namespace Neo.Network
             return NeoStartupCommandLine.Parse(ReadProcessArguments(), defaults, _customValueSwitches, _customFlagSwitches);
         }
 
-        // A browser tab can only be a client: it cannot listen on a socket, and a "?server" in a link must never
+        // WHY: a browser tab can only be a client: it cannot listen on a socket, and a "?server" in a link must never
         // turn a visitor's tab into a dedicated server.
         private NeoStartupIntent ResolveFromUrl(NeoStartupDefaults defaults)
         {
@@ -505,7 +522,7 @@ namespace Neo.Network
             }
         }
 
-        // A headless or networked peer must keep running at a steady, bounded rate and keep running when its
+        // WHY: a headless or networked peer must keep running at a steady, bounded rate and keep running when its
         // window loses focus. Without a frame cap a batch-mode server spins a whole core; without run-in-background
         // an unfocused client or host stops simulating, which a server cannot tell from a dead peer.
         private void ApplyHeadlessRuntime(NeoStartupIntent intent)
@@ -571,7 +588,7 @@ namespace Neo.Network
 #endif
         }
 
-        // Server-only peers must not render, listen to audio or show a local HUD. Presenting components read
+        // WHY: server-only peers must not render, listen to audio or show a local HUD. Presenting components read
         // LocalPresentationSuppressed; the explicit list plus the sweep cover anything that predates that flag.
         private void ApplyDedicatedServerSuppression(NeoStartupIntent intent)
         {

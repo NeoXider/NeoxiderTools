@@ -12,6 +12,7 @@ namespace Neo.Rpg.Network
     [AddComponentMenu("Neoxider/RPG/Network/Rpg Attack Network Adapter")]
     public sealed class RpgAttackNetworkAdapter : MonoBehaviour, IRpgAttackNetworkAdapter
     {
+        /// <summary>Built-in attack input runs only for the peer that owns the attacker (always offline or without a NetworkIdentity).</summary>
         public bool CanProcessBuiltInInput(GameObject source)
         {
 #if MIRROR
@@ -27,6 +28,7 @@ namespace Neo.Rpg.Network
 #endif
         }
 
+        /// <summary>A pure client never spawns networked projectiles itself; the server spawns and replicates them.</summary>
         public bool ShouldBlockProjectileSpawn(GameObject source)
         {
 #if MIRROR
@@ -36,6 +38,7 @@ namespace Neo.Rpg.Network
 #endif
         }
 
+        /// <summary>Server: network-spawns a projectile that carries a NetworkIdentity.</summary>
         public void SpawnProjectile(GameObject projectile)
         {
 #if MIRROR

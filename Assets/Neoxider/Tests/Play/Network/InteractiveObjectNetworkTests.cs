@@ -54,7 +54,7 @@ namespace Neo.Tests.Play
             _objInteractive = _session.Own(new GameObject("InteractiveObject"));
             _objInteractive.SetActive(false);
 
-            // Configure all behaviours before the inactive identity awakens.
+            // WHY: Configure all behaviours before the inactive identity awakens.
             _interactiveObject = _objInteractive.AddComponent<InteractiveObject>();
             if (_interactiveObject.onInteractDown == null)
             {

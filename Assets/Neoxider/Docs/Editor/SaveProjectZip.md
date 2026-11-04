@@ -2,7 +2,7 @@
 
 **What it is:** This is a simple but extremely useful tool that adds a single command to the Unity menu for creating a ZIP archive of the entire project. It's a convenient way to quickly make a backup or share the proj...
 
-**How to use:** see the sections below.
+**How to use:** choose **Neoxider > Tools > Save Project Zip**, pick where to save the archive (the project folder and name are suggested); `Assets`, `ProjectSettings` and `Packages` are packed and the file is revealed when done.
 
 ---
 

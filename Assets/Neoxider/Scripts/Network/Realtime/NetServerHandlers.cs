@@ -18,7 +18,7 @@ namespace Neo.Network.Realtime
     /// </summary>
     public sealed class NetServerHandlers : IDisposable
     {
-        // A separate token per registration, not just per set: reconnects cannot release a newer lease.
+        // WHY: a separate token per registration, not just per set: reconnects cannot release a newer lease.
         private static class Registration<T> where T : struct, NetworkMessage
         {
             internal static object Current;

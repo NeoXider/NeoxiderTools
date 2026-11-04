@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Globalization;
 using System.Text;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -42,7 +42,8 @@ namespace Neo.Extensions
         /// </summary>
         public static bool IsNullOrEmptyAfterTrim(this string input)
         {
-            return string.IsNullOrEmpty(input?.Trim());
+            // WHY: same answer as Trim()+IsNullOrEmpty without allocating the trimmed copy.
+            return string.IsNullOrWhiteSpace(input);
         }
 
         /// <summary>
@@ -108,7 +109,15 @@ namespace Neo.Extensions
                 return false;
             }
 
-            return input.All(char.IsDigit);
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (!char.IsDigit(input[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -141,7 +150,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        ///     Converts string to boolean (case insensitive).
+        ///     Converts string to boolean: <c>"true"</c>, <c>"yes"</c> and <c>"1"</c> (ordinal, case insensitive) are true.
         /// </summary>
         public static bool ToBool(this string input)
         {
@@ -150,22 +159,20 @@ namespace Neo.Extensions
                 return false;
             }
 
-            return input.ToLower() switch
-            {
-                "true" => true,
-                "yes" => true,
-                "1" => true,
-                _ => false
-            };
+            // WHY: ordinal comparison does not allocate a lowered copy and does not depend on the OS culture.
+            return string.Equals(input, "true", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(input, "yes", StringComparison.OrdinalIgnoreCase) ||
+                   input == "1";
         }
 
         /// <summary>
-        ///     Safely parses a string to an integer.
+        ///     Safely parses a string to an integer. The invariant culture is tried first, then the current culture.
         /// </summary>
         /// <returns>The parsed integer, or the default value if parsing fails.</returns>
         public static int ToInt(this string input, int defaultValue = 0)
         {
-            if (int.TryParse(input, out int result))
+            if (int.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result) ||
+                int.TryParse(input, out result))
             {
                 return result;
             }
@@ -174,12 +181,15 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        ///     Safely parses a string to a float.
+        ///     Safely parses a string to a float. The invariant culture (<c>'.'</c> decimal separator, no grouping)
+        ///     is tried first, so <c>"1.5"</c> parses on every OS locale; the current culture is the fallback, so a
+        ///     locale-formatted input such as <c>"1,5"</c> on a comma-decimal system still parses.
         /// </summary>
         /// <returns>The parsed float, or the default value if parsing fails.</returns>
         public static float ToFloat(this string input, float defaultValue = 0f)
         {
-            if (float.TryParse(input, out float result))
+            if (float.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out float result) ||
+                float.TryParse(input, out result))
             {
                 return result;
             }
@@ -300,11 +310,15 @@ namespace Neo.Extensions
                 return input;
             }
 
-            StringBuilder sb = new();
+            StringBuilder sb = new(input.Length * 24);
             for (int i = 0; i < input.Length; i++)
             {
                 Color color = new(Random.value, Random.value, Random.value);
-                sb.Append(input[i].ToString().SetColor(color));
+                sb.Append("<color=#");
+                sb.Append(ColorUtility.ToHtmlStringRGB(color));
+                sb.Append('>');
+                sb.Append(input[i]);
+                sb.Append("</color>");
             }
 
             return sb.ToString();

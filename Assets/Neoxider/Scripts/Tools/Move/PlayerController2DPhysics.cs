@@ -262,6 +262,13 @@ namespace Neo.Tools
         public void Teleport(Vector3 worldPosition, bool resetVelocity = true)
         {
             transform.position = worldPosition;
+            if (_rigidbody == null)
+            {
+                return;
+            }
+
+            // WHY: with interpolation the body would otherwise blend from its old simulated pose for one step.
+            _rigidbody.position = worldPosition;
             if (resetVelocity)
             {
                 _rigidbody.linearVelocity = Vector2.zero;
@@ -346,7 +353,8 @@ namespace Neo.Tools
                 return true;
             }
 
-            if (!IsLegacyInputAvailable())
+            // WHY: cached probe; this runs several times per frame and must not touch Input or throw each time.
+            if (!NeoInputAvailability.IsLegacyInputAvailable())
             {
                 return true;
             }
@@ -361,19 +369,6 @@ namespace Neo.Tools
             }
 
             return false;
-        }
-
-        private static bool IsLegacyInputAvailable()
-        {
-            try
-            {
-                Vector3 _ = Input.mousePosition;
-                return true;
-            }
-            catch (InvalidOperationException)
-            {
-                return false;
-            }
         }
 
         private float ReadMoveXInput()
@@ -534,8 +529,12 @@ namespace Neo.Tools
             if (_flipByVelocityX && Mathf.Abs(nextSpeedX) > 0.01f)
             {
                 Vector3 scale = transform.localScale;
-                scale.x = Mathf.Abs(scale.x) * Mathf.Sign(nextSpeedX);
-                transform.localScale = scale;
+                float flippedX = Mathf.Abs(scale.x) * Mathf.Sign(nextSpeedX);
+                if (scale.x != flippedX)
+                {
+                    scale.x = flippedX;
+                    transform.localScale = scale;
+                }
             }
         }
 

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Editor
@@ -5,6 +6,11 @@ namespace Neo.Editor
     /// <summary>
     ///     Settings for CustomEditorBase visual appearance and behavior
     /// </summary>
+    /// <remarks>
+    ///     The persisted values live in <see cref="NeoInspectorSettings" /> (ProjectSettings/NeoInspectorSettings.asset)
+    ///     and are edited in Neoxider > Visual Settings. Several historical names are kept for compatibility; their
+    ///     summaries say what they switch in the current inspector.
+    /// </remarks>
     public static class CustomEditorSettings
     {
         private static NeoInspectorSettings Settings
@@ -35,7 +41,9 @@ namespace Neo.Editor
         public static int ButtonTextMaxLength => 16;
         public static FontStyle SignatureFontStyle => FontStyle.Bold;
 
-        public static float SignatureSpacing => 6f;
+        /// <summary>Space above and below the header of a Neo component.</summary>
+        public static float SignatureSpacing => 4f;
+
         public static float ButtonSpacing => 1f;
         public static float ButtonParameterSpacing => 20f;
 
@@ -51,14 +59,32 @@ namespace Neo.Editor
         /// <summary>Upper limit for inspector animation repaints per second.</summary>
         public static int AnimationFps => Settings.AnimationFps;
 
+        /// <summary>
+        ///     Eased transitions for sections opening and closing, hover highlights and switches. Only runs while
+        ///     <see cref="EnableAnimations" /> is on (and, in Play Mode, <see cref="AnimateInPlayMode" />).
+        /// </summary>
+        public static bool EnableTransitions => Settings.EnableTransitions;
+
+        /// <summary>
+        ///     With several Neo components on one GameObject, only the first draws the full banner; the others get the
+        ///     compact one-row header.
+        /// </summary>
+        public static bool CompactRepeatedBanners => Settings.CompactRepeatedBanners;
+
+        /// <summary>Shows the full Neoxider banner; off draws the compact one-row header instead.</summary>
         public static bool EnableRainbowSignature => Settings.EnableRainbowSignature;
 
+        /// <summary>Animates the banner mascot (breathing, blink, click pop) while animation is on.</summary>
         public static bool EnableRainbowSignatureAnimation => Settings.EnableRainbowSignatureAnimation;
 
+        /// <summary>No visible effect: the text signature it outlined was replaced by the banner in v10.</summary>
+        [Obsolete("No visible effect since the v10 banner replaced the text signature; the value is only stored.")]
         public static bool EnableRainbowOutline => Settings.EnableRainbowOutline;
 
+        /// <summary>Draws the spectrum half-frame along the left side of the property card.</summary>
         public static bool EnableRainbowComponentOutline => Settings.EnableRainbowComponentOutline;
 
+        /// <summary>Lets the spectrum colours flow along the half-frame while animation is on.</summary>
         public static bool EnableRainbowLineAnimation => Settings.EnableRainbowLineAnimation;
 
         public static float RainbowSpeed => Settings.RainbowSpeed;
@@ -70,7 +96,9 @@ namespace Neo.Editor
         public static float RainbowComponentOutlineWidth =>
             Settings.RainbowComponentOutlineWidth;
 
+        /// <summary>Accent colour of the collapsible [Header] sections (historically the script-name colour).</summary>
         public static Color ScriptNameColor => Settings.ScriptNameColor;
+
         public static int MinFieldsForHeaderCategory => Settings.MinFieldsForHeaderCategory;
 
         /// <summary>When true, lists and arrays use Unity default drawing instead of custom foldouts (avoids list logic issues).</summary>
@@ -91,6 +119,16 @@ namespace Neo.Editor
             Settings.SetAnimationFps(value);
         }
 
+        public static void SetEnableTransitions(bool value)
+        {
+            Settings.SetEnableTransitions(value);
+        }
+
+        public static void SetCompactRepeatedBanners(bool value)
+        {
+            Settings.SetCompactRepeatedBanners(value);
+        }
+
         public static void SetEnableRainbowSignature(bool value)
         {
             Settings.SetEnableRainbowSignature(value);
@@ -101,6 +139,7 @@ namespace Neo.Editor
             Settings.SetEnableRainbowSignatureAnimation(value);
         }
 
+        [Obsolete("No visible effect since the v10 banner replaced the text signature; the value is only stored.")]
         public static void SetEnableRainbowOutline(bool value)
         {
             Settings.SetEnableRainbowOutline(value);
@@ -119,6 +158,18 @@ namespace Neo.Editor
         public static void SetRainbowSpeed(float value)
         {
             Settings.SetRainbowSpeed(value);
+        }
+
+        /// <summary>Saturation of the spectrum half-frame (0..1).</summary>
+        public static void SetRainbowSaturation(float value)
+        {
+            Settings.SetRainbowSaturation(value);
+        }
+
+        /// <summary>Brightness of the spectrum half-frame (0..1).</summary>
+        public static void SetRainbowBrightness(float value)
+        {
+            Settings.SetRainbowBrightness(value);
         }
 
         public static void SetScriptNameColor(Color value)

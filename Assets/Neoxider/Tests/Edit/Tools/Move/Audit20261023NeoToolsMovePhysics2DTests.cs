@@ -130,7 +130,7 @@ namespace Neo.Editor.Tests
             rotator.degreesPerSecond = 1f;
             _owner.SetActive(true);
 
-            // Prove real Awake/FixedUpdate delivery and local-world simulation before the negative XY controls.
+            // WHY: prove real Awake/FixedUpdate delivery and local-world simulation before the negative XY controls.
             yield return WaitForNativeFixedStep();
             rotator.enabled = false;
             Assert.That(_physicsScene.Simulate(Time.fixedDeltaTime), Is.True);
@@ -149,7 +149,7 @@ namespace Neo.Editor.Tests
 
         private static IEnumerator WaitForNativeFixedStep()
         {
-            // The Edit runner advances its enumerator on editor updates, even after entering Play.
+            // WHY: the Edit runner advances its enumerator on editor updates, even after entering Play.
             double before = Time.fixedTimeAsDouble;
             double deadline = Time.realtimeSinceStartupAsDouble + 3d;
             while (Time.fixedTimeAsDouble <= before && Time.realtimeSinceStartupAsDouble < deadline)

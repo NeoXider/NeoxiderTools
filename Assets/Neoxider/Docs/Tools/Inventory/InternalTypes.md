@@ -1,5 +1,14 @@
 ﻿# Inventory Core — Public C# Contracts
 
+**What it is:** Reference of the plain C# inventory types in `Scripts/Tools/Inventory/Core/` and `Data/`
+(storages, constraints, records, slots, selection, save data, transfer rules), namespace `Neo.Tools`.
+
+**How to use:** create an `AggregatedInventory` or `SlotGridInventory`, call `SetConstraints`, then use the
+`IInventoryStorage` / `ISlottedInventory` methods below; wrap it in `InventoryComponent` only when you need
+scene events and persistence.
+
+---
+
 These types are public runtime building blocks in `Neo.Tools`; storage does not require a scene,
 singleton, ScriptableObject, or SaveProvider. `InventoryComponent` is an optional scene adapter.
 
@@ -36,6 +45,9 @@ singleton, ScriptableObject, or SaveProvider. `InventoryComponent` is an optiona
 - `SetConstraints` clones its argument and does not trim existing contents. Lowering a stack cap can
   leave an existing stack above it; moving to an empty slot respects the new cap and keeps the remainder.
 - `GetSlot` and all snapshots return copies. Update through a mutation API rather than editing a snapshot.
+  (Inside the assembly the built-in storages also offer internal clone-free reads, which `InventoryComponent`
+  uses for count deltas, entries, saves and UI; custom `IInventoryStorage` implementations fall back to snapshots.)
+- `SlotGridInventory.Add` fills existing stacks, then empty slots, tracking the running total in one pass.
 - `MoveSlot` / `TryInsertIntoSlot` use amount `0` for the default full request. Positive amounts are
   bounded by available source count. Simple merges conserve count; incompatible contents only swap
   for a full request. Empty-slot simple inserts also enforce the stack cap.

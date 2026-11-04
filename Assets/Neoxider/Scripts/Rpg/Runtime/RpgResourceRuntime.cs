@@ -48,14 +48,20 @@ namespace Neo.Rpg.Runtime
             ResolvedRegenPerSecond = RpgStatResolver.ResolveRegen(this, null, null);
         }
 
-        /// <summary>Sets <see cref="Current"/> and pushes the reactive properties.</summary>
+        /// <summary>Sets <see cref="Current"/> and pushes the reactive properties. A NaN value keeps the current value.</summary>
         public void SetCurrent(float value, bool forceNotify = false)
         {
-            SetCurrentGuarded(value, null, out _, forceNotify);
+            SetCurrentGuarded(value, RpgResourceGuard.None, out _, forceNotify);
         }
 
         internal float ClampCurrent(float value)
         {
+            // WHY: Mathf.Clamp passes NaN through; one NaN Current makes every comparison false (never dead, never full).
+            if (float.IsNaN(value))
+            {
+                return Current;
+            }
+
             float min = Definition.canGoBelowZero ? Definition.minValue : 0f;
             float ceiling = Definition.canOverfill ? float.MaxValue : Max;
             float clamped = Mathf.Clamp(value, min, ceiling);
@@ -66,49 +72,53 @@ namespace Neo.Rpg.Runtime
             return clamped;
         }
 
-        internal bool SetCurrentGuarded(float value, Func<bool> isCurrent, out float change, bool forceNotify = false)
+        internal bool SetCurrentGuarded(float value, in RpgResourceGuard guard, out float change,
+            bool forceNotify = false)
         {
             float clamped = ClampCurrent(value);
             change = clamped - Current;
             Current = clamped;
             PushFloat(CurrentState, Current, forceNotify);
-            if (isCurrent != null && !isCurrent())
+            if (!guard.IsCurrent())
             {
                 return false;
             }
             PushFloat(PercentState, Max > 0f ? Mathf.Clamp01(Current / Max) : 0f, forceNotify);
-            return isCurrent == null || isCurrent();
+            return guard.IsCurrent();
         }
 
         /// <summary>Sets <see cref="Max"/> and rescales reactive properties. Does NOT clamp Current down
-        /// unless current would now overflow — caller decides whether to refill or preserve.</summary>
+        /// unless current would now overflow — caller decides whether to refill or preserve. A NaN value keeps
+        /// the current Max.</summary>
         public void SetMax(float value, bool clampCurrentToMax, bool forceNotify = false)
         {
-            SetMaxGuarded(value, clampCurrentToMax, null, forceNotify);
+            SetMaxGuarded(value, clampCurrentToMax, RpgResourceGuard.None, forceNotify);
         }
 
-        internal bool SetMaxGuarded(float value, bool clampCurrentToMax, Func<bool> isCurrent,
+        internal bool SetMaxGuarded(float value, bool clampCurrentToMax, in RpgResourceGuard guard,
             bool forceNotify = false)
         {
+            if (float.IsNaN(value))
+            {
+                value = Max;
+            }
+
             float floor = 0f;
             float ceiling = Definition.maxCap > 0f ? Definition.maxCap : float.MaxValue;
             Max = Mathf.Clamp(value, floor, ceiling);
             PushFloat(MaxState, Max, forceNotify);
-            if (isCurrent != null && !isCurrent())
+            if (!guard.IsCurrent())
             {
                 return false;
             }
 
             if (clampCurrentToMax && !Definition.canOverfill && Current > Max)
             {
-                return SetCurrentGuarded(Max, isCurrent, out _, forceNotify);
-            }
-            else
-            {
-                PushFloat(PercentState, Max > 0f ? Mathf.Clamp01(Current / Max) : 0f, forceNotify);
+                return SetCurrentGuarded(Max, guard, out _, forceNotify);
             }
 
-            return isCurrent == null || isCurrent();
+            PushFloat(PercentState, Max > 0f ? Mathf.Clamp01(Current / Max) : 0f, forceNotify);
+            return guard.IsCurrent();
         }
 
         public bool IsDepleted => Current <= 0f && !Definition.canGoBelowZero;
@@ -129,6 +139,42 @@ namespace Neo.Rpg.Runtime
             {
                 property.Value = value;
             }
+        }
+    }
+
+    /// <summary>
+    ///     Allocation-free staleness check for one guarded resource write: the owning service generation, the exact
+    ///     runtime instance under its id, and an optional owner predicate must all still hold after each publication.
+    /// </summary>
+    // WHY: a value type instead of a captured Func<bool>; regen ticks call guarded writes every frame per resource.
+    internal readonly struct RpgResourceGuard
+    {
+        internal static readonly RpgResourceGuard None = default;
+
+        private readonly RpgCharacterResourceService _service;
+        private readonly int _generation;
+        private readonly string _id;
+        private readonly RpgResourceRuntime _resource;
+        private readonly Func<bool> _ownerIsCurrent;
+
+        internal RpgResourceGuard(RpgCharacterResourceService service, int generation, string id,
+            RpgResourceRuntime resource, Func<bool> ownerIsCurrent = null)
+        {
+            _service = service;
+            _generation = generation;
+            _id = id;
+            _resource = resource;
+            _ownerIsCurrent = ownerIsCurrent;
+        }
+
+        internal bool IsCurrent()
+        {
+            if (_service == null)
+            {
+                return true;
+            }
+
+            return _service.IsCurrent(_generation, _id, _resource) && (_ownerIsCurrent == null || _ownerIsCurrent());
         }
     }
 }

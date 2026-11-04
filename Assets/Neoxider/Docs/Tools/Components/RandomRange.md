@@ -1,7 +1,17 @@
 # RandomRange
 
-`Neo.Tools.RandomRange` generates an Int or Float value and exposes it through a reactive property and
-UnityEvents. Swapped endpoints are normalized in both modes.
+**What it is:** a `MonoBehaviour` (`NeoNetworkComponent`) that generates an Int or Float random value in a range and
+exposes it through a reactive property and UnityEvents (for NeoCondition and NoCode bindings). Script:
+`Scripts/Tools/Components/RandomRange.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Components`.
+
+**How to use:**
+1. Add **Neoxider / Tools / RandomRange**, choose **Value Mode**, set **Min** and **Max**.
+2. Call `Generate()` from C# or a UnityEvent.
+3. Read `ValueInt` / `ValueFloat`, subscribe to `Value`, or wire `OnGeneratedInt` / `OnGeneratedFloat`.
+
+---
+
+Swapped endpoints are normalized in both modes.
 
 ```csharp
 RandomRange range = GetComponent<RandomRange>();

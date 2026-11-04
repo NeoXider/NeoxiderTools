@@ -4,34 +4,95 @@ using UnityEngine.Events;
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Universal no-code quest action: Accept/Complete/Fail/Restart/Reset/ResetAll.
-    ///     Configured in the Inspector and invoked from UnityEvent with no arguments.
+    ///     Universal no-code quest action: Accept/Complete/Fail/Restart/Reset/ResetAll, target notifications
+    ///     (kill/collect/reach/talk) and objective-condition evaluation. Configured in the Inspector and invoked from
+    ///     UnityEvent with no arguments; each action maps to one typed <see cref="QuestManager" /> method.
     /// </summary>
     [NeoDoc("Quest/QuestBridge.md")]
     [CreateFromMenu("Neoxider/Quest/Quest NoCode Action")]
     [AddComponentMenu("Neoxider/Quest/" + nameof(QuestNoCodeAction))]
     public class QuestNoCodeAction : MonoBehaviour
     {
+        /// <summary>Quest operation performed by <see cref="Execute" />. Values are serialized; append only.</summary>
         public enum ActionType
         {
+            /// <summary>QuestManager.AcceptQuest(Quest), gated by Flow Config when assigned.</summary>
             Accept,
+
+            /// <summary>QuestManager.AddObjectiveProgress(Quest, Objective Index, Amount).</summary>
             CompleteObjective,
+
+            /// <summary>QuestManager.FailQuest(Quest).</summary>
             Fail,
+
+            /// <summary>QuestManager.RestartQuest(Quest).</summary>
             Restart,
+
+            /// <summary>QuestManager.ResetQuest(Quest).</summary>
             Reset,
-            ResetAll
+
+            /// <summary>QuestManager.ResetAllQuests().</summary>
+            ResetAll,
+
+            /// <summary>QuestManager.NotifyKill(Target Id, Amount) for KillCount objectives.</summary>
+            NotifyKill,
+
+            /// <summary>QuestManager.NotifyCollect(Target Id, Amount) for CollectCount objectives.</summary>
+            NotifyCollect,
+
+            /// <summary>QuestManager.NotifyReachPoint(Target Id) for ReachPoint objectives.</summary>
+            NotifyReachPoint,
+
+            /// <summary>QuestManager.NotifyTalk(Target Id) for Talk objectives.</summary>
+            NotifyTalk,
+
+            /// <summary>QuestManager.EvaluateObjectiveConditions() for CustomCondition objectives.</summary>
+            EvaluateObjectiveConditions
         }
 
-        [Header("Action")] [SerializeField] private ActionType _actionType = ActionType.Accept;
-        [SerializeField] private QuestConfig _quest;
-        [SerializeField] private int _objectiveIndex;
+        [Header("Action")] [Tooltip("Operation performed by Execute().")] [SerializeField]
+        private ActionType _actionType = ActionType.Accept;
 
-        [Header("Optional Flow Gate")] [SerializeField]
+        [Tooltip("Target quest for Accept, CompleteObjective, Fail, Restart and Reset.")] [SerializeField]
+        private QuestConfig _quest;
+
+        [Tooltip("Objective index (0-based, in QuestConfig order) used by CompleteObjective.")] [SerializeField]
+        private int _objectiveIndex;
+
+        [Tooltip("Target id for the Notify actions; must equal the objective's Target Id (case-sensitive).")]
+        [SerializeField]
+        private string _targetId = "";
+
+        [Tooltip(
+            "Progress added by CompleteObjective and NotifyKill/NotifyCollect to counter objectives. Binary objectives complete on any positive amount.")]
+        [SerializeField]
+        [Min(1)]
+        private int _amount = 1;
+
+        [Header("Optional Flow Gate")]
+        [Tooltip("Optional QuestFlowConfig whose strict chains must allow the quest on Accept/Restart.")]
+        [SerializeField]
         private QuestFlowConfig _flowConfig;
 
-        [Header("Events")] [SerializeField] private UnityEvent _onSuccess = new();
-        [SerializeField] private UnityEvent<string> _onFailed = new();
-        [SerializeField] private UnityEvent<string> _onResultMessage = new();
+        [Header("Events")] [Tooltip("Raised when the action was applied.")] [SerializeField]
+        private UnityEvent _onSuccess = new();
+
+        [Tooltip("Raised with a reason when the action was rejected or credited nothing.")] [SerializeField]
+        private UnityEvent<string> _onFailed = new();
+
+        [Tooltip("Raised with a message for both success and failure (UI/log).")] [SerializeField]
+        private UnityEvent<string> _onResultMessage = new();
+
+        private NotifyMessageCache _successMessage;
+        private NotifyMessageCache _failureMessage;
+
+        private struct NotifyMessageCache
+        {
+            public QuestObjectiveType Type;
+            public string TargetId;
+            public int Credited;
+            public string Text;
+        }
 
         /// <summary>Selected quest action.</summary>
         public ActionType Action
@@ -54,6 +115,20 @@ namespace Neo.Quest
             set => _objectiveIndex = value;
         }
 
+        /// <summary>Target id used by NotifyKill, NotifyCollect, NotifyReachPoint and NotifyTalk.</summary>
+        public string TargetId
+        {
+            get => _targetId;
+            set => _targetId = value ?? "";
+        }
+
+        /// <summary>Progress amount used by CompleteObjective and counter notifications (at least 1).</summary>
+        public int Amount
+        {
+            get => _amount;
+            set => _amount = Mathf.Max(1, value);
+        }
+
         /// <summary>Optional flow gate checked on Accept/Restart.</summary>
         public QuestFlowConfig FlowConfig
         {
@@ -69,6 +144,12 @@ namespace Neo.Quest
 
         /// <summary>Event: result message for both success and failure.</summary>
         public UnityEvent<string> OnResultMessage => _onResultMessage;
+
+        /// <summary>Sets the target id (1-arg overload for UnityEvent wiring before Execute()).</summary>
+        public void SetTargetId(string targetId)
+        {
+            TargetId = targetId;
+        }
 
         [Button("Reset", PlayModeOnly = true)]
         public void Reset()
@@ -110,6 +191,21 @@ namespace Neo.Quest
                     break;
                 case ActionType.ResetAll:
                     ResetAll();
+                    break;
+                case ActionType.NotifyKill:
+                    Notify(QuestObjectiveType.KillCount);
+                    break;
+                case ActionType.NotifyCollect:
+                    Notify(QuestObjectiveType.CollectCount);
+                    break;
+                case ActionType.NotifyReachPoint:
+                    Notify(QuestObjectiveType.ReachPoint);
+                    break;
+                case ActionType.NotifyTalk:
+                    Notify(QuestObjectiveType.Talk);
+                    break;
+                case ActionType.EvaluateObjectiveConditions:
+                    EvaluateObjectiveConditions();
                     break;
                 default:
                     EmitFailed("Unsupported quest action.");
@@ -173,6 +269,67 @@ namespace Neo.Quest
             EmitSuccess("All quests reset.");
         }
 
+        /// <summary>Runs QuestManager.EvaluateObjectiveConditions() and emits success.</summary>
+        [Button("Evaluate Objective Conditions", PlayModeOnly = true)]
+        public void EvaluateObjectiveConditions()
+        {
+            if (!TryGetManager(out QuestManager manager))
+            {
+                return;
+            }
+
+            manager.EvaluateObjectiveConditions();
+            EmitSuccess("Objective conditions evaluated.");
+        }
+
+        /// <summary>
+        ///     Credits every active objective of <paramref name="type" /> whose Target Id equals <see cref="TargetId" />.
+        ///     Emits success when at least one objective was credited, otherwise a failure with the reason. The result
+        ///     message is reused while type, target id and credited count repeat, so warm calls do not allocate.
+        /// </summary>
+        public void Notify(QuestObjectiveType type)
+        {
+            if (!TryGetManager(out QuestManager manager))
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_targetId))
+            {
+                EmitFailed("Target id is empty.");
+                return;
+            }
+
+            int credited = manager.Notify(type, _targetId, _amount);
+            if (credited > 0)
+            {
+                EmitSuccess(GetNotifyMessage(type, credited));
+                return;
+            }
+
+            EmitFailed(GetNotifyMessage(type, 0));
+        }
+
+        // WHY: enemy/pickup prefabs (often pooled) repeat the same notification; reusing the last formatted result
+        // keeps the NoCode route allocation-free once warm instead of building a string per kill.
+        private string GetNotifyMessage(QuestObjectiveType type, int credited)
+        {
+            bool success = credited > 0;
+            ref NotifyMessageCache cache = ref success ? ref _successMessage : ref _failureMessage;
+            if (cache.Text == null || cache.Type != type || cache.Credited != credited ||
+                !string.Equals(cache.TargetId, _targetId, System.StringComparison.Ordinal))
+            {
+                cache.Type = type;
+                cache.TargetId = _targetId;
+                cache.Credited = credited;
+                cache.Text = success
+                    ? $"{type} '{_targetId}': {credited} objective(s) credited."
+                    : $"No active {type} objective matches '{_targetId}'.";
+            }
+
+            return cache.Text;
+        }
+
         private void ExecuteAcceptInternal(QuestManager manager)
         {
             if (!TryValidateQuest(out string error))
@@ -181,16 +338,19 @@ namespace Neo.Quest
                 return;
             }
 
-            if (_flowConfig != null && !_flowConfig.CanAcceptQuest(manager, _quest, out string reason))
+            // WHY: the chain-only gate keeps start-condition predicates (user code) to one evaluation per attempt;
+            // QuestFlowConfig.CanAcceptQuest followed by AcceptQuest evaluated them twice.
+            if (_flowConfig != null && !_flowConfig.IsChainSatisfied(manager, _quest, out string chainReason))
             {
-                EmitFailed(string.IsNullOrEmpty(reason) ? "Quest is locked by flow rules." : reason);
+                EmitFailed(string.IsNullOrEmpty(chainReason) ? "Quest is locked by flow rules." : chainReason);
                 return;
             }
 
-            bool accepted = manager.AcceptQuest(_quest);
-            if (!accepted)
+            if (!manager.TryAcceptQuest(_quest, out string reason))
             {
-                EmitFailed($"Accept failed: {_quest.Id}");
+                EmitFailed(string.IsNullOrEmpty(reason)
+                    ? $"Accept failed: {_quest.Id}"
+                    : $"Accept failed: {_quest.Id} ({reason})");
                 return;
             }
 
@@ -219,7 +379,12 @@ namespace Neo.Quest
                 return;
             }
 
-            manager.CompleteObjective(_quest, _objectiveIndex);
+            if (!manager.AddObjectiveProgress(_quest, _objectiveIndex, _amount))
+            {
+                EmitFailed("Objective progress was not credited.");
+                return;
+            }
+
             EmitSuccess($"CompleteObjective: {_quest.Id}[{_objectiveIndex}]");
         }
 
@@ -250,15 +415,12 @@ namespace Neo.Quest
                 return;
             }
 
-            if (_flowConfig != null && !_flowConfig.CanAcceptQuest(manager, _quest, out string reason))
+            // WHY: an existing state bypasses the chain gate because the quest was already admitted once.
+            if (_flowConfig != null && manager.GetState(_quest) == null &&
+                !_flowConfig.IsChainSatisfied(manager, _quest, out string reason))
             {
-                QuestState state = manager.GetState(_quest);
-                bool canBypassBecauseHasState = state != null;
-                if (!canBypassBecauseHasState)
-                {
-                    EmitFailed(string.IsNullOrEmpty(reason) ? "Quest is locked by flow rules." : reason);
-                    return;
-                }
+                EmitFailed(string.IsNullOrEmpty(reason) ? "Quest is locked by flow rules." : reason);
+                return;
             }
 
             bool restarted = manager.RestartQuest(_quest);

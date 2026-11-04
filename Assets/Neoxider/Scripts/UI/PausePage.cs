@@ -111,7 +111,7 @@ namespace Neo.Tools
 
         private void LateUpdate()
         {
-            // Also repopulate active components when both domain and scene reload are disabled.
+            // WHY: Also repopulate active components when both domain and scene reload are disabled.
             if (!_registered || _registeredSession != _session)
             {
                 Register();
@@ -186,7 +186,7 @@ namespace Neo.Tools
                         AcquireManager();
                     }
 
-                    // A GM observer may close the last page while Pause is still on the stack.
+                    // WHY: A GM observer may close the last page while Pause is still on the stack.
                     ReadRequests(out time, out scale, out manager, out cursor);
                     if (!manager)
                     {
@@ -208,7 +208,7 @@ namespace Neo.Tools
             }
             finally
             {
-                // Restore channels even if an external GM observer throws after committing its state.
+                // WHY: Restore channels even if an external GM observer throws after committing its state.
                 ReadRequests(out bool time, out float scale, out bool manager, out bool cursor);
                 if (!manager)
                 {
@@ -297,7 +297,7 @@ namespace Neo.Tools
             if (controlsTime)
             {
                 CaptureTimeBaseline();
-                // Other pages may already hold time at zero. GM must capture the true baseline.
+                // WHY: Other pages may already hold time at zero. GM must capture the true baseline.
                 Time.timeScale = _timeBaseline;
             }
             else
@@ -338,7 +338,7 @@ namespace Neo.Tools
             _managerAttempted = false;
             if (manager != null)
             {
-                // GM restores its capture before broadcasting Resume; page time is restored afterwards.
+                // WHY: GM restores its capture before broadcasting Resume; page time is restored afterwards.
                 manager.Resume();
             }
         }
@@ -355,7 +355,7 @@ namespace Neo.Tools
             {
                 float baseline = _timeBaseline;
                 _hasTimeBaseline = false;
-                // A foreign/replacement GM may now own its own pause. Releasing page time cannot resume it.
+                // WHY: A foreign/replacement GM may now own its own pause. Releasing page time cannot resume it.
                 bool foreignManagerTime = GM.TryGetInstance(out GM current) &&
                                           current.State == GM.GameState.Pause && current.useTimeScalePause;
                 Time.timeScale = foreignManagerTime ? 0f : baseline;

@@ -26,7 +26,7 @@ namespace Neo.Tests.Network.Integration
             yield return Until(() => _peers.ContainsKey("client-a"), "client A Authenticated/Ready/PlayerSpawned");
             yield return ObservePeers("rpg-final-initialization", StateChecks, onlyPeer: "client-a");
 
-            // Mutate after A's initial receipt; B must receive the new state in its spawn payload.
+            // WHY: Mutate after A's initial receipt; B must receive the new state in its spawn payload.
             _world.Character.Damage(47f);
             Require(_world.Character.Spend(Audit20261023TestPlayNetworkWorld.ResourceId, 3f), "Server resource spend failed.");
             _expectedState.hp = 73f;
@@ -48,7 +48,7 @@ namespace Neo.Tests.Network.Integration
             yield return PhysicsCase();
 
             yield return Reconnect(false);
-            // AllClients context actions are transient: A retains its child state, while B's
+            // WHY: AllClients context actions are transient: A retains its child state, while B's
             // re-created replicas start inactive and receive no implicit replay.
             yield return ObservePeers("late-join-reconnect", StateChecks | MatrixChecks.Reactive | MatrixChecks.Context,
                 serverBonusA: false, aBonusA: true, bBonusA: false);
@@ -77,7 +77,7 @@ namespace Neo.Tests.Network.Integration
             _world.Counter.Set(10);
             _world.Selector.Set(0);
             _world.Selector.SetExcludedIndices(new[] { 0, 1, 3 });
-            _world.Selector.SetRandom(false); // Exactly one eligible item; retain item 0.
+            _world.Selector.SetRandom(false); // WHY: Exactly one eligible item; retain item 0.
             _world.Selector.SetExcludedIndices(new[] { 1 });
             _world.Money.SetMoney(200f);
             Require(_world.Money.ClientMutationAuthority == NetworkAuthorityMode.ServerOnly,
@@ -99,7 +99,7 @@ namespace Neo.Tests.Network.Integration
             NetworkIdentity identity = _world.netIdentity;
             Dictionary<int, NetworkConnectionToClient> observers =
                 new Dictionary<int, NetworkConnectionToClient>(identity.observers);
-            // Hold only this test identity's outbound replication. Both independent clients must
+            // WHY: Hold only this test identity's outbound replication. Both independent clients must
             // invoke Add(1) from 10 even when their OS scheduling/network latency differs.
             identity.observers.Clear();
             foreach (NetworkConnectionToClient connection in observers.Values) connection.observing.Remove(identity);
@@ -121,7 +121,7 @@ namespace Neo.Tests.Network.Integration
                     pair.Value.observing.Add(identity);
                 }
             }
-            // Set(12) is correctly a no-op. Two explicit trusted publications rejoin the replicas;
+            // WHY: Set(12) is correctly a no-op. Two explicit trusted publications rejoin the replicas;
             // the server's 12 and two accepted deltas above are asserted before these writes.
             yield return ResetEvents(caseId);
             _world.Counter.Set(13);
@@ -142,13 +142,13 @@ namespace Neo.Tests.Network.Integration
             yield return ExecutePeers("unknown-authority-denied", "relay:unknown", 31);
             yield return ObservePeers("unknown-authority-denied", MatrixChecks.None, Events("unknown"),
                 Events("unknown"), Events("unknown"));
-            // A separate component is the positive transport control. Unknown-policy rejection
+            // WHY: A separate component is the positive transport control. Unknown-policy rejection
             // does not promise preservation of that same sender's admission budget.
             yield return ExecutePeers("known-authority-positive-control", "relay:known", 32);
             yield return ObservePeers("known-authority-positive-control", MatrixChecks.None, Events("known", 32f),
                 Events("known", 32f), Events("known", 32f));
 
-            _world.Relay("local").isNetworked = false; // Clients retain true: a genuinely queued ingress request.
+            _world.Relay("local").isNetworked = false; // WHY: Clients retain true: a genuinely queued ingress request.
             double localStart = Time.unscaledTimeAsDouble;
             yield return ResetEvents("local-only-ingress-denied");
             yield return ExecutePeers("local-only-ingress-denied", "relay:local", 41);
@@ -186,7 +186,7 @@ namespace Neo.Tests.Network.Integration
             yield return ResetEvents("selector-nonowner-denied");
             yield return ExecutePeers("selector-nonowner-denied", "none", 0, "selector-set", 1);
             CheckServer("selector-nonowner-denied", MatrixChecks.Selector, Events("selector"));
-            // Set() optimistically changes B's local index; rejection has no public rollback acknowledgement.
+            // WHY: Set() optimistically changes B's local index; rejection has no public rollback acknowledgement.
             yield return ObservePeers("selector-nonowner-denied", MatrixChecks.Selector, Events("selector"),
                 Events("selector"), null, bChecks: MatrixChecks.None);
             _world.Selector.SetExcludedIndices(new[] { 0, 1, 2 });
@@ -247,7 +247,7 @@ namespace Neo.Tests.Network.Integration
 
         private IEnumerator MoneyBudgetBoundary()
         {
-            // This measures the documented 50ms admission window, not guessed delivery completion.
+            // WHY: This measures the documented 50ms admission window, not guessed delivery completion.
             yield return Until(() => Time.unscaledTimeAsDouble - _lastMoneyFence >= 0.051d,
                 "Money next eligible unscaled budget boundary");
         }
@@ -293,7 +293,7 @@ namespace Neo.Tests.Network.Integration
             body.position = _world.TriggerPosition;
             yield return Until(() => _world.HasPhysicsEvent(player.netId), "actual engine trigger carrying client A's netId");
             MatrixEvents[] events = Events("physics", _playerA);
-            // AllClients applies on both current clients, not on a dedicated server.
+            // WHY: AllClients applies on both current clients, not on a dedicated server.
             yield return ObservePeers(caseId, MatrixChecks.Context, events, events, events,
                 serverBonusA: false, aBonusA: true, bBonusA: true);
         }
@@ -311,9 +311,9 @@ namespace Neo.Tests.Network.Integration
             {
                 NetServerHandlers old = _serverLease;
                 NetServerHandlers current = ServerLease(true);
-                current.Dispose(); // Disposing the current generation must not resurrect old.
+                current.Dispose(); // WHY: Disposing the current generation must not resurrect old.
                 _serverLease = ServerLease(false);
-                old.Dispose(); // This stale generation must not remove the new one.
+                old.Dispose(); // WHY: This stale generation must not remove the new one.
             }
             yield return ExecutePeers(caseId, action, value, action, value);
             MatrixEvents[] server = Events("handler-server", value, value);
@@ -463,7 +463,7 @@ namespace Neo.Tests.Network.Integration
                 _leaseReplies.Remove(step);
             }
             else Require(action == "none", "Unknown scenario action: " + action);
-            // Default Mirror Commands and this signal share Channels.Reliable. Receiving this ACK
+            // WHY: Default Mirror Commands and this signal share Channels.Reliable. Receiving this ACK
             // is a server-side ingress fence, not a claim that component RPCs reached a client.
             response.state = _world.Capture(_playerA, _playerB);
             Reply("ack", step, response);
@@ -471,7 +471,7 @@ namespace Neo.Tests.Network.Integration
 
         private void SendMoneyWire(byte operation, float amount)
         {
-            // Adversarial payload traverses the real transport and Weaver dispatch; no private
+            // WHY: Adversarial payload traverses the real transport and Weaver dispatch; no private
             // method invocation. Signature matches installed Mirror's Cecil FullName convention.
             const string signature = "System.Void Neo.Shop.Money::CmdMoneyOp(Neo.Shop.Money/MoneyOp,System.Single,Mirror.NetworkConnectionToClient)";
             using (NetworkWriterPooled writer = NetworkWriterPool.Get())
@@ -528,7 +528,7 @@ namespace Neo.Tests.Network.Integration
         {
             MatrixState wanted = JsonUtility.FromJson<MatrixState>(JsonUtility.ToJson(_expectedState));
             wanted.isOwned = owned;
-            // Context child state is role-specific, unlike the shared replicated snapshot.
+            // WHY: Context child state is role-specific, unlike the shared replicated snapshot.
             wanted.bonusA = contextBonusA;
             wanted.bonusB = false;
             return new MatrixExpected { checks = checks, state = wanted, events = events ?? Array.Empty<MatrixEvents>() };
@@ -563,7 +563,7 @@ namespace Neo.Tests.Network.Integration
                         contextBonusA: bBonusA)
                 });
             yield return Responses(onlyPeer);
-            // The server independently checks the actual received snapshots as well as client assertions.
+            // WHY: The server independently checks the actual received snapshots as well as client assertions.
             foreach (string peer in onlyPeer == null ? PeerIds() : new[] { onlyPeer })
             {
                 MatrixExpected expected = Expected((peer == "client-b" ? bChecks ?? checks : checks)

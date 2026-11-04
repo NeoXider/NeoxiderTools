@@ -56,6 +56,14 @@ namespace Neo.Network
             return false;
         }
 
+        /// <summary>
+        ///     Size at which <see cref="RateLimitCheck(NetworkConnectionToClient)"/> drops expired per-connection
+        ///     entries before adding a new peer, so a long-running server does not keep one entry per historical
+        ///     connection id.
+        /// </summary>
+        internal const int PerConnectionPruneThreshold = 32;
+
+        private static readonly List<int> s_expiredConnectionIds = new();
         private Dictionary<int, double> _lastCmdTimePerConnection;
 
         /// <summary>
@@ -71,15 +79,42 @@ namespace Neo.Network
             }
 
             double now = Time.unscaledTimeAsDouble;
+            float limit = NetworkRateLimit;
             _lastCmdTimePerConnection ??= new Dictionary<int, double>();
-            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out double last)
-                && now - last < NetworkRateLimit)
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out double last))
             {
-                return true;
+                if (now - last < limit)
+                {
+                    return true;
+                }
+            }
+            else if (_lastCmdTimePerConnection.Count >= PerConnectionPruneThreshold)
+            {
+                PruneExpiredConnections(now, limit);
             }
 
             _lastCmdTimePerConnection[sender.connectionId] = now;
             return false;
+        }
+
+        // WHY: an entry older than the limit rejects nothing, so removing it is indistinguishable from keeping it.
+        private void PruneExpiredConnections(double now, float limit)
+        {
+            s_expiredConnectionIds.Clear();
+            foreach (KeyValuePair<int, double> entry in _lastCmdTimePerConnection)
+            {
+                if (now - entry.Value >= limit)
+                {
+                    s_expiredConnectionIds.Add(entry.Key);
+                }
+            }
+
+            for (int i = 0; i < s_expiredConnectionIds.Count; i++)
+            {
+                _lastCmdTimePerConnection.Remove(s_expiredConnectionIds[i]);
+            }
+
+            s_expiredConnectionIds.Clear();
         }
 
         /// <summary>

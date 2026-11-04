@@ -1,14 +1,14 @@
 ﻿# UIPage
 
-**Purpose:** UI page component for `PM` (Page Manager). Stores `PageId`, popup mode, and compatibility settings for open/close behavior.
+**What it is:** UI page component for `PM` (Page Manager). Stores `PageId`, popup mode, and compatibility settings for open/close behavior. Script `Samples~/NeoxiderPages/Runtime/Scripts/Page/UIPage.cs`, namespace `Neo.Pages`.
 
-## Setup
+**How to use:**
 
-1. Add `UIPage` to the root GameObject of a page.
+1. Add `UIPage` (**Add Component → Neoxider → Pages → UIPage**) to the root GameObject of a page, under the `PM` object.
 2. Assign `Page Id`.
 3. Enable `Popup` if the page should open above other pages.
 4. Enable `Ignore On Exclusive Change` if the page should not be closed during exclusive page switches.
-5. For custom animation, add a project-specific component next to `UIPage`.
+5. For custom animation, derive from `UIPage` (see [Custom animated pages](#custom-animated-pages)) or add a project-specific component next to it.
 
 ## Key Fields (Inspector)
 
@@ -33,9 +33,34 @@ On exclusive switches via `PM` (for example Menu -> Shop), the incoming page is 
 
 | Method | Purpose |
 |--------|---------|
-| `StartActive()` | Enable the page. |
-| `EndActive()` | Close the page. If the GameObject is already inactive in the hierarchy, only `SetActive(false)` runs. |
+| `StartActive()` | Enable the page (a disable/enable cycle, so `OnEnable` of the page content runs again). Virtual. |
+| `EndActive()` | Close the page. If the GameObject is already inactive in the hierarchy, only `SetActive(false)` runs. Virtual. |
 | `SetActive(bool)` | Directly enable/disable the page GameObject. |
+| `OpenThisPage()` | Opens this page through `UIKit.ShowPage` (also the **Open** button in the Inspector). |
+| `HasShowAnimation`, `ShowAnimationDuration`, `HideAnimationDuration` | Animation timing reported to `PM`; `false`/`0` for the base page. Virtual. |
+| `WaitForShowAnimation()`, `WaitForHideAnimation()` | Coroutines that wait for those durations (realtime). |
+
+## Custom animated pages
+
+The base page switches instantly. An animated page derives from `UIPage`, plays its tween in an override of
+`StartActive()`/`EndActive()` and reports the timing, so `PM` keeps the outgoing page visible until the incoming one
+has finished showing:
+
+```csharp
+public class FadePage : UIPage
+{
+    [SerializeField] private float _fade = 0.25f;
+
+    public override bool HasShowAnimation => _fade > 0f;
+    public override float ShowAnimationDuration => _fade;
+
+    public override void StartActive()
+    {
+        base.StartActive();
+        // start the fade-in tween here
+    }
+}
+```
 
 ## Compatibility
 

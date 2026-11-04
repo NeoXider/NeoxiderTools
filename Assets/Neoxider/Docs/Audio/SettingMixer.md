@@ -1,10 +1,9 @@
 ﻿# SettingMixer
 
-**Purpose:** Controls `AudioMixer` parameters from C# or UnityEvents. Normalized volume (`0..1`) maps
+**What it is:** a component that controls `AudioMixer` parameters from C# or UnityEvents. Normalized volume (`0..1`) maps
 to silence through `0 dB`; direct dB methods accept `-80..20 dB`.
 
-## Setup
-
+**How to use:**
 1. Add the component `Add Component > Neoxider > Audio > SettingMixer`.
 2. Configure the parameter type (`Master`, `Music`, `Efx`, or `Custom`).
 3. Bind `Slider.OnValueChanged(float)` to the `SettingMixer.Set(float)` method.
@@ -15,6 +14,8 @@ For C# setup, assign `audioMixer` and `parameterType`, then call `Set(0.5f)`; cu
 `SetCustom("parameter", 0.5f)`. Non-default enum choices (`Music`, `Efx`, `Custom`) survive initialization.
 Legacy serialized parameter names still migrate to their matching enum when no explicit non-default
 target was selected; existing serialized names and fields remain compatible.
+
+---
 
 ## Key Fields (Inspector)
 

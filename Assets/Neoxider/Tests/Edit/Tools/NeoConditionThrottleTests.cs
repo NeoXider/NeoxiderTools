@@ -27,7 +27,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_EveryFrame_ThrottleGateRejectsBeforeInterval()
         {
-            var go = new GameObject("CondThrottle");
+            GameObject go = new GameObject("CondThrottle");
             NeoCondition nc = go.AddComponent<NeoCondition>();
             try
             {
@@ -78,7 +78,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_OnDisable_DoesNotThrow()
         {
-            var go = new GameObject("CondDisable");
+            GameObject go = new GameObject("CondDisable");
             NeoCondition nc = go.AddComponent<NeoCondition>();
             try
             {

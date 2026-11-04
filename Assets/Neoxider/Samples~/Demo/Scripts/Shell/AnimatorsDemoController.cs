@@ -1,183 +1,311 @@
+using System;
+using System.Globalization;
 using Neo.Animations;
-using Neo.Samples.Survivor;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Bright, self-contained demo for the <b>Neo.Animations</b> animator components. A single world-space disc is
-    ///     driven live by three animators at once — <see cref="Vector3Animator" /> pulses its scale,
-    ///     <see cref="ColorAnimator" /> shifts its colour, and <see cref="FloatAnimator" /> spins it — all reading from the
-    ///     shared <see cref="AnimationType" />. Buttons cycle the animation type and Play/Pause/Stop every animator in sync;
-    ///     a slider sets their speed. Live readouts show the current float value and active type. Robust in an empty scene.
+    ///     Controller of the authored <b>Neo.Animations</b> demo (AnimatorsDemo.unity). The scene, saved by its
+    ///     DemoSceneKit builder, holds a disc whose scale follows a <see cref="Vector3Animator" />, a disc tinted by a
+    ///     <see cref="ColorAnimator" />, a square moved by a <see cref="TransformAnimator" /> (rotate, bob, scale pulse,
+    ///     impulse shake) and a card bar filled by a <see cref="FloatAnimator" />. The value animators reach their
+    ///     targets through persistent UnityEvents (OnVectorChanged, OnColorChanged, Value.OnChanged), so the targets
+    ///     move without this component. The card's Play / Pause / Resume / Stop buttons, the shared
+    ///     <see cref="AnimationType" /> dropdown, the speed slider and the transform channel toggles call the public
+    ///     methods below, which forward to the real animator API and log every call. It builds nothing at runtime.
     /// </summary>
-    [AddComponentMenu("Neoxider/Demos/Animators Demo")]
+    [AddComponentMenu("")]
     public sealed class AnimatorsDemoController : MonoBehaviour
     {
-        private static readonly AnimationType[] Types =
+        [Header("Animators")]
+        [Tooltip("Fills the card bar through Value.OnChanged.")]
+        [SerializeField] private FloatAnimator _float;
+
+        [Tooltip("Tints the colour disc through OnColorChanged.")]
+        [SerializeField] private ColorAnimator _color;
+
+        [Tooltip("Scales the scale disc through OnVectorChanged.")]
+        [SerializeField] private Vector3Animator _vector;
+
+        [Tooltip("Rotates, bobs and pulses the square.")]
+        [SerializeField] private TransformAnimator _transform;
+
+        [Header("Controls synced on start")]
+        [SerializeField] private TMP_Dropdown _typeDropdown;
+        [SerializeField] private Slider _speedSlider;
+        [SerializeField] private Toggle _rotateToggle;
+        [SerializeField] private Toggle _bobToggle;
+        [SerializeField] private Toggle _pulseToggle;
+
+        [Header("Feed")]
+        [SerializeField] private DemoLogFeed _log;
+
+        private bool _warnedUnbuilt;
+
+        private enum Playback
         {
-            AnimationType.Pulsing, AnimationType.SinWave, AnimationType.PerlinNoise,
-            AnimationType.SmoothTransition, AnimationType.BounceEase, AnimationType.ElasticEase
-        };
-
-        private NeoDemoShell.Context _shell;
-        private SpriteRenderer _sprite;
-        private Vector3Animator _scale;
-        private ColorAnimator _color;
-        private FloatAnimator _spin;
-        private TMP_Text _valueLabel;
-        private TMP_Text _typeLabel;
-        private int _typeIndex;
-
-        private void OnEnable() => _shell?.SetVisible(true);
-        private void OnDisable() => _shell?.SetVisible(false);
-
-        private void OnDestroy()
-        {
-            if (_sprite != null)
-            {
-                _sprite.gameObject.SetActive(false);
-                NeoDemoShell.DestroyOwnedObject(_sprite.gameObject);
-            }
-
-            _shell?.Dispose();
+            Play,
+            Pause,
+            Resume,
+            Stop
         }
+
+        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _float != null && _color != null && _vector != null && _transform != null &&
+                                    _log != null;
+
+        public FloatAnimator FloatAnimator => _float;
+        public ColorAnimator ColorAnimator => _color;
+        public Vector3Animator Vector3Animator => _vector;
+        public TransformAnimator TransformAnimator => _transform;
+
+        /// <summary>The animation type the three value animators share (read from the float animator).</summary>
+        public AnimationType CurrentType => _float != null ? _float.AnimationType : AnimationType.PerlinNoise;
 
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Animations", new Color(0.55f, 0.45f, 0.95f), transform);
-            HideBackdrop();
+            if (!IsSceneBuilt)
+            {
+                WarnUnbuilt();
+                return;
+            }
 
-            NeoDemoShell.ShowInfoCardOnce(
-                "Neo.Animations",
-                "One disc driven live by three animators sharing the same animation type.",
-                "Vector3Animator pulses scale · ColorAnimator shifts colour · FloatAnimator spins it",
-                "Next type cycles the shared AnimationType; Play/Pause/Stop drive all three",
-                "Speed slider feeds every animator; the float readout is the live spin value");
-
-            BuildTarget();
-
-            _shell.AddSlider("Speed", 0f, 8f, 2f, SetSpeed);
-            _shell.AddButtonRow(
-                ("Next type", NextType),
-                ("Play", PlayAll),
-                ("Pause", PauseAll),
-                ("Stop", StopAll));
-
-            _typeLabel = _shell.AddValueLabel("Animation type");
-            _valueLabel = _shell.AddValueLabel("Spin value");
-
-            SetSpeed(2f);
-            ApplyType();
-            _shell.Log("Three animators bound to one disc — no imported art, no Animator asset.");
+            SyncControls();
+            Log("Four animators on real targets; the value animators reach them through UnityEvents");
         }
 
-        private void Update()
+        /// <summary>Button target: <c>Play()</c> on every animator.</summary>
+        public void PlayAll()
         {
-            if (_sprite == null)
+            ForEach(Playback.Play);
+            Log("Play() x4");
+        }
+
+        /// <summary>Button target: <c>Pause()</c> on every animator; the targets hold their current value.</summary>
+        public void PauseAll()
+        {
+            ForEach(Playback.Pause);
+            Log("Pause() x4 - values hold, the clocks stop");
+        }
+
+        /// <summary>Button target: <c>Resume()</c> on every animator (only paused ones continue).</summary>
+        public void ResumeAll()
+        {
+            ForEach(Playback.Resume);
+            Log("Resume() x4");
+        }
+
+        /// <summary>
+        ///     Button target: <c>Stop()</c> on every animator. The value animators freeze their output;
+        ///     <see cref="Neo.Animations.TransformAnimator.Stop" /> restores the captured base pose.
+        /// </summary>
+        public void StopAll()
+        {
+            ForEach(Playback.Stop);
+            Log("Stop() x4 - value animators freeze, TransformAnimator returns to its base pose");
+        }
+
+        /// <summary>Dropdown target: the shared <see cref="AnimationType" /> by its enum value.</summary>
+        public void SetAnimationType(int type)
+        {
+            if (!Enum.IsDefined(typeof(AnimationType), type))
+            {
+                Log("Ignored unknown AnimationType " + type);
+                return;
+            }
+
+            ApplyType((AnimationType)type);
+        }
+
+        /// <summary>Slider target: <c>AnimationSpeed</c> of the three value animators.</summary>
+        public void SetSpeed(float speed)
+        {
+            float value = Mathf.Max(0f, speed);
+            if (_float != null)
+            {
+                _float.AnimationSpeed = value;
+            }
+
+            if (_color != null)
+            {
+                _color.AnimationSpeed = value;
+            }
+
+            if (_vector != null)
+            {
+                _vector.AnimationSpeed = value;
+            }
+
+            Log("AnimationSpeed = " + value.ToString("0.0", CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>Toggle target: the rotate channel of <see cref="Neo.Animations.TransformAnimator.Settings" />.</summary>
+        public void SetRotateChannel(bool enabled)
+        {
+            TransformAnimationSettings settings = Settings();
+            if (settings != null)
+            {
+                settings.RotateEnabled = enabled;
+                Log("TransformAnimator rotate channel " + OnOff(enabled));
+            }
+        }
+
+        /// <summary>Toggle target: the float (bob) channel of <see cref="Neo.Animations.TransformAnimator.Settings" />.</summary>
+        public void SetBobChannel(bool enabled)
+        {
+            TransformAnimationSettings settings = Settings();
+            if (settings != null)
+            {
+                settings.FloatEnabled = enabled;
+                Log("TransformAnimator float (bob) channel " + OnOff(enabled));
+            }
+        }
+
+        /// <summary>Toggle target: the scale pulse channel of <see cref="Neo.Animations.TransformAnimator.Settings" />.</summary>
+        public void SetPulseChannel(bool enabled)
+        {
+            TransformAnimationSettings settings = Settings();
+            if (settings != null)
+            {
+                settings.ScaleEnabled = enabled;
+                Log("TransformAnimator scale pulse channel " + OnOff(enabled));
+            }
+        }
+
+        private void ForEach(Playback playback)
+        {
+            if (_float != null)
+            {
+                Apply(playback, _float.Play, _float.Pause, _float.Resume, _float.Stop);
+            }
+
+            if (_color != null)
+            {
+                Apply(playback, _color.Play, _color.Pause, _color.Resume, _color.Stop);
+            }
+
+            if (_vector != null)
+            {
+                Apply(playback, _vector.Play, _vector.Pause, _vector.Resume, _vector.Stop);
+            }
+
+            if (_transform != null)
+            {
+                Apply(playback, _transform.Play, _transform.Pause, _transform.Resume, _transform.Stop);
+            }
+        }
+
+        private static void Apply(Playback playback, Action play, Action pause, Action resume, Action stop)
+        {
+            switch (playback)
+            {
+                case Playback.Play:
+                    play();
+                    break;
+                case Playback.Pause:
+                    pause();
+                    break;
+                case Playback.Resume:
+                    resume();
+                    break;
+                default:
+                    stop();
+                    break;
+            }
+        }
+
+        private void ApplyType(AnimationType type)
+        {
+            if (_float != null)
+            {
+                _float.AnimationType = type;
+            }
+
+            if (_color != null)
+            {
+                _color.AnimationType = type;
+            }
+
+            if (_vector != null)
+            {
+                _vector.AnimationType = type;
+            }
+
+            Log("AnimationType = " + type + " (Float, Color and Vector3 animators)");
+        }
+
+        private void SyncControls()
+        {
+            if (_typeDropdown != null)
+            {
+                _typeDropdown.SetValueWithoutNotify((int)CurrentType);
+            }
+
+            if (_speedSlider != null && _float != null)
+            {
+                _speedSlider.SetValueWithoutNotify(_float.AnimationSpeed);
+            }
+
+            TransformAnimationSettings settings = _transform != null ? _transform.Settings : null;
+            if (settings == null)
             {
                 return;
             }
 
-            // WHY: pull each animator's live output every frame so the demo works whether or not the
-            // OnChanged UnityEvents are wired in the scene.
-            _sprite.transform.localScale = _scale.CurrentVector;
-            _sprite.color = _color.CurrentColor;
-            _sprite.transform.localRotation = Quaternion.Euler(0f, 0f, _spin.CurrentValue);
-
-            if (_valueLabel != null)
+            if (_rotateToggle != null)
             {
-                _valueLabel.text = _spin.CurrentValue.ToString("0.0");
+                _rotateToggle.SetIsOnWithoutNotify(settings.RotateEnabled);
+            }
+
+            if (_bobToggle != null)
+            {
+                _bobToggle.SetIsOnWithoutNotify(settings.FloatEnabled);
+            }
+
+            if (_pulseToggle != null)
+            {
+                _pulseToggle.SetIsOnWithoutNotify(settings.ScaleEnabled);
             }
         }
 
-        private void BuildTarget()
+        private TransformAnimationSettings Settings()
         {
-            var go = new GameObject("Animated Disc");
-            go.transform.SetParent(transform, false);
-            go.transform.position = Vector3.zero;
-
-            _sprite = go.AddComponent<SpriteRenderer>();
-            _sprite.sprite = SurvivorArt.Disc;
-            _sprite.color = new Color(0.55f, 0.45f, 0.95f);
-
-            _scale = go.AddComponent<Vector3Animator>();
-            _scale.playOnStart = true;
-            _scale.startVector = new Vector3(1.4f, 1.4f, 1f);
-            _scale.endVector = new Vector3(3.2f, 3.2f, 1f);
-
-            _color = go.AddComponent<ColorAnimator>();
-            _color.playOnStart = true;
-            _color.startColor = new Color(0.55f, 0.45f, 0.95f);
-            _color.endColor = new Color(1f, 0.55f, 0.30f);
-
-            _spin = go.AddComponent<FloatAnimator>();
-            _spin.playOnStart = true;
-            _spin.minValue = 0f;
-            _spin.maxValue = 360f;
-        }
-
-        private void SetSpeed(float v)
-        {
-            _scale.AnimationSpeed = v;
-            _color.AnimationSpeed = v;
-            _spin.AnimationSpeed = v;
-        }
-
-        private void NextType()
-        {
-            _typeIndex = (_typeIndex + 1) % Types.Length;
-            ApplyType();
-        }
-
-        private void ApplyType()
-        {
-            AnimationType type = Types[_typeIndex];
-            _scale.AnimationType = type;
-            _color.AnimationType = type;
-            _spin.AnimationType = type;
-            if (_typeLabel != null)
+            if (_transform == null)
             {
-                _typeLabel.text = type.ToString();
+                WarnUnbuilt();
+                return null;
             }
 
-            _shell.Log($"Animation type → {type}");
+            return _transform.Settings;
         }
 
-        private void PlayAll()
+        private static string OnOff(bool enabled)
         {
-            _scale.Play();
-            _color.Play();
-            _spin.Play();
-            _shell.Log("Play all");
+            return enabled ? "on" : "off";
         }
 
-        private void PauseAll()
+        private void Log(string message)
         {
-            _scale.Pause();
-            _color.Pause();
-            _spin.Pause();
-            _shell.Log("Pause all");
-        }
-
-        private void StopAll()
-        {
-            _scale.Stop();
-            _color.Stop();
-            _spin.Stop();
-            _shell.Log("Stop all");
-        }
-
-        private void HideBackdrop()
-        {
-            // WHY: the animated world-space disc lives behind the screen-space shell canvas, so hide the opaque
-            // backdrop and let the camera clear colour read through (same trick as the Parallax demo).
-            Transform backdrop = _shell.Canvas != null ? _shell.Canvas.transform.Find("Backdrop") : null;
-            if (backdrop != null && backdrop.TryGetComponent(out UnityEngine.UI.Image img))
+            if (_log != null)
             {
-                img.enabled = false;
+                _log.Log(message);
             }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[AnimatorsDemoController] The scene is not authored. Open Scenes/Animations/AnimatorsDemo.unity or " +
+                "run Neoxider/Demo/Rebuild Active Demo Scene.", this);
         }
     }
 }

@@ -102,9 +102,9 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ChangeState_SetsCurrentAndPrevious()
         {
-            var fsm = new StateMachine<IState>();
-            var idle = new IdleState();
-            var run = new RunState();
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            IdleState idle = new IdleState();
+            RunState run = new RunState();
 
             fsm.ChangeState(idle);
             Assert.AreEqual(idle, fsm.CurrentState);
@@ -118,9 +118,9 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ChangeState_CallsEnterAndExit()
         {
-            var fsm = new StateMachine<IState>();
-            var idle = new IdleState();
-            var run = new RunState();
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            IdleState idle = new IdleState();
+            RunState run = new RunState();
 
             fsm.ChangeState(idle);
             Assert.IsTrue(idle.Entered);
@@ -133,8 +133,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ChangeState_SameState_DoesNothing()
         {
-            var fsm = new StateMachine<IState>();
-            var idle = new IdleState();
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            IdleState idle = new IdleState();
 
             fsm.ChangeState(idle);
             idle.Entered = false;
@@ -145,7 +145,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ChangeState_Null_DoesNotThrow()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             fsm.ChangeState(null);
             Assert.IsNull(fsm.CurrentState);
         }
@@ -153,8 +153,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void Stop_ExitsCurrentStateAndClearsCurrent()
         {
-            var fsm = new StateMachine<IState>();
-            var state = new ExitCountingState();
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            ExitCountingState state = new ExitCountingState();
 
             fsm.ChangeState(state);
             fsm.Stop();
@@ -168,7 +168,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ChangeState_Generic_CreatesAndCaches()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             fsm.ChangeState<IdleState>();
             Assert.IsNotNull(fsm.CurrentState);
             Assert.IsInstanceOf<IdleState>(fsm.CurrentState);
@@ -177,7 +177,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void GetOrCreateState_CachesInstance()
         {
-            var fsm = new StateMachine<IState>(true);
+            StateMachine<IState> fsm = new StateMachine<IState>(true);
             IdleState state1 = fsm.GetOrCreateState<IdleState>();
             IdleState state2 = fsm.GetOrCreateState<IdleState>();
             Assert.AreSame(state1, state2, "Cached state should return same instance.");
@@ -186,7 +186,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void GetOrCreateState_NoCaching_CreatesFresh()
         {
-            var fsm = new StateMachine<IState>(false);
+            StateMachine<IState> fsm = new StateMachine<IState>(false);
             IdleState state1 = fsm.GetOrCreateState<IdleState>();
             IdleState state2 = fsm.GetOrCreateState<IdleState>();
             Assert.AreNotSame(state1, state2, "Without caching, should create new instances.");
@@ -195,8 +195,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void Update_CallsCurrentStateOnUpdate()
         {
-            var fsm = new StateMachine<IState>();
-            var idle = new IdleState();
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            IdleState idle = new IdleState();
             fsm.ChangeState(idle);
 
             fsm.Update();
@@ -208,8 +208,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void FixedUpdate_CallsCurrentState()
         {
-            var fsm = new StateMachine<IState>();
-            var idle = new IdleState();
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            IdleState idle = new IdleState();
             fsm.ChangeState(idle);
 
             fsm.FixedUpdate();
@@ -219,8 +219,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void LateUpdate_CallsCurrentState()
         {
-            var fsm = new StateMachine<IState>();
-            var idle = new IdleState();
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            IdleState idle = new IdleState();
             fsm.ChangeState(idle);
 
             fsm.LateUpdate();
@@ -230,8 +230,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void RegisterTransition_And_CanTransition()
         {
-            var fsm = new StateMachine<IState>();
-            var transition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            StateTransition transition = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(RunState),
@@ -248,8 +248,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void TryChangeState_Success()
         {
-            var fsm = new StateMachine<IState>();
-            var transition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            StateTransition transition = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(RunState),
@@ -267,7 +267,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void TryChangeState_Failure_NoTransition()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             fsm.ChangeState<IdleState>();
 
             bool changed = fsm.TryChangeState<AttackState>();
@@ -278,8 +278,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void UnregisterTransition_RemovesTransition()
         {
-            var fsm = new StateMachine<IState>();
-            var transition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            StateTransition transition = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(RunState),
@@ -297,8 +297,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void EvaluateTransitions_ExecutesMatchingTransition()
         {
-            var fsm = new StateMachine<IState>();
-            var transition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            StateTransition transition = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(RunState),
@@ -315,8 +315,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void EvaluateTransitions_DisabledTransition_DoesNotFire()
         {
-            var fsm = new StateMachine<IState>();
-            var transition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            StateTransition transition = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(RunState),
@@ -333,9 +333,9 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void TransitionPriority_HigherPriorityFirst()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
 
-            var lowPriority = new StateTransition
+            StateTransition lowPriority = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(RunState),
@@ -343,7 +343,7 @@ namespace Neo.Editor.Tests.Edit
                 Priority = 0
             };
 
-            var highPriority = new StateTransition
+            StateTransition highPriority = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(AttackState),
@@ -362,7 +362,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ClearStateCache_ResetsCachedInstances()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             IdleState first = fsm.GetOrCreateState<IdleState>();
             fsm.ClearStateCache();
             IdleState second = fsm.GetOrCreateState<IdleState>();
@@ -373,7 +373,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void OnStateChanged_Event_Fires()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             IState eventFrom = null, eventTo = null;
             fsm.OnStateChanged.AddListener((from, to) =>
             {
@@ -381,8 +381,8 @@ namespace Neo.Editor.Tests.Edit
                 eventTo = to;
             });
 
-            var idle = new IdleState();
-            var run = new RunState();
+            IdleState idle = new IdleState();
+            RunState run = new RunState();
             fsm.ChangeState(idle);
             fsm.ChangeState(run);
 
@@ -393,7 +393,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void OnStateEntered_Event_Fires()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             IState lastEntered = null;
             fsm.OnStateEntered.AddListener(s => lastEntered = s);
 
@@ -405,11 +405,11 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void OnStateExited_Event_Fires()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             IState lastExited = null;
             fsm.OnStateExited.AddListener(s => lastExited = s);
 
-            var idle = new IdleState();
+            IdleState idle = new IdleState();
             fsm.ChangeState(idle);
             fsm.ChangeState<RunState>();
 
@@ -419,8 +419,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void GlobalTransition_FiresFromAnyState()
         {
-            var fsm = new StateMachine<IState>();
-            var globalTransition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>();
+            StateTransition globalTransition = new StateTransition
             {
                 FromStateType = null, // WHY: null FromStateType means the transition is global
                 ToStateType = typeof(AttackState),
@@ -438,8 +438,8 @@ namespace Neo.Editor.Tests.Edit
         public void TypedTransition_FiresWhenTransitionCachingDisabled()
         {
             // WHY: with caching off, RegisterTransition must not drop typed transitions.
-            var fsm = new StateMachine<IState>(true, false);
-            var transition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>(true, false);
+            StateTransition transition = new StateTransition
             {
                 FromStateType = typeof(IdleState),
                 ToStateType = typeof(RunState),
@@ -459,8 +459,8 @@ namespace Neo.Editor.Tests.Edit
         public void CanTransitionTo_CachingDisabled_RespectsFromState()
         {
             // WHY: uncached typed transitions live in the global list; CanTransitionTo must still honor FromStateType.
-            var fsm = new StateMachine<IState>(true, false);
-            var transition = new StateTransition
+            StateMachine<IState> fsm = new StateMachine<IState>(true, false);
+            StateTransition transition = new StateTransition
             {
                 FromStateType = typeof(RunState),
                 ToStateType = typeof(AttackState),
@@ -477,20 +477,20 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void CanTransitionTo_NoCurrentState_ReturnsTrue()
         {
-            var fsm = new StateMachine<IState>();
+            StateMachine<IState> fsm = new StateMachine<IState>();
             Assert.IsTrue(fsm.CanTransitionTo<IdleState>(), "With no current state, any transition should be allowed.");
         }
 
         [Test]
         public void Behaviour_OnDisable_StopsCurrentState()
         {
-            var go = new GameObject("StateMachineHost");
+            GameObject go = new GameObject("StateMachineHost");
             try
             {
                 StateMachineBehaviourBase behaviour = go.AddComponent<StateMachineBehaviourBase>();
                 behaviour.ChangeState<ExitCountingState>();
 
-                var state = (ExitCountingState)behaviour.CurrentState;
+                ExitCountingState state = (ExitCountingState)behaviour.CurrentState;
                 InvokePrivate(behaviour, "OnDisable");
 
                 Assert.That(state.ExitCount, Is.EqualTo(1));
@@ -505,10 +505,10 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ContextAction_UsesSceneObjectProvidedByComponentSlot()
         {
-            var target = new GameObject("StateMachineActionTarget");
+            GameObject target = new GameObject("StateMachineActionTarget");
             try
             {
-                var action = new SetContextGameObjectActiveAction
+                SetContextGameObjectActiveAction action = new SetContextGameObjectActiveAction
                 {
                     ContextSlot = ConditionContextSlot.Owner,
                     SetActive = false

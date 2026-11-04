@@ -39,7 +39,7 @@ Playback of ready-made animations (one-shot and looped).
 - **PlayLooped(CardViewAnimationType, float?)** — start a looped animation
 - **StopLooped(CardViewAnimationType)**, **StopAllLooped()**
 
-Animation types: **CardViewAnimationType** (Bounce, Pulse, PulseLooped, Shake, Highlight, FlyIn, Idle). Implemented by [CardViewUniversal](./View/CardViewUniversal.md); in a custom view you can call [CardViewAnimationTemplates](./View/CardViewUniversal.md#переиспользование-шаблонов) directly.
+Animation types: **CardViewAnimationType** (Bounce, Pulse, PulseLooped, Shake, Highlight, FlyIn, Idle). Implemented by [CardViewUniversal](./View/CardViewUniversal.md); in a custom view you can call [CardViewAnimationTemplates](./View/CardViewUniversal.md#reusing-animation-templates) directly.
 
 ---
 
@@ -52,6 +52,12 @@ Interface of a card container (hand, zone).
 - **ArrangeCardsAsync(bool animate)**, **Clear()**
 
 Implementation: [HandView](./View/HandView.md). For multiple zones — use several HandViews or your own containers following the same approach.
+
+### IOrderedHandView (optional)
+
+- **SetOrderAsync(IReadOnlyList<ICardView> order, bool animate, CancellationToken)** — apply an exact permutation of the current members with one layout pass and no remove/add callbacks.
+
+Implemented by [HandView](./View/HandView.md); `HandPresenter` uses it for sorting and falls back to remove/add for plain `IHandView` implementations.
 
 ---
 
@@ -68,12 +74,12 @@ Interface for deck visuals (spawn point, counter, trump card). Bound to CardData
 | Classic cards (Durak, War/Drunkard), inspector setup | CardComponent + HandComponent/DeckComponent/BoardComponent (no ICardView). |
 | Classic cards with code (MVP) | ICardView (CardView or CardViewUniversal) + HandView + CardPresenter. |
 | Arbitrary cards, custom animations and modes | CardViewUniversal (ICardView + ICardDisplayMode + ICardViewAnimations). |
-| Custom card model (CCG, roguelike) | Your own view interface + your own data; animations and layouts — [CardViewAnimationTemplates](View/CardViewUniversal.md#переиспользование-шаблонов), [CardLayoutCalculator](../../Scripts/Cards/Utils/CardLayoutCalculator.cs). |
+| Custom card model (CCG, roguelike) | Your own view interface + your own data; animations and layouts — [CardViewAnimationTemplates](View/CardViewUniversal.md#reusing-animation-templates), [CardLayoutCalculator](../../Scripts/Cards/Utils/CardLayoutCalculator.cs). |
 
 ---
 
 ## See Also
 
-- [What to reuse across different card games](./README.md) (section in the README)
+- [What to reuse across different card games](./README.md#reuse-across-card-games) (section in the README)
 - [CardViewUniversal](./View/CardViewUniversal.md) — modes, animations, template reuse
 - [CustomCardViewGuide](./View/CustomCardViewGuide.md) — step-by-step custom card implementation

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb72ec8f943d4d945a0c1412b8c6a061, type: 3}
+  m_Name: SaveDemoProviderSettings
+  m_EditorClassIdentifier: Neo.Save::Neo.Save.SaveProviderSettings
+  _providerType: 1
+  _fileName: neo_save_demo.json
+  _encryptFileSave: 0
+  _fileEncryptionKey: 
+  _fileEncryptionIv: 

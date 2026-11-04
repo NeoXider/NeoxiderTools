@@ -71,7 +71,7 @@ Use this structure for every component that has its own .md file.
 4. **API** — public methods and properties convenient to call from code and from UnityEvent; return values.
 5. **Unity Events** — when each event fires, what parameters it passes (important for No-Code).
 6. **Examples** — at least two: scene/UnityEvent setup (No-Code) and a short C# snippet (code).
-7. **See also** — links to related documents and a back link to the section (e.g., "← [Tools/Components](README.md)").
+7. **See also** — links to related documents and a back link to the section (e.g., `← [Tools/Components](README.md)`).
 
 ### 4.2. Optional Blocks
 

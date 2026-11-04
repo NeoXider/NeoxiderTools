@@ -2,7 +2,11 @@
 
 **What it is:** Reuse `ConditionEntry` and `IConditionEvaluator` in NeoCondition, State Machine transitions, and custom C# systems.
 
-**How to use:** see the sections below.
+**How to use:**
+1. Reference the `Neo.Condition` assembly from your asmdef.
+2. Declare a `[SerializeField] ConditionEntry` (or a list) on your component; the Inspector drawer is provided.
+3. Call `entry.Evaluate(contextGameObject)` (legacy bool) or `entry.TryEvaluate(contextGameObject, out bool result)` when an unavailable source must not count as a result.
+4. In the State Machine, add **Neoxider Condition** to a transition instead of writing code.
 
 ---
 
@@ -29,7 +33,7 @@ namespace Neo.Condition
 - The **State Machine** uses the `ConditionEntryPredicate` predicate, which internally calls `conditionEntry.Evaluate(context)`.
 - Any custom system can accept an `IConditionEvaluator` (or specifically a `ConditionEntry`) and call `Evaluate(context)` with a suitable context.
 
-The context (`GameObject context`) is used when Source Object is unset and Find By Name is not configured. A missing named object or a destroyed explicit reference does not fall back to the context. Cached members follow a new context on each evaluation, so sharing an entry across owners does not retain the first owner's values. The Other Object branch follows the same context rules unless it has an explicit source; NeoCondition also binds an unset Other Source Object to the left source in `Start()`.
+The context (`GameObject context`) is used when Source Object is unset (also an empty field saved in an asset) and Find By Name is not configured. A missing named object or a destroyed explicit reference does not fall back to the context. Cached members follow a new context on each evaluation, so sharing an entry across owners does not retain the first owner's values. The Other Object branch follows the same context rules unless it has an explicit source; NeoCondition also binds an unset Other Source Object to the left source in `Start()`; a destroyed explicit Other Source Object is kept and stays unavailable.
 
 ---
 
@@ -131,7 +135,8 @@ No implementation is required on your side: the `ConditionEntryPredicate` predic
 
 | Task | Action |
 |--------|----------|
-| Use a single condition in your system | A `ConditionEntry` field, call `entry.Evaluate(contextGameObject)`. |
+| Use a single condition in your system | A `ConditionEntry` field, call `entry.Evaluate(contextGameObject)` or `TryEvaluate(contextGameObject, out bool)`. |
+| Configure from code | Every Inspector setting has a public property (left source, Other Object branch, method arguments). |
 | Multiple conditions (AND/OR) | A `List<ConditionEntry>`, a loop calling `Evaluate`, combine results with your own logic. |
 | Context | Pass to `Evaluate` the GameObject that should serve as the fallback when the source is empty. |
 | Inspector | A `ConditionEntry` field (or a list) is enough; the UI is provided by `ConditionEntryDrawer`. |
@@ -144,4 +149,15 @@ For details on configuring a single condition (Source, Component, Property, Comp
 
 Public source/member setters clear the relevant entry cache. Call `InvalidateCacheFull()` after editing serialized binding settings directly; it resets both sources and name-search state. `InvalidateCache()` resets only the left member binding. The shared `ReflectionCache` caches both hits and misses independently for each binding-flags selection.
 
-Unavailable sources, null values, and read/conversion errors evaluate to `false` before inversion. `Invert = true` therefore turns an unavailable entry into `true`. Bool/text comparisons use equality or inequality; floating-point equality uses `Mathf.Approximately`. `NeoCondition.Evaluate()` combines entries without events, while `Check()` updates `LastResult` and applies Only On Change to all events.
+Unavailable sources, null values, and read/conversion errors evaluate to `false` before inversion. `Invert = true` therefore turns an unavailable entry into `true`. When that matters (for example "player has no shield" must not pass while the player object is not spawned yet), use `TryEvaluate`:
+
+```csharp
+if (!entry.TryEvaluate(gameObject, out bool passed))
+{
+    return; // source, member or value unavailable: no decision yet
+}
+```
+
+Bool/text comparisons use equality or inequality; floating-point equality uses `Mathf.Approximately`. `NeoCondition.Evaluate()` combines entries without events, while `Check()` updates `LastResult` and applies Only On Change to all events.
+
+Retries of a missing component or member do not allocate and log their warning once, so polling an entry while its target spawns later is cheap.

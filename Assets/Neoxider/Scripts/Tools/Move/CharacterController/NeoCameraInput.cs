@@ -32,9 +32,9 @@ namespace Neo.Tools
         [SerializeField]
         private float _mouseInputMultiplier = 0.0025f;
 
-        // ПОЧЕМУ: 400 пикселей оставляют большой запас для настоящего быстрого движения, но остаются заметно ниже
-        // скачка почти на ширину окна, который WebGL может вернуть после потери и повторного захвата pointer lock.
-        [Tooltip("Максимальная длина дельты указателя за кадр в пикселях. Большее значение отбрасывается как артефакт повторного захвата курсора; 0 отключает фильтр.")]
+        // WHY: 400 pixels leave plenty of headroom for a genuinely fast mouse move, yet stay well below the almost
+        // window-wide jump WebGL can report after pointer lock is lost and captured again.
+        [Tooltip("Maximum pointer delta length per frame, in pixels. A longer delta is discarded as a cursor re-capture artifact; 0 disables the filter.")]
         [SerializeField, Min(0f)]
         private float _maxPointerDeltaPerFrame = 400f;
 
@@ -84,7 +84,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Gets whether look is currently active, taking the cursor gate into account.
         /// </summary>
-        public bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
+        public bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !MoveCursor.Visible);
 
         private float EffectiveSensitivity =>
             _useGameSettingsMouseSensitivity ? GameSettings.MouseSensitivity : _mouseSensitivity;
@@ -182,9 +182,9 @@ namespace Neo.Tools
 
             try
             {
-                var raw = new Vector2(Input.GetAxisRaw(_mouseXAxis), Input.GetAxisRaw(_mouseYAxis)) *
-                          _mouseInputMultiplier;
-                var rate = new Vector2(
+                Vector2 raw = new Vector2(Input.GetAxisRaw(_mouseXAxis), Input.GetAxisRaw(_mouseYAxis)) *
+                              _mouseInputMultiplier;
+                Vector2 rate = new Vector2(
                     NeoLookRate.FromFrameDelta(raw.x, Time.deltaTime, Time.timeScale),
                     NeoLookRate.FromFrameDelta(raw.y, Time.deltaTime, Time.timeScale));
                 return rate * sensitivity;

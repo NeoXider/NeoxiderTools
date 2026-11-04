@@ -45,6 +45,11 @@ Pool `Mode` is `Loop` by default (the game moves the track, via `NextMusicTrack(
 `Shuffle` (advances by itself at the end of the clip). Pitch randomisation defaults to on for sounds,
 off for music.
 
+`AMSettings` persists volumes **and** the Music/Efx/Master/UI mute (`PersistVolume`, `PersistMute`, on by
+default) and no longer forces sound back on when it binds; a `SetMusic`/`SetEfx` call in your `Awake` is
+kept. Those calls are therefore the player's saved preference — for temporary silence (pause menu, ad,
+cutscene) use `AudioListener.pause` or a mixer snapshot.
+
 Avoid: `EnableRandomMusic()` / `SetRandomMusicTracks()` — obsolete; use a `Shuffle` pool with an id.
 Avoid: a `SetVolume` → `Play` → `SetVolume` dance — that is what `SoundOptions.Volume` is for.
 Avoid: writing a "swap the track list from outside" component — that is what pools replaced.
@@ -66,8 +71,14 @@ public class PlayerData : SaveableBehaviour
 SaveManager.Save();                 // all registered
 SaveManager.Save(myComponent);
 SaveManager.Load(myComponent);
+
+// 64-bit values (money in cents, big counters) — no long<->string helpers:
+SaveProvider.SetLong("wallet_cents", cents);
+long stored = SaveProvider.GetLong("wallet_cents");   // also reads values written with SetInt
+SaveProvider.Save();                // cheap with FileSaveProvider: an unchanged flush skips the disk write
 ```
 Note: `[SaveField]` must be on a real field (not an auto-property). Avoid raw `PlayerPrefs`.
+`FileSaveProvider.HasUnsavedChanges` / `FilePath` show the pending state and the file location.
 
 ## Reactive properties
 ```csharp
@@ -85,25 +96,27 @@ _score.Value += 10;                 // subscribers notified
 _health.OnNext(75f);                // == .Value = 75f
 _health.SetValueWithoutNotify(100f);// silent (e.g. on load)
 _health.ForceNotify();
-var flag = new ReactiveProperty<bool>(false);   // non-serialized generic
+ReactiveProperty<bool> flag = new ReactiveProperty<bool>(false);   // non-serialized generic
 ```
 `OnChanged` is the inspector-facing `UnityEvent<T>`; from code use `AddListener`. Don't add a
-`NoCodeBindText` to push the value — set it in code.
+`NoCodeBindText` to push the value — set it in code. Nested notifications do not allocate; weak
+subscriptions whose Unity target was destroyed are removed silently.
 
-## Object pooling — `PoolManager`
+## Object pooling — `SpawnUtility` / `PoolManager`
 ```csharp
 using Neo.Tools;
 
-GameObject bullet = PoolManager.Get(bulletPrefab, pos, Quaternion.identity);
+GameObject bullet = SpawnUtility.Spawn(bulletPrefab, pos, Quaternion.identity);  // works without a PoolManager
 GameObject b2     = PoolManager.Get(bulletPrefab, pos, Quaternion.identity, parent);
-// return via Despawner component, or PooledObjectInfo.OwnerPool.Release(instance)
+SpawnUtility.Despawn(bullet);       // or PoolManager.Release(b2), bullet.ReturnToPool(), a Despawner
 
 public class Bullet : PoolableBehaviour {           // or implement IPoolable
-    public override void OnPoolGet()     => gameObject.SetActive(true);
+    public override void OnPoolGet()     { /* reset state; the pool already activated the object */ }
     public override void OnPoolRelease() { /* stop FX */ }
 }
 ```
-Pools are created on first `Get()`. Avoid `Instantiate`/`Destroy` churn for frequently spawned objects.
+Pools are created on first `Get()`. Warm get/return is O(1) and allocation-free; a double or foreign return
+is ignored. Avoid `Instantiate`/`Destroy` churn for frequently spawned objects.
 
 ## Singletons & event hub — `GM` / `EM`
 ```csharp
@@ -123,8 +136,17 @@ EM.I.OnStateChange.AddListener(s => Debug.Log(s));
 ```csharp
 using Neo.StateMachine;
 
-var sm = new StateMachine<IState>();
-var transition = new StateTransition { FromStateType = typeof(IdleState), ToStateType = typeof(AttackState) };
+public sealed class IdleState : IState
+{
+    public void OnEnter() { }
+    public void OnUpdate() { }
+    public void OnFixedUpdate() { }
+    public void OnLateUpdate() { }
+    public void OnExit() { }
+}
+
+StateMachine<IState> sm = new StateMachine<IState>();
+StateTransition transition = new StateTransition { FromStateType = typeof(IdleState), ToStateType = typeof(AttackState) };
 transition.AddPredicate(new CustomPredicate());   // attach a StatePredicate; see Docs/StateMachine for BoolPredicate/FloatComparisonPredicate/etc.
 sm.RegisterTransition(transition);
 sm.ChangeState<IdleState>();
@@ -132,9 +154,11 @@ sm.Update();                  // CurrentState.OnUpdate()
 sm.EvaluateTransitions();     // auto-fire
 sm.OnStateChanged.AddListener((prev, next) => Debug.Log($"{prev}->{next}"));
 ```
-Avoid the `StateMachineData`/`StateData` ScriptableObject no-code workflow when coding; subclass
-`StateMachineBehaviourBase` (override `OnEnter`/`OnUpdate`/`OnExit`/`CheckTransition`) or use the generic
-`StateMachine<T>` above.
+On a GameObject, subclass the generic wrapper (`public class EnemyBrain : StateMachineBehaviour<IState>`) —
+it ticks Update/FixedUpdate/LateUpdate for the active state without allocating. Avoid the
+`StateMachineData`/`StateData` ScriptableObject no-code workflow when coding. If a scene already uses it,
+the wrappers accept `ChangeState(StateData)` from code; a literal `ChangeState(null)` is now ambiguous
+(cast it: `ChangeState((string)null)`).
 
 ## Abilities — `Neo.Abilities` (v10 combat; see abilities.md for the full module)
 ```csharp
@@ -144,6 +168,7 @@ using Neo.Abilities;
 caster.TryCast("frost_nova");                   // no-target / self
 caster.TryCastAtUnit("firebolt", targetUnit);   // unit-targeted
 caster.TryCastAtPoint("fireball", groundPoint); // point-targeted
+CastFailureReason lastFailure = caster.LastCastResult.Failure;   // typed reason, no string parsing
 cooldownImage.fillAmount = caster.GetCooldownNormalized("fireball");
 
 unit.OnDamaged.AddListener(dmg => FlashHit(dmg));    // per-unit receipts
@@ -151,7 +176,7 @@ unit.OnDied.AddListener(HandleDeath);
 float speed = unit.Unit.GetProperty("move_speed");   // aggregated base->add->mul->max
 bool stunned = unit.Unit.HasState("stunned");
 
-var system = AbilitySystemBehaviour.I.System;        // hub singleton, auto-creates
+AbilitySystem system = AbilitySystemBehaviour.I.System;   // hub singleton, auto-creates
 system.GrantAbility(unit.UnitId, "ember");           // runtime grant (upgrades)
 system.SetAbilityLevel(unit.UnitId, "ember", 2);     // leveled values scale
 system.Events.SubscribeAny(e => Log(e.EventId, e.Target, e.Amount)); // global receipt stream
@@ -163,40 +188,74 @@ survivor-style auto-fire instead of hand-rolling a fire-when-ready loop.
 
 ## RPG — `RpgCharacter` (LEGACY — superseded by `Neo.Abilities`; existing Rpg scenes only)
 ```csharp
-using Neo.Rpg;
+using Neo.Core.Resources;   // RpgResourceId
+using Neo.Rpg;              // RpgDamageInfo, IRpgDamageModifier
+using Neo.Rpg.Components;   // RpgCharacter
 
-var c = enemy.GetComponent<RpgCharacter>();     // one per enemy/player; not a singleton
+RpgCharacter c = enemy.GetComponent<RpgCharacter>();   // one per enemy/player; not a singleton
 c.Damage(25f);  c.Heal(10f);
-c.Spend("Mana", 20f);  c.ApplyBuffById("Regen");
+c.ApplyDamage(new RpgDamageInfo(25f, source: attacker));   // typed hit with a source (attacker: IRpgCombatReceiver)
+c.DamageApplied += (info, applied) => ShowHitNumber(applied);
+c.AddDamageModifier(shield);    // IRpgDamageModifier.ModifyIncomingDamage(target, info, amount): shields, armor, caps
+c.Spend(RpgResourceId.Mana, 20f);  c.ApplyBuffById("Regen");
 c.AddXp(100f);  c.SetLevel(5);
-float hp = c.GetResource("Hp");
+float hp = c.GetResource(RpgResourceId.Hp);
 c.OnDeathEvent.AddListener(HandleDeath);        // output event — fine from code
 ```
-Avoid `RpgNoCodeAction` (it just calls these methods from a UnityEvent). Never start NEW combat on
-`Neo.Rpg` — it is slated for removal; use the Abilities idiom above.
+`AttackSpeedPercent` buffs feed `c.GetAttackSpeedMultiplier()`; `RpgAttackController.ScaleCooldownByAttackSpeed`
+(off by default) applies it to new cooldowns. Pooled legacy hitboxes route to a receiver with
+`RpgStatsDamageableBridge.Initialize(receiver)` / `ClearReceiver()`. Avoid `RpgNoCodeAction` (it just calls
+these methods from a UnityEvent). Never start NEW combat on `Neo.Rpg` — use the Abilities idiom above.
 
 ## Quest / Progression (singletons)
 ```csharp
+using System.Collections.Generic;
 using Neo.Quest; using Neo.Progression;
 
-QuestManager.I.AcceptQuest(questConfig);
-QuestManager.I.CompleteObjective(questConfig, objectiveIndex: 0);
-QuestManager.I.OnQuestCompleted.AddListener(id => Debug.Log($"done {id}"));
+if (!QuestManager.I.TryAcceptQuest(questConfig, out string why)) Debug.Log(why);
+QuestManager.I.NotifyKill("wolf");                     // credits every matching KillCount objective, zero GC
+QuestManager.I.NotifyCollect("herb", 3);               // stack pickup in one call
+QuestManager.I.NotifyReachPoint("ruins");  QuestManager.I.NotifyTalk("elder");
+QuestManager.I.AddObjectiveProgress(questConfig, 0, 2); // by index, clamped to RequiredCount
+QuestManager.I.QuestCompleted += quest => GiveReward(quest);
+QuestManager.I.GetActiveQuests(_activeBuffer);         // List<QuestState>, reused
 
 ProgressionManager.I.AddXp(50);
 ProgressionManager.I.TryBuyPerk("fast_attack", out string err);
+ProgressionManager.I.NodeUnlocked += nodeId => RefreshTree();
 ```
-Avoid `QuestNoCodeAction` / `ProgressionNoCodeAction` in code — call the manager directly.
+An empty or null target id credits nothing (credit such objectives by index). If a progress or completion
+listener throws, the credit still finishes and the completion events still fire before the exception is
+rethrown. `QuestConfig.ValidateDefinition()` lists authoring problems. Avoid `QuestNoCodeAction` / `ProgressionNoCodeAction` in code — call the manager directly.
 
 ## Health / resources
 ```csharp
 using Neo.Core.Resources;
 
-var health = player.GetComponent<HealthComponent>();
+HealthComponent health = player.GetComponent<HealthComponent>();
 health.Decrease(RpgResourceId.Hp, 15f);
 if (health.IsDepleted(RpgResourceId.Hp)) HandleDeath();
 ```
 Avoid putting a `NeoCondition` "Hp <= 0 → GameOver" on the object; write the `if` in code.
+
+## Time seams — testable timers and cooldowns
+```csharp
+using System;
+using Neo.Tools;
+
+ManualFrameClock frames = new ManualFrameClock(unscaledDeltaTime: 0.1f);
+Timer cooldown = new Timer(1f, updateInterval: 0f) { FrameClock = frames };   // default: UnityFrameClock.Instance
+cooldown.Start();                   // each frame now advances exactly 0.1 s
+
+public sealed class DailyGate       // a rule with an injectable UTC clock
+{
+    private readonly INeoClock _clock;
+    public DailyGate(INeoClock clock = null) { _clock = clock ?? NeoTrustedTime.AsClock; }
+    public bool IsOpen(DateTime lastClaimUtc) => (_clock.UtcNow - lastClaimUtc).TotalHours >= 24d;
+}
+```
+`TimerObject.FrameClock` / `UtcClock`, `Bonus.CooldownSchedule(cooldownSeconds, clock: ...)` and the
+animators' `ManualUpdate` + `Tick(dt)` take the same seams. Guide: `Docs/Tools/Time/Clocks.md`.
 
 ## Extensions one-liners (see extensions.md for the full set)
 ```csharp
@@ -204,8 +263,10 @@ using Neo.Extensions;
 
 Enemy nearest = enemies.FindClosest(transform.position);
 enemies.SetActiveAll(false);
-var pick = list.GetRandomElement();
+Enemy pick = enemyList.GetRandomElement();
 int i = weights.GetRandomWeightedIndex();
+System.Random rng = new System.Random(dailySeed);
+deck.Shuffle(rng);                            // reproducible; also GetRandomElement(rng), GetRandomWeightedIndex(rng)
 transform.DestroyChildren();
 transform.SetPosition(y: 0f);                 // only Y
 transform.LookAt2D(target.position);

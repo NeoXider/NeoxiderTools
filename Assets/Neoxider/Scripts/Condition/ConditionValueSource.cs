@@ -20,6 +20,11 @@ namespace Neo.Condition
         private MemberInfo _cachedMember;
         private Type _cachedArgumentType;
         private object[] _cachedArgs;
+        private bool _hasCachedArgument;
+        private ArgumentKind _cachedArgumentKind;
+        private int _cachedArgumentInt;
+        private float _cachedArgumentFloat;
+        private string _cachedArgumentString;
         private bool _cacheValid;
         private bool _hasLoggedDestroyedWarning;
         private bool _hasLoggedMissingMemberWarning;
@@ -35,7 +40,7 @@ namespace Neo.Condition
 
         public bool EnsureCache(GameObject fallbackObject)
         {
-            // A reusable entry can be evaluated for a different owner on every call.
+            // WHY: a reusable entry can be evaluated for a different owner on every call.
             GameObject target = ResolveTargetObject(fallbackObject);
             SourceMode mode = _isOther ? _entry.OtherSourceMode : _entry.Source;
             return mode == SourceMode.GameObject
@@ -85,15 +90,49 @@ namespace Neo.Condition
 
             if (_cachedMember is MethodInfo method)
             {
-                // WHY: reuse the args array to avoid a per-check allocation; the value is still re-read every
-                // evaluation so Inspector edits in Play Mode affect the next check (documented behavior).
+                // WHY: reuse the args array and the converted argument to avoid per-check allocations; the source
+                // value is still compared every evaluation so Inspector edits in Play Mode affect the next check.
                 _cachedArgs ??= new object[1];
-                _cachedArgs[0] = Convert.ChangeType(GetArgumentValue(), _cachedArgumentType,
-                    CultureInfo.InvariantCulture);
+                if (!_hasCachedArgument || !IsCachedArgumentCurrent())
+                {
+                    _hasCachedArgument = false;
+                    _cachedArgs[0] = Convert.ChangeType(GetArgumentValue(), _cachedArgumentType,
+                        CultureInfo.InvariantCulture);
+                    RememberArgument();
+                }
+
                 return method.Invoke(_cachedComponent, _cachedArgs);
             }
 
             return null;
+        }
+
+        private bool IsCachedArgumentCurrent()
+        {
+            ArgumentKind kind = _isOther ? _entry.OtherPropertyArgumentKind : _entry.PropertyArgumentKind;
+            if (kind != _cachedArgumentKind)
+            {
+                return false;
+            }
+
+            return kind switch
+            {
+                ArgumentKind.Float => (_isOther ? _entry.OtherPropertyArgumentFloat : _entry.PropertyArgumentFloat)
+                    .Equals(_cachedArgumentFloat),
+                ArgumentKind.String => string.Equals(
+                    _isOther ? _entry.OtherPropertyArgumentString : _entry.PropertyArgumentString,
+                    _cachedArgumentString, StringComparison.Ordinal),
+                _ => (_isOther ? _entry.OtherPropertyArgumentInt : _entry.PropertyArgumentInt) == _cachedArgumentInt
+            };
+        }
+
+        private void RememberArgument()
+        {
+            _cachedArgumentKind = _isOther ? _entry.OtherPropertyArgumentKind : _entry.PropertyArgumentKind;
+            _cachedArgumentInt = _isOther ? _entry.OtherPropertyArgumentInt : _entry.PropertyArgumentInt;
+            _cachedArgumentFloat = _isOther ? _entry.OtherPropertyArgumentFloat : _entry.PropertyArgumentFloat;
+            _cachedArgumentString = _isOther ? _entry.OtherPropertyArgumentString : _entry.PropertyArgumentString;
+            _hasCachedArgument = true;
         }
 
         public void InvalidateCache()
@@ -104,6 +143,7 @@ namespace Neo.Condition
             _cachedMember = null;
             _cachedArgumentType = null;
             _cachedArgs = null;
+            _hasCachedArgument = false;
             _hasLoggedDestroyedWarning = false;
             _hasLoggedMissingMemberWarning = false;
         }
@@ -134,13 +174,6 @@ namespace Neo.Condition
                 _isOther ? _entry.OtherFindRetryIntervalSeconds : _entry.FindRetryIntervalSeconds);
         }
 
-        private static bool IsSourceObjectDestroyed(GameObject obj)
-        {
-            // WHY: destroyed UnityEngine.Object compares == null but keeps a managed reference; the old
-            // "obj != null && obj == null" form could never be true, so destroyed-source warnings never fired.
-            return !ReferenceEquals(obj, null) && obj == null;
-        }
-
         private bool EnsureCacheComponent(GameObject target)
         {
             int occurrence = _isOther ? _entry.OtherComponentOccurrence : _entry.ComponentOccurrence;
@@ -169,6 +202,7 @@ namespace Neo.Condition
             _cachedMember = null;
             _cachedArgumentType = null;
             _cachedArgs = null;
+            _hasCachedArgument = false;
 
             string componentTypeName = _isOther ? _entry.OtherComponentTypeName : _entry.ComponentTypeName;
             string propertyName = _isOther ? _entry.OtherPropertyName : _entry.PropertyName;
@@ -176,7 +210,8 @@ namespace Neo.Condition
 
             if (target == null)
             {
-                if (!useSearch && IsSourceObjectDestroyed(_isOther ? _entry.OtherSourceObject : _entry.SourceObject))
+                if (!useSearch && BindingSourceGameObjectResolver.IsDestroyedReference(
+                        _isOther ? _entry.OtherSourceObject : _entry.SourceObject))
                 {
                     LogDestroyedWarning(
                         $"Source GameObject was destroyed (expected object for component '{componentTypeName}')");
@@ -191,37 +226,10 @@ namespace Neo.Condition
             }
 
             _cachedGameObject = target;
-            Component[] components;
-            try
-            {
-                components = target.GetComponents<Component>();
-            }
-            catch (MissingReferenceException)
-            {
-                LogDestroyedWarning($"GameObject was destroyed while resolving component '{componentTypeName}'");
-                return false;
-            }
-
-            int matchingOccurrence = 0;
-            foreach (Component comp in components)
-            {
-                if (comp == null)
-                {
-                    continue;
-                }
-
-                if (comp.GetType().FullName == componentTypeName || comp.GetType().Name == componentTypeName)
-                {
-                    if (matchingOccurrence == occurrence)
-                    {
-                        _cachedComponent = comp;
-                        _cachedComponentOccurrence = occurrence;
-                        break;
-                    }
-
-                    matchingOccurrence++;
-                }
-            }
+            // WHY: allocation-free lookup; a missing component is retried on every check.
+            _cachedComponent =
+                BindingSourceGameObjectResolver.FindComponentOccurrence(target, componentTypeName, occurrence);
+            _cachedComponentOccurrence = occurrence;
 
             if (_cachedComponent == null)
             {
@@ -253,15 +261,7 @@ namespace Neo.Condition
             }
             else
             {
-                PropertyInfo prop;
-                try
-                {
-                    prop = ReflectionCache.GetProperty(type, propertyName, flags);
-                }
-                catch (AmbiguousMatchException)
-                {
-                    prop = null;
-                }
+                ReflectionCache.TryGetProperty(type, propertyName, flags, out PropertyInfo prop);
 
                 if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
                 {
@@ -310,13 +310,15 @@ namespace Neo.Condition
             _cachedMember = null;
             _cachedArgumentType = null;
             _cachedArgs = null;
+            _hasCachedArgument = false;
 
             bool useSearch = _isOther ? _entry.OtherUseSceneSearch : _entry.UseSceneSearch;
             string propertyName = _isOther ? _entry.OtherPropertyName : _entry.PropertyName;
 
             if (target == null)
             {
-                if (!useSearch && IsSourceObjectDestroyed(_isOther ? _entry.OtherSourceObject : _entry.SourceObject))
+                if (!useSearch && BindingSourceGameObjectResolver.IsDestroyedReference(
+                        _isOther ? _entry.OtherSourceObject : _entry.SourceObject))
                 {
                     LogDestroyedWarning("Source GameObject was destroyed (GameObject mode)");
                 }
@@ -333,15 +335,7 @@ namespace Neo.Condition
             Type type = typeof(GameObject);
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
-            PropertyInfo prop;
-            try
-            {
-                prop = ReflectionCache.GetProperty(type, propertyName, flags);
-            }
-            catch (AmbiguousMatchException)
-            {
-                prop = null;
-            }
+            ReflectionCache.TryGetProperty(type, propertyName, flags, out PropertyInfo prop);
 
             if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
             {

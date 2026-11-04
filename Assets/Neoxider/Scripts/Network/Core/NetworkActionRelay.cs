@@ -138,6 +138,60 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Trigger channel by name with a float payload.</summary>
+        public void TriggerFloatByName(string channelName, float value)
+        {
+            int idx = FindChannelIndex(channelName);
+            if (idx >= 0)
+            {
+                DispatchFloat(idx, value);
+            }
+        }
+
+        /// <summary>Trigger channel by name with a string payload.</summary>
+        public void TriggerStringByName(string channelName, string value)
+        {
+            int idx = FindChannelIndex(channelName);
+            if (idx >= 0)
+            {
+                DispatchString(idx, value);
+            }
+        }
+
+        /// <summary>
+        ///     Looks a channel up by its <see cref="NetworkActionChannel.channelName"/> (ordinal match) without logging.
+        ///     Resolve once and keep the index to trigger a channel from code without a name lookup per call.
+        /// </summary>
+        /// <returns><see langword="true"/> when a configured channel has that name.</returns>
+        public bool TryGetChannelIndex(string channelName, out int index)
+        {
+            index = -1;
+            if (_channels == null || string.IsNullOrEmpty(channelName))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _channels.Length; i++)
+            {
+                if (string.Equals(_channels[i]?.channelName, channelName, System.StringComparison.Ordinal))
+                {
+                    index = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        ///     The configured channel at <paramref name="index"/>, or <see langword="null"/> when out of range. Use it
+        ///     to subscribe to a channel's events from code.
+        /// </summary>
+        public NetworkActionChannel GetChannel(int index)
+        {
+            return _channels != null && index >= 0 && index < _channels.Length ? _channels[index] : null;
+        }
+
         private void DispatchVoid(int idx)
         {
 #if MIRROR
@@ -280,9 +334,11 @@ namespace Neo.Network
             RpcTriggerString(idx, value, skipHostLocalRpc);
         }
 
+        // WHY: OthersOnly walks the relay's observers, like the ClientRpc of AllClients does. A connection that does
+        // not observe this object (still loading, filtered by interest management) cannot run the TargetRpc anyway.
         private void TargetTriggerVoidForOthers(NetworkConnectionToClient sender, int idx, bool skipHostSender)
         {
-            foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
+            foreach (NetworkConnectionToClient connection in netIdentity.observers.Values)
             {
                 if (IsSenderConnection(connection, sender, skipHostSender))
                 {
@@ -296,7 +352,7 @@ namespace Neo.Network
         private void TargetTriggerFloatForOthers(NetworkConnectionToClient sender, int idx, float value,
             bool skipHostSender)
         {
-            foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
+            foreach (NetworkConnectionToClient connection in netIdentity.observers.Values)
             {
                 if (IsSenderConnection(connection, sender, skipHostSender))
                 {
@@ -310,7 +366,7 @@ namespace Neo.Network
         private void TargetTriggerStringForOthers(NetworkConnectionToClient sender, int idx, string value,
             bool skipHostSender)
         {
-            foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
+            foreach (NetworkConnectionToClient connection in netIdentity.observers.Values)
             {
                 if (IsSenderConnection(connection, sender, skipHostSender))
                 {
@@ -493,7 +549,12 @@ namespace Neo.Network
         {
             if (_channels == null || idx < 0 || idx >= _channels.Length || _channels[idx] == null)
             {
-                NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Invalid channel index {idx} on '{name}'.", this);
+                // WHY: remote commands reach this path; build the message only when the warning is enabled.
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Invalid channel index {idx} on '{name}'.", this);
+                }
+
                 return false;
             }
 
@@ -502,20 +563,16 @@ namespace Neo.Network
 
         private int FindChannelIndex(string channelName)
         {
-            if (_channels == null || string.IsNullOrEmpty(channelName))
+            if (TryGetChannelIndex(channelName, out int index))
             {
-                return -1;
+                return index;
             }
 
-            for (int i = 0; i < _channels.Length; i++)
+            if (!string.IsNullOrEmpty(channelName) && NetworkDiagnostics.RuntimeWarningsEnabled)
             {
-                if (string.Equals(_channels[i]?.channelName, channelName, System.StringComparison.Ordinal))
-                {
-                    return i;
-                }
+                NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Channel '{channelName}' not found on '{name}'.", this);
             }
 
-            NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Channel '{channelName}' not found on '{name}'.", this);
             return -1;
         }
     }

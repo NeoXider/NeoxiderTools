@@ -12,7 +12,7 @@ namespace Neo.Editor.Tests
     {
         private static ResourcePoolModel WithPool(ResourcePoolEntry entry, string id = "HP")
         {
-            var model = new ResourcePoolModel();
+            ResourcePoolModel model = new ResourcePoolModel();
             model.AddPool(id, entry);
             return model;
         }
@@ -20,7 +20,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Increase_ClampsToMaxHeadroom()
         {
-            var model = WithPool(new ResourcePoolEntry
+            ResourcePoolModel model = WithPool(new ResourcePoolEntry
             {
                 Current = 90f, Max = 100f, MaxIncreaseAmount = -1f, MaxDecreaseAmount = -1f
             });
@@ -34,7 +34,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void TrySpend_NotEnough_FailsAndKeepsValue()
         {
-            var model = WithPool(new ResourcePoolEntry
+            ResourcePoolModel model = WithPool(new ResourcePoolEntry
             {
                 Current = 30f, Max = 100f, MaxIncreaseAmount = -1f, MaxDecreaseAmount = -1f
             });
@@ -49,7 +49,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Decrease_ToZero_RaisesDepletedOnce()
         {
-            var model = WithPool(new ResourcePoolEntry
+            ResourcePoolModel model = WithPool(new ResourcePoolEntry
             {
                 Current = 20f, Max = 100f, MaxIncreaseAmount = -1f, MaxDecreaseAmount = -1f
             });
@@ -69,7 +69,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Tick_KeepsRegenRemainder_AcrossLongFrame()
         {
-            var model = WithPool(new ResourcePoolEntry
+            ResourcePoolModel model = WithPool(new ResourcePoolEntry
             {
                 Current = 0f, Max = 100f, MaxIncreaseAmount = -1f, MaxDecreaseAmount = -1f,
                 RegenPerSecond = 10f, RegenInterval = 1f, IgnoreCanHeal = true
@@ -87,13 +87,13 @@ namespace Neo.Editor.Tests
         [Test]
         public void Increase_OnDepletedPool_BlockedUnlessIgnoreCanHeal()
         {
-            var blocked = WithPool(new ResourcePoolEntry
+            ResourcePoolModel blocked = WithPool(new ResourcePoolEntry
             {
                 Current = 0f, Max = 100f, MaxIncreaseAmount = -1f, MaxDecreaseAmount = -1f
             });
             Assert.AreEqual(0f, blocked.Increase("HP", 25f), 1e-4f);
 
-            var healable = WithPool(new ResourcePoolEntry
+            ResourcePoolModel healable = WithPool(new ResourcePoolEntry
             {
                 Current = 0f, Max = 100f, MaxIncreaseAmount = -1f, MaxDecreaseAmount = -1f,
                 IgnoreCanHeal = true

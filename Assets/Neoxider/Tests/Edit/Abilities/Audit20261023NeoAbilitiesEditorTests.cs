@@ -210,7 +210,7 @@ namespace Neo.Editor.Tests.Abilities
             modifier.Blueprint.Id = "audit_modifier";
             OpenWindow(modifier);
 
-            // Inline serialization cannot retain null list entries. Arrange the managed-data edge case
+            // WHY: Inline serialization cannot retain null list entries. Arrange the managed-data edge case
             // after Inspector binding, then exercise the board renderer without another serialization.
             ModifierBlueprint blueprint = modifier.Blueprint;
             blueprint.TickInterval = 1f;
@@ -267,7 +267,7 @@ namespace Neo.Editor.Tests.Abilities
             blueprint.SetValue(modifier, null);
             Assert.That(modifier.Blueprint, Is.Null);
 
-            // A full refresh serializes _blueprint by value and materializes a placeholder. Test the
+            // WHY: A full refresh serializes _blueprint by value and materializes a placeholder. Test the
             // real managed null through the existing renderer and validation paths before that boundary.
             InvokeWindow("RefreshValidationAndLibrary");
             VisualElement board = RebuildModifierBoardWithoutSerialization();
@@ -509,7 +509,7 @@ namespace Neo.Editor.Tests.Abilities
 
         private void OpenWindow(ScriptableObject selected)
         {
-            // Late binding avoids changing the shared test asmdef. Reflection only bridges the window's
+            // WHY: Late binding avoids changing the shared test asmdef. Reflection only bridges the window's
             // private UI commands and its in-memory library; assertions observe authored data and UI output.
             Type windowType = Type.GetType("Neo.Abilities.Editor.AbilityDesignerWindow, Neo.Abilities.Editor", true);
             _window = (EditorWindow)ScriptableObject.CreateInstance(windowType);
@@ -550,7 +550,7 @@ namespace Neo.Editor.Tests.Abilities
 
         private VisualElement RebuildModifierBoardWithoutSerialization()
         {
-            // BuildModifierBoard appends to the retained center pane. Remove only its previous board
+            // WHY: BuildModifierBoard appends to the retained center pane. Remove only its previous board
             // so neither a stale summary nor an unrelated Inspector element can satisfy the assertions.
             VisualElement previous = _window.rootVisualElement.Q<VisualElement>(className: "nad-mod-board");
             Assert.That(previous, Is.Not.Null);

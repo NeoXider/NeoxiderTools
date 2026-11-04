@@ -27,6 +27,19 @@ namespace Neo.Editor
         private const string MenuPath = "Neoxider/Network/Create Lobby Demo Scene";
         private const string SceneTemplateGuid = "6ba1121cb747442992b1c286f8a7d3fa";
 
+        /// <summary>Assembly-qualified name of the Input System UI module, resolved by name (optional package).</summary>
+        internal const string InputSystemUIModuleTypeName =
+            "UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem";
+
+        /// <summary>
+        ///     Single console line after the scene was saved. The scene's info label repeats the Build Profiles hint.
+        /// </summary>
+        internal static string GetCreatedMessage(string path)
+        {
+            return "[Neo] Lobby demo scene saved to: " + path +
+                   ". Add its lobby/gameplay scenes to Build Profiles before playing.";
+        }
+
         [MenuItem(MenuPath, false, 200)]
         public static void CreateLobbyDemoScene()
         {
@@ -196,7 +209,9 @@ namespace Neo.Editor
 
             GameObject panelObj = CreatePanel(canvasObj.transform, "ConnectionPanel", new Vector2(0, 0));
 
-            CreateText(panelObj.transform, "Title", "🎮 Neo Lobby Demo", 36,
+            // WHY: plain-text labels. TMP's default font (LiberationSans SDF) has no emoji glyphs, so the old emoji
+            // prefixes rendered as missing-glyph boxes and logged a missing-character warning for each label.
+            CreateText(panelObj.transform, "Title", "Neo Lobby Demo", 36,
                 new Vector2(0, 200), new Vector2(500, 60));
 
             GameObject statusText = CreateText(panelObj.transform, "StatusText", "Disconnected", 20,
@@ -243,19 +258,19 @@ namespace Neo.Editor
             ipField.placeholder = placeholder.GetComponent<TMP_Text>();
             ipField.text = "localhost";
 
-            GameObject hostBtn = CreateButton(panelObj.transform, "HostButton", "🖥️ Host Lobby",
+            GameObject hostBtn = CreateButton(panelObj.transform, "HostButton", "Host Lobby",
                 new Vector2(-110, -10), new Vector2(200, 50), new Color(0.1f, 0.6f, 0.3f));
             UnityEventTools.AddPersistentListener(hostBtn.GetComponent<Button>().onClick, presenter.HostLobby);
 
-            GameObject joinBtn = CreateButton(panelObj.transform, "JoinButton", "🔗 Join Lobby",
+            GameObject joinBtn = CreateButton(panelObj.transform, "JoinButton", "Join Lobby",
                 new Vector2(110, -10), new Vector2(200, 50), new Color(0.2f, 0.4f, 0.8f));
             UnityEventTools.AddPersistentListener(joinBtn.GetComponent<Button>().onClick, presenter.JoinLobby);
 
-            GameObject readyBtn = CreateButton(panelObj.transform, "ReadyButton", "✅ Toggle Ready",
+            GameObject readyBtn = CreateButton(panelObj.transform, "ReadyButton", "Toggle Ready",
                 new Vector2(0, -80), new Vector2(300, 50), new Color(0.7f, 0.5f, 0.1f));
             UnityEventTools.AddPersistentListener(readyBtn.GetComponent<Button>().onClick, presenter.ToggleReady);
 
-            GameObject leaveBtn = CreateButton(panelObj.transform, "LeaveButton", "🚪 Leave",
+            GameObject leaveBtn = CreateButton(panelObj.transform, "LeaveButton", "Leave",
                 new Vector2(0, -150), new Vector2(200, 50), new Color(0.7f, 0.15f, 0.15f));
             UnityEventTools.AddPersistentListener(leaveBtn.GetComponent<Button>().onClick, presenter.LeaveLobby);
             UnityEventTools.AddPersistentListener<string>(ipField.onValueChanged, presenter.SetAddress);
@@ -283,13 +298,14 @@ namespace Neo.Editor
             EditorSceneManager.MarkSceneDirty(scene);
 
             bool saved = EditorSceneManager.SaveScene(scene, path);
+            Selection.activeGameObject = managerObj;
             if (saved)
             {
-                Debug.Log($"[Neo] Lobby demo scene saved to: {path}");
+                // WHY: one confirmation for an explicit menu command; it used to print two lines, and the second
+                // claimed success even when the save had failed.
+                Debug.Log(GetCreatedMessage(path));
             }
 
-            Selection.activeGameObject = managerObj;
-            Debug.Log("[Neo] Lobby Demo Scene created. Add its lobby/gameplay scenes to Build Profiles before playing.");
             return saved;
         }
 
@@ -310,7 +326,8 @@ namespace Neo.Editor
 
                 CreateDefaultSceneObjects();
                 GameObject canvas = CreateCanvas();
-                // No cross-scene serialized manager reference: the runtime presenter resolves the surviving singleton.
+                // WHY: no cross-scene serialized manager reference; the runtime presenter resolves the surviving
+                // singleton.
                 NeoLobbyPresenter presenter = canvas.AddComponent<NeoLobbyPresenter>();
                 GameObject panel = CreatePanel(canvas.transform, "GamePanel", Vector2.zero);
                 CreateText(panel.transform, "GameInfo", "Gameplay scene — extend the saved GamePlayer prefab", 22,
@@ -393,11 +410,28 @@ namespace Neo.Editor
             return root;
         }
 
-        private static void CreateEventSystem()
+        /// <summary>Creates the scene's EventSystem with the UI input module of <see cref="GetUIInputModuleType" />.</summary>
+        internal static GameObject CreateEventSystem()
         {
             GameObject root = new("EventSystem");
             root.AddComponent<UnityEngine.EventSystems.EventSystem>();
-            root.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            root.AddComponent(GetUIInputModuleType());
+            return root;
+        }
+
+        /// <summary>
+        ///     The Input System UI module when that package is installed, otherwise the legacy
+        ///     <see cref="UnityEngine.EventSystems.StandaloneInputModule" />.
+        /// </summary>
+        internal static Type GetUIInputModuleType()
+        {
+            // WHY: StandaloneInputModule throws every frame in an Input System-only project; the package is
+            // optional, so its module is resolved by name.
+            Type inputSystemModule = Type.GetType(InputSystemUIModuleTypeName, false);
+            return inputSystemModule != null &&
+                   typeof(UnityEngine.EventSystems.BaseInputModule).IsAssignableFrom(inputSystemModule)
+                ? inputSystemModule
+                : typeof(UnityEngine.EventSystems.StandaloneInputModule);
         }
 
         private static GameObject CreatePlayerPrefab(string folder, bool roomPlayer)

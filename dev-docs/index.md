@@ -8,10 +8,12 @@ Main entry: [Docs/README.md](../Assets/Neoxider/Docs/README.md). It contains the
 - [Useful components](../Assets/Neoxider/Docs/UsefulComponents.md)
 - [Package compatibility](../Assets/Neoxider/Docs/PackageCompatibility.md)
 - [Samples](../Assets/Neoxider/Docs/Samples.md)
+- [Testing](../Assets/Neoxider/Docs/Testing.md)
 - [NeoxiderPages](../Assets/Neoxider/Docs/NeoxiderPages/README.md)
 
 ## Modules
 
+- [Abilities](../Assets/Neoxider/Docs/Abilities/README.md)
 - [Animations](../Assets/Neoxider/Docs/Animations/README.md)
 - [Audio](../Assets/Neoxider/Docs/Audio/README.md)
 - [Bonus](../Assets/Neoxider/Docs/Bonus/README.md)
@@ -21,6 +23,7 @@ Main entry: [Docs/README.md](../Assets/Neoxider/Docs/README.md). It contains the
 - [Editor](../Assets/Neoxider/Docs/Editor/README.md)
 - [Extensions](../Assets/Neoxider/Docs/Extensions/README.md)
 - [GridSystem](../Assets/Neoxider/Docs/GridSystem/README.md)
+- [Haptics](../Assets/Neoxider/Docs/Haptics/Haptics.md)
 - [Level](../Assets/Neoxider/Docs/Level/README.md)
 - [Merge](../Assets/Neoxider/Docs/Merge/README.md)
 - [Network](../Assets/Neoxider/Docs/Network/README.md)
@@ -38,3 +41,19 @@ Main entry: [Docs/README.md](../Assets/Neoxider/Docs/README.md). It contains the
 - [StateMachine](../Assets/Neoxider/Docs/StateMachine/README.md)
 - [Tools](../Assets/Neoxider/Docs/Tools/README.md)
 - [UI](../Assets/Neoxider/Docs/UI/README.md)
+
+The HTML/CSS → UI Toolkit converter is no longer part of this package; it lives in [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) (`com.neoxider.htmltouitk`).
+
+## Developer documents (dev-docs)
+
+Working documents for package developers and agents. They are not shipped in the UPM package.
+
+- [TODO](TODO.md) — open technical tasks and follow-ups, grouped by module.
+- [Ideas](IDEAS.md) — ideas that may become tasks later.
+- [Demo scene builders](DemoSceneBuilders.md) — how demo scenes are authored by editor scene builders (DemoSceneKit), the runner menu and batch mode, idempotency rules.
+- [Documentation style](DocumentationStyle.md) and the [component page template](TEMPLATE.md).
+- [Summary](summary.md) — compact navigation for agents.
+- [Abilities architecture](ABILITIES_ARCHITECTURE.md), [Dota ability architecture reference](DOTA_ABILITY_ARCHITECTURE.md), [Abilities atom gap analysis](ABILITIES_ATOMS_GAP.md) — design references for `Neo.Abilities`.
+- [Rpg removal map](RPG_REMOVAL_MAP.md) — historical, superseded plan (Neo.Rpg was not removed).
+- [Audit 2026-09-02](AUDIT_2026-09-02.md) — historical improvement audit (Russian).
+- Audit reports by date: [2026-10-23](../Docs/Audits/2026-10-23/README.md), [2026-11-01](../Docs/Audits/2026-11-01/README.md), [2026-11-02](../Docs/Audits/2026-11-02/) (evidence reports behind the 12.0.0 quality pass).

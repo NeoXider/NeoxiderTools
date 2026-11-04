@@ -173,7 +173,7 @@ namespace Neo.Core.Tests
         [Test]
         public void Decrease_Overkill_ReturnsOnlyRemovedAmount()
         {
-            var model = new ResourcePoolModel();
+            ResourcePoolModel model = new();
             model.AddPool(RpgResourceId.Hp, new ResourcePoolEntry
             {
                 Current = 5f,
@@ -192,7 +192,7 @@ namespace Neo.Core.Tests
         [Test]
         public void Increase_UncappedPoolWithIncreaseLimit_AddsInsteadOfDraining()
         {
-            var model = new ResourcePoolModel();
+            ResourcePoolModel model = new();
             model.AddPool(RpgResourceId.Mana, new ResourcePoolEntry
             {
                 Current = 50f,
@@ -211,7 +211,7 @@ namespace Neo.Core.Tests
         [Test]
         public void SetCurrent_IgnoresMaxDecreaseLimit_AndDoesNotFireDepleted()
         {
-            var model = new ResourcePoolModel();
+            ResourcePoolModel model = new();
             model.AddPool(RpgResourceId.Hp, new ResourcePoolEntry
             {
                 Current = 100f,
@@ -300,7 +300,7 @@ namespace Neo.Core.Tests
         [Test]
         public void Tick_RegenDoesNotHealFromZeroWhenCanHealIsFalse()
         {
-            var model = new ResourcePoolModel();
+            ResourcePoolModel model = new();
             model.AddPool(RpgResourceId.Hp, new ResourcePoolEntry
             {
                 Current = 0f,
@@ -348,7 +348,7 @@ namespace Neo.Core.Tests
                 .GetField("_pools", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null);
 
-            var pools = (List<ResourceEntryInspector>)field.GetValue(health);
+            List<ResourceEntryInspector> pools = (List<ResourceEntryInspector>)field.GetValue(health);
             ResourceEntryInspector entry = pools.Find(pool => pool.id == id);
             Assert.That(entry, Is.Not.Null);
             return entry;

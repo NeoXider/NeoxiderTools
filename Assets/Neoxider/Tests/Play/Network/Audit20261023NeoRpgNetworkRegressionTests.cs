@@ -140,7 +140,7 @@ namespace Neo.Tests.Play
             RpgCharacterNetworkAdapter target = CreateCharacter(!networked, out RpgCharacter targetCharacter);
             targetCharacter.isNetworked = networked;
             DeserializeSnapshot(target, payload, true);
-            // A server-side replay does not run the client SyncVar hook: startup must apply the payload.
+            // WHY: a server-side replay does not run the client SyncVar hook: startup must apply the payload.
             Assert.That(targetCharacter.HpValue, Is.EqualTo(100f));
 
             target.OnStartClient();
@@ -163,7 +163,7 @@ namespace Neo.Tests.Play
             _manager.StartClient();
             Assert.That(NeoNetworkState.IsClientOnly, Is.True);
 
-            // This is a post-spawn delta contract. Complete the empty initial spawn batch
+            // WHY: this is a post-spawn delta contract. Complete the empty initial spawn batch
             // through Mirror's public transport boundary before expecting immediate hooks.
             Transport transport = _manager.transport;
             transport.OnClientConnected.Invoke();
@@ -248,7 +248,7 @@ namespace Neo.Tests.Play
             if (rebuild)
             {
                 source = CreateCharacter(true, out sourceCharacter);
-                sourceCharacter.Damage(0f); // Resolve the real adapter before clearing/rebuilding runtime state.
+                sourceCharacter.Damage(0f); // WHY: Resolve the real adapter before clearing/rebuilding runtime state.
                 SpawnCharacter(source, 88341);
             }
             else
@@ -285,7 +285,7 @@ namespace Neo.Tests.Play
             }
             else
             {
-                // First initialization goes through the facade, including its post-Execute notification.
+                // WHY: first initialization goes through the facade, including its post-Execute notification.
                 // This branch checks completion/data but cannot isolate/count the core's final notification.
                 source.NetDamage(0f);
             }
@@ -300,7 +300,7 @@ namespace Neo.Tests.Play
 
             AssertRestoredSnapshot(sourceCharacter);
             Assert.That(sourceDeaths, Is.Zero);
-            // Both branches observe the completed payload. Direct RebuildRuntime proves core-to-adapter
+            // WHY: both branches observe the completed payload. Direct RebuildRuntime proves core-to-adapter
             // publication; first-init NetDamage also publishes from the wrapper after Execute.
             byte[] publishedPayload = SerializeSnapshot(source, true);
             Assert.That(publishedPayload, Is.Not.EqualTo(priorPayload));
@@ -319,7 +319,7 @@ namespace Neo.Tests.Play
             for (int replay = 0; replay < 2; replay++)
             {
                 DeserializeSnapshot(receiver, publishedPayload, true);
-                // This public lifecycle invokes ApplyNetworkState on an unspawned, non-server receiver.
+                // WHY: this public lifecycle invokes ApplyNetworkState on an unspawned, non-server receiver.
                 receiver.OnStartClient();
                 AssertRestoredSnapshot(receiverCharacter);
                 Assert.That(receiverCharacter.CaptureProfile().ActiveBuffs.Count, Is.EqualTo(1));
@@ -358,7 +358,7 @@ namespace Neo.Tests.Play
             Assert.That(growthEvents, Is.EqualTo(allowClientStateCommands ? 1 : 0));
             Assert.That(character.Level, Is.EqualTo(3));
 
-            character.SetLevel(4); // Deferred growth preserves the last applied anchor.
+            character.SetLevel(4); // WHY: Deferred growth preserves the last applied anchor.
             DispatchCommand(adapter, sender,
                 new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyLevelGrowth));
 
@@ -422,6 +422,95 @@ namespace Neo.Tests.Play
             Assert.That(adapter.ShouldBlockProjectileSpawn(actor), Is.False);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void LethalCommand_PublishesOneSnapshotOfTheFinalState(bool remoteCommand)
+        {
+            _manager.StartServer();
+            Assert.That(NetworkServer.active, Is.True);
+            RpgCharacterNetworkAdapter adapter = CreateCharacter(true, out RpgCharacter character);
+            character.AllowClientStateCommands = true;
+            character.AuthorityMode = NetworkAuthorityMode.None;
+            int before = adapter.PublishedSnapshotCount;
+
+            if (remoteCommand)
+            {
+                DispatchDamage(adapter, new NetworkConnectionToClient(88351), 1000f);
+            }
+            else
+            {
+                adapter.NetDamage(1000f);
+            }
+
+            Assert.That(character.IsDead, Is.True);
+            Assert.That(adapter.PublishedSnapshotCount - before, Is.EqualTo(1),
+                "HP, death and the post-command publication used to serialize the profile three times");
+            RpgCharacterNetworkAdapter receiver = CreateCharacter(true, out RpgCharacter receiverCharacter);
+            DeserializeSnapshot(receiver, SerializeSnapshot(adapter, true), true);
+            receiver.OnStartClient();
+            Assert.That(receiverCharacter.IsDead, Is.True, "the single snapshot carries the final state");
+            Assert.That(receiverCharacter.CurrentHp, Is.Zero);
+        }
+
+        [TestCase(-1)]
+        [TestCase((int)RpgCharacterNetworkCommandType.ApplyLevelGrowth + 1)]
+        [TestCase(int.MaxValue)]
+        public void UnknownCommandType_IsDroppedWithoutPublishingASnapshot(int rawType)
+        {
+            _manager.StartServer();
+            Assert.That(NetworkServer.active, Is.True);
+            RpgCharacterNetworkAdapter adapter = CreateCharacter(true, out RpgCharacter character);
+            character.AllowClientStateCommands = true;
+            character.AuthorityMode = NetworkAuthorityMode.None;
+            int before = adapter.PublishedSnapshotCount;
+
+            DispatchCommand(adapter, new NetworkConnectionToClient(88361),
+                new RpgCharacterNetworkCommand((RpgCharacterNetworkCommandType)rawType, RpgResourceId.Hp, 50f, 3, true));
+
+            Assert.That(adapter.PublishedSnapshotCount, Is.EqualTo(before),
+                "an unnamed command executed nothing but still serialized and replicated a full snapshot");
+            Assert.That(character.HpValue, Is.EqualTo(100f));
+
+            DispatchDamage(adapter, new NetworkConnectionToClient(88362), 25f);
+            Assert.That(character.HpValue, Is.EqualTo(75f), "named commands keep working");
+            Assert.That(adapter.PublishedSnapshotCount - before, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void NonFiniteStatBaseCommand_LeavesTheStatFinite()
+        {
+            _template.stats = new[] { new RpgStatDefinition { id = new RpgStatId("S"), baseValue = 10f } };
+            _manager.StartServer();
+            Assert.That(NetworkServer.active, Is.True);
+            RpgCharacterNetworkAdapter adapter = CreateCharacter(true, out RpgCharacter character);
+            character.AllowClientStateCommands = true;
+            character.AuthorityMode = NetworkAuthorityMode.None;
+            Assert.That(character.GetStat("S"), Is.EqualTo(10f));
+
+            DispatchCommand(adapter, new NetworkConnectionToClient(88363),
+                new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetStatBase, "S", float.NaN));
+            DispatchCommand(adapter, new NetworkConnectionToClient(88364),
+                new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddStatBase, "S", float.PositiveInfinity));
+
+            Assert.That(character.GetStat("S"), Is.EqualTo(10f), "a remote NaN base used to poison the stat");
+            Assert.That(character.CaptureProfile().Stats[0].Base, Is.EqualTo(10f));
+        }
+
+        [Test]
+        public void NoOpCommand_StillPublishesOnce()
+        {
+            _manager.StartServer();
+            Assert.That(NetworkServer.active, Is.True);
+            RpgCharacterNetworkAdapter adapter = CreateCharacter(true, out RpgCharacter character);
+            character.Damage(0f);
+            int before = adapter.PublishedSnapshotCount;
+
+            adapter.NetDamage(0f);
+
+            Assert.That(adapter.PublishedSnapshotCount - before, Is.EqualTo(1),
+                "an executed command keeps its one post-command publication");
+        }
+
         private GameObject CreateObject(string name)
         {
             GameObject ownedObject = new(name);
@@ -438,7 +527,7 @@ namespace Neo.Tests.Play
             character.Template = _template;
             character.isNetworked = networkedAtAwake;
             RpgCharacterNetworkAdapter adapter = actor.AddComponent<RpgCharacterNetworkAdapter>();
-            // Mirror's one native Awake must see the complete, configured behaviour graph.
+            // WHY: Mirror's one native Awake must see the complete, configured behaviour graph.
             actor.SetActive(true);
             Assert.That(adapter.netIdentity, Is.SameAs(identity));
             return adapter;
@@ -468,7 +557,7 @@ namespace Neo.Tests.Play
         private static void DispatchCommand(RpgCharacterNetworkAdapter adapter, NetworkConnectionToClient sender,
             RpgCharacterNetworkCommand command)
         {
-            // Mirror registers the Cecil full signature and omits the injected sender from the payload.
+            // WHY: Mirror registers the Cecil full signature and omits the injected sender from the payload.
             const string commandSignature = "System.Void Neo.Rpg.Network.RpgCharacterNetworkAdapter::CmdExecute(" +
                                             "System.Int32,System.String,System.Single,System.Int32,System.Boolean," +
                                             "Mirror.NetworkConnectionToClient)";
@@ -476,7 +565,7 @@ namespace Neo.Tests.Play
             RemoteCallDelegate handler = RemoteProcedureCalls.GetDelegate(commandHash);
             Assert.That(handler, Is.Not.Null, "Mirror must weave and register the RPG command.");
             using NetworkWriterPooled writer = NetworkWriterPool.Get();
-            // Use the registered int serializer selected by the same weaver as the receive delegate.
+            // WHY: use the registered int serializer selected by the same weaver as the receive delegate.
             writer.Write<int>((int)command.Type);
             writer.WriteString(command.Text);
             writer.WriteFloat(command.Number);

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using UnityEngine.Events;
 
@@ -346,7 +347,7 @@ namespace Neo.Tools
                 }
             }
 
-            // Explicit reusable grant sources replenish only after a fault-free completed request.
+            // WHY: Explicit reusable grant sources replenish only after a fault-free completed request.
             // A fault must never turn already accepted world quantity into a second grant.
             if (fullyCollected && !_collectOnlyOnce && !_destroyAfterCollect && !_deactivateAfterCollect &&
                 firstFault == null)
@@ -378,7 +379,7 @@ namespace Neo.Tools
             for (int i = 0; i < captured.ComponentStates.Count; i++)
             {
                 InventoryItemComponentState state = captured.ComponentStates[i];
-                int index = instance.ComponentStates.FindIndex(existing => existing.Key == state.Key);
+                int index = FindStateIndex(instance.ComponentStates, state.Key);
                 if (index < 0)
                 {
                     instance.ComponentStates.Add(state);
@@ -390,6 +391,20 @@ namespace Neo.Tools
             }
 
             return instance;
+        }
+
+        private static int FindStateIndex(List<InventoryItemComponentState> states, string key)
+        {
+            for (int i = 0; i < states.Count; i++)
+            {
+                InventoryItemComponentState existing = states[i];
+                if (existing != null && existing.Key == key)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private InventoryComponent ResolveInventory(InventoryComponent collectorInventory)

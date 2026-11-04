@@ -2,17 +2,17 @@
 
 # NeoxiderTools — a gameplay-systems framework for Unity
 
-[![Version](https://img.shields.io/badge/version-11.0.1-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](./LICENSE.md) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
+[![Version](https://img.shields.io/badge/version-12.0.0-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](./LICENSE.md) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
 
-**A modular Unity C# construction library: abilities, shops, saving, quests, cards, grids, NPC AI, UI motion. 25+ modules, 200+ ready components, 200+ extension methods and 1,500+ tests help you assemble reusable game systems from ready parts. Use runtime APIs directly, add scene components, or combine both.**
+**A modular Unity C# construction library: abilities, shops, saving, quests, cards, grids, NPC AI, UI motion. 26 module areas plus 17 Tools submodules, 200+ ready components, 200+ extension methods and more than 5,000 tests help you assemble reusable game systems from ready parts. Use runtime APIs directly, add scene components, or combine both.**
 
 **`SurvivorDemo`** shows a Vampire-Survivors-style sample assembled from one `SurvivorConfig` data asset on top of `Neo.Abilities`. **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI** and **UI motion** offer C# APIs and scene workflows, with optional Mirror integration for multiplayer. The package includes EditMode and PlayMode coverage; see [Tests](#tests) for how to run it.
 
-[GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md) · [Upgrade from 10.x](./Docs/Migration11.md)
+[GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md) · [Upgrade from 11.x](./Docs/Migration12.md) · [Upgrade from 10.x](./Docs/Migration11.md)
 
-> **NeoxiderTools 11.0.0.** Windows validation covers Unity `6000.3.14f1` and `6000.6.0f1`, including the [HTML → UITK CLI/native/manual workflow](./Docs/UI/HtmlToUitkVerification11.md). See [Verification 11](./Verification11.md), [Migration to 11](./Docs/Migration11.md) and the [tagged release](https://github.com/NeoXider/NeoxiderTools/releases/tag/v11.0.0).
+> **Upgrading from 11.x?** Read [Upgrading to 12](./Docs/Migration12.md): the HTML → UI Toolkit converter moved to [its own package](https://github.com/NeoXider/HtmlToUitk), a few APIs became obsolete, and the demo scenes are now authored in the scene. The Windows validation of 11.0.0 (Unity `6000.3.14f1` and `6000.6.0f1`) is in [Verification 11](./Verification11.md); see also the [11.0.0 release](https://github.com/NeoXider/NeoxiderTools/releases/tag/v11.0.0).
 
-**По-русски:** [C# API, компоненты и NoCode](./Docs/README.md) · [обновление с 10.x](./Docs/Migration11.md).
+**По-русски:** [C# API, компоненты и NoCode](./Docs/README.md) · [обновление с 11.x](./Docs/Migration12.md) · [обновление с 10.x](./Docs/Migration11.md).
 
 ---
 
@@ -29,11 +29,44 @@
 
 ---
 
+<!-- demo-gallery:begin -->
+
+## See it running
+
+Captures taken in the Unity Editor (several in Play Mode) of scenes from the **Demo Scenes** sample.
+
+<table>
+<tr>
+<td width="33%" align="center"><a href="./Docs/Abilities/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SurvivorDemo.jpg" alt="Survivor arena: Abilities, waves and upgrades from one config" width="100%" /></a><br /><b>Survivor arena</b><br /><sub>Abilities, waves and upgrades from one config</sub></td>
+<td width="33%" align="center"><a href="./Docs/GridSystem/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemMatch3Demo.jpg" alt="Match3 board: Shaped boards, paths and match rules" width="100%" /></a><br /><b>Match3 board</b><br /><sub>Shaped boards, paths and match rules</sub></td>
+<td width="33%" align="center"><a href="./Docs/Bonus/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/BonusRewardsDemo.jpg" alt="Rewards and collection: Collection, chest and cooldown gifts, no script" width="100%" /></a><br /><b>Rewards and collection</b><br /><sub>Collection, chest and cooldown gifts, no script</sub></td>
+</tr>
+<tr>
+<td width="33%" align="center"><a href="./Docs/Tools/Physics/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Physics3DDemo.jpg" alt="Physics 3D: Magnet, impulse zone and explosive force" width="100%" /></a><br /><b>Physics 3D</b><br /><sub>Magnet, impulse zone and explosive force</sub></td>
+<td width="33%" align="center"><a href="./Docs/UI/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UIComponentsDemo.jpg" alt="UI components: Tabs, variants, loader, shake and pause" width="100%" /></a><br /><b>UI components</b><br /><sub>Tabs, variants, loader, shake and pause</sub></td>
+<td width="33%" align="center"><a href="./Docs/Cards/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/CardGame.jpg" alt="Card game: Deck, hand and board components" width="100%" /></a><br /><b>Card game</b><br /><sub>Deck, hand and board components</sub></td>
+</tr>
+<tr>
+<td width="33%" align="center"><a href="./Docs/Bonus/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SlotExample.jpg" alt="Slot machine: Bets, paylines and a paytable" width="100%" /></a><br /><b>Slot machine</b><br /><sub>Bets, paylines and a paytable</sub></td>
+<td width="33%" align="center"><a href="./Docs/Shop/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Shop.jpg" alt="Shop: Storefront, purchase states and a wallet" width="100%" /></a><br /><b>Shop</b><br /><sub>Storefront, purchase states and a wallet</sub></td>
+<td width="33%" align="center"><a href="./Docs/UI/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AnimationFlyDemo.jpg" alt="Reward fly: Coins flying from world, canvas and screen" width="100%" /></a><br /><b>Reward fly</b><br /><sub>Coins flying from world, canvas and screen</sub></td>
+</tr>
+<tr>
+<td width="33%" align="center"><a href="./Docs/NoCode/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeActionsDemo.jpg" alt="NoCode actions: Level, Progression, Quest and RPG without code" width="100%" /></a><br /><b>NoCode actions</b><br /><sub>Level, Progression, Quest and RPG without code</sub></td>
+<td width="33%" align="center"><a href="./Docs/Progression/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Progression_Demo.jpg" alt="Progression: XP, perk and unlock trees, premium track" width="100%" /></a><br /><b>Progression</b><br /><sub>XP, perk and unlock trees, premium track</sub></td>
+<td width="33%" align="center"><a href="./Docs/UI/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UIMeshRigDemo.jpg" alt="UI Mesh Rig: One rig in uGUI, UI Toolkit and world space" width="100%" /></a><br /><b>UI Mesh Rig</b><br /><sub>One rig in uGUI, UI Toolkit and world space</sub></td>
+</tr>
+</table>
+
+<!-- demo-gallery:end -->
+
 ## Highlight reel
 
-- ⚔️ **Dota-style Abilities + a visual Ability Designer.** Author abilities and modifiers as data assets (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`); one validated cast pipeline resolves damage / heal / knockback / pull / teleport / chain / execute, live crit / lifesteal / evasion, and buffs / debuffs / DoT / auras / shields / stuns — with multiplayer-ready receipts.
+- ⚔️ **Dota-style Abilities + a visual Ability Designer.** Author abilities and modifiers as data assets (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`); one validated cast pipeline resolves damage / heal / knockback / pull / teleport / chain / execute, live crit / lifesteal / evasion, and buffs / debuffs / DoT / auras / shields / stuns — with multiplayer-ready receipts, typed cast results and an opt-in spatial grid for crowds of units.
 - 🧛 **A Vampire-Survivors-style sample from one data asset.** The bundled `SurvivorDemo` assembles auto-fire, waves, upgrades and scaling from a single `SurvivorConfig` on top of `Neo.Abilities` — use it as a starting point for your own survivor-like.
 - 🧩 **No-code that actually builds games.** Ready components + inspector event wiring + binding scripts let non-coders assemble whole scenes. Study the reference scenes: `adventure`, `Shooter2D`, `ClickerExample`, `DrawExample`.
+- 🔍 **Demo scenes you can read in the Inspector.** Every module demo is saved with its UI and UnityEvent wiring, so you see how a button reaches a module API without entering Play Mode; an editor builder rebuilds each scene from **Neoxider > Demo**.
+- 🧪 **Testable cores.** Plain C# rules behind the components (bonus schedules, collections, slot math, card decks, grid pathfinding, RPG stat services), injectable clocks (`IFrameClock`, `INeoClock`), seeded shuffles and exact integer odds (`IntegerChanceTable`) make games reproducible in tests, replays and servers.
 - 🟢 **A living inspector.** The Neoxider header is a "slime linter": it reflects each component's health — remembers console errors per component, flags missing references and NaN/∞ fields, and watches the Game view in Play Mode.
 - 🎁 **Juice out of the box.** `AnimationFly` (coins/gems fly to the HUD with fountain / magnet / scatter presets), tweened toggles and buttons, parallax, and audio managers provide configurable motion and feedback.
 - 🧰 **200+ extension methods & 200+ drop-in components.** Random, collections, transforms, string/number formatting, coroutines, movement, cameras, spawners, timers — the repetitive glue is already written. Browse registered component entries and ready-made presets in the **Create Neoxider Object** window; the available entries depend on imported samples and optional modules.
@@ -45,7 +78,8 @@
 - **Unity 6000.0+** (Unity 6). Compatibility notes: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md).
 - **Installed automatically (UPM):** `com.unity.ugui` (ships TextMeshPro on Unity 6), `com.unity.ai.navigation`, `com.unity.inputsystem`.
 - **Required (add to your project):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) and [UniTask](https://github.com/Cysharp/UniTask).
-- **Optional:** `Mirror` (multiplayer), `DOTween Pro`, `Odin Inspector`, `Spine Runtime`, [`MarkdownRenderer`](https://github.com/NeoXider/MarkdownRenderer), the [mobile haptics backend](./Docs/Haptics/Haptics.md), URP (only for URP-specific rendering / 2D lights). NeoxiderPages imports without DOTween Pro.
+- **Optional:** `Mirror` (multiplayer), `DOTween Pro`, `Odin Inspector`, `Spine Runtime`, [`MarkdownRenderer`](https://github.com/NeoXider/MarkdownRenderer), [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) (HTML/CSS → UI Toolkit), the [mobile haptics backend](./Docs/Haptics/Haptics.md), URP (only for URP-specific rendering / 2D lights). NeoxiderPages imports without DOTween Pro.
+- **Samples:** TMP Essential Resources and `com.unity.2d.sprite`; see [sample prerequisites](./Docs/Samples.md#host-and-sample-prerequisites).
 
 DOTween, UniTask, and the optional integrations above are installed separately. Character Movement Fundamentals runtime/editor code is bundled in `ThirdParty/CharacterMovementFundamentals`; its demo content is an optional sample. See [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for the license and dependency details.
 
@@ -54,10 +88,10 @@ DOTween, UniTask, and the optional integrations above are installed separately. 
 **Package Manager → `+` → Add package from git URL:**
 
 ```text
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v11.0.1
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v12.0.0
 ```
 
-This URL pins version `11.0.1`. Use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development) for source development. UPM retains its hidden `Samples~` layout.
+This URL pins version `12.0.0`. Use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development) for source development. UPM retains its hidden `Samples~` layout.
 
 Then install DOTween (Asset Store, run `Tools > Demigiant > DOTween Utility Panel`) and UniTask:
 
@@ -79,7 +113,7 @@ Required prefab artwork is included under `SharedAssets` in both legacy variants
 Legacy import does not install UPM dependencies automatically: provide Navigation2.0.16, Input1.20.1,
 uGUI2.0.0, DOTween Core and UniTask separately. Pro is excluded from new artifacts/source archives;
 vendor notices retain their own terms. Do not mix legacy/UPM copies of the same asset GUIDs.
-The separate `HtmlToUitk.Cli.v11.0.0.zip` supplies the converter. Final archives have `SHA256SUMS` and
+Final archives have `SHA256SUMS` and
 a release-input manifest; actual export/import status belongs to [Verification 11](./Verification11.md).
 
 ## Quick start
@@ -109,50 +143,50 @@ Start with the runtime contract and add scene wrappers, views, or NoCode helpers
 
 ## Module map
 
-| Module | What it covers | Docs |
-|--------|-----------------|------|
-| ⚔️ **Abilities** *(v10)* | Data-driven Dota-style abilities & modifiers: units, properties, buffs/DoT/shields, cast pipeline, effect-op atoms, multiplayer receipts | [Abilities](./Docs/Abilities/README.md) |
-| 🧙 **RPG** | Unified `RpgCharacter`: resources, stats, level/XP, buffs/statuses, melee/ranged/aoe, evade, target selectors, no-code bridges *(superseded by Abilities)* | [RPG](./Docs/Rpg/README.md) |
-| 📈 **Progression** | XP, levels, perk tree, unlock tree, persistent meta-progression | [Progression](./Docs/Progression/README.md) |
-| 🎛 **Condition** | No-code checks over fields/props/methods/state, AND/OR, UnityEvent outputs | [Condition](./Docs/Condition/README.md) |
-| 🔗 **NoCode** | Bind component values to UI & actions, formatted text, progress, action bridges | [NoCode](./Docs/NoCode/README.md) |
-| 💾 **Save** | PlayerPrefs + JSON providers, typed helpers, save attributes, scene/global data | [Save](./Docs/Save/README.md) |
-| 🛒 **Shop** | Items, bundles, owned/equipped, multi-currency, inventory bridge, save profile | [Shop](./Docs/Shop/README.md) |
-| 🎒 **Inventory** | Aggregated & slot-grid inventories, pickups, transfer rules, save integration | [Inventory](./Docs/Tools/Inventory/README.md) |
-| 🗺 **Quest** | Quest configs, goals, manager, no-code actions, runtime state | [Quest](./Docs/Quest/README.md) |
-| 🔁 **StateMachine** | Runtime FSM + no-code transition predicates | [StateMachine](./Docs/StateMachine/README.md) |
-| 🧬 **Reactive** | Serializable reactive `float`/`int`/`bool` properties driving UI without glue | [Reactive](./Docs/Reactive/README.md) |
-| 🃏 **Cards** | Deck/hand/board runtime, custom decks/views, poker, Drunkard sample | [Cards](./Docs/Cards/README.md) |
-| ⬛ **GridSystem** | Field generation, placement, GridMerge, Dice, Match3, TicTacToe, SlidingMerge | [GridSystem](./Docs/GridSystem/README.md) |
-| 🔀 **Merge** | Pure-C# connected-group merge engine for grids, inventories, lists, graphs | [Merge](./Docs/Merge/README.md) |
-| 🎰 **Bonus** | Wheel of Fortune, slot machine, daily/cooldown rewards | [Bonus](./Docs/Bonus/README.md) |
-| 🤺 **NPC** | Navigation, patrol, chase, animator driver, modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
-| ✨ **UI** | Panels, button & toggle animations, `AnimationFly` reward motion | [UI](./Docs/UI/README.md) |
-| **HTML → UITK** | HTML/CSS authoring, native controls, typed actions, adaptive/nav/anim specs and a limited static gradient bake | [Module](./Docs/UI/HtmlToUitk.md), [CLI](https://github.com/NeoXider/NeoxiderTools/blob/main/Tools/HtmlToUitk/README.md) |
-| 🔊 **Audio** | Music/SFX manager, one-shot pooling, settings-bound volume | [Audio](./Docs/Audio/README.md) |
-| 🌐 **Network** | Optional Mirror wrappers + no-code sync/action bridges + realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Multiplayer Guide](./Docs/Network/Multiplayer_Guide.md), [Realtime IO Guide](./Docs/Network/Realtime_IO_Guide.md) |
-| 🖱 **Interaction** | C# contracts, hover/click, 2D/3D physics events, ray modes, and range checks | [Interaction](./Docs/Tools/InteractableObject/README.md) |
-| 🧰 **Tools** | 80+ components: 3D character controller (slopes, stairs, platforms, 1st/3rd person), free-fly camera, physics, spawners, timers, input, text, view helpers | [Tools](./Docs/Tools/README.md) |
-| ➕ **Extensions** | 200+ C# / Unity API extension methods | [Extensions](./Docs/Extensions/README.md) |
+| | Module | What it covers | Docs |
+|:-:|--------|-----------------|------|
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/abilities.jpg" alt="Abilities module concept art" width="96" /> | ⚔️ **Abilities** | Data-driven Dota-style abilities & modifiers: units, properties, buffs/DoT/shields, cast pipeline with typed results, effect-op atoms, spatial grid for crowds, multiplayer receipts | [Abilities](./Docs/Abilities/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/rpg.jpg" alt="RPG module concept art" width="96" /> | 🧙 **RPG** | Unified `RpgCharacter`: resources, stats, level/XP, buffs/statuses, damage modifiers, melee/ranged/aoe, evade, target selectors, no-code bridges *(superseded by Abilities)* | [RPG](./Docs/Rpg/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/core.jpg" alt="Core module concept art" width="96" /> | ❤️ **Core** | Resource pools (HP/mana), health component, levels and XP curves | [Core](./Docs/Core/README.md) |
+|  | 📈 **Progression** | XP, levels, perk tree, unlock tree, premium track, persistent meta-progression | [Progression](./Docs/Progression/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/condition.jpg" alt="Condition module concept art" width="96" /> | 🎛 **Condition** | No-code checks over fields/props/methods/state, AND/OR, UnityEvent outputs | [Condition](./Docs/Condition/README.md) |
+|  | 🔗 **NoCode** | Bind component values to UI & actions, formatted text, progress, action bridges, each with a typed C# API | [NoCode](./Docs/NoCode/README.md) |
+|  | 💾 **Save** | PlayerPrefs + JSON providers, typed helpers incl. 64-bit values, save attributes, scene/global data | [Save](./Docs/Save/README.md) |
+|  | ⚙️ **Settings** | Game settings service with deferred saving and UI bindings | [Settings](./Docs/Settings/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/shop.jpg" alt="Shop module concept art" width="96" /> | 🛒 **Shop** | Items, bundles, typed purchase results, owned/equipped, multi-currency, inventory bridge, save profile | [Shop](./Docs/Shop/README.md) |
+|  | 🎒 **Inventory** | Aggregated & slot-grid inventories, pickups, transfer rules, selection events, save integration | [Inventory](./Docs/Tools/Inventory/README.md) |
+|  | 🗺 **Quest** | Quest configs, goals, manager, kill/collect/reach/talk notifications, no-code actions, runtime state | [Quest](./Docs/Quest/README.md) |
+|  | 🚪 **Level** | Level manager, scene loading, level map flow | [Level](./Docs/Level/README.md) |
+|  | 🔁 **StateMachine** | Runtime FSM + no-code transition predicates | [StateMachine](./Docs/StateMachine/README.md) |
+|  | 🧬 **Reactive** | Serializable reactive `float`/`int`/`bool` properties driving UI without glue | [Reactive](./Docs/Reactive/README.md) |
+|  | 🃏 **Cards** | Deck/hand/board runtime, seeded shuffling, stable custom sorting, custom decks/views, poker, Drunkard sample | [Cards](./Docs/Cards/README.md) |
+|  | ⬛ **GridSystem** | Field generation, pathfinding & movement ranges, placement, GridMerge, Dice, Match3, TicTacToe / n-in-a-row, SlidingMerge (2048) | [GridSystem](./Docs/GridSystem/README.md) |
+|  | 🔀 **Merge** | Pure-C# connected-group merge engine for grids, inventories, lists, graphs | [Merge](./Docs/Merge/README.md) |
+|  | 🎰 **Bonus** | Wheel of Fortune, slot machine, collections, daily/cooldown rewards, each with a plain C# core | [Bonus](./Docs/Bonus/README.md) |
+|  | 🤺 **NPC** | Navigation, patrol, chase, staggered re-pathing, animator driver, modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
+|  | ✨ **UI** | Panels, button & toggle animations, `AnimationFly` reward motion, UI Mesh Rig | [UI](./Docs/UI/README.md) |
+|  | 🎞 **Animations** | Float, color, `Vector3` and transform animators with a manual clock | [Animations](./Docs/Animations/README.md) |
+|  | 🔊 **Audio** | Music/SFX manager, one-shot pooling, settings-bound volume and mute saved between launches | [Audio](./Docs/Audio/README.md) |
+|  | 📳 **Haptics** | Named vibration feels, settings switch, repeat throttle | [Haptics](./Docs/Haptics/Haptics.md) |
+|  | 🏞 **Parallax** | Camera-bound parallax layers with seamless recycling | [Parallax](./Docs/Parallax/README.md) |
+|  | 🌐 **Network** | Optional Mirror wrappers + no-code sync/action bridges + realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Multiplayer Guide](./Docs/Network/Multiplayer_Guide.md), [Realtime IO Guide](./Docs/Network/Realtime_IO_Guide.md) |
+|  | 🖱 **Interaction** | C# contracts, hover/click, 2D/3D physics events, ray modes, and range checks | [Interaction](./Docs/Tools/InteractableObject/README.md) |
+|  | 🧰 **Tools** | 80+ components: 3D character controller (slopes, stairs, platforms, 1st/3rd person), free-fly camera, physics, spawners, timers and injectable clocks, exact-odds random tables, dialogue and bark lines, input, text, view helpers | [Tools](./Docs/Tools/README.md) |
+|  | ➕ **Extensions** | 200+ C# / Unity API extension methods, including seeded random helpers | [Extensions](./Docs/Extensions/README.md) |
+|  | 🛠 **Editor** | Living inspector, `[Button]` and inject attributes, Create Neoxider Object window, maintenance tools | [Editor](./Docs/Editor/README.md) |
 
 Full navigation lives in the [Docs index](./Docs/README.md); the [Project Summary](./PROJECT_SUMMARY.md) is a compact "what already exists, reuse it" map.
 
 ## HTML/CSS → UI Toolkit
 
-The [primary HtmlToUitk guide](./Docs/UI/HtmlToUitk.md) covers native controls, typed C# actions, lifecycle and generated metadata/PNGs. [Current11.0.0 verification](./Docs/UI/HtmlToUitkVerification11.md): fresh CLI solution **2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**, complete Unity Html assembly **370/370,0 skipped per SDK**, real external conversion/native import/Play UI and Unity 6.3 OS clicks at1280×720. The30 debt cases remain nonexecuted; arbitrary CSS/JS, full browser parity, all resolutions and mobile/player support are not established. [2026-10-14 results](https://github.com/NeoXider/NeoxiderTools/blob/main/Docs/Plans/HtmlToUitk-Verification-20261014.md) retain their historical scope.
-
-UPM/Core/Complete include runtime/editor, **not Tools or the CLI**. Extract `HtmlToUitk.Cli.v11.0.0.zip` separately and select its DLL with **CLI...**. The net9-targeted portable publish uses LatestMajor on the tested.NET 10 runtime without RollForward ENV; no runtime9 is bundled. SDK 10.0.301 supports source builds. From a full checkout:
-
-```powershell
-dotnet publish Tools/HtmlToUitk/src/HtmlToUitk.Cli/HtmlToUitk.Cli.csproj -c Release --self-contained false -p:UseAppHost=false -p:RollForward=LatestMajor -o Tools/HtmlToUitk/bin
-dotnet Tools/HtmlToUitk/bin/htmltouitk.dll run Tools/HtmlToUitk/fixtures/production-neutral/neutral.htujob.json
-```
-
-The C# `preview`/`compare` commands honestly return nonzero unsupported; the working Python oracle preview/comparison commands are listed in the CLI docs. NuGet install is not required and not claimed.
+The HTML/CSS → UI Toolkit converter (HtmlToUitk) left this package after 11.0.1 and is now the standalone
+[HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) library (`com.neoxider.htmltouitk`); see [Upgrading to 12](./Docs/Migration12.md#htmltouitk-moved-to-its-own-package).
 
 ## Samples
 
-Import via `Package Manager ▸ NeoxiderTools ▸ Samples`. This checkout uses the hidden release source folder `Samples~`. Unity copies imported content to `Assets/Samples/NeoxiderTools/11.0.1/<sample name>/`, for example `Assets/Samples/NeoxiderTools/11.0.1/Demo Scenes/Scenes/SurvivorDemo.unity`.
+Import via `Package Manager ▸ NeoxiderTools ▸ Samples`. This checkout uses the hidden release source folder `Samples~`. Unity copies imported content to `Assets/Samples/NeoxiderTools/<version>/<sample name>/`, for example `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/Scenes/SurvivorDemo.unity`.
+
+Every demo scene is saved with its UI, configured components and UnityEvent wiring: open it and inspect the setup in Edit Mode, then press Play. Editor builders in the sample author these scenes, and **Neoxider ▸ Demo ▸ Rebuild Active Demo Scene** restores a scene you changed ([how demo scenes are made](./Docs/Samples.md#how-demo-scenes-are-made)).
 
 | Package Manager sample | Source path | Purpose |
 |------------------------|-------------|---------|
@@ -162,7 +196,7 @@ Import via `Package Manager ▸ NeoxiderTools ▸ Samples`. This checkout uses t
 
 During sample development, `Samples/` replaces `Samples~/` so Unity imports the source assets. Release packaging restores `Samples~` and matching `package.json` sample paths. See [Sample scenes](./Docs/Samples.md) for all layouts and scene paths.
 
-Imported copies from earlier versions remain separate project content. Review customized samples using the [migration guide](./Docs/Migration11.md).
+Imported copies from earlier versions remain separate project content and are not updated by a package upgrade. Re-import the samples you use; see [Upgrading to 12](./Docs/Migration12.md#samples-and-demo-scenes).
 
 ## Games built with NeoxiderTools
 
@@ -172,9 +206,9 @@ Imported copies from earlier versions remain separate project content. Review cu
 
 ## Tests
 
-EditMode and PlayMode tests under `Tests/` cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, networking, and NoCode bindings. Read the [EditMode and isolation guide](./Docs/Testing.md) and [PlayMode guide](./Docs/PlayModeTesting.md) for host prerequisites and scope. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For UPM, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply.
+More than 5,000 EditMode cases plus the PlayMode suites under `Tests/` cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, networking, and NoCode bindings; the demo builders have their own `Neo.Demo.Editor.Tests`. Read the [EditMode and isolation guide](./Docs/Testing.md) and [PlayMode guide](./Docs/PlayModeTesting.md) for host prerequisites and scope. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For UPM, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply.
 
-Static-reset and Play Mode transition fixtures require an isolated host. [Verification 11](./Verification11.md) records accepted Windows results and remaining artifact gates. Repository package-integrity CI is green; GitHub Unity CI is blocked by missing GameCI secrets and is not a green Unity run. Local native receipts are separate. `python scripts/check_package.py` belongs to the full repository, not a legacy-Core consumer validator. Use full-checkout/UPM testables sources with their host prerequisites; final archive contents are listed in the release-input manifest.
+Static-reset and Play Mode transition fixtures require an isolated host. [Verification 11](./Verification11.md) records accepted Windows results and remaining artifact gates for 11.0.0. The repository does not currently configure GitHub Actions workflows; local native receipts are separate. `python scripts/check_package.py` belongs to the full repository, not a legacy-Core consumer validator. Use full-checkout/UPM testables sources with their host prerequisites; final archive contents are listed in the release-input manifest.
 
 ## Project layout
 

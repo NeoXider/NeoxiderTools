@@ -1,6 +1,13 @@
 # Numeric, time and random edge cases
 
-Use these helpers through `using Neo.Extensions;` and reference `Neo.Extensions` from a custom asmdef. This topic supplements the [Extensions entry point](README.md).
+**What it is:** the edge-case reference for the numeric, time and random helpers of `Neo.Extensions`: number and
+duration formatting, normalization, UTC timestamps and random selection. This topic supplements the
+[Extensions entry point](README.md).
+
+**How to use:** reference `Neo.Extensions` from a custom asmdef, add `using Neo.Extensions;`, and look up the
+helper you call in the sections below.
+
+---
 
 ## Number formatting
 
@@ -92,7 +99,7 @@ The caller persists the returned time and applies reward transactions. Pass the 
 
 `Chance` rejects NaN and probabilities outside [0, 1]. Zero is always false and one always true. It still consumes a random sample for these valid endpoints. `RandomizeBetween(int.MinValue)` samples the full representable integer range without negation overflow; ordinary integer ranges retain Unity's exclusive upper-bound convention.
 
-Collection randomization and shape sampling use Unity's shared random state and belong on its supported Unity thread. The enum-value cache resets at subsystem registration. In-place Shuffle requires a writable list; `Shuffle(false)` and `GetRandomElements` use a copy. A weight selector is evaluated once per item per selection and allocates a temporary weights array.
+Collection randomization and shape sampling use Unity's shared random state and belong on its supported Unity thread. The overloads that take a `System.Random` (`Shuffle`, `GetRandomIndex`, `GetRandomElement`, `GetRandomWeightedIndex`) or a `Func<int, int>` index source (`Shuffle`) use only the supplied source, so a seed reproduces the result. `GetRandomEnumValue<T>` reads an immutable per-type array of the declared values (no allocation after the first call per type, nothing to reset between play sessions) and throws `InvalidOperationException` for an enum without values. In-place Shuffle requires a writable list; `Shuffle(false)` and `GetRandomElements` use a copy. A weight selector is evaluated once per item per selection and allocates a temporary weights array.
 
 For mutable chance entries, explicit sample evaluation or an injected random source, reuse [ChanceManager](../Tools/Random/ChanceManager.md) (`Neo.Tools`, assembly `Neo.Tools.Random`): `GetId(float)` accepts a sample, and `RandomProvider` supplies draws. Its entry sanitization and normalization policies differ from the strict validation above; choose them explicitly when adapting existing data. Extensions callers need no dependency on that module for the one-shot weighted helpers.
 

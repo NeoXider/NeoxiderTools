@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Neo.Tests.Performance;
 using Neo.Tools;
 using NUnit.Framework;
 
@@ -15,7 +17,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Constructor_WithWeights_CreatesEntries()
         {
-            var cm = new ChanceManager(0.3f, 0.7f);
+            ChanceManager cm = new ChanceManager(0.3f, 0.7f);
             Assert.AreEqual(2, cm.Count);
         }
 
@@ -23,7 +25,7 @@ namespace Neo.Editor.Tests
         public void GetId_WithDeterministicValue_ReturnsExpectedIndex()
         {
             // WHY: disable auto-normalize to keep raw weights
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             cm.AutoNormalize = false;
             cm.AddChance(1f);
             cm.AddChance(1f);
@@ -38,14 +40,14 @@ namespace Neo.Editor.Tests
         [Test]
         public void GetId_EmptyList_ReturnsMinusOne()
         {
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             Assert.AreEqual(-1, cm.GetId(0.5f));
         }
 
         [Test]
         public void AddEntry_IncreasesCount()
         {
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             cm.AddEntry(0.5f, "Test");
             Assert.AreEqual(1, cm.Count);
             Assert.AreEqual("Test", cm.GetEntry(0).Label);
@@ -54,7 +56,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void RemoveChance_DecreasesCount()
         {
-            var cm = new ChanceManager(0.5f, 0.5f);
+            ChanceManager cm = new ChanceManager(0.5f, 0.5f);
             int initialCount = cm.Count;
             cm.RemoveChance(0);
             Assert.AreEqual(initialCount - 1, cm.Count);
@@ -63,7 +65,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Clear_RemovesAllEntries()
         {
-            var cm = new ChanceManager(0.2f, 0.3f, 0.5f);
+            ChanceManager cm = new ChanceManager(0.2f, 0.3f, 0.5f);
             cm.Clear();
             Assert.AreEqual(0, cm.Count);
         }
@@ -71,7 +73,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Clear_InvalidatesTotalWeightCache()
         {
-            var cm = new ChanceManager(0.2f, 0.3f, 0.5f);
+            ChanceManager cm = new ChanceManager(0.2f, 0.3f, 0.5f);
             // WHY: force the TotalWeight cache to populate before clearing.
             Assert.Greater(cm.TotalWeight, 0f);
             cm.Clear();
@@ -81,7 +83,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Normalize_SumsToTarget()
         {
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             cm.AutoNormalize = false;
             cm.AddChance(2f);
             cm.AddChance(3f);
@@ -99,7 +101,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void SetLocked_PreservesWeightDuringNormalize()
         {
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             cm.AutoNormalize = false;
             cm.AddChance(0.5f);
             cm.AddChance(0.5f);
@@ -114,7 +116,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void TryEvaluate_WithValidEntries_ReturnsTrue()
         {
-            var cm = new ChanceManager(0.5f, 0.5f);
+            ChanceManager cm = new ChanceManager(0.5f, 0.5f);
             bool result = cm.TryEvaluate(0.3f, out int index, out ChanceManager.Entry entry);
             Assert.IsTrue(result);
             Assert.IsNotNull(entry);
@@ -124,7 +126,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ValidateWeights_EmptyList_ReturnsIssue()
         {
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             List<string> issues = cm.ValidateWeights();
             Assert.IsTrue(issues.Count > 0);
         }
@@ -132,7 +134,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void GetNormalizedWeight_ReturnsCorrectProportion()
         {
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             cm.AutoNormalize = false;
             cm.AddChance(1f);
             cm.AddChance(3f);
@@ -144,7 +146,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void CustomRandomProvider_IsUsed()
         {
-            var cm = new ChanceManager();
+            ChanceManager cm = new ChanceManager();
             cm.AutoNormalize = false;
             cm.AddChance(1f);
             cm.AddChance(1f);
@@ -154,6 +156,40 @@ namespace Neo.Editor.Tests
             int id = cm.GetChanceId();
             Assert.AreEqual(0, id);
         }
+
+        [Test]
+        public void WarmWeightChangesAndRolls_DoNotAllocate()
+        {
+            ChanceManager cm = new ChanceManager(1f, 2f, 3f, 4f);
+            cm.AutoNormalize = true;
+            float roll = 0f;
+            int picks = 0;
+            cm.RandomProvider = () => roll;
+            Action cycle = () =>
+            {
+                for (int i = 0; i < 200; i++)
+                {
+                    cm.SetChanceValue(i & 3, 1f + (i & 7));
+                    cm.SetLocked(1, (i & 1) == 0);
+                    roll = i % 10 * 0.1f;
+                    if (cm.GetChanceId() >= 0)
+                    {
+                        picks++;
+                    }
+                }
+            };
+            cycle();
+            picks = 0;
+
+            long allocationCalls = GcAlloc.TryCount(cycle, out string notAdmitted);
+
+            Assert.That(picks, Is.EqualTo(200), "positive control: every roll picks an entry");
+            Assert.That(cm.TotalWeight, Is.EqualTo(1f).Within(1e-4f), "positive control: auto-normalize ran");
+            GcAlloc.IgnoreIfNotAdmitted(notAdmitted);
+            Assert.That(allocationCalls, Is.Zero,
+                "SetChanceValue/SetLocked (normalize plus id repair) and GetChanceId must reuse their buffers");
+        }
+
         [TearDown]
         public void RestoreRandomState() { UnityEngine.Random.state = _previousRandomState; }
 

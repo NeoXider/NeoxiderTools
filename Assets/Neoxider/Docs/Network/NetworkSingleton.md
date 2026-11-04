@@ -15,7 +15,7 @@ Its key trick is **conditional compilation**:
 - If Mirror Networking **is installed**, the class inherits from `NetworkBehaviour`, so you can use `[SyncVar]`, `[Command]`, and `[ClientRpc]`.
 - If Mirror **is not installed** (or you are building a purely single-player part of the game), it behaves like a plain `MonoBehaviour` with no network dependency.
 
-A plain `Singleton<T>` lives forever in the scene. `NetworkSingleton<T>` registers itself in `Awake` (unless **Set Instance On Awake** is off), destroys a duplicate on the same type (override `DestroyGameObjectOnDuplicateSingleton` to allow several, for example one wallet per save key) and clears its static state on play start.
+A plain `Singleton<T>` lives forever in the scene. `NetworkSingleton<T>` registers itself in `Awake` (unless **Set Instance On Awake** is off), destroys a duplicate on the same type (override `DestroyGameObjectOnDuplicateSingleton` to allow several, for example one wallet per save key) and clears its static state on play start. That reset matters only in the Editor with domain reload disabled: it walks just the assemblies that reference `Neo.Network` (directly or through another such assembly), and a player build skips it because its statics start empty.
 
 You can specialize a concrete singleton through normal inheritance, for example
 `class SpecializedScore : MyScoreManager`. It shares `NetworkSingleton<MyScoreManager>`'s instance;

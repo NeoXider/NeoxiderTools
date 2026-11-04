@@ -34,6 +34,9 @@ namespace Neo.Bonus
 
         [SerializeField] private List<Entry> _entries = new();
 
+        // WHY: a method-group argument allocates a new delegate on every pick; outcome building picks once per cell.
+        [NonSerialized] private Func<SlotEconomyDefinition.Symbol, float> _resolveWeight;
+
         /// <summary>When false the shared definition weights are used untouched.</summary>
         public bool Enabled
         {
@@ -213,7 +216,7 @@ namespace Neo.Bonus
                 return 0;
             }
 
-            return economy.PickWeightedId(ResolveWeight);
+            return economy.PickWeightedId(_resolveWeight ??= ResolveWeight);
         }
 
         /// <summary>Deterministic pick for tests/replays; <paramref name="normalizedRoll"/> in [0..1].</summary>
@@ -224,7 +227,7 @@ namespace Neo.Bonus
                 return 0;
             }
 
-            return economy.PickWeightedId(ResolveWeight, normalizedRoll);
+            return economy.PickWeightedId(_resolveWeight ??= ResolveWeight, normalizedRoll);
         }
 
         private Entry FindEntry(int symbolId)

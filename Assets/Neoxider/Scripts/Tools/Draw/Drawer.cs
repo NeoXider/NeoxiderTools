@@ -124,8 +124,20 @@ namespace Neo.Tools
 
         public List<LineRenderer> lines = new();
 
+        // WHY: stroke buffers are grow-only so a warm stroke rebuilds geometry without managed allocations;
+        // anything above this element count is released when the stroke ends or is reset, deleted or
+        // returned to its pool, so one huge stroke does not pin its peak buffers.
+        private const int RetainedBufferLimit = 16384;
+
+        private static readonly List<Vector2> SharedColliderPoints = new();
+
+        private readonly List<Vector3> _processedPoints = new();
+        private readonly List<Vector2> _colliderPoints = new();
         private GameObject _autoPoolPrefab;
         private Vector3[] _cachedPositionsArray;
+        private Vector3[] _rendererPositions;
+        private bool _liveColliderDirty;
+        private Matrix4x4 _liveColliderWorldToLocal;
 
         private LineRenderer _currentLR;
         private EdgeCollider2D _liveCol;
@@ -199,13 +211,13 @@ namespace Neo.Tools
         {
             _isDestroying = true;
             DeleteAll();
-            // CreateLineRenderer can also be used without BeginLine/EndLine.
+            // WHY: CreateLineRenderer can also be used without BeginLine/EndLine, so lines outside `lines` own resources too.
             foreach (LineRenderer lr in new List<LineRenderer>(_lineResources.Keys))
             {
                 Delete(lr);
             }
 
-            // This source is unique to this Drawer. Assigned/shared prefab pools are never retired here.
+            // WHY: this source is unique to this Drawer. Assigned/shared prefab pools are never retired here.
             SpawnUtility.RetirePool(_autoPoolPrefab);
             _autoPoolPrefab.SafeDestroy();
         }
@@ -222,14 +234,18 @@ namespace Neo.Tools
                 Timer += Time.deltaTime;
             }
 
-            if (Input.GetMouseButtonDown(0) && TryScreenToWorld(Input.mousePosition, out Vector3 start))
+            // WHY: MouseInputCompat keeps the component working when only the Input System package is active,
+            // where every legacy Input call throws.
+            bool hasPointer = MouseInputCompat.TryGetPosition(out Vector3 pointer);
+            if (MouseInputCompat.TryGetButtonDown(0, out bool pressed) && pressed && hasPointer
+                && TryScreenToWorld(pointer, out Vector3 start))
             {
                 BeginLine(start);
             }
 
-            if (Input.GetMouseButton(0))
+            if (MouseInputCompat.TryGetButton(0, out bool held) && held)
             {
-                if (TryScreenToWorld(Input.mousePosition, out Vector3 worldPos))
+                if (hasPointer && TryScreenToWorld(pointer, out Vector3 worldPos))
                 {
                     AppendPoint(worldPos);
                     Folow(worldPos);
@@ -241,7 +257,7 @@ namespace Neo.Tools
                 }
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (MouseInputCompat.TryGetButtonUp(0, out bool released) && released)
             {
                 EndLine();
             }
@@ -255,10 +271,17 @@ namespace Neo.Tools
             }
 
             pos.z = fixedZ;
-            _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
-            if (_liveCol != null)
+            int last = _currentLR.positionCount - 1;
+            if (_currentLR.GetPosition(last) != pos)
             {
-                UpdateColliderPoints(_liveCol, new List<Vector3>(GetCurrentWorldPositions()));
+                _currentLR.SetPosition(last, pos);
+                _liveColliderDirty = true;
+            }
+
+            if (_liveCol != null && (_liveColliderDirty
+                                     || _liveCol.transform.worldToLocalMatrix != _liveColliderWorldToLocal))
+            {
+                SyncColliderWithCurrentLine(_liveCol);
             }
         }
 
@@ -327,6 +350,7 @@ namespace Neo.Tools
             float previousDistance = Distance.CurrentValue;
             int previousCount = PointCount.CurrentValue;
             rawPoints.Clear();
+            ReleaseOversizedBuffers();
             if (CanAccessLine(_currentLR))
             {
                 _currentLR.positionCount = 0;
@@ -336,7 +360,7 @@ namespace Neo.Tools
                 }
             }
 
-            // Both metrics and geometry must describe the reset before either callback runs.
+            // WHY: both metrics and geometry must describe the reset before either callback runs.
             Distance.SetValueWithoutNotify(0f);
             PointCount.SetValueWithoutNotify(0);
             if (previousDistance != 0f)
@@ -381,7 +405,7 @@ namespace Neo.Tools
                         lr = pooled.GetComponent<LineRenderer>();
                         if (lr == null || !TryTrackLine(lr))
                         {
-                            // The one cleanup slot may already belong to another lifecycle participant.
+                            // WHY: the one cleanup slot may already belong to another lifecycle participant.
                             // Return the untouched rental and use an ordinary renderer instead.
                             PoolManager.Release(pooled);
                             lr = null;
@@ -416,7 +440,7 @@ namespace Neo.Tools
                 resources = _lineResources[lr];
             }
 
-            // All drawing APIs accept world positions, including template and pooled renderers.
+            // WHY: all drawing APIs accept world positions, including template and pooled renderers.
             lr.useWorldSpace = true;
             lr.positionCount = 0;
             if (lr.TryGetComponent(out EdgeCollider2D previousCollider))
@@ -424,7 +448,7 @@ namespace Neo.Tools
                 previousCollider.enabled = false;
             }
 
-            // A caller may have returned this instance directly through PoolManager.
+            // WHY: a caller may have returned this instance directly through PoolManager.
             lines.Remove(lr);
             if (_pendingDeletes.TryGetValue(lr, out CoroutineExtensions.CoroutineHandle previousDelete))
             {
@@ -593,8 +617,9 @@ namespace Neo.Tools
             LineResources resources = _lineResources[line];
             int version = _strokeVersion;
 
-            List<Vector3> processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
-            UpdateLinePositions(processed);
+            Smooth(rawPoints, smoothing, fixedZ, _processedPoints);
+            LimitPoints(_processedPoints, maxPoints, _processedPoints);
+            UpdateLinePositions(_processedPoints);
 
             if (useFolow)
             {
@@ -603,10 +628,13 @@ namespace Neo.Tools
 
             if (addCollider && !colliderAfterCreation && _liveCol)
             {
-                UpdateColliderPoints(_liveCol, processed);
+                // WHY: the renderer buffer already holds the processed stroke, including the followed endpoint.
+                WriteColliderPoints(_liveCol, _cachedPositionsArray, _processedPoints.Count, _colliderPoints);
+                _liveColliderDirty = false;
+                _liveColliderWorldToLocal = _liveCol.transform.worldToLocalMatrix;
             }
 
-            // Publish only after geometry and both metrics are committed. A listener may end/reset the stroke.
+            // WHY: publish only after geometry and both metrics are committed; a listener may end/reset the stroke.
             if (PointCount.CurrentValue != previousCount)
             {
                 PointCount.ForceNotify();
@@ -633,6 +661,10 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     Writes world-space <paramref name="src" /> points into <paramref name="col" /> (collider-local space).
+        ///     Fewer than two points disable the collider. Does not allocate once its shared buffer is warm.
+        /// </summary>
         public static void UpdateColliderPoints(EdgeCollider2D col, List<Vector3> src)
         {
             col.enabled = src.Count >= 2;
@@ -641,13 +673,19 @@ namespace Neo.Tools
                 return;
             }
 
-            Vector2[] pts2D = new Vector2[src.Count];
+            Matrix4x4 worldToLocal = col.transform.worldToLocalMatrix;
+            SharedColliderPoints.Clear();
             for (int i = 0; i < src.Count; i++)
             {
-                pts2D[i] = col.transform.InverseTransformPoint(src[i]);
+                SharedColliderPoints.Add(worldToLocal.MultiplyPoint3x4(src[i]));
             }
 
-            col.points = pts2D;
+            col.SetPoints(SharedColliderPoints);
+            SharedColliderPoints.Clear();
+            if (SharedColliderPoints.Capacity > RetainedBufferLimit)
+            {
+                SharedColliderPoints.Capacity = 0;
+            }
         }
 
         /// <summary>
@@ -661,21 +699,59 @@ namespace Neo.Tools
                 return pts;
             }
 
+            List<Vector3> result = new(max);
+            LimitPoints(pts, max, result);
+            return result;
+        }
+
+        /// <summary>
+        ///     Non-allocating form of <see cref="LimitPoints(List{Vector3}, int)" />: writes the evenly sampled points
+        ///     into <paramref name="results" />. <paramref name="results" /> may be the same list as
+        ///     <paramref name="points" />; the selection is then done in place.
+        /// </summary>
+        /// <param name="points">Source points.</param>
+        /// <param name="max">Maximum point count; 0 or 1 keeps every point.</param>
+        /// <param name="results">Destination list; cleared first unless it is <paramref name="points" />.</param>
+        public static void LimitPoints(List<Vector3> points, int max, List<Vector3> results)
+        {
+            if (points == null)
+            {
+                throw new ArgumentNullException(nameof(points));
+            }
+
+            if (results == null)
+            {
+                throw new ArgumentNullException(nameof(results));
+            }
+
+            if (!ReferenceEquals(points, results))
+            {
+                results.Clear();
+                results.AddRange(points);
+            }
+
+            int count = results.Count;
+            if (max <= 1 || count <= max)
+            {
+                return;
+            }
+
             if (max == 2)
             {
-                return new List<Vector3> { pts[0], pts[^1] };
+                results[1] = results[count - 1];
+                results.RemoveRange(2, count - 2);
+                return;
             }
 
-            List<Vector3> result = new(max);
-            float step = (pts.Count - 1f) / (max - 1);
-
+            // WHY: in place is safe because every sampled index is >= its destination index (step > 1),
+            // so a source slot is always read before any write can reach it.
+            float step = (count - 1f) / (max - 1);
             for (int i = 0; i < max; i++)
             {
-                int idx = Mathf.RoundToInt(i * step);
-                result.Add(pts[idx]);
+                results[i] = results[Mathf.RoundToInt(i * step)];
             }
 
-            return result;
+            results.RemoveRange(max, count - max);
         }
 
         /// <summary>
@@ -688,6 +764,7 @@ namespace Neo.Tools
                 return;
             }
 
+            ReleaseOversizedBuffers();
             if (rawPoints.Count < minCountCreate ||
                 (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate))
             {
@@ -707,6 +784,7 @@ namespace Neo.Tools
             _currentLR = null;
             _liveCol = null;
             rawPoints.Clear();
+            ReleaseOversizedBuffers();
             lines.Add(line);
 
             if (deleteAfterRelease > 0f)
@@ -724,7 +802,7 @@ namespace Neo.Tools
                 });
             }
 
-            // Listeners can begin another stroke or delete this line safely.
+            // WHY: raised last, so listeners can begin another stroke or delete this line safely.
             OnLineCreated?.Invoke(line);
         }
 
@@ -736,26 +814,89 @@ namespace Neo.Tools
             }
 
             _liveCol = _currentLR.GetOrAdd<EdgeCollider2D>();
-            UpdateColliderPoints(_liveCol, new List<Vector3>(GetCurrentWorldPositions()));
+            SyncColliderWithCurrentLine(_liveCol);
             _liveCol.edgeRadius = Mathf.Max(0f,
                 lineWidth * (useWidthCurve ? widthCurve.Evaluate(1f) : 1f) * 0.5f);
             return _liveCol;
         }
 
-        private Vector3[] GetCurrentWorldPositions()
+        private void SyncColliderWithCurrentLine(EdgeCollider2D col)
         {
-            if (!CanAccessLine(_currentLR))
+            int count = _currentLR.positionCount;
+            EnsureCapacity(ref _rendererPositions, count);
+            if (count > 0)
             {
-                return Array.Empty<Vector3>();
+                _currentLR.GetPositions(_rendererPositions);
             }
 
-            Vector3[] positions = new Vector3[_currentLR.positionCount];
-            for (int i = 0; i < _currentLR.positionCount; i++)
+            WriteColliderPoints(col, _rendererPositions, count, _colliderPoints);
+            _liveColliderDirty = false;
+            _liveColliderWorldToLocal = col.transform.worldToLocalMatrix;
+        }
+
+        private static void WriteColliderPoints(EdgeCollider2D col, Vector3[] source, int count,
+            List<Vector2> buffer)
+        {
+            col.enabled = count >= 2;
+            if (!col.enabled)
             {
-                positions[i] = _currentLR.GetPosition(i);
+                return;
             }
 
-            return positions;
+            Matrix4x4 worldToLocal = col.transform.worldToLocalMatrix;
+            buffer.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                buffer.Add(worldToLocal.MultiplyPoint3x4(source[i]));
+            }
+
+            col.SetPoints(buffer);
+        }
+
+        private static void EnsureCapacity(ref Vector3[] buffer, int count)
+        {
+            if (buffer != null && buffer.Length >= count)
+            {
+                return;
+            }
+
+            int size = buffer == null ? 16 : buffer.Length;
+            while (size < count)
+            {
+                size *= 2;
+            }
+
+            buffer = new Vector3[size];
+        }
+
+        private void ReleaseOversizedBuffers()
+        {
+            if (rawPoints.Count == 0 && rawPoints.Capacity > RetainedBufferLimit)
+            {
+                rawPoints.Capacity = 0;
+            }
+
+            if (_processedPoints.Capacity > RetainedBufferLimit)
+            {
+                _processedPoints.Clear();
+                _processedPoints.Capacity = 0;
+            }
+
+            if (_colliderPoints.Capacity > RetainedBufferLimit)
+            {
+                _colliderPoints.Clear();
+                _colliderPoints.Capacity = 0;
+            }
+
+            if (_cachedPositionsArray != null && _cachedPositionsArray.Length > RetainedBufferLimit)
+            {
+                _cachedPositionsArray = null;
+            }
+
+            if (_rendererPositions != null && _rendererPositions.Length > RetainedBufferLimit)
+            {
+                _rendererPositions = null;
+            }
         }
 
         private bool TryTrackLine(LineRenderer lr)
@@ -797,7 +938,7 @@ namespace Neo.Tools
                        && (resources.Pool == null || (resources.MatchesGeneration && !resources.Info.IsInPool));
             }
 
-            // Unknown pooled instances can belong to a newer rental after our cleanup removed its record.
+            // WHY: unknown pooled instances can belong to a newer rental after our cleanup removed its record.
             return !lr.TryGetComponent(out PooledObjectInfo info) || info.OwnerPool == null;
         }
 
@@ -829,13 +970,14 @@ namespace Neo.Tools
                     _liveCol = null;
                     _strokeVersion++;
                     rawPoints.Clear();
-                    // Pool cleanup cannot invoke user callbacks inside its transitioning rental.
+                    ReleaseOversizedBuffers();
+                    // WHY: pool cleanup cannot invoke user callbacks inside its transitioning rental.
                     Distance.SetValueWithoutNotify(0f);
                     PointCount.SetValueWithoutNotify(0);
                 }
             }
 
-            // Release hooks run with IsInPool=true, before reuse/eviction. Check the captured generation,
+            // WHY: release hooks run with IsInPool=true, before reuse/eviction. Check the captured generation,
             // not active-rental status, and restore only the exact clone we installed.
             if (lr != null && (resources.Pool == null || resources.MatchesGeneration)
                            && resources.OwnedMaterial != null && lr.sharedMaterial == resources.OwnedMaterial)
@@ -886,7 +1028,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Reset listeners can return/re-rent this same renderer. Never act on their replacement.
+            // WHY: reset listeners can return/re-rent this same renderer; never act on their replacement.
             if (!CanAccessLine(lr, resources))
             {
                 return;
@@ -1011,48 +1153,80 @@ namespace Neo.Tools
         /// </summary>
         public static List<Vector3> Smooth(List<Vector3> points, int passes, float? fixedZ = 0)
         {
-            Vector3[] input = points.ToArray();
+            List<Vector3> result = new(points.Count);
+            Smooth(points, passes, fixedZ, result);
+            return result;
+        }
+
+        /// <summary>
+        ///     Non-allocating form of <see cref="Smooth(List{Vector3}, int, float?)" />: writes the smoothed copy of
+        ///     <paramref name="points" /> into <paramref name="results" /> (cleared first). Each pass doubles the point
+        ///     count; fewer than three points are copied unsmoothed. <paramref name="points" /> is never modified unless
+        ///     it is also passed as <paramref name="results" />.
+        /// </summary>
+        /// <param name="points">Source polyline.</param>
+        /// <param name="passes">Chaikin passes; 0 or less only copies (and flattens Z when requested).</param>
+        /// <param name="fixedZ">When set, every point is placed on this Z before smoothing.</param>
+        /// <param name="results">Destination list, reused across calls to avoid allocations.</param>
+        public static void Smooth(List<Vector3> points, int passes, float? fixedZ, List<Vector3> results)
+        {
+            if (points == null)
+            {
+                throw new ArgumentNullException(nameof(points));
+            }
+
+            if (results == null)
+            {
+                throw new ArgumentNullException(nameof(results));
+            }
+
+            if (!ReferenceEquals(points, results))
+            {
+                results.Clear();
+                results.AddRange(points);
+            }
+
             if (fixedZ.HasValue)
             {
-                for (int i = 0; i < input.Length; i++)
+                float z = fixedZ.Value;
+                for (int i = 0; i < results.Count; i++)
                 {
-                    input[i].z = fixedZ.Value;
+                    Vector3 point = results[i];
+                    point.z = z;
+                    results[i] = point;
                 }
             }
 
-            if (passes <= 0 || points.Count < 3)
+            if (passes <= 0 || results.Count < 3)
             {
-                return new List<Vector3>(input);
+                return;
             }
 
-            Vector3[] output = null;
-
-            for (int p = 0; p < passes; p++)
+            for (int pass = 0; pass < passes; pass++)
             {
-                int newSize = 1 + (input.Length - 1) * 2 + 1;
-                if (output == null || output.Length != newSize)
-                {
-                    output = new Vector3[newSize];
-                }
+                ChaikinPassInPlace(results);
+            }
+        }
 
-                output[0] = input[0];
-                int idx = 1;
-
-                for (int i = 0; i < input.Length - 1; i++)
-                {
-                    Vector3 a = input[i];
-                    Vector3 b = input[i + 1];
-
-                    output[idx++] = Vector3.Lerp(a, b, 0.25f);
-                    output[idx++] = Vector3.Lerp(a, b, 0.75f);
-                }
-
-                output[idx] = input[^1];
-
-                (input, output) = (output, input);
+        private static void ChaikinPassInPlace(List<Vector3> points)
+        {
+            int count = points.Count;
+            int expandedCount = count * 2;
+            Vector3 last = points[count - 1];
+            for (int i = count; i < expandedCount; i++)
+            {
+                points.Add(last);
             }
 
-            return new List<Vector3>(input);
+            // WHY: walking backwards writes pair i into slots 2i+1 and 2i+2, which are always above the
+            // inputs i and i+1 still to be read, so one buffer serves as both source and destination.
+            for (int i = count - 2; i >= 0; i--)
+            {
+                Vector3 a = points[i];
+                Vector3 b = points[i + 1];
+                points[2 * i + 1] = Vector3.Lerp(a, b, 0.25f);
+                points[2 * i + 2] = Vector3.Lerp(a, b, 0.75f);
+            }
         }
 
         public static float GetDistance(Vector3[] points)
@@ -1089,18 +1263,17 @@ namespace Neo.Tools
                 return;
             }
 
-            if (_cachedPositionsArray == null || _cachedPositionsArray.Length != positions.Count)
-            {
-                _cachedPositionsArray = new Vector3[positions.Count];
-            }
-
-            for (int i = 0; i < positions.Count; i++)
+            int count = positions.Count;
+            EnsureCapacity(ref _cachedPositionsArray, count);
+            for (int i = 0; i < count; i++)
             {
                 _cachedPositionsArray[i] = positions[i];
             }
 
-            _currentLR.positionCount = positions.Count;
+            // WHY: SetPositions ignores entries at or beyond positionCount, so the grow-only buffer can be larger.
+            _currentLR.positionCount = count;
             _currentLR.SetPositions(_cachedPositionsArray);
+            _liveColliderDirty = true;
         }
 
         private sealed class LineResources

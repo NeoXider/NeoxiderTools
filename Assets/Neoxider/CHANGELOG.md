@@ -1,6 +1,706 @@
 
 ## [Unreleased]
 
+## [12.0.0] - 2026-11-04
+
+A library-wide quality pass: bug fixes and behaviour corrections in every module, allocation-free hot paths, typed
+C# APIs next to the Inspector and NoCode workflows, plain C# cores with injectable time and random sources, demo
+scenes authored in the scene by editor builders, and a reworked Neo inspector. The HTML/CSS → UI Toolkit converter
+(HtmlToUitk) moved to its own package, [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk)
+(`com.neoxider.htmltouitk`). Read [Upgrading to 12](Docs/Migration12.md) before updating: it lists the removed
+assemblies, the obsolete APIs with their replacements, the source-compatibility notes and every behaviour change,
+with the ones most likely to need an adjustment marked **check** (also marked below).
+
+### Breaking and removed
+
+- **HtmlToUitk moved to its own package.** `Neo.HtmlToUitk.Runtime`, `Neo.HtmlToUitk.Editor`,
+  `Neo.HtmlToUitk.Tests.Editor`, the Velora showcase (`Assets/HtmlToUitkShowcase`), the .NET CLI
+  (`Tools/HtmlToUitk`) and the `Docs/UI/HtmlToUitk*.md` pages left `com.neoxider.tools`. Install it from
+  `https://github.com/NeoXider/HtmlToUitk.git`: assembly names, namespaces, script GUIDs, menu paths and EditorPrefs
+  keys are unchanged, so scenes and prefabs resolve again once it is installed. Converter warnings are switched on
+  with `HtmlToUitkDiagnostics.Configure(warnings: true)` instead of `NeoDiagnostics`. Delete any bundled copy of
+  `Scripts/UI/HtmlToUitk` first; duplicate assembly names do not compile. See [HtmlToUitk moved to its own
+  package](Docs/Migration12.md#htmltouitk-moved-to-its-own-package).
+- **Source compatibility.** A literal `ChangeState(null)` on `StateMachineBehaviourBase` /
+  `StateMachineBehaviour<TState>` is now ambiguous (CS0121) because of the new `ChangeState(StateData)`; cast it to
+  `(string)null`. `RandomExtensions.GetRandomEnumValue<T>()` throws `InvalidOperationException` for an enum without
+  values; `PokerHandEvaluator.Evaluate(null)` throws `ArgumentNullException`; `AbilityEventBus.Publish` ignores an
+  event without an id; `FileSaveProvider.TryChangeSlot` with an empty name returns `false`; `ChanceData.OnIdGenerated`
+  is a property now (it was a public field), so code that passes it by `ref` or finds it through field reflection
+  must change; list and array callers of `ProgressionRewardDispatcher.DispatchRewards` bind to the new
+  `IReadOnlyList` overload (same results). The
+  diagnostic `InteractionPhysicsQueries.Statistics.ClassifiedHits` now counts the raw hits actually inspected, so it
+  reports smaller numbers than 11.x.
+- **Changed defaults that existing scenes pick up:** `AMSettings` **Persist Mute** is on; `ButtonScale`,
+  `ButtonShake`, `FakeLoad` and the `UI` page manager animate in unscaled time; `NpcNavigation` **Stagger Path
+  Updates** is on; `ErrorLogger` **Max Entries** is 50 (was unlimited); in Input System-only projects
+  `MouseInputCompat` reads the primary touch when no mouse is connected. See [behaviour
+  changes](Docs/Migration12.md#behaviour-changes-to-review).
+- **Assembly references:** `Neo.Tools.Draw` now references `Neo.Tools.Input`, `Neo.Tools.Time` references
+  `Unity.TextMeshPro`, and `Neo.Haptics` references `Neo.Extensions` (no cycles; this matters only when copying
+  assemblies selectively).
+- **Editor drawing constants:** `NeoxiderEditorGUI.SectionHeaderHeight` 32 → 24, `PillToggleWidth` 54 → 32 and
+  `CustomEditorSettings.SignatureSpacing` 6 → 4; `SectionAccent(bool)` returns one accent for both states and
+  `SectionTitleColor(bool)` the theme title colour. Custom inspectors drawn with these helpers get the new compact
+  look.
+- **Samples:** the runtime bootstraps `GridSystemMatch3DemoSetup`, `GridSystemTicTacToeDemoSetup` and
+  `DiceMergeDemoSetup` were removed, `ShopDemoBootstrap` became `ShopDemoController` (same script GUID), and
+  `RpgCharacterQuickDemo` dropped its `_configureOnAwake` field. The unused sample scripts `RpgDemoUI`,
+  `ConditionDemoSetup`, `HealthTextDisplay`, `Network/TestStart` and the obsolete `SurvivorHud` were deleted (no
+  scene or prefab used them), and `AnimatorsDemoController` became the driver of the authored AnimatorsDemo scene
+  (hidden from Add Component). Sample assets used only by package prefabs moved into the package (see
+  **Packaging** under Changed). A package upgrade does not update imported sample copies; re-import the samples
+  you use.
+- **Docs:** removed `Docs/Tools/View/MeshEmissionAnimator.md`, which described a component that does not exist.
+
+### Deprecated
+
+Warnings only; everything below still compiles and works. Replacements are listed in [Obsolete
+APIs](Docs/Migration12.md#obsolete-apis-and-replacements).
+
+- `VariantView.currentStateIndex` → `CurrentStateIndex`; `Map.GetCopmplete()` → `Map.IsComplete`;
+  `Neo.Editor.NeoEditorAutoRegister` (empty; delete calls to it); `CustomEditorSettings.EnableRainbowOutline` /
+  `SetEnableRainbowOutline` (no visible effect since v10); `ChanceData.OnIdGenerated`, because a ScriptableObject
+  must not carry scene wiring: subscribe to `ChanceSystemBehaviour.OnIdGenerated` or use the index `GenerateId()`
+  returns (listeners already saved on the asset still load and fire).
+- Demo sample: `NeoDemoShell.Build` / `ShowInfoCardOnce`, `ModuleDemoSceneInfo.Show` and `QuestDemoView` (used by
+  no scene). Author the frame, info card and views in the scene with an editor builder instead.
+
+### Added
+
+- **Core**: `ResourcePoolModel.TrySpendAll` / `CanSpendAll` with the new `ResourceCost` value type pay a
+  multi-resource cost completely or not at all: costs on one pool must fit the balance the earlier ones leave, each
+  cost obeys the decrease limit, listeners run after the last payment, and `out int failedIndex` overloads name the
+  missing resource. `HealthComponent` exposes `CanSpend`, `CanSpendAll` and `TrySpendAll` (mana plus HP, or two
+  currencies, without partial payments). `BeginNotificationBatch` / `EndNotificationBatch` /
+  `IsBatchingNotifications` apply mutations at once and deliver Changed/Depleted notifications in order at the
+  outermost end; a throwing listener does not drop the rest, and the first exception is rethrown afterwards.
+  Resource entries have Inspector tooltips for every field.
+- **Extensions, Network.Contracts**: seeded `RandomExtensions` overloads (`Shuffle` with a `System.Random` or a
+  `Func<int,int>`, `GetRandomElement` / `GetRandomIndex` / `GetRandomWeightedIndex(System.Random)`) for
+  deterministic tests, replays and daily seeds; `UIUtils.IsPointerOverUI(Vector2)`;
+  `UnityEventDelegateCache.UnsubscribeAll()`; `NeoDiagnostics.MaxThrottleKeys` (1024);
+  `NetworkAuthorityPolicy.IsKnown` / `IsAuthorized`, a transport-free authority decision table that can be
+  unit-tested without Mirror.
+- **Tools/Input**: `MoveInputCompat.ReadMove()` / `ReadMove(horizontalAxis, verticalAxis)` reads two-axis movement
+  on both backends (legacy raw axes, or WASD, arrows and the gamepad left stick; not normalized);
+  `MouseInputCompat.TryGetScrollDelta` / `TryGetPointerDelta`;
+  `OptionalInputSystemAdapter.SimulateMouseWithTouches`, `TryGetMouseDelta`, `TryGetMouseScroll`;
+  `InputBackendCompat.IsLegacyInputConfigured`; `MouseEffect.RequiresHoldEvents`, with one gated warning when the
+  effect subscribes to a manager whose Hold events are off.
+- **Tools/Time, Random, Dialogue**: clock seams `IFrameClock` / `UnityFrameClock` / `ManualFrameClock`
+  (`Timer.FrameClock`, `TimerObject.FrameClock`) and `INeoClock` views (`TimerObject.UtcClock`,
+  `TrustedClock.AsNeoClock()`, `NeoTrustedTime.AsClock`); `TimerTextFormatter`; opt-in `CarryLoopOvershoot` on
+  `Timer` and `TimerObject` for exact looping periods; `GameTimeController.TogglePause()`, `IsPaused` and
+  `ResumeScale`. `IntegerChanceTable`: exact integer weights (odds such as 1 in 1,000,000), O(log n) rolls and an
+  injectable unbiased random source. `DialogueLinePool` (plain C#) and `DialogueLinePlayer`: pooled bark lines by
+  tag without back-to-back repeats, with time windows, first-pick slots, contextual interrupts and
+  `Tick(deltaTime)`. `DialogueController.RevealMode` (`MaxVisibleCharacters` reveals through TMP with no string per
+  character and no word-wrap jumps) and `DialogueUI.SetDialogueTextRevealed` / `SetVisibleCharacters` /
+  `ShowAllCharacters`.
+- **Tools/Components, Text, Debug, Managers**: `TypewriterEffect.PlayRevealAsync` and
+  `TypewriterEffectComponent.RevealMode`; `Bootstrap.InitializePending()`, `HasFailed(IInit)` and
+  `IsBootstrapCompleted`; `SingletonById<T>.TryGet`; `CameraAspectRatioScaler.ReferenceOrthographicSize`,
+  `ReferenceFieldOfView`, `Mode`, `TargetResolution`, `Refresh()` and `CaptureReferenceFromCamera()`;
+  `Loot.ScatterPlane` (XY for 2D); `Prefix` / `Suffix` on `SetText` and `TimeToText`; `ScoreManager.SaveKey`;
+  `AnimatorParameterDriver.Animator`; `ErrorLogger.MaxEntries`, `Entries`, `Clear()` and an optional character
+  budget `MaxCharacters` (default 0 = off) with `HistoryCharacterCount`.
+- **Tools/Move, Physics, Draw**: non-allocating `Drawer.Smooth(points, passes, fixedZ, results)` and
+  `Drawer.LimitPoints(points, max, results)` (in place allowed); `AffectedLayers` on `ExplosiveForce`,
+  `MagneticField` and `ImpulseZone`, plus `ImpulseZone.SetDirection`, `SetCustomDirection`, `SetCooldown` and
+  `ImpulseForce`; `CameraConstraint.HasValidBounds`.
+- **Tools/Spawner, Inventory**: `SimpleSpawner.SpawnInstance()` (typed return next to the UnityEvent `Spawn()`);
+  `NeoObjectPool.Prefab`; `InventoryComponent.OnSelectedItemChanged`, `AutoSave`, and `DeferAutoSave()` /
+  `IsAutoSaveDeferred`: a burst of mutations inside `using (inventory.DeferAutoSave())` writes the JSON once while
+  events still fire per mutation.
+- **Tools/View, Animations, Audio**: `Tick(deltaTime)` and `ManualUpdate` on `FloatAnimator`, `ColorAnimator`,
+  `Vector3Animator`, `TransformAnimator` and `LightAnimator`, plus `RandomizeStartTime` and `UseUnscaledTime`;
+  `AnimationUtils.ApplyToRenderer` (emission through a `MaterialPropertyBlock`, no material copies); `StarView.Bind`
+  / `ShowStars`; `BillboardUniversal` getters; `ZPositionAdjuster.Adjust`, `ComputeDepth` and `Ratio`;
+  `SelectorModel.IsItemActive(int)`; `AMSettings.PersistVolume` / `PersistMute`.
+- **UI**: `AnimationFlyRequest.Clone()`, optional count/start/end on `FromPrefab` / `FromSprite`,
+  `AnimationFly.OwnedVisualCount`; `CategoryBar.SelectionChanged` and `IsInitialized`; `VariantView.StateChanged`,
+  `OnStateChanged` and `CurrentStateIndex`; **Use Unscaled Time** (`UseUnscaledTime`) on `ButtonScale`,
+  `ButtonShake` (plus `IsShaking`), `FakeLoad` and the `UI` page manager;
+  `UIMeshRigGeometryBuilder.Build(..., reuse)`.
+- **Abilities**: an opt-in spatial grid for unit radius queries (`AbilitySystemBehaviour` **Spatial Cell Size**,
+  `InvalidateSpatialCache`, reusable `AbilitySpatialGrid` with `Move`, `Remove` and the shared inclusive
+  `IsWithinRadius` / `SqrDistance` tests) with results identical to the linear scan;
+  `AbilityCasterBehaviour.Cast(CastRequest)` returns a typed `CastResult`, and `LastCastResult` keeps the latest;
+  `EffectContext.IsReleased`; `ModifierEngine.ForgetOwner` / `TrackedOwnerCount`; `XorShiftRandom.Reseed`;
+  `AbilityProjectileBehaviour.IsFlying` / `CastId`.
+- **RPG**: an extensible damage pipeline (`IRpgDamageModifier`, `RpgCharacter.AddDamageModifier` /
+  `RemoveDamageModifier`, `ApplyDamage(RpgDamageInfo)`, the `DamageApplied` event) for shields, armour, caps and
+  thorns; plain C# `RpgCharacterStatService`, `RpgCharacterProgressionService` and `RpgModifierMath` behind
+  `RpgCharacter`; `GetAttackSpeedMultiplier()` with the opt-in `RpgAttackController.ScaleCooldownByAttackSpeed`;
+  code setters for `RpgTargetQuery`, `RpgTargetSelector.Query`, `RpgAutoAttackController` and `RpgContactDamage`;
+  `RpgStatsDamageableBridge.Initialize(IRpgCombatReceiver)`, `ClearReceiver`, `TryTakeDamage` and `TryHeal` for
+  pooled hitboxes; `MeleeWeapon.DamageType` (also on `AuraWeapon`) so resist buffs apply to melee and aura hits;
+  `RpgCharacterNetworkCommand.IsKnownType`.
+- **NPC**: `NpcNavigation.IsRunning`, `AutoUpdatePath`, `RefreshPath()` and **Stagger Path Updates**
+  (`NpcFollowTargetCore.PathUpdatePhase`); `NpcAnimationCore.HasSpeedParameter` / `HasIsMovingParameter`;
+  `NpcRpgCombatBrain.IsActive`, `Preset`, `CurrentDecision` and C# accessors for its events.
+- **Shop**: `Shop.TryBuy` / `TryBuyBundle` return a `ShopPurchaseStatus` (`Purchased`, `AlreadyOwned`, `Selected`,
+  `InsufficientFunds`, `CommitFailed`, `PendingServerAuthority`, `Unavailable`, `Busy`);
+  `GetItemsInCategory(category, results)`; `TextMoney.BoundMoney`.
+- **Bonus**: plain C# cores `CollectionSet` (`Collection.Set` as `IReadOnlyCollectionSet`,
+  `Collection.RandomIndexSource`), `BoxProgress` / `BoxProgressRules` with idempotent claim receipts,
+  `CooldownSchedule` on an injected `INeoClock` (shared by `CooldownReward` and `TimeReward`) and `SlotSpinMath`;
+  `Box.TargetCollection`, `WheelMoneyWin.Wallet`, `LineRoulett.UseUnscaledTime`, `Row.GetVisibleElement`; a
+  `CollectionVisualManager` **Collection** field (`TargetCollection`) and `SetItems(ItemCollection[])`, so each
+  panel can show its own collection.
+- **Cards**: seeded shuffling (`DeckModel(seed)`, `DeckModel(System.Random)`, `ShuffleRandom`, `Shuffle(random)`,
+  `DeckComponent` **Use Fixed Shuffle Seed** and `CreateShuffleRandom()`); stable custom sorting (`HandModel.Sort`,
+  `HandComponent` / `HandPresenter.SortAsync` with an `IComparer<CardData>` or `Comparison<CardData>`,
+  `CardComparer.ByValueAscending` / `ByValueDescending` / `ByGroupThenValueAscending`); `HandComponent.Contains` and
+  `DrawRandom(System.Random)`; list-filling `CardLayoutCalculator` overloads; `PokerHandEvaluator.EvaluateStrength`
+  / `GetCombination`; `BoardComponent.RemoveCards(cards)` next to batch `PlaceCardsImmediate(cards)`, both with one
+  layout pass.
+- **GridSystem**: `GridPathfinder.TryFindPath` and `CollectReachableCells` (movement ranges, flood fill);
+  `FieldGenerator.CollectNeighbors`; `FieldGeneratorConfig.MovementPreset` (8-way, diagonal, hex and 3D rules from
+  the Inspector); `GridShapeMask.Create`, `SetCells`, `Contains` and a `Mode` setter; TicTacToe `WinLineLength`
+  (Gomoku-style boards), `WinningLine` and `TicTacToeWinChecker.TryGetWinningLine`; SlidingMerge `HasAnyMove`,
+  seedable `TrySpawnRandomContent`, `SlidingMergeStep.MergedFrom` / `MergedValue`, `OnNoMovesLeft`,
+  `OnContentSpawned`, `Slid`, `ContentSpawned` and custom merge rules (a complete 2048 loop); Dice
+  `CanPlaceAnywhere` / `TryFindPlacement` over all rotations; `FieldObjectSpawner.Unregister` /
+  `PruneDestroyedObjects`; `Match3BoardService.RandomIndexProvider` (reproducible boards) and `IsResolving`;
+  `Match3MatchFinder.HasMatch` and `CollectMatchedCells(field, minMatchLength, set)`.
+- **Save, Settings, Level**: 64-bit values (`SaveProvider.GetLong` / `SetLong`, `ISaveProvider` extensions,
+  `ILongSaveProvider` implemented by `FileSaveProvider`); `FileSaveProvider.FilePath` / `HasUnsavedChanges`;
+  `GameSettingsComponent.HasPendingDeferredSave`; `SaveProviderSettingsComponent.ExecutionOrder`; `Map.IsComplete`;
+  `LevelManager.TryResetProgress(mapId)`, `ResetProgress(mapId)`, `ResetAllProgress()` and `Map.ResetProgress()` for
+  a "New game" button (they also work before the manager initialized; the Inspector buttons are Play Mode-only).
+- **Quest, Progression**: `QuestManager.Notify(type, targetId, amount)`, `NotifyReachPoint`, `NotifyTalk`,
+  `NotifyKill` / `NotifyCollect(id, amount)`, `AddObjectiveProgress`, `GetActiveQuests(List<QuestState>)`,
+  `AutoSave`, `TryAcceptQuest(quest, out reason)` and the C# events `ObjectiveCompleted`, `QuestFailed`,
+  `QuestReset`, `QuestsLoaded`; `QuestNoCodeAction` NotifyKill / NotifyCollect / NotifyReachPoint / NotifyTalk /
+  EvaluateObjectiveConditions actions with **Target Id** and **Amount**; `QuestConfig.ValidateDefinition()`,
+  `QuestObjectiveData.IsCounter` / `TargetProgress`, `QuestFlowConfig.IsChainSatisfied`. Progression gains the C#
+  events `NodeUnlocked`, `PerkPurchased` and `PremiumActivated`, **On Premium Activated**, the NoCode
+  `ActivatePremium` action and `HasPremium` condition mode, `LevelCurveDefinition.TryGetNextDefinition` /
+  `IsAscending`, and an allocation-free
+  `ProgressionRewardDispatcher.DispatchRewards(IReadOnlyList<ProgressionReward>, ...)` overload.
+- **Condition, NoCode, StateMachine**: `ConditionEntry.TryEvaluate(context, out result)` (an unavailable source is
+  told apart from a failed comparison) and public properties for every Inspector setting;
+  `NeoCondition.UseUnscaledTime`; `BindingSourceGameObjectResolver.IsDestroyedReference` and
+  `FindComponentOccurrence`; `ReflectionCache.TryGetProperty`; NoCode `RefreshBinding()`, `UpdateMode`,
+  `PollIntervalSeconds`, `NoCodeFormattedText.SetValues` / `Format` / `CurrentText`, `SetProgress.SetRange`,
+  `NoCodeBindText.ForceRewrite()`; `ChangeState(StateData)`, `EvaluateTransitionsNow()`, `AutoEvaluateTransitions`,
+  `StateMachineData` and event accessors on the wrappers; a per-machine `StateMachine<TState>.DebugLogEnabled` and
+  `EnableDebugLog` on both wrappers.
+- **Network**: `NetworkActionRelay.TriggerFloatByName`, `TriggerStringByName`, `TryGetChannelIndex` and
+  `GetChannel`; `NeoNetworkDiscovery.IsAdvertising`, `AutoAdvertiseOnHost` and `AutoDiscoverOnClient`;
+  `StartAsClient(address, port)` and `ApplyPort` on the offline `NeoNetworkManager` stub, so code compiles without
+  Mirror.
+- **Editor**: `NeoxiderSettings.FindMissingFolders()`; `CustomEditorSettings.EnableTransitions`,
+  `CompactRepeatedBanners`, `SetRainbowSaturation` and `SetRainbowBrightness`; `NeoInspectorTheme.AccentText`,
+  `AccentFill`, `Snap` and `DrawChevron`; `NeoDocHelper.GetBrokenNeoDocPath`; `RequireInterfaceDrawer.GetTooltip`;
+  `ComponentBindingInspectorShared.FindSceneObject`; `SceneSaverAutoSaveScheduler.ObserveDirty` /
+  `IsIntervalElapsed`.
+- **NeoxiderPages (sample)**: `PM.TryGetPageIdByName`, `PM.DebugLogs` (**Debug Logs**),
+  `PM.ClosePopupsOnExclusivePageChange` (now also in the PM inspector) and the editor-only
+  `PM.PreviewPageInEditor(PageId)`; `BtnChangePage.Interactable`, `ButtonAction`, `TargetPageId`, `HasLegacyAction`
+  and `IsLegacyAction(Action)`; `FakeLoad.UseUnscaledTime` and `IsLoading`; `PageSubscriber.IsSubscribed`;
+  `ToggleAudio.SyncFromSettings()`; `IsAvailable` on the UIKit `Audio`, `Wallet`, `Score` and `Level` facades; the
+  menu **Neoxider > Samples > Generate Default PageIds**.
+- **One-argument targets for UnityEvents**: `AnchorMove.Apply()`, `SetX`, `SetY` and `SetAnchor` (it used to apply
+  only in `OnValidate`); `CategoryBar.DisableEntry(int)` / `EnableEntry(int)`; `MagneticField.SetModeIndex(int)` and
+  `CurrentMode`; `ImpulseZone.SetDirectionIndex(int)` and `CurrentDirection` (an undefined index is ignored);
+  `Leaderboard.SubmitScore(int)` / `SubmitScore(float)` (keeps the best result); `Box.ResetProgress()` (writes 0
+  and raises the progress events); `Neo.UI.FakeLoad.IsLoading`.
+
+### Changed
+
+- **Neo inspector look**: a 44px banner whose version pill carries the update status (click to check, with a
+  separate Update pill; the update strip is gone); a compact one-row header when **Show banner** is off and, by
+  default, for every Neo component after the first on a GameObject (**One banner per GameObject**); 24px section
+  bars with vector chevrons, skin-aware icons and accent count pills; compact boolean switches; eased transitions
+  (**Smooth transitions**); parameterless `[Button]` actions are single buttons with a signature tooltip, actions
+  with parameters show an "N params" chip; a redesigned Visual Settings window with editable saturation and
+  brightness; mipmapped mascot icons with a per-inspector click spring.
+- **Neo inspector behaviour**: `[Button]` actions run on every selected object (static methods once) and are
+  recorded with Undo in Edit Mode; `[GetComponent]` / `[FindInScene]` / `[LoadFromResources]` assignments apply to
+  every selected object, are recorded with Undo and warn once per object and field; mixed booleans show a dash;
+  nested class headers carry the prefab override bar and Revert menu, and a closed section shows a hidden override;
+  `[Header]` on private base-class fields is recognised; `[NeoDoc]` is inherited and a broken path is reported; the
+  documentation preview renders code, links and bullets; a click on the mascot chip opens the component's
+  documentation page (the rest of the header only bounces the mascot). `NeoxiderSettings.SaveSettings()` no longer
+  refreshes the AssetDatabase, the scene hierarchy template is saved in `ProjectSettings/NeoxiderSettings.json`, and
+  update-check request logs need the EditorPrefs switch `Neo.UpdateCheck.Verbose`.
+- **Editor tools**: the NeoCondition inspector draws **Use Unscaled Time** and edits only the shared settings when
+  several objects are selected; the Quest inspector lists `ValidateDefinition()` issues, and Generate ID derives
+  each selected quest's id from its own title; Save Project Zip shows a cancelable progress bar and leaves no
+  partial archive; the `StateMachineBehaviourBase` inspector uses the package sections and refreshes its Runtime
+  values in Play Mode. Scene Saver writes a console line per auto-save only with **Log Each Auto-Save** (off by
+  default; a failed save is always logged). The UI Mesh Rig menu messages are in English, and the Mirror lobby demo
+  scene creator adds `InputSystemUIInputModule` when the Input System package is installed.
+- **Audio** (**check**): `AMSettings` saves the Music/Efx/Master/UI mute under `saveKeyMute` (**Persist Mute**, on
+  by default, needs **Persist Volume**) and no longer forces channels back on when it binds to `AM`; a `SetMusic` /
+  `SetEfx` call made before binding is kept. For temporary silence use `AudioListener.pause`, a mixer snapshot or
+  `AudioFocusMute`. `SetMasterVolume` while Master is muted only sets the level that unmuting restores, the mute
+  Inspector buttons work in Play Mode only, and `RandomMusicController` skips empty track slots.
+- **UI** (**check**): `AnimationFly.Play(request)` works on a copy of the request (set everything, including
+  `OnAllArrived`, before `Play`) and isolates callbacks, so a throwing listener is logged and the flight still
+  completes. `ButtonScale`, `ButtonShake` and `FakeLoad` default to unscaled time; `ButtonShake` restores the
+  position from shake start and no longer resets it in `OnEnable`; `FakeLoad.Load()` during a load restarts it. The
+  `UI` page manager's `SetPageAnim`, `SetOnePageAnim` and `SetPageDelay` finish while `Time.timeScale` is 0 (**Use
+  Unscaled Time**, on by default; untick it to keep scaled delays, and give the curtain Animator Update Mode =
+  Unscaled Time). `CategoryBar.Select` / `Next` / `Prev` called before `Start` become the initial selection.
+  `Neo.UI.FakeLoad` matches the Pages one: in one-shot mode a later `Load()` in the same session completes one frame
+  later in Play Mode (it finished inside `Load()`, often inside the page switch that showed the loading page, so an
+  `OnFinisLoad` page change was undone), and a load interrupted by deactivating the GameObject continues when it is
+  active again. `VariantView` applies its saved state in `Awake`, so a spawned or loaded view shows it at once.
+  `ButtonScale` takes the release scale from the button's scale when a press starts instead of the `Awake`
+  snapshot, so a button rescaled by layout or code comes back to its new size.
+- **Abilities** (**check**): contexts the system creates for casts, projectile hits, modifier ticks and reactions
+  are pooled, so a custom `IEffectOperation` must not keep the `EffectContext`, its `PrimaryTargets`, `Random` or a
+  nested child after `Execute`. Modifier tick and event-reaction rolls after the first use their own derived seeds
+  (a 50% DoT or thorns node no longer fires on every tick or on none; replays recorded with 11.x diverge after a
+  modifier's second tick). `ModifierEngine.VersionOf` comes from one engine-wide counter (compare for equality
+  only). `Direction` skillshots fly to their intended end point (`Range + cast_range_bonus`; Range 0 flies the aim
+  length, at least `AbilitySystem.DefaultDirectionReach`) instead of detonating one unit after launch. Range checks,
+  hub radius queries, the spatial grid and `AbilityAutoCaster` share one exact inclusive radius test in double
+  precision.
+- **RPG** (**check**): `RpgContactDamage.OnTargetFound` now fires when a target comes into range and `OnTargetLost`
+  fires once per loss; `RpgEvadeController` reactive states notify only on change; direct 3D casts apply
+  `MaxTargets` nearest-first; `AuraWeapon` skips a pulse started from a damage callback of a running pulse;
+  `RpgAutoAttackController.Start` keeps a target set with `SetTarget`.
+- **NPC** (**check**): `NpcRpgCombatBrain.OnChaseStarted` fires once per chase, and an unchanged chase target no
+  longer restarts the path and re-fires `onTargetChanged` / `onSpeedChanged` every decision tick; a continuing chase
+  re-paths at **Path Update Interval**, and with **Auto Update Path** off the brain still follows a moving target;
+  Combined mode retries an unreachable chase after that interval; `onPathBlocked` / `PathBlocked` fire once per path
+  request; a combat receiver added after `Awake` gates actions.
+- **Shop**: `ShopListView.OnRefreshed` fires once per purchase or bundle (it fired 3 or N+1 times); `SetItems`
+  spawns rows for new catalog entries; `TryBuyBundle` reports `AlreadyOwned` for an owned single-purchase bundle;
+  `ShopVariantsPanel` re-pushes only the slots that changed and raises `ApplyVariantState` and the
+  `ShopVariantStateView` events once per change (`RefreshStates()` still pushes every slot). After editing
+  `ShopItemDatas` in place, call `SetItems(shop.ShopItemDatas, false)` to re-index.
+- **Bonus**: a `Collection` with **Set Instance On Awake** off loads its saved unlocks in `Awake`; such a
+  `CollectionVisualManager` wires its own item buttons, and `ItemCollection.Unlock()` writes into the collection its
+  manager displays; `Collection.Set` is read-only, and an out-of-range injected random index throws instead of
+  granting the lowest locked slot. Every UnityEvent of `Collection`, `CollectionVisualManager`, `Box`,
+  `ItemCollection`, `LineRoulett`, `SpinController`, `ButtonPrice`, `ShopItem` and `NpcNavigation` exists right
+  after `AddComponent`, so code-built scenes can subscribe without null checks.
+- **Cards** (**check**): scattered layouts and layout jitter are deterministic per card index and no longer consume
+  `UnityEngine.Random`; hand sorting is stable; `DeckComponent.Reset()` / `Initialize()` clear the visual stack
+  board, `ReturnCard` detaches the card from its hand or board, and the trump preview follows the bottom card. A
+  batch placement raises `OnCardPlaced` per card after the whole batch and then at most one `OnBoardFull`; batch
+  removal raises nothing; `DrunkardGame` fills and empties its board in batches (no extra `OnBoardCleared` per
+  restart). A UI card released by a board or hand stays under the root Canvas of the zone it left.
+  `DeckComponent.BuildVisualStackAsync()` and `BoardComponent.RestoreAllSourcesToBoardAsync()` complete
+  synchronously; `GetAllRanks()` / `GetAllCardData()` skip empty entries.
+- **GridSystem**: `TicTacToeBoardService` raises `FieldGenerator.OnCellStateChanged` for moves and resets after the
+  round state is committed; `SlidingMergeResolver.Slide`, the SlidingMerge and Dice `ClearBoard` and
+  `GridSlotAllocator.Clear` notify after every cell is written; on gapless rectangular grids
+  `GetNearestCellFromWorld` is constant-time and may pick the other cell on an exact shared edge; custom path
+  predicates run at most once per cell. `Match3BoardService` reports busy inside a delayed resolve's first step and
+  idle inside its completion callbacks, so a move or level chained from `OnMatchesResolved` is accepted; a cascade
+  limit of 0 no longer sticks busy, and `InitializeBoard()` from a resolve callback stops the old cascade.
+- **Save, Settings, Level**: `SaveProviderSettingsComponent` runs at `[DefaultExecutionOrder(-1000)]`, so readers in
+  the same scene load from the configured provider; an `OnDataLoaded()` exception is logged and the rest of the load
+  continues; `FileSaveProvider.Save()` with nothing new skips the disk write (it still raises `OnDataSaved`),
+  integers are written in the invariant culture (device-culture values from older builds still read), and a rejected
+  provider configuration is always logged. **check**: `GlobalSave.SaveProgress()` does nothing before
+  `GlobalSave.data` was read or assigned (it used to erase the stored profile). `SaveManager` flushes on both focus
+  loss and pause.
+- **Quest, Progression** (**check**): `Notify*` with a null or empty target id credit nothing (credit such
+  objectives by index); when an objective listener throws, the quest still completes and the exception is rethrown
+  afterwards; Auto Save writes once per top-level operation; unlocks and purchases with several rewards publish one
+  settled state before `OnNodeUnlocked` / `OnPerkPurchased`, and `TryUnlockNode` / `TryBuyPerk` re-check ownership
+  and points after user conditions, so a re-entrant claim cannot charge twice.
+- **Condition, NoCode, StateMachine** (**check**): `NeoCondition` **EveryFrame** throttles on unscaled time and
+  keeps checking while `Time.timeScale` is 0 (**Interval** follows game time unless **Use Unscaled Time** is on).
+  `NoCodeBindText` writes only changed values. **Enable Debug Log** is per component instead of one shared switch. A
+  machine configured before `Awake` survives activation; loading `StateMachineData` enters the assigned Initial
+  State asset; a target state's constructor that changes or stops the machine wins; a `FromStateType` changed after
+  `RegisterTransition` routes from its new source; `StateData` action lists run the entries present when a pass
+  starts; `StateMachineData.Validate(false)` always writes its warnings.
+- **Network**: `NetworkContextActionRelay` sends AllClients/OthersOnly actions to the observers of its
+  `NetworkIdentity`, so a client that hides the relay is no longer disconnected; on a host it sends to remote
+  observers before applying locally, and listener exceptions are logged instead of disconnecting the sender.
+  `NetworkActionRelay` OthersOnly also targets observers. `NeoNetworkDiscovery` advertises once per server or host
+  start with any network manager, stops with the server and no longer re-broadcasts searches during a session; an
+  advertising failure is one warning. `NetworkEventDispatcher` and `NetworkPlayerName` reject remote commands while
+  **Is Networked** is off, and `NeoNetworkBootstrap` starts again after a session ended without `StopNetwork()`.
+- **Tools/Input** (**check** in Input System-only projects): without a connected mouse, `MouseInputCompat` position,
+  delta and left button read the primary touch, as legacy `Input.simulateMouseWithTouches` does (MouseInputManager,
+  MouseEffect, InteractiveObject, Drawer, the Move mouse components, RpgButtonBinding). Opt out with
+  `OptionalInputSystemAdapter.SimulateMouseWithTouches = false` from a `BeforeSceneLoad` hook. Legacy and Both
+  projects are unchanged.
+- **Tools/Move, Physics** (**check**): `MagneticField` **Max Overlap Colliders** is the initial size of a growing
+  buffer, not a cap. `Follow` rotation limits and `UniversalRotator.limitRange` share one sector rule: the nearer
+  edge wins, sectors past 180° stay reachable, a range of a full turn or more disables limits (`[-360, 360]` no
+  longer pins every aim to 0), and an inverted range wraps through 180°. `Follow.TeleportToTarget` applies position
+  limits and snaps only the channels the follower follows (a rotation-only follower keeps its position and turns
+  straight to the aim, a position-only follower keeps its rotation); `DistanceChecker` fires `onDepart` once when
+  its target or source is lost; `AdvancedForceApplier` **Clamp Max Speed** also clamps the two physics steps after
+  `ApplyForce`; player `Teleport` moves the Rigidbody; the player animator drivers skip parameters the controller
+  does not declare. `CameraConstraint` pauses instead of disabling itself when its bounds source disappears and
+  resumes on the next one; `IsAtEdge` reports only constrained axes. A deactivated or destroyed
+  `CursorLockController` hands look back like `DisableController()`, and `PlayerController3DPhysics` treats an
+  inactive owner as absent.
+- **Tools** (**check**): `ErrorLogger` history is capped by **Max Entries** (50; 0 = unlimited); `Loot` does not
+  drop while its scene unloads or the app quits; `CameraAspectRatioScaler` stores its reference size and field of
+  view on the component (existing scenes capture the camera once); `Bootstrap` finishes its startup pass when an
+  `IInit.Init` throws and sets that target aside; `TypewriterEffect` keeps `CharactersPerSecond` over time, typing
+  several characters per frame when needed, and carries at most 0.1 s of a long frame into the next characters;
+  `ChanceManager` Inspector weights are no longer clamped to 0–1; `GameTimeController.SetTimeScale(0)` pauses like
+  `PauseGame()`.
+- **Pools and inventory**: a destroyed `PoolManager` retires its pools (stored instances are destroyed, a rental
+  still out is destroyed on its return, and `Get` on a dying manager returns null);
+  `SpawnUtility.ClearFallbackPools()` retires the pools it drops; fallback pools keep objects the incoming scene
+  spawned in its own `Awake` / `OnEnable`. **check**: `InventoryHand` keeps its spawned visual and writes to a
+  linked `Selector` only when the slot index or count changes; subscribe to
+  `InventoryComponent.OnSelectedItemChanged` for item changes in the selected slot.
+- **Packaging**: package assets no longer reference assets that ship only in `Samples~`, so a UPM install without
+  the samples has no missing references. The package now has its own copies (new GUIDs): `Prefabs/Bonus/Slot/Row`,
+  `SlotElement`, `SlotUI` and `Resources/Slot/SpritesDafualt.asset` use `Art/Bonus/Slot/` (`Frame 3`-`Frame 6`,
+  `Group 2`, `Group 2-1`, `Layer 4`, `Layer 11`); `Prefabs/Shop/ItemShop` uses `Art/Shop/` (`Group 132`,
+  `Group 133`, `Resource 1@4`); `Prefabs/Bullet`, `Prefabs/Simple Weapon` and `Prefabs/Tools/AI/OLD AI NPC` use
+  `Art/Materials/Neo Yellow.mat` and `Neo Red.mat`; the bundled `ThirdParty/CharacterMovementFundamentals/Art`
+  controller and materials use `Art/Capguy/Animations/` (nine clips), `Art/Capguy/Textures/` and
+  `Art/Environment/Textures/Tex_Grid_Red.png`. Files that only those package assets used left the samples: Demo
+  `Sprites/Group 2-1.png`, `Sprites/Layer 11.png`, `Sprites/Clicker/Group 132.png` and `Group 133.png`; Character
+  Movement Fundamentals the nine `Capguy/Animations/*.fbx` clips (Fall, Idle, Jump, Land, WalkBackward, WalkForward,
+  WalkLeft, WalkNeutral, WalkRight), `Capguy/Model/Textures/Tex_Cap.png`, `Tex_Capguy.png` and
+  `Environment/Textures/Tex_Grid_Red.png`. See
+  [moved assets](Docs/Migration12.md#package-assets-moved-out-of-the-samples). The folder metas without a folder
+  (`Scripts/GridSystem/Editor.meta`, `Scripts/NPC/Core.meta`, `Scripts/Rpg/DemoUtils.meta` and the Character
+  Movement Fundamentals `Misc/Physics Materials.meta`) are gone, so a fresh install no longer warns about them.
+- **NeoxiderPages (sample)** (**check**): `PM` page switches and setup warnings log through `NeoDiagnostics` behind
+  the per-manager **Debug Logs** flag (errors for missing pages still log), and name lookups (`ChangePageByName`,
+  `TryGetPageIdByName`, GM Win/Lose/End) use a name index instead of LINQ and per-switch `Object.name` reads. The
+  Pages `FakeLoad` uses unscaled time by default (existing instances included); a one-shot load completes one frame
+  after `Load()` in Play Mode, so a loading page used as PM's startup page closes on scene revisits, and a load
+  interrupted by deactivating its GameObject continues on reactivation. `BtnChangePage` buttons whose Action still
+  holds a legacy UIKit.Page value (for example 12 = Pause) open their Target Page again with a one-time warning
+  (the inspector offers **Use Open Page**), and adding the component no longer creates a `PageOpen` asset. The PM
+  Editor Preview buttons no longer raise `OnPageChanged`. `UIPage.HasShowAnimation`, `ShowAnimationDuration` and
+  `HideAnimationDuration` are virtual, so animated pages can make PM wait.
+- **Extensions, Core, Reactive, Haptics** (**check**): `StringExtension.ToFloat` / `ToInt` parse the invariant
+  culture first (`"1.500"` now reads as 1.5 on dot-grouping locales) and `ToBool` is ordinal; a destroyed `Camera`
+  counts as null in `ScreenExtensions` and `UIUtils.WorldToCanvasPoint`; `LookAt2D` and `GetClosest` are null-safe;
+  `NeoDiagnostics.LogWarningThrottled` never forgets a running window and lets new keys at the bound share one
+  overflow window; `ResourcePoolModel.Tick` raises nothing for regen or heal cycles that add nothing; weak
+  `ReactiveProperty` subscriptions with a destroyed target are removed silently; a throwing `Haptics.Played`
+  observer is logged and the pulse still plays.
+
+### Performance
+
+Measured in the Unity 6000.3.14f1 Editor (Mono, batch, profiler off), with the old code path and the new one in the
+same harness. Run the explicit `Performance` test category to measure on your machine
+([Testing](Docs/Testing.md#performance-and-allocation-tests)) and compare `NEO_PERF` lines only from the same
+machine and Unity version.
+
+| Hot path | Before | 12.0.0 |
+|---|---:|---:|
+| Input System key read (`InteractiveObject`) | 35.1 µs, 24 GC.Alloc | 0.41 µs, 0 |
+| Mouse poll (`MouseInputManager`) | 60.9 µs, 39 GC.Alloc | 1.02 µs, 0 |
+| Primary touch (`SwipeController`) | 34.4 µs, 25 GC.Alloc | 0.92 µs, 0 |
+| `MoveInputCompat.ReadMove` (8 keys + left stick) | 113.2 µs, 68 GC.Alloc | 3.55 µs, 0 |
+| 1000 `InteractiveObject`s on one shared ray, per frame (5 routes) | 1008–1927 ms | 6.3–10.9 ms |
+| 100 `InteractiveObject`s on one camera ray, per frame | 12.3 ms | 0.64 ms |
+| `Match3BoardService.TryFindValidSwap`, 32×32 board | 37.3 ms, 4978 allocations | 0.52 ms, 0 |
+| `Match3BoardService.TryFindValidSwap`, 16×16 board | 2.41 ms, 1202 allocations | 0.12 ms, 0 |
+| `Selector` getters at 1000 indices, 100 calls | 4.77 ms, 2400 allocations | 0.0075 ms, 0 |
+| StateMachine transition to a cached C# state type | 0.86 µs, 3 allocations | 0.34 µs, 0 |
+| NoCode StateMachine evaluation, 128 states / 256 transitions | 17.25 µs | 0.55 µs, 0 |
+| 128-card stack on a `BoardComponent`: one by one vs `PlaceCardsImmediate(cards)` | 113 µs per card | 14.8 µs per card |
+| Ability radius query among 1024 units: linear scan vs opt-in spatial grid | 307 µs | 0.96 µs, 0 |
+
+- **No allocations once warm**, guarded by GC.Alloc tests: Input System polling and
+  `UIInputCompat.IsPointerOverUI()`; ability event publication, instant and projectile casts, hits, modifier ticks,
+  reactions, `chain`, `dispel` and `remove_modifier`; the RPG character tick, regen, damage, Direct/Area casts, aura
+  pulses and target selection; accepted Match3 swaps with their cascades and the no-moves shuffle; SlidingMerge
+  `CanSlide` / `HasAnyMove` and pathfinding queries; immediate board and hand layouts,
+  `PokerHandEvaluator.EvaluateStrength`, hand queries, comparers and shuffles; `NeoObjectPool` Get/Return (also
+  O(1)); StateMachine updates and transition evaluation; `Selector` commands; quest notifications, reward dispatch
+  and `NpcNavigation` ticks; `Shop` id lookups and `ShopListView` rebinds; `TimerObject` labels and `TimeToText`;
+  warm `AM.Play` / `TryPlay` / `PlayAt`; `Drawer` stroke rebuilds; `ExplosiveForce` / `MagneticField` overlaps; UI
+  Mesh Rig rebuilds; settings preset and quality changes and `GameSettings.SaveState()`; throttled `NeoDiagnostics`
+  warnings; `UIUtils.IsPointerOverUI` / `GetUIElementsAtPosition`, `GetCombinedBounds` and the list/array
+  extensions. `ResourcePoolModel.Tick` and `ReactiveProperty` set-and-notify measured 0 allocations. The working
+  GC.Alloc counter also found two hidden allocations, now fixed: RPG direct 3D casts, 2D casts and
+  `RpgProjectile` sorted hits through `Array.Sort` / `List.Sort` with a comparer, which wraps a new delegate on
+  every call, and three-argument `Mathf.Max` / `Mathf.Min` (a `params` array per call) ran in every `AuraWeapon`
+  pulse and every `SpinController` line count; a source guard keeps `params` overloads of `Mathf.Max` / `Min` out of
+  the package.
+- **Algorithms**: N interaction targets on a shared ray of H hits cost about H + N instead of N × H; batch board
+  placement and removal use one layout pass (O(n) transform writes instead of O(n²)); `SlotGridInventory.Add` is
+  O(slots) instead of O(slots²); ascending progression reward tracks are walked in one pass; the ability spatial
+  grid is patched in place on `TryMoveUnit` and unregistration; ability id lookups keep their case-insensitive rules
+  with an ASCII fast path; `ResourcePoolModel.Tick` reuses its registration snapshot; `MergeResolver` cleans visited
+  state in O(group); NPC re-paths are staggered. Bonus `CheckSpin` payline counting is allocation-free
+  (`GetWinningLines` / `GetMultiplayers` still allocate once per spin).
+- **Fewer native calls**: `ParallaxLayer` skips its per-tile pass while nothing moved; `Follow`, `ScreenPositioner`,
+  `CameraConstraint`, `BillboardUniversal`, `ZPositionAdjuster`, `MeshEmission`, `LightAnimator`,
+  `TransformAnimator` and `AM` write only on change; `ImageFillAmountAnimator.SetValue` keeps the running tween for
+  a repeated target; `UIMeshRigElement` repaints only while its pose changes over time, and the world and sprite rig
+  renderers upload only positions on a pose rebuild; `FileSaveProvider` skips unchanged flushes; `[SaveField]`
+  lookups and collection wrappers are resolved once per type; `NetworkContextActionRelay` caches resolved types and
+  methods; animator drivers and `AnimatorParameterDriver` use cached hashes.
+- **Startup and Editor**: the singleton and `NetworkSingleton` static-reset sweeps run only in the Editor over the
+  assemblies that can declare them, and the `NeoEditorAutoRegister` type scan is gone. Each Neo inspector resolves
+  its property plan once, reuses cached `SerializedProperty` objects, styles and labels, retries unresolved
+  `[FindInScene]` / `[GetComponents]` / `[LoadFromResources]` lookups only after a change or every 0.5 s, and idles
+  its repaint ticker while Unity is in the background. The NoCode pickers and the NeoCondition, AM, DeckConfig,
+  Progression, Level Curve and Stat Growth inspectors, UI Mesh Rig handles, Ability Designer, the State Machine
+  editor and the Create Neoxider Object window cache what they used to rebuild per repaint. Section titles, count
+  pills, badges and the banner reuse their `GUIContent` and remember text widths; the State Machine Data, State
+  Data, Quest Flow Config, Scene Saver and UI Mesh Rig adapter inspectors rebuild their badge arrays and row texts
+  only when a value changes, and the State Data action-type scan runs once per domain reload.
+- **`ImageFillAmountAnimator.SetValue` with the running target** no longer allocates: its tween lambdas captured
+  locals of the whole method, so the compiler created their closure object on every call, the early return for a
+  repeated value included (one GC.Alloc per call from a binding that pushes the same value each frame).
+
+### Fixed
+
+- **Tools/InteractableObject, Input**: a target whose collider sits only on a child is found again in Editor Play
+  Mode (player builds were not affected); a filtered 2D raycast no longer returns a stale cached result after
+  `Physics2D.queriesHitTriggers` changed in the same frame; the automatic EventSystem check costs one scene search
+  for many targets and no longer throws and catches in Input System-only projects; `FreeFlyCameraController` wheel
+  speed, `Drawer` and the player controllers work in Input System-only projects; the `MouseInputManager` gizmo uses
+  the event it built.
+- **Tools/Move, Physics**: `Follow` 2D keeps its rotation while sitting on its target, and a follow-state listener
+  can move the follower or clear the target safely; `PlayerController3DPhysics` applies camera pitch every rendered
+  frame and unsubscribes exactly what it subscribed; `NeoCharacterSprint` without an `AdvancedWalkerController`
+  warns once and disables itself instead of throwing every frame; `MagneticField` with an Update Interval runs its
+  first update immediately; `ExplosiveForce` survives a listener that explodes again; `MouseMover2D` /
+  `MouseMover3D` find `Camera.main` again after a camera swap.
+- **Tools/Time, Random**: `TimerObject` **Time Text** (TMP) works; it was compiled out behind an undefined define
+  (assign the label explicitly; it is never auto-found). An invalid Time Format shows the default with one gated
+  warning instead of throwing; day-cycle and infinite timers no longer drift from float rounding; the start pulse
+  restores the original scale on restart or disable; `TogglePause` no longer resumes to a stale slow-motion speed.
+  `IntegerChanceTable` applies Inspector edits without `Invalidate()`, and `UnityRandomBelow` no longer loops
+  forever above 2^60.
+- **Tools/Components**: `CameraAspectRatioScaler` no longer creeps the camera size up after an Edit Mode preview and
+  a reload; a relative `CameraShake` returns a moving camera to its pre-shake pose; `Counter.Registry` is cleared
+  between play sessions with domain reload disabled; `ScoreManager` derives its starting stars like `ResetScore()`.
+- **Tools/Spawner, Inventory**: a pool rental with no parent moves into the active scene in Play Mode instead of
+  leaking into the next scene from `DontDestroyOnLoad`; destroying only the `PoolManager` component destroys its
+  stored instances; a prefab spawned from the incoming scene's `Awake` gets a fresh fallback pool instead of one
+  whose storage died; `InventoryPickupBridge` and `InventorySlotView` ignore destroyed pickups and grids; a stale
+  `AutoSaveScope` dispose is ignored.
+- **Tools/View, Animations**: `Selector` keeps Inspector-authored Excluded Indices in player builds, and an emptied
+  set is saved as an empty value; `LightAnimator` stops cleanly when its light is destroyed;
+  `MeshEmission.ResetToOriginal` restores the exact baseline with `emissionCutoff >= 1`.
+- **UI**: `AnimationFly` components other than the singleton find their Bonus Prefab List types in player builds and
+  use their own screen-to-world depth, and a huge count product spawns the cap; `ButtonChangePage` press feedback
+  scales every axis, and navigation ignores a destroyed page manager; `FakeLoad` finishes zero-length loads once and
+  stops the old stream when `EndLoad()` / `Load()` is called from a progress listener; `CategoryBar` logs no error
+  when it is destroyed with its scene. UI Mesh Rig: adding or removing an owner component between a rig and its
+  points moves those points to the right rig, points with a destroyed owner no longer throw, the creation menu
+  commands are one Undo step, and Add Point / Duplicate / preset points keep their keys and settings through Redo.
+- **Abilities**: grid queries with huge radii or far coordinates return the same units as the linear scan on every
+  platform (x64 builds returned nothing); a unit on the auto-caster's range boundary is no longer rejected as
+  `OutOfRange`; a projectile releases its pending cast when disabled or destroyed and returns to the pool when the
+  hub is gone; `DestroyUnit` forgets the unit's modifier bookkeeping; an `AbilityUnitBehaviour` that outlives its
+  hub no longer unregisters the replacement hub's unit with the same id; shielded hits no longer keep the last
+  victim's modifiers alive.
+- **RPG**: NaN, infinite and overflowing stat bases are ignored and such save rows are skipped (one NaN base made a
+  character that could never die); resource and stat `SetCurrent` / `SetMax` keep their value on NaN; `AddXp(NaN)`
+  is ignored, and upgrade points and levels saturate instead of wrapping; destroyed network adapters no longer
+  swallow commands; `IRpgCombatReceiver.TakeDamage` keeps the hit source; the server drops a network command of an
+  unknown type instead of replicating a snapshot for it.
+- **NPC, Shop**: NPC animator parameters are validated once per controller (no per-frame "parameter does not exist"
+  warnings); `TextMoney` binds when a wallet registers instead of scanning the scene every frame, and recovers after
+  disable/enable; Shop-owned buy buttons unsubscribe from the button they subscribed, and `SetItems` no longer
+  stacks duplicate listeners.
+- **Bonus**: `WheelFortune` with Single Use off no longer locks its CanvasGroup after the first spin, and a
+  destroyed wheel graphic ends the spin; the obsolete `TimeReward` keeps its running or paused state while inactive;
+  `CollectionVisualManager` subscribes when hidden before its Collection exists and no longer throws when a
+  code-created Collection appears after it; automatic `BoxProgress` claims never collide with caller claim ids; a
+  slot `Row` spun before its `Awake` keeps its spin.
+- **Cards**: deals after `Reset` / `Initialize` always carry the card that left the model; `ShuffleVisualAsync` no
+  longer shakes cards dealt mid-shake and accepts negative durations; `DeckModel.Draw(-1)` and negative layout
+  counts no longer throw; `CardSettingsRuntime.GlobalAnimationConfig` resets each play session; a card that leaves
+  the board through a hierarchy callback during placement no longer stays a phantom member; a `DrunkardGame` restart
+  from such a callback cannot place the old card; an aborted stack build destroys the cards it created, and the
+  debug list no longer grows by a deck per restart; `PlaceCardsImmediate` stops after a listener clears the board.
+- **GridSystem**: a TicTacToe move or reset made from a cell listener is handled consistently; Dice Inspector edits
+  in Play Mode reach the live board; on an inactive GameObject a delayed Match3 swap or resolve runs immediately
+  instead of failing to start its coroutine.
+- **Save, Settings, Level**: a Deferred settings save whose coroutine was stopped from outside is restarted by the
+  next change; if the save provider throws partway through `ResetAllProgress()`, the maps already reset stay reset
+  and their notifications still run. `LevelComponent` publishes the new XP and XP-to-next values before the level
+  listeners and `OnLevelUp` run, so an XP label or bar next to a level label no longer shows the previous profile
+  inside a level callback, and each `AddXp` / `SetLevel` call (also one made from an `OnLevelUp` reward) notifies
+  every reactive state exactly once.
+- **Quest, Progression**: crediting an objective through a config with appended objectives stores the completion it
+  reports; ReachPoint and Talk objectives can be completed by Target Id; a jump to a very high level no longer
+  iterates every level number; `ValidateDefinition` reports a whitespace-only id.
+- **Condition, NoCode, StateMachine**: an empty Source Object, Other Source Object or NoCode Source Root saved in a
+  scene, prefab or asset falls back to the context in Editor Play Mode (for example, a `ConditionEntryPredicate` in
+  a saved `StateMachineData` never passed); an inverted entry can no longer pass on a missing object; Initial State
+  Type Name resolves full type names across assemblies and warns when **Enable Debug Log** is on; labels of
+  unregistered transitions are no longer kept alive.
+- **Network**: the relay type-name cache scans again after a new assembly loads (mods, hot-update DLLs);
+  `NeoMirrorSceneReactivator.Enabled` resets at play start with domain reload disabled, and
+  `NeoNetworkBootstrap.HasStartedNetwork` clears on the frame after a session ends without `StopNetwork()`;
+  `NeoNetworkComponent.RateLimitCheck` drops expired connection entries on long-running servers.
+- **Editor**: the scene hierarchy template is applied on the first access after an editor restart; a manual update
+  check no longer drops back to idle while the tags fallback runs; an empty `[GetComponents]` / `[FindAllInScene]`
+  collection no longer keeps the scene marked modified; removing a Neoxider Settings folder no longer desyncs the
+  layout, the Missing Scripts window no longer removes rows mid-draw, `RequireInterface` and UnityEvent labels keep
+  their tooltips, the neutral mascot face keeps its quality, and DeckConfig / NeoCondition text is readable on both
+  editor skins; the Dialogue Editor no longer dirties the scene when closed and follows undo, outside edits and skin
+  switches; the Edit Transition window keeps its transition across script reloads only when that row is unchanged;
+  `CreateMenuObject.startPath` always uses '/', Prefab To Sprite shows the real preview, and save panels and dialogs
+  no longer leave layout errors; the Ability Designer rebuilds its effect board after outside edits; the
+  popup-option cache no longer keeps closed inspectors alive.
+- **NeoxiderPages (sample)**: `PM.SetPage` raises `OnPageChanged` once (it raised it twice); a switch to an unknown
+  PageId no longer blanks the current and previous page; reopening the current page keeps the Back history, so Back
+  no longer closes the only visible page; `CloseCurrentPage` on a popup makes the page under it current again;
+  `FindPage` no longer returns a destroyed or re-assigned cached page. `BtnChangePage` no longer throws without a
+  `PM` or a parent, ignores right and middle clicks, warns on an undefined Action value and keeps non-uniform scales
+  in its press animation. `PageSubscriber` resolves PageIds through the PM instead of
+  `Resources.FindObjectsOfTypeAll`, waits for EM (it threw with GM but no EM) and unsubscribes when destroyed.
+  `ToggleAudio` works without GM and no longer lets the toggle's initial state overwrite the saved mute. The UIKit
+  `Audio`, `Wallet`, `Score` and `Level` facades return defaults instead of throwing when their manager is missing,
+  and `G` checks GM/EM with Unity null semantics. A repeated one-shot `FakeLoad` completes at once, `Load()` during a
+  load restarts it, and its one-shot flag and the `UIKit` listeners reset each play session. The Privacy Page
+  prefab's Accept button opens PageMenu and the Menu Page settings button opens PagePause again (their stale action
+  values 3 and 12 did nothing).
+  The Pages inspectors no longer allocate or search the scene on every repaint, the PageId dropdown writes only
+  when you pick an entry (safe multi-object editing), and Auto Sprite Assigner resizes can be undone.
+- **Rewards and events of components created from code**: `CooldownReward.SetRewardAvailableNow()` raises
+  `OnRewardAvailable` (it marked the reward available before the refresh that announces it, unlike `TimeReward`).
+  `ColorAnimator`, `Vector3Animator`, `FloatAnimator`, `TimerObject` and `Neo.UI.FakeLoad` initialize their
+  UnityEvents, so a component added with `AddComponent` has events to subscribe to.
+
+### Demos
+
+- **Every module demo scene is authored in the scene.** The Demo Scenes sample and the NeoxiderPages UI scene are
+  built by editor scene builders (`Neo.Demo.Editor`) and saved with their UI, configured components and persistent
+  UnityEvent wiring, so you can inspect the setup without Play Mode; nothing is built at Play start. Rebuild a scene
+  from **Neoxider > Demo > Rebuild Active Demo Scene**; see [how demo scenes are
+  made](Docs/Samples.md#how-demo-scenes-are-made).
+- **New and reworked scenes**: CardGame guide overlay (fixed shuffle seed, restart); AnimationFlyDemo (coin, gem and
+  chest flights, `PlayByType`, live readouts) and UIMeshRigDemo with the SpriteRenderer adapter; SlotExample and
+  WheelFortuneExample with demo bets, paylines and paytable data; ChanceSystemExample (`IntegerChanceTable` jackpot
+  odds) and a Dialogue scene with `DialogueLinePlayer` barks; Audio, Parallax, Light and Selector demos;
+  InventoryUseDemo with slot grid views and a generated item database; AbilitiesNoCodeDemo, SurvivorDemo
+  (`SurvivorHudView`) and the VampireSurvivorMCP HUD; RpgCharacterQuickDemo and RpgCombatNpcDemo (`ApplyDamage` with
+  a source, `DamageApplied`, an `IRpgDamageModifier` guard); CameraAspectRatio, Follow, DrawExample,
+  MouseEffectorExample and CameraConstraint; Save (64-bit wallet, write counters), Settings (deferred save) and
+  LevelFlowDemo; AttributeExample; GridSystem Match3, TicTacToe (5×5 four-in-a-row, O bot) and Dice Merge with an
+  Edit Mode board preview; Progression and Quest; Shop and the NPC scene migrated from `AiNavigation` to
+  `NpcNavigation`; StateMachine, NeoCondition, NoCode binding and NoCode actions; NetworkDemo (relay scopes, a
+  server-authoritative boss, LAN discovery, telemetry rows).
+- **New module scenes**: `Scenes/Animations/AnimatorsDemo.unity` (`FloatAnimator`, `ColorAnimator`,
+  `Vector3Animator` and `TransformAnimator` on real targets with Inspector-wired value bindings,
+  Play/Pause/Resume/Stop, a shared AnimationType and speed, TransformAnimator channels and a Shake impulse; menu
+  **Neoxider > Demo > Open Animators Demo**); `Scenes/UI/UIComponentsDemo.unity` (`CategoryBar` tabs switching a
+  `VariantView` page, a `VariantView` badge, `AnchorMove`, `FakeLoad`, `ButtonShake` and a `PausePage` overlay with
+  scaled and unscaled clocks); `Scenes/Bonuses/BonusRewardsDemo.unity` (a reward loop of Bonus components only: a
+  `Collection` of six pizzas shown through `CollectionVisualManager` slots and an `ItemCollectionInfo` details row, a
+  `Box` chest filled by a `CooldownReward` gift that grants a random locked pizza, the legacy `TimeReward` paying
+  into a session-only `Money` wallet, and a reset); `Scenes/Tools/Physics/Physics3DDemo.unity` (`MagneticField`
+  pulsing between pull and push, an `ImpulseZone` trigger above an elastic plate that keeps balls bouncing, with a
+  Kick button, and a manual `ExplosiveForce` mine fired with `Explode()` and `Explode(18)`). The UI Components,
+  Bonus Rewards and Physics 3D scenes are wired without a demo script.
+- **Example games**: the hand-authored NoCode reference games `_ExampleGame/adventure`, `ClickerExample` and
+  `Shooter2D` get minimal builders (`Editor/Builders/ExampleGames`) that add an info card naming the key objects and
+  their UnityEvent wiring and replace the legacy `StandaloneInputModule`; the games themselves are never rebuilt.
+  The NeoxiderPages `UI.unity` gets a plain uGUI **[Demo] Pages Info** card (no Demo-sample components, portrait
+  scaling) with Pause popup / GM Win / Back / Close buttons, authored by `PagesUIBuilder`.
+- **Behaviour**: demos use demo-only save keys and files (`Neo.Demo.*`, `NeoDemo.Quests`, `neo_save_demo.json`), so
+  they no longer overwrite a game's keys; EventSystems use `InputSystemUIInputModule` (a hand-authored
+  `StandaloneInputModule` is replaced on rebuild); `DemoPointerGate` keeps clicks on demo UI from drawing, dragging
+  or spawning in the world; NeoxiderPages scenes contain no Demo-assembly components, so a Pages-only import has no
+  missing scripts; the NetworkDemo manager no longer auto-creates a player without a prefab and is no longer
+  `DontDestroyOnLoad`.
+- **Save keys of the example games** (**check**): adventure saves its inventory under `NeoDemo.Adventure.Inventory`,
+  ClickerExample under `NeoDemo.Clicker.Money` / `.Shop` / `.BestScore` / `.Level`, Shooter2D under
+  `NeoDemo.Shooter2D.Money` / `.BestScore` / `.Level`, and the Pages UI scene under `NeoDemo.Pages.Money` /
+  `.BestScore` / `.Level`; Progression_Demo drops the unrelated `PlayerInventory` / `Progression_Managers` objects,
+  whose inventory autosaved `Inventory_Default`. ClickerExample progress saved by earlier versions under the
+  default `Money` / `Shop` keys is not carried over: those keys belong to your game.
+- **Sample scripts**: `SurvivorPlayerController` reads movement through `MoveInputCompat`, so SurvivorDemo works with
+  Active Input Handling = Input System Package (New). `RpgWorldHealthBars` gains `Track` / `Untrack`, a
+  scene-assigned target list and a **Scan Scene For Targets** toggle (the scene search is only a fallback for
+  hand-made scenes) and no longer allocates per frame; RpgCombatNpcDemo authors its targets. The `CubeEnemy` prefab
+  carries an authored `RpgDeathHandler`, so `VampireSurvivorDemoController` no longer adds one at runtime (an enemy
+  without it is deactivated on death with a one-time editor warning), and `SurvivorGame` reports a missing
+  `SurvivorConfig` as a one-time editor warning. Builder texts use `->` instead of U+2192, which the static TMP atlas
+  lacks.
+- **Demo kit** (`Neo.Demo.Editor`, for builder authors): `DemoSceneBuildContext` gains `Retire`, listener ownership
+  (`OwnListeners`, `TrackListeners`, `ValidateListeners`), `AllowRuntimeAsset`, `FindHandAuthoredRoot`, `HostOf` /
+  `IsGeneratedTarget` / `IsGeneratedRoot` / `TryGetRootKey` and nested `.Array.size` paths in `Set`;
+  `DemoWiring.AddDynamic` for two- and three-argument events, `AddSetter` / `Setter`, `PruneOwned` / `PruneWhere`;
+  `DemoSceneKit.CornerPanel`, `WorldLabel`, `Readout`, `Step` / `StepFailed`, `UpgradeLegacyInputModule(s)` and
+  public backdrop helpers; `DemoFrameOptions` header/log widths, content card and input-module upgrade; `DemoPanel`
+  value, text, log and bar rows; `DemoSceneAssets.WhiteSquare`, `EnsureAsset`, `EnsureRenderTexture`,
+  `EnsurePrefab`, `LoadDemoAsset`; `DemoSceneRunner.TryCreateSceneAsset`, so **Neoxider > Demo > Rebuild ...** and
+  `DemoSceneBatch.RebuildAll` create a missing builder scene (and its folder `.meta` files) instead of failing with
+  "Scene asset not found". Validation warns about characters missing from a static TMP atlas and Mirror scene ids
+  of 0; reused primitives and prefabs no longer get duplicate children. Game-view PNGs can be captured
+  without Play Mode (`Neo.Demo.Editor.DemoSceneBatch.CaptureAll` with `-neoDemoShots <dir>`, `-neoDemoScenes`,
+  `-neoDemoShotSize WxH`, or **Neoxider > Demo > Capture**); scenes are never saved.
+- **Demo save keys and text**: Shop, AttributeExample, NeoConditionDemo and CardGame now persist under
+  `NeoDemo.<Demo>.<Data>` keys too, so no sample scene reads or overwrites the save of the user's own game (the
+  NeoCondition '+25' button used to write the user's `BestScore`). Arrows and circled digits in demo labels and log
+  lines are plain ASCII (`->`, `<-`, `1.`), so TMP no longer adds them to the dynamic fallback font asset during
+  Play. VampireSurvivorMCP assigns its health bars to the controller and turns the bars' scene search off in the
+  saved scene.
+- **Mirror scene ids in demo scenes**: with Mirror installed, entering Play Mode in ClickerExample or Shooter2D
+  stopped at once ("needs to be opened and resaved"): the `--System--` prefab's `Money` carries a `NetworkIdentity`
+  whose sceneId Mirror assigns only in memory. A rebuild now gives every scene `NetworkIdentity` without an id a
+  stable one (scene path + hierarchy path) and records it on prefab instances.
+
+### Docs and tests
+
+- **Pictures in the docs**: the repository README, the package README and the Docs index open with a gallery of
+  demo-scene captures (Editor and Play Mode) linked to the module guides, plus a "What's new in 12" summary with
+  measured numbers; every module guide shows its demo scene and a concept illustration in the README style. The
+  images live in the repository's `Images/demos` and `Images/modules` folders, outside the UPM package.
+- **Docs**: new [Upgrading to 12](Docs/Migration12.md). The READMEs, the Docs index and `PROJECT_SUMMARY.md`
+  describe the current module set, the plain C# cores and time/random seams, and the builder-authored demos;
+  `Samples.md` describes how every demo scene is made. New pages: Tools/Time/Clocks,
+  Tools/Random/IntegerChanceTable, Tools/Dialogue/DialogueLinePool, GridSystem/GridPathfinder, Bonus CollectionSet,
+  BoxProgress and CooldownSchedule. Module pages open with What it is / How to use and match the current API;
+  `MODULE_STRUCTURE.md` is in English with the current assembly map; `DEPRECATED_OR_REMOVAL_CANDIDATES.md` lists
+  every current `[Obsolete]` member; `UsefulComponents.md` is rebuilt from the real component menus; `Testing.md`
+  gains "Performance and allocation tests"; Tools/Input and Tools/InteractableObject document the measured numbers.
+  The Cookbook slot recipe no longer wires `SpinController.OnWin` to `Money.Add` while Auto Payout is on (that paid
+  twice). The `neoxider-tools` skill is synced with 12.0.0 and its stale examples are fixed. The NeoxiderPages pages
+  describe the PM behaviour; the Animations, Bonus, Tools/Physics and UI pages point to their new demo scenes;
+  `Samples.md` lists every scene and the modules that still have no demo scene; `Testing.md` lists every benchmark
+  suite and the sample-scene tests.
+- **Tests**: the new test-only assembly `Neo.Tests.Performance` (`Tests/Performance`) provides a self-calibrating
+  native GC.Alloc counter (`GcAllocCounter`, `GcAlloc`) and the single `NEO_PERF` line writer (`NeoPerf`,
+  `NeoPerfUpdateWindow`); `Neo.Editor.Tests` and `Neo.Tests.Play` reference it. Zero-allocation guards count
+  GC.Alloc calls instead of `System.GC.GetAllocatedBytesForCurrentThread()`, which reads 0 in the Unity 6 Editor, so
+  the old guards could never fail; when the recorder is unavailable a guard reports Ignored, never passed.
+  Benchmarks are explicit tests in the `Performance` category. New regression and allocation tests cover every
+  module, `Neo.Demo.Editor.Tests` builds each demo scene twice (wiring present, second pass changes nothing), the
+  cursor-ownership tests run against an in-memory cursor on batch hosts, and the editor validation host requires an
+  explicit `-neoValidationExpectedPackageVersion`.
+- **Sample and packaging tests**: `SampleScenePlaySmokeTests` (PlayMode) loads every scene of the visible samples,
+  ticks 12 frames and fails on error, assert or exception logs, Filled Images without a sprite, a demo controller
+  that reports `IsSceneBuilt == false` or logs an unbuilt-scene warning, and a builder-owned scene without its
+  authored info card; `EveryRegisteredSceneBuilder_HasItsSceneSavedInTheVisibleSample` fails for a builder whose
+  scene was never saved. `AudioDemoScenePlayTests` presses the authored AudioDemo buttons and removes
+  `AudioDemoController` mid-crossfade (borrowed music keeps playing); it replaces the session case that expected
+  runtime-built clips. `SampleSceneSaveKeyTests` (EditMode) scans every sample scene and prefab, prefab-instance
+  overrides included, and fails when a persisting component (inventory, level profile, progression, quests,
+  counter, selector, timer, wallet, shop, score, level manager, equipment, leaderboard, box, collection, rewards)
+  uses its library default save key. `PackageSampleIsolationTests` fails when a package asset references a GUID
+  that ships only in the samples, and `ParamsOverloadAllocationTests` keeps `params` `Mathf.Max` / `Min` calls out
+  of the sources. Sample asset validation and the sample evidence tests check each visible sample and skip only
+  hidden or not-imported ones (missing scripts from a hidden sample are skipped, references that resolve nowhere
+  still fail); Character Movement Fundamentals scenes are skipped in Input System-only projects with that reason;
+  the sample PlayMode isolation removes the demo-only `neo_save_demo.json`. `Neo.Demo.Editor.Tests` adds the
+  AnimatorsDemo / UIComponentsDemo, Bonus Rewards, Physics 3D and missing-scene-creation builder tests, and
+  `NeoxiderPagesChangedBehaviorTests` the PM, `BtnChangePage`, `PageSubscriber`, `ToggleAudio`, facade and
+  `FakeLoad` regressions (they run while the Pages sample is visible).
+  `NoCodeWrapperAdditionsTests` covers the new one-argument targets and the event initializers; new regressions pin
+  `CooldownReward` / `TimeReward` availability events, `Box.ResetProgress`, the `ButtonScale` release scale and a
+  `FakeLoad` load that survives deactivation. `RpgDemoHealthBarFeedTests` (PlayMode), `VampireSurvivorEnemyPrefabTests`
+  and `ExampleGameBuildersTests` (`Neo.Demo.Editor.Tests`) cover the health-bar feed, the authored enemy death
+  handlers and the example-game guides. The Neo inspector chrome repaint test now allows Unity's own text-draw cost
+  (one GC.Alloc per IMGUI text in Unity 6.3) and fails on anything the chrome allocates itself.
+
 ## [11.0.1] - 2026-10-28
 
 ### Changed
@@ -25,7 +725,7 @@ See [migration from 10.x](Docs/Migration11.md) for deliberate behavior changes.
 HtmlToUitk current acceptance: fresh CLI **2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**,
 and complete Unity assembly **370/370,0 skipped per SDK**, with real three external CLI runs/native import/Play UI and manual
 Unity 6.3 OS interaction at1280×720. The30 debt cases remain nonexecuted. Portable net9 CLI uses
-LatestMajor on tested.NET 10; no runtime9 is bundled. [Exact scope](Docs/UI/HtmlToUitkVerification11.md).
+LatestMajor on tested.NET 10; no runtime9 is bundled. [Exact scope](https://github.com/NeoXider/HtmlToUitk/blob/main/Documentation~/HtmlToUitkVerification11.md).
 Release delivery is choose-one Core/Complete plus `HtmlToUitk.Cli.v11.0.0.zip`, SHA256SUMS and
 a release-input manifest; actual final archive export/import and publication are separate gates.
 
@@ -220,7 +920,7 @@ a release-input manifest; actual final archive export/import and publication are
 
 - **HTML/CSS → UI Toolkit**: встроенный runtime/editor для native controls, typed C# actions, навигации/modal/tabs, media width/height/aspect и keyframes/reduced motion. CLI создаёт UXML/USS/localization specs и проверяемые gradient PNG с manifest.
 - Static gradient backend поддерживает linear/radial/conic/repeating/alpha в явно ограниченном контракте; неподдерживаемая dynamic geometry и CSS/JS получают nonzero diagnostic. Full browser parity не обещается.
-- [Runtime/editor и C# API](Docs/UI/HtmlToUitk.md), [канонический внешний CLI](../../Tools/HtmlToUitk/README.md). CLI/.NET DLL не входят в package/player; для authoring нужен полный checkout либо отдельно собранный CLI с настроенным внешним путём. C# preview/compare пока unsupported nonzero; проверенные Python oracle альтернативы описаны в CLI документации. Проверенный native срез: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 и PlayMode — 7/7; failures/skips — 0, exit0. [Verification](../../Docs/Plans/HtmlToUitk-Verification-20261014.md), [TODO и открытые гейты](../../Docs/Plans/HtmlToUitk-TODO.md). Player/mobile и полный browser parity не заявляются.
+- [Runtime/editor и C# API](https://github.com/NeoXider/HtmlToUitk/blob/main/Documentation~/HtmlToUitk.md), [канонический внешний CLI](https://github.com/NeoXider/HtmlToUitk/blob/main/Tools~/README.md). CLI/.NET DLL не входят в package/player; для authoring нужен полный checkout либо отдельно собранный CLI с настроенным внешним путём. C# preview/compare пока unsupported nonzero; проверенные Python oracle альтернативы описаны в CLI документации. Проверенный native срез: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 и PlayMode — 7/7; failures/skips — 0, exit0. [Verification](https://github.com/NeoXider/HtmlToUitk/blob/main/dev-docs~/Plans/HtmlToUitk-Verification-20261014.md), [TODO и открытые гейты](https://github.com/NeoXider/HtmlToUitk/blob/main/dev-docs~/Plans/HtmlToUitk-TODO.md). Player/mobile и полный browser parity не заявляются.
 
 ## [10.18.1] - 2026-10-08
 

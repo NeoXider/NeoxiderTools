@@ -1,6 +1,13 @@
 ﻿# RpgResourceBinding
 
-**What it is:** a small component that binds one `RpgCharacter` resource to UnityEvents and NoCode UI.
+**What it is:** a small component (`Scripts/Rpg/Components/RpgResourceBinding.cs`, namespace `Neo.Rpg`) that binds one `RpgCharacter` resource to UnityEvents and NoCode UI.
+
+**How to use:**
+1. Add the component (menu `Neoxider/RPG/RpgResourceBinding`) to a UI object.
+2. Assign the `RpgCharacter` and choose a resource through a preset or `Custom`.
+3. Wire `OnCurrent`, `OnMax` or `OnPercent` to a slider, image fill or text.
+
+---
 
 Callbacks belong to one exact character/resource subscription. Disable, rebind and runtime replacement
 invalidate callbacks already captured in the former reactive notification. If an initial `OnCurrent`

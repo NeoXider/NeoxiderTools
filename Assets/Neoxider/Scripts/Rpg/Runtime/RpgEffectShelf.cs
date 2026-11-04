@@ -236,6 +236,40 @@ namespace Neo.Rpg.Runtime
             return FindStatus(id) != null;
         }
 
+        /// <summary>
+        ///     Product of <see cref="StatusEffectDefinition.MovementSpeedMultiplier" /> (clamped at 0) over every
+        ///     active status with a known definition. 1 when nothing slows the character.
+        /// </summary>
+        public float GetStatusMovementMultiplier()
+        {
+            float multiplier = 1f;
+            for (int i = 0; i < _activeStatuses.Count; i++)
+            {
+                if (TryGetStatus(_activeStatuses[i].StatusId, out StatusEffectDefinition definition) &&
+                    definition != null)
+                {
+                    multiplier *= Mathf.Max(0f, definition.MovementSpeedMultiplier);
+                }
+            }
+
+            return multiplier;
+        }
+
+        /// <summary>True when any active status with a known definition has <see cref="StatusEffectDefinition.BlocksActions" />.</summary>
+        public bool HasBlockingStatus()
+        {
+            for (int i = 0; i < _activeStatuses.Count; i++)
+            {
+                if (TryGetStatus(_activeStatuses[i].StatusId, out StatusEffectDefinition definition) &&
+                    definition != null && definition.BlocksActions)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         internal int GetBuffStackCount(string id)
         {
             ActiveBuffEntry entry = FindBuff(id);

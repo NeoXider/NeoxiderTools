@@ -150,10 +150,7 @@ namespace Neo.Tools
                     continue;
                 }
 
-                int added = Add(entry.ItemId, entry.Count);
-                if (added <= 0)
-                {
-                }
+                Add(entry.ItemId, entry.Count);
             }
         }
 

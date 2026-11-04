@@ -54,7 +54,7 @@ namespace Neo.Rpg.Runtime
                 return 0;
             }
 
-            // Reduce each contribution separately: adding a huge delta first loses a small prior phase.
+            // WHY: reduce each contribution separately: adding a huge delta first loses a small prior phase.
             double phase = (double)previous % width + (double)deltaTime % width;
             double ticks = Math.Truncate((double)previous / width) + Math.Floor((double)deltaTime / width);
             if (phase < 0d)
@@ -68,7 +68,7 @@ namespace Neo.Rpg.Runtime
                 ticks += 1d;
             }
 
-            // Do not invent a logical tick when casting a just-below-boundary phase back to float.
+            // WHY: do not invent a logical tick when casting a just-below-boundary phase back to float.
             remainder = RoundedPhase(phase, interval);
 
             return ticks <= 0d ? 0 : (int)Math.Min(MaxTicksPerEntry, ticks);

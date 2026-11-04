@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 
 namespace Neo.Tests.Play
 {
-    // Uses the coordinator's exclusive runtime test world; global state is restored by TearDown.
+    // WHY: Uses the coordinator's exclusive runtime test world; global state is restored by TearDown.
     public sealed class Audit20261023NeoUIPausePageTests
     {
         private readonly List<GameObject> _pages = new List<GameObject>();
@@ -290,17 +290,18 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator CursorOwners_DeferForceLockUntilLastReleaseAndForgetItForNextGroup()
         {
-            Assert.That(Application.isFocused, Is.True, "Native cursor-lock control requires a focused host.");
+            IgnoreWithoutNativeCursorLock("before any PausePage cursor owner exists");
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.Locked),
-                "Direct native lock write/read must succeed before any PausePage cursor owner exists.");
-            Assert.That(Cursor.visible, Is.False);
             yield return null;
-            Assert.That(Application.isFocused, Is.True, "Focus must persist through the native control frame.");
-            Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.Locked),
-                "Direct native lock must persist for a frame without PausePage ownership.");
-            Assert.That(Cursor.visible, Is.False);
+            if (Application.isBatchMode || !Application.isFocused || Cursor.lockState != CursorLockMode.Locked ||
+                Cursor.visible)
+            {
+                Assert.Ignore("PAUSEPAGE_NATIVE_CURSOR_CAPABILITY unavailable: a direct native lock did not survive " +
+                              "one frame without any PausePage owner (lock " + Cursor.lockState + ", visible " +
+                              Cursor.visible + ", focused " + Application.isFocused + "). Run this case in an " +
+                              "interactive Editor with the Game view focused.");
+            }
 
             for (int force = 1; force >= 0; force--)
             {
@@ -389,6 +390,48 @@ namespace Neo.Tests.Play
             Assert.That(manager.ResumeCalls, Is.EqualTo(1));
             Assert.That(Time.timeScale, Is.EqualTo(0.35f).Within(0.0001f));
             yield return null;
+        }
+
+        /// <summary>
+        ///     Ends the case as Ignored when this host cannot hold a native cursor lock: a batch or unfocused Editor
+        ///     always reads <see cref="CursorLockMode.None" /> back, so the ownership matrix cannot be judged there.
+        ///     This is missing host evidence, never a pass; an interactive Editor with a focused Game view runs every
+        ///     assertion.
+        /// </summary>
+        private static void IgnoreWithoutNativeCursorLock(string stage)
+        {
+            string missing = DescribeMissingNativeCursorLock();
+            if (missing != null)
+            {
+                Assert.Ignore("PAUSEPAGE_NATIVE_CURSOR_CAPABILITY unavailable " + stage + ": " + missing +
+                              ". Run this case in an interactive Editor with the Game view focused.");
+            }
+        }
+
+        /// <summary>Returns why a direct lock write does not read back on this host, or null when it does.</summary>
+        private static string DescribeMissingNativeCursorLock()
+        {
+            if (Application.isBatchMode)
+            {
+                return "the Editor runs in batch mode";
+            }
+
+            if (!Application.isFocused)
+            {
+                return "the application is not focused";
+            }
+
+            CursorLockMode priorLock = Cursor.lockState;
+            bool priorVisible = Cursor.visible;
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            CursorLockMode lockRead = Cursor.lockState;
+            bool visibleRead = Cursor.visible;
+            Cursor.lockState = priorLock;
+            Cursor.visible = priorVisible;
+            return lockRead == CursorLockMode.Locked && !visibleRead
+                ? null
+                : "a direct Locked/hidden write reads back " + lockRead + "/visible=" + visibleRead;
         }
 
         private Audit20261023NeoUIPauseManager CreateManager()

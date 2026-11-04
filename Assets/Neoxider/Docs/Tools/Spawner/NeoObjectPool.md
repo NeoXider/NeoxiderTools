@@ -1,6 +1,13 @@
 # NeoObjectPool
 
-`Neo.Tools.NeoObjectPool` is the current public pool for one prefab. It wraps Unity's `ObjectPool<GameObject>` and does not require a scene manager. The caller owns the pool and outstanding rentals.
+**What it is:** Plain C# pool for one prefab that wraps Unity's `ObjectPool<GameObject>` and drives [IPoolable](IPoolable.md) callbacks; no scene manager is required. `Scripts/Tools/Spawner/NeoObjectPool.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Create it with a prefab and sizes: `new NeoObjectPool(prefab, initialSize, expandPool, maxSize, storageRoot)`.
+2. Rent with `GetObject(position, rotation)` and give back with `ReturnObject(instance)` (or `SpawnUtility.Despawn`).
+3. Call `Clear()` to drop retained instances, or `Retire()` when you dispose the source. The caller owns the pool and outstanding rentals.
+
+---
 
 ## Runtime API
 
@@ -14,12 +21,13 @@ pool.Clear();
 | API | Contract |
 |-----|----------|
 | Constructor | Requires a live prefab; null throws `ArgumentNullException` with parameter `prefab`. Synchronously prewarms the initial set. Negative initial sizes become zero. An optional `storageRoot` owns inactive objects. |
-| `GetObject(Vector3, Quaternion)` | Returns an active instance at the requested world pose. Destroyed inactive entries are discarded and replaced. Detaches the instance from its storage root. |
-| `ReturnObject(GameObject)` | Returns only instances whose `PooledObjectInfo.OwnerPool` is this pool. Null, foreign objects and duplicate returns are ignored. |
+| `GetObject(Vector3, Quaternion)` | Returns an active instance at the requested world pose. Destroyed inactive entries are discarded and replaced. Detaches the instance from its storage root; in Play Mode it then lands unparented in the active scene, like `Object.Instantiate` without a parent, so a storage root kept in DontDestroyOnLoad does not carry it across scene loads. |
+| `ReturnObject(GameObject)` | Returns only instances whose `PooledObjectInfo.OwnerPool` is this pool. Null, destroyed, foreign objects and duplicate returns are ignored. O(1) in every build: the guard is `PooledObjectInfo.IsInPool`, not Unity's Editor-only `collectionCheck` scan of the inactive set. |
 | `int CountInactive` | Number of retained entries waiting to be rented. Externally destroyed entries are removed when retrieved. |
+| `GameObject Prefab` | Source object this pool clones. |
 | `bool IsRetired` | True after terminal retirement. |
 | `Retire()` | Permanently rejects retrieval, destroys retained inactive instances, and destroys outstanding rentals on their later valid return. It never destroys a storage root. |
-| `Clear()` | Destroys retained inactive instances and clears the component cache. Active rentals remain caller-owned; return them before clearing if they should also be destroyed. The pool remains usable. |
+| `Clear()` | Destroys retained inactive instances. Active rentals remain caller-owned and can still return; return them before clearing if they should also be destroyed. The pool remains usable. |
 
 `maxSize` is an **inactive retention limit**, not a cap on active objects. With `expandPool = true`, a positive maximum limits retention; zero (or negative) means unlimited retention. With `expandPool = false`, retention is limited to the initial size, with a minimum of one so an initially empty pool remains usable. Either setting can create an object when no inactive instance is available.
 
@@ -29,7 +37,7 @@ Use `SpawnUtility.RetirePool(source)` when a generated source has manager/fallba
 
 ## Lifecycle and scene integration
 
-The pool finds `IPoolable` components on the instance and inactive children, caches that set, and calls `OnPoolCreate()` once. Each retrieval increments `SpawnGeneration`, clears `IsInPool`, invokes `OnPoolGet()`, then activates the object. `GetObject` assigns the requested pose after those callbacks; use the returned instance for work that depends on its final position. Prewarming runs get/release callbacks as well.
+The pool finds `IPoolable` components on the instance and inactive children once, caches that set on the instance's `PooledObjectInfo` (so the cache dies with the instance and get/return never search the hierarchy), and calls `OnPoolCreate()` once. Each retrieval increments `SpawnGeneration`, clears `IsInPool`, invokes `OnPoolGet()`, then activates the object. `GetObject` assigns the requested pose after those callbacks; use the returned instance for work that depends on its final position. Prewarming runs get/release callbacks as well.
 
 Normal prewarm acquires the entire initial set before returning it: each new instance receives create/get, then the acquired set receives release. The public constructor keeps this synchronous behavior. Manager and fallback factories register a fully initialized pool before starting the same callback sequence. Retirement from its first create/get callback therefore reaches that pool, stops further prewarm, destroys acquired prewarm instances, and makes the original factory request return null. A startup configuration cannot recreate the retired source through a later duplicate entry. Retirement does not return or re-rent the instance inside its callback; the current acquisition completes before its destructive return.
 

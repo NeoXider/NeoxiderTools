@@ -5,7 +5,8 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Compatibility between legacy (Input Manager) and new (Input System) input.
-    ///     Uses the shared legacy-first backend selection and optional Input System reflection fallback.
+    ///     Uses the shared legacy-first backend selection and the optional Input System adapter; warmed reads do
+    ///     not allocate through either backend.
     /// </summary>
     public static class KeyInputCompat
     {

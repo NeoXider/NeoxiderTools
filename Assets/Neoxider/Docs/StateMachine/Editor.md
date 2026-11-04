@@ -1,6 +1,8 @@
 # State Machine editor tools
 
-The `Neo.StateMachine.Editor` assembly provides the inspectors for `StateData`, `StateMachineData`, and `StateMachineBehaviourBase`, plus the transition condition window. Start with the [module overview](README.md) for the runtime C# API or the [scene setup guide](NoCode_StateMachine_Usage.md) for a complete asset workflow.
+**What it is:** the `Neo.StateMachine.Editor` assembly (`Scripts/StateMachine/NoCode/Editor/`): inspectors for `StateData`, `StateMachineData` and `StateMachineBehaviourBase`, plus the transition condition window. Editor-only authoring; runtime behavior lives in the runtime assembly.
+
+**How to use:** follow the steps below. Start with the [module overview](README.md) for the runtime C# API or the [scene setup guide](NoCode_StateMachine_Usage.md) for a complete asset workflow.
 
 ## Configure assets and scene context
 
@@ -20,9 +22,9 @@ The component inspector also exposes events, read-only runtime state, and **Relo
 
 Transition names, enabled flags, priorities, predicate fields, and condition additions/removals support Unity Undo/Redo. Action additions use Unity's serialized property Undo workflow. Changes dirty the owning asset so normal project saving persists them.
 
-The transition window checks that its selected transition still belongs to its owner. When Undo reconstructs that object, or the transition is removed, reopen **Edit Conditions** from the inspector. The window refuses to edit a detached transition or a different row. Selection must also be reopened after a domain reload.
+The transition window checks that its selected transition still belongs to its owner. When Undo reconstructs that object, or the transition is removed, reopen **Edit Conditions** from the inspector. The window refuses to edit a detached transition or a different row. Since 12.0 an open window keeps its owner asset and row across a script reload (and an editor restart) and picks the transition up again from that row. If the row no longer has the same name and From/To states (rows were reordered or removed meanwhile), the window shows the reopen message instead of editing another transition. An ownerless window still needs to be reopened.
 
-The machine inspector supports editing multiple assets. Its validation result combines `StateMachineData.Validate()` results for every selected asset. **Edit Conditions** is available only with one machine asset selected, so each condition edit has an unambiguous owner. Manual validation first applies pending inspector edits.
+The machine inspector supports editing multiple assets. Its validation result combines `StateMachineData.Validate()` results for every selected asset. **Edit Conditions** is available only with one machine asset selected, so each condition edit has an unambiguous owner. Manual validation first applies pending inspector edits and writes every problem it finds to the console (`Validate(false)`), whatever the debug log settings.
 
 For a shared machine asset, edit conditions with that single asset selected, then return to multi-selection for common configuration changes. Runtime timing and callback contracts are described in the [runtime API](StateMachine.md) and [predicate reference](StatePredicate.md); the transition window edits their serialized configuration.
 
@@ -56,7 +58,9 @@ Pass the asset that owns the transition to enable serialized field editing, pers
 
 With an owner asset, `ShowWindow` requires the supplied transition to belong to that asset. After its owner is destroyed, the window refuses further edits. When both arguments are valid, the existing window selects that transition; callers do not need to register custom editors manually.
 
-`StateMachineEditorRegistrar.IsInitialized` reports that its delayed editor setup pass has completed. To validate a configuration from editor C#, call `configuration.Validate(true)` for a result without log output, or use **Validate Configuration** in the asset inspector. The setup flag is not an asset validation result.
+`StateMachineEditorRegistrar.IsInitialized` reports that its delayed editor setup pass has completed. The registration sanity check behind it (a temporary asset and inspector) runs after every script reload, because a recompile is what can break the registration. To validate a configuration from editor C#, call `configuration.Validate(true)` for a result without log output, or use **Validate Configuration** in the asset inspector. The setup flag is not an asset validation result.
+
+The component inspector groups its fields in the package's section panels. In Play Mode the **Runtime** values refresh on their own at a capped rate while the inspector is visible, and stop costing anything once it is hidden.
 
 ## Related API and scene guides
 

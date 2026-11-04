@@ -21,13 +21,13 @@ namespace Neo.Editor.Tests
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            // EnterPlayMode itself refuses an existing Play session; set ownership only after it succeeds.
+            // WHY: EnterPlayMode itself refuses an existing Play session; set ownership only after it succeeds.
             // Code before a reload instruction may be replayed when the runner restores its enumerator.
             ownsPlayMode = false;
             yield return new EnterPlayMode();
             ownsPlayMode = true;
             Assert.That(Application.isPlaying, Is.True, "Runtime callbacks require admitted Play Mode.");
-            // Own only this hierarchy; never simulate/reset a foreign scene or change global physics settings.
+            // WHY: own only this hierarchy; never simulate/reset a foreign scene or change global physics settings.
             root = new GameObject(nameof(Audit20261023NeoToolsPhysicsRegressionTests));
             root.transform.position = new Vector3(18100f, 19700f, 22300f);
         }
@@ -415,7 +415,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void TriggerCallback_DestroyedBody_DoesNotReportAnAppliedImpulse()
         {
-            // Admitted synchronous callback-logic driver: immediate destruction is outside a PhysX contact step.
+            // WHY: admitted synchronous callback-logic driver; immediate destruction is outside a PhysX contact step.
             // Real contact delivery/filtering/reentry is exercised independently by the coroutine cases.
             ImpulseZone zone = CreateZone(false, 0f);
             Rigidbody target = CreateBody("Target", Vector3.right);
@@ -711,10 +711,11 @@ namespace Neo.Editor.Tests
             SerializedObject settings = new(field);
             settings.FindProperty("_toggle").boolValue = true;
             settings.FindProperty("useFixedUpdate").boolValue = useFixedUpdate;
-            // Valid query throttling isolates the first timed mode callback from any earlier force pass.
-            settings.FindProperty("updateInterval").floatValue = Time.time + 10f;
+            // WHY: the first update queries at once, so a zero attract phase puts the mode callback into that very
+            // update; without a query throttle the force pass would follow it if the destroyed field kept going.
+            settings.FindProperty("updateInterval").floatValue = 0f;
+            settings.FindProperty("attractDuration").floatValue = 0f;
             settings.ApplyModifiedPropertiesWithoutUndo();
-            field.SetAttractDuration(0.1f);
             field.SetRepelDuration(0.1f);
             field.ResetToggleTimer();
             int entries = 0;

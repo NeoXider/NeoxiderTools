@@ -1,6 +1,13 @@
 ﻿# InventorySlotView
 
-**Purpose:** A UI component representing a single physical cell within an `InventorySlotGridView`. It contains the component that draws the item itself (`InventoryItemView`), alongside logic for selection highlighting and click handling.
+**What it is:** UI `MonoBehaviour` for one physical cell of an `InventorySlotGridView`: item presenter, selection highlight, empty-state root and click forwarding. `Scripts/Tools/Inventory/UI/InventorySlotView.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Build a slot prefab with this component, a child [InventoryItemView](InventoryItemView.md) and optional highlight/empty objects.
+2. Assign the prefab to `InventorySlotGridView.Slot Prefab`; the grid calls `Bind` on refresh.
+3. Clicks (via the EventSystem) are forwarded to the owning grid; a destroyed grid is ignored.
+
+---
 
 ## Fields (Inspector)
 
@@ -25,4 +32,4 @@ Create a UI slot prefab (a square background). Inside, place a child `ItemPresen
 ## See Also
 - [InventorySlotGridView](InventorySlotGridView.md)
 - [InventoryItemView](InventoryItemView.md)
-- ← [Tools/Inventory](../README.md)
+- ← [Tools/Inventory](README.md)

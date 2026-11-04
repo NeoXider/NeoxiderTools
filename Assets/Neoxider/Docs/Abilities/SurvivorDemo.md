@@ -4,14 +4,17 @@
 [Neo.Abilities](./README.md) and the Core resource/level systems. You move a hero around an
 arena while endless waves close in; your weapons auto-fire, kills drop XP orbs, and every level-up
 lets you pick one of three upgrade cards. Spawn rate and enemy health escalate the longer you
-survive. The whole game — arena, camera, player, enemies, projectiles, HUD — is assembled **in code
-at runtime from a single data asset**, so swapping that asset produces a different survivor game on
-the same code. That is the point of the kit: it is a template you clip by editing data, not code.
+survive. The game is **data**: a single `SurvivorConfig` asset holds the player, the enemy spawn
+table, the abilities, the upgrades and the tuning, so swapping that asset produces a different
+survivor game on the same code. That is the point of the kit: it is a template you clip by editing
+data, not code.
 
 **How to use** — import the **Demo Scenes** sample via Package Manager (the package ships it hidden in
-`Samples~`), then open `<Demo sample>/Scenes/SurvivorDemo.unity` and press Play.
-The scene contains exactly one GameObject ("Survivor Game") with a single `SurvivorGame` component
-and a `SurvivorConfig` assigned to it — nothing else. Everything visible is generated on Start.
+`Samples~`), then open `<Demo sample>/Scenes/SurvivorDemo.unity` and press Play. Everything the game
+needs is a saved scene object, so you can read the whole wiring in the Hierarchy and Inspector
+**without entering Play Mode**: the `Survivor Game` object (config + references), `[Demo] Services`
+(ability hub, info card data), `[Demo] World` (arena, player, inactive pooled templates),
+`[Demo] Pool Manager`, `[Demo] Camera` and `[Demo] HUD`. Nothing is assembled at runtime.
 
 The active release source is `Assets/Neoxider/Samples~/Demo/Scenes/SurvivorDemo.unity`. During sample development it becomes `Assets/Neoxider/Samples/Demo/Scenes/SurvivorDemo.unity`. Package Manager imports it into the consuming project, for example `Assets/Samples/NeoxiderTools/10.19.0/Demo Scenes/Scenes/SurvivorDemo.unity`; use the installed version's folder. Importing does not make `Samples~` itself visible as a regular Unity asset folder.
 
@@ -25,34 +28,46 @@ The active release source is `Assets/Neoxider/Samples~/Demo/Scenes/SurvivorDemo.
    homing bolt that strikes the nearest enemy.
 5. Walk over the golden **XP orbs** dropped by dead enemies (they are magnetized to you when close).
 6. On **level up** the game pauses and shows three random **upgrade cards**; click one to continue.
+   **Level up now** (top right) opens the picker immediately, **Restart run** starts over.
 7. When your health hits zero you get a **game-over** screen with your time, kills, and level; click
-   **Play Again** to restart the same scene instantly (no reload).
+   **Play again** to restart the same scene instantly (no reload).
 
 A tutorial toast at the top fades out after ~6 seconds:
-`WASD move · weapons auto-fire · collect XP · level up to choose upgrades`.
+`WASD move · weapons auto-fire · collect XP · level up to choose upgrades`. The info card in the
+bottom-right corner names the objects to inspect; collapse it with its **-** button.
 
 ## Kit architecture
 
-Everything lives in the Demo sample under `Scripts/Survivor/` (namespace
-`Neo.Samples.Survivor`). The scene holds **one component + one config**; the rest is built at runtime.
+Everything lives in the Demo sample under `Scripts/Survivor/` (namespace `Neo.Samples.Survivor`).
+The scene is authored by the editor builder `Editor/Builders/Abilities/SurvivorDemoBuilder.cs`
+(menu **Neoxider/Demo/Rebuild Active Demo Scene**), which reads the config and saves every object.
+
+| Scene object | What it is |
+|--------------|------------|
+| `Survivor Game` | `SurvivorGame` with the **Config** and the authored references (hub, HUD, camera, player, templates). |
+| `[Demo] Services/Ability System` | `AbilitySystemBehaviour`: the config's library, the `bolt` projectile archetype bound to its template, **Spatial Cell Size** 3 (grid radius queries for hundreds of chasers). |
+| `[Demo] World/Arena` | Neon frame + floor sprites sized from `ArenaExtent`. |
+| `[Demo] World/Player` | `AbilityUnitBehaviour` (player `UnitTemplate`) + `SurvivorPlayerController`. |
+| `[Demo] World/Templates` | Inactive pooled templates: one `Enemy_<unit template>` per enemy type, `XpOrb`, one `Projectile_<archetype>` per projectile archetype. |
+| `[Demo] Pool Manager` | `PoolManager` (a scene root, so its DontDestroyOnLoad promotion is clean). |
+| `[Demo] HUD` | Overlay canvas with `SurvivorHudView`, the upgrade cards (`Btn_Upgrade 1..3` → `SurvivorGame.PickUpgrade(i)`), `Btn_Play again` / `Btn_Restart run` → `SurvivorGame.RestartRun`, `Btn_Level up now` → `SurvivorGame.GrantLevelUp`, and the info card. |
 
 | Script | Role |
 |--------|------|
-| `SurvivorGame` | Bootstrap + game loop. On `Start` it builds the PoolManager, camera, arena, ability system, enemy/orb templates and HUD from the config, then runs spawning, XP/level-up, camera follow and game-over. The only component you place in a scene. |
-| `SurvivorConfig` | **The whole game as data** (`ScriptableObject`). Library, player template + color, starting abilities, enemy spawn table, upgrade pool, arena/camera size, spawn ramp, health ramp, XP curve, pickup/player radius. Swap it and you have a different game. `CreateAssetMenu`: *Neoxider/Survivor Demo/Config*. |
+| `SurvivorGame` | Game loop over the authored scene: registers upgrade content, maps each config enemy type to its template (by unit template), then runs spawning, XP/level-up, upgrades, camera follow and game-over. Restarts re-register the player from its `UnitTemplate` (disable/enable), so health, abilities, modifiers and cooldowns reset without recreating objects. Public: `RestartRun`, `PickUpgrade(int)`, `GrantLevelUp`, `AddXp`, `Level`, `Kills`, `IsLevelUpOpen`. |
+| `SurvivorConfig` | **The whole game as data** (`ScriptableObject`). Library, player template + color, starting abilities, enemy spawn table, upgrade pool, arena/camera size, spawn ramp, health ramp, XP curve, pickup/player radius. `CreateAssetMenu`: *Neoxider/Survivor Demo/Config*. |
 | `SurvivorUpgrade` | One level-up option (`ScriptableObject`): title, description, accent color, a `SurvivorUpgradeKind`, and the payload (modifier / ability / health bonus) plus `MaxTimes`. `CreateAssetMenu`: *Neoxider/Survivor Demo/Upgrade*. |
 | `SurvivorUpgradeKind` | Enum of the three upgrade behaviors: `PermanentModifier`, `GrantAbility`, `MaxHealth`. |
 | `SurvivorEnemyType` | One spawn-table entry (`[Serializable]`, inlined in the config): unit template + color, radius, contact DPS, XP reward, spawn weight, unlock time. |
-| `SurvivorPlayerController` | The player avatar. WASD movement scaled by the unit's `move_speed` property, plus the auto-caster: fires every granted ability the moment it comes off cooldown (unit-targeted abilities lock onto the nearest enemy, the rest self-cast). |
+| `SurvivorPlayerController` | The player avatar. WASD movement (read through `MoveInputCompat`, so it works with the Input System only) scaled by the unit's `move_speed` property, plus the auto-caster: fires every granted ability the moment it comes off cooldown (unit-targeted abilities lock onto the nearest enemy, the rest self-cast). |
 | `SurvivorEnemy` | A pooled chaser. Steers toward the player at its unit `move_speed`, freezes while stunned/rooted/frozen, deals continuous contact damage, drops an XP orb on death. Pure presentation + steering; the ability domain owns its health and combat. |
 | `SurvivorXpOrb` | A pooled XP pickup. Idles until the player is within magnet range, homes in, and is collected on contact. |
-| `SurvivorHud` | Builds and drives the HUD in code (no prefabs): XP/level bar, timer, kills, health bar, ability cooldown pips, the fading tutorial toast, the level-up card picker and the game-over screen. |
-| `SurvivorUI` | Small uGUI construction helpers (rounded panels, bars, labels, buttons) and the shared color palette used by the HUD. |
-| `SurvivorArt` | Procedural sprites (soft disc, ring, radial glow, 9-sliced rounded rect), cached and shared, so the demo needs **zero imported art assets**. |
+| `SurvivorHudView` | Drives the authored HUD: XP bar, level, timer, kills, health bar, ability cooldown pips, the fading tutorial toast, the level-up cards and the game-over screen. Labels change only when their value changes, so the running HUD allocates nothing per frame. |
+| `SurvivorUI` / `SurvivorArt` | Shared runtime helpers still used by other demos; the authored scene uses the DemoKit sprite assets (`Sprites/DemoKit`) instead of procedural textures. |
 
-Because `SurvivorGame` reads all content from `SurvivorConfig`, the scene is deliberately empty of
-game objects — no player prefab, no enemy prefabs, no canvas. This is what makes the kit
-"clip-and-reskin": the code is fixed, the game is the data.
+After changing the config's **enemy list** or adding a **projectile archetype**, rebuild the scene
+(**Neoxider/Demo/Rebuild Active Demo Scene**) so the matching templates and archetype bindings are
+authored. Stats, upgrades, abilities and tuning are read at Play time and need no rebuild.
 
 ## The data behind the demo
 
@@ -125,7 +140,8 @@ You never edit a script. Build a new game by authoring data and pointing the con
 3. **Author weapons.** Create [AbilityDefinition](./AbilityDefinition.md) assets. Unit-targeted
    abilities (e.g. a homing bolt) auto-aim at the nearest enemy; NoTarget abilities self-cast as
    area bursts around the hero. For projectiles set a Projectile delivery + an archetype id (the
-   kit auto-builds a glowing projectile template for every archetype the library references).
+   scene builder authors a glowing projectile template for every archetype the library and the
+   upgrades reference).
 4. **Author modifiers.** Create [ModifierDefinition](./ModifierDefinition.md) assets for stat buffs
    (permanent, Duration 0) and for enemy debuffs like slows/DoTs used by your abilities.
 5. **Collect them.** Add every ability and modifier to an [AbilityLibrary](./AbilityLibrary.md) and
@@ -136,7 +152,9 @@ You never edit a script. Build a new game by authoring data and pointing the con
 7. **Wire the config lists.** Fill in `PlayerTemplate`, `StartingAbilities` (ability ids), the
    `Enemies` spawn table (`SurvivorEnemyType` rows), and the `Upgrades` pool. Tune arena, spawn
    ramp, health ramp and XP curve to taste.
-8. **Point the scene at it.** Assign your config to the `SurvivorGame` component and press Play.
+8. **Point the scene at it.** Assign your config to the `SurvivorGame` component, run
+   **Neoxider/Demo/Rebuild Active Demo Scene** once (templates and archetypes follow the config),
+   and press Play.
 
 ### The three upgrade kinds
 
@@ -170,8 +188,9 @@ The demo is a working tour of the ability system rather than a bespoke combat sc
 - **Cast pipeline** — the auto-caster only fires slots whose cooldown/charges are ready and lets the
   system validate targeting and range; a homing bolt casts `AtUnit` on the nearest enemy in range,
   area weapons cast `NoTarget`.
-- **Homing projectiles** — `magic_bolt` uses a Projectile delivery + archetype id; the kit registers
-  an `AbilityProjectileBehaviour` template for each archetype and the system spawns/steers it.
+- **Homing projectiles** — `magic_bolt` uses a Projectile delivery + archetype id; the hub's
+  **Archetypes** list binds it to the authored `Projectile_bolt` template (`AbilityProjectileBehaviour`)
+  and the system spawns/steers it.
   See [AbilityProjectileBehaviour](./AbilityProjectileBehaviour.md).
 - **Area effects** — `nova`, `frost_ring`, and `ember` use `AreaAroundCaster` selectors with a radius,
   the same effect-node model documented in the [Abilities README](./README.md).
@@ -192,18 +211,18 @@ Core systems it leans on:
 
 ## What to reuse in your own game
 
-- **The config-driven bootstrap pattern.** `SurvivorGame.BuildOnce()` shows how to stand up a whole
-  playable scene (camera, arena, ability system + library + archetypes, pooled templates, canvas)
-  from one `ScriptableObject` — a clean base for any "assemble the game from data" sample.
+- **The authored, config-driven scene.** `SurvivorDemoBuilder` shows how to turn one
+  `ScriptableObject` into a saved, inspectable scene (camera, arena, ability hub + library +
+  archetypes, pooled templates, HUD with persistent UnityEvents), while `SurvivorGame` only runs the
+  loop over serialized references.
 - **The auto-caster.** `SurvivorPlayerController.AutoCast` is a compact, reusable recipe for
   fire-when-ready weapons that pick unit vs. self targeting from the blueprint — drop it into any
-  Neo.Abilities project.
+  Neo.Abilities project (or use the NoCode [AbilityAutoCaster](./AbilityAutoCaster.md)).
 - **Enemy-as-presentation.** `SurvivorEnemy` keeps steering/contact in the MonoBehaviour and lets the
   ability domain own health, damage and disabling states — the recommended split for Neo.Abilities
   actors.
-- **Prefab-free HUD + art.** `SurvivorHud`, `SurvivorUI`, and `SurvivorArt` build a full themed UI and
-  all sprites in code, so the sample imports nothing. Handy when you want a self-contained demo or a
-  quick debug overlay.
+- **Spatial grid for crowds.** The hub's **Spatial Cell Size** turns projectile hits, area effects and
+  auto-cast searches into grid lookups; results match the linear scan.
 
 ## See also
 

@@ -246,6 +246,24 @@ namespace Neo.Tools
             Sort();
         }
 
+        /// <summary>
+        ///     Submits a player result that is kept only when it beats the current one; a one-argument
+        ///     <see cref="UpdatePlayerScore" /> for UnityEvents.
+        /// </summary>
+        public void SubmitScore(int score)
+        {
+            UpdatePlayerScore(score);
+        }
+
+        /// <summary>
+        ///     <see cref="SubmitScore(int)" /> for float sources such as Counter or Money events; the value is rounded
+        ///     to the nearest integer.
+        /// </summary>
+        public void SubmitScore(float score)
+        {
+            UpdatePlayerScore(Mathf.RoundToInt(score));
+        }
+
         public void UpdatePlayerName(string newName)
         {
             player ??= new LeaderboardUser("PlayerName");
@@ -262,7 +280,7 @@ namespace Neo.Tools
                 return -1;
             }
 
-            int referenceIndex = users.FindIndex(user => ReferenceEquals(user, player));
+            int referenceIndex = IndexOfReference(users, player);
             return referenceIndex >= 0 ? referenceIndex : FindUniquePersistentPlayerIndex(out bool ambiguous);
         }
 
@@ -398,7 +416,16 @@ namespace Neo.Tools
                 }
             }
 
-            int countAdd = users.Count(user => user != null) - leaderboardItems.Count;
+            int nonNullUsers = 0;
+            for (int i = 0; i < users.Count; i++)
+            {
+                if (users[i] != null)
+                {
+                    nonNullUsers++;
+                }
+            }
+
+            int countAdd = nonNullUsers - leaderboardItems.Count;
 
             for (int i = 0; i < countAdd; i++)
             {
@@ -429,24 +456,35 @@ namespace Neo.Tools
             users.Add(player);
         }
 
+        /// <summary>
+        ///     Ranks the source users into a new <see cref="sortUsers" /> list (scored users first, then by
+        ///     <see cref="sortOrder" />, ties in source order), assigns <c>num</c>, refreshes rows and raises
+        ///     <see cref="OnSort" />.
+        /// </summary>
         public void Sort()
         {
             users ??= new List<LeaderboardUser>();
             CanonicalizePlayer();
-            int playerSourceIndex = player != null ? users.FindIndex(user => ReferenceEquals(user, player)) : -1;
-            // WHY: Repeated canonical references are known aliases. Preserve source slots but rank the user once.
-            IEnumerable<LeaderboardUser> rankableUsers = users.Where((user, index) => user != null &&
-                (!ReferenceEquals(user, player) || index == playerSourceIndex));
-            if (sortOrder == SortOrder.Descending)
+            int playerSourceIndex = player != null ? IndexOfReference(users, player) : -1;
+            // WHY: A fresh list keeps previously handed-out sortUsers snapshots unchanged.
+            List<LeaderboardUser> ranked = new(users.Count);
+            for (int i = 0; i < users.Count; i++)
             {
-                sortUsers = rankableUsers.OrderBy(x => x.score == 0)
-                    .ThenByDescending(x => x.score).ToList();
+                LeaderboardUser user = users[i];
+                // WHY: Repeated canonical references are known aliases. Preserve source slots but rank the user once.
+                if (user == null || (ReferenceEquals(user, player) && i != playerSourceIndex))
+                {
+                    continue;
+                }
+
+                // WHY: num temporarily holds the source index so the unstable List.Sort can break ties in source
+                // order (the stable LINQ ordering this replaces); ranks overwrite it below.
+                user.num = i;
+                ranked.Add(user);
             }
-            else
-            {
-                sortUsers = rankableUsers.OrderBy(x => x.score == 0)
-                    .ThenBy(x => x.score).ToList();
-            }
+
+            ranked.Sort(sortOrder == SortOrder.Descending ? DescendingRanking : AscendingRanking);
+            sortUsers = ranked;
 
             for (int i = 0; i < sortUsers.Count; i++)
             {
@@ -456,6 +494,51 @@ namespace Neo.Tools
             SetItems();
 
             OnSort?.Invoke();
+        }
+
+        private static readonly Comparison<LeaderboardUser> DescendingRanking = CompareDescending;
+        private static readonly Comparison<LeaderboardUser> AscendingRanking = CompareAscending;
+
+        private static int CompareDescending(LeaderboardUser left, LeaderboardUser right)
+        {
+            int unscored = (left.score == 0).CompareTo(right.score == 0);
+            if (unscored != 0)
+            {
+                return unscored;
+            }
+
+            int byScore = right.score.CompareTo(left.score);
+            return byScore != 0 ? byScore : left.num.CompareTo(right.num);
+        }
+
+        private static int CompareAscending(LeaderboardUser left, LeaderboardUser right)
+        {
+            int unscored = (left.score == 0).CompareTo(right.score == 0);
+            if (unscored != 0)
+            {
+                return unscored;
+            }
+
+            int byScore = left.score.CompareTo(right.score);
+            return byScore != 0 ? byScore : left.num.CompareTo(right.num);
+        }
+
+        private static int IndexOfReference(List<LeaderboardUser> list, LeaderboardUser target)
+        {
+            if (list == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (ReferenceEquals(list[i], target))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private void SetItems()
@@ -504,9 +587,10 @@ namespace Neo.Tools
             return sortUsers?.IndexOf(user) ?? -1;
         }
 
+        /// <summary>Rank (0-based index in <see cref="sortUsers" />) of the player, or -1.</summary>
         public int GetIdPlayer()
         {
-            return player != null ? sortUsers?.FindIndex(user => ReferenceEquals(user, player)) ?? -1 : -1;
+            return player != null ? IndexOfReference(sortUsers, player) : -1;
         }
 
         private void SavePlayerData()

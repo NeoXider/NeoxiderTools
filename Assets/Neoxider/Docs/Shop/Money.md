@@ -1,6 +1,22 @@
 ﻿# Money
 
-**Purpose:** Global in-game currency manager (Singleton). By default it saves and loads the balance using `SaveProvider`, and supports reactive properties (`ReactiveProperty`) for easy UI binding. You can disable persistence for session-only modes and demos (NoCode-friendly).
+**What it is:** a currency wallet component (`Scripts/Shop/Money.cs`, namespace `Neo.Shop`, a `NetworkSingleton`
+reachable as `Money.I`). By default it saves and loads the balance using `SaveProvider`, and exposes reactive
+properties (`CurrentMoney`, `LevelMoney`, `AllMoney`, `LastChangeMoney`) for UI binding. Several wallets with
+different save keys can coexist; persistence can be disabled for session-only modes and demos (NoCode-friendly).
+
+**How to use:**
+1. Add `Neoxider > Shop > Money` to a manager object and set its `_moneySave` key.
+2. Change the balance with `Add`, `TrySpend`/`Spend`, `SetMoney`; read or subscribe through `CurrentMoney`.
+3. Show it with `TextMoney`, and let `Shop` spend from it (default wallet or `CurrencyOverrideSaveKey`).
+
+```csharp
+Money coins = Money.I;
+coins.CurrentMoney.AddListener(UpdateCoinsLabel);
+MoneySpendResult result = coins.TrySpend(25f);
+```
+
+---
 
 ## Lookup by Save Key
 
@@ -12,6 +28,9 @@ bool found = Money.TryFindBySaveKey("Gems", out Money wallet);
 ```
 
 This is used by `ShopItemData.CurrencyOverrideSaveKey`, `ShopBundleData.CurrencyOverrideSaveKey`, and `TextMoney`.
+A wallet registers in `Awake`/`OnEnable`; `TextMoney` waits for that registration when it starts before any wallet
+exists. A lookup that misses the registry scans the scene (including inactive objects), so keep override keys
+correct: a misspelled key costs one scene scan per lookup.
 
 If no key is selected, systems fall back to the usual `Money.I` singleton or the Shop default currency.
 

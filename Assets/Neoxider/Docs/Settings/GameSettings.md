@@ -30,6 +30,7 @@ GameSettings.FlushPendingSettingsSave();
 - Sensitivity is clamped to `0.01..50`. A NaN setter argument preserves the current value. A saved NaN uses the configured default; a NaN default uses `2`. Infinite values clamp to the corresponding bound. Group reset uses the same bounds.
 - Quality and resolution indices clamp to their available lists. `TryGetRuntimeResolution` returns `false` and zero dimensions for an invalid index or missing context.
 - `SetQualityLevel` and named `SetGraphicsPreset` changes reapply the requested `VSync` after Unity applies the quality profile, before `OnSettingsChanged` and saving. The separate performance setting takes precedence over the profile's VSync value; changing to `Custom` alone keeps the current quality level.
+- Setters and `LoadState` call `QualitySettings.SetQualityLevel(index, true)` only when the index differs from the active level, because applying expensive changes is costly even for the same level. `ResetGroup(Graphics)` always re-applies the level, restoring runtime tweaks of the quality profile.
 - Invalid saved graphics presets use the configured default, or `High` if that default is also invalid. Invalid fullscreen modes use a valid default, or `FullScreenWindow` when fullscreen is requested.
 - `FullScreen` and `FullScreenModeValue` describe the same requested display state. Turning fullscreen off selects `Windowed`; turning it on from `Windowed` selects `FullScreenWindow`. A subsequent manual resolution change keeps that mode. Load and display reset normalize inconsistent legacy/default pairs; the next save writes the normalized values using the existing keys.
 - Framerate values below `-1` normalize to `-1` in setters, load and reset. Configure `-1` for unlimited or positive FPS values for explicit caps. VSync uses `vSyncCount` values `0` and `1`; platform support determines the actual result.
@@ -38,7 +39,7 @@ GameSettings.FlushPendingSettingsSave();
 
 ## Saving and reset
 
-`LoadState` reads the **current provider**; it does not call `SaveProvider.Load()` to reload that backend from disk. `SaveState` writes every group whose persist flag is enabled; it does not call `SaveProvider.Save()`. Call the provider's load/save operations separately when an explicit backend reload or durable flush is needed.
+`LoadState` reads the **current provider**; it does not call `SaveProvider.Load()` to reload that backend from disk. `SaveState` writes every group whose persist flag is enabled; it does not call `SaveProvider.Save()`. Call the provider's load/save operations separately when an explicit backend reload or durable flush is needed. With the file provider, writing unchanged values keeps it clean, so repeated `SaveState` calls (panel closing, pause) do not cause disk writes. Keys are `SaveKeyPrefix` + the `GameSettingsSaveKeys` suffix; they are composed once per prefix.
 
 `FlushPendingSettingsSave` cancels the pending debounce callback and writes enabled groups immediately. `SkipUntilFlush` only skips scheduling for that mutation: another immediate save, a panel closing, or a pending deferred save can still capture its current value. It is not an isolated transaction.
 

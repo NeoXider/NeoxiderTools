@@ -14,7 +14,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void AddListenerInsideCallback_DoesNotThrow()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
             int secondListenerCalls = 0;
 
             prop.AddListener(val =>
@@ -30,7 +30,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void RemoveListenerInsideCallback_DoesNotThrow()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
             int callCount = 0;
             UnityAction<int> listener = null;
 
@@ -54,7 +54,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void MultipleListeners_AllReceiveNotification()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
             int a = 0, b = 0, c = 0;
 
             prop.AddListener(v => a = v);
@@ -71,7 +71,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void RemoveEarlierListenerInsideCallback_LaterListenerStillNotified()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
             int aCalls = 0, cCalls = 0;
 
             UnityAction<int> listenerA = v => aCalls++;
@@ -99,7 +99,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void RemoveAllListenersInsideCallback_DoesNotThrow()
         {
-            var prop = new ReactivePropertyInt(0);
+            ReactivePropertyInt prop = new ReactivePropertyInt(0);
 
             UnityAction<int> listenerA = null;
             UnityAction<int> listenerB = null;

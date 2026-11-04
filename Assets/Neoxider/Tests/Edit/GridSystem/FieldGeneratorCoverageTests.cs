@@ -31,11 +31,11 @@ namespace Neo.Editor.Tests.GridSystem
 
         private FieldGenerator CreateGenerator(int width, int height, GridOrigin2D origin)
         {
-            var owner = new GameObject("FieldGeneratorCoverage");
+            GameObject owner = new GameObject("FieldGeneratorCoverage");
             _createdObjects.Add(owner);
             owner.AddComponent<Grid>();
             FieldGenerator generator = owner.AddComponent<FieldGenerator>();
-            var config = new FieldGeneratorConfig
+            FieldGeneratorConfig config = new FieldGeneratorConfig
             {
                 Size = new Vector3Int(width, height, 0),
                 GridType = GridType.Rectangular,
@@ -67,11 +67,11 @@ namespace Neo.Editor.Tests.GridSystem
         public void FindPathDetailed_ReturnsNoPath_WhenThereIsNoValidRoute()
         {
             FieldGenerator generator = CreateGenerator(3, 1);
-            var blockedCell = new Vector3Int(1, 0, 0);
+            Vector3Int blockedCell = new Vector3Int(1, 0, 0);
 
             generator.SetWalkable(blockedCell, false);
 
-            var request = new GridPathRequest
+            GridPathRequest request = new GridPathRequest
             {
                 Start = new Vector3Int(0, 0, 0),
                 End = new Vector3Int(2, 0, 0),
@@ -92,7 +92,7 @@ namespace Neo.Editor.Tests.GridSystem
         public void CellMutationHelpers_UpdateContentAndPassabilityStates()
         {
             FieldGenerator generator = CreateGenerator(2, 2);
-            var position = new Vector3Int(0, 0, 0);
+            Vector3Int position = new Vector3Int(0, 0, 0);
 
             generator.SetCell(position, 5, true);
             generator.SetContentId(position, 11);

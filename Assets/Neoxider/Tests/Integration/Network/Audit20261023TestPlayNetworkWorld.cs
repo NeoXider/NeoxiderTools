@@ -168,7 +168,7 @@ namespace Neo.Tests.Network.Integration
                 items[i] = Child(selectorRoot, "Item" + i);
                 items[i].SetActive(false);
             }
-            // OwnerOnly resolves the identity on the component's own GameObject.
+            // WHY: OwnerOnly resolves the identity on the component's own GameObject.
             world.Selector = root.AddComponent<Audit20261023TestPlayNetworkSelector>();
             world.Selector.startOnAwake = false;
             world.Selector.isNetworked = true;

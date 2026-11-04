@@ -50,7 +50,7 @@ namespace Neo.Editor.Tests
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(bufferField, Is.Not.Null);
             Collider[] complete = (Collider[])bufferField.GetValue(controller);
-            // The complete native query is an ordering-independent oracle, even if a truncated prefix happened to include floor.
+            // WHY: the complete native query is an ordering-independent oracle, even if a truncated prefix happened to include floor.
             foreach (Collider expectedHit in expected)
             {
                 CollectionAssert.Contains(complete, expectedHit);

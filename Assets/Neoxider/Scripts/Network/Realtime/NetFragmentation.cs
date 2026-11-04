@@ -274,7 +274,7 @@ namespace Neo.Network.Realtime
             return null;
         }
 
-        // A free slot, else the oldest incomplete frame (dropped), unless every in-flight frame is newer than this one.
+        // WHY: a free slot, else the oldest incomplete frame (dropped), unless every in-flight frame is newer than this one.
         private Slot AcquireSlot(ushort frameId)
         {
             Slot oldest = null;

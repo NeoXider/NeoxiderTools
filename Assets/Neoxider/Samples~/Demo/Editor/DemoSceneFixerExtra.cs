@@ -5,65 +5,70 @@ using UnityEngine.AI;
 using Neo.Rpg;
 using Neo.Rpg.Components;
 using Neo.Tools;
+using Neo.Demo.Editor;
 #if MIRROR
 using Mirror;
 #endif
 
 namespace Neo.Editor.Rpg
 {
+    /// <summary>One-shot repair of the RPG demo prefabs, data and spawners (menu Neoxider/Samples/RPG/Fix All).</summary>
     public static class DemoSceneFixerExtra
     {
+        private const string FallbackDemoRoot = "Assets/Neoxider/Samples/Demo";
+
         [MenuItem("Neoxider/Samples/RPG/Fix All", false, 320)]
         public static void FixAll()
         {
-            const string meleeTemplatePath = "Assets/Neoxider/Samples/Demo/Data/RpgCombatNpcDemo/Assets/MeleeNpcCharacterTemplate.asset";
-            const string rangedTemplatePath = "Assets/Neoxider/Samples/Demo/Data/RpgCombatNpcDemo/Assets/RangedNpcCharacterTemplate.asset";
+            string demoRoot = DemoSampleRoots.TryResolveDemoRoot(out string resolved, out _) ? resolved : FallbackDemoRoot;
+            string meleeTemplatePath = demoRoot + "/Data/RpgCombatNpcDemo/Assets/MeleeNpcCharacterTemplate.asset";
+            string rangedTemplatePath = demoRoot + "/Data/RpgCombatNpcDemo/Assets/RangedNpcCharacterTemplate.asset";
 
-            var def = AssetDatabase.LoadAssetAtPath<RpgAttackDefinition>("Assets/Neoxider/Samples/Demo/Data/EnemyRangedAttack.asset");
-            var proj = AssetDatabase.LoadAssetAtPath<RpgProjectile>("Assets/Neoxider/Samples/Demo/Prefabs/EnemyEnergySphere.prefab");
+            RpgAttackDefinition def = AssetDatabase.LoadAssetAtPath<RpgAttackDefinition>(demoRoot + "/Data/EnemyRangedAttack.asset");
+            RpgProjectile proj = AssetDatabase.LoadAssetAtPath<RpgProjectile>(demoRoot + "/Prefabs/EnemyEnergySphere.prefab");
             if (def != null && proj != null)
             {
-                var so = new SerializedObject(def);
+                SerializedObject so = new SerializedObject(def);
                 so.FindProperty("_projectilePrefab").objectReferenceValue = proj;
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(def);
                 Debug.Log("Fixed Definition Projectile");
             }
 
-            var rangedPath = "Assets/Neoxider/Samples/Demo/Prefabs/SphereEnemy_Ranged.prefab";
-            using (var scope = new PrefabUtility.EditPrefabContentsScope(rangedPath))
+            string rangedPath = demoRoot + "/Prefabs/SphereEnemy_Ranged.prefab";
+            using (PrefabUtility.EditPrefabContentsScope scope = new PrefabUtility.EditPrefabContentsScope(rangedPath))
             {
-                var r = scope.prefabContentsRoot;
+                GameObject r = scope.prefabContentsRoot;
                 RemoveMissingScripts(r);
                 EnsureRpgCharacter(r, rangedTemplatePath);
 
-                var ac = r.GetComponent<RpgAttackController>();
+                RpgAttackController ac = r.GetComponent<RpgAttackController>();
                 if (ac != null && def != null)
                 {
-                    var so = new SerializedObject(ac);
-                    var arr = so.FindProperty("_attacks");
+                    SerializedObject so = new SerializedObject(ac);
+                    SerializedProperty arr = so.FindProperty("_attacks");
                     arr.arraySize = 1;
                     arr.GetArrayElementAtIndex(0).objectReferenceValue = def;
                     so.ApplyModifiedProperties();
                 }
 
-                var auto = r.GetComponent<RpgAutoAttackController>();
+                RpgAutoAttackController auto = r.GetComponent<RpgAutoAttackController>();
                 if (auto != null)
                 {
-                    var so = new SerializedObject(auto);
+                    SerializedObject so = new SerializedObject(auto);
                     so.FindProperty("attackRange").floatValue = 15f;
                     so.FindProperty("attackInterval").floatValue = 1.0f;
                     so.FindProperty("targetTag").stringValue = "Player";
                     so.ApplyModifiedProperties();
                 }
 
-                var nav = r.GetComponent<NavMeshAgent>();
+                NavMeshAgent nav = r.GetComponent<NavMeshAgent>();
                 if (nav) nav.stoppingDistance = 10f;
-                
-                // WHY: Add contact damage to ranged as well just in case player gets close!
-                var cd = r.GetComponent<RpgContactDamage>();
+
+                // WHY: ranged enemies also deal contact damage so a player who closes in still gets hit.
+                RpgContactDamage cd = r.GetComponent<RpgContactDamage>();
                 if (cd == null) cd = r.AddComponent<RpgContactDamage>();
-                var cdSo = new SerializedObject(cd);
+                SerializedObject cdSo = new SerializedObject(cd);
                 cdSo.FindProperty("damageRange").floatValue = 2.5f;
                 cdSo.FindProperty("damage").intValue = 3;
                 cdSo.FindProperty("cooldown").floatValue = 1f;
@@ -72,20 +77,20 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Ranged Enemy");
             }
 
-            var meleePath = "Assets/Neoxider/Samples/Demo/Prefabs/CubeEnemy_New.prefab";
-            using (var scope = new PrefabUtility.EditPrefabContentsScope(meleePath))
+            string meleePath = demoRoot + "/Prefabs/CubeEnemy_New.prefab";
+            using (PrefabUtility.EditPrefabContentsScope scope = new PrefabUtility.EditPrefabContentsScope(meleePath))
             {
-                var r = scope.prefabContentsRoot;
+                GameObject r = scope.prefabContentsRoot;
                 RemoveMissingScripts(r);
                 EnsureRpgCharacter(r, meleeTemplatePath);
 
-                var nav = r.GetComponent<NavMeshAgent>();
+                NavMeshAgent nav = r.GetComponent<NavMeshAgent>();
                 if (nav) nav.stoppingDistance = 1.5f;
 
-                var cd = r.GetComponent<RpgContactDamage>();
+                RpgContactDamage cd = r.GetComponent<RpgContactDamage>();
                 if (cd)
                 {
-                    var so = new SerializedObject(cd);
+                    SerializedObject so = new SerializedObject(cd);
                     so.FindProperty("damageRange").floatValue = 2.5f;
                     so.FindProperty("damage").intValue = 10;
                     so.FindProperty("cooldown").floatValue = 1f;
@@ -95,23 +100,23 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Melee Enemy");
             }
 
-            var spawners = Object.FindObjectsByType<Spawner>(FindObjectsSortMode.None);
-            var rangedGo = AssetDatabase.LoadAssetAtPath<GameObject>(rangedPath);
-            var meleeGo = AssetDatabase.LoadAssetAtPath<GameObject>(meleePath);
+            Spawner[] spawners = Object.FindObjectsByType<Spawner>(FindObjectsSortMode.None);
+            GameObject rangedGo = AssetDatabase.LoadAssetAtPath<GameObject>(rangedPath);
+            GameObject meleeGo = AssetDatabase.LoadAssetAtPath<GameObject>(meleePath);
             if (rangedGo != null && meleeGo != null)
             {
-                foreach (var s in spawners)
+                foreach (Spawner s in spawners)
                 {
-                    var so = new SerializedObject(s);
-                    var variants = so.FindProperty("variants");
+                    SerializedObject so = new SerializedObject(s);
+                    SerializedProperty variants = so.FindProperty("variants");
                     if (variants != null)
                     {
                         variants.arraySize = 2;
-                        var v0 = variants.GetArrayElementAtIndex(0);
+                        SerializedProperty v0 = variants.GetArrayElementAtIndex(0);
                         v0.FindPropertyRelative("GameObject").objectReferenceValue = meleeGo;
                         v0.FindPropertyRelative("Probability").floatValue = 0.5f;
 
-                        var v1 = variants.GetArrayElementAtIndex(1);
+                        SerializedProperty v1 = variants.GetArrayElementAtIndex(1);
                         v1.FindPropertyRelative("GameObject").objectReferenceValue = rangedGo;
                         v1.FindPropertyRelative("Probability").floatValue = 0.5f;
                         so.ApplyModifiedProperties();
@@ -119,8 +124,8 @@ namespace Neo.Editor.Rpg
                     }
                     else 
                     {
-                        // WHY: fallback to old prefabs array
-                        var p = so.FindProperty("_prefabs");
+                        // WHY: older Spawner versions serialize a plain _prefabs array instead of variants.
+                        SerializedProperty p = so.FindProperty("_prefabs");
                         if (p != null)
                         {
                             p.arraySize = 2;
@@ -134,14 +139,14 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Spawners");
             }
 
-            RepairRpgEnemyPrefab("Assets/Neoxider/Samples/Demo/Prefabs/CubeEnemy.prefab", meleeTemplatePath);
+            RepairRpgEnemyPrefab(demoRoot + "/Prefabs/CubeEnemy.prefab", meleeTemplatePath);
             RepairRpgEnemyPrefab(meleePath, meleeTemplatePath);
             RepairRpgEnemyPrefab(rangedPath, rangedTemplatePath);
 #if MIRROR
             EnsureNetworkIdentity(rangedPath);
             EnsureNetworkIdentity(meleePath);
 #endif
-            var cleanedTerrainCount = CleanMissingTreePrototypes();
+            int cleanedTerrainCount = CleanMissingTreePrototypes(System.IO.Path.GetDirectoryName(demoRoot)?.Replace('\\', '/'));
             if (cleanedTerrainCount > 0)
             {
                 Debug.Log($"Cleaned missing terrain tree prototypes in {cleanedTerrainCount} TerrainData asset(s).");
@@ -153,8 +158,8 @@ namespace Neo.Editor.Rpg
 
         private static void RepairRpgEnemyPrefab(string prefabPath, string templatePath)
         {
-            using var scope = new PrefabUtility.EditPrefabContentsScope(prefabPath);
-            var root = scope.prefabContentsRoot;
+            using PrefabUtility.EditPrefabContentsScope scope = new PrefabUtility.EditPrefabContentsScope(prefabPath);
+            GameObject root = scope.prefabContentsRoot;
             if (root == null) return;
 
             RemoveMissingScripts(root);
@@ -184,14 +189,14 @@ namespace Neo.Editor.Rpg
         {
             if (root == null) return;
 
-            var character = root.GetComponent<RpgCharacter>();
+            RpgCharacter character = root.GetComponent<RpgCharacter>();
             if (character == null)
             {
                 character = root.AddComponent<RpgCharacter>();
                 Debug.Log($"Added RpgCharacter to {root.name}.");
             }
 
-            var template = AssetDatabase.LoadAssetAtPath<RpgCharacterTemplate>(templatePath);
+            RpgCharacterTemplate template = AssetDatabase.LoadAssetAtPath<RpgCharacterTemplate>(templatePath);
             if (template != null && character.Template != template)
             {
                 character.Template = template;
@@ -204,8 +209,8 @@ namespace Neo.Editor.Rpg
 #if MIRROR
         private static void EnsureNetworkIdentity(string prefabPath)
         {
-            using var scope = new PrefabUtility.EditPrefabContentsScope(prefabPath);
-            var root = scope.prefabContentsRoot;
+            using PrefabUtility.EditPrefabContentsScope scope = new PrefabUtility.EditPrefabContentsScope(prefabPath);
+            GameObject root = scope.prefabContentsRoot;
             if (root == null) return;
 
             RemoveMissingScripts(root);
@@ -215,7 +220,7 @@ namespace Neo.Editor.Rpg
 
         private static void EnsureNetworkIdentity(GameObject root, string prefabPath)
         {
-            var identity = root.GetComponent<NetworkIdentity>();
+            NetworkIdentity identity = root.GetComponent<NetworkIdentity>();
             if (identity == null)
             {
                 identity = root.AddComponent<NetworkIdentity>();
@@ -228,22 +233,23 @@ namespace Neo.Editor.Rpg
         }
 #endif
 
-        private static int CleanMissingTreePrototypes()
+        private static int CleanMissingTreePrototypes(string samplesRoot)
         {
-            var cleanedCount = 0;
-            string[] terrainGuids = AssetDatabase.FindAssets("t:TerrainData", new[] { "Assets/Neoxider/Samples" });
+            int cleanedCount = 0;
+            string searchRoot = string.IsNullOrEmpty(samplesRoot) ? "Assets/Neoxider/Samples" : samplesRoot;
+            string[] terrainGuids = AssetDatabase.FindAssets("t:TerrainData", new[] { searchRoot });
 
             foreach (string guid in terrainGuids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                var terrain = AssetDatabase.LoadAssetAtPath<TerrainData>(path);
+                TerrainData terrain = AssetDatabase.LoadAssetAtPath<TerrainData>(path);
                 if (terrain == null) continue;
 
                 TreePrototype[] prototypes = terrain.treePrototypes ?? new TreePrototype[0];
                 TreeInstance[] instances = terrain.treeInstances ?? new TreeInstance[0];
-                var validPrototypes = new List<TreePrototype>(prototypes.Length);
-                var indexMap = new Dictionary<int, int>(prototypes.Length);
-                var changed = false;
+                List<TreePrototype> validPrototypes = new List<TreePrototype>(prototypes.Length);
+                Dictionary<int, int> indexMap = new Dictionary<int, int>(prototypes.Length);
+                bool changed = false;
 
                 for (int i = 0; i < prototypes.Length; i++)
                 {
@@ -271,7 +277,7 @@ namespace Neo.Editor.Rpg
 
                 if (!changed) continue;
 
-                var validInstances = new List<TreeInstance>(instances.Length);
+                List<TreeInstance> validInstances = new List<TreeInstance>(instances.Length);
                 foreach (TreeInstance instance in instances)
                 {
                     if (!indexMap.TryGetValue(instance.prototypeIndex, out int newIndex))

@@ -12,20 +12,71 @@ namespace Neo.StateMachine.NoCode.Editor
     /// </summary>
     public class TransitionEditorWindow : EditorWindow
     {
-        private StateMachineData data;
-        private bool requiresOwner;
-        private int transitionIndex = -1;
-        private Vector2 scrollPosition;
-        private StateTransition transition;
+        private static readonly GUIContent SettingsContent = new GUIContent("Settings");
+
+        // WHY: the owner, its index and the scroll survive a domain reload and an editor restart. The
+        // transition itself is an inline object without identity: serializing it with the window gave back a
+        // detached copy after every script compile, which no longer matched any row of the asset, so the
+        // window went blank. It is re-resolved from the owner and index instead.
+        [SerializeField] private StateMachineData data;
+        [SerializeField] private bool requiresOwner;
+        [SerializeField] private int transitionIndex = -1;
+        [SerializeField] private Vector2 scrollPosition;
+        [NonSerialized] private StateTransition transition;
+
+        // WHY: the index alone can point at another row after a reload - the rows may have been reordered or
+        // removed meanwhile (a VCS update, an edit in another inspector while scripts compiled). The row's name
+        // and states are remembered with it, and a restored row that no longer matches them is not edited.
+        [SerializeField] private string boundTransitionName;
+        [SerializeField] private StateData boundFromState;
+        [SerializeField] private StateData boundToState;
+
+        // WHY: one SerializedObject per window. The predicate list used to build a new one for every
+        // predicate on every IMGUI event, which is a full native object snapshot each time.
+        [NonSerialized] private SerializedObject _serializedData;
 
         private void OnEnable()
         {
+            Undo.undoRedoPerformed -= OnUndoRedo;
             Undo.undoRedoPerformed += OnUndoRedo;
+            if (transition == null && requiresOwner && data != null)
+            {
+                RestoreTransition();
+                if (transition != null && !MatchesBoundIdentity(transition))
+                {
+                    transition = null;
+                    transitionIndex = -1;
+                }
+            }
         }
 
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedo;
+            ReleaseSerializedData();
+        }
+
+        private SerializedObject GetSerializedData()
+        {
+            if (data == null)
+            {
+                ReleaseSerializedData();
+                return null;
+            }
+
+            if (_serializedData == null || _serializedData.targetObject != data)
+            {
+                ReleaseSerializedData();
+                _serializedData = new SerializedObject(data);
+            }
+
+            return _serializedData;
+        }
+
+        private void ReleaseSerializedData()
+        {
+            _serializedData?.Dispose();
+            _serializedData = null;
         }
 
         private void OnUndoRedo()
@@ -52,6 +103,21 @@ namespace Neo.StateMachine.NoCode.Editor
             }
         }
 
+        private bool MatchesBoundIdentity(StateTransition candidate)
+        {
+            return string.Equals(candidate.TransitionName ?? string.Empty, boundTransitionName ?? string.Empty,
+                       StringComparison.Ordinal) &&
+                   candidate.FromStateData == boundFromState &&
+                   candidate.ToStateData == boundToState;
+        }
+
+        private void RememberBoundIdentity()
+        {
+            boundTransitionName = transition.TransitionName;
+            boundFromState = transition.FromStateData;
+            boundToState = transition.ToStateData;
+        }
+
         private bool TryGetCurrentTransition()
         {
             if (this == null || transition == null)
@@ -71,6 +137,7 @@ namespace Neo.StateMachine.NoCode.Editor
             }
 
             transitionIndex = index;
+            RememberBoundIdentity();
             return true;
         }
 
@@ -137,6 +204,8 @@ namespace Neo.StateMachine.NoCode.Editor
             }
             else
             {
+                SerializedObject serializedData = GetSerializedData();
+                serializedData?.Update();
                 int removeIndex = -1;
                 for (int i = 0; i < transition.Predicates.Count; i++)
                 {
@@ -150,7 +219,7 @@ namespace Neo.StateMachine.NoCode.Editor
                         NeoxiderEditorGUI.DrawKeyValueRow("Type", predicate.GetType().Name,
                             new Color(0.70f, 0.62f, 1f, 1f));
                         NeoxiderEditorGUI.DrawKeyValueRow("Name", predicate.PredicateName);
-                        DrawPredicateFields(i, predicate);
+                        DrawPredicateFields(i, predicate, serializedData);
                         NeoxiderEditorGUI.DrawCaption(
                             predicate.IsInverted
                                 ? "This predicate is inverted: its result is flipped for the transition."
@@ -217,22 +286,20 @@ namespace Neo.StateMachine.NoCode.Editor
                 : null;
         }
 
-        private void DrawPredicateFields(int predicateIndex, StatePredicate predicate)
+        private void DrawPredicateFields(int predicateIndex, StatePredicate predicate, SerializedObject serializedData)
         {
-            if (data == null)
+            if (data == null || serializedData == null)
             {
                 predicate.IsInverted = EditorGUILayout.Toggle("Inverted", predicate.IsInverted);
                 return;
             }
 
-            using (SerializedObject serializedData = new(data))
+            SerializedProperty predicateProperty = GetPredicateProperty(serializedData, predicateIndex);
+            if (predicateProperty != null)
             {
-                serializedData.Update();
-                SerializedProperty predicateProperty = GetPredicateProperty(serializedData, predicateIndex);
-                if (predicateProperty != null)
+                EditorGUILayout.PropertyField(predicateProperty, SettingsContent, true);
+                if (serializedData.ApplyModifiedProperties())
                 {
-                    EditorGUILayout.PropertyField(predicateProperty, new GUIContent("Settings"), true);
-                    serializedData.ApplyModifiedProperties();
                     RestoreTransition();
                 }
             }
@@ -332,6 +399,10 @@ namespace Neo.StateMachine.NoCode.Editor
             data = owner;
             requiresOwner = owner is not null;
             transitionIndex = data != null ? data.Transitions?.IndexOf(transition) ?? -1 : -1;
+            if (transition != null)
+            {
+                RememberBoundIdentity();
+            }
         }
 
         private void ShowAddPredicateMenu()

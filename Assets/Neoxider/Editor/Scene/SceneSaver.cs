@@ -148,12 +148,25 @@ public class SceneSaver : EditorWindow
             }
 
             Scene activeScene = EditorSceneManager.GetActiveScene();
+            bool isDirty = activeScene.isDirty;
+            double now = EditorApplication.timeSinceStartup;
+            double intervalSeconds = settings.IntervalMinutes * 60d;
+
+            // WHY: Scene.path marshals a new string on every call. Reading it on every editor tick only to learn
+            // that the interval has not elapsed yet was a steady stream of garbage; the dirty epoch is still
+            // observed every tick, so the decision below is unchanged.
+            _scheduler.ObserveDirty(isDirty);
+            if (!_scheduler.IsIntervalElapsed(now, intervalSeconds))
+            {
+                return;
+            }
+
             SceneSaverCheckContext context = new SceneSaverCheckContext(
-                EditorApplication.timeSinceStartup,
-                settings.IntervalMinutes * 60d,
+                now,
+                intervalSeconds,
                 activeScene.path,
                 Undo.GetCurrentGroup(),
-                activeScene.isDirty,
+                isDirty,
                 settings.SaveEvenIfNotDirty);
 
             if (!_scheduler.ShouldSave(context))

@@ -1,5 +1,14 @@
 # 11.0.0 verification record
 
+> **Historical record for 11.0.0.** The source changed afterwards: the HTML → UI Toolkit converter moved to the
+> separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package and the demo scenes were re-authored by
+> editor scene builders. Nothing below verifies the 12.0.0 source; see [Upgrading to 12](Docs/Migration12.md).
+
+**What it is:** the historical record of the Windows validation performed for the 11.0.0 release.
+
+**How to use:** consult it for what was verified for 11.0.0 and with which limits; do not read it as evidence for
+later sources.
+
 This records the Windows validation performed on `demo` on 26–27 October 2026 (receipt timestamps use UTC). It distinguishes
 full-suite baselines, current affected tests, capability-specific runs and manual observations.
 The groups overlap and must not be added together as one fresh all-pass run.
@@ -36,7 +45,7 @@ IL2CPP, mobile hardware, consoles, HDRP or audible device output. See [dependenc
 | Cards regressions | 149 Edit Mode cases passed per SDK (P27). The 46-case Cards/sample Play Mode group passed per SDK (P29), covering Canvas scaling, world-space preservation, hover/transfer and reentrant deck mutation. |
 | Current sample presentation | Ten native sample cases passed per SDK (P31), including Inventory/Abilities button flows, viewport bounds, non-null Filled Image sprites and an actual CardGame EventSystem raycast/click that starts exactly one round. |
 | Separate OS peers | Three distinct Windows player processes completed the matrix, including authority/admission, state/RPC delivery, late join, reconnect, restart and owned cleanup. |
-| HTML → UITK .NET graph | Historical 2852 passed / 30 NotExecuted qualified for the 11.0.0 release against its recorded source and dependency identities. Workflow and documentation files changed afterward, so this is not a new execution or a current-source identity claim. |
+| HTML → UITK .NET graph (moved) | Historical 2852 passed / 30 NotExecuted qualified for the 11.0.0 release against its recorded source and dependency identities. Workflow and documentation files changed afterward, so this is not a new execution or a current-source identity claim. The converter has since moved to the separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package. |
 
 Raw failures were retained. Batch-mode cursor failures were not changed to ignores or counted as
 passes: the original controls were run in the required interactive context. The HDRP case remains
@@ -48,7 +57,11 @@ that exact owned process was stopped and its exit was not reported as a natural 
 subsequent six actual no-Mirror tests completed successfully. Transient registry/Burst/bootstrap
 failures remain operational history, separate from the successful retries.
 
-## Final HTML → UITK acceptance for 11.0.0
+## Final HTML → UITK acceptance for 11.0.0 (moved)
+
+> **Moved.** After 11.0.1 the converter, its tests and this focused record left NeoxiderTools for the standalone
+> [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package (`com.neoxider.htmltouitk`, `Documentation~/HtmlToUitkVerification11.md`).
+> The paragraph below is kept as the historical 11.0.0 record.
 
 A fresh focused round on 27 October covers the separate converter and Unity adapters.
 The complete converter solution passed **2573**, retaining **30 NotExecuted** legacy cases;
@@ -58,7 +71,7 @@ CLI conversion/import/render/navigation/lifecycle and native gradient pixels are
 A separate OS-mouse pass exercised Settings, Video, Back, modal Cancel and exactly one Save
 after document replacement. The standalone published CLI also ran outside the repository.
 
-The [focused report](Docs/UI/HtmlToUitkVerification11.md) includes actual captures, repaired
+The focused report, now `Documentation~/HtmlToUitkVerification11.md` in the [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package, includes actual captures, repaired
 output collisions, projection callback ownership and localization, plus exact scope/limits.
 These groups overlap earlier full baselines; they are not an additional package-wide full run.
 At release time, hosted package integrity passed; hosted Unity jobs did not run because GameCI

@@ -1,12 +1,16 @@
 # Getting Started — NeoxiderTools
 
-**Goal:** get from "package installed" to a working C# runtime model or a first audio scene in about five minutes.
+**What it is:** the quick start: get from "package installed" to a working C# runtime model or a first audio scene in about five minutes.
+
+**How to use:** check the [requirements](#requirements), [install](#installation) the package and its two
+dependencies, then follow either [Start with a C# runtime model](#start-with-a-c-runtime-model) or
+[Your first scene in 5 minutes](#your-first-scene-in-5-minutes-audio-manager-am).
 
 For recorded test environments, results and limits, see the [verification record](../Verification11.md).
 
-**Navigation:** [← To Docs](./README.md) · [Migration from 10.x](./Migration11.md) · [Testing and isolation](./Testing.md)
+**Navigation:** [← To Docs](./README.md) · [Upgrading from 11.x](./Migration12.md) · [Migration from 10.x](./Migration11.md) · [Testing and isolation](./Testing.md)
 
-**По-русски:** [C# без сцены](#start-with-a-c-runtime-model), [первый аудиокомпонент](#your-first-scene-in-5-minutes-audio-manager-am) или [NoCode](./NoCode/GettingStarted.md). Существующий проект сначала сверьте с [миграцией на 11](./Migration11.md).
+**По-русски:** [C# без сцены](#start-with-a-c-runtime-model), [первый аудиокомпонент](#your-first-scene-in-5-minutes-audio-manager-am) или [NoCode](./NoCode/GettingStarted.md). Существующий проект сначала сверьте с [обновлением до 12](./Migration12.md) (с 11.x) или [миграцией на 11](./Migration11.md) (с 10.x).
 
 ---
 
@@ -15,11 +19,12 @@ For recorded test environments, results and limits, see the [verification record
 | Requirement | Version |
 |-------------|---------|
 | Unity | **6000.0** (Unity 6) or newer — see [PackageCompatibility](./PackageCompatibility.md) |
-| TextMeshPro | ships inside `com.unity.ugui` on Unity 6 |
-| AI Navigation | 1.1.7+ (resolved as UPM dependency) |
-| Input System | 1.14.2+ (resolved as UPM dependency) |
+| uGUI / TextMeshPro | `com.unity.ugui` 2.0.0+ (UPM dependency); TextMeshPro ships inside it on Unity 6 |
+| AI Navigation | `com.unity.ai.navigation` 2.0.16+ (UPM dependency) |
+| Input System | `com.unity.inputsystem` 1.20.1+ (UPM dependency) |
 | UniTask | **required** — install manually (see below) |
 | DOTween | **required** by tween-based runtime assemblies in the installed package; install separately |
+| TMP Essential Resources | needed by the text-based samples; **Window → Text Mesh Pro → Import TMP Essential Resources** |
 
 > UniTask and DOTween are not listed in `package.json` dependencies and must be installed into the host project separately.
 
@@ -37,7 +42,7 @@ For recorded test environments, results and limits, see the [verification record
    ```
 4. Click **Add** and wait for the import to finish.
 
-The Git URL follows the remote default branch. For local development, use the local route below.
+The Git URL follows the remote default branch; append a release tag such as `#v11.0.1` to pin a version. For local development, use the local route below.
 
 ### Option B — Local path (for development)
 
@@ -50,8 +55,10 @@ Copy the `Assets/Neoxider` folder into your project or reference it as a local p
 
 Open `Packages/manifest.json` and add to `dependencies`:
 ```json
-"com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
+"com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.11"
 ```
+
+`2.5.11` is the version the package is validated with; see [Dependencies](./Dependencies.md).
 Or download the `.unitypackage` from [UniTask releases](https://github.com/Cysharp/UniTask/releases).
 
 ### Install DOTween (required)
@@ -117,15 +124,17 @@ Samples are not copied automatically after installation. To import them:
 
 | Sample | What it contains |
 |--------|-----------------|
-| **Demo Scenes** | Example scenes for `AM`, `GridSystem`, `Shop`, `NoCode`, `Condition`, `StateMachine`, and more |
+| **Demo Scenes** | A demo scene per module (`AM`, `GridSystem`, `Shop`, `NoCode`, `Condition`, `StateMachine`, `Abilities`, and more), example games and `SurvivorDemo` |
 | **NeoxiderPages** | Optional UI page-navigation module (`PM`, `UIPage`, `BtnChangePage`) |
 | **Character Movement Fundamentals** | Character-controller demos for slopes, stairs, moving platforms, gravity, and a top-down arena |
 
-After import, files appear in `Assets/Samples/NeoxiderTools/11.0.1/<sample name>/`. For example, the audio scene is `Assets/Samples/NeoxiderTools/11.0.1/Demo Scenes/Scenes/Audio/AudioDemo.unity`.
+After import, files appear in `Assets/Samples/NeoxiderTools/<version>/<sample name>/`. For example, the audio scene is `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/Scenes/Audio/AudioDemo.unity`.
+
+Each demo scene is saved with its UI, configured components and UnityEvent wiring. Open it, select a button and look at its **On Click** list to see which module API it calls, then press Play. The collapsible info card in the scene names the components to inspect and the equivalent C# calls. If you change a demo scene and want it back, use **Neoxider > Demo > Rebuild Active Demo Scene** ([how demo scenes are made](./Samples.md#how-demo-scenes-are-made)).
 
 The release sources live in `Assets/Neoxider/Samples~/`; this hidden folder is not the imported project copy. During sample development, `Assets/Neoxider/Samples/` is the alternative active source root. See [Sample scenes](./Samples.md) for the layout and scene index.
 
-Imported copies from earlier versions remain separate. Compare customized content using [Migration to 11](./Migration11.md).
+Imported copies from earlier versions remain separate and are not updated by a package upgrade. Re-import the samples you use; see [Upgrading to 12](./Migration12.md#samples-and-demo-scenes).
 
 ---
 
@@ -206,7 +215,9 @@ Run the scene. Your selected C# or NoCode playback component plays the sound aut
 | Interaction contracts, hover/click and physics events | [Interaction](./Tools/InteractableObject/README.md) |
 | RPG characters and combat | [Rpg](./Rpg/README.md) |
 | Ready-to-run example scenes | [Sample scenes](./Samples.md) |
+| Injectable time and exact odds for testable rules | [Clocks](./Tools/Time/Clocks.md), [IntegerChanceTable](./Tools/Random/IntegerChanceTable.md) |
 | Package compatibility | [PackageCompatibility](./PackageCompatibility.md) |
+| Upgrading an 11.x project | [Upgrading to 12](./Migration12.md) |
 | Upgrading a 10.x project | [Migration to 11](./Migration11.md) |
 | EditMode contracts and isolated test hosts | [Testing](./Testing.md) |
 | PlayMode lifecycle and integration checks | [PlayMode testing](./PlayModeTesting.md) |

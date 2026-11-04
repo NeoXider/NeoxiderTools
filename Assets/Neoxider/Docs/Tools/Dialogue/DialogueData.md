@@ -1,6 +1,11 @@
 # Dialogue data types
 
-**Purpose:** The plain `[Serializable]` data classes the Dialogue system works on. They live in `Scripts/Tools/Dialogue/DialogueData.cs` — there is no `DialogueData` type itself, and none of them are ScriptableObjects: they are authored inline on [DialogueController](./DialogueController.md).
+**What it is:** The plain `[Serializable]` data classes the Dialogue system works on. They live in `Scripts/Tools/Dialogue/DialogueData.cs` — there is no `DialogueData` type itself, and none of them are ScriptableObjects: they are authored inline on [DialogueController](./DialogueController.md).
+
+**How to use:** fill the controller's `dialogues` array (dialogue > monologues > sentences) in the Inspector or the
+Dialogue Editor, or build the arrays from C# before calling `StartDialogue(...)`.
+
+---
 
 | Type | Contents |
 |------|----------|

@@ -41,7 +41,7 @@ namespace Neo.Save
 
             try
             {
-                using var aes = Aes.Create();
+                using Aes aes = Aes.Create();
                 aes.Key = key;
                 aes.IV = iv;
                 using ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
@@ -75,7 +75,7 @@ namespace Neo.Save
 
             try
             {
-                using var aes = Aes.Create();
+                using Aes aes = Aes.Create();
                 aes.Key = key;
                 aes.IV = iv;
                 using ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);

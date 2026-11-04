@@ -1,6 +1,8 @@
 ﻿# TextLevel
 
-**Purpose:** A UI component that automatically subscribes to the `LevelManager` and displays the current or maximum level in a `TextMeshPro` text field.
+**What it is:** A UI component that automatically subscribes to the `LevelManager` and displays the current or maximum level in a `TextMeshPro` text field.
+
+**How to use:** Add it to a TextMeshPro object, choose `Current` or `Max`, and optionally assign `_levelSource` when several `LevelManager`s exist (see Setup below).
 
 ## Setup
 

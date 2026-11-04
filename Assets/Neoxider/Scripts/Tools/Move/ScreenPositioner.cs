@@ -87,31 +87,26 @@ namespace Neo.Tools
                 return;
             }
 
-            float z = transform.position.z;
-
-            if (_useScreenPosition)
-            {
-                transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
-                    _screenEdge,
-                    _positionScreen,
-                    _depth
-                );
-            }
-            else
-            {
-                transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
-                    _screenEdge,
-                    _offsetScreen,
-                    _depth
-                );
-            }
+            Vector3 current = transform.position;
+            Vector3 position = _targetCamera.GetWorldPositionAtScreenEdge(
+                _screenEdge,
+                _useScreenPosition ? _positionScreen : _offsetScreen,
+                _depth
+            );
 
             if (!_useDepth)
             {
-                transform.SetPosition(z: z);
+                position.z = current.z;
             }
 
-            transform.AddPosition(_offset);
+            position.x += _offset.x;
+            position.y += _offset.y;
+
+            // WHY: one transform write per update (and none when nothing moved) instead of three.
+            if (position.x != current.x || position.y != current.y || position.z != current.z)
+            {
+                transform.position = position;
+            }
         }
 
         /// <summary>Configures the edge, pixel offset and camera-space depth beyond the near clip plane.</summary>

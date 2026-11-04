@@ -120,6 +120,56 @@ namespace Neo.Core.Resources
             return _model.TrySpend(resourceId, amount, out failReason);
         }
 
+        /// <summary>
+        ///     Checks one cost with the <see cref="TrySpend" /> rules without paying it or reserving anything
+        ///     (see <see cref="ResourcePoolModel.CanSpend" />), e.g. to grey out an ability button.
+        /// </summary>
+        public bool CanSpend(string resourceId, float amount, out string failReason)
+        {
+            EnsureInitialized();
+            if (_model == null)
+            {
+                failReason = "No model.";
+                return false;
+            }
+
+            return _model.CanSpend(resourceId, amount, out failReason);
+        }
+
+        /// <summary>
+        ///     Checks a multi-resource cost list without paying it (see
+        ///     <see cref="ResourcePoolModel.CanSpendAll(IReadOnlyList{ResourceCost},out string)" />).
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="costs" /> is null.</exception>
+        public bool CanSpendAll(IReadOnlyList<ResourceCost> costs, out string failReason)
+        {
+            EnsureInitialized();
+            if (_model == null)
+            {
+                failReason = "No model.";
+                return false;
+            }
+
+            return _model.CanSpendAll(costs, out failReason);
+        }
+
+        /// <summary>
+        ///     Pays every cost or none, with listeners running only after the last payment (see
+        ///     <see cref="ResourcePoolModel.TrySpendAll(IReadOnlyList{ResourceCost},out string)" />).
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="costs" /> is null.</exception>
+        public bool TrySpendAll(IReadOnlyList<ResourceCost> costs, out string failReason)
+        {
+            EnsureInitialized();
+            if (_model == null)
+            {
+                failReason = "No model.";
+                return false;
+            }
+
+            return _model.TrySpendAll(costs, out failReason);
+        }
+
         public float Decrease(string resourceId, float amount)
         {
             EnsureInitialized();
@@ -204,11 +254,11 @@ namespace Neo.Core.Resources
                 LoadModel();
             }
 
-            // Stage later pools and recreate their reactive objects before the first listener can read them.
+            // WHY: Stage later pools and recreate their reactive objects before the first listener can read them.
             SyncAllReactive(notify: false);
             _model.OnResourceChanged += HandleResourceChanged;
             _model.OnResourceDepleted += HandleResourceDepleted;
-            // Publish readiness before invoking listeners that may call back into the public API.
+            // WHY: Publish readiness before invoking listeners that may call back into the public API.
             _initialized = true;
             SyncAllReactive(true);
             _onPoolsChanged?.Invoke();
@@ -344,9 +394,9 @@ namespace Neo.Core.Resources
             }
         }
 
-        private void SyncReactiveFor(string resourceId, bool forceNotify = false, bool notify = true)
+        private void SyncReactiveFor(ResourceEntryInspector entry, string resourceId, bool forceNotify, bool notify)
         {
-            if (_model == null || !TryGetPoolEntry(resourceId, out ResourceEntryInspector entry))
+            if (_model == null)
             {
                 return;
             }
@@ -393,24 +443,30 @@ namespace Neo.Core.Resources
                 return;
             }
 
-            foreach (ResourceEntryInspector p in _pools)
+            // WHY: index loop over the authored list; ids are unique by contract, so each entry syncs itself
+            // instead of a per-entry id search (O(P) instead of O(P^2) for an init or load).
+            for (int i = 0; i < _pools.Count; i++)
             {
+                ResourceEntryInspector p = _pools[i];
                 if (p == null || string.IsNullOrWhiteSpace(p.id))
                 {
                     continue;
                 }
 
-                SyncReactiveFor(p.id, forceNotify, notify);
+                SyncReactiveFor(p, p.id, forceNotify, notify);
             }
         }
 
         private void HandleResourceChanged(string id, float current, float max)
         {
-            SyncReactiveFor(id);
-            if (TryGetPoolEntry(id, out ResourceEntryInspector entry))
+            // WHY: one pool lookup per change serves both the reactive mirrors and the UnityEvent.
+            if (!TryGetPoolEntry(id, out ResourceEntryInspector entry))
             {
-                entry.OnChanged?.Invoke(current, max);
+                return;
             }
+
+            SyncReactiveFor(entry, id, false, true);
+            entry.OnChanged?.Invoke(current, max);
         }
 
         private void HandleResourceDepleted(string id)

@@ -88,40 +88,19 @@ namespace Neo.Rpg.Runtime
 
             if (stats != null && upgradeRules != null)
             {
-                foreach (KeyValuePair<string, RpgStatRuntime> kv in stats)
+                // WHY: enumerating the interface boxes the dictionary enumerator; the owning services pass a Dictionary.
+                if (stats is Dictionary<string, RpgStatRuntime> concrete)
                 {
-                    if (kv.Value.UpgradeCount <= 0)
+                    foreach (KeyValuePair<string, RpgStatRuntime> kv in concrete)
                     {
-                        continue;
+                        AccumulateUpgradeMax(ref value, resource, kv.Key, kv.Value, upgradeRules);
                     }
-
-                    if (!upgradeRules.TryGetValue(kv.Key, out RpgStatUpgradeRule rule) || rule == null)
+                }
+                else
+                {
+                    foreach (KeyValuePair<string, RpgStatRuntime> kv in stats)
                     {
-                        continue;
-                    }
-
-                    if (rule.derivedResourceModifiers == null)
-                    {
-                        continue;
-                    }
-
-                    for (int i = 0; i < rule.derivedResourceModifiers.Length; i++)
-                    {
-                        RpgResourceModifier r = rule.derivedResourceModifiers[i];
-                        if (r == null || r.resourceId != resource.Id)
-                        {
-                            continue;
-                        }
-
-                        switch (r.kind)
-                        {
-                            case RpgResourceModifierKind.AddMaxFlat:
-                                value += r.value * kv.Value.UpgradeCount;
-                                break;
-                            case RpgResourceModifierKind.AddMaxPercent:
-                                value += resource.BaseMax * (r.value / 100f) * kv.Value.UpgradeCount;
-                                break;
-                        }
+                        AccumulateUpgradeMax(ref value, resource, kv.Key, kv.Value, upgradeRules);
                     }
                 }
             }
@@ -199,22 +178,18 @@ namespace Neo.Rpg.Runtime
 
             if (stats != null && upgradeRules != null)
             {
-                foreach (KeyValuePair<string, RpgStatRuntime> pair in stats)
+                if (stats is Dictionary<string, RpgStatRuntime> concrete)
                 {
-                    if (pair.Value.UpgradeCount <= 0 ||
-                        !upgradeRules.TryGetValue(pair.Key, out RpgStatUpgradeRule rule) ||
-                        rule?.derivedResourceModifiers == null)
+                    foreach (KeyValuePair<string, RpgStatRuntime> pair in concrete)
                     {
-                        continue;
+                        AccumulateUpgradeRegen(ref baseRate, resource, pair.Key, pair.Value, upgradeRules);
                     }
-
-                    foreach (RpgResourceModifier modifier in rule.derivedResourceModifiers)
+                }
+                else
+                {
+                    foreach (KeyValuePair<string, RpgStatRuntime> pair in stats)
                     {
-                        if (modifier != null && modifier.resourceId == resource.Id &&
-                            modifier.kind == RpgResourceModifierKind.AddRegenFlat)
-                        {
-                            baseRate += modifier.value * pair.Value.UpgradeCount;
-                        }
+                        AccumulateUpgradeRegen(ref baseRate, resource, pair.Key, pair.Value, upgradeRules);
                     }
                 }
             }
@@ -251,6 +226,55 @@ namespace Neo.Rpg.Runtime
             }
 
             return (baseRate + buffFlat) * (1f + buffPercent / 100f);
+        }
+
+        private static void AccumulateUpgradeMax(ref float value, RpgResourceRuntime resource, string statId,
+            RpgStatRuntime stat, IReadOnlyDictionary<string, RpgStatUpgradeRule> upgradeRules)
+        {
+            if (stat.UpgradeCount <= 0 || !upgradeRules.TryGetValue(statId, out RpgStatUpgradeRule rule) ||
+                rule?.derivedResourceModifiers == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < rule.derivedResourceModifiers.Length; i++)
+            {
+                RpgResourceModifier r = rule.derivedResourceModifiers[i];
+                if (r == null || r.resourceId != resource.Id)
+                {
+                    continue;
+                }
+
+                switch (r.kind)
+                {
+                    case RpgResourceModifierKind.AddMaxFlat:
+                        value += r.value * stat.UpgradeCount;
+                        break;
+                    case RpgResourceModifierKind.AddMaxPercent:
+                        value += resource.BaseMax * (r.value / 100f) * stat.UpgradeCount;
+                        break;
+                }
+            }
+        }
+
+        private static void AccumulateUpgradeRegen(ref float baseRate, RpgResourceRuntime resource, string statId,
+            RpgStatRuntime stat, IReadOnlyDictionary<string, RpgStatUpgradeRule> upgradeRules)
+        {
+            if (stat.UpgradeCount <= 0 || !upgradeRules.TryGetValue(statId, out RpgStatUpgradeRule rule) ||
+                rule?.derivedResourceModifiers == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < rule.derivedResourceModifiers.Length; i++)
+            {
+                RpgResourceModifier modifier = rule.derivedResourceModifiers[i];
+                if (modifier != null && modifier.resourceId == resource.Id &&
+                    modifier.kind == RpgResourceModifierKind.AddRegenFlat)
+                {
+                    baseRate += modifier.value * stat.UpgradeCount;
+                }
+            }
         }
 
         private static float BuffOnlyRegen(string resourceId, IReadOnlyList<BuffStatModifierApplication> mods)

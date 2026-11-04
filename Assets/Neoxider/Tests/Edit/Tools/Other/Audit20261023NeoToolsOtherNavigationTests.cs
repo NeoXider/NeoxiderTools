@@ -161,7 +161,7 @@ namespace Neo.Editor.Tests.Tools
                     arrivals++;
                 });
 
-                // Editor polling can resume in the same frame; wait for a real captured frame and Start.
+                // WHY: Editor polling can resume in the same frame; wait for a real captured frame and Start.
                 yield return WaitForNextFrame(Time.frameCount, Time.realtimeSinceStartup + 5f);
                 navigation.SetTarget(target);
                 Assert.That(submissionFrames.Count, Is.EqualTo(1));
@@ -948,7 +948,7 @@ namespace Neo.Editor.Tests.Tools
                 "Post-cancel observation requires actual native frame progression.");
             Assert.That(Time.timeAsDouble - canceledScaledTime, Is.GreaterThanOrEqualTo(0.35d),
                 "Native scaled time must exceed the authored 0.2-second patrol wait before observing cancellation.");
-            // Give an eligible delayed continuation another native frame before asserting its absence.
+            // WHY: Give an eligible delayed continuation another native frame before asserting its absence.
             yield return WaitForNextFrame(Time.frameCount, postCancelDeadline);
             Assert.That(Time.realtimeSinceStartup, Is.LessThan(postCancelDeadline),
                 "Post-cancel native/scaled observation must complete within the realtime deadline.");

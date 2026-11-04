@@ -1,0 +1,101 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b57ebcb7c8d0fbc439f6adbb9adf54f0, type: 3}
+  m_Name: DemoRewardTrack
+  m_EditorClassIdentifier: Neo.Progression::Neo.Progression.LevelCurveDefinition
+  _levels:
+  - _level: 2
+    _requiredXp: 100
+    _grantedPerkPoints: 1
+    _rewards:
+    - _rewardType: 2
+      _amount: 1
+      _moneyAmount: 0
+      _moneyTarget: {fileID: 0}
+      _collectionTarget: {fileID: 0}
+      _collectionItem: {fileID: 0}
+      _questManager: {fileID: 0}
+      _quest: {fileID: 0}
+      _description: Premium lane bonus
+      _isPremium: 1
+  - _level: 3
+    _requiredXp: 250
+    _grantedPerkPoints: 1
+    _rewards: []
+  - _level: 4
+    _requiredXp: 475
+    _grantedPerkPoints: 1
+    _rewards:
+    - _rewardType: 2
+      _amount: 2
+      _moneyAmount: 0
+      _moneyTarget: {fileID: 0}
+      _collectionTarget: {fileID: 0}
+      _collectionItem: {fileID: 0}
+      _questManager: {fileID: 0}
+      _quest: {fileID: 0}
+      _description: Premium lane bonus
+      _isPremium: 1
+  - _level: 5
+    _requiredXp: 800
+    _grantedPerkPoints: 2
+    _rewards: []
+  - _level: 6
+    _requiredXp: 1250
+    _grantedPerkPoints: 1
+    _rewards:
+    - _rewardType: 2
+      _amount: 1
+      _moneyAmount: 0
+      _moneyTarget: {fileID: 0}
+      _collectionTarget: {fileID: 0}
+      _collectionItem: {fileID: 0}
+      _questManager: {fileID: 0}
+      _quest: {fileID: 0}
+      _description: Premium lane bonus
+      _isPremium: 1
+  - _level: 7
+    _requiredXp: 1850
+    _grantedPerkPoints: 1
+    _rewards: []
+  - _level: 8
+    _requiredXp: 2625
+    _grantedPerkPoints: 1
+    _rewards:
+    - _rewardType: 2
+      _amount: 2
+      _moneyAmount: 0
+      _moneyTarget: {fileID: 0}
+      _collectionTarget: {fileID: 0}
+      _collectionItem: {fileID: 0}
+      _questManager: {fileID: 0}
+      _quest: {fileID: 0}
+      _description: Premium lane bonus
+      _isPremium: 1
+  - _level: 9
+    _requiredXp: 3600
+    _grantedPerkPoints: 1
+    _rewards: []
+  - _level: 10
+    _requiredXp: 4800
+    _grantedPerkPoints: 2
+    _rewards:
+    - _rewardType: 2
+      _amount: 3
+      _moneyAmount: 0
+      _moneyTarget: {fileID: 0}
+      _collectionTarget: {fileID: 0}
+      _collectionItem: {fileID: 0}
+      _questManager: {fileID: 0}
+      _quest: {fileID: 0}
+      _description: Premium lane bonus
+      _isPremium: 1

@@ -101,7 +101,7 @@ namespace Neo.Editor.Tests
             Assert.That(Audit20261023NeoNetworkSingleton.I, Is.SameAs(component));
             Assert.That(Audit20261023NeoNetworkSingleton.HasInstance, Is.True);
 
-            // Exercise the subsystem-registration callback; no public runtime reset API is needed.
+            // WHY: Exercise the subsystem-registration callback; no public runtime reset API is needed.
             MethodInfo reset = typeof(NetworkSingleton<>).Assembly
                 .GetType("Neo.Network.NetworkSingletonRuntimeReset")
                 .GetMethod("ResetStaticState", BindingFlags.Static | BindingFlags.NonPublic);

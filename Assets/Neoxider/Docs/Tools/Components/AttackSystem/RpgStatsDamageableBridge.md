@@ -3,7 +3,12 @@
 **What it is:** a compatibility bridge from the legacy `AttackSystem` into the current RPG combat layer.
 File: `Scripts/Rpg/Combat/RpgStatsDamageableBridge.cs` (`Neo.Rpg.Combat` assembly).
 
+**How to use:** add it next to (or under) an `RpgCharacter`; legacy `IDamageable` / `IHealable` callers then
+damage and heal that character. Details in **Setup** below.
+
 **Navigation:** [← AttackSystem](./README.md) · [RPG](../../../Rpg/README.md)
+
+---
 
 ## Purpose
 
@@ -31,5 +36,8 @@ Use it for old scenes, prefabs, and components that still depend on `IDamageable
 - `TakeDamage(int amount)` ignores `amount <= 0`.
 - `Heal(int amount)` ignores `amount <= 0`.
 - `DamageMultiplier` and `HealMultiplier` clamp negative values to `0`.
+- For pooled hitboxes or custom receivers, the runtime override API (`Initialize(IRpgCombatReceiver)`,
+  `ClearReceiver()`, `HasReceiverOverride`, `TryTakeDamage(int, out float)`, `TryHeal(int, out float)`) is
+  documented in [RPG / Combat](../../../Rpg/Combat/README.md#rpgstatsdamageablebridge).
 - The bridge does not add network authority by itself. Networked objects use the optional
   `RpgCharacterNetworkAdapter` from `Neo.Rpg.Network`.

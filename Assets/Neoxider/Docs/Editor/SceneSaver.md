@@ -19,7 +19,7 @@ Different `Level.unity` scenes now have different GUID subdirectories, so one ca
 
 The scene must first be saved as an asset with a valid GUID. Its path, unsaved edits and dirty state remain unchanged by `saveAsCopy`. To recover, open the desired backup through Unity and use **Save As** to choose the destination; restoration does not happen automatically. Custom Editor code can continue calling `SceneSaverGUI.SaveSceneClone()`; scheduler and EditorPrefs contracts are unchanged.
 
-В 11.0 копии одноимённых сцен разделены по GUID исходной сцены. Старые backup-файлы сохраняются; исходная сцена и её несохранённые изменения не перезаписываются.
+Since 11.0, copies of same-named scenes are separated by the source scene's GUID. Older backup files are kept; the source scene and its unsaved changes are never overwritten.
 
 ---
 
@@ -41,6 +41,7 @@ An editor script that automatically saves backup copies of the active scene. Log
 - **Configurable interval**: in minutes, clamped to a 0.25-minute minimum — a zero interval would mean "save on every tick".
 - **Safe saving**: the copy carries the `_AutoSave` suffix in a separate folder and never overwrites your scene file.
 - **Idle when it must be**: skipped in Play mode, in batch mode, while the editor compiles or imports assets, and while a prefab stage is open.
+- **Quiet console**: a successful backup writes a console line only with **Log Each Auto-Save** on (EditorPrefs `Neoxider.SceneSaver.LogEachSave`, off by default); a failed save is always logged.
 
 **Public methods**
 - `ShowWindow()`: static, opens the settings window. Invoked via `MenuItem`.

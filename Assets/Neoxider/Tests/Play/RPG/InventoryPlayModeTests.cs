@@ -49,7 +49,7 @@ namespace Neo.Tests.Play
             bool eventFired = false;
             _inventory.OnInventoryChanged.AddListener(() => eventFired = true);
 
-            // Wait one frame to ensure initialization is fully settled
+            // WHY: Wait one frame to ensure initialization is fully settled
             yield return null;
 
             _inventory.AddItemByIdAmount(101, 1);

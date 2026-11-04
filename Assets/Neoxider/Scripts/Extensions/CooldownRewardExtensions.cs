@@ -70,7 +70,7 @@ namespace Neo.Extensions
                 return last;
             }
 
-            // Multiply in double to preserve the count (including counts beyond float's integer
+            // WHY: Multiply in double to preserve the count (including counts beyond float's integer
             // precision), then truncate only sub-tick fractions, consistently across .NET profiles.
             double advanceTicks = (double)claimsGiven * cooldownSeconds * TimeSpan.TicksPerSecond;
             long remainingTicks = DateTime.MaxValue.Ticks - last.Ticks;

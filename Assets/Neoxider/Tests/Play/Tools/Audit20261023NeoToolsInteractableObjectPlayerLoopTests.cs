@@ -42,11 +42,13 @@ namespace Neo.Tests.Play
             List<InteractiveObject> targets = new();
             for (int i = 0; i < targetCount; i++)
             {
-                // Distinct physical targets, all on the same raw ray. At N=1000 this also exercises N x H projection.
+                // WHY: Distinct physical targets on one shared raw ray. From the index threshold on this exercises the
+                // indexed projection (H + N inspected entries); below it, the complete N x H projection.
                 InteractiveObject target = CreateTarget(Origin + direction * (2f + i * 0.005f),
                     keyboard: keyboard, hover: !keyboard, twoDimensions: twoDimensions);
-                target.InteractionDistance = 10f; // Identical keyboard look length, independent of target distance.
-                // A component JSON overwrite can recreate the intentionally null inline UnityEvents.
+                // WHY: One keyboard look length for every target, independent of its distance. Fields are set one by
+                // one because a component JSON overwrite would recreate the intentionally null UnityEvents.
+                target.InteractionDistance = 10f;
                 SetField(target, "checkObstacles", false);
                 SetField(target, "viewCheckPoint", lookSource);
                 AssertNoObserverEvents(target);
@@ -61,7 +63,8 @@ namespace Neo.Tests.Play
                 _input.QueueKeyboard(true);
             }
 
-            yield return null; // The actual PlayerLoop warms native and target-local buffers; no SendMessage/manual Update.
+            // WHY: The real PlayerLoop warms native and target-local buffers; no SendMessage or manual Update.
+            yield return null;
             if (keyboard)
             {
                 Assert.That(KeyInputCompat.GetKeyDown(KeyCode.E), Is.True, _input.Diagnostics);
@@ -96,7 +99,7 @@ namespace Neo.Tests.Play
                 yield return null;
             }
 
-            // Observe real hover-exit transitions before measuring the unchanged miss context.
+            // WHY: Observe the real hover-exit transitions before measuring the unchanged miss context.
             int[] hoverExits = new int[targetCount];
             for (int i = 0; i < targets.Count; i++)
             {
@@ -127,13 +130,15 @@ namespace Neo.Tests.Play
             if (keyboard)
             {
                 _input.QueueKeyboard(false);
-                yield return null; // Rearm the next real press without changing geometry.
+                // WHY: Re-arm the next real press without changing geometry.
+                yield return null;
                 _input.QueueKeyboard(true);
             }
 
             InteractionPhysicsQueries.ResetCounters();
             beforeFrame = Time.frameCount;
-            yield return null; // Camera: the very next frame, after all hover-exit observers settled.
+            // WHY: Camera routes measure the very next frame, after every hover-exit observer settled.
+            yield return null;
             Assert.That(Time.frameCount, Is.GreaterThan(beforeFrame));
             AssertConsumerStates(targets, keyboard, false);
             foreach (int exits in hoverExits)
@@ -164,7 +169,8 @@ namespace Neo.Tests.Play
                 Assert.That(keyboard ? InteractedThisFrame(target) : target.IsHovered, Is.EqualTo(expected), input);
                 if (expected)
                 {
-                    AssertNoObserverEvents(target); // Confirm the precondition again at the actual positive consumer frame.
+                    // WHY: Confirm the null-observer precondition again on the actual positive consumer frame.
+                    AssertNoObserverEvents(target);
                 }
             }
         }
@@ -186,7 +192,114 @@ namespace Neo.Tests.Play
             Assert.That(counters.FreshQueries, Is.Zero);
             Assert.That(counters.FrameAdvances, Is.EqualTo(1));
             Assert.That(counters.ClassificationPasses, Is.EqualTo(targetCount));
-            Assert.That(counters.ClassifiedHits, Is.EqualTo((long)targetCount * hitCount));
+            Assert.That(counters.ClassifiedHits, Is.EqualTo(ExpectedDenseInspection(targetCount, hitCount)));
+        }
+
+        /// <summary>
+        ///     Dense positive: below the index threshold each target inspects the H raw hits once; from the
+        ///     threshold the complete H-hit index is built once and each target inspects its own hit (H + N).
+        /// </summary>
+        internal static long ExpectedDenseInspection(int targetCount, int hitCount)
+        {
+            if (hitCount == 0)
+            {
+                return 0L;
+            }
+
+            return hitCount < InteractionHitProjector.DefaultIndexedMinimumHits
+                ? (long)targetCount * hitCount
+                : (long)hitCount + targetCount;
+        }
+
+        /// <summary>
+        ///     Dense clear-path selection (default checkObstacles): one index build and one distance-order build of the
+        ///     H = N hits, one own entry per target, and one walked hit for every target behind the nearest one.
+        /// </summary>
+        internal static long ExpectedClearPathInspection(int targetCount)
+        {
+            return 4L * targetCount - 1;
+        }
+
+        [UnityTest] public IEnumerator PlayerLoop_Camera3D_ObstaclesOn_100() => ObstaclesOnQueries(false);
+        [UnityTest] public IEnumerator PlayerLoop_Camera2D_ObstaclesOn_100() => ObstaclesOnQueries(true);
+
+        private IEnumerator ObstaclesOnQueries(bool twoDimensions)
+        {
+            const int targetCount = 100;
+            List<InteractiveObject> targets = new();
+            for (int i = 0; i < targetCount; i++)
+            {
+                InteractiveObject target = CreateTarget(Origin + Vector3.forward * (2f + i * 0.005f), hover: true,
+                    twoDimensions: twoDimensions);
+                AssertNoObserverEvents(target);
+                targets.Add(target);
+            }
+
+            Physics.SyncTransforms();
+            Physics2D.SyncTransforms();
+            InteractionPhysicsQueries.ReleaseBuffers();
+            yield return null;
+            InteractionPhysicsQueries.Invalidate();
+            InteractionPhysicsQueries.ResetCounters();
+            yield return null;
+
+            Assert.That(targets[0].IsHovered, Is.True, "The nearest collinear target has a clear path.");
+            for (int i = 1; i < targets.Count; i++)
+            {
+                Assert.That(targets[i].IsHovered, Is.False, "Target " + i + " is behind the nearest target's collider.");
+            }
+
+            WriteCounters("obstacles-on", targetCount, twoDimensions, false);
+            InteractionPhysicsQueries.Statistics counters = InteractionPhysicsQueries.Counters;
+            Assert.That(counters.NativeCalls, Is.EqualTo(1));
+            Assert.That(counters.CacheHits, Is.EqualTo(targetCount - 1));
+            Assert.That(counters.RangeNativeCalls + counters.CallbackBoundaries + counters.FreshQueries, Is.Zero);
+            Assert.That(counters.ClassificationPasses, Is.EqualTo(targetCount));
+            Assert.That(counters.ClassifiedHits, Is.EqualTo(ExpectedClearPathInspection(targetCount)),
+                "The clear-path rule must not fall back to an N x H projection.");
+        }
+
+        [UnityTest] public IEnumerator PlayerLoop_Camera3D_PartialMiss_100() => PartialMissQueries(false);
+        [UnityTest] public IEnumerator PlayerLoop_Camera2D_PartialMiss_100() => PartialMissQueries(true);
+
+        private IEnumerator PartialMissQueries(bool twoDimensions)
+        {
+            const int onRay = 50;
+            const int offRay = 50;
+            List<InteractiveObject> hit = new();
+            List<InteractiveObject> missed = new();
+            for (int i = 0; i < onRay + offRay; i++)
+            {
+                bool onTheRay = i < onRay;
+                // WHY: Off-ray targets share the dense camera query but none of its raw hits belongs to them.
+                Vector3 position = Origin + Vector3.forward * (2f + i * 0.005f) + (onTheRay ? Vector3.zero : Vector3.right * 3f);
+                InteractiveObject target = CreateTarget(position, hover: true, twoDimensions: twoDimensions);
+                SetField(target, "checkObstacles", false);
+                AssertNoObserverEvents(target);
+                (onTheRay ? hit : missed).Add(target);
+            }
+
+            Physics.SyncTransforms();
+            Physics2D.SyncTransforms();
+            InteractionPhysicsQueries.ReleaseBuffers();
+            yield return null;
+            AssertConsumerStates(hit, false, true);
+            AssertConsumerStates(missed, false, false);
+
+            InteractionPhysicsQueries.Invalidate();
+            InteractionPhysicsQueries.ResetCounters();
+            yield return null;
+            AssertConsumerStates(hit, false, true);
+            AssertConsumerStates(missed, false, false);
+            WriteCounters("partial-miss", onRay + offRay, twoDimensions, false);
+            InteractionPhysicsQueries.Statistics counters = InteractionPhysicsQueries.Counters;
+            Assert.That(counters.NativeCalls, Is.EqualTo(1));
+            Assert.That(counters.CacheHits, Is.EqualTo(onRay + offRay - 1));
+            Assert.That(counters.CallbackBoundaries + counters.FreshQueries + counters.OverflowFallbacks, Is.Zero);
+            Assert.That(counters.ClassificationPasses, Is.EqualTo(onRay + offRay));
+            // WHY: One index build (H = onRay) + one entry per hit target; missed targets add no complete fallback.
+            Assert.That(counters.ClassifiedHits, Is.EqualTo((long)onRay + onRay),
+                "A camera miss must not fall back to an N x H projection.");
         }
 
         private static void WriteCounters(string control, int targetCount, bool twoDimensions, bool keyboard)

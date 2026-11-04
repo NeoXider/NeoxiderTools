@@ -848,8 +848,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   intecactable: 1
   _imageTarget: {fileID: 4736066519434243164}
-  action: 3
-  targetPageId: {fileID: 0}
+  action: 0
+  targetPageId: {fileID: 11400000, guid: cd4ac9bd18859104d94f4065d89f6793, type: 2}
   _canSwitchPage: 1
   _executeState: 0
   _useAnimImage: 1

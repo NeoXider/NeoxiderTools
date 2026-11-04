@@ -1,6 +1,13 @@
 ﻿# Tools / Managers
 
-Managers and singleton patterns used by runtime systems. Namespace: `Neo.Tools`; assembly: `Neo.Tools.Managers`. Scripts are located in `Scripts/Tools/Managers/`.
+**What it is:** managers and singleton patterns used by runtime systems: the `GM` state flow, the `EM` event hub,
+ordered `Bootstrap` initialization and the `Singleton<T>` / `SingletonById<T>` bases. Scripts live in
+`Scripts/Tools/Managers/`; namespace `Neo.Tools`, assembly `Neo.Tools.Managers`.
+
+**Contents:** the table below. All singletons reset their statics before each Editor play session, so they work with
+Enter Play Mode Options (domain reload disabled).
+
+---
 
 ## Components and C# APIs
 

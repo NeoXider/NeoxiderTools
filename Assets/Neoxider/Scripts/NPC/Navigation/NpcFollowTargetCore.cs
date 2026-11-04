@@ -16,6 +16,7 @@ namespace Neo.NPC.Navigation
         private bool destinationReachedFired;
         private Vector3? explicitDestination;
         private bool isStopped;
+        private bool pathBlockedReported;
         private bool pathDirty = true;
 
         private Vector3 lastDesiredPosition;
@@ -24,6 +25,7 @@ namespace Neo.NPC.Navigation
         private float lastPathUpdateTime;
         private float maxSampleDistance;
         private float pathUpdateInterval;
+        private float pathUpdatePhase;
 
         private float triggerDistance;
 
@@ -37,6 +39,18 @@ namespace Neo.NPC.Navigation
         public Transform Target { get; private set; }
 
         public bool FollowEnabled { get; private set; } = true;
+
+        /// <summary>
+        ///     Fraction of the path update interval (0..1) by which the first periodic re-path after a new
+        ///     target or destination is advanced. Agents with different phases spread their periodic path
+        ///     requests over the interval instead of re-pathing in the same frame. 0 keeps the legacy timing;
+        ///     the immediate first request of a new target is never delayed.
+        /// </summary>
+        public float PathUpdatePhase
+        {
+            get => pathUpdatePhase;
+            set => pathUpdatePhase = float.IsNaN(value) ? 0f : Mathf.Clamp(value, 0f, 0.999f);
+        }
 
         public event Action<Vector3> DestinationReached;
         public event Action<Vector3> PathBlocked;
@@ -67,6 +81,7 @@ namespace Neo.NPC.Navigation
             Target = newTarget;
             explicitDestination = null;
             destinationReachedFired = false;
+            pathBlockedReported = false;
             pathDirty = true;
             lastPathUpdateTime = float.NegativeInfinity;
         }
@@ -76,6 +91,7 @@ namespace Neo.NPC.Navigation
             Target = null;
             explicitDestination = destination;
             destinationReachedFired = false;
+            pathBlockedReported = false;
             pathDirty = true;
             lastPathUpdateTime = float.NegativeInfinity;
             return true;
@@ -124,13 +140,16 @@ namespace Neo.NPC.Navigation
 
                 if (autoUpdatePath && time >= lastPathUpdateTime + pathUpdateInterval)
                 {
+                    bool firstPeriodicUpdate = float.IsNegativeInfinity(lastPathUpdateTime);
                     if (pathDirty || (!agent.pathPending && !agent.hasPath) ||
                         (constrained - lastDesiredPosition).sqrMagnitude > 0.001f)
                     {
                         UpdatePath(constrained);
                     }
 
-                    lastPathUpdateTime = time;
+                    // WHY: agents retargeted in the same frame would otherwise re-path in lockstep forever;
+                    // shifting only the first period keeps the interval while desynchronizing the crowd.
+                    lastPathUpdateTime = firstPeriodicUpdate ? time - pathUpdateInterval * pathUpdatePhase : time;
                 }
             }
 
@@ -197,6 +216,7 @@ namespace Neo.NPC.Navigation
                     lastDesiredPosition = desired;
                     pathDirty = false;
                     destinationReachedFired = false;
+                    pathBlockedReported = false;
                     PathUpdated?.Invoke(resolved);
                     return true;
                 }
@@ -221,11 +241,22 @@ namespace Neo.NPC.Navigation
 
             if (agent.pathStatus is NavMeshPathStatus.PathInvalid or NavMeshPathStatus.PathPartial)
             {
+                // WHY: report each blocked path once; a partial path otherwise re-fired every Tick (every frame).
+                if (pathBlockedReported)
+                {
+                    return;
+                }
+
                 Vector3? desired = GetDesiredDestination();
                 if (desired.HasValue)
                 {
+                    pathBlockedReported = true;
                     PathBlocked?.Invoke(desired.Value);
                 }
+            }
+            else
+            {
+                pathBlockedReported = false;
             }
         }
 

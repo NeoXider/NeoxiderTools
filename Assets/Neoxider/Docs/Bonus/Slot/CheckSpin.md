@@ -1,6 +1,15 @@
 ﻿# CheckSpin
 
-**Purpose:** Serializable helper on **`SpinController`**: resolve paylines, compute multipliers, force-win / force-lose planning (`SetWin` / `SetLose`). Matrices of symbols and gizmo helpers live on **`SpinController`** — see [SpinController.md](./SpinController.md).
+**What it is:** a serializable plain C# class (`Scripts/Bonus/Slot/CheckSpin.cs`) embedded in **`SpinController`**: resolves paylines, finds winning lines and multipliers, and reshapes planned outcomes (`SetWin` / `SetLose`). It needs no scene, so tests and servers can evaluate any `[column, row]` id matrix. Matrices of symbols and gizmo helpers live on **`SpinController`** — see [SpinController.md](./SpinController.md).
+
+**How to use:**
+1. Configure it in the `SpinController` Inspector (**Check Spin**: Lines Data, Sprites Multiplier Data, Sequence Length, fallback rows) or create `new CheckSpin()` in code.
+2. Call `GetWinningLines(ids, activeLines)` and `GetMultiplayers(ids, activeLines, lines)`; feed the multipliers to `SlotSpinMath.ComputePayout`.
+
+---
+
+A win needs one contiguous run of the same non-negative id at least `SequenceLength` long along a payline.
+`GetPaylineDefinitionCount` counts lines without building them, and winning-line checks do not allocate per line.
 
 ## Fallback rows (no valid `Lines Data`)
 

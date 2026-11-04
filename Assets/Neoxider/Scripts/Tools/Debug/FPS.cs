@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System;
+using TMPro;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -47,6 +48,10 @@ namespace Neo.Tools
         private float[] fpsBuffer;
         private float nextDisplayTime;
         private int samplesAccumulated;
+        private string _displayText;
+        private long _displayKey;
+        private bool _displayDecimals;
+        private bool _displaySuffix;
 
         [Header("UI Settings")] [Tooltip("Text component to display FPS")] [SerializeField]
         private TMP_Text text;
@@ -162,18 +167,35 @@ namespace Neo.Tools
         private void UpdateFpsDisplay()
         {
             float averageFps = GetAverageFps();
+            text.color = GetFpsColor(averageFps);
 
+            // WHY: a stable frame rate shows the same number interval after interval; reuse that string
+            // instead of formatting and concatenating a new one each refresh.
+            long displayKey = showDecimals
+                ? (long)Math.Round(averageFps * 10.0, MidpointRounding.AwayFromZero)
+                : Mathf.RoundToInt(averageFps);
+            if (_displayText != null && displayKey == _displayKey && showDecimals == _displayDecimals &&
+                showSuffix == _displaySuffix)
+            {
+                text.text = _displayText;
+                return;
+            }
+
+            // WHY: the text is a pure function of the key, so the cached string is always exact.
             string fpsText = showDecimals
-                ? averageFps.ToString("F1")
-                : Mathf.RoundToInt(averageFps).ToString();
+                ? (displayKey / 10.0).ToString("F1")
+                : displayKey.ToString();
 
             if (showSuffix)
             {
                 fpsText += " FPS";
             }
 
+            _displayText = fpsText;
+            _displayKey = displayKey;
+            _displayDecimals = showDecimals;
+            _displaySuffix = showSuffix;
             text.text = fpsText;
-            text.color = GetFpsColor(averageFps);
         }
 
         private Color GetFpsColor(float fps)

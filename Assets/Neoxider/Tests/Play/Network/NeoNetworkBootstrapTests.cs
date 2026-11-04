@@ -137,6 +137,29 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator ASessionThatEndedElsewhere_DoesNotBlockTheNextStart()
+        {
+            FieldInfo statusInterval = typeof(NeoNetworkBootstrap).GetField("_statusLogIntervalSeconds",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.That(statusInterval, Is.Not.Null);
+            statusInterval.SetValue(_bootstrap, 0f);
+            Assert.That(_bootstrap.StartAs(NeoStartupMode.Host), Is.True);
+            yield return WaitUntil(() => NetworkServer.active && NetworkClient.isConnected);
+
+            // WHY: the session ends without the bootstrap, like a server shutdown or a failed connect would.
+            _manager.StopNetwork();
+            yield return WaitUntil(() => !NetworkServer.active && !NetworkClient.active);
+            yield return null;
+            Assert.That(_bootstrap.HasStartedNetwork, Is.False,
+                "an ended session is released on the next frame, even with the status log off");
+
+            Assert.That(_bootstrap.StartAs(NeoStartupMode.Host), Is.True,
+                "a stale started flag used to refuse every later Host/Join request");
+            yield return WaitUntil(() => NetworkServer.active);
+            Assert.That(_bootstrap.HasStartedNetwork, Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator ASecondRequest_WhileRunning_ChangesNothing()
         {
             _bootstrap.StartAs(NeoStartupMode.Host);

@@ -1,6 +1,10 @@
 ﻿# LevelManager
 
-**Purpose:** Level selection and map (chapter) progress controller. `CurrentLevel` is a zero-based selection. `MaxLevel` is the next uncompleted level index / number of recorded completions on the selected map. `SaveLevel()` writes progress through `SaveProvider`; level selection alone does not save or load a scene.
+**What it is:** a scene singleton (`Scripts/Level/LevelManager.cs`, namespace `Neo.Level`) for level selection and map (chapter) progress. `CurrentLevel` is a zero-based selection. `MaxLevel` is the next uncompleted level index / number of recorded completions on the selected map. `SaveLevel()` writes progress through `SaveProvider`; level selection alone does not save or load a scene.
+
+**How to use:** follow the setup below, then drive it from code (`LevelManager.I.SaveLevel()`) or from Inspector UnityEvents.
+
+---
 
 ## Setup
 
@@ -42,6 +46,12 @@ LevelManager.I.Restart();
 // Select a map; then select its saved frontier explicitly if desired
 LevelManager.I.SetMapId(1);
 LevelManager.I.SetLastLevel();
+
+// Start a map over: its frontier returns to level 0 and its save key is deleted;
+// the selected level is kept, so select the frontier (level 0) again
+if (!LevelManager.I.TryResetProgress(1)) { /* not a configured map */ }
+LevelManager.I.ResetAllProgress();
+LevelManager.I.SetLastLevel();
 ```
 
 `SetLevel` clamps negative selections to zero on non-looping maps. Finite maps with a positive count clamp to their last level. Infinite maps (and the legacy non-looping zero-count configuration) retain the existing upper limit of `MaxLevel + 1`. Looping maps use `GetLoopLevel(id, count)`, which wraps positive and negative integers into `[0, count)` and returns zero for a non-positive count. Selection and saved progress saturate at `int.MaxValue` rather than overflowing.
@@ -52,6 +62,8 @@ A looping map requires a positive `countLevels`; without any levels, `SaveLevel(
 
 `SetLastMap()` chooses the first incomplete configured map, or the last configured map when all are complete. Null slots are skipped without renumbering save keys. `SetMapId` rejects null or out-of-range slots without changing the current selection or firing change events. Switching maps does not automatically change `CurrentLevel`.
 
+`TryResetProgress(mapId)` clears one map's saved progress: the map's frontier becomes 0 and the key `Map_{saveKey}_{mapId}__level` is deleted from `SaveProvider` (staged like `SaveLevel()`, so flush at your checkpoint). It returns `false` for a null or out-of-range map. For the selected map it raises `OnChangeMaxLevel(0)` and refreshes the level buttons; the selected level is kept, so call `SetLastLevel()` afterwards to jump back to level 0. The reset also works before the manager initialized (an inactive object, or a caller that runs before its `Awake`): a map that is not bound to its save key yet is bound first, so the next initialization reads 0 instead of the old frontier. The key is deleted before the frontier changes in memory: when the save provider throws, the map, its stored value and the events stay as they were and the exception reaches the caller. `ResetProgress(mapId)` is the UnityEvent form and a Play Mode-only Inspector button (an invalid index is ignored; its warning goes through the `NeoDiagnostics` warning channel, which is off by default, so code callers should check the `TryResetProgress` return value; a NoCode "New game" button adds a second persistent call to `SetLastLevel()`). `ResetAllProgress()` (also a Play Mode-only Inspector button) clears every configured map in index order and raises one `OnChangeMaxLevel` for the selected map. If the provider throws partway, the maps before the failing one stay reset, the rest keep their progress, the exception reaches the caller, and the event and button refresh still run when the selected map was already reset. `Map.ResetProgress()` does the same for one map you hold directly, but only a map bound by `Load` can delete its key.
+
 Automatic map advancement also skips empty or already completed intermediate maps. Switching to a different map in a progress-event listener is retained.
 
 The public event fields can be assigned from C# when constructing components dynamically. Subscribe before invoking selection/completion methods; scene-authored listeners can be configured in the Inspector. Persistence flush policy belongs to `SaveProvider`; call `SaveProvider.Save()` at an explicit checkpoint if required by the game.
@@ -59,7 +71,7 @@ The public event fields can be assigned from C# when constructing components dyn
 ## Events
 
 - `OnChangeLevel` — Fired when the current level changes.
-- `OnChangeMaxLevel` — Fired when the player beats a new level.
+- `OnChangeMaxLevel` — Fired with the frontier on initialization, on map change, after `SaveLevel()` records a completion and after a reset of the selected map.
 - `OnChangeMap` — Fired when the active map changes.
 
 ## See Also

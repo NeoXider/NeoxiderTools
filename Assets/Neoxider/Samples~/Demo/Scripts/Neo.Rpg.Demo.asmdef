@@ -39,7 +39,13 @@
         "Neo.NoCode",
         "Neo.Parallax",
         "Neo.Animations",
-        "Neo.Tools.Inventory"
+        "Neo.Tools.Inventory",
+        "Neo.Tools.Random",
+        "Neo.Tools.Dialogue",
+        "Neo.Bonus",
+        "Neo.Tools.Move",
+        "Neo.Tools.Draw",
+        "Neo.Network.Contracts"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

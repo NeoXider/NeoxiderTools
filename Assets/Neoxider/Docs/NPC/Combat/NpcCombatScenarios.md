@@ -2,6 +2,9 @@
 
 **What it is:** ready-made recipes for building automatic NPCs based on `NpcNavigation`, `NpcRpgCombatBrain`, `RpgTargetSelector`, and `RpgAttackController`.
 
+**How to use:** set up the [common base](#common-base-for-all-scenarios) once, then pick the scenario that matches
+your enemy and copy its component and asset settings.
+
 This page serves as a practical cookbook: what to add to the object, what to configure, and how to get the enemy type you need without a separate large script.
 
 ---

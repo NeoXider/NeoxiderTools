@@ -1,43 +1,18 @@
 using System;
-using System.Linq;
-using UnityEditor;
-using UnityEngine;
 
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Auto-registers CustomEditor types for Neo components.
-    ///     Mitigates visibility issues when the package is installed via Package Manager.
+    ///     Former auto-registration hook for Neo component editors. Kept only so code that names the type still
+    ///     compiles; it does nothing.
     /// </summary>
-    [InitializeOnLoad]
+    /// <remarks>
+    ///     WHY: the [InitializeOnLoad] hook enumerated every type of every loaded assembly after each domain reload
+    ///     and discarded the result. Editor registration never depended on it: <see cref="NeoCustomEditor" /> is a
+    ///     fallback editor for all MonoBehaviours and Unity discovers it by its attribute.
+    /// </remarks>
+    [Obsolete("NeoEditorAutoRegister no longer does anything; NeoCustomEditor is discovered by Unity directly.")]
     public static class NeoEditorAutoRegister
     {
-        static NeoEditorAutoRegister()
-        {
-            EditorApplication.delayCall += RegisterNeoEditors;
-        }
-
-        private static void RegisterNeoEditors()
-        {
-            var neoTypes = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly =>
-                {
-                    try
-                    {
-                        return assembly.GetTypes();
-                    }
-                    catch
-                    {
-                        return Type.EmptyTypes;
-                    }
-                })
-                .Where(type =>
-                    type != null &&
-                    !type.IsAbstract &&
-                    typeof(MonoBehaviour).IsAssignableFrom(type) &&
-                    type.Namespace != null &&
-                    (type.Namespace == "Neo" || type.Namespace.StartsWith("Neo.")))
-                .ToList();
-        }
     }
 }

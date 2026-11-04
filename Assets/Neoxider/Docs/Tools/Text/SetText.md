@@ -1,6 +1,16 @@
 ﻿# SetText
 
-**Purpose:** A component for displaying formatted numeric and text values in `TMP_Text`. Supports thousand separators, decimal places, notation styles (Plain, Grouped, Scientific, IdleShort), percentages, currency, `BigInteger`, and animated number transitions via DOTween.
+**What it is:** a `MonoBehaviour` that displays formatted numbers and strings in a `TMP_Text`: thousand separators,
+decimal places, notation styles (Plain, Grouped, Scientific, IdleShort), percentages, currency, exact `BigInteger`
+values and animated number transitions via DOTween. Script: `Scripts/Tools/Text/SetText.cs`, namespace `Neo.Tools`,
+assembly `Neo.Tools.Text`.
+
+**How to use:**
+1. Add **Neoxider / Tools / SetText** beside a TextMeshPro label (or assign **Text**).
+2. Configure separators, decimals, notation and the prefix/suffix in the Inspector.
+3. Call `Set(int)` / `Set(float)` for animated numbers or `Set(string)` for literal text (C# or UnityEvents).
+
+---
 
 ## Fields (Inspector)
 
@@ -35,6 +45,7 @@
 | `void SetFormatted(BigInteger value, NumberFormatOptions options)` | The same operation for an exact large integer. |
 | `Separator`, `DecimalPlaces`, `NumberNotationStyle`, `RoundingMode` | Redraw the retained numeric value immediately; decimal places are clamped to 0–10. |
 | `IndexOffset` | Offset applied to future `Set(int)` calls. |
+| `Prefix`, `Suffix` | The Inspector **Start Add / End Add** texts. A retained numeric value redraws immediately; a literal string uses the new affix from the next `Set(string)`. |
 | `currentNum` | Approximate animated float value, including after an integer finishes with exact text. Immediate string/currency/percentage/large integer writes do not replace this animation state. |
 | `void Clear()` | Cancel animation and clear the text, including affixes. |
 
@@ -45,6 +56,10 @@ All animated numeric paths use float interpolation. In 11.0, `Set(int)` and the 
 For `Set(float)`, completion settles `currentNum` to the supplied float before the final formatting update. This avoids losing a small target such as `9.5f` when interpolating from a much larger value. Decimal places, rounding, notation and affixes still determine the displayed string; this does not turn a float request into an integer request or change any serialized format setting. A superseded tween's setter and completion callback cannot publish through the newer value's formatter.
 
 Immediate writes and newer animations cancel an unfinished tween and its exact final commit. Completion publishes a final `OnTextUpdated` if the exact string differs from the last interpolated text; it does not publish a redundant identical completion string. Tweens belong to the component and are released when it is destroyed. The animated Inspector button is available in Play Mode.
+
+Performance: with empty affixes, `Set(string)` passes the caller's string instance to the label and `OnTextUpdated`
+without copying, and re-setting the same string does not allocate. A running number tween still formats one string
+per frame (`ToPrettyString`) while it runs; idle labels cost nothing.
 
 ## Unity Events
 

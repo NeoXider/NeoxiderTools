@@ -41,7 +41,7 @@ namespace Neo.Tests.Edit
         [Test]
         public void EveryPackagedMover_ParksTheTransformOriginAtTheFeet()
         {
-            var offenders = new List<string>();
+            List<string> offenders = new List<string>();
             int moverCount = 0;
 
             foreach (string file in EnumerateSerializedAssets())

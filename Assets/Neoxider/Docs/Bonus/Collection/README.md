@@ -1,6 +1,22 @@
 ﻿# Collection
 
-Persistent collectible unlocks with optional box rewards and replaceable item views.
+**What it is:** persistent collectible unlocks with optional box rewards and replaceable item views
+(`Scripts/Bonus/Collection/`). The state and rules live in plain C# cores — [CollectionSet](CollectionSet.md)
+(independent sets, C# events, injectable random) and [BoxProgress](BoxProgress.md) (integer piggy bank with
+idempotent claims) — and the components wrap them for scenes.
+
+**Contents:**
+
+| Page | Kind |
+|------|------|
+| [CollectionSet](CollectionSet.md) | Plain C# set core: unlock/lock/reset, persistence, events. |
+| [BoxProgress](BoxProgress.md) | Plain C# accumulate/threshold/claim core and shared `BoxProgressRules`. |
+| [Collection](Collection.md) | Scene component over one `CollectionSet` (catalog, UnityEvents, `Collection.I`). |
+| [Box](Box.md) | Scene/UI progress box that grants a locked item. |
+| [ItemCollectionData](ItemCollectionData.md) | Item ScriptableObject. |
+| [ItemCollection](ItemCollection.md), [ItemCollectionInfo](ItemCollectionInfo.md), [CollectionVisualManager](CollectionVisualManager.md) | Views. |
+
+---
 
 ## Scene setup
 
@@ -11,8 +27,19 @@ Persistent collectible unlocks with optional box rewards and replaceable item vi
    [CollectionVisualManager](CollectionVisualManager.md), and wire `OnSetItem(int)` to a details view.
 4. Use [Box](Box.md) to exchange accumulated progress for a still-locked item.
 
-`ItemCollection` and `ItemCollectionInfo` accept an explicit collection reference, with `Collection.I`
-as fallback. `Box` and `CollectionVisualManager` currently use `Collection.I` directly.
+`ItemCollection`, `ItemCollectionInfo`, `Box` and `CollectionVisualManager` (**Collection** field /
+`TargetCollection`) accept an explicit collection reference, with `Collection.I` as fallback; an `ItemCollection`
+without its own reference unlocks into the collection its manager displays. A non-global
+collection (**Set Instance On Awake** off) stays out of `Collection.I` but still loads its saved unlocks in its own
+`Awake`, so it works with every view. Several collections each need their own **Save Key Prefix**. To show
+several collections at once, give each panel its own `CollectionVisualManager` and turn **Set Instance On Awake**
+off on every manager except one (see [CollectionVisualManager](CollectionVisualManager.md)).
+
+Every UnityEvent of these components exists on a component added from code (`AddComponent`), so code-built
+scenes can subscribe without a SerializedObject pass.
+
+Code-first games that need several independent sets without scene objects create one
+[CollectionSet](CollectionSet.md) per set; each is saved under its own prefix and reset with `LockAll()`.
 
 ## C# API
 
@@ -50,7 +77,11 @@ remain unchanged; the Box settlement seam is internal to this assembly.
 - [Box](Box.md): progress, threshold events, and one prize per accepted take.
 - [ItemCollection](ItemCollection.md): icon, enabled state, and `Unlock()` for UnityEvent bindings.
 - [ItemCollectionInfo](ItemCollectionInfo.md): item name, description, and optional icon.
-- [CollectionVisualManager](CollectionVisualManager.md): singleton-backed view refresh and selection.
+- [CollectionVisualManager](CollectionVisualManager.md): view refresh and selection for an assigned or the global collection.
+
+**Demo:** `Scenes/Bonuses/BonusRewardsDemo.unity` in the Demo Scenes sample shows a six-item `Collection`, its
+`CollectionVisualManager` slots, an `ItemCollectionInfo` details row and a `Box` chest that unlocks a random locked
+item, wired without a demo script.
 
 ## See Also
 

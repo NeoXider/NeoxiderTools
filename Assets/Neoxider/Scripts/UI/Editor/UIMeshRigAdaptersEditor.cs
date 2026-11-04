@@ -63,7 +63,41 @@ namespace Neo.UI.Editor
         private UIMeshRigPoint _selectedPoint;
         private UIMeshRigLayoutPreset _layoutPreset = UIMeshRigLayoutPreset.SimpleBounce;
 
+        // WHY: the native size line and the draw-mode warning are rebuilt only when their value changes; the
+        // inspector repaints far more often than either changes.
+        private bool _hasNativeSizeText;
+        private Vector2 _shownNativeSize;
+        private string _nativeSizeText;
+        private SpriteDrawMode _shownDrawMode;
+        private string _drawModeWarning;
+
         protected override string NeoxiderModuleName => "UI Mesh Rig";
+
+        /// <summary>"x, y world units" text for <paramref name="nativeSize" />, cached until the size changes.</summary>
+        internal string GetNativeSizeText(Vector2 nativeSize)
+        {
+            if (!_hasNativeSizeText || nativeSize != _shownNativeSize)
+            {
+                _hasNativeSizeText = true;
+                _shownNativeSize = nativeSize;
+                _nativeSizeText = nativeSize.ToString("F3") + " world units";
+            }
+
+            return _nativeSizeText;
+        }
+
+        /// <summary>Warning for a non-Simple <paramref name="drawMode" />, cached until the mode changes.</summary>
+        internal string GetDrawModeWarning(SpriteDrawMode drawMode)
+        {
+            if (_drawModeWarning == null || drawMode != _shownDrawMode)
+            {
+                _shownDrawMode = drawMode;
+                _drawModeWarning = "SpriteRenderer Draw Mode is " + drawMode + ". Sliced and Tiled modes " +
+                                   "regenerate their own geometry, so the rig deformation is discarded. Use Simple.";
+            }
+
+            return _drawModeWarning;
+        }
 
         protected override void ProcessAttributeAssignments()
         {
@@ -90,16 +124,13 @@ namespace Neo.UI.Editor
                 rig, rig.Sprite, rig.Columns, rig.Rows, "SpriteRenderer (cloned Sprite geometry)");
             if (rig.Sprite != null)
             {
-                EditorGUILayout.LabelField("Native size", rig.NativeSize.ToString("F3") + " world units");
+                EditorGUILayout.LabelField("Native size", GetNativeSizeText(rig.NativeSize));
             }
 
             SpriteRenderer spriteRenderer = rig.GetComponent<SpriteRenderer>();
             if (spriteRenderer != null && spriteRenderer.drawMode != SpriteDrawMode.Simple)
             {
-                EditorGUILayout.HelpBox(
-                    "SpriteRenderer Draw Mode is " + spriteRenderer.drawMode + ". Sliced and Tiled modes " +
-                    "regenerate their own geometry, so the rig deformation is discarded. Use Simple.",
-                    MessageType.Warning);
+                EditorGUILayout.HelpBox(GetDrawModeWarning(spriteRenderer.drawMode), MessageType.Warning);
             }
 
             UIMeshRigOwnerInspector.DrawAuthoringControls(rig);

@@ -131,7 +131,7 @@ namespace Neo.Editor.Tests
 
         private static void Deliver(bool server, int value)
         {
-            // Read the actual installed Mirror delegate. This is handler lifecycle evidence, not remote admission.
+            // WHY: Read the actual installed Mirror delegate. This is handler lifecycle evidence, not remote admission.
             Assert.That(Table(server).TryGetValue(NetworkMessageId<OwnershipMessage>.Id,
                 out NetworkMessageDelegate receive), Is.True);
             NetworkWriter writer = new NetworkWriter();

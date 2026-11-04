@@ -1,12 +1,13 @@
 ﻿# PlayAudioBtn
 
-**Purpose:** A utility for playing sounds upon UI (User Interface) interactions. It automatically intercepts clicks, hovers, and selections on buttons or other UI elements.
+**What it is:** A utility for playing sounds upon UI (User Interface) interactions. It automatically intercepts clicks, hovers, and selections on buttons or other UI elements.
 
-## Setup
-
+**How to use:**
 1. Add `Add Component > Neoxider > Audio > PlayAudioBtn` to a UI object (e.g., a `Button`).
 2. In the `_triggerMode` field, select the desired event (e.g., `PointerClick` for mouse clicks or touch).
 3. Pick a sound with `_soundId` (a dropdown of the ids configured on `AM`), or add an `AudioClip` to the `_clips` array.
+
+---
 
 ## Key Fields (Inspector)
 

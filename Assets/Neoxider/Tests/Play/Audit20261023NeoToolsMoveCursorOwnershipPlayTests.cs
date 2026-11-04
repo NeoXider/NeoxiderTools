@@ -9,12 +9,21 @@ using UnityEngine.TestTools;
 
 namespace Neo.Tests.Play
 {
+    /// <summary>
+    ///     Cursor ownership through real disable/destroy lifecycles (OnDisable/OnDestroy ordering across frames). The
+    ///     ownership cases run against an in-memory cursor installed in <see cref="MoveCursor" />, so every combination
+    ///     is asserted on any host. One smoke case removes it and checks that the product reaches the native
+    ///     <see cref="Cursor" />; that case alone is Ignored (MOVE_NATIVE_CURSOR_CAPABILITY) on batch, unfocused or
+    ///     lock-refusing hosts, where Unity reads every lock back as None.
+    /// </summary>
     public sealed class Audit20261023NeoToolsMoveCursorOwnershipPlayTests
     {
         private readonly List<GameObject> _roots = new List<GameObject>();
         private bool _priorGlobalManagement;
         private bool _priorVisible;
         private CursorLockMode _priorLock;
+        private FakeCursor _cursor;
+        private MoveCursor.IBackend _priorCursorBackend;
 
         [SetUp]
         public void SetUp()
@@ -22,6 +31,8 @@ namespace Neo.Tests.Play
             _priorGlobalManagement = CursorLockController.GlobalCursorManagement;
             _priorVisible = Cursor.visible;
             _priorLock = Cursor.lockState;
+            _cursor = new FakeCursor();
+            _priorCursorBackend = MoveCursor.SetBackend(_cursor);
             CursorLockController.GlobalCursorManagement = true;
         }
 
@@ -43,16 +54,39 @@ namespace Neo.Tests.Play
             finally
             {
                 _roots.Clear();
+                MoveCursor.SetBackend(_priorCursorBackend);
+                _priorCursorBackend = null;
                 Cursor.lockState = _priorLock;
                 Cursor.visible = _priorVisible;
                 CursorLockController.GlobalCursorManagement = _priorGlobalManagement;
             }
         }
 
+        /// <summary>
+        ///     Native smoke: without the in-memory cursor, a single owner's ShowCursor and its destroy-time release
+        ///     must reach <see cref="Cursor" /> and survive a frame. Ignored where the host cannot hold a native lock.
+        /// </summary>
         [UnityTest]
-        public IEnumerator NativeCursor_FocusedWriteReadCapabilityControl()
+        public IEnumerator NativeCursor_SingleOwnerShowAndDestroyReachTheUnityCursor()
         {
-            yield return AssertFocusedNativeCursorCapability("standalone native cursor control");
+            MoveCursor.SetBackend(null);
+            const string context = "native single owner: destroy, look=True, movement=True";
+            yield return RequireFocusedNativeCursorCapability(context);
+            GameObject root = CreateRoot();
+            PlayerController3DPhysics player = CreatePlayer(root, true, true);
+            CursorLockController controller = CreateController(root, player, true, true);
+            player.gameObject.SetActive(true);
+            controller.ShowCursor();
+            yield return null;
+            Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.None), context);
+            Assert.That(Cursor.visible, Is.True, context);
+
+            Object.Destroy(controller.gameObject);
+            yield return null;
+
+            Assert.That(player.LookEnabled, Is.True, context);
+            Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.Locked), context);
+            Assert.That(Cursor.visible, Is.False, context);
         }
 
         [UnityTest]
@@ -72,7 +106,7 @@ namespace Neo.Tests.Play
                             bool initialLook = (baseline & 1) == 0;
                             bool initialMovement = (baseline & 2) == 0;
                             string context = $"lookTop={lookOwnerIsTop}, topFirst={closeTopFirst}, destroy={destroy}, look={initialLook}, movement={initialMovement}";
-                            yield return AssertFocusedNativeCursorCapability(context);
+                            ResetCursor();
                             GameObject root = CreateRoot();
                             PlayerController3DPhysics player = CreatePlayer(root, initialLook, initialMovement);
                             CursorLockController lookOwner = CreateController(root, player, true, false);
@@ -148,9 +182,9 @@ namespace Neo.Tests.Play
                             Assert.That(player.LookEnabled, Is.EqualTo(initialLook), context);
                             Assert.That(player.MovementEnabled, Is.EqualTo(initialMovement), context);
                             bool finalLookAutoLocks = !lookClosesFirst && initialLook;
-                            Assert.That(Cursor.lockState,
+                            Assert.That(_cursor.LockState,
                                 Is.EqualTo(finalLookAutoLocks ? CursorLockMode.Locked : CursorLockMode.None), context);
-                            Assert.That(Cursor.visible, Is.EqualTo(!finalLookAutoLocks), context);
+                            Assert.That(_cursor.Visible, Is.EqualTo(!finalLookAutoLocks), context);
                             Assert.That(lookUnlocks, Is.EqualTo(expectedLookUnlocks), context);
                             Assert.That(movementUnlocks, Is.EqualTo(expectedMovementUnlocks), context);
                             Object.Destroy(root);
@@ -170,8 +204,9 @@ namespace Neo.Tests.Play
                 {
                     bool initialLook = (baseline & 1) == 0;
                     bool initialMovement = (baseline & 2) == 0;
-                    yield return AssertFocusedNativeCursorCapability(
-                        $"single owner: destroy={destruction != 0}, look={initialLook}, movement={initialMovement}");
+                    string context =
+                        $"single owner: destroy={destruction != 0}, look={initialLook}, movement={initialMovement}";
+                    ResetCursor();
                     GameObject root = CreateRoot();
                     PlayerController3DPhysics player = CreatePlayer(root, initialLook, initialMovement);
                     CursorLockController controller = CreateController(root, player, true, true);
@@ -180,9 +215,9 @@ namespace Neo.Tests.Play
                     player.gameObject.SetActive(true);
                     controller.ShowCursor();
                     yield return null;
-                    AssertVisibleCursor("single owner before cleanup");
-                    Assert.That(player.LookEnabled, Is.False);
-                    Assert.That(player.MovementEnabled, Is.False);
+                    AssertVisibleCursor(context);
+                    Assert.That(player.LookEnabled, Is.False, context);
+                    Assert.That(player.MovementEnabled, Is.False, context);
 
                     if (destruction != 0)
                     {
@@ -196,22 +231,32 @@ namespace Neo.Tests.Play
                     }
 
                     yield return null;
-                    Assert.That(player.LookEnabled, Is.EqualTo(initialLook));
-                    Assert.That(player.MovementEnabled, Is.EqualTo(initialMovement));
-                    Assert.That(Cursor.lockState, Is.EqualTo(initialLook ? CursorLockMode.Locked : CursorLockMode.None));
-                    Assert.That(Cursor.visible, Is.EqualTo(!initialLook));
-                    Assert.That(unlocks, Is.EqualTo(1));
+                    Assert.That(player.LookEnabled, Is.EqualTo(initialLook), context);
+                    Assert.That(player.MovementEnabled, Is.EqualTo(initialMovement), context);
+                    Assert.That(_cursor.LockState,
+                        Is.EqualTo(initialLook ? CursorLockMode.Locked : CursorLockMode.None), context);
+                    Assert.That(_cursor.Visible, Is.EqualTo(!initialLook), context);
+                    Assert.That(unlocks, Is.EqualTo(1), context);
                     Object.Destroy(root);
                     yield return null;
                 }
             }
         }
 
-        private static IEnumerator AssertFocusedNativeCursorCapability(string context)
+        /// <summary>
+        ///     Proves that this host can hold a native cursor state across a frame before the native smoke case is
+        ///     judged. A batch, unfocused or lock-refusing host always reads None, which would make a native Locked
+        ///     expectation fail without saying anything about the product, so the case is reported as Ignored with the
+        ///     observed reason instead.
+        /// </summary>
+        private static IEnumerator RequireFocusedNativeCursorCapability(string context)
         {
-            const string requirement = "MOVE_NATIVE_CURSOR_CAPABILITY: run in an interactive validation host with the Game view " +
-                                       "focused; native Locked/hidden and None/visible must survive a frame before judging ownership. ";
-            Assert.That(Application.isPlaying, Is.True, requirement + context);
+            Assert.That(Application.isPlaying, Is.True, "Native cursor cases run in Play Mode. " + context);
+            if (Application.isBatchMode)
+            {
+                IgnoreMissingCapability("the player or Editor runs in batch mode", context);
+            }
+
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.ExecuteMenuItem("Window/General/Game");
 #endif
@@ -221,34 +266,77 @@ namespace Neo.Tests.Play
                 yield return null;
             }
 
-            Assert.That(HasNativeCursorFocus(), Is.True, requirement + context);
+            if (!HasNativeCursorFocus())
+            {
+                IgnoreMissingCapability(DescribeMissingFocus(), context);
+            }
+
             CursorLockMode priorLock = Cursor.lockState;
             bool priorVisible = Cursor.visible;
             try
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
-                Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.Locked), requirement + context);
-                Assert.That(Cursor.visible, Is.False, requirement + context);
+                RequireCursorReadback(CursorLockMode.Locked, false, "after a direct Locked write", context);
                 yield return null;
-                Assert.That(HasNativeCursorFocus(), Is.True, requirement + context);
-                Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.Locked), requirement + context);
-                Assert.That(Cursor.visible, Is.False, requirement + context);
+                RequireFocusAfterFrame(context);
+                RequireCursorReadback(CursorLockMode.Locked, false, "one frame after a direct Locked write", context);
 
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
-                Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.None), requirement + context);
-                Assert.That(Cursor.visible, Is.True, requirement + context);
+                RequireCursorReadback(CursorLockMode.None, true, "after a direct None write", context);
                 yield return null;
-                Assert.That(HasNativeCursorFocus(), Is.True, requirement + context);
-                Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.None), requirement + context);
-                Assert.That(Cursor.visible, Is.True, requirement + context);
+                RequireFocusAfterFrame(context);
+                RequireCursorReadback(CursorLockMode.None, true, "one frame after a direct None write", context);
             }
             finally
             {
                 Cursor.lockState = priorLock;
                 Cursor.visible = priorVisible;
             }
+        }
+
+        private static void RequireFocusAfterFrame(string context)
+        {
+            if (!HasNativeCursorFocus())
+            {
+                IgnoreMissingCapability("focus was lost during the probe frame (" + DescribeMissingFocus() + ")",
+                    context);
+            }
+        }
+
+        private static void RequireCursorReadback(CursorLockMode expectedLock, bool expectedVisible, string when,
+            string context)
+        {
+            CursorLockMode lockRead = Cursor.lockState;
+            bool visibleRead = Cursor.visible;
+            if (lockRead != expectedLock || visibleRead != expectedVisible)
+            {
+                IgnoreMissingCapability("the cursor read back " + lockRead + "/visible=" + visibleRead + " " + when +
+                                        " (expected " + expectedLock + "/visible=" + expectedVisible + ")", context);
+            }
+        }
+
+        private static void IgnoreMissingCapability(string reason, string context)
+        {
+            Assert.Ignore("MOVE_NATIVE_CURSOR_CAPABILITY unavailable: " + reason + ". The ownership cases still ran " +
+                          "against the in-memory cursor; only the native write-through is unverified here. " + context);
+        }
+
+        private static string DescribeMissingFocus()
+        {
+            if (!Application.isFocused)
+            {
+                return "the application is not focused";
+            }
+
+#if UNITY_EDITOR
+            UnityEditor.EditorWindow focused = UnityEditor.EditorWindow.focusedWindow;
+            return "the focused window is " + (focused == null ? "none" : focused.GetType().Name) +
+                   ", not the Game view";
+#else
+            return "the player window has no input focus";
+#endif
         }
 
         private static bool HasNativeCursorFocus()
@@ -319,10 +407,16 @@ namespace Neo.Tests.Play
             SetField(controller, "_onCursorUnlocked", unlocked);
         }
 
-        private static void AssertVisibleCursor(string context)
+        private void AssertVisibleCursor(string context)
         {
-            Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.None), context);
-            Assert.That(Cursor.visible, Is.True, context);
+            Assert.That(_cursor.LockState, Is.EqualTo(CursorLockMode.None), context);
+            Assert.That(_cursor.Visible, Is.True, context);
+        }
+
+        private void ResetCursor()
+        {
+            _cursor.LockState = CursorLockMode.None;
+            _cursor.Visible = true;
         }
 
         private static void SetField(object target, string name, object value)
@@ -330,6 +424,13 @@ namespace Neo.Tests.Play
             FieldInfo field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, name);
             field.SetValue(target, value);
+        }
+
+        /// <summary>In-memory cursor that holds exactly what was written, like a focused Game view.</summary>
+        private sealed class FakeCursor : MoveCursor.IBackend
+        {
+            public CursorLockMode LockState { get; set; } = CursorLockMode.None;
+            public bool Visible { get; set; } = true;
         }
     }
 }

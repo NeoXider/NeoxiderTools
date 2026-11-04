@@ -97,9 +97,9 @@ namespace Neo.Editor.Tests
             AudioClip a = CreateClip("a");
             AudioClip b = CreateClip("b");
             AudioClip c = CreateClip("c");
-            var entry = new SoundEntry("hit", a, b, c);
+            SoundEntry entry = new SoundEntry("hit", a, b, c);
 
-            var seen = new HashSet<AudioClip>();
+            HashSet<AudioClip> seen = new HashSet<AudioClip>();
             AudioClip previous = null;
 
             for (int i = 0; i < 200; i++)
@@ -118,7 +118,7 @@ namespace Neo.Editor.Tests
         public void NextClip_SkipsNullsAndSurvivesAnEntryWithOneUsableClip()
         {
             AudioClip only = CreateClip("only");
-            var entry = new SoundEntry("gappy", null, only, null);
+            SoundEntry entry = new SoundEntry("gappy", null, only, null);
 
             for (int i = 0; i < 20; i++)
             {
@@ -130,7 +130,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NextClip_OnEmptyEntryReturnsNullWithoutThrowing()
         {
-            var entry = new SoundEntry("empty");
+            SoundEntry entry = new SoundEntry("empty");
             Assert.IsNull(entry.NextClip());
             Assert.IsTrue(entry.IsEmpty);
         }
@@ -140,7 +140,7 @@ namespace Neo.Editor.Tests
         {
             AudioClip a = CreateClip("a");
             AudioClip b = CreateClip("b");
-            var entry = new SoundEntry("steps", a, b);
+            SoundEntry entry = new SoundEntry("steps", a, b);
 
             Assert.AreSame(a, entry.ClipAt(0));
             Assert.AreSame(b, entry.ClipAt(1));
@@ -248,7 +248,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void MusicVolumeOverride_DoesNotWriteBackIntoTheEntry()
         {
-            var entry = new MusicEntry("boss", CreateClip("b"));
+            MusicEntry entry = new MusicEntry("boss", CreateClip("b"));
             _am.SetMusicEntries(entry);
 
             _am.PlayMusicPool("boss", MusicOptions.Volume(0.25f));
@@ -427,7 +427,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void SoundOptions_OverridesDoNotMutateTheEntry()
         {
-            var entry = new SoundEntry("hit", CreateClip("h"));
+            SoundEntry entry = new SoundEntry("hit", CreateClip("h"));
             _am.SetSoundEntries(entry);
 
             _am.Play("hit", SoundOptions.Volume(0.2f).WithoutPitch());
@@ -449,7 +449,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void SoundOptions_ZeroVolumeOverride_IsRespectedRatherThanTreatedAsFull()
         {
-            var entry = new SoundEntry("hit", CreateClip("h"));
+            SoundEntry entry = new SoundEntry("hit", CreateClip("h"));
             _am.SetSoundEntries(entry);
 
             // WHY: the legacy Sound record read `volume == 0 ? 1 : volume`, so a zeroed value meant "full".
@@ -617,7 +617,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ClipVolume_MissingTrimsReadAsOne()
         {
-            var entry = new SoundEntry("hit", CreateClip("a"), CreateClip("b"));
+            SoundEntry entry = new SoundEntry("hit", CreateClip("a"), CreateClip("b"));
 
             Assert.AreEqual(1f, entry.ClipVolume(0), 1e-5f,
                 "An entry authored before trims existed has no trim array and must play at full level.");
@@ -627,7 +627,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void SetClipVolume_GrowsTheTrimArrayWithoutSilencingUntouchedClips()
         {
-            var entry = new SoundEntry("steps", CreateClip("a"), CreateClip("b"), CreateClip("c"));
+            SoundEntry entry = new SoundEntry("steps", CreateClip("a"), CreateClip("b"), CreateClip("c"));
 
             entry.SetClipVolume(2, 0.5f);
 
@@ -640,7 +640,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ClipTrim_JoinsTheMusicVolumeProduct()
         {
-            var entry = new MusicEntry("theme", CreateClip("t"));
+            MusicEntry entry = new MusicEntry("theme", CreateClip("t"));
             entry.SetClipVolume(0, 0.5f);
             _am.SetMusicEntries(entry);
             _am.SetMusicVolume(1f);
@@ -654,7 +654,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ClipTrim_TracksWhicheverClipWasActuallyPicked()
         {
-            var entry = new SoundEntry("hit", CreateClip("a"), CreateClip("b"));
+            SoundEntry entry = new SoundEntry("hit", CreateClip("a"), CreateClip("b"));
             entry.SetClipVolume(0, 0.25f);
             entry.SetClipVolume(1, 0.75f);
 

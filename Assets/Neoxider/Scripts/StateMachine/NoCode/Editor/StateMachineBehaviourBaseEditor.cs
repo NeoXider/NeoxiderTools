@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Collections.Generic;
 using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -8,7 +8,18 @@ namespace Neo.StateMachine.NoCode.Editor
     [CustomEditor(typeof(StateMachineBehaviourBase))]
     public class StateMachineBehaviourBaseEditor : CustomEditorBase
     {
+        private static readonly GUIContent ContextOverridesContent = new GUIContent("Context Overrides",
+            "Scene objects for Override1..5. Element 0 is Override1; Owner uses this GameObject.");
+
+        private static readonly GUIContent TargetStateContent = new GUIContent("Target State",
+            "State the Change State button switches to.");
+
         private int selectedStateIndex;
+
+        // WHY: the target-state popup used to run a LINQ chain and allocate a fresh name array on every IMGUI
+        // event.
+        private readonly List<string> _stateNames = new List<string>();
+        private string[] _stateNameOptions = System.Array.Empty<string>();
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
@@ -35,43 +46,68 @@ namespace Neo.StateMachine.NoCode.Editor
 
         private void DrawSettingsSection()
         {
-            EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("enableDebugLog"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("showStateInInspector"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("autoEvaluateTransitions"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("exitCurrentStateOnDisable"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("reloadDataOnEnable"));
+            NeoxiderEditorGUI.BeginSection("Settings", "Logging, inspector readout and lifecycle behaviour.");
+            DrawField("enableDebugLog");
+            DrawField("showStateInInspector");
+            DrawField("autoEvaluateTransitions");
+            DrawField("exitCurrentStateOnDisable");
+            DrawField("reloadDataOnEnable");
+            NeoxiderEditorGUI.EndSection();
         }
 
         private void DrawReferencesSection()
         {
-            EditorGUILayout.LabelField("References", EditorStyles.boldLabel);
-            SerializedProperty dataProp = serializedObject.FindProperty("stateMachineData");
-            EditorGUILayout.PropertyField(dataProp);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("contextOverrides"),
-                new GUIContent("Context Overrides",
-                    "Scene objects for Override1..5. Element 0 is Override1; Owner uses this GameObject."), true);
+            NeoxiderEditorGUI.BeginSection("References", "The StateMachineData asset and scene context objects.");
+            DrawField("stateMachineData");
+            SerializedProperty overrides = serializedObject.FindProperty("contextOverrides");
+            if (overrides != null)
+            {
+                EditorGUILayout.PropertyField(overrides, ContextOverridesContent, true);
+            }
+
+            NeoxiderEditorGUI.EndSection();
         }
 
         private void DrawEventsSection()
         {
-            EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("onInitialized"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("onStateEntered"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("onStateExited"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("onStateChanged"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("onTransitionEvaluated"));
+            NeoxiderEditorGUI.BeginSection("Events", "Raised on initialization, state changes and evaluations.");
+            DrawField("onInitialized");
+            DrawField("onStateEntered");
+            DrawField("onStateExited");
+            DrawField("onStateChanged");
+            DrawField("onTransitionEvaluated");
+            NeoxiderEditorGUI.EndSection();
         }
 
         private void DrawRuntimeSection()
         {
-            EditorGUILayout.LabelField("Runtime", EditorStyles.boldLabel);
+            NeoxiderEditorGUI.BeginSection("Runtime", Application.isPlaying
+                ? "Live values, refreshed while the inspector is visible."
+                : "Filled in while the game runs.");
             using (new EditorGUI.DisabledScope(true))
             {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("currentStateName"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("previousStateName"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("stateChangeCount"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("stateEnterTime"));
+                DrawField("currentStateName");
+                DrawField("previousStateName");
+                DrawField("stateChangeCount");
+                DrawField("stateEnterTime");
+            }
+
+            NeoxiderEditorGUI.EndSection();
+
+            if (Application.isPlaying)
+            {
+                // WHY: the runtime fields change while nothing in the editor does; a capped live lease keeps
+                // them current and lapses on its own once the inspector is hidden.
+                EnsureLiveRepaint();
+            }
+        }
+
+        private void DrawField(string propertyName)
+        {
+            SerializedProperty property = serializedObject.FindProperty(propertyName);
+            if (property != null)
+            {
+                EditorGUILayout.PropertyField(property);
             }
         }
 
@@ -81,7 +117,7 @@ namespace Neo.StateMachine.NoCode.Editor
             SerializedProperty dataProp = serializedObject.FindProperty("stateMachineData");
             StateMachineData data = dataProp?.objectReferenceValue as StateMachineData;
 
-            EditorGUILayout.LabelField("Controls", EditorStyles.boldLabel);
+            NeoxiderEditorGUI.BeginSection("Controls", "Drive the machine by hand while the game runs.");
 
             if (!Application.isPlaying)
             {
@@ -110,24 +146,20 @@ namespace Neo.StateMachine.NoCode.Editor
                 }
             }
 
-            if (data == null || data.States == null || data.States.Length == 0)
-            {
-                return;
-            }
-
-            string[] stateNames = data.States
-                .Where(s => s != null)
-                .Select(s => s.StateName)
-                .Where(n => !string.IsNullOrEmpty(n))
-                .ToArray();
-
+            string[] stateNames = GetStateNames(data);
             if (stateNames.Length == 0)
             {
+                if (data == null)
+                {
+                    NeoxiderEditorGUI.DrawCaption("Assign State Machine Data to pick a target state here.");
+                }
+
+                NeoxiderEditorGUI.EndSection();
                 return;
             }
 
             selectedStateIndex = Mathf.Clamp(selectedStateIndex, 0, stateNames.Length - 1);
-            selectedStateIndex = EditorGUILayout.Popup("Target State", selectedStateIndex, stateNames);
+            selectedStateIndex = EditorGUILayout.Popup(TargetStateContent, selectedStateIndex, stateNames);
 
             using (new EditorGUI.DisabledScope(!Application.isPlaying))
             {
@@ -136,6 +168,58 @@ namespace Neo.StateMachine.NoCode.Editor
                     behaviour.ChangeState(stateNames[selectedStateIndex]);
                 }
             }
+
+            NeoxiderEditorGUI.EndSection();
+        }
+
+        private string[] GetStateNames(StateMachineData data)
+        {
+            if (data == null)
+            {
+                _stateNameOptions = System.Array.Empty<string>();
+                return _stateNameOptions;
+            }
+
+            // WHY: rebuilt into a reused list every draw (a state asset can be renamed without touching the
+            // machine asset), but a new popup array is only allocated when the names actually differ.
+            _stateNames.Clear();
+            StateData[] states = data.States;
+            if (states != null)
+            {
+                for (int i = 0; i < states.Length; i++)
+                {
+                    StateData state = states[i];
+                    if (state != null && !string.IsNullOrEmpty(state.StateName))
+                    {
+                        _stateNames.Add(state.StateName);
+                    }
+                }
+            }
+
+            if (!SameNames(_stateNames, _stateNameOptions))
+            {
+                _stateNameOptions = _stateNames.ToArray();
+            }
+
+            return _stateNameOptions;
+        }
+
+        private static bool SameNames(List<string> names, string[] options)
+        {
+            if (names.Count != options.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < options.Length; i++)
+            {
+                if (!string.Equals(names[i], options[i], System.StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

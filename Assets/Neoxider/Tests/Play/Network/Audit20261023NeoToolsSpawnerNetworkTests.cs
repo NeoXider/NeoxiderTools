@@ -219,7 +219,7 @@ namespace Neo.Tests.Play
             _spawnPrefab.SetActive(false);
             _spawnPrefab.AddComponent<Audit20261023NeoToolsSpawnerPoolProbe>();
             NetworkClient.RegisterPrefab(_spawnPrefab);
-            // NetworkIdentity.Awake caches its behaviours once: compose and configure before activation.
+            // WHY: NetworkIdentity.Awake caches its behaviours once: compose and configure before activation.
             _spawnerObject = new GameObject("AuditSpawnerNetwork");
             _spawnerObject.SetActive(false);
             NetworkIdentity spawnerIdentity = _spawnerObject.AddComponent<NetworkIdentity>();

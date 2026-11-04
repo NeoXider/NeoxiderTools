@@ -8,7 +8,8 @@ using UnityEditor;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Mouse input manager with value-type event data and allocation-free legacy input polling.
+    ///     Mouse input manager with value-type event data. Warmed polling is allocation-free through both the
+    ///     legacy Input Manager and the optional Input System adapter.
     ///     Provides Press, Hold, Release, Click events with MouseEventData struct.
     /// </summary>
     [CreateFromMenu("Neoxider/Tools/Input/MouseInputManager")]
@@ -66,7 +67,7 @@ namespace Neo.Tools
 
         private bool _pressed;
         private GameObject _pressedObj;
-        // Release clears press state before callbacks, but its visual cleanup can still be interrupted.
+        // WHY: Release clears press state before callbacks, but its visual cleanup can still be interrupted.
         private bool _releasePending;
         private ulong _dispatchVersion;
         private DispatchPhase _dispatchPhase;
@@ -192,7 +193,7 @@ namespace Neo.Tools
                 }
                 finally
                 {
-                    // A failed Release observer leaves ownership available for later cancellation.
+                    // WHY: a failed Release observer leaves ownership available for later cancellation.
                     if (releaseCompleted && _dispatchVersion == version)
                     {
                         _releasePending = false;
@@ -214,7 +215,7 @@ namespace Neo.Tools
             _releasePending = false;
             if (!wasPressed && _dispatchPhase == DispatchPhase.Canceled)
             {
-                // A repeated loss signal must not fence the remaining cleanup subscribers.
+                // WHY: a repeated loss signal must not fence the remaining cleanup subscribers.
                 return;
             }
 
@@ -367,9 +368,8 @@ namespace Neo.Tools
 
         private void CacheGizmoData(in MouseEventData data)
         {
-            ref readonly MouseEventData d = ref LastEventDataRef;
-            _lastWorldPos = d.WorldPosition;
-            _lastHitObj = d.HitObject;
+            _lastWorldPos = data.WorldPosition;
+            _lastHitObj = data.HitObject;
             _hasData = true;
         }
 
@@ -390,15 +390,15 @@ namespace Neo.Tools
                 }
             }
 
-                if (targetCamera == null && logMissingCamera && !_missingCameraLogged)
-                {
-                    _missingCameraLogged = true;
-                    NeoDiagnostics.LogWarningThrottled(
-                        $"{nameof(MouseInputManager)}.{NeoDiagnostics.StableId(this)}.MissingCamera",
-                        $"[{nameof(MouseInputManager)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
-                        this,
-                        5f);
-                }
+            if (targetCamera == null && logMissingCamera && !_missingCameraLogged)
+            {
+                _missingCameraLogged = true;
+                NeoDiagnostics.LogWarningThrottled(
+                    $"{nameof(MouseInputManager)}.{NeoDiagnostics.StableId(this)}.MissingCamera",
+                    $"[{nameof(MouseInputManager)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
+                    this,
+                    5f);
+            }
 
             return targetCamera;
         }
@@ -512,8 +512,8 @@ namespace Neo.Tools
             Canceled
         }
 
-        // Private event storage: subscription changes invalidate ownership immediately. An active
-        // dispatch owns its immutable local array; accessors never clear or mutate that array.
+        // WHY: subscription changes invalidate the snapshot immediately, while an active dispatch owns its
+        // immutable local array; accessors never clear or mutate that array.
         private sealed class SubscriberSnapshot<T> where T : Delegate
         {
             private readonly object _gate = new();

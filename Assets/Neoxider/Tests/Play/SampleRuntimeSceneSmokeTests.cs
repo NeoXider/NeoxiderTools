@@ -249,7 +249,11 @@ namespace Neo.Tests.Play
         {
             yield return LoadScene("Scenes/Inventory/InventoryUseDemo.unity");
             object controller = FindRequiredComponent("Neo.Samples.InventoryDemoController", "inventory demo");
-            Canvas inventoryCanvas = ((Component)controller).GetComponentInChildren<Canvas>();
+            Assert.That(GetProperty<bool>(controller, "IsSceneBuilt"), Is.True,
+                "InventoryUseDemo must be authored by InventoryUseDemoBuilder (UI saved in the scene).");
+            GameObject frame = GameObject.Find("[Demo] Frame");
+            Assert.That(frame, Is.Not.Null, "The authored demo frame canvas is missing.");
+            Canvas inventoryCanvas = frame.GetComponent<Canvas>();
             Assert.That(inventoryCanvas, Is.Not.Null);
             AssertRectInsideViewport((RectTransform)inventoryCanvas.transform.Find("Content"), "inventory controls");
             InventoryHand hand = Object.FindFirstObjectByType<InventoryHand>();
@@ -264,7 +268,8 @@ namespace Neo.Tests.Play
             ClickDemoButton("Btn_Deposit catch");
             Assert.That(catchBag.IsEmpty, Is.True);
             Assert.That(hotbar.GetSlot(2).Instance.InstanceId, Is.EqualTo(selected.InstanceId));
-            hand.SetSlotIndex(2);
+            ClickDemoButton("Btn_Slot 3");
+            Assert.That(hand.SlotIndex, Is.EqualTo(2), "Slot buttons call InventoryHand.SetSlotIndex persistently.");
             ClickDemoButton("Btn_Use selected [E]");
             Assert.That(hotbar.GetSlot(2).IsEmpty, Is.True);
             Assert.That(podium.GetSlot(0).Instance.InstanceId, Is.EqualTo(selected.InstanceId));
@@ -272,7 +277,9 @@ namespace Neo.Tests.Play
             ClickDemoButton("Btn_Recall from podium");
             Assert.That(podium.IsEmpty, Is.True);
             Assert.That(hotbar.GetSlot(2).Instance.InstanceId, Is.EqualTo(selected.InstanceId));
-            hand.SetSlotIndex(0);
+            ClickDemoButton("Btn_Slot 1");
+            Assert.That(hotbar.SelectedItemId, Is.EqualTo(202), "Selecting the CELL slot updates SelectedItemId.");
+            Assert.That(hotbar.SelectedItemCount, Is.EqualTo(3));
             ClickDemoButton("Btn_Use selected [E]");
             Assert.That(hotbar.GetSlot(0).Count, Is.EqualTo(2));
             Assert.That(GetProperty<int>(controller, "Health"), Is.EqualTo(70));
@@ -283,6 +290,69 @@ namespace Neo.Tests.Play
             Assert.That(hotbar.GetSlot(0).Count, Is.EqualTo(3));
             Assert.That(catchBag.TotalItemCount, Is.EqualTo(2));
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator StateMachineDemo_AuthoredCodeAndNoCodePathsReact()
+        {
+            yield return LoadScene("Scenes/StateMachine/StateMachineDemo.unity");
+            yield return WaitFrames(3);
+            object controller = FindRequiredComponent("Neo.Samples.StateMachineDemoController",
+                "state machine demo controller");
+            Assert.That(GetProperty<bool>(controller, "IsSceneBuilt"), Is.True,
+                "StateMachineDemo must be authored by StateMachineDemoBuilder (UI saved in the scene).");
+            Assert.That(GetProperty<string>(controller, "AgentStateName"), Is.EqualTo("Idle"));
+            ClickDemoButton("Btn_Provoke");
+            Assert.That(GetProperty<string>(controller, "AgentStateName"), Is.EqualTo("Chase"));
+
+            object guard = FindRequiredComponent("Neo.StateMachine.StateMachineBehaviourBase", "NoCode guard");
+            Assert.That(GetProperty<string>(guard, "CurrentStateName"), Is.EqualTo("Sleep"));
+            ClickDemoButton("Btn_Force Alert");
+            Assert.That(GetProperty<string>(guard, "CurrentStateName"), Is.EqualTo("Alert"));
+            yield return new WaitForSeconds(2f);
+            Assert.That(GetProperty<string>(guard, "CurrentStateName"), Is.EqualTo("Sleep"),
+                "Alert -> Sleep fires after 1.5 s in Alert while the Noise toggle is off.");
+
+            Toggle noise = null;
+            foreach (Toggle toggle in Object.FindObjectsByType<Toggle>(FindObjectsSortMode.None))
+            {
+                if (toggle.transform.parent != null && toggle.transform.parent.name.Contains("Noise"))
+                {
+                    noise = toggle;
+                }
+            }
+
+            Assert.That(noise, Is.Not.Null, "Missing the Noise toggle row.");
+            noise.isOn = true;
+            yield return WaitFrames(3);
+            Assert.That(GetProperty<string>(guard, "CurrentStateName"), Is.EqualTo("Alert"),
+                "The Sleep -> Alert ConditionEntryPredicate reads Toggle.isOn through context slot Override1.");
+            noise.isOn = false;
+        }
+
+        [UnityTest]
+        public IEnumerator NoCodeBindingDemo_AuthoredButtonsDriveTheBindings()
+        {
+            yield return LoadScene("Scenes/NoCode/NoCodeBindingDemo.unity");
+            yield return WaitFrames(3);
+            object counter = FindRequiredComponent("Neo.Tools.Counter", "binding source Counter");
+            float start = GetProperty<float>(counter, "ValueFloat");
+            ClickDemoButton("Btn_+10");
+            yield return WaitFrames(2);
+            Assert.That(GetProperty<float>(counter, "ValueFloat"), Is.EqualTo(start + 10f).Within(0.001f));
+            List<string> texts = new List<string>();
+            Type formattedType = FindType("Neo.NoCode.NoCodeFormattedText");
+            Assert.That(formattedType, Is.Not.Null);
+            foreach (Object formatted in Object.FindObjectsByType(formattedType, FindObjectsSortMode.None))
+            {
+                texts.Add(GetProperty<string>(formatted, "CurrentText"));
+            }
+
+            Assert.That(texts, Has.Some.EqualTo((start + 10f).ToString("0") + " / 100"),
+                "The Reactive NoCodeFormattedText follows Counter.Value.");
+            ClickDemoButton("Btn_Reset to 50");
+            yield return WaitFrames(2);
+            Assert.That(GetProperty<float>(counter, "ValueFloat"), Is.EqualTo(50f).Within(0.001f));
         }
 
         [UnityTest]
@@ -689,7 +759,7 @@ namespace Neo.Tests.Play
 
         private static List<Component> FindActiveComponents(Type type)
         {
-            var result = new List<Component>();
+            List<Component> result = new List<Component>();
             Object[] objects = Resources.FindObjectsOfTypeAll(type);
             for (int i = 0; i < objects.Length; i++)
             {

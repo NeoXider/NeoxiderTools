@@ -2,7 +2,7 @@
 
 **What it is:** A Unity editor tool that helps find and fix one of the most common problems in large projects — missing scripts (`Missing Script`). This happens when a script...
 
-**How to use:** see the sections below.
+**How to use:** open **Neoxider > Tools > Find & Remove Missing Scripts**, run a search, review the objects it lists, then remove the missing references from all or selected entries.
 
 ---
 

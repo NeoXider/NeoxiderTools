@@ -35,6 +35,7 @@ namespace Neo.Abilities
             new System.Collections.Generic.HashSet<UnitId>();
 
         private AbilitySystemBehaviour _hub;
+        private Transform _transform;
         private uint _castId;
         private UnitId _owner;
         private UnitId _homingTarget;
@@ -46,9 +47,16 @@ namespace Neo.Abilities
         private int _hits;
         private bool _active;
 
+        /// <summary>True between <see cref="OnSpawned" /> and the moment the projectile finishes or is disabled.</summary>
+        public bool IsFlying => _active;
+
+        /// <summary>Cast this projectile reports hits for (0 when it was never spawned by the hub).</summary>
+        public uint CastId => _castId;
+
         public void OnSpawned(SpawnRequest request, AbilitySystemBehaviour hub)
         {
             _hub = hub;
+            _transform = transform;
             _castId = request.CastId;
             _owner = request.Owner;
             _homingTarget = request.TargetUnit;
@@ -67,54 +75,88 @@ namespace Neo.Abilities
             else
             {
                 _hasDetonationPoint = false;
-                _direction = transform.forward;
+                _direction = _transform.forward;
             }
         }
 
         private void Update()
         {
-            if (!_active || _hub == null)
+            if (!_active)
             {
                 return;
             }
 
-            float step = _effectiveSpeed * Time.deltaTime;
+            if (_hub == null)
+            {
+                // WHY: the hub (and its pending cast table) is gone, e.g. after a scene switch; a pooled
+                // projectile would otherwise stay active and invisible to the pool forever.
+                _active = false;
+                PoolManager.Release(gameObject);
+                return;
+            }
+
+            float deltaTime = Time.deltaTime;
+            float step = _effectiveSpeed * deltaTime;
+            Transform self = _transform;
+            Vector3 position = self.position;
 
             if (_homingTarget.IsValid && _hub.TryGetPosition(_homingTarget, out Vector3 targetPos))
             {
-                Vector3 delta = targetPos - transform.position;
+                Vector3 delta = targetPos - position;
                 if (delta.sqrMagnitude > 0.0001f)
                 {
                     _direction = delta.normalized;
                 }
             }
 
-            transform.position += _direction * step;
+            position += _direction * step;
             if (_direction.sqrMagnitude > 0.0001f)
             {
-                transform.rotation = Quaternion.LookRotation(_direction);
+                self.SetPositionAndRotation(position, Quaternion.LookRotation(_direction));
+            }
+            else
+            {
+                self.position = position;
             }
 
             TryHitUnits();
 
-            if (_active && _hasDetonationPoint &&
-                (transform.position - _detonationPoint).sqrMagnitude <= step * step)
+            if (_active && _hasDetonationPoint && (position - _detonationPoint).sqrMagnitude <= step * step)
             {
                 Detonate(_detonationPoint);
                 return;
             }
 
-            _age += Time.deltaTime;
+            _age += deltaTime;
             if (_active && _age >= _maxLifetime)
             {
                 Despawn();
             }
         }
 
+        // WHY: an external disable or destroy (scene unload, pool clear, SetActive(false)) bypasses
+        // Despawn; release the pending cast now instead of leaving it routable until the domain timeout.
+        // Despawn clears _active before PoolManager.Release disables the object, so nothing runs twice.
+        private void OnDisable()
+        {
+            if (!_active)
+            {
+                return;
+            }
+
+            _active = false;
+            AbilitySystemBehaviour hub = _hub;
+            if (hub != null)
+            {
+                hub.System.ReleaseProjectileCast(_castId);
+            }
+        }
+
         private void TryHitUnits()
         {
             HitScratch.Clear();
-            _hub.QueryUnitsInRadius(transform.position, _hitRadius, HitScratch);
+            Vector3 position = _transform.position;
+            _hub.QueryUnitsInRadius(position, _hitRadius, HitScratch);
             if (HitScratch.Count == 0)
             {
                 return;
@@ -144,7 +186,7 @@ namespace Neo.Abilities
                 }
 
                 _hitUnits.Add(id);
-                system.NotifyProjectileHit(_castId, id, transform.position);
+                system.NotifyProjectileHit(_castId, id, position);
                 _hits++;
                 if (_hits >= Mathf.Max(1, _maxHits))
                 {

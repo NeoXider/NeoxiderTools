@@ -10,7 +10,7 @@ namespace Neo.Abilities
     public sealed class EffectOpRegistry
     {
         private readonly Dictionary<string, IEffectOperation> _ops =
-            new Dictionary<string, IEffectOperation>(StringComparer.OrdinalIgnoreCase);
+            new Dictionary<string, IEffectOperation>(AbilityIdComparer.Instance);
 
         public void Register(IEffectOperation op)
         {

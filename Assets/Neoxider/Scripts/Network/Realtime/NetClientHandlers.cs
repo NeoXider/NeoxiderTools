@@ -24,7 +24,7 @@ namespace Neo.Network.Realtime
     /// </summary>
     public sealed class NetClientHandlers : IDisposable
     {
-        // A separate token per registration, not just per set: reconnects cannot release a newer lease.
+        // WHY: a separate token per registration, not just per set: reconnects cannot release a newer lease.
         private static class Registration<T> where T : struct, NetworkMessage
         {
             internal static object Current;
@@ -146,7 +146,7 @@ namespace Neo.Network.Realtime
             {
                 if (!_wasClientActive)
                 {
-                    // a new session: Mirror cleared the old handlers at shutdown, so apply them again
+                    // WHY: a new session: Mirror cleared the old handlers at shutdown, so apply them again
                     _registered = false;
                 }
 
@@ -183,7 +183,7 @@ namespace Neo.Network.Realtime
                 return;
             }
 
-            // Mirror wiped the handler table on the previous shutdown; replace-registering is idempotent.
+            // WHY: Mirror wiped the handler table on the previous shutdown; replace-registering is idempotent.
             _registered = false;
             _wasClientActive = true;
             RegisterNow();

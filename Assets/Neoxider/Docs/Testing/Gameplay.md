@@ -1,6 +1,9 @@
 # Gameplay Edit Mode tests
 
-Gameplay tests live under `Assets/Neoxider/Tests/Edit` in `Neo.Editor.Tests`. The assembly targets the Unity Editor and requires `UNITY_INCLUDE_TESTS`; it is excluded from player builds. Use the Unity Test Runner's **EditMode** tab and filter by fixture or namespace. A successful static review does not establish compilation or a passing Unity run.
+**What it is:** Gameplay tests live under `Assets/Neoxider/Tests/Edit` in `Neo.Editor.Tests`. The assembly targets the Unity Editor and requires `UNITY_INCLUDE_TESTS`; it is excluded from player builds. Use the Unity Test Runner's **EditMode** tab and filter by fixture or namespace. A successful static review does not establish compilation or a passing Unity run.
+
+**How to use:** start from [public contracts to exercise](#public-contracts-to-exercise), assert the regressions
+listed below, and clean up every object a fixture creates ([isolation and cleanup](#isolation-and-cleanup)).
 
 This is the gameplay contract-testing entry point. See [utility tests](./Utilities.md) for utility-specific coverage and [network Play Mode tests](./NetworkPlayMode.md) for real message-exchange evidence. Return to the [documentation index](../README.md) for module navigation.
 

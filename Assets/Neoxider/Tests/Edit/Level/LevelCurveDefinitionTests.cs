@@ -246,7 +246,7 @@ namespace Neo.Core.Tests
         [Test]
         public void LevelModel_SetLevel_UnreachableLevel_DoesNotCorruptTotalXp()
         {
-            var model = new LevelModel();
+            LevelModel model = new LevelModel();
             model.SetCurve(LevelCurveType.Custom, customEntries: new List<LevelCurveEntry>
             {
                 new(1, 0),
@@ -293,7 +293,7 @@ namespace Neo.Core.Tests
         public void Definition_Custom_LevelFromXp()
         {
             LevelCurveDefinition def = ScriptableObject.CreateInstance<LevelCurveDefinition>();
-            var entries = new List<LevelCurveEntry>
+            List<LevelCurveEntry> entries = new List<LevelCurveEntry>
             {
                 new(1, 0),
                 new(2, 100),
@@ -326,7 +326,7 @@ namespace Neo.Core.Tests
         [Test]
         public void Definition_Curve_LevelFromXp()
         {
-            var curve = new AnimationCurve(
+            AnimationCurve curve = new AnimationCurve(
                 new Keyframe(1f, 0f),
                 new Keyframe(2f, 100f),
                 new Keyframe(3f, 250f),
@@ -355,13 +355,13 @@ namespace Neo.Core.Tests
         [Test]
         public void LevelComponent_AddXp_UsesIncreasingCurveRequirements()
         {
-            var curve = new AnimationCurve(
+            AnimationCurve curve = new AnimationCurve(
                 new Keyframe(1f, 0f),
                 new Keyframe(2f, 100f),
                 new Keyframe(3f, 250f),
                 new Keyframe(4f, 500f));
             LevelCurveDefinition def = ScriptableObject.CreateInstance<LevelCurveDefinition>();
-            var host = new GameObject("LevelComponent_AddXp_UsesIncreasingCurveRequirements");
+            GameObject host = new GameObject("LevelComponent_AddXp_UsesIncreasingCurveRequirements");
             SetPrivateField(def, "_mode", LevelCurveMode.Curve);
             SetPrivateField(def, "_animationCurve", curve);
 
@@ -387,7 +387,7 @@ namespace Neo.Core.Tests
         [Test]
         public void LevelComponent_SetLevel_WhenUseXp_SyncsTotalXpToLevelThreshold()
         {
-            var host = new GameObject("LevelComponent_SetLevel_WhenUseXp_SyncsTotalXpToLevelThreshold");
+            GameObject host = new GameObject("LevelComponent_SetLevel_WhenUseXp_SyncsTotalXpToLevelThreshold");
             try
             {
                 LevelComponent component = host.AddComponent<LevelComponent>();
@@ -409,7 +409,7 @@ namespace Neo.Core.Tests
         [Test]
         public void LevelNoCodeAction_AddXp_DoesNotRaiseLevelUpWhenLevelUnchanged()
         {
-            var host = new GameObject("LevelNoCodeAction_AddXp_DoesNotRaiseLevelUpWhenLevelUnchanged");
+            GameObject host = new GameObject("LevelNoCodeAction_AddXp_DoesNotRaiseLevelUpWhenLevelUnchanged");
             try
             {
                 LevelComponent component = host.AddComponent<LevelComponent>();
@@ -499,7 +499,7 @@ namespace Neo.Core.Tests
         {
             // WHY: regression — a lowered cap must clamp a directly-set level and notify listeners,
             // since the XP-only recompute path is skipped when UseXp is false.
-            var model = new LevelModel();
+            LevelModel model = new LevelModel();
             model.SetUseXp(false);
             model.SetLevel(8);
             Assert.That(model.CurrentLevel, Is.EqualTo(8));
@@ -522,7 +522,7 @@ namespace Neo.Core.Tests
         [Test]
         public void LevelNoCodeAction_SetLevel_RaisesLevelUpWhenLevelChanges()
         {
-            var host = new GameObject("LevelNoCodeAction_SetLevel_RaisesLevelUpWhenLevelChanges");
+            GameObject host = new GameObject("LevelNoCodeAction_SetLevel_RaisesLevelUpWhenLevelChanges");
             try
             {
                 LevelComponent component = host.AddComponent<LevelComponent>();

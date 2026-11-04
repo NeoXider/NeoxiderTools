@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -29,12 +30,33 @@ namespace Neo.Level
             Percent
         }
 
+        /// <summary>
+        ///     Scene loading seam of <see cref="SceneFlowController" /> (assign through
+        ///     <see cref="SceneFlowController.SceneLoader" />). The default implementation forwards to
+        ///     <see cref="SceneManager" />; replace it to route loads through Addressables, a network scene manager
+        ///     or a test double.
+        /// </summary>
         public interface ISceneFlowSceneLoader
         {
+            /// <summary>Build index of the active scene, used by <see cref="SceneFlowController.Restart" />.</summary>
             int ActiveSceneBuildIndex { get; }
+
+            /// <summary>Loads a scene synchronously by build index (Sync and Additive modes).</summary>
             void LoadScene(int buildIndex, LoadSceneMode mode = LoadSceneMode.Single);
+
+            /// <summary>Loads a scene synchronously by name (Sync and Additive modes).</summary>
             void LoadScene(string sceneName, LoadSceneMode mode = LoadSceneMode.Single);
+
+            /// <summary>
+            ///     Starts an asynchronous load by build index. A null result releases the controller's request, so a
+            ///     later call can retry.
+            /// </summary>
             AsyncOperation LoadSceneAsync(int buildIndex, LoadSceneMode mode = LoadSceneMode.Single);
+
+            /// <summary>
+            ///     Starts an asynchronous load by name. A null result releases the controller's request, so a later
+            ///     call can retry.
+            /// </summary>
             AsyncOperation LoadSceneAsync(string sceneName, LoadSceneMode mode = LoadSceneMode.Single);
         }
 
@@ -79,8 +101,13 @@ namespace Neo.Level
             private AsyncOperation _currentOperation;
             private bool _readyToProceedInvoked;
             private object _activeRequest;
+            private int _shownPercent = -1;
             private static ISceneFlowSceneLoader _sceneLoader = new UnitySceneFlowSceneLoader();
 
+            /// <summary>
+            ///     Loader shared by every controller; assigning null restores the <see cref="SceneManager" /> loader.
+            ///     Restore it after installing a custom or test loader.
+            /// </summary>
             public static ISceneFlowSceneLoader SceneLoader
             {
                 get => _sceneLoader;
@@ -108,10 +135,21 @@ namespace Neo.Level
                 set => _sceneName = value ?? "";
             }
 
+            /// <summary>Raised when an asynchronous load starts.</summary>
             public UnityEvent OnLoadStarted => _onLoadStarted;
+
+            /// <summary>Raised with the raw Unity progress (0..1) while an asynchronous load runs.</summary>
             public UnityEventFloat OnProgress => _onProgress;
+
+            /// <summary>
+            ///     Raised once when a load without automatic activation (<c>AsyncManual</c>, or <c>Async</c> with Activate
+            ///     On Ready off) reaches 0.9 and waits for <see cref="ProceedScene" />.
+            /// </summary>
             public UnityEvent OnReadyToProceed => _onReadyToProceed;
+
+            /// <summary>Raised after an asynchronous load finished and the progress panel was hidden.</summary>
             public UnityEvent OnLoadCompleted => _onLoadCompleted;
+
             /// <summary>Whether this controller owns an asynchronous scene load, including manual activation waits.</summary>
             public bool IsLoading => _activeRequest != null;
 
@@ -285,6 +323,7 @@ namespace Neo.Level
                 object request = new();
                 _activeRequest = request;
                 _readyToProceedInvoked = false;
+                _shownPercent = -1;
                 bool byName = !string.IsNullOrEmpty(sceneName);
                 try
                 {
@@ -421,16 +460,16 @@ namespace Neo.Level
                 if (_progressTextFormat == ProgressTextFormat.Percent)
                 {
                     int percent = Mathf.RoundToInt(progress * 100f);
-                    string t = _progressPrefix + percent + "%";
-                    if (_textProgress != null)
+                    // WHY: progress is pushed every frame while loading; rebuild the label only when the shown
+                    // percentage changes instead of allocating a new string per frame.
+                    if (percent == _shownPercent)
                     {
-                        _textProgress.text = t;
+                        return;
                     }
 
-                    if (_textMeshProgress != null)
-                    {
-                        _textMeshProgress.text = t;
-                    }
+                    WriteProgressLabel(string.Concat(_progressPrefix, percent.ToString(CultureInfo.InvariantCulture),
+                        "%"));
+                    _shownPercent = percent;
                 }
                 else
                 {
@@ -439,6 +478,14 @@ namespace Neo.Level
             }
 
             private void SetProgressText(string text)
+            {
+                // WHY: any other label (ready text, plain prefix) replaces the shown percentage, so the next
+                // percentage must be written again.
+                _shownPercent = -1;
+                WriteProgressLabel(text);
+            }
+
+            private void WriteProgressLabel(string text)
             {
                 if (_textProgress != null)
                 {

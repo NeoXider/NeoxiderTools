@@ -1,8 +1,18 @@
 ﻿# Level module
 
-Level flow, scene loading, level buttons, and progress. Scripts in `Scripts/Level/`. Use this page as the English module entry.
+**What it is:** level selection and per-map progress (`LevelManager`, `Map`), level-select UI (`LevelButton`, `TextLevel`) and scene loading with a progress screen (`SceneFlowController`). Scripts in `Scripts/Level/`, namespace `Neo.Level`.
 
-Demo in the release layout: `Assets/Neoxider/Samples~/Demo/Scenes/Level/LevelFlowDemo.unity`, controller `Demo/Scripts/Shell/LevelDemoController.cs`. Active sample development uses `Assets/Neoxider/Samples/` instead. Import **Demo Scenes** through Package Manager to copy the sample into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`; `Samples~` is not compiled in place.
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/LevelFlowDemo.jpg" alt="LevelFlowDemo: LevelManager maps, level buttons and LevelComponent XP" width="100%" /></p>
+
+*Demo scene: `Scenes/Level/LevelFlowDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:** see [Component documentation](#component-documentation) below.
+
+---
+
+Demo in the release layout: `Assets/Neoxider/Samples~/Demo/Scenes/Level/LevelFlowDemo.unity`, authored by the editor builder `Demo/Editor/Builders/Level/LevelFlowDemoBuilder.cs`, controller `Demo/Scripts/Shell/LevelDemoController.cs`. The hand-authored `Level Demo` `LevelManager` gets a finite **World 1** map (5 levels) and an infinite **Endless** map under the save key `Neo.Demo.LevelFlow`. A grid of five `LevelButton`s switches its Lock / Next / Done visuals through its own events, two `TextLevel` labels show the selected level and the cleared count, and the completion badge reads `Map.IsComplete`. **Complete level**, **Next level**, **Replay** and the map buttons call `SaveLevel`, `NextLevel`, `Restart` and `SetMapId` directly through persistent UnityEvents (NoCode). The same scene drives a `Neo.Core.Level` `LevelComponent` (XP curve asset, labels bound to its reactive states, `LevelNoCodeAction` and C# buttons). Active sample development uses `Assets/Neoxider/Samples/` instead. Import **Demo Scenes** through Package Manager to copy the sample into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`; `Samples~` is not compiled in place.
 
 ## Runtime API
 
@@ -17,6 +27,10 @@ levels.SetLevel(2);                 // Select directly from ordinary C#.
 // After successful gameplay:
 levels.SaveLevel();                 // Record completion only at the current frontier.
 levels.SetLastLevel();              // Select the newly unlocked level.
+// "New game" for one map (or ResetAllProgress() for every map). The reset returns the frontier to 0
+// but keeps the selected level, so select level 0 again:
+levels.TryResetProgress(levels.MapId);
+levels.SetLastLevel();
 ```
 
 Reference `Neo.Level` from a custom assembly. Level selection does not load a Unity scene; use `OnChangeLevel` to drive your level view or call `SceneFlowController` explicitly. The manager can run without level buttons. Empty map slots are skipped during initialization and map discovery, and cannot be selected.

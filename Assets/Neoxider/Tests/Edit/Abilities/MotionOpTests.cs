@@ -36,8 +36,6 @@ namespace Neo.Editor.Tests.Abilities
             return new EffectNodeData { OpId = op, Target = target, Amount = amount, CustomParam = custom };
         }
 
-        // ---------------------------------------------------------------- knockback
-
         [Test]
         public void Knockback_PushesTargetAwayFromCaster()
         {
@@ -48,14 +46,14 @@ namespace Neo.Editor.Tests.Abilities
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: target.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(Node(AbilityEffectOps.Knockback, 3f)), ctx);
 
-            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // pushed 3 further out along +x
+            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // WHY: pushed 3 further out along +x
         }
 
         [Test]
         public void Knockback_UsesTargetPointOriginWhenPresent()
         {
             AbilityUnit target = AbilityTestSupport.CreateUnit(_system, team: 2);
-            _world.SetPosition(_caster.Id, new Vector3(50f, 50f, 0f)); // caster far away — ignored
+            _world.SetPosition(_caster.Id, new Vector3(50f, 50f, 0f)); // WHY: caster far away — ignored
             _world.SetPosition(target.Id, new Vector3(2f, 0f, 0f));
 
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: target.Id);
@@ -64,10 +62,8 @@ namespace Neo.Editor.Tests.Abilities
 
             _system.ExecuteEffects(AbilityTestSupport.Nodes(Node(AbilityEffectOps.Knockback, 3f)), ctx);
 
-            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // away from the point, not the caster
+            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // WHY: away from the point, not the caster
         }
-
-        // ---------------------------------------------------------------- pull
 
         [Test]
         public void Pull_DragsTargetTowardCaster()
@@ -92,10 +88,8 @@ namespace Neo.Editor.Tests.Abilities
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: target.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(Node(AbilityEffectOps.Pull, 10f)), ctx);
 
-            AssertAt(_world.Positions[target.Id], Vector3.zero); // clamped exactly to the caster
+            AssertAt(_world.Positions[target.Id], Vector3.zero); // WHY: clamped exactly to the caster
         }
-
-        // ---------------------------------------------------------------- teleport
 
         [Test]
         public void Teleport_Caster_BlinksToTargetPoint()
@@ -153,8 +147,6 @@ namespace Neo.Editor.Tests.Abilities
             AssertAt(_world.Positions[target.Id], Vector3.zero);
         }
 
-        // ---------------------------------------------------------------- immunity
-
         [Test]
         public void Motion_SkipsUnmovableTargets()
         {
@@ -166,7 +158,7 @@ namespace Neo.Editor.Tests.Abilities
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: target.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(Node(AbilityEffectOps.Knockback, 3f)), ctx);
 
-            AssertAt(_world.Positions[target.Id], new Vector3(2f, 0f, 0f)); // unmoved
+            AssertAt(_world.Positions[target.Id], new Vector3(2f, 0f, 0f)); // WHY: unmoved
         }
 
         [Test]
@@ -180,7 +172,7 @@ namespace Neo.Editor.Tests.Abilities
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: target.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(Node(AbilityEffectOps.Pull, 2f)), ctx);
 
-            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // unmoved
+            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // WHY: unmoved
         }
 
         [Test]
@@ -194,15 +186,13 @@ namespace Neo.Editor.Tests.Abilities
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: target.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(Node(AbilityEffectOps.Teleport)), ctx);
 
-            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // unmoved
+            AssertAt(_world.Positions[target.Id], new Vector3(5f, 0f, 0f)); // WHY: unmoved
         }
-
-        // ---------------------------------------------------------------- headless safety
 
         [Test]
         public void Motion_WithNullWorldAdapter_IsNoOpAndSafe()
         {
-            var headless = new AbilitySystem(); // default NullWorldAdapter — no positions, TryMoveUnit false
+            AbilitySystem headless = new AbilitySystem(); // WHY: default NullWorldAdapter — no positions, TryMoveUnit false
             AbilityUnit caster = AbilityTestSupport.CreateUnit(headless, team: 1);
             AbilityUnit target = AbilityTestSupport.CreateUnit(headless, team: 2);
             EffectContext ctx = AbilityTestSupport.Context(headless, caster.Id, targets: target.Id);

@@ -7,6 +7,11 @@ using UnityEngine.Networking;
 
 namespace Neo.Editor
 {
+    /// <summary>
+    ///     Throttled GitHub release check behind the version pill of the inspector header. State lives in
+    ///     SessionState so it survives domain reloads; reads are served from memory because the header asks on every
+    ///     IMGUI event.
+    /// </summary>
     internal static class NeoUpdateChecker
     {
         public enum UpdateStatus
@@ -26,15 +31,77 @@ namespace Neo.Editor
         private const string SessionUpdateAvailable = "Neo.UpdateCheck.UpdateAvailable";
         private const string SessionUpdateUrl = "Neo.UpdateCheck.UpdateUrl";
         private const string SessionError = "Neo.UpdateCheck.Error";
-        private const string SessionStatus = "Neo.UpdateCheck.Status";
+        internal const string SessionStatus = "Neo.UpdateCheck.Status";
         private const string SessionLastManualCheckTicks = "Neo.UpdateCheck.LastManualCheckTicks";
+        private const string VerbosePrefsKey = "Neo.UpdateCheck.Verbose";
 
         private static UnityWebRequest _request;
         private static bool _isChecking;
+        private static bool _isFallbackChecking;
+
+        // WHY: Tick() runs on every IMGUI event of every Neo inspector. Reading five SessionState strings, parsing
+        // ticks and calling Enum.IsDefined each time allocated per event; SessionState is only written here, so
+        // the last read stays valid until one of the writers below invalidates it.
+        private static bool s_stateCached;
+        private static State s_cachedState;
+        private static bool s_ticksCached;
+        private static long s_cachedLastTicks;
+        private static string s_lastLoggedWarning;
+
+        /// <summary>
+        ///     When true (EditorPrefs <c>Neo.UpdateCheck.Verbose</c>), request/result details are logged; otherwise
+        ///     only a changed warning is logged once, since the version pill already shows the status.
+        /// </summary>
+        internal static bool VerboseLogging => EditorPrefs.GetBool(VerbosePrefsKey, false);
+
+        /// <summary>True while a request started in this domain (the releases call or its tags fallback) is in flight.</summary>
+        internal static bool IsChecking => _isChecking || _isFallbackChecking;
+
+        /// <summary>Drops the in-memory copy so the next read comes from SessionState.</summary>
+        internal static void InvalidateCache()
+        {
+            s_stateCached = false;
+            s_ticksCached = false;
+        }
+
+        private static void WriteString(string key, string value)
+        {
+            SessionState.SetString(key, value);
+            InvalidateCache();
+        }
+
+        private static void WriteInt(string key, int value)
+        {
+            SessionState.SetInt(key, value);
+            InvalidateCache();
+        }
+
+        private static void WriteBool(string key, bool value)
+        {
+            SessionState.SetBool(key, value);
+            InvalidateCache();
+        }
+
+        private static void LogInfo(string message)
+        {
+            if (VerboseLogging)
+            {
+                Debug.Log(message);
+            }
+        }
+
+        private static void LogWarningOnce(string message)
+        {
+            if (VerboseLogging || !string.Equals(message, s_lastLoggedWarning, StringComparison.Ordinal))
+            {
+                s_lastLoggedWarning = message;
+                Debug.LogWarning(message);
+            }
+        }
 
         public static State Tick(string currentVersion, string packageRootPath)
         {
-            if (_isChecking)
+            if (IsChecking)
             {
                 State s = ReadState();
                 return new State(UpdateStatus.Checking, s.LatestVersion, s.UpdateUrl, s.Error);
@@ -51,7 +118,7 @@ namespace Neo.Editor
 
             TryStartCheck(currentVersion, packageRootPath);
             State state = ReadState();
-            return _isChecking
+            return IsChecking
                 ? new State(UpdateStatus.Checking, state.LatestVersion, state.UpdateUrl, state.Error)
                 : state;
         }
@@ -61,7 +128,7 @@ namespace Neo.Editor
         /// </summary>
         public static State Peek()
         {
-            if (_isChecking)
+            if (IsChecking)
             {
                 State s = ReadState();
                 return new State(UpdateStatus.Checking, s.LatestVersion, s.UpdateUrl, s.Error);
@@ -72,7 +139,7 @@ namespace Neo.Editor
 
         public static void RequestImmediateCheck(string currentVersion, string packageRootPath)
         {
-            if (_isChecking)
+            if (IsChecking)
             {
                 return;
             }
@@ -84,48 +151,69 @@ namespace Neo.Editor
                 long cooldownTicks = TimeSpan.FromSeconds(MinManualCheckIntervalSeconds).Ticks;
                 if (nowTicks - lastManualTicks < cooldownTicks)
                 {
-                    int secondsLeft = (int)((cooldownTicks - (nowTicks - lastManualTicks)) / TimeSpan.TicksPerSecond) +
-                                      1;
-                    Debug.Log($"[NeoUpdateChecker] Next check available in {secondsLeft} s.");
+                    // WHY: verbose-only like every other info line; the pill already shows the current state.
+                    if (VerboseLogging)
+                    {
+                        int secondsLeft =
+                            (int)((cooldownTicks - (nowTicks - lastManualTicks)) / TimeSpan.TicksPerSecond) + 1;
+                        LogInfo($"[NeoUpdateChecker] Next check available in {secondsLeft} s.");
+                    }
+
                     return;
                 }
             }
 
-            SessionState.SetString(SessionLastManualCheckTicks, DateTime.UtcNow.Ticks.ToString());
+            WriteString(SessionLastManualCheckTicks, DateTime.UtcNow.Ticks.ToString());
 
-            SessionState.SetString(SessionLastCheckTicks, "0");
-            SessionState.SetInt(SessionStatus, (int)UpdateStatus.Checking);
+            WriteString(SessionLastCheckTicks, "0");
+            WriteInt(SessionStatus, (int)UpdateStatus.Checking);
 
             TryStartCheck(currentVersion, packageRootPath);
         }
 
         private static State ReadState()
         {
-            int statusInt = SessionState.GetInt(SessionStatus, (int)UpdateStatus.Unknown);
-            UpdateStatus status = Enum.IsDefined(typeof(UpdateStatus), statusInt)
-                ? (UpdateStatus)statusInt
-                : UpdateStatus.Unknown;
+            if (!s_stateCached)
+            {
+                int statusInt = SessionState.GetInt(SessionStatus, (int)UpdateStatus.Unknown);
+                UpdateStatus status = statusInt >= (int)UpdateStatus.Unknown && statusInt <= (int)UpdateStatus.Ahead
+                    ? (UpdateStatus)statusInt
+                    : UpdateStatus.Unknown;
 
-            string latest = SessionState.GetString(SessionLatestVersion, string.Empty);
-            string url = SessionState.GetString(SessionUpdateUrl, string.Empty);
-            string error = SessionState.GetString(SessionError, string.Empty);
-            return new State(status, latest, url, error);
+                string latest = SessionState.GetString(SessionLatestVersion, string.Empty);
+                string url = SessionState.GetString(SessionUpdateUrl, string.Empty);
+                string error = SessionState.GetString(SessionError, string.Empty);
+                s_cachedState = new State(status, latest, url, error);
+                s_stateCached = true;
+            }
+
+            // WHY: a manual check persists "Checking" before its request starts. A domain reload mid-request drops
+            // the request but not that status, which left the strip spinning (and live-repainting) until the next
+            // scheduled check. Without a request in flight in this domain the status is simply unknown.
+            if (s_cachedState.Status == UpdateStatus.Checking && !IsChecking)
+            {
+                return new State(UpdateStatus.Unknown, s_cachedState.LatestVersion, s_cachedState.UpdateUrl,
+                    s_cachedState.Error);
+            }
+
+            return s_cachedState;
         }
 
         private static long GetLastCheckTicks()
         {
-            string ticksStr = SessionState.GetString(SessionLastCheckTicks, string.Empty);
-            if (long.TryParse(ticksStr, out long ticks))
+            if (!s_ticksCached)
             {
-                return ticks;
+                string ticksStr = SessionState.GetString(SessionLastCheckTicks, string.Empty);
+                s_cachedLastTicks = long.TryParse(ticksStr, out long ticks) ? ticks : 0;
+                s_ticksCached = true;
             }
 
-            return 0;
+            return s_cachedLastTicks;
         }
 
         private static void SetLastCheckTicks(long ticks)
         {
-            SessionState.SetString(SessionLastCheckTicks, ticks.ToString());
+            WriteString(SessionLastCheckTicks, ticks.ToString());
         }
 
         private static void TryStartCheck(string currentVersion, string packageRootPath)
@@ -141,20 +229,20 @@ namespace Neo.Editor
 
                 if (string.IsNullOrEmpty(repoUrl))
                 {
-                    SessionState.SetString(SessionError, "repository URL not found in package.json");
-                    SessionState.SetInt(SessionStatus, (int)UpdateStatus.Unknown);
+                    WriteString(SessionError, "repository URL not found in package.json");
+                    WriteInt(SessionStatus, (int)UpdateStatus.Unknown);
                     SetLastCheckTicks(DateTime.UtcNow.Ticks);
-                    Debug.LogWarning("[NeoUpdateChecker] Could not find repository URL in package.json. " +
-                                     $"packageRootPath=\"{packageRootPath ?? "null"}\"");
+                    LogWarningOnce("[NeoUpdateChecker] Could not find repository URL in package.json. " +
+                                   $"packageRootPath=\"{packageRootPath ?? "null"}\"");
                     return;
                 }
 
                 if (!TryParseGitHubOwnerRepo(repoUrl, out string owner, out string repo, out string repoWebUrl))
                 {
-                    SessionState.SetString(SessionError, $"Cannot parse GitHub URL: {repoUrl}");
-                    SessionState.SetInt(SessionStatus, (int)UpdateStatus.Unknown);
+                    WriteString(SessionError, $"Cannot parse GitHub URL: {repoUrl}");
+                    WriteInt(SessionStatus, (int)UpdateStatus.Unknown);
                     SetLastCheckTicks(DateTime.UtcNow.Ticks);
-                    Debug.LogWarning($"[NeoUpdateChecker] Could not parse GitHub URL: {repoUrl}");
+                    LogWarningOnce($"[NeoUpdateChecker] Could not parse GitHub URL: {repoUrl}");
                     return;
                 }
 
@@ -167,7 +255,7 @@ namespace Neo.Editor
 
                 _isChecking = true;
                 SetLastCheckTicks(DateTime.UtcNow.Ticks);
-                Debug.Log($"[NeoUpdateChecker] Update request: {apiUrl}");
+                LogInfo($"[NeoUpdateChecker] Update request: {apiUrl}");
 
                 UnityWebRequestAsyncOperation op = _request.SendWebRequest();
                 op.completed += _ =>
@@ -187,7 +275,7 @@ namespace Neo.Editor
             catch (Exception ex)
             {
                 _isChecking = false;
-                Debug.LogWarning($"[NeoUpdateChecker] Exception while checking for updates: {ex.Message}");
+                LogWarningOnce($"[NeoUpdateChecker] Exception while checking for updates: {ex.Message}");
             }
         }
 
@@ -230,10 +318,14 @@ namespace Neo.Editor
                 string tagsApiUrl = $"https://api.github.com/repos/{owner}/{repo}/tags?per_page=1";
                 string updateUrl = repoWebUrl;
 
-                var tagsRequest = UnityWebRequest.Get(tagsApiUrl);
+                UnityWebRequest tagsRequest = UnityWebRequest.Get(tagsApiUrl);
                 tagsRequest.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 tagsRequest.SetRequestHeader("Accept", "application/vnd.github+json");
 
+                // WHY: the first request's completion clears _isChecking before this one finishes; without a flag of
+                // its own ReadState demoted the persisted "Checking" to Unknown halfway through the check and the
+                // strip stopped its live repaint. A separate flag stays correct even if completion fires early.
+                _isFallbackChecking = true;
                 UnityWebRequestAsyncOperation op = tagsRequest.SendWebRequest();
                 op.completed += _ =>
                 {
@@ -252,41 +344,43 @@ namespace Neo.Editor
                     finally
                     {
                         tagsRequest.Dispose();
+                        _isFallbackChecking = false;
                     }
                 };
             }
             catch
             {
+                _isFallbackChecking = false;
                 ApplyResult(currentVersion, null, repoWebUrl, "Update check failed");
             }
         }
 
         private static void ApplyResult(string currentVersion, string latestVersion, string updateUrl, string error)
         {
-            SessionState.SetString(SessionError, error ?? string.Empty);
+            WriteString(SessionError, error ?? string.Empty);
 
             if (!string.IsNullOrEmpty(error))
             {
-                Debug.LogWarning($"[NeoUpdateChecker] Update check error: {error}");
+                LogWarningOnce($"[NeoUpdateChecker] Update check error: {error}");
             }
 
             if (string.IsNullOrEmpty(latestVersion))
             {
-                SessionState.SetBool(SessionUpdateAvailable, false);
-                SessionState.SetString(SessionLatestVersion, string.Empty);
-                SessionState.SetString(SessionUpdateUrl, updateUrl ?? string.Empty);
-                SessionState.SetInt(SessionStatus, (int)UpdateStatus.Unknown);
+                WriteBool(SessionUpdateAvailable, false);
+                WriteString(SessionLatestVersion, string.Empty);
+                WriteString(SessionUpdateUrl, updateUrl ?? string.Empty);
+                WriteInt(SessionStatus, (int)UpdateStatus.Unknown);
                 return;
             }
 
-            SessionState.SetString(SessionLatestVersion, latestVersion);
-            SessionState.SetString(SessionUpdateUrl, updateUrl ?? string.Empty);
+            WriteString(SessionLatestVersion, latestVersion);
+            WriteString(SessionUpdateUrl, updateUrl ?? string.Empty);
 
             UpdateStatus status = CompareToPublished(currentVersion, latestVersion);
-            SessionState.SetInt(SessionStatus, (int)status);
-            SessionState.SetBool(SessionUpdateAvailable, status == UpdateStatus.UpdateAvailable);
+            WriteInt(SessionStatus, (int)status);
+            WriteBool(SessionUpdateAvailable, status == UpdateStatus.UpdateAvailable);
 
-            Debug.Log(
+            LogInfo(
                 $"[NeoUpdateChecker] Check finished: current={currentVersion}, latest={latestVersion}, status={status}");
         }
 

@@ -2,6 +2,13 @@
 
 **What it is:** a `NeoNetworkComponent` that turns ordinary `UnityEvent`s into **context-aware** network actions. Instead of hard-wiring an inspector reference to a single template `GameObject`, the relay resolves the **same networked entity on every client** by `netId` and applies an action to a child target (e.g. `Sphere`).
 
+**How to use:**
+1. Add the relay to an object with a `NetworkIdentity` (or under one) and tick **Is Networked**.
+2. Pick **Context Source**, **Root Mode**, **Target Mode** and **Action** (see the patterns below).
+3. Wire any `UnityEvent` to `Trigger()`, `Trigger(Collider)` or `Trigger(GameObject)`; from C# call the same methods.
+
+---
+
 **Where:** `Assets/Neoxider/Scripts/Network/Core/NetworkContextActionRelay.cs`, menu `Neoxider/Network/Network Context Action Relay`.
 
 **Inspector:** dedicated (`Assets/Neoxider/Editor/Network/NetworkContextActionRelayEditor.cs`) — inherits `CustomEditorBase` (same look as `NeoCondition`), draws sectioned Context / Target / Action / Networking / Diagnostics / Editor Helpers / Events with reflection-driven dropdowns for component and method selection (shared helpers in `ComponentBindingInspectorShared`).
@@ -70,10 +77,28 @@ the configured string is `null`: `String` invokes `Method(string)` with null, wh
 
 1. The client calls `Trigger(...)`. `relayComponentIndex` is taken from `NetworkBehaviour.ComponentIndex`, which is identical on every peer thanks to Mirror's deterministic order.
 2. A pure client sends `NetworkContextActionMessage(relayNetId, relayComponentIndex, contextNetId)` to the server.
-3. The server applies the action locally (host) **and** sends the message to every other client (skipping the host's local connection to avoid a double-apply).
+3. The server sends the message to the **observers of the relay's `NetworkIdentity`** (the connections Mirror
+   spawned the relay's object on, spectators without a player included), skipping the host's local connection,
+   and then applies the action locally on a host. Remote observers are served first, so an exception in a host-side
+   listener cannot leave them out of sync. Every other connection is skipped: a client that is still loading, or
+   one whose relay object is hidden by interest management, has no relay to apply the action and often no handler
+   for the message (hiding a scene object disables it, and the last disabled relay unregisters the handler), and
+   Mirror would disconnect it for an unknown message id.
 4. Each client resolves the exact relay via `NetworkIdentity.NetworkBehaviours[componentIndex]` and applies the action to its local copy of `contextNetId`.
 
-Why direct `NetworkConnection.Send` instead of `[ClientRpc]`: the RPC path is observer-driven (AOI / interest management), so on scene `NetworkIdentity`s with an empty observer list mid-spawn the action silently never reached remote clients. Direct send guarantees delivery to every connected peer.
+The relay uses one Mirror message type in both directions, and `relayComponentIndex` picks the exact relay on an
+object that carries several. Its audience is the one a `[ClientRpc]` would reach: the relay's observers.
+
+Listener exceptions: an exception thrown by a relay listener, `SendMessage` receiver or configured method while a
+**received message** is applied is logged (`Debug.LogException`) instead of escaping into Mirror, which would
+otherwise disconnect the peer that sent a valid message. A local (host-side or offline) `Trigger` call still lets
+the exception reach its caller; on a host the remote observers have already been sent the action by then.
+
+Reflection: component types named in **Target Component Type** / **Method Component Type** are resolved once per
+name and the configured method is cached per relay until its component type, name or argument mode changes, so a
+frequently fired relay no longer walks every loaded assembly on each apply. A name that does not resolve is
+remembered too, but scanned again after another assembly loads (`AppDomain.AssemblyLoad`), so a type from a mod
+or hot-update DLL loaded at runtime is still found. Both caches are cleared at play start.
 
 ## Runtime API (10.18.1 hardening)
 
@@ -112,6 +137,10 @@ Inspector use is unchanged: pick **Context Source** / **Root Mode** / **Target M
 
 - A "stays on forever" state after pickup is **not auto-synced for late joiners**. For durable state use `SyncVar` / `NetworkPropertySync` / a dedicated networked state holder.
 - The action target must live in a part of the hierarchy that remains active on remote players (not under `_localOnlyObjects`).
+- Keep relay components enabled on clients while their object is spawned. The client handler exists only while at
+  least one relay is enabled there, so a client that disabled every relay (`enabled = false`) but still observes a
+  relay's object has no handler, and Mirror disconnects it when that relay fires. Use **Is Networked** to switch a
+  relay off instead.
 - **Unchanged by this release:** Mirror malformed-batch parsing, retained-batch queue growth, and
   raw-socket admission behavior. The per-connection ingress budget above only bounds relay-message
   ingress rate; it does not cap transport memory. Deadline / pending-cap behavior is a proposal,

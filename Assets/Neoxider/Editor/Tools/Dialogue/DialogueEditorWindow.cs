@@ -1,4 +1,5 @@
 using System;
+using Neo.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -9,17 +10,14 @@ namespace Neo.Tools.Editor
     public sealed class DialogueEditorWindow : EditorWindow
     {
         private const float LeftPanelWidth = 260f;
-        private const float RightPanelMinWidth = 580f;
+        private const float RightPanelMinWidth = 380f;
         private const int ItemHeight = 26;
+        private const string ReadmeRelativePath = "Tools/Dialogue/README.md";
 
         private static readonly Color AccentPrimary = new(0.22f, 0.55f, 0.75f, 1f);
         private static readonly Color AccentSecondary = new(0.35f, 0.72f, 0.55f, 1f);
         private static readonly Color AccentTertiary = new(0.85f, 0.55f, 0.25f, 1f);
-        private static readonly Color SelectedBg = new(0.22f, 0.48f, 0.68f, 0.45f);
-        private static readonly Color PanelBg = new(0.22f, 0.22f, 0.26f, 0.4f);
-        private static readonly Color HeaderBg = new(0.18f, 0.18f, 0.22f, 0.95f);
-        private static readonly Color PanelBorder = new(0.34f, 0.38f, 0.46f, 0.55f);
-        private static readonly Color CardBg = new(0.16f, 0.17f, 0.21f, 0.92f);
+
         private ObjectField _controllerField;
         private SerializedProperty _dialoguesProp;
 
@@ -27,80 +25,164 @@ namespace Neo.Tools.Editor
         private VisualElement _rightDetailsContainer;
         private ScrollView _rightScrollView;
         private Button _selectBtn;
+        private VisualElement _changeTracker;
 
-        private int _selectedDialogue = -1;
-        private int _selectedMonolog = -1;
-        private int _selectedSentence = -1;
+        // WHY: the bound controller and the selection survive a domain reload, so a script compile no longer
+        // drops the user back to an empty window. After an editor restart only the indices come back: a scene
+        // object reference stored in the window layout does not survive it.
+        [SerializeField] private int _selectedDialogue = -1;
+        [SerializeField] private int _selectedMonolog = -1;
+        [SerializeField] private int _selectedSentence = -1;
+        [SerializeField] private DialogueController _target;
+
         private SerializedObject _serializedObject;
+        private Palette _palette;
 
-        private DialogueController _target;
+        /// <summary>
+        ///     Window colours for the active editor skin. The window used to paint a fixed dark theme, which left
+        ///     the embedded property fields (drawn with the light skin's dark text) unreadable on light cards.
+        /// </summary>
+        private readonly struct Palette
+        {
+            public readonly Color RootBg;
+            public readonly Color HeaderBg;
+            public readonly Color PanelBg;
+            public readonly Color PanelBorder;
+            public readonly Color CardBg;
+            public readonly Color SelectedBg;
+            public readonly Color Text;
+            public readonly Color MutedText;
+            public readonly Color Hairline;
+            public readonly float HeaderAlpha;
+            public readonly bool IsDark;
+
+            private Palette(bool dark)
+            {
+                IsDark = dark;
+                if (dark)
+                {
+                    RootBg = new Color(0.11f, 0.12f, 0.15f, 1f);
+                    HeaderBg = new Color(0.18f, 0.18f, 0.22f, 0.95f);
+                    PanelBg = new Color(0.22f, 0.22f, 0.26f, 0.4f);
+                    PanelBorder = new Color(0.34f, 0.38f, 0.46f, 0.55f);
+                    CardBg = new Color(0.16f, 0.17f, 0.21f, 0.92f);
+                    SelectedBg = new Color(0.22f, 0.48f, 0.68f, 0.45f);
+                    Text = Color.white;
+                    MutedText = new Color(0.70f, 0.70f, 0.75f, 1f);
+                    Hairline = new Color(1f, 1f, 1f, 0.06f);
+                    HeaderAlpha = 0.35f;
+                }
+                else
+                {
+                    RootBg = new Color(0.78f, 0.79f, 0.82f, 1f);
+                    HeaderBg = new Color(0.70f, 0.71f, 0.75f, 1f);
+                    PanelBg = new Color(0.86f, 0.87f, 0.90f, 0.7f);
+                    PanelBorder = new Color(0.55f, 0.58f, 0.64f, 0.6f);
+                    CardBg = new Color(0.94f, 0.95f, 0.97f, 1f);
+                    SelectedBg = new Color(0.40f, 0.62f, 0.82f, 0.55f);
+                    Text = new Color(0.08f, 0.09f, 0.11f, 1f);
+                    MutedText = new Color(0.30f, 0.32f, 0.36f, 1f);
+                    Hairline = new Color(0f, 0f, 0f, 0.10f);
+                    HeaderAlpha = 0.30f;
+                }
+            }
+
+            public static Palette ForCurrentSkin()
+            {
+                return new Palette(EditorGUIUtility.isProSkin);
+            }
+        }
 
         private void Update()
         {
-            if (_target == null || _serializedObject == null)
+            // WHY: this used to snapshot the whole controller with SerializedObject.Update() on every editor
+            // tick (about a hundred times a second while the window was visible). Bound fields poll on their
+            // own; the window only has to notice that its controller was destroyed (scene closed, object
+            // deleted) and stop holding a dead SerializedObject.
+            if (_serializedObject != null && _serializedObject.targetObject == null)
             {
-                return;
+                BindTarget(null);
             }
 
-            if (_serializedObject.targetObject != _target)
+            // WHY: the palette is baked into inline styles when the GUI is built, so an open window kept the
+            // previous skin's colours after a light/dark switch until it was reopened.
+            if (_leftContent != null && _palette.IsDark != EditorGUIUtility.isProSkin)
             {
-                BindTarget(_target);
+                RebuildGui();
             }
+        }
 
-            _serializedObject.Update();
+        private void RebuildGui()
+        {
+            rootVisualElement.Clear();
+            _changeTracker = null;
+            CreateGUI();
         }
 
         private void OnEnable()
         {
             minSize = new Vector2(LeftPanelWidth + RightPanelMinWidth + 60f, 320f);
+            Undo.undoRedoPerformed -= OnUndoRedo;
+            Undo.undoRedoPerformed += OnUndoRedo;
             if (_target != null)
             {
-                BindTarget(_target);
+                BindTarget(_target, false);
             }
         }
 
         private void OnDisable()
         {
-            if (_serializedObject != null && _target != null)
+            Undo.undoRedoPerformed -= OnUndoRedo;
+            // WHY: ApplyModifiedProperties already marks the controller dirty when something changed. The old
+            // unconditional SetDirty dirtied the scene every time the window was merely closed.
+            if (_serializedObject != null && _serializedObject.targetObject != null)
             {
                 _serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(_target);
             }
+        }
+
+        private void OnUndoRedo()
+        {
+            if (_serializedObject == null || _serializedObject.targetObject == null)
+            {
+                return;
+            }
+
+            _serializedObject.Update();
+            EnsureSelection();
+            RefreshAll();
         }
 
         private void CreateGUI()
         {
+            _palette = Palette.ForCurrentSkin();
             rootVisualElement.style.flexGrow = 1;
             rootVisualElement.style.minHeight = 300;
-            rootVisualElement.style.backgroundColor = new Color(0.11f, 0.12f, 0.15f, 1f);
+            rootVisualElement.style.backgroundColor = _palette.RootBg;
 
             VisualElement toolbar = new();
             toolbar.style.flexDirection = FlexDirection.Row;
-            toolbar.style.height = 36;
-            toolbar.style.backgroundColor = HeaderBg;
+            toolbar.style.flexWrap = Wrap.Wrap;
+            toolbar.style.minHeight = 36;
+            toolbar.style.backgroundColor = _palette.HeaderBg;
             toolbar.style.borderBottomWidth = 1;
-            toolbar.style.borderBottomColor = new Color(1f, 1f, 1f, 0.08f);
+            toolbar.style.borderBottomColor = _palette.Hairline;
             toolbar.style.paddingLeft = 10;
             toolbar.style.paddingRight = 10;
             toolbar.style.paddingTop = 6;
+            toolbar.style.paddingBottom = 4;
             toolbar.style.alignItems = Align.Center;
 
             Label controllerLabel = new("Dialogue Editor");
-            controllerLabel.style.width = 96;
+            controllerLabel.style.width = 104;
             controllerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            controllerLabel.style.color = Color.white;
+            controllerLabel.style.color = _palette.Text;
             toolbar.Add(controllerLabel);
 
             _controllerField = new ObjectField
                 { objectType = typeof(DialogueController), value = _target, allowSceneObjects = true };
             _controllerField.style.width = 220;
-            _controllerField.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue is DialogueController c)
-                {
-                    BindTarget(c);
-                }
-            });
+            _controllerField.RegisterValueChangedCallback(evt => BindTarget(evt.newValue as DialogueController));
             toolbar.Add(_controllerField);
 
             _selectBtn = new Button(() =>
@@ -116,10 +198,7 @@ namespace Neo.Tools.Editor
             _selectBtn.SetEnabled(_target != null);
             toolbar.Add(_selectBtn);
 
-            Button docsBtn = new(() =>
-                    EditorUtility.DisplayDialog("Dialogue Editor",
-                        "Documentation: Assets/Neoxider/Docs/Tools/Dialogue/README.md", "OK"))
-                { text = "Docs" };
+            Button docsBtn = new(OpenReadme) { text = "Docs", tooltip = "Open the Dialogue module guide." };
             docsBtn.style.width = 70;
             docsBtn.style.backgroundColor = AccentTertiary;
             toolbar.Add(docsBtn);
@@ -133,13 +212,14 @@ namespace Neo.Tools.Editor
 
             VisualElement leftPanel = new();
             leftPanel.style.width = LeftPanelWidth;
-            leftPanel.style.backgroundColor = PanelBg;
+            leftPanel.style.flexShrink = 0;
+            leftPanel.style.backgroundColor = _palette.PanelBg;
             leftPanel.style.paddingLeft = 10;
             leftPanel.style.paddingRight = 10;
             leftPanel.style.paddingTop = 10;
             leftPanel.style.paddingBottom = 10;
             leftPanel.style.borderRightWidth = 1;
-            leftPanel.style.borderRightColor = PanelBorder;
+            leftPanel.style.borderRightColor = _palette.PanelBorder;
 
             ScrollView leftScroll = new(ScrollViewMode.Vertical);
             leftScroll.style.flexGrow = 1;
@@ -156,14 +236,14 @@ namespace Neo.Tools.Editor
 
             VisualElement rightPanel = new();
             rightPanel.style.flexGrow = 1;
-            rightPanel.style.backgroundColor = PanelBg;
+            rightPanel.style.backgroundColor = _palette.PanelBg;
             rightPanel.style.paddingLeft = 10;
             rightPanel.style.paddingRight = 10;
             rightPanel.style.paddingTop = 10;
             rightPanel.style.paddingBottom = 10;
             rightPanel.style.minWidth = RightPanelMinWidth;
             rightPanel.style.borderLeftWidth = 1;
-            rightPanel.style.borderLeftColor = PanelBorder;
+            rightPanel.style.borderLeftColor = _palette.PanelBorder;
 
             _rightScrollView = new ScrollView(ScrollViewMode.Vertical);
             _rightScrollView.style.flexGrow = 1;
@@ -199,7 +279,49 @@ namespace Neo.Tools.Editor
 
             rootVisualElement.Add(main);
 
+            RebindChangeTracker();
             RefreshAll();
+        }
+
+        private void OpenReadme()
+        {
+            string path = NeoDocHelper.ResolveDocPath(CreateMenuObject.startPath, ReadmeRelativePath);
+            if (!string.IsNullOrEmpty(path) && AssetDatabase.LoadAssetAtPath<TextAsset>(path) != null)
+            {
+                NeoDocHelper.OpenDocInWindow(path);
+                return;
+            }
+
+            EditorUtility.DisplayDialog("Dialogue Editor",
+                "Documentation: Docs/" + ReadmeRelativePath + " in the Neoxider package.", "OK");
+        }
+
+        /// <summary>
+        ///     Rebuilds the structure list when the controller changes outside the window (Inspector edits, a
+        ///     renamed character or an edited sentence), so the left column never shows stale names.
+        /// </summary>
+        private void RebindChangeTracker()
+        {
+            if (rootVisualElement == null)
+            {
+                return;
+            }
+
+            _changeTracker?.RemoveFromHierarchy();
+            _changeTracker = null;
+            if (_serializedObject == null)
+            {
+                return;
+            }
+
+            _changeTracker = new VisualElement { name = "dialogue-change-tracker" };
+            _changeTracker.style.display = DisplayStyle.None;
+            rootVisualElement.Add(_changeTracker);
+            _changeTracker.TrackSerializedObjectValue(_serializedObject, _ =>
+            {
+                RefreshBreadcrumbs();
+                RefreshLeftPanel();
+            });
         }
 
         [MenuItem("Neoxider/Windows/Dialogue Editor", false, 1)]
@@ -222,9 +344,21 @@ namespace Neo.Tools.Editor
 
         private void BindTarget(DialogueController controller)
         {
+            BindTarget(controller, true);
+        }
+
+        private void BindTarget(DialogueController controller, bool resetSelection)
+        {
+            bool changedTarget = controller != _target;
             _target = controller;
+            _serializedObject?.Dispose();
             _serializedObject = _target != null ? new SerializedObject(_target) : null;
             _dialoguesProp = _serializedObject?.FindProperty("dialogues");
+            if (changedTarget && resetSelection)
+            {
+                _selectedDialogue = _selectedMonolog = _selectedSentence = -1;
+            }
+
             EnsureSelection();
             if (_controllerField != null)
             {
@@ -236,6 +370,7 @@ namespace Neo.Tools.Editor
                 _selectBtn.SetEnabled(_target != null);
             }
 
+            RebindChangeTracker();
             if (_leftContent != null)
             {
                 RefreshAll();
@@ -244,6 +379,7 @@ namespace Neo.Tools.Editor
 
         private void RefreshAll()
         {
+            _serializedObject?.Update();
             RefreshBreadcrumbs();
             RefreshLeftPanel();
             RefreshRightPanel();
@@ -273,10 +409,7 @@ namespace Neo.Tools.Editor
             _leftContent.Clear();
             if (_dialoguesProp == null)
             {
-                Label hint = new("Assign a Controller above.");
-                hint.style.marginTop = 8;
-                hint.style.color = new Color(0.7f, 0.7f, 0.75f);
-                _leftContent.Add(hint);
+                AddEmptyHint(_leftContent, "Assign a Dialogue Controller in the toolbar above.");
                 return;
             }
 
@@ -292,7 +425,7 @@ namespace Neo.Tools.Editor
             _leftContent.Add(structureHeader);
             _leftContent.Add(new VisualElement { style = { height = 6 } });
 
-            AddSectionHeader(_leftContent, $"Dialogues ({_dialoguesProp.arraySize})", AccentPrimary,
+            AddSectionHeader(_leftContent, $"Dialogues ({_dialoguesProp.arraySize})", AccentPrimary, _palette,
                 AddDialogue,
                 _selectedDialogue >= 0 ? RemoveDialogue : null,
                 _selectedDialogue > 0 ? MoveDialogueUp : null,
@@ -302,7 +435,7 @@ namespace Neo.Tools.Editor
             for (int i = 0; i < _dialoguesProp.arraySize; i++)
             {
                 int idx = i;
-                AddItemButton(_leftContent, _selectedDialogue == idx, $"  Dialogue {idx + 1}", () =>
+                AddItemButton(_leftContent, _selectedDialogue == idx, $"  Dialogue {idx + 1}", _palette, () =>
                 {
                     _selectedDialogue = idx;
                     _selectedMonolog = -1;
@@ -323,7 +456,7 @@ namespace Neo.Tools.Editor
                 SerializedProperty monologues = GetMonologues();
                 if (monologues != null)
                 {
-                    AddSectionHeader(_leftContent, $"Monologues ({monologues.arraySize})", AccentSecondary,
+                    AddSectionHeader(_leftContent, $"Monologues ({monologues.arraySize})", AccentSecondary, _palette,
                         AddMonolog,
                         _selectedMonolog >= 0 ? RemoveMonolog : null,
                         _selectedMonolog > 0 ? MoveMonologUp : null,
@@ -337,7 +470,7 @@ namespace Neo.Tools.Editor
                         string name = string.IsNullOrWhiteSpace(nameProp.stringValue)
                             ? "Unnamed"
                             : nameProp.stringValue;
-                        AddItemButton(_leftContent, _selectedMonolog == idx, $"  {idx + 1}. {name}", () =>
+                        AddItemButton(_leftContent, _selectedMonolog == idx, $"  {idx + 1}. {name}", _palette, () =>
                         {
                             _selectedMonolog = idx;
                             _selectedSentence = -1;
@@ -359,7 +492,7 @@ namespace Neo.Tools.Editor
                 SerializedProperty sentences = GetSentences();
                 if (sentences != null)
                 {
-                    AddSectionHeader(_leftContent, $"Sentences ({sentences.arraySize})", AccentTertiary,
+                    AddSectionHeader(_leftContent, $"Sentences ({sentences.arraySize})", AccentTertiary, _palette,
                         AddSentence,
                         _selectedSentence >= 0 ? RemoveSentence : null,
                         _selectedSentence > 0 ? MoveSentenceUp : null,
@@ -372,7 +505,7 @@ namespace Neo.Tools.Editor
                         int idx = i;
                         SerializedProperty item = sentences.GetArrayElementAtIndex(idx);
                         string preview = BuildSentencePreview(item.FindPropertyRelative("sentence").stringValue);
-                        AddItemButton(_leftContent, _selectedSentence == idx, $"  {idx + 1}. {preview}", () =>
+                        AddItemButton(_leftContent, _selectedSentence == idx, $"  {idx + 1}. {preview}", _palette, () =>
                         {
                             _selectedSentence = idx;
                             RefreshAll();
@@ -396,20 +529,25 @@ namespace Neo.Tools.Editor
 
             _rightDetailsContainer.Clear();
             _rightDetailsContainer.Unbind();
-            if (_serializedObject == null || _selectedDialogue < 0)
+            if (_serializedObject == null)
             {
-                AddEmptyHint(_rightDetailsContainer, "Select a dialogue from the left panel.");
+                AddEmptyHint(_rightDetailsContainer, "Pick a Dialogue Controller to edit its dialogues.");
                 return;
             }
 
-            _serializedObject.Update();
+            if (_selectedDialogue < 0)
+            {
+                AddEmptyHint(_rightDetailsContainer, "Select a dialogue from the left panel, or press + to add one.");
+                return;
+            }
+
             SerializedProperty dialogue = GetDialogue();
             if (dialogue == null)
             {
                 return;
             }
 
-            AddDetailBlock(_rightDetailsContainer, $"Dialogue {_selectedDialogue + 1}", AccentPrimary, box =>
+            AddDetailBlock(_rightDetailsContainer, $"Dialogue {_selectedDialogue + 1}", AccentPrimary, _palette, box =>
             {
                 SerializedProperty prop = dialogue.FindPropertyRelative("OnChangeDialog");
                 PropertyField pf = new(prop, "On Change Dialogue");
@@ -422,7 +560,8 @@ namespace Neo.Tools.Editor
                 SerializedProperty monolog = GetMonolog();
                 if (monolog != null)
                 {
-                    AddDetailBlock(_rightDetailsContainer, $"Monologue {_selectedMonolog + 1}", AccentSecondary, box =>
+                    AddDetailBlock(_rightDetailsContainer, $"Monologue {_selectedMonolog + 1}", AccentSecondary,
+                        _palette, box =>
                     {
                         SerializedProperty p1 = monolog.FindPropertyRelative("characterName");
                         SerializedProperty p2 = monolog.FindPropertyRelative("OnChangeMonolog");
@@ -441,7 +580,8 @@ namespace Neo.Tools.Editor
                 SerializedProperty sentence = GetSentence();
                 if (sentence != null)
                 {
-                    AddDetailBlock(_rightDetailsContainer, $"Sentence {_selectedSentence + 1}", AccentTertiary, box =>
+                    AddDetailBlock(_rightDetailsContainer, $"Sentence {_selectedSentence + 1}", AccentTertiary,
+                        _palette, box =>
                     {
                         SerializedProperty spriteProp = sentence.FindPropertyRelative("sprite");
                         SerializedProperty textProp = sentence.FindPropertyRelative("sentence");
@@ -458,16 +598,16 @@ namespace Neo.Tools.Editor
                     });
 
                     VisualElement previewBox = new();
-                    previewBox.style.height = 80 + 2 * 18;
+                    previewBox.style.minHeight = 80 + 2 * 18;
                     previewBox.style.marginTop = 8;
-                    previewBox.style.backgroundColor = new Color(0.2f, 0.2f, 0.24f, 0.6f);
+                    previewBox.style.backgroundColor = _palette.CardBg;
                     previewBox.style.flexDirection = FlexDirection.Row;
                     previewBox.style.paddingLeft = 10;
                     previewBox.style.paddingTop = 8;
                     previewBox.style.paddingRight = 10;
                     previewBox.style.paddingBottom = 8;
                     Label previewLabel = new("Preview");
-                    previewLabel.style.color = Color.white;
+                    previewLabel.style.color = _palette.Text;
                     previewLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
                     previewLabel.style.marginBottom = 4;
                     previewLabel.style.fontSize = 12;
@@ -479,19 +619,36 @@ namespace Neo.Tools.Editor
                     _rightDetailsContainer.Add(previewLabel);
                     VisualElement previewRow = new();
                     previewRow.style.flexDirection = FlexDirection.Row;
-                    Texture2D previewTex = null;
                     if (sentence.FindPropertyRelative("sprite").objectReferenceValue is Sprite sp)
                     {
-                        previewTex = AssetPreview.GetAssetPreview(sp) ?? AssetPreview.GetMiniThumbnail(sp);
-                    }
-
-                    if (previewTex != null)
-                    {
-                        Image img = new() { image = previewTex, scaleMode = ScaleMode.ScaleToFit };
+                        Texture2D previewTex = AssetPreview.GetAssetPreview(sp);
+                        Image img = new()
+                        {
+                            image = previewTex != null ? previewTex : AssetPreview.GetMiniThumbnail(sp),
+                            scaleMode = ScaleMode.ScaleToFit
+                        };
                         img.style.width = 64;
                         img.style.height = 64;
                         img.style.marginRight = 8;
                         previewRow.Add(img);
+                        if (previewTex == null)
+                        {
+                            // WHY: AssetPreview renders asynchronously; without a follow-up the preview stayed a
+                            // mini icon until something else rebuilt the panel. Poll briefly, then give up.
+                            double giveUpAt = EditorApplication.timeSinceStartup + 3d;
+                            img.schedule.Execute(() =>
+                                {
+                                    Texture2D loaded = sp != null ? AssetPreview.GetAssetPreview(sp) : null;
+                                    if (loaded != null)
+                                    {
+                                        img.image = loaded;
+                                    }
+                                })
+                                .Every(100)
+                                .Until(() => sp == null || img.panel == null ||
+                                             AssetPreview.GetAssetPreview(sp) != null ||
+                                             EditorApplication.timeSinceStartup > giveUpAt);
+                        }
                     }
 
                     string textPreview = sentence.FindPropertyRelative("sentence").stringValue;
@@ -501,7 +658,7 @@ namespace Neo.Tools.Editor
                     }
 
                     Label textLabel = new(textPreview);
-                    textLabel.style.color = new Color(0.9f, 0.9f, 0.92f);
+                    textLabel.style.color = _palette.Text;
                     textLabel.style.whiteSpace = WhiteSpace.Normal;
                     textLabel.style.flexGrow = 1;
                     textLabel.style.fontSize = 13;
@@ -514,7 +671,7 @@ namespace Neo.Tools.Editor
             }
         }
 
-        private static void AddSectionHeader(VisualElement parent, string title, Color accent,
+        private static void AddSectionHeader(VisualElement parent, string title, Color accent, Palette palette,
             Action onAdd, Action onRemove, Action onUp, Action onDown)
         {
             VisualElement row = new();
@@ -523,8 +680,12 @@ namespace Neo.Tools.Editor
             row.style.marginBottom = 2;
             Label titleEl = new(title);
             titleEl.style.flexGrow = 1;
-            titleEl.style.backgroundColor = new StyleColor(new Color(accent.r, accent.g, accent.b, 0.35f));
-            titleEl.style.color = Color.white;
+            titleEl.style.flexShrink = 1;
+            titleEl.style.overflow = Overflow.Hidden;
+            titleEl.style.textOverflow = TextOverflow.Ellipsis;
+            titleEl.style.backgroundColor =
+                new StyleColor(new Color(accent.r, accent.g, accent.b, palette.HeaderAlpha));
+            titleEl.style.color = palette.Text;
             titleEl.style.unityFontStyleAndWeight = FontStyle.Bold;
             titleEl.style.fontSize = 12;
             titleEl.style.paddingLeft = 8;
@@ -532,24 +693,24 @@ namespace Neo.Tools.Editor
             titleEl.style.borderLeftWidth = 4;
             titleEl.style.borderLeftColor = accent;
             row.Add(titleEl);
-            Button addBtn = new(onAdd ?? (() => { })) { text = "+" };
+            Button addBtn = new(onAdd ?? (() => { })) { text = "+", tooltip = "Add" };
             addBtn.style.width = 26;
             addBtn.style.height = 24;
             addBtn.style.backgroundColor = AccentSecondary;
             row.Add(addBtn);
-            Button remBtn = new(onRemove ?? (() => { })) { text = "−" };
+            Button remBtn = new(onRemove ?? (() => { })) { text = "−", tooltip = "Remove the selected item" };
             remBtn.style.width = 26;
             remBtn.style.height = 24;
             remBtn.style.backgroundColor = AccentTertiary;
             remBtn.SetEnabled(onRemove != null);
             row.Add(remBtn);
-            Button upBtn = new(onUp ?? (() => { })) { text = "↑" };
+            Button upBtn = new(onUp ?? (() => { })) { text = "↑", tooltip = "Move up" };
             upBtn.style.width = 26;
             upBtn.style.height = 24;
             upBtn.style.backgroundColor = accent;
             upBtn.SetEnabled(onUp != null);
             row.Add(upBtn);
-            Button downBtn = new(onDown ?? (() => { })) { text = "↓" };
+            Button downBtn = new(onDown ?? (() => { })) { text = "↓", tooltip = "Move down" };
             downBtn.style.width = 26;
             downBtn.style.height = 24;
             downBtn.style.backgroundColor = accent;
@@ -558,11 +719,14 @@ namespace Neo.Tools.Editor
             parent.Add(row);
         }
 
-        private static void AddItemButton(VisualElement parent, bool selected, string label, Action onClick)
+        private static void AddItemButton(VisualElement parent, bool selected, string label, Palette palette,
+            Action onClick)
         {
             Button btn = new(onClick) { text = label };
             btn.style.height = ItemHeight + 4;
             btn.style.unityTextAlign = TextAnchor.MiddleLeft;
+            btn.style.overflow = Overflow.Hidden;
+            btn.style.textOverflow = TextOverflow.Ellipsis;
             btn.style.paddingLeft = 12;
             btn.style.paddingRight = 10;
             btn.style.marginBottom = 3;
@@ -570,47 +734,50 @@ namespace Neo.Tools.Editor
             btn.style.borderTopWidth = 1;
             btn.style.borderBottomWidth = 1;
             btn.style.borderRightWidth = 1;
-            btn.style.borderTopColor = new Color(1f, 1f, 1f, 0.04f);
-            btn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.06f);
-            btn.style.borderRightColor = new Color(1f, 1f, 1f, 0.04f);
+            btn.style.borderTopColor = palette.Hairline;
+            btn.style.borderBottomColor = palette.Hairline;
+            btn.style.borderRightColor = palette.Hairline;
             if (selected)
             {
-                btn.style.backgroundColor = SelectedBg;
+                btn.style.backgroundColor = palette.SelectedBg;
                 btn.style.borderLeftColor = AccentPrimary;
-                btn.style.color = Color.white;
+                btn.style.color = palette.Text;
                 btn.style.unityFontStyleAndWeight = FontStyle.Bold;
             }
             else
             {
-                btn.style.backgroundColor = new Color(CardBg.r, CardBg.g, CardBg.b, 0.72f);
-                btn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.07f);
-                btn.style.color = new Color(0.86f, 0.88f, 0.92f, 1f);
+                btn.style.backgroundColor = new Color(palette.CardBg.r, palette.CardBg.g, palette.CardBg.b, 0.72f);
+                btn.style.borderLeftColor = palette.Hairline;
+                btn.style.color = palette.Text;
                 btn.style.unityFontStyleAndWeight = FontStyle.Normal;
             }
 
             parent.Add(btn);
         }
 
-        private static void AddEmptyHint(VisualElement parent, string text)
+        private void AddEmptyHint(VisualElement parent, string text)
         {
             Label hint = new(text);
-            hint.style.height = 36;
-            hint.style.backgroundColor = new Color(CardBg.r, CardBg.g, CardBg.b, 0.80f);
+            hint.style.minHeight = 36;
+            hint.style.whiteSpace = WhiteSpace.Normal;
+            hint.style.paddingLeft = 8;
+            hint.style.paddingRight = 8;
+            hint.style.backgroundColor = new Color(_palette.CardBg.r, _palette.CardBg.g, _palette.CardBg.b, 0.80f);
             hint.style.unityTextAlign = TextAnchor.MiddleCenter;
-            hint.style.color = new Color(0.7f, 0.7f, 0.75f);
+            hint.style.color = _palette.MutedText;
             hint.style.fontSize = 12;
             hint.style.borderLeftWidth = 4;
             hint.style.borderLeftColor = new Color(0.50f, 0.52f, 0.58f, 1f);
             parent.Add(hint);
         }
 
-        private static void AddDetailBlock(VisualElement parent, string title, Color accent,
+        private static void AddDetailBlock(VisualElement parent, string title, Color accent, Palette palette,
             Action<VisualElement> addFields)
         {
             Label header = new(title);
             header.style.height = 22;
-            header.style.backgroundColor = new StyleColor(new Color(accent.r, accent.g, accent.b, 0.4f));
-            header.style.color = Color.white;
+            header.style.backgroundColor = new StyleColor(new Color(accent.r, accent.g, accent.b, palette.HeaderAlpha));
+            header.style.color = palette.Text;
             header.style.unityFontStyleAndWeight = FontStyle.Bold;
             header.style.fontSize = 12;
             header.style.paddingLeft = 8;
@@ -619,14 +786,14 @@ namespace Neo.Tools.Editor
             header.style.borderLeftColor = accent;
             parent.Add(header);
             VisualElement box = new();
-            box.style.backgroundColor = new Color(CardBg.r, CardBg.g, CardBg.b, 0.88f);
+            box.style.backgroundColor = new Color(palette.CardBg.r, palette.CardBg.g, palette.CardBg.b, 0.88f);
             box.style.paddingLeft = 6;
             box.style.paddingRight = 6;
             box.style.paddingTop = 8;
             box.style.paddingBottom = 8;
             box.style.marginBottom = 8;
             box.style.borderBottomWidth = 1;
-            box.style.borderBottomColor = new Color(1f, 1f, 1f, 0.06f);
+            box.style.borderBottomColor = palette.Hairline;
             addFields?.Invoke(box);
             parent.Add(box);
         }

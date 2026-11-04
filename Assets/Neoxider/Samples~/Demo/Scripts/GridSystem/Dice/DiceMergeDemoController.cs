@@ -2,12 +2,20 @@ using System.Collections.Generic;
 using Neo.GridSystem;
 using Neo.GridSystem.Dice;
 using Neo.GridSystem.Merge;
+using Neo.Samples;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Demo.GridSystem
 {
+    /// <summary>
+    ///     Game loop of the authored dice merge demo: spawns the next piece from the dice pool, places it through
+    ///     <see cref="DiceBoardService" />, scores merges and detects game over with
+    ///     <see cref="DiceBoardService.CanPlaceAnywhere" />. The scene builder saves the UI and the persistent
+    ///     listeners (buttons, the merge-size slider, <see cref="DiceBoardService.OnMergesResolved" />); this
+    ///     component builds no UI at runtime.
+    /// </summary>
     [AddComponentMenu("Neoxider/Demo/GridSystem/DiceMergeDemoController")]
     public sealed class DiceMergeDemoController : MonoBehaviour
     {
@@ -16,6 +24,9 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private TMP_Text _scoreText;
         [SerializeField] private TMP_Text _poolText;
         [SerializeField] private TMP_Text _statusText;
+
+        [Tooltip("Optional log feed that receives every action and merge.")]
+        [SerializeField] private DemoLogFeed _log;
 
         private readonly DicePieceGenerator _pieceGenerator = new();
         private readonly List<int> _pool = DicePieceGenerator.CreateDefaultPool();
@@ -73,14 +84,22 @@ namespace Neo.Demo.GridSystem
             EnsureBoard();
             _diceBoard.ClearBoard();
             SpawnNextPiece();
-            SetStatus("Drag dice onto the board");
+            SetStatus("Drag the next piece onto the board");
         }
 
         public void SpawnNextPiece()
         {
             _currentPiece = _pieceGenerator.Generate(_pool);
             _gameOver = !CanPlaceCurrentPieceAnywhere();
-            SetStatus(_gameOver ? "Game over" : "New dice spawned");
+            if (_gameOver)
+            {
+                SetStatus("Game over: the piece fits nowhere · CanPlaceAnywhere");
+            }
+            else
+            {
+                SetStatusText("New piece in the tray");
+            }
+
             RefreshTexts();
             OnDemoStateChanged.Invoke();
         }
@@ -93,8 +112,58 @@ namespace Neo.Demo.GridSystem
             }
 
             _currentPiece = _currentPiece.RotateClockwise();
-            SetStatus("Pair rotated");
+            SetStatus("Pair rotated · DicePiece.RotateClockwise");
             OnDemoStateChanged.Invoke();
+        }
+
+        /// <summary>Button target: reports the first anchor and rotation where the current piece fits.</summary>
+        public void ShowHint()
+        {
+            if (_currentPiece == null || _diceBoard == null || _gameOver)
+            {
+                return;
+            }
+
+            if (_diceBoard.TryFindPlacement(_currentPiece, true, out Vector3Int anchor, out int turns))
+            {
+                SetStatus($"Hint: fits at {anchor.x},{anchor.y}" + (turns > 0 ? $" after {turns} turn(s)" : string.Empty) +
+                          " · TryFindPlacement");
+                return;
+            }
+
+            SetStatus("Hint: no placement left");
+        }
+
+        /// <summary>Slider target: connected dice needed for a merge (DiceBoardService.MinMergeGroupSize).</summary>
+        public void SetMergeGroupSize(float size)
+        {
+            if (_diceBoard == null)
+            {
+                return;
+            }
+
+            int value = Mathf.Max(2, Mathf.RoundToInt(size));
+            if (_diceBoard.MinMergeGroupSize == value)
+            {
+                return;
+            }
+
+            _diceBoard.MinMergeGroupSize = value;
+            Log($"Merge group size {value} · DiceBoardService.MinMergeGroupSize");
+        }
+
+        /// <summary>Persistent target of <see cref="DiceBoardService.OnMergesResolved" />.</summary>
+        public void HandleMergesResolved(GridMergeResult result)
+        {
+            if (result == null || !result.HasChanges)
+            {
+                return;
+            }
+
+            foreach (GridMergeGroupResult group in result.Groups)
+            {
+                Log($"{group.Positions.Count}×{group.SourceContentId} merged into {group.ResultContentId} · OnMergesResolved");
+            }
         }
 
         public bool TryPlaceCurrentPiece(Vector3Int anchor)
@@ -176,6 +245,7 @@ namespace Neo.Demo.GridSystem
                 }
 
                 RemoveValueFromBoard(removed);
+                Log($"Pool shifted: {removed} retired, {added} added");
                 _removedPoolBase++;
             }
 
@@ -199,34 +269,8 @@ namespace Neo.Demo.GridSystem
 
         private bool CanPlaceCurrentPieceAnywhere()
         {
-            if (_currentPiece == null || _generator == null || _diceBoard == null)
-            {
-                return false;
-            }
-
-            foreach (DicePiece orientation in EnumerateOrientations(_currentPiece))
-            {
-                foreach (FieldCell cell in _generator.GetAllCells(false))
-                {
-                    if (_diceBoard.CanPlace(orientation, cell.Position))
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private static IEnumerable<DicePiece> EnumerateOrientations(DicePiece piece)
-        {
-            DicePiece current = piece;
-            int count = piece.CellCount > 1 ? 4 : 1;
-            for (int i = 0; i < count; i++)
-            {
-                yield return current;
-                current = current.RotateClockwise();
-            }
+            return _currentPiece != null && _generator != null && _diceBoard != null &&
+                   _diceBoard.CanPlaceAnywhere(_currentPiece);
         }
 
         private void EnsureBoard()
@@ -241,20 +285,34 @@ namespace Neo.Demo.GridSystem
         {
             if (_scoreText != null)
             {
-                _scoreText.text = "Score: " + _score;
+                _scoreText.text = _score.ToString();
             }
 
             if (_poolText != null)
             {
-                _poolText.text = "Pool: " + string.Join(", ", _pool);
+                _poolText.text = string.Join(", ", _pool);
             }
         }
 
         private void SetStatus(string text)
         {
+            SetStatusText(text);
+            Log(text);
+        }
+
+        private void SetStatusText(string text)
+        {
             if (_statusText != null)
             {
                 _statusText.text = text;
+            }
+        }
+
+        private void Log(string text)
+        {
+            if (_log != null)
+            {
+                _log.Log(text);
             }
         }
     }

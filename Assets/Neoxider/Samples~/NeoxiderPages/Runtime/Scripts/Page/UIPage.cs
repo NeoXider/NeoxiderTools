@@ -14,14 +14,21 @@ namespace Neo.Pages
         None = 3
     }
 
+    /// <summary>
+    ///     UI page component for use with <see cref="PM" />.
+    ///     Handles page active state for the PM page controller.
+    /// </summary>
+    /// <remarks>
+    ///     The base page switches instantly. A project page with a show/hide animation derives from this class,
+    ///     overrides <see cref="StartActive" />/<see cref="EndActive" /> and reports its timing through
+    ///     <see cref="HasShowAnimation" />, <see cref="ShowAnimationDuration" /> and
+    ///     <see cref="HideAnimationDuration" />, so <see cref="PM" /> keeps the outgoing page visible until the
+    ///     incoming one has finished showing.
+    /// </remarks>
     [MovedFrom("")]
     [CreateFromMenu("Neoxider/Pages/UIPage")]
     [AddComponentMenu("Neoxider/Pages/" + nameof(UIPage))]
     [NeoDoc("NeoxiderPages/UIPage.md")]
-    /// <summary>
-    /// UI page component for use with <see cref="PM"/>.
-    /// Handles page active state for the PM page controller.
-    /// </summary>
     public class UIPage : MonoBehaviour
     {
         [FormerlySerializedAs("pageType")] [FormerlySerializedAs("page")] [Header("Id")] [SerializeField]
@@ -48,8 +55,6 @@ namespace Neo.Pages
 
         [HideInInspector] [SerializeField] private bool _legacyAnimationModeMigrated;
 
-        private Coroutine _deactivateRoutine;
-
         public PageId PageId => pageId;
 
         /// <summary>Opens this page through the page system (handy inspector test button).</summary>
@@ -69,30 +74,15 @@ namespace Neo.Pages
         /// <summary>
         ///     True when this page plays a show animation on <see cref="StartActive"/>.
         ///     Used by <see cref="PM"/> to keep the previous page visible until the incoming animation finishes.
+        ///     The base page has none.
         /// </summary>
-        public bool HasShowAnimation => false;
+        public virtual bool HasShowAnimation => false;
 
         /// <summary>Realtime seconds to wait for the show tween (duration + delay). Zero when <see cref="HasShowAnimation"/> is false.</summary>
-        public float ShowAnimationDuration
-        {
-            get
-            {
-                if (!HasShowAnimation)
-                {
-                    return 0f;
-                }
+        public virtual float ShowAnimationDuration => 0f;
 
-                return 0f;
-            }
-        }
-
-        public float HideAnimationDuration
-        {
-            get
-            {
-                return 0f;
-            }
-        }
+        /// <summary>Realtime seconds <see cref="WaitForHideAnimation" /> waits for the hide tween. Zero for the base page.</summary>
+        public virtual float HideAnimationDuration => 0f;
 
         private void OnValidate()
         {
@@ -104,38 +94,21 @@ namespace Neo.Pages
             MigrateLegacyAnimationModeIfNeeded();
         }
 
-
-        private void OnRewind()
-        {
-            SetActive(false);
-        }
-
         /// <summary>
-        ///     Enables the page and optionally plays the show animation.
+        ///     Enables the page (a disable/enable cycle, so OnEnable logic of the page content runs again).
         /// </summary>
         public virtual void StartActive()
         {
-            StopDeactivateRoutine();
             SetActive(false);
             SetActive(true);
-            CancelInvoke(nameof(OnRewind));
-
             MigrateLegacyAnimationModeIfNeeded();
-
-            if (CanPlayForward())
-            {
-                // WHY: Animation hooks are intentionally optional for the sample.
-            }
         }
 
         /// <summary>
-        ///     Disables the page and optionally plays the close animation backward.
+        ///     Disables the page.
         /// </summary>
         public virtual void EndActive()
         {
-            StopDeactivateRoutine();
-            CancelInvoke(nameof(OnRewind));
-
             if (!gameObject.activeInHierarchy)
             {
                 SetActive(false);
@@ -177,18 +150,6 @@ namespace Neo.Pages
             _legacyAnimationModeMigrated = true;
         }
 
-        private bool CanPlayForward()
-        {
-            return _animationMode == UIPageAnimationMode.ForwardOnly ||
-                   _animationMode == UIPageAnimationMode.ForwardAndBackward;
-        }
-
-        private bool CanPlayBackward()
-        {
-            return _animationMode == UIPageAnimationMode.BackwardOnly ||
-                   _animationMode == UIPageAnimationMode.ForwardAndBackward;
-        }
-
         /// <summary>
         ///     Yields until the show tween completes (or immediately when there is no show animation).
         ///     Used by <see cref="PM"/> before deactivating other pages on exclusive switches.
@@ -207,6 +168,7 @@ namespace Neo.Pages
             }
         }
 
+        /// <summary>Yields until the hide tween completes (or immediately when <see cref="HideAnimationDuration" /> is zero).</summary>
         public IEnumerator WaitForHideAnimation()
         {
             float wait = HideAnimationDuration;
@@ -214,17 +176,6 @@ namespace Neo.Pages
             {
                 yield return new WaitForSecondsRealtime(wait);
             }
-        }
-
-        private void StopDeactivateRoutine()
-        {
-            if (_deactivateRoutine == null)
-            {
-                return;
-            }
-
-            StopCoroutine(_deactivateRoutine);
-            _deactivateRoutine = null;
         }
     }
 }

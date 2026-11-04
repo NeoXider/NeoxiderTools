@@ -1,10 +1,17 @@
 # TransformAnimator
 
-Universal transform animator that combines constant rotation, curve-driven floating (bob), symmetric
-scale pulse, continuous Perlin shake and one-shot impulse shakes on a single component.
+**What it is:** a MonoBehaviour that animates a transform's local pose with constant rotation,
+curve-driven floating (bob), symmetric scale pulse, continuous Perlin shake and one-shot impulse shakes.
+Script: `Scripts/Animations/TransformAnimator.cs`, namespace `Neo.Animations`. The math lives in the
+scene-free `TransformAnimationEvaluator`; the component owns Unity lifecycle, target binding and
+application of the evaluated local pose.
 
-The math lives in the scene-free `TransformAnimationEvaluator`; the component owns Unity
-lifecycle, target binding and application of the evaluated local pose.
+**How to use:**
+1. Add `TransformAnimator` from **Neoxider/Animations/TransformAnimator** and enable the channels you need.
+2. Leave **Play On Enable** on, or call `Play()`; call `Shake()` for hit or pickup feedback.
+3. For a custom clock set `ManualUpdate = true` and call `Tick(deltaTime)` yourself.
+
+---
 
 ## Architecture
 
@@ -62,6 +69,8 @@ Call `Stop()` later when the animation should end; it restores the captured base
 | `CaptureBase()` | Re-captures the effective target's local pose |
 | `ResetTime()` / `RandomizeTime()` | Change main time without sampling; do not reset impulse time; RandomizeTime also changes the seed |
 | `ApplyCurrentState()` | Evaluates and applies immediately, even when stopped or paused; does not advance time |
+| `Tick(float deltaTime)` | Advances main and impulse clocks and applies the pose; ignored while stopped, paused or disabled; negative/NaN/infinite deltas apply without advancing |
+| `ManualUpdate` | Not serialized. When true, `Update` does nothing and the owner calls `Tick` |
 | `IsPlaying` / `IsPaused` / `Time` | Runtime state |
 | `OnAnimationStarted` / `OnAnimationStopped` / `OnAnimationPaused` | UnityEvents |
 
@@ -71,6 +80,9 @@ disabled while editing the scene.
 
 The captured pose is bound to the exact `Transform` that supplied it. `Stop`, disable and target changes
 never apply that pose to another transform. Use `Target` or `SetTarget` for runtime target changes.
+
+Each tick writes position and rotation in one `SetLocalPositionAndRotation` call plus the scale, and a
+warm tick allocates nothing.
 
 `Pause()` freezes both main and impulse advancement. `Stop()` retains main time, restores the base and
 clears the impulse. Disable also restores and clears playback/impulse, without emitting a stopped

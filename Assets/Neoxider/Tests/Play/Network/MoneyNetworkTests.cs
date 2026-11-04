@@ -79,10 +79,10 @@ namespace Neo.Tests.Play
             NetworkServer.Spawn(_moneyObj);
             yield return NetworkTestHelper.WaitForSpawn(id);
 #else
-            yield return null; // Let the real component startup finish before establishing the baseline.
+            yield return null; // WHY: Let the real component startup finish before establishing the baseline.
 #endif
 
-            // Clean state — local only to avoid RPC before full spawn
+            // WHY: Clean state — local only to avoid RPC before full spawn
             _money.isNetworked = false;
             _money.SetMoney(0);
             _money.SetLevelMoney(0);

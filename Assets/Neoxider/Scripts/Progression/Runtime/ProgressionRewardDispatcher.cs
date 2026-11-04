@@ -17,6 +17,12 @@ namespace Neo.Progression
         public static void DispatchRewards(IEnumerable<ProgressionReward> rewards, ProgressionManager manager,
             bool premiumOnly = false)
         {
+            if (rewards is IReadOnlyList<ProgressionReward> list)
+            {
+                DispatchRewards(list, manager, premiumOnly);
+                return;
+            }
+
             if (rewards == null || manager == null)
             {
                 return;
@@ -25,23 +31,47 @@ namespace Neo.Progression
             manager.EnsureInitialized();
             foreach (ProgressionReward reward in rewards)
             {
-                if (reward == null)
-                {
-                    continue;
-                }
-
-                if (premiumOnly && !reward.IsPremium)
-                {
-                    continue;
-                }
-
-                if (!premiumOnly && reward.IsPremium && !manager.HasPremium)
-                {
-                    continue;
-                }
-
-                DispatchReward(reward, manager);
+                DispatchFiltered(reward, manager, premiumOnly);
             }
+        }
+
+        /// <summary>
+        ///     Indexed overload of <see cref="DispatchRewards(IEnumerable{ProgressionReward},ProgressionManager,bool)" />
+        ///     used by level, node and perk rewards; it avoids the boxed enumerator of the interface overload.
+        /// </summary>
+        public static void DispatchRewards(IReadOnlyList<ProgressionReward> rewards, ProgressionManager manager,
+            bool premiumOnly = false)
+        {
+            if (rewards == null || manager == null)
+            {
+                return;
+            }
+
+            manager.EnsureInitialized();
+            for (int i = 0; i < rewards.Count; i++)
+            {
+                DispatchFiltered(rewards[i], manager, premiumOnly);
+            }
+        }
+
+        private static void DispatchFiltered(ProgressionReward reward, ProgressionManager manager, bool premiumOnly)
+        {
+            if (reward == null)
+            {
+                return;
+            }
+
+            if (premiumOnly && !reward.IsPremium)
+            {
+                return;
+            }
+
+            if (!premiumOnly && reward.IsPremium && !manager.HasPremium)
+            {
+                return;
+            }
+
+            DispatchReward(reward, manager);
         }
 
         /// <summary>

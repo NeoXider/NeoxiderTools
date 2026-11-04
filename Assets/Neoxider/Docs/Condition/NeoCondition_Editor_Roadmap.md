@@ -1,10 +1,22 @@
 # NeoCondition — Editor/No-Code System Roadmap
 
-**What it is:** Make `NeoCondition` a professional, extensible, and reusable system:
+**What it is:** design notes for the next steps of the `NeoCondition` editor and data model (attributes, member registry, robust member serialization, provider mode). Nothing on this page is shipped API unless the status below says so.
 
-**How to use:** see the sections below.
+**How to use:** read it before changing `NeoConditionEditor`, `ConditionEntryDrawer` or the `ConditionEntry` data model; the current behavior is documented in [NeoCondition](NeoCondition.md).
 
 ---
+
+## Status (2026-11)
+
+Shipped since this roadmap was written:
+- Every Inspector setting of `ConditionEntry` has a public C# property, including the Other Object branch and method arguments (prerequisite for drawer modules and code-built conditions).
+- `ConditionEntry.TryEvaluate(context, out bool)` separates "unavailable" from "comparison failed" (basis for the inline validation and runtime preview items).
+- Allocation-free retries for missing components and cached ambiguous-property lookups (`ReflectionCache.TryGetProperty`).
+- The inspector draws **Use Unscaled Time** under **Interval (sec)** (12.0).
+- Inspector cost (12.0): popup option arrays, member labels and the live "Current Value" reflection lookups are cached; text styles are cached and pick readable colours for the light and dark editor skins.
+- Multi-selection (12.0): with several NeoConditions selected the inspector edits only the shared settings (Logic Mode, Check Mode, interval, flags). The condition rows resolve components and members from one object, so they are edited with a single selection; this also stops a mixed selection from silently receiving the first object's toggles.
+
+Still open: everything in Phases 1–4 below (attributes, `ConditionMemberRegistry`, versioned member descriptor, drawer split, search/groups, provider mode).
 
 
 ## Goal

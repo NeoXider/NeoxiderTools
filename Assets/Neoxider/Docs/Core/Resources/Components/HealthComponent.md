@@ -1,14 +1,15 @@
 # HealthComponent
 
-**Purpose:** MonoBehaviour that manages one or more resource pools (HP, Mana, or any custom id): current/max, regen, discrete heal, per-operation limits, reactive states and events. Implements `IResourcePoolProvider`. Namespace `Neo.Core.Resources`.
+**What it is:** MonoBehaviour that manages one or more resource pools (HP, Mana, or any custom id): current/max, regen, discrete heal, per-operation limits, reactive states and events. Implements `IResourcePoolProvider`. Namespace `Neo.Core.Resources`. Script: `Scripts/Core/Resources/Components/HealthComponent.cs`.
 
-## Setup
-
+**How to use:**
 - Add Component → **Neoxider/Core/Health Component**.
 - Configure the **Pools** list: each entry has an `id`, `current`, `max`, optional `regenPerSecond`/`regenInterval`, discrete `healAmount`/`healDelay`, per-op limits `maxDecreaseAmount`/`maxIncreaseAmount` (-1 = no limit), `restoreOnAwake`, and `ignoreCanHeal`.
 - Optional persistence: set `_saveKey`, and toggle `_loadOnAwake` / `_autoSave` (auto-saves on disable).
 - Use unique, nonblank ids; matching is case-insensitive. The list and its numeric fields are authoring configuration, read once during initialization. Use the runtime methods below to change live values.
 - Null entries and blank ids are ignored; a null list becomes an empty pool set. Missing reactive objects are recreated during initialization. These guards do not validate arbitrary numeric configuration: keep values finite and respect the Inspector's minimums.
+
+---
 
 ## C# workflow
 
@@ -53,6 +54,9 @@ These are C# properties, not inspector fields — bind them from conditions/logi
 | `GetMax(id)` | float | Pool maximum. |
 | `IsDepleted(id)` | bool | true when current ≤ 0. |
 | `TrySpend(id, amount, out failReason)` | bool | Deducts only if enough; false + reason otherwise. |
+| `CanSpend(id, amount, out failReason)` | bool | Same rules as `TrySpend` without paying or reserving anything (grey out a button). Not part of `IResourcePoolProvider`. |
+| `CanSpendAll(costs, out failReason)` | bool | Checks a `ResourceCost` list as sequential payments: costs on one pool must fit the balance the earlier ones leave. Not part of `IResourcePoolProvider`. |
+| `TrySpendAll(costs, out failReason)` | bool | Pays every cost or none; listeners and per-pool events run only after the last payment, so one cannot invalidate another. Not part of `IResourcePoolProvider`. |
 | `Decrease(id, amount)` | float | Reduces the pool; returns the amount actually removed. |
 | `Increase(id, amount)` | float | Raises the pool; returns the amount actually added. |
 | `Restore(id)` | void | Fills the pool to its max. |
@@ -89,7 +93,14 @@ Id constants: `RpgResourceId.Hp`, `RpgResourceId.Mana`.
 - `Decrease` raises `OnDamage` for the actual amount removed and raises `OnDeath` exactly once when a pool crosses from `> 0` to `<= 0`. `OnDeath` works for any pool, not only HP.
 - `Increase` does **not** heal a pool already at zero unless that pool has `ignoreCanHeal` enabled (dead-can't-regen semantics; enable it for regenerating mana/energy pools).
 - Regen keeps its sub-interval remainder across long frames, so frame hitches never lose accumulated regen time.
+- Regen and discrete heal cycles that add nothing (the pool is already full) raise no `OnChanged` and no
+  reactive notification, so a full pool with regen enabled stays silent instead of reporting once per interval.
+- `TrySpendAll` runs the payments inside one model notification batch: `OnChanged`, the reactive states and
+  `OnDeath` of every paid pool arrive in payment order after all costs were applied. A failed list changes nothing.
 - `ResourcePoolModel` is the pure C# core; `HealthComponent` syncs inspector pools, UnityEvents, and reactive states around it.
+- Pool ids must be unique. Each model change looks its inspector entry up once (a linear scan of the authored
+  list, case-insensitive, first match) and uses it for both the reactive mirrors and `OnChanged`; a full
+  reactive sync (initialization, `Load`) walks the list once instead of searching per entry.
 
 ## See Also
 

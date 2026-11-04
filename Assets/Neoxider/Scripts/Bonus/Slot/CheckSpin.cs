@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
@@ -36,6 +35,8 @@ namespace Neo.Bonus
         /// </summary>
         [SerializeField] [HideInInspector] [FormerlySerializedAs("_fallbackWindowRowIndex")]
         private int _legacyFallbackWindowRowIndexOrUnused = FallbackLegacyUnusedSentinel;
+
+        [NonSerialized] private Dictionary<int, int> _runScratch;
 
         public int SequenceLength => Mathf.Max(2, _sequenceLength);
 
@@ -93,13 +94,7 @@ namespace Neo.Bonus
                 List<LinesData.InnerArray> ok = new();
                 foreach (LinesData.InnerArray line in _linesData.lines)
                 {
-                    if (line?.corY == null || line.corY.Length != columnCount)
-                    {
-                        continue;
-                    }
-
-                    bool bad = line.corY.Any(y => y < 0 || y >= windowRowCount);
-                    if (bad)
+                    if (!IsLineValid(line, columnCount, windowRowCount))
                     {
                         continue;
                     }
@@ -116,7 +111,53 @@ namespace Neo.Bonus
         /// <summary>How many payline definitions exist for this grid size.</summary>
         public int GetPaylineDefinitionCount(int columnCount, int windowRowCount)
         {
-            return GetEffectiveLines(columnCount, windowRowCount).Length;
+            columnCount = Mathf.Max(0, columnCount);
+            windowRowCount = Mathf.Max(1, windowRowCount);
+
+            // WHY: counted without materializing the line list; bet/UI paths query this on every change.
+            if (_linesData != null && _linesData.lines != null)
+            {
+                int valid = 0;
+                foreach (LinesData.InnerArray line in _linesData.lines)
+                {
+                    if (IsLineValid(line, columnCount, windowRowCount))
+                    {
+                        valid++;
+                    }
+                }
+
+                if (valid > 0)
+                {
+                    return valid;
+                }
+            }
+
+            if (columnCount <= 0)
+            {
+                return 0;
+            }
+
+            GetResolvedFallbackWindowRowRange(windowRowCount, out int rMin, out int rMax);
+            return rMax - rMin + 1;
+        }
+
+        private static bool IsLineValid(LinesData.InnerArray line, int columnCount, int windowRowCount)
+        {
+            if (line?.corY == null || line.corY.Length != columnCount)
+            {
+                return false;
+            }
+
+            int[] corY = line.corY;
+            for (int i = 0; i < corY.Length; i++)
+            {
+                if (corY[i] < 0 || corY[i] >= windowRowCount)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -168,17 +209,10 @@ namespace Neo.Bonus
 
             foreach (LinesData.InnerArray line in _linesData.lines)
             {
-                if (line?.corY == null || line.corY.Length != columnCount)
+                if (IsLineValid(line, columnCount, windowRowCount))
                 {
-                    continue;
+                    return false;
                 }
-
-                if (line.corY.Any(y => y < 0 || y >= windowRowCount))
-                {
-                    continue;
-                }
-
-                return false;
             }
 
             return true;
@@ -254,45 +288,102 @@ namespace Neo.Bonus
             LinesData.InnerArray[] defs = GetEffectiveLines(cols, rows);
             int evalLines = Mathf.Min(Mathf.Max(1, countLine), defs.Length);
 
-            List<int> winningLines = new();
+            int winningCount = 0;
+            int[] winningLines = null;
             for (int i = 0; i < defs.Length && i < evalLines; i++)
             {
-                Dictionary<int, int> lineSpriteCounts = GetInfoInSequenceLine(elementIds, defs[i], seq);
-                if (lineSpriteCounts.Count > 0)
+                if (!HasWinningRun(elementIds, defs[i], seq))
                 {
-                    winningLines.Add(i);
+                    continue;
                 }
+
+                winningLines ??= new int[evalLines - i];
+                winningLines[winningCount++] = i;
             }
 
-            return winningLines.ToArray();
+            if (winningCount == 0)
+            {
+                return Array.Empty<int>();
+            }
+
+            if (winningCount != winningLines.Length)
+            {
+                Array.Resize(ref winningLines, winningCount);
+            }
+
+            return winningLines;
         }
 
-        private Dictionary<int, int> GetInfoInSequenceLine(int[,] elementIds, LinesData.InnerArray currentLine,
-            int sequenceLength)
+        /// <summary>True when the payline holds a contiguous run of one non-negative id at least as long as required.</summary>
+        private static bool HasWinningRun(int[,] elementIds, LinesData.InnerArray currentLine, int sequenceLength)
         {
-            Dictionary<int, int> idCounts = new();
-            if (elementIds.GetLength(0) < currentLine.corY.Length)
+            if (!IsLineReadable(elementIds, currentLine))
             {
-                return idCounts;
+                return false;
+            }
+
+            int required = Mathf.Max(2, sequenceLength);
+            int[] corY = currentLine.corY;
+            int runId = elementIds[0, corY[0]];
+            int runLength = 1;
+            for (int x = 1; x < corY.Length; x++)
+            {
+                int elementId = elementIds[x, corY[x]];
+                if (elementId == runId)
+                {
+                    runLength++;
+                    continue;
+                }
+
+                if (runId >= 0 && runLength >= required)
+                {
+                    return true;
+                }
+
+                runId = elementId;
+                runLength = 1;
+            }
+
+            return runId >= 0 && runLength >= required;
+        }
+
+        private static bool IsLineReadable(int[,] elementIds, LinesData.InnerArray currentLine)
+        {
+            int[] corY = currentLine?.corY;
+            if (corY == null || corY.Length == 0 || elementIds.GetLength(0) < corY.Length)
+            {
+                return false;
             }
 
             int rows = elementIds.GetLength(1);
-            for (int x = 0; x < currentLine.corY.Length; x++)
+            for (int x = 0; x < corY.Length; x++)
             {
-                int y = currentLine.corY[x];
-                if (y < 0 || y >= rows)
+                if (corY[x] < 0 || corY[x] >= rows)
                 {
-                    return idCounts;
+                    return false;
                 }
             }
 
-            if (currentLine.corY.Length == 0)
+            return true;
+        }
+
+        /// <summary>
+        ///     Longest qualifying run per symbol id along the payline. Fills and returns a scratch dictionary owned by
+        ///     this instance, so the result is only valid until the next call.
+        /// </summary>
+        private Dictionary<int, int> GetInfoInSequenceLine(int[,] elementIds, LinesData.InnerArray currentLine,
+            int sequenceLength)
+        {
+            Dictionary<int, int> idCounts = _runScratch ??= new Dictionary<int, int>();
+            idCounts.Clear();
+            if (!IsLineReadable(elementIds, currentLine))
             {
                 return idCounts;
             }
 
             // WHY: only contiguous runs along the payline may pay; merging separated adjacent pairs
             // into one per-symbol counter awarded 3-in-a-row for broken patterns like [A,A,X,A,A].
+            int required = Mathf.Max(2, sequenceLength);
             int runId = elementIds[0, currentLine.corY[0]];
             int runLength = 1;
             for (int x = 1; x < currentLine.corY.Length; x++)
@@ -304,20 +395,19 @@ namespace Neo.Bonus
                     continue;
                 }
 
-                CommitRun(idCounts, runId, runLength);
+                CommitRun(idCounts, runId, runLength, required);
                 runId = elementId;
                 runLength = 1;
             }
 
-            CommitRun(idCounts, runId, runLength);
-
-            return idCounts.Where(kv => kv.Value >= sequenceLength).ToDictionary(kv => kv.Key, kv => kv.Value);
+            CommitRun(idCounts, runId, runLength, required);
+            return idCounts;
         }
 
-        /// <summary>Stores the longest contiguous run per symbol (runs shorter than 2 never count).</summary>
-        private static void CommitRun(Dictionary<int, int> idCounts, int runId, int runLength)
+        /// <summary>Stores the longest contiguous run per symbol; runs shorter than <paramref name="required"/> never count.</summary>
+        private static void CommitRun(Dictionary<int, int> idCounts, int runId, int runLength, int required)
         {
-            if (runId < 0 || runLength < 2)
+            if (runId < 0 || runLength < required)
             {
                 return;
             }
@@ -362,13 +452,11 @@ namespace Neo.Bonus
         public void SetLose(int[,] elementIds, int[] lineWin, int totalIdCount, int countLine)
         {
             const int maxIterations = 64;
+            LinesData.InnerArray[] defs = GetEffectiveLines(elementIds.GetLength(0), elementIds.GetLength(1));
             for (int iter = 0; iter < maxIterations; iter++)
             {
                 foreach (int lineIndex in lineWin)
                 {
-                    int cols = elementIds.GetLength(0);
-                    int rows = elementIds.GetLength(1);
-                    LinesData.InnerArray[] defs = GetEffectiveLines(cols, rows);
                     if (lineIndex >= 0 && lineIndex < defs.Length)
                     {
                         SetLoseLine(elementIds, defs[lineIndex], totalIdCount);

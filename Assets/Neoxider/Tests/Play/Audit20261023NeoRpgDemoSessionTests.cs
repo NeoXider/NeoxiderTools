@@ -9,7 +9,6 @@ using Neo.Core.Level;
 using Neo.Save;
 using Neo.Tools;
 using NUnit.Framework;
-using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -211,8 +210,10 @@ namespace Neo.Tests.Play
             Assert.That(calls, Is.EqualTo(1));
         }
 
+        // WHY: NetworkDemo is authored by NetworkDemoBuilder; the controller only reads serialized scene references,
+        // builds no UI at runtime and must stay quiet and exception-free in an unbuilt scene (no manager, relay or labels).
         [UnityTest]
-        public IEnumerator NetworkController_TwentyComponentRemovals_ReuseOnEnableAndReleaseShell()
+        public IEnumerator NetworkController_ComponentRemovals_BuildNoUiAndTolerateMissingReferences()
         {
             GameObject owner = Host("Network controller owner");
             owner.SetActive(true);
@@ -220,106 +221,65 @@ namespace Neo.Tests.Play
             {
                 Behaviour controller = (Behaviour)owner.AddComponent(RequireDemoType("Neo.Samples.NetworkDemoController"));
                 yield return null;
-                Canvas canvas = owner.GetComponentInChildren<Canvas>();
-                Assert.That(canvas, Is.Not.Null);
-                Sprite gradient = canvas.transform.Find("Backdrop").GetComponent<Image>().sprite;
-                Texture2D texture = gradient.texture;
+                Call(controller, "OnPingReceived");
+                Call(controller, "OnChatReceived", "hello");
+                Call(controller, "RequestBossHit", 10f);
+                Call(controller, "SendChatFromField");
+                Assert.That(Property(controller, "PingsReceived"), Is.EqualTo(1));
+                Assert.That(Property(controller, "LastChatMessage"), Is.EqualTo("hello"));
+                Assert.That(Property(controller, "IsSceneBuilt"), Is.EqualTo(false));
                 controller.enabled = false;
-                Assert.That(canvas.gameObject.activeSelf, Is.False);
                 controller.enabled = true;
-                Assert.That(owner.GetComponentsInChildren<Canvas>(true), Has.Length.EqualTo(1));
-                Assert.That(owner.GetComponentInChildren<Canvas>(), Is.SameAs(canvas));
-                Assert.That(canvas.transform.Find("Backdrop").GetComponent<Image>().sprite, Is.SameAs(gradient));
+                yield return null;
 
                 Object.Destroy(controller);
                 yield return null;
-                yield return null;
-                Assert.That(canvas == null && gradient == null && texture == null, Is.True);
-                Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty);
+                Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty, "The authored demo builds no UI at runtime.");
                 Assert.That(owner != null && _camera != null && _eventSystem != null, Is.True);
             }
-
-            owner.AddComponent(RequireDemoType("Neo.Samples.NetworkDemoController"));
-            yield return null;
-            Canvas finalCanvas = owner.GetComponentInChildren<Canvas>();
-            Sprite finalGradient = finalCanvas.transform.Find("Backdrop").GetComponent<Image>().sprite;
-            Texture2D finalTexture = finalGradient.texture;
-            Object.Destroy(owner);
-            yield return null;
-            yield return null;
-            Assert.That(finalCanvas == null && finalGradient == null && finalTexture == null, Is.True,
-                "Destroying the owner must also release its native resources during hierarchy teardown.");
-            Assert.That(_camera != null && _eventSystem != null, Is.True);
         }
 
+        // WHY: LevelFlowDemo is authored by LevelFlowDemoBuilder; the controller only drives the scene's
+        // LevelComponent / LevelManager through serialized references and never builds UI or owns their assets.
         [UnityTest]
-        public IEnumerator AudioController_DestroyDuringCrossfade_ReleasesSixClipsAndKeepsBorrowedTrack()
-        {
-            if (AMSettings.HasInstance) Assert.Ignore("This audio regression requires an isolated settings service.");
-            AM manager = (AM)FreshService(typeof(AM));
-            manager.gameObject.SetActive(true);
-            AudioListener.pause = false;
-            AudioClip borrowed = Own(AudioClip.Create("Audit borrowed music", 441000, 1, 44100, false));
-            HashSet<AudioClip> before = new HashSet<AudioClip>(Resources.FindObjectsOfTypeAll<AudioClip>());
-            GameObject owner = Host("Audio controller");
-            Component controller = owner.AddComponent(RequireDemoType("Neo.Samples.AudioDemoController"));
-            owner.SetActive(true);
-            yield return null;
-
-            AudioClip[] generated = Resources.FindObjectsOfTypeAll<AudioClip>()
-                .Where(clip => !before.Contains(clip) && clip.name.StartsWith("demo_", StringComparison.Ordinal)).ToArray();
-            Assert.That(generated, Has.Length.EqualTo(6));
-            FindButton(owner, "Beep").onClick.Invoke();
-            Assert.That(manager.GetComponentsInChildren<AudioSource>(true).Any(source =>
-                source.clip != null && source.clip.name == "demo_beep"), Is.True,
-                "The demo must use an independently releasable 2D voice.");
-            owner.GetComponentInChildren<Toggle>().isOn = true;
-            Assert.That(manager.Music.isPlaying, Is.True, "This acceptance requires enabled Unity audio.");
-            AudioClip outgoingClip = manager.Music.clip;
-            manager.PlayMusicByClip(borrowed, MusicTransition.Fade(10f));
-            AudioSource outgoing = manager.GetComponentsInChildren<AudioSource>(true)
-                .FirstOrDefault(source => source != manager.Music && source.clip == outgoingClip);
-            Assert.That(outgoing, Is.Not.Null, "Arrange a real outgoing demo pad, not only the main music source.");
-
-            Object.Destroy(controller);
-            yield return null;
-            yield return null;
-
-            Assert.That(generated.All(clip => clip == null), Is.True);
-            Assert.That(manager != null && borrowed != null, Is.True);
-            Assert.That(manager.Music.clip, Is.SameAs(borrowed));
-            Assert.That(manager.Music.isPlaying, Is.True, "Removing the demo must not globally stop borrowed music.");
-            Assert.That(outgoing == null || outgoing.clip == null, Is.True);
-            Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty);
-        }
-
-        [UnityTest]
-        public IEnumerator LevelController_ComponentRemoval_ReleasesCurveAndOwnConsumers()
+        public IEnumerator LevelController_ComponentRemoval_KeepsAuthoredLevelAndBuildsNoUi()
         {
             Component borrowedManager = FreshService(RequireType("Neo.Level.LevelManager"));
             borrowedManager.gameObject.SetActive(true);
             GameObject owner = Host("Level controller");
+            LevelCurveDefinition curve = Own(ScriptableObject.CreateInstance<LevelCurveDefinition>());
+            curve.SetLinear(100);
+            LevelComponent consumer = owner.AddComponent<LevelComponent>();
+            SerializedObject level = new SerializedObject(consumer);
+            level.FindProperty("_levelCurve").objectReferenceValue = curve;
+            level.FindProperty("_loadOnAwake").boolValue = false;
+            level.FindProperty("_autoSave").boolValue = false;
+            level.ApplyModifiedPropertiesWithoutUndo();
             Component controller = owner.AddComponent(RequireDemoType("Neo.Samples.LevelDemoController"));
+            SerializedObject references = new SerializedObject(controller);
+            references.FindProperty("_level").objectReferenceValue = consumer;
+            references.FindProperty("_levelManager").objectReferenceValue = borrowedManager;
+            references.ApplyModifiedPropertiesWithoutUndo();
             owner.SetActive(true);
             yield return null;
-            LevelComponent consumer = owner.GetComponentInChildren<LevelComponent>();
-            Assert.That(consumer, Is.Not.Null);
-            LevelCurveDefinition curve = consumer.LevelCurveDefinition;
-            Assert.That(curve, Is.Not.Null);
-            FindButton(owner, "+10 XP").onClick.Invoke();
+
+            Call(controller, "AddXp", 10);
             Assert.That(consumer.TotalXp, Is.EqualTo(10));
+            Call(controller, "LevelUp");
+            Assert.That(consumer.Level, Is.EqualTo(2), "Level up adds exactly the XP missing to the next level.");
 
             Object.Destroy(controller);
             yield return null;
             yield return null;
 
-            Assert.That(consumer == null && curve == null, Is.True);
+            Assert.That(consumer != null && curve != null, Is.True, "Authored components and assets are not the controller's.");
+            Assert.That(consumer.TotalXp, Is.EqualTo(100));
             Assert.That(borrowedManager != null && owner != null, Is.True);
-            Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty);
+            Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty, "The authored demo builds no UI at runtime.");
         }
 
         [UnityTest]
-        public IEnumerator LevelController_PartialBorrowedEvents_PreservesObserversAndReleasesResources()
+        public IEnumerator LevelController_BorrowedManagerEvents_KeepExternalObserversAndState()
         {
             Component manager = FreshService(RequireType("Neo.Level.LevelManager"));
             FieldInfo levelEventField = manager.GetType().GetField("OnChangeLevel");
@@ -327,8 +287,8 @@ namespace Neo.Tests.Play
             Assert.That(levelEventField, Is.Not.Null);
             Assert.That(maxEventField, Is.Not.Null);
 
-            // Exercise each partially configured public event pair, then clear its surviving field
-            // before removal. The demo must not create/replace events or remove external observers.
+            // WHY: each partially configured public event pair is exercised; the controller's listener targets must
+            // work without UI references and must never replace the events or remove external observers.
             for (int scenario = 0; scenario < 2; scenario++)
             {
                 UnityEvent<int> borrowedEvent = new UnityEvent<int>();
@@ -347,31 +307,22 @@ namespace Neo.Tests.Play
                 object map = Property(manager, "Map");
                 object currentLevel = Property(manager, "CurrentLevel");
                 object maxLevel = Property(manager, "MaxLevel");
-                GameObject owner = Host("Level partial events " + scenario);
+                GameObject owner = Host("Level borrowed events " + scenario);
                 Component controller = owner.AddComponent(RequireDemoType("Neo.Samples.LevelDemoController"));
+                SerializedObject references = new SerializedObject(controller);
+                references.FindProperty("_levelManager").objectReferenceValue = manager;
+                references.ApplyModifiedPropertiesWithoutUndo();
                 owner.SetActive(true);
                 yield return null;
 
+                Call(controller, "OnMapLevelChanged", 3);
+                Call(controller, "OnMapProgressChanged", 2);
+                Call(controller, "OnMapChanged", 0);
                 Assert.That(levelEventField.GetValue(manager), Is.SameAs(levelEvent));
                 Assert.That(maxEventField.GetValue(manager), Is.SameAs(maxEvent));
-                LevelComponent consumer = owner.GetComponentInChildren<LevelComponent>();
-                Assert.That(consumer, Is.Not.Null);
-                LevelCurveDefinition curve = consumer.LevelCurveDefinition;
-                Assert.That(curve, Is.Not.Null);
-                Canvas canvas = owner.GetComponentInChildren<Canvas>();
-                Assert.That(canvas, Is.Not.Null);
-                Sprite gradient = canvas.transform.Find("Backdrop").GetComponent<Image>().sprite;
-                Texture2D texture = gradient.texture;
-                FindButton(owner, "+10 XP").onClick.Invoke();
-                Assert.That(consumer.TotalXp, Is.EqualTo(10));
                 borrowedEvent.Invoke(17 + scenario);
                 Assert.That(externalCalls, Is.EqualTo(1));
                 Assert.That(lastPayload, Is.EqualTo(17 + scenario));
-                string signalName = scenario == 0 ? "OnChangeLevel" : "OnChangeMaxLevel";
-                string expectedLog = $"event {signalName} → {17 + scenario}";
-                Assert.That(owner.GetComponentsInChildren<TMP_Text>()
-                    .Any(label => label.text.Contains(expectedLog)), Is.True,
-                    "A present borrowed event must still reach the demo through its public UI log.");
 
                 levelEventField.SetValue(manager, null);
                 maxEventField.SetValue(manager, null);
@@ -379,8 +330,6 @@ namespace Neo.Tests.Play
                 yield return null;
                 yield return null;
 
-                Assert.That(consumer == null && curve == null, Is.True);
-                Assert.That(canvas == null && gradient == null && texture == null, Is.True);
                 Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty);
                 Assert.That(manager != null && owner != null, Is.True);
                 Assert.That(levelEventField.GetValue(manager), Is.Null);
@@ -470,33 +419,43 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator StateMachineController_ComponentRemoval_StopsConsumerAndReleasesDefinitions()
+        public IEnumerator StateMachineController_DrivesAuthoredObjectsAndStopsItsMachineOnRemoval()
         {
+            // WHY: StateMachineDemo.unity is authored by StateMachineDemoBuilder; the controller builds nothing at
+            // runtime (no UI, no StateData) and only drives the scene objects it references.
             Type dataType = RequireType("Neo.StateMachine.NoCode.StateMachineData");
             Type stateType = RequireType("Neo.StateMachine.NoCode.StateData");
             HashSet<ScriptableObject> before = new HashSet<ScriptableObject>(Resources.FindObjectsOfTypeAll<ScriptableObject>());
             GameObject owner = Host("State machine controller");
+            SpriteRenderer agent = Own(new GameObject("Audit20261023NeoRpgDemo Agent")).AddComponent<SpriteRenderer>();
+            SpriteRenderer prey = Own(new GameObject("Audit20261023NeoRpgDemo Prey")).AddComponent<SpriteRenderer>();
             Component controller = owner.AddComponent(RequireDemoType("Neo.Samples.StateMachineDemoController"));
+            SerializedObject serialized = new SerializedObject(controller);
+            serialized.FindProperty("_agent").objectReferenceValue = agent.transform;
+            serialized.FindProperty("_agentRenderer").objectReferenceValue = agent;
+            serialized.FindProperty("_prey").objectReferenceValue = prey.transform;
+            serialized.FindProperty("_preyRenderer").objectReferenceValue = prey;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
             owner.SetActive(true);
             yield return null;
             yield return null;
-            ScriptableObject[] definitions = NewDefinitions(dataType, before).Concat(NewDefinitions(stateType, before)).ToArray();
-            Assert.That(definitions, Has.Length.EqualTo(3));
-            Component consumer = owner.GetComponentInChildren(RequireType("Neo.StateMachine.StateMachineBehaviourBase"));
-            object machine = Property(consumer, "StateMachine");
-            Call(consumer, "ChangeState", "Alert");
-            Assert.That(Property(Property(machine, "CurrentState"), "StateName"), Is.EqualTo("Alert"));
-            Sprite borrowed = SharedArt("Disc");
+
+            Assert.That(NewDefinitions(dataType, before).Concat(NewDefinitions(stateType, before)), Is.Empty);
+            Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty);
+            Assert.That(owner.GetComponentsInChildren<SpriteRenderer>(true), Is.Empty);
+            Assert.That(Property(controller, "AgentStateName"), Is.EqualTo("Idle"));
+            Assert.That(prey.enabled, Is.False);
+            Call(controller, "Provoke");
+            Assert.That(Property(controller, "AgentStateName"), Is.EqualTo("Chase"));
+            Assert.That(prey.enabled, Is.True);
+            object machine = Property(controller, "AgentMachine");
 
             Object.Destroy(controller);
             yield return null;
             yield return null;
 
             Assert.That(Property(machine, "CurrentState"), Is.Null);
-            Assert.That(consumer == null && definitions.All(definition => definition == null), Is.True);
-            Assert.That(owner.GetComponentsInChildren<SpriteRenderer>(true), Is.Empty);
-            Assert.That(owner.GetComponentsInChildren<Canvas>(true), Is.Empty);
-            Assert.That(borrowed != null && owner != null, Is.True);
+            Assert.That(agent != null && prey != null && owner != null, Is.True);
         }
 
         [UnityTest]
@@ -517,13 +476,22 @@ namespace Neo.Tests.Play
             ScriptableObject playerTemplate = Own(ScriptableObject.CreateInstance(RequireType("Neo.Abilities.UnitTemplate")));
             config.GetType().GetField("PlayerTemplate").SetValue(config, playerTemplate);
             GameObject owner = Host("Survivor");
+            // WHY: the Survivor scene is authored by SurvivorDemoBuilder; the game only references its saved,
+            // inactive pooled templates, so the regression authors the orb template the same way.
+            GameObject templates = new GameObject("Templates");
+            templates.transform.SetParent(owner.transform, false);
+            templates.SetActive(false);
+            GameObject source = new GameObject("XpOrb");
+            source.transform.SetParent(templates.transform, false);
+            source.SetActive(false);
+            Component orb = source.AddComponent(RequireDemoType("Neo.Samples.Survivor.SurvivorXpOrb"));
             Component game = owner.AddComponent(gameType);
             SerializedObject serialized = new SerializedObject(game);
             serialized.FindProperty("_config").objectReferenceValue = config;
+            serialized.FindProperty("_orbTemplate").objectReferenceValue = orb;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             owner.SetActive(true);
             yield return null;
-            GameObject source = owner.transform.Find("Templates/XpOrb").gameObject;
             GameObject otherSource = Host("External source");
             otherSource.name = source.name;
             _beforeDestroy.Add(() => SpawnUtility.RetirePool(otherSource));
@@ -610,14 +578,6 @@ namespace Neo.Tests.Play
         private static ScriptableObject[] NewDefinitions(Type type, HashSet<ScriptableObject> before) =>
             Resources.FindObjectsOfTypeAll<ScriptableObject>()
                 .Where(value => value.GetType() == type && !before.Contains(value)).ToArray();
-
-        private static Button FindButton(GameObject owner, string label)
-        {
-            Button button = owner.GetComponentsInChildren<Button>(true)
-                .FirstOrDefault(candidate => candidate.GetComponentInChildren<TMP_Text>().text == label);
-            Assert.That(button, Is.Not.Null, label);
-            return button;
-        }
 
         private static void SetString(Object target, string field, string value)
         {

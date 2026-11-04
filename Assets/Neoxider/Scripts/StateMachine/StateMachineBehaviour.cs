@@ -28,7 +28,10 @@ namespace Neo.StateMachine
     [AddComponentMenu("Neoxider/Tools/" + nameof(StateMachineBehaviour))]
     public class StateMachineBehaviour<TState> : MonoBehaviour where TState : class, IState
     {
-        [Header("Settings")] [SerializeField] [Tooltip("Initial state (state type for code)")]
+        [Header("Settings")]
+        [SerializeField]
+        [Tooltip(
+            "Initial C# state entered in Start when no StateMachineData is set: full type name (Namespace.State) or assembly-qualified name.")]
         private string initialStateTypeName;
 
         [SerializeField] [Tooltip("Enable state transition logging")]
@@ -40,8 +43,10 @@ namespace Neo.StateMachine
         [SerializeField] [Tooltip("Reload StateMachineData when the component is enabled again after disable.")]
         private bool reloadDataOnEnable = true;
 
+#pragma warning disable 0414
         [SerializeField] [Tooltip("Show current state in inspector")]
         private bool showStateInInspector = true;
+#pragma warning restore 0414
 
         [SerializeField] [Tooltip("Evaluate transitions every frame")]
         private bool autoEvaluateTransitions = true;
@@ -70,13 +75,57 @@ namespace Neo.StateMachine
             {
                 if (stateMachine == null)
                 {
-                    stateMachine = new StateMachine<TState>();
+                    stateMachine = new StateMachine<TState> { DebugLogEnabled = enableDebugLog };
                     SetupEvents();
                 }
 
                 return stateMachine;
             }
         }
+
+        /// <summary>
+        ///     When true (default), transitions are evaluated every Update. Disable to drive evaluation manually
+        ///     through <see cref="EvaluateTransitionsNow"/>.
+        /// </summary>
+        public bool AutoEvaluateTransitions
+        {
+            get => autoEvaluateTransitions;
+            set => autoEvaluateTransitions = value;
+        }
+
+        /// <summary>GameObjects mapped to Override1..5 slots in transition conditions (set in the scene).</summary>
+        public GameObject[] ContextOverrides => contextOverrides ?? Array.Empty<GameObject>();
+
+        /// <summary>
+        ///     This component's Enable Debug Log: gates its own logs and its machine's
+        ///     (<see cref="Neo.StateMachine.StateMachine{TState}.DebugLogEnabled"/>), including the NoCode actions the
+        ///     machine runs. Another behaviour's setting does not change it.
+        /// </summary>
+        public bool EnableDebugLog
+        {
+            get => enableDebugLog;
+            set
+            {
+                enableDebugLog = value;
+                if (stateMachine != null)
+                {
+                    stateMachine.DebugLogEnabled = value;
+                }
+            }
+        }
+
+        /// <summary>Optional NoCode configuration; call <see cref="LoadFromStateMachineData"/> after changing it.</summary>
+        public StateMachineData StateMachineData
+        {
+            get => stateMachineData;
+            set => stateMachineData = value;
+        }
+
+        /// <summary>
+        ///     Assembly-qualified or full ("Namespace.State") name of the C# state entered in Start when no
+        ///     StateMachineData is assigned. Resolved in Awake.
+        /// </summary>
+        public string InitialStateTypeName => initialStateTypeName;
 
         /// <summary>
         ///     Currently active state.
@@ -95,7 +144,10 @@ namespace Neo.StateMachine
 
         private void OnEnable()
         {
+            // WHY: the shared switch only serves logs that run outside any machine (asset validation); this
+            // machine and the actions it runs use its own DebugLogEnabled.
             StateMachineLog.Enabled = enableDebugLog;
+            StateMachine.DebugLogEnabled = enableDebugLog;
             if (!initialized)
             {
                 InitializeStateMachine();
@@ -120,9 +172,19 @@ namespace Neo.StateMachine
             }
         }
 
+        // WHY: the per-frame callbacks push the scene context inline; the former RunWithContext(() => ...) lambdas
+        // captured 'this' and allocated a delegate on every Update/FixedUpdate/LateUpdate/evaluation.
         private void Update()
         {
-            RunWithContext(() => StateMachine.Update());
+            PushContext();
+            try
+            {
+                StateMachine.Update();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
 
             if (autoEvaluateTransitions)
             {
@@ -132,17 +194,33 @@ namespace Neo.StateMachine
 
         private void FixedUpdate()
         {
-            RunWithContext(() => StateMachine.FixedUpdate());
+            PushContext();
+            try
+            {
+                StateMachine.FixedUpdate();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
         }
 
         private void LateUpdate()
         {
-            RunWithContext(() => StateMachine.LateUpdate());
+            PushContext();
+            try
+            {
+                StateMachine.LateUpdate();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
         }
 
         private void OnDestroy()
         {
-            RunWithContext(() => StateMachine.Stop());
+            StopWithContext();
             StateMachine.ClearStateCache();
             StateMachine.ClearTransitionCache();
         }
@@ -151,16 +229,18 @@ namespace Neo.StateMachine
         {
             if (exitCurrentStateOnDisable)
             {
-                RunWithContext(() => StateMachine.Stop());
+                StopWithContext();
             }
         }
 
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (showStateInInspector && Application.isPlaying && StateMachine != null)
+            // WHY: an Inspector toggle during Play Mode reaches the running machine without a re-enable; the field is
+            // read directly so validation never creates the machine.
+            if (stateMachine != null)
             {
-                // WHY: Current state is shown by the custom editor
+                stateMachine.DebugLogEnabled = enableDebugLog;
             }
         }
 #endif
@@ -171,11 +251,19 @@ namespace Neo.StateMachine
         /// <typeparam name="T">Target state type.</typeparam>
         public void ChangeState<T>() where T : class, TState, new()
         {
-            RunWithContext(() => StateMachine.ChangeState<T>());
+            PushContext();
+            try
+            {
+                StateMachine.ChangeState<T>();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
 
             if (enableDebugLog)
             {
-                StateMachineLog.Info($"[StateMachineBehaviour] Changed state to {typeof(T).Name}", this);
+                StateMachineLog.Info(true, $"[StateMachineBehaviour] Changed state to {typeof(T).Name}", this);
             }
         }
 
@@ -187,35 +275,58 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                StateMachineLog.Warning(
+                StateMachineLog.Warning(enableDebugLog,
                     "[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
                     this);
                 return;
             }
 
-            StateData stateData = Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
+            StateData stateData = stateMachineData.GetStateByName(stateName);
             if (stateData != null)
             {
-                // WHY: StateData implements IState; still require compatibility with TState
-                if (stateData is TState state)
-                {
-                    RunWithContext(() => StateMachine.ChangeState(state));
-
-                    if (enableDebugLog)
-                    {
-                        StateMachineLog.Info($"[StateMachineBehaviour] Changed state to {stateName}", this);
-                    }
-                }
-                else
-                {
-                    StateMachineLog.Warning(
-                        $"[StateMachineBehaviour] StateData '{stateName}' is not compatible with TState type.", this);
-                }
+                ChangeState(stateData);
             }
             else
             {
-                StateMachineLog.Warning(
+                StateMachineLog.Warning(enableDebugLog,
                     $"[StateMachineBehaviour] State with name '{stateName}' not found in StateMachineData.", this);
+            }
+        }
+
+        /// <summary>
+        ///     Changes to the given StateData asset with this component's scene context. The asset must be
+        ///     compatible with <typeparamref name="TState"/>; null is ignored.
+        /// </summary>
+        /// <param name="stateData">Target state asset.</param>
+        public void ChangeState(StateData stateData)
+        {
+            if (stateData == null)
+            {
+                return;
+            }
+
+            // WHY: StateData implements IState; still require compatibility with TState
+            if (stateData is not TState state)
+            {
+                StateMachineLog.Warning(enableDebugLog,
+                    $"[StateMachineBehaviour] StateData '{stateData.StateName}' is not compatible with TState type.",
+                    this);
+                return;
+            }
+
+            PushContext();
+            try
+            {
+                StateMachine.ChangeState(state);
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
+
+            if (enableDebugLog)
+            {
+                StateMachineLog.Info(true, $"[StateMachineBehaviour] Changed state to {stateData.StateName}", this);
             }
         }
 
@@ -229,23 +340,34 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
+        ///     Evaluates transitions once immediately (with this component's scene context).
+        /// </summary>
+        public void EvaluateTransitionsNow()
+        {
+            EvaluateTransitionsInternal();
+        }
+
+        /// <summary>
         ///     Reloads transitions and initial state from StateMachineData.
         /// </summary>
         public void LoadFromStateMachineData()
         {
             if (stateMachineData == null)
             {
-                StateMachineLog.Warning("[StateMachineBehaviour] Cannot load: StateMachineData is null.", this);
+                StateMachineLog.Warning(enableDebugLog, "[StateMachineBehaviour] Cannot load: StateMachineData is null.",
+                    this);
                 return;
             }
 
-            RunWithContext(() => StateMachine.Stop());
+            StopWithContext();
             StateMachine.ClearTransitionCache();
             stateMachineData.LoadIntoStateMachine(StateMachine);
 
+            // WHY: enter the assigned asset itself. Resolving it by name picked the first state with that name, so
+            // two states left with the default "New State" name could start the machine in the wrong state.
             if (stateMachineData.InitialState != null)
             {
-                ChangeState(stateMachineData.InitialState.StateName);
+                ChangeState(stateMachineData.InitialState);
             }
             else if (!string.IsNullOrEmpty(stateMachineData.InitialStateName))
             {
@@ -255,15 +377,55 @@ namespace Neo.StateMachine
 
         private void InitializeStateMachine()
         {
-            stateMachine = new StateMachine<TState>();
-            SetupEvents();
+            // WHY: keep a machine configured through the lazy getter before Awake (inactive object, AddComponent
+            // followed by RegisterTransition); replacing it here silently dropped that configuration.
+            if (stateMachine == null)
+            {
+                stateMachine = new StateMachine<TState> { DebugLogEnabled = enableDebugLog };
+                SetupEvents();
+            }
 
             if (!string.IsNullOrEmpty(initialStateTypeName))
             {
-                initialStateType = Type.GetType(initialStateTypeName);
+                initialStateType = ResolveStateType(initialStateTypeName);
+                // WHY: gated on this component's own flag; the shared StateMachineLog.Enabled is assigned only in
+                // OnEnable, after Awake, so routing through it suppressed the warning for a misspelled name.
+                if (initialStateType == null && enableDebugLog)
+                {
+                    NeoDiagnostics.LogWarning(
+                        $"[StateMachineBehaviour] Initial state type '{initialStateTypeName}' was not found.", this,
+                        true);
+                }
             }
 
             initialized = true;
+        }
+
+        /// <summary>
+        ///     Resolves a state type from an assembly-qualified or full ("Namespace.State") type name.
+        ///     <see cref="Type.GetType(string)"/> alone only searches the calling assembly and mscorlib, so game states
+        ///     in Assembly-CSharp or another asmdef named by full name were never found and the initial state was
+        ///     silently skipped.
+        /// </summary>
+        private static Type ResolveStateType(string typeName)
+        {
+            Type type = Type.GetType(typeName, false);
+            if (type != null)
+            {
+                return type;
+            }
+
+            System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                type = assemblies[i].GetType(typeName, false);
+                if (type != null)
+                {
+                    return type;
+                }
+            }
+
+            return null;
         }
 
         private void SetupEvents()
@@ -272,30 +434,53 @@ namespace Neo.StateMachine
             {
                 if (enableDebugLog)
                 {
-                    string fromName = from?.GetType().Name ?? "None";
-                    string toName = to?.GetType().Name ?? "None";
-                    StateMachineLog.Info($"[StateMachineBehaviour] State changed: {fromName} -> {toName}", this);
+                    StateMachineLog.Info(true,
+                        $"[StateMachineBehaviour] State changed: {GetStateLogName(from)} -> {GetStateLogName(to)}", this);
                 }
             });
         }
 
         private void EvaluateTransitionsInternal()
         {
-            RunWithContext(() => StateMachine.EvaluateTransitions());
-        }
-
-        private void RunWithContext(Action action)
-        {
-            StateMachineEvaluationContext.Push(gameObject,
-                contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
+            PushContext();
             try
             {
-                action?.Invoke();
+                StateMachine.EvaluateTransitions();
             }
             finally
             {
                 StateMachineEvaluationContext.Pop();
             }
+        }
+
+        private void StopWithContext()
+        {
+            PushContext();
+            try
+            {
+                StateMachine.Stop();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
+        }
+
+        private void PushContext()
+        {
+            StateMachineEvaluationContext.Push(gameObject,
+                contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
+        }
+
+        private static string GetStateLogName(TState state)
+        {
+            if (state == null)
+            {
+                return "None";
+            }
+
+            // WHY: every NoCode state shares the StateData type name; the asset's state name tells them apart.
+            return state is StateData stateData ? stateData.StateName : state.GetType().Name;
         }
 
         private void ChangeStateByType(Type stateType)
@@ -311,12 +496,20 @@ namespace Neo.StateMachine
                 if (state != null)
                 {
                     // WHY: No ChangeState(Type) — create instance via reflection
-                    RunWithContext(() => StateMachine.ChangeState(state));
+                    PushContext();
+                    try
+                    {
+                        StateMachine.ChangeState(state);
+                    }
+                    finally
+                    {
+                        StateMachineEvaluationContext.Pop();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                StateMachineLog.Error(
+                StateMachineLog.Error(enableDebugLog,
                     $"[StateMachineBehaviour] Failed to change state to {stateType.Name}: {ex.Message}",
                     this);
             }

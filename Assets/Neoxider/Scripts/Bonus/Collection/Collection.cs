@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Neo.Extensions;
 using Neo.Save;
 using Neo.Tools;
@@ -19,16 +18,16 @@ namespace Neo.Bonus
         [SerializeField] private ItemCollectionData[] _itemCollectionDatas;
         [SerializeField] private bool[] _enabledItems;
 
-        [Space] public UnityEvent<int> OnGetItem;
-        public UnityEvent OnLoadItems;
-        public UnityEvent<int> OnItemAdded;
-        public UnityEvent<int> OnItemRemoved;
+        [Space] public UnityEvent<int> OnGetItem = new();
+        public UnityEvent OnLoadItems = new();
+        public UnityEvent<int> OnItemAdded = new();
+        public UnityEvent<int> OnItemRemoved = new();
 
         [Space] [Tooltip("Invoked when collection composition changes: (unlockedCount, totalCount).")]
-        public UnityEvent<int, int> OnCompletionChanged;
+        public UnityEvent<int, int> OnCompletionChanged = new();
 
         [Tooltip("Invoked when collection composition changes: ratio 0–1.")]
-        public UnityEvent<float> OnCompletionPercentageChanged;
+        public UnityEvent<float> OnCompletionPercentageChanged = new();
 
         public string SaveKeyPrefix
         {
@@ -55,12 +54,30 @@ namespace Neo.Bonus
         }
 
         public int ItemCount => _itemCollectionDatas != null ? _itemCollectionDatas.Length : 0;
-        public int UnlockedCount => _enabledItems != null ? _enabledItems.Count(x => x) : 0;
+        public int UnlockedCount => _enabledItems != null ? EnsureSet().UnlockedCount : 0;
         public int LockedCount => ItemCount - UnlockedCount;
 
         /// <summary>
+        ///     Read-only view of the plain C# state behind this component (same storage as <see cref="EnabledItems" />).
+        ///     Subscribe to its C# events from code; they are raised after this component has persisted the change and
+        ///     invoked the matching UnityEvent. Change state through this component (<see cref="TryAddItem(int)" />,
+        ///     <see cref="RemoveItem" />, ...) so it is saved and announced. For independent sets that need no scene
+        ///     object, create a <see cref="CollectionSet" /> directly.
+        /// </summary>
+        public IReadOnlyCollectionSet Set => EnsureSet();
+
+        /// <summary>
+        ///     Optional random source for <see cref="GetPrize()" /> returning an integer in <c>[0, maxExclusive)</c>.
+        ///     Null uses <c>UnityEngine.Random</c>. Inject one for deterministic tests or server-authored prizes. A value
+        ///     outside the range throws <see cref="InvalidOperationException" /> before anything is unlocked.
+        /// </summary>
+        public Func<int, int> RandomIndexSource { get; set; }
+
+        private CollectionSet _set;
+
+        /// <summary>
         ///     True when this instance is registered as Collection.I (global singleton). When false, use by reference for
-        ///     multiple collections.
+        ///     multiple collections; such an instance still loads its saved unlocks in <c>Awake</c>.
         /// </summary>
         public bool IsSingleton => SetInstanceOnAwakeEnabled;
 
@@ -83,6 +100,40 @@ namespace Neo.Bonus
             int total = ItemCount;
             OnCompletionChanged?.Invoke(unlocked, total);
             OnCompletionPercentageChanged?.Invoke(GetCompletionPercentage());
+            EnsureSet().RaiseCompletionChanged();
+        }
+
+        private CollectionSet EnsureSet()
+        {
+            if (_set == null)
+            {
+                // WHY: no save prefix; the component persists every change itself and orders its UnityEvents.
+                _set = new CollectionSet(_enabledItems, null, IsCatalogSlotAssigned);
+            }
+            else if (!_set.UsesStorage(_enabledItems))
+            {
+                // WHY: Load/UnlockAllItems may replace the serialized array; keep the same core so subscribers survive.
+                _set.AdoptStorage(_enabledItems);
+            }
+
+            return _set;
+        }
+
+        private bool IsCatalogSlotAssigned(int index)
+        {
+            return _itemCollectionDatas != null && index < _itemCollectionDatas.Length &&
+                   _itemCollectionDatas[index] != null;
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            // WHY: Singleton.Awake initializes only the instance it registers as Collection.I. A collection kept out
+            // of the global slot (Set Instance On Awake off) would otherwise never load its saved unlocks.
+            if (!SetInstanceOnAwakeEnabled)
+            {
+                Init();
+            }
         }
 
         protected override void Init()
@@ -109,7 +160,7 @@ namespace Neo.Bonus
 
             for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
-                _enabledItems[i] = SaveProvider.GetInt($"{_saveKeyPrefix}Item_{i}") == 1;
+                _enabledItems[i] = SaveProvider.GetInt(CollectionSet.GetItemSaveKey(_saveKeyPrefix, i)) == 1;
             }
 
             OnLoadItems?.Invoke();
@@ -126,7 +177,7 @@ namespace Neo.Bonus
 
             for (int i = 0; i < _enabledItems.Length && i < _itemCollectionDatas.Length; i++)
             {
-                SaveProvider.SetInt($"{_saveKeyPrefix}Item_{i}", _enabledItems[i] ? 1 : 0);
+                SaveProvider.SetInt(CollectionSet.GetItemSaveKey(_saveKeyPrefix, i), _enabledItems[i] ? 1 : 0);
             }
         }
 
@@ -136,7 +187,7 @@ namespace Neo.Bonus
             return GetPrize(null);
         }
 
-        // Settle the caller's associated cost after unlock, before collection notifications.
+        /// <summary>Grants a prize; <paramref name="onCommitted" /> settles the caller's cost after the unlock, before notifications.</summary>
         internal ItemCollectionData GetPrize(Action onCommitted)
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0 ||
@@ -145,21 +196,12 @@ namespace Neo.Bonus
                 return null;
             }
 
-            List<int> lockedIndices = new();
-            for (int i = 0; i < _enabledItems.Length; i++)
-            {
-                if (!_enabledItems[i] && _itemCollectionDatas[i] != null)
-                {
-                    lockedIndices.Add(i);
-                }
-            }
-
-            if (lockedIndices.Count == 0)
+            int prizeId = EnsureSet().PickLockedIndex(_randomPrize, RandomIndexSource);
+            if (prizeId < 0)
             {
                 return null;
             }
 
-            int prizeId = _randomPrize ? lockedIndices.GetRandomElement() : lockedIndices[0];
             ItemCollectionData prize = _itemCollectionDatas[prizeId];
 
             if (!TryAddItem(prizeId, onCommitted))
@@ -201,24 +243,24 @@ namespace Neo.Bonus
                 return false;
             }
 
-            if (_enabledItems[id])
+            if (!EnsureSet().SetUnlockedSilently(id, true))
             {
                 return false;
             }
 
-            _enabledItems[id] = true;
             try
             {
-                SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
+                SaveProvider.SetInt(CollectionSet.GetItemSaveKey(_saveKeyPrefix, id), 1);
             }
             finally
             {
-                // A persistence observer may throw after accepting the unlock.
+                // WHY: a persistence observer may throw after accepting the unlock.
                 // The accepted prize must still consume its associated cost.
                 onCommitted?.Invoke();
             }
 
             OnItemAdded?.Invoke(id);
+            _set.RaiseItemUnlocked(id);
             InvokeCompletionEvents();
             return true;
         }
@@ -245,15 +287,15 @@ namespace Neo.Bonus
                 return;
             }
 
-            if (!_enabledItems[id])
+            if (!EnsureSet().SetUnlockedSilently(id, false))
             {
                 return;
             }
 
-            _enabledItems[id] = false;
-            SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 0);
+            SaveProvider.SetInt(CollectionSet.GetItemSaveKey(_saveKeyPrefix, id), 0);
 
             OnItemRemoved?.Invoke(id);
+            _set.RaiseItemLocked(id);
             InvokeCompletionEvents();
         }
 
@@ -277,14 +319,15 @@ namespace Neo.Bonus
                 return;
             }
 
+            CollectionSet set = EnsureSet();
             int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
             for (int i = 0; i < count; i++)
             {
-                if (_enabledItems[i])
+                if (set.SetUnlockedSilently(i, false))
                 {
-                    _enabledItems[i] = false;
-                    SaveProvider.SetInt($"{_saveKeyPrefix}Item_{i}", 0);
+                    SaveProvider.SetInt(CollectionSet.GetItemSaveKey(_saveKeyPrefix, i), 0);
                     OnItemRemoved?.Invoke(i);
+                    set.RaiseItemLocked(i);
                 }
             }
 

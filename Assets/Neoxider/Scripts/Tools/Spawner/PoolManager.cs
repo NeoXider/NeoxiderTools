@@ -37,6 +37,7 @@ namespace Neo.Tools
         private readonly Dictionary<GameObject, NeoObjectPool> _pools = new();
         private readonly ConditionalWeakTable<GameObject, object> _retiredSources = new();
         private static readonly object RetiredSourceMarker = new();
+        private bool _tornDown;
 
         protected override bool DontDestroyOnLoadEnabled => true;
 
@@ -49,6 +50,41 @@ namespace Neo.Tools
             }
 
             PrewarmPools();
+        }
+
+        /// <summary>
+        ///     Retires every pool of this manager and destroys their stored inactive instances, so a rental returned
+        ///     afterwards is destroyed instead of being parked inactive where it stands, never reused. This also
+        ///     holds when only the component is destroyed and the storage roots stay behind.
+        /// </summary>
+        protected override void OnDestroy()
+        {
+            _tornDown = true;
+            if (_pools.Count > 0)
+            {
+                // WHY: Copy first: a release cleanup run by the teardown may call RetirePool on this manager.
+                NeoObjectPool[] pools = new NeoObjectPool[_pools.Count];
+                _pools.Values.CopyTo(pools, 0);
+                _pools.Clear();
+                // WHY: In Play Mode the pool destroys stored instances with Object.Destroy, which is harmless on a
+                // child already dying with the storage root and still reaches the instances when only this component
+                // goes. Edit Mode destroys with DestroyImmediate, so there the children dying with the root are left
+                // to it: a second immediate destroy of the same object is reported as an error.
+                bool playing = Application.isPlaying;
+                for (int i = 0; i < pools.Length; i++)
+                {
+                    if (playing)
+                    {
+                        pools[i].Retire();
+                    }
+                    else
+                    {
+                        pools[i].RetireWithStorage();
+                    }
+                }
+            }
+
+            base.OnDestroy();
         }
 
         private void PrewarmPools()
@@ -69,7 +105,8 @@ namespace Neo.Tools
 
         private NeoObjectPool GetOrCreatePool(GameObject prefab)
         {
-            if (_retiredSources.TryGetValue(prefab, out _))
+            // WHY: A pool created during this manager's own teardown would store under a dying root.
+            if (_tornDown || _retiredSources.TryGetValue(prefab, out _))
             {
                 return null;
             }
@@ -91,10 +128,10 @@ namespace Neo.Tools
 
             NeoObjectPool pool = new(prefab, initialSize, expandPool, maxSize,
                 GetOrCreatePoolStorageRoot(prefab), false);
-            // A first create/get callback must be able to retire this exact in-flight registration.
+            // WHY: A first create/get callback must be able to retire this exact in-flight registration.
             _pools[prefab] = pool;
             pool.Prewarm(initialSize);
-            // Prewarm may have removed the registration. Never reinsert it or publish a rental afterward.
+            // WHY: Prewarm may have removed the registration. Never reinsert it or publish a rental afterward.
             return pool.IsRetired ? null : pool;
         }
 
@@ -112,6 +149,14 @@ namespace Neo.Tools
             return root.transform;
         }
 
+        /// <summary>
+        ///     Rents an instance of <paramref name="prefab" /> at the given world pose from its pool, created on first
+        ///     use. Under a parent the rental keeps that world pose; a null parent leaves it unparented in the active
+        ///     scene, so it unloads with that scene unless it is returned first.
+        /// </summary>
+        /// <returns>
+        ///     The rental, or null for a null or retired source, a missing manager, or a manager being destroyed.
+        /// </returns>
         public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
         {
             if (prefab == null)
@@ -131,13 +176,8 @@ namespace Neo.Tools
                 return null;
             }
 
-            GameObject instance = pool.GetObject(position, rotation);
-            if (instance != null)
-            {
-                instance.transform.SetParent(parent, true);
-            }
-
-            return instance;
+            // WHY: A null parent leaves the rental in the active scene, not in this manager's DontDestroyOnLoad scene.
+            return pool.GetObject(position, rotation, parent);
         }
 
         /// <summary>
@@ -152,7 +192,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            // Weak keys prevent the retirement marker itself from retaining a destroyed generated source.
+            // WHY: Weak keys prevent the retirement marker itself from retaining a destroyed generated source.
             if (!manager._retiredSources.TryGetValue(source, out _))
             {
                 manager._retiredSources.Add(source, RetiredSourceMarker);

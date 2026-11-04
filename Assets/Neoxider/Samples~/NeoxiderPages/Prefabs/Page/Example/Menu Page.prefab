@@ -2073,13 +2073,13 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7035944853993685232, guid: a3118a4d1c96c9d408b8d1bb863d2b7a, type: 3}
-      propertyPath: page
-      value: 12
+      propertyPath: action
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7035944853993685232, guid: a3118a4d1c96c9d408b8d1bb863d2b7a, type: 3}
-      propertyPath: action
-      value: 12
-      objectReference: {fileID: 0}
+      propertyPath: targetPageId
+      value: 
+      objectReference: {fileID: 11400000, guid: 4f101c284507708408ae1e5b71f5ef3c, type: 2}
     - target: {fileID: 7035944853993685232, guid: a3118a4d1c96c9d408b8d1bb863d2b7a, type: 3}
       propertyPath: _executeState
       value: 0

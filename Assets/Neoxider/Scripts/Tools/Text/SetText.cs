@@ -67,9 +67,22 @@ namespace Neo.Tools
 
         private void ApplyText(string value)
         {
-            string formatted = startAdd + value + endAdd;
+            string formatted = ComposeText(value);
             text.text = formatted;
             OnTextUpdated?.Invoke(formatted);
+        }
+
+        /// <summary>Wraps <paramref name="value" /> with the prefix and suffix; no copy when both are empty.</summary>
+        private string ComposeText(string value)
+        {
+            bool hasStart = !string.IsNullOrEmpty(startAdd);
+            bool hasEnd = !string.IsNullOrEmpty(endAdd);
+            if (!hasStart && !hasEnd)
+            {
+                return value ?? string.Empty;
+            }
+
+            return string.Concat(hasStart ? startAdd : string.Empty, value, hasEnd ? endAdd : string.Empty);
         }
 
         private NumberFormatOptions BuildNumberFormatOptions(string prefix = "", string suffix = "")
@@ -215,6 +228,44 @@ namespace Neo.Tools
             set => indexOffset = value;
         }
 
+        /// <summary>
+        ///     Text placed before the value (Inspector "Start Add"). A retained numeric value redraws immediately;
+        ///     literal strings use it from the next <see cref="Set(string)" />.
+        /// </summary>
+        public string Prefix
+        {
+            get => startAdd;
+            set
+            {
+                if (startAdd == value)
+                {
+                    return;
+                }
+
+                startAdd = value;
+                RefreshNumber();
+            }
+        }
+
+        /// <summary>
+        ///     Text placed after the value (Inspector "End Add"). A retained numeric value redraws immediately;
+        ///     literal strings use it from the next <see cref="Set(string)" />.
+        /// </summary>
+        public string Suffix
+        {
+            get => endAdd;
+            set
+            {
+                if (endAdd == value)
+                {
+                    return;
+                }
+
+                endAdd = value;
+                RefreshNumber();
+            }
+        }
+
         #endregion
 
         #region Unity Methods
@@ -271,7 +322,7 @@ namespace Neo.Tools
             Set((float)value);
             Tween tween = _tween;
             BigInteger integer = new BigInteger(value);
-            // Replace float completion: integer text is exact while currentNum stays interpolated.
+            // WHY: Replace float completion: integer text is exact while currentNum stays interpolated.
             tween.OnComplete(() =>
             {
                 if (_tween != tween)
@@ -284,7 +335,7 @@ namespace Neo.Tools
                 if (text != null)
                 {
                     string formatted = _formatCurrentNumber();
-                    if (text.text != startAdd + formatted + endAdd)
+                    if (text.text != ComposeText(formatted))
                     {
                         ApplyText(formatted);
                     }
@@ -332,12 +383,12 @@ namespace Neo.Tools
                     return;
                 }
 
-                // Interpolation from a large float can lose a small target in start + change.
+                // WHY: Interpolation from a large float can lose a small target in start + change.
                 currentNum = value;
                 if (text != null)
                 {
                     string formatted = FormatNumber(value);
-                    if (text.text != startAdd + formatted + endAdd)
+                    if (text.text != ComposeText(formatted))
                     {
                         ApplyText(formatted);
                     }

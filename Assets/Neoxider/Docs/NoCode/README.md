@@ -1,8 +1,35 @@
 # Neo.NoCode
 
-No-code UI bindings for scenes where designers should connect data to text and progress visuals without writing one-off view scripts.
+**What it is:** no-code UI bindings (assembly `Neo.NoCode`, scripts in `Scripts/NoCode/`) that connect a numeric field/property or `ReactiveProperty*` of any component to text and progress visuals without one-off view scripts. Each component wraps the plain C# `ComponentFloatBinding` and has a typed C# API.
 
-Demo: `Assets/Neoxider/Samples~/Demo/Scenes/NoCode/NoCodeBindingDemo.unity` — runtime-built UI via `NeoDemoShell`. The release layout uses `Samples~`; active sample development uses `Samples`. Importing **Demo Scenes** through Package Manager copies the sample into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`.
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeActionsDemo.jpg" alt="NoCodeActionsDemo: Level, Progression, Quest and Rpg NoCode actions" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeBindingDemo.jpg" alt="NoCodeBindingDemo: one counter bound to text, formatted text and a progress bar" width="49%" /></p>
+
+*Demo scenes: `Scenes/NoCode/NoCodeActionsDemo.unity`, `Scenes/NoCode/NoCodeBindingDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:**
+
+| Page | Topic |
+|------|-------|
+| [GettingStarted](GettingStarted.md) | Scene walkthrough: build gameplay UI without code. |
+| [ComponentFloatBinding](ComponentFloatBinding.md) | The serializable source binding and its C# API. |
+| [NoCodeFloatBindingBehaviour](NoCodeFloatBindingBehaviour.md) | Base class for custom float views (`NoCodeBindText`, `SetProgress`). |
+
+---
+
+## Demos
+
+Both scenes are fully authored in the `.unity` file (no runtime UI construction, no controller): select any label, bar or button to see its NoCode component or persistent UnityEvent in the Inspector without entering Play Mode.
+
+| Scene | What it shows | Where to look |
+|---|---|---|
+| `Scenes/NoCode/NoCodeBindingDemo.unity` | One source, `Counter.Value` (a `ReactivePropertyFloat`), drives every binding: `NoCodeBindText` into a tweening `SetText`, `NoCodeFormattedText`, `SetProgress` into a Filled image and into a slider, and the update modes side by side (Reactive, Poll every 0.5 s, Once + `RefreshBinding()`). | Object `Counter`; the right column of `[Demo] Frame`. Buttons and the input slider call `Counter.Add` / `Counter.Set` directly. |
+| `Scenes/NoCode/NoCodeActionsDemo.unity` | `LevelNoCodeAction`, `ProgressionNoCodeAction`, `QuestNoCodeAction` and `RpgNoCodeAction` bridges: buttons call `Execute()`, result events (`OnResultMessage`, `OnSuccess`) write the result labels and the log, readouts use `NoCodeFormattedText` / `SetProgress`. | Objects `Level System`, `Progression System`, `Quest System`, `Rpg Character` and their `Bridge_*` children. |
+
+C# equivalent of the binding demo: `counter.Add(10)`, `bindText.RefreshBinding()`, `formattedText.SetValues(sources, "{0:0} / 100")`, `setProgress.SetRange(0f, 100f)`.
+
+The scenes are authored by the editor builders `NoCodeBindingDemoBuilder` / `NoCodeActionsDemoBuilder` (menu **Neoxider/Demo/Rebuild Active Demo Scene**). Paths are relative to the Demo sample root: `Assets/Neoxider/Samples~/Demo` in the release layout, `Assets/Neoxider/Samples/Demo` during sample development, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` after a Package Manager import.
 
 ## UX Discipline And C# Contract
 
@@ -24,9 +51,9 @@ For business rules, keep the rule in a normal C# component or service, test it t
 
 | Component | Purpose |
 |-----------|---------|
-| `NoCodeBindText` | Reads a numeric source and writes to `SetText`, then `TimeToText`, then TMP, in that priority order. Unassigned targets are looked up on the same GameObject. |
-| `NoCodeFormattedText` | Formats multiple sources with invariant-culture `string.Format`, for example `HP {0:0}/{1:0}`. Writes to `SetText`, TMP, or an existing legacy uGUI Text target, in that order. |
-| `SetProgress` | Maps a value from Min/Max into the assigned `Slider.normalizedValue` and/or `Image.fillAmount`, clamped to 0–1. Equal or approximately equal endpoints leave the targets unchanged. |
+| `NoCodeBindText` | Reads a numeric source and writes to `SetText`, then `TimeToText`, then TMP, in that priority order. Unassigned targets are looked up on the same GameObject. An unchanged value is not written again (call `ForceRewrite()` to re-push it). |
+| `NoCodeFormattedText` | Formats multiple sources with invariant-culture `string.Format`, for example `HP {0:0}/{1:0}`. Writes to `SetText`, TMP, or an existing legacy uGUI Text target, in that order. Unchanged inputs are not re-formatted. |
+| `SetProgress` | Maps a value from Min/Max into the assigned `Slider.normalizedValue` and/or `Image.fillAmount`, clamped to 0–1. Equal or approximately equal endpoints leave the targets unchanged. `SetRange(min, max)` updates the range at runtime (e.g. max HP). |
 
 ## Source Flow
 
@@ -51,11 +78,54 @@ The module is intended for Inspector-driven prototypes and reusable UI screens. 
 
 `NoCodeFormattedText` treats missing/null bindings as zero. Invalid format strings are displayed literally. `NoCodeBindText` and `SetProgress` retain their previous output when their source cannot be read.
 
+`NoCodeBindText` pushes a value only when it (or the resolved target) changed since the last write; this avoids restarting `SetText` number animations on every poll. If another script overwrites the label, call `ForceRewrite()`. Enabling the component always writes once. An Inspector edit makes the next refresh write even for an unchanged value; that refresh is the next poll, or in Reactive mode with a subscribed source the next value change. Call `ForceRewrite()` to push immediately.
+
+## Performance
+
+- One reflective read per poll for plain sources (a plain numeric field boxes once). A subscribed reactive source is re-checked once after the output callback, so each reactive change costs two reads; reactive reads do not box.
+- `NoCodeFormattedText` skips `string.Format` when no value, format or target changed, so a Reactive refresh without changes is allocation-free.
+- Unresolved sources (late spawn, missing component) are retried without allocating component arrays or messages; the warning is logged once.
+- Prefer `ReactiveProperty*` sources: they refresh only on change, while ordinary fields are polled every **Poll Interval** (0.16 s by default).
+
 ## C# API
 
-Use [ComponentFloatBinding](./ComponentFloatBinding.md) directly to read component data from C#. Its `SourceRoot`, `ComponentTypeName`, `ComponentOccurrence`, and `MemberName` setters invalidate cached resolution automatically. `TryGetReactiveProperty` exposes the typed reactive instance; callers that subscribe directly own their listener cleanup.
+Use [ComponentFloatBinding](./ComponentFloatBinding.md) directly to read component data from C#. Its `UseSceneSearch`, `SearchObjectName`, `SourceRoot`, `ComponentTypeName`, `ComponentOccurrence` and `MemberName` setters invalidate cached resolution automatically. `TryGetReactiveProperty` exposes the typed reactive instance; callers that subscribe directly own their listener cleanup.
 
-For custom views, derive from [NoCodeFloatBindingBehaviour](./NoCodeFloatBindingBehaviour.md), override `ApplyFloat(float)`, and expose a method calling the protected `RefreshFromSource()` when runtime rewiring needs an immediate refresh. Existing text and progress components expose their source through `Binding`. `NoCodeFormattedText.RefreshFromSource()` is public and can also be connected to a UnityEvent.
+Every NoCode component has a typed path:
+
+| Component | C# API |
+|-----------|--------|
+| `NoCodeBindText`, `SetProgress` (and custom subclasses) | `Binding`, `UpdateMode`, `PollIntervalSeconds`, `RefreshBinding()`; `NoCodeBindText.ForceRewrite()`; `SetProgress.MinValue` / `MaxValue` / `SetRange(min, max)` |
+| `NoCodeFormattedText` | `Values`, `SetValues(bindings, format)`, `Format`, `UpdateMode`, `PollIntervalSeconds`, `RefreshFromSource()`, `CurrentText`, `OnTextChanged` |
+
+```csharp
+using Neo.NoCode;
+using UnityEngine;
+
+public sealed class HealthBarSetup : MonoBehaviour
+{
+    [SerializeField] private SetProgress _bar;
+    [SerializeField] private NoCodeFormattedText _label;
+    [SerializeField] private GameObject _player;
+
+    private void Start()
+    {
+        ComponentFloatBinding hp = new()
+        {
+            SourceRoot = _player,
+            ComponentTypeName = "Health",
+            MemberName = "Current"
+        };
+        _bar.Binding.SourceRoot = _player;
+        _bar.Binding.ComponentTypeName = "Health";
+        _bar.Binding.MemberName = "Current";
+        _bar.SetRange(0f, 250f);
+        _label.SetValues(new[] { hp }, "HP {0:0}");
+    }
+}
+```
+
+`Health` / `Current` stand for any component and numeric (or reactive) member of your game. For custom views, derive from [NoCodeFloatBindingBehaviour](./NoCodeFloatBindingBehaviour.md) and override `ApplyFloat(float)`. `RefreshBinding()` and `NoCodeFormattedText.RefreshFromSource()` are public and can also be connected to a UnityEvent.
 
 ## Related docs
 

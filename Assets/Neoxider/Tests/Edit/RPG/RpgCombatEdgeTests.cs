@@ -22,8 +22,8 @@ namespace Neo.Tests.Edit.RPG
         [Test]
         public void CombatMath_NullResolversAndNullEntries_ReturnSafeDefaults()
         {
-            var buffs = new List<ActiveBuffEntry> { null, new() { BuffId = "missing" } };
-            var statuses = new List<ActiveStatusEntry> { null, new() { StatusId = "missing" } };
+            List<ActiveBuffEntry> buffs = new List<ActiveBuffEntry> { null, new() { BuffId = "missing" } };
+            List<ActiveStatusEntry> statuses = new List<ActiveStatusEntry> { null, new() { StatusId = "missing" } };
 
             Assert.That(RpgCombatMath.GetOutgoingDamageMultiplier(buffs, null), Is.EqualTo(1f));
             Assert.That(RpgCombatMath.GetIncomingDamageMultiplier(buffs, null, "Fire"), Is.EqualTo(1f));
@@ -133,7 +133,7 @@ namespace Neo.Tests.Edit.RPG
                 SetPrivateField(buff, "_stackable", true);
                 SetPrivateField(buff, "_maxStacks", 2);
 
-                var shelf = new RpgEffectShelf();
+                RpgEffectShelf shelf = new RpgEffectShelf();
                 shelf.ApplyBuff(buff);
                 shelf.ApplyBuff(buff);
                 shelf.ApplyBuff(buff);
@@ -143,7 +143,7 @@ namespace Neo.Tests.Edit.RPG
                 Assert.That(shelf.ActiveBuffs, Has.Count.EqualTo(1));
                 Assert.That(shelf.ActiveBuffs[0].Stacks, Is.EqualTo(2));
 
-                var modifiers = new List<BuffStatModifierApplication>();
+                List<BuffStatModifierApplication> modifiers = new List<BuffStatModifierApplication>();
                 shelf.BuildModifierApplications(modifiers);
                 Assert.That(modifiers, Has.Count.EqualTo(1));
                 Assert.That(modifiers[0].Stacks, Is.EqualTo(2));
@@ -151,13 +151,13 @@ namespace Neo.Tests.Edit.RPG
                 float multiplier = RpgCombatMath.GetOutgoingDamageMultiplier(shelf.ActiveBuffs, Resolve(buff));
                 Assert.That(multiplier, Is.EqualTo(1.2f).Within(0.001f));
 
-                var copiedBuffs = new List<ActiveBuffEntry>();
+                List<ActiveBuffEntry> copiedBuffs = new List<ActiveBuffEntry>();
                 shelf.CopyActiveEffectsTo(copiedBuffs, null);
                 Assert.That(copiedBuffs[0].Stacks, Is.EqualTo(2));
                 copiedBuffs[0].Stacks = 1;
                 Assert.That(shelf.ActiveBuffs[0].Stacks, Is.EqualTo(2));
 
-                var restored = new RpgEffectShelf();
+                RpgEffectShelf restored = new RpgEffectShelf();
                 restored.RegisterBuffLibrary(new[] { buff });
                 restored.RestoreActiveEffects(new[]
                 {
@@ -273,7 +273,7 @@ namespace Neo.Tests.Edit.RPG
             GameObject root = new("RpgHitTargetRoot");
             GameObject child = new("RpgHitTargetChild");
             RpgAttackDefinition attack = CreateAttack("direct", 0f);
-            var affectedReceivers = new HashSet<IRpgCombatReceiver>();
+            HashSet<IRpgCombatReceiver> affectedReceivers = new HashSet<IRpgCombatReceiver>();
 
             try
             {
@@ -384,7 +384,7 @@ namespace Neo.Tests.Edit.RPG
 
         private static T InvokeInternal<T>(object target, string methodName, params object[] args)
         {
-            var argumentTypes = new Type[args.Length];
+            Type[] argumentTypes = new Type[args.Length];
             for (int i = 0; i < args.Length; i++)
             {
                 argumentTypes[i] = args[i].GetType();

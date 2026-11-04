@@ -1,8 +1,15 @@
 # UI Mesh Rig editor tools
 
-This is the editor companion to [UI Mesh Rig](UIMeshRig.md). `Neo.UI.Editor` supplies the creation menus,
+**What it is:** the editor companion to [UI Mesh Rig](UIMeshRig.md). `Neo.UI.Editor` supplies the creation menus,
 inspectors and Scene view tools for the uGUI, world mesh and SpriteRenderer adapters, plus the optional
 UI Toolkit host inspector. Runtime geometry and motion remain in `Neo.UI`.
+
+**How to use:**
+1. Create a rig from one of the menus in [Create and configure](#create-and-configure).
+2. Choose a **Ready-Made Rig** layout and press **Apply Layout & Preview**, or add points yourself.
+3. Edit and animate the points in the Scene view ([Edit points and animate](#edit-points-and-animate)).
+
+---
 
 ## Create and configure
 
@@ -42,6 +49,22 @@ rig have their own key scope.
 **Capture Rest Pose** accepts the current Transform pose as neutral. **Reset Pose** restores it. Layout
 replacement, point creation, duplication, deletion and pose edits use Unity Undo; undoing a layout restores
 the previous points and authoring mode.
+
+The inspector's **Apply Layout & Preview** button is its own Undo step, so it never absorbs an earlier unrelated
+edit. Menu commands that create or convert a rig (**GameObject > UI > Neoxider UI Mesh Rig**, the 2D Sprite
+Renderer and World variants, **Convert To Neoxider UI Mesh Rig** and **Create Non-Destructive Neoxider Mesh Rig
+Child**) apply their starter layout inside the command's own Undo step: one Undo reverts the whole command,
+including the restored Image, its Button target and the hierarchy. Redo restores the generated
+point keys, layout and motion settings. Duplicated branches keep their unique keys, authored/rest pose and
+internal/external references through Undo/Redo and ordinary scene save/reopen on Graphic, World and Sprite adapters.
+Points made with **Add Point** likewise keep their unique key, layer, placement and captured rest pose through
+Undo/Redo and scene save/reopen.
+
+Кнопка **Apply Layout & Preview** в инспекторе — отдельный шаг Undo и не захватывает предыдущее несвязанное
+изменение. Команды меню, которые создают или конвертируют риг, применяют стартовый layout внутри своего шага Undo:
+одно Undo отменяет команду целиком, вместе с восстановлением Image, цели Button и иерархии. После Redo и
+повторного открытия сцены у дубликатов и у точек, добавленных через **Add Point**, сохраняются уникальные ключи,
+слой, поза, данные анимации и ссылки.
 
 The point and motion inspectors expose **Start Preview**, **Pause / Resume**, **Restart Preview** and
 **Stop Preview**. Preview composes a temporary procedural pose without changing authored Transforms or

@@ -88,8 +88,16 @@ namespace Neo.Tools
         [SerializeField] private bool useUnscaledTime;
 
         [SerializeField] private bool isPaused;
+
+        [SerializeField] private bool carryLoopOvershoot;
         private CancellationTokenSource cancellationTokenSource;
         private float lastUpdateTime;
+
+        // WHY: Time the last frame of a cycle ran past zero. With CarryLoopOvershoot the next looping cycle is that much
+        // shorter, so the long-run period stays exact instead of gaining up to one frame per cycle.
+        private float cycleOvershoot;
+
+        [NonSerialized] private IFrameClock frameClock;
 
         // WHY: Identifies the current run; a cancelled cycle observes the cancellation one frame
         // late and must not clobber the state of a newer run started in the meantime.
@@ -139,6 +147,29 @@ namespace Neo.Tools
         ///     Gets whether the timer is currently paused
         /// </summary>
         public bool IsPaused => isPaused;
+
+        /// <summary>
+        ///     Frame time source read once per frame by a running timer. Defaults to
+        ///     <see cref="UnityFrameClock.Instance" />; assign a <see cref="ManualFrameClock" /> for deterministic
+        ///     tests, replays or simulations. Assigning <c>null</c> restores the default.
+        /// </summary>
+        public IFrameClock FrameClock
+        {
+            get => frameClock ?? UnityFrameClock.Instance;
+            set => frameClock = value;
+        }
+
+        /// <summary>
+        ///     Looping only: when true, each new cycle starts with the time by which the previous cycle's last frame
+        ///     overshot zero, keeping the long-run period exact. Whole cycles skipped by one long frame are dropped
+        ///     (one completion, phase kept), so a new cycle never starts already complete. Default false keeps the
+        ///     legacy restart at full duration.
+        /// </summary>
+        public bool CarryLoopOvershoot
+        {
+            get => carryLoopOvershoot;
+            set => carryLoopOvershoot = value;
+        }
 
         /// <summary>
         ///     Gets the current remaining time in seconds
@@ -220,6 +251,7 @@ namespace Neo.Tools
             }
 
             lastUpdateTime = 0f;
+            cycleOvershoot = 0f;
             RemainingTime = Duration;
         }
 
@@ -280,6 +312,7 @@ namespace Neo.Tools
             isPaused = false;
             RemainingTime = Duration;
             lastUpdateTime = 0f;
+            cycleOvershoot = 0f;
             int generation = ++runGeneration;
 
             try
@@ -309,7 +342,8 @@ namespace Neo.Tools
                         break;
                     }
 
-                    RemainingTime = Duration;
+                    RemainingTime = carryLoopOvershoot ? GetNextCycleRemaining() : Duration;
+                    cycleOvershoot = 0f;
                     lastUpdateTime = 0f;
                     // Non-empty cycles already yield on their final update; empty cycles must also yield.
                     if (cycleNeedsYield)
@@ -354,6 +388,7 @@ namespace Neo.Tools
             isRunning = false;
             isPaused = false;
             lastUpdateTime = 0f;
+            cycleOvershoot = 0f;
             RemainingTime = Duration;
             // The owning StartAsync finally disposes the source after its pending await observes cancellation.
             runCancellation?.Cancel();
@@ -410,6 +445,20 @@ namespace Neo.Tools
             RemainingTime = Mathf.Clamp(remainingTime, 0f, Duration);
         }
 
+        // WHY: Only the part of the overshoot inside one cycle is carried. A remainder of a whole cycle or more would
+        // start the next cycle at zero and fire a second OnTimerEnd in the same frame.
+        private float GetNextCycleRemaining()
+        {
+            float cycleLength = Duration;
+            if (!(cycleOvershoot > 0f) || !(cycleLength > 0f))
+            {
+                return cycleLength;
+            }
+
+            float remaining = cycleLength - cycleOvershoot % cycleLength;
+            return remaining > 0f ? remaining : cycleLength;
+        }
+
         private async UniTask RunTimerCycle(CancellationToken cancellationToken)
         {
             while (RemainingTime > 0 && !cancellationToken.IsCancellationRequested)
@@ -423,12 +472,17 @@ namespace Neo.Tools
                     }
                 }
 
-                float deltaTime = UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-                lastUpdateTime += deltaTime;
+                float deltaTime = FrameClock.GetDeltaTime(UseUnscaledTime);
+                if (deltaTime > 0f && !float.IsNaN(deltaTime) && !float.IsInfinity(deltaTime))
+                {
+                    lastUpdateTime += deltaTime;
+                }
 
                 if (lastUpdateTime >= UpdateInterval)
                 {
+                    float remainingBefore = RemainingTime;
                     RemainingTime -= lastUpdateTime;
+                    cycleOvershoot = remainingBefore > 0f && RemainingTime < 0f ? -RemainingTime : 0f;
                     RemainingTime = Mathf.Max(0f, RemainingTime);
 
                     float progress = Duration > 0 ? 1f - RemainingTime / Duration : 1f;

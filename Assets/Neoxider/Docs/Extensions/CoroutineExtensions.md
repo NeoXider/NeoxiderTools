@@ -1,5 +1,11 @@
 ﻿# CoroutineExtensions
 
+**What it is:** extension methods that run delayed and conditional actions as tracked coroutines (`Delay`, `WaitUntil`, `WaitWhile`, `DelayFrames`, `NextFrame`, `EndOfFrame`, `RepeatUntil`, `Start`). File: `Scripts/Extensions/CoroutineExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** call `this.Delay(1f, Respawn)` from a MonoBehaviour (or the static overloads without an owner) and keep the returned handle to `Stop()` it.
+
+---
+
 Run delayed/conditional actions from C# through `using Neo.Extensions;`. Each call returns a `CoroutineExtensions.CoroutineHandle` for tracked cancellation and status. Reference `Neo.Extensions` from a custom asmdef. The complete ownership contract is in [Lifecycle and ownership](LifecycleAndOwnership.md).
 
 ## API

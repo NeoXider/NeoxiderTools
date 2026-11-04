@@ -1,6 +1,13 @@
 ﻿# InventoryItemView
 
-**Purpose:** A foundational UI component responsible for drawing a single item stack. It takes data (`InventoryItemData`) and updates the `Image` icon, name, and count text (`TMP_Text`). Used inside slots and standard lists.
+**What it is:** UI `MonoBehaviour` that draws one item stack: icon `Image`, name and count `TMP_Text`. Used by `InventoryView` and `InventorySlotView`. `Scripts/Tools/Inventory/UI/InventoryItemView.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Build a cell prefab with this component and assign the optional icon/name/count references.
+2. Use it as `InventoryView.Item View Prefab`, a Manual View, or the item view of an `InventorySlotView`.
+3. From C#, call `Bind(itemData, itemId, count)` / `Clear()`.
+
+---
 
 ## Fields (Inspector)
 

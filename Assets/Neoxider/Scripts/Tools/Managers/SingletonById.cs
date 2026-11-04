@@ -48,7 +48,7 @@ namespace Neo.Tools
 
             ById[_id] = (T)this;
 
-            if (_dontDestroyOnLoad)
+            if (_dontDestroyOnLoad && Application.isPlaying)
             {
                 DontDestroyOnLoad(gameObject);
             }
@@ -82,6 +82,16 @@ namespace Neo.Tools
         public static bool Has(string id)
         {
             return Get(id) != null;
+        }
+
+        /// <summary>Gets the live instance registered for <paramref name="id" />.</summary>
+        /// <returns><see langword="true" /> when a live (not destroyed) instance is registered.</returns>
+        public static bool TryGet(string id, out T instance)
+        {
+            T found = Get(id);
+            // WHY: a destroyed entry compares equal to null through Unity's operator but is still a reference.
+            instance = found != null ? found : null;
+            return instance != null;
         }
     }
 }

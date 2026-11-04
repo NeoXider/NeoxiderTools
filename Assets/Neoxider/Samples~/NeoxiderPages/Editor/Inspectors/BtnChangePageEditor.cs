@@ -1,4 +1,3 @@
-using System;
 using Neo.Editor;
 using Neo.Pages;
 using UnityEditor;
@@ -7,11 +6,19 @@ using UnityEngine;
 namespace Neo.Pages.Editor
 {
     [CustomEditor(typeof(BtnChangePage))]
+    [CanEditMultipleObjects]
     public sealed class BtnChangePageEditor : CustomEditorBase
     {
-        private const float ModeButtonHeight = 22f;
-        private const string SourceLabelAll = "Source: all project folders";
+        private static readonly GUIContent InteractableContent = new("Interactable",
+            "When off, clicks and the press animation are ignored.");
+        private static readonly GUIContent PageContent = new("Page");
+        private static readonly GUIContent PageAssetContent = new("Page Id (asset)");
+        private static readonly GUIContent UseOpenPageContent = new("Use Open Page",
+            "Replace the legacy value with Open Page; the button keeps opening its Target Page.");
+
         private SerializedProperty actionProp;
+        private string legacyActionMessage;
+        private int legacyActionMessageValue = int.MinValue;
         private SerializedProperty canSwitchProp;
 
         private SerializedProperty changeTextProp;
@@ -56,14 +63,28 @@ namespace Neo.Pages.Editor
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(intecactableProp);
+            EditorGUILayout.PropertyField(intecactableProp, InteractableContent);
             EditorGUILayout.PropertyField(imageTargetProp);
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Page Settings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(actionProp);
 
-            if ((BtnChangePage.Action)actionProp.enumValueIndex == BtnChangePage.Action.OpenPage)
+            // WHY: intValue, not enumValueIndex: an out-of-range value from an old scene must not throw or hide
+            // the field; it shows as a warning so the author picks a valid action.
+            int actionValue = actionProp.intValue;
+            bool singleAction = !actionProp.hasMultipleDifferentValues;
+            bool legacyAction = singleAction && BtnChangePage.IsLegacyAction((BtnChangePage.Action)actionValue);
+            if (legacyAction)
+            {
+                EditorGUILayout.HelpBox(GetLegacyActionMessage(actionValue), MessageType.Warning);
+                if (GUILayout.Button(UseOpenPageContent))
+                {
+                    actionProp.intValue = (int)BtnChangePage.Action.OpenPage;
+                }
+            }
+
+            if (singleAction && (legacyAction || actionValue == (int)BtnChangePage.Action.OpenPage))
             {
                 DrawPageIdSelector(targetPageIdProp);
             }
@@ -74,7 +95,7 @@ namespace Neo.Pages.Editor
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Animation", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(useAnimImageProp);
-            if (useAnimImageProp.boolValue)
+            if (useAnimImageProp.boolValue || useAnimImageProp.hasMultipleDifferentValues)
             {
                 EditorGUILayout.PropertyField(timeAnimImageProp);
                 EditorGUILayout.PropertyField(scaleAnimProp);
@@ -83,7 +104,7 @@ namespace Neo.Pages.Editor
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("SetText", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(changeTextProp);
-            if (changeTextProp.boolValue)
+            if (changeTextProp.boolValue || changeTextProp.hasMultipleDifferentValues)
             {
                 EditorGUILayout.PropertyField(textPageProp);
             }
@@ -99,101 +120,39 @@ namespace Neo.Pages.Editor
             // WHY: Pages inspectors do not use NeoCustomEditor auto-assign.
         }
 
+        private string GetLegacyActionMessage(int actionValue)
+        {
+            // WHY: cached per value so a misconfigured button does not allocate a message on every repaint.
+            if (legacyActionMessage == null || legacyActionMessageValue != actionValue)
+            {
+                legacyActionMessageValue = actionValue;
+                legacyActionMessage = "Legacy action value " + actionValue.ToString() +
+                                      " (old UIKit.Page enum): the button opens its Target Page. Pick an Action.";
+            }
+
+            return legacyActionMessage;
+        }
+
         private void DrawPageIdSelector(SerializedProperty pageId)
         {
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Target Page", EditorStyles.miniBoldLabel);
+            selectorMode = PagesEditorGUI.SegmentedMode(selectorMode, PagesEditorGUI.DropdownOrAsset);
+            EditorGUILayout.Space(2);
+
+            if (selectorMode == 0)
             {
-                EditorGUILayout.LabelField("Target Page", EditorStyles.miniBoldLabel);
-                selectorMode = DrawSegmentedMode(selectorMode,
-                    new GUIContent("Dropdown", "Pick from PageId assets in the folder"),
-                    new GUIContent("Asset", "Manually assign a specific PageId asset"));
-                EditorGUILayout.Space(2);
-
-                if (selectorMode == 0)
+                if (PagesEditorGUI.PageIdPopup(pageId, PageContent))
                 {
-                    PageId[] ids = FindAllPageIds(null);
-                    if (ids.Length == 0)
-                    {
-                        EditorGUILayout.HelpBox(
-                            "No PageId assets in the project.\nCreate a PageId manually or generate via menu: Tools → Neo → Pages → Generate Default PageIds.",
-                            MessageType.Warning);
-                        return;
-                    }
-
-                    string[] labels = PageIdEditorCache.GetLabels(null);
-
-                    var current = pageId.objectReferenceValue as PageId;
-                    int currentIdx = current == null ? 0 : Array.FindIndex(ids, x => x == current) + 1;
-                    if (currentIdx < 0)
-                    {
-                        currentIdx = 0;
-                    }
-
-                    int newIdx = EditorGUILayout.Popup(new GUIContent("Page"), currentIdx, labels);
-                    if (newIdx == 0)
-                    {
-                        pageId.objectReferenceValue = null;
-                    }
-                    else if (newIdx > 0 && newIdx <= ids.Length)
-                    {
-                        pageId.objectReferenceValue = ids[newIdx - 1];
-                    }
-
-                    EditorGUILayout.LabelField(SourceLabelAll, EditorStyles.miniLabel);
-                }
-                else
-                {
-                    EditorGUILayout.PropertyField(pageId, new GUIContent("Page Id (asset)"));
+                    EditorGUILayout.LabelField(PagesEditorGUI.SourceLabelAll, EditorStyles.miniLabel);
                 }
             }
-        }
-
-        private static int DrawSegmentedMode(int value, GUIContent left, GUIContent right)
-        {
-            using (new EditorGUILayout.HorizontalScope())
+            else
             {
-                int selected = value;
-
-                Color prevBg = GUI.backgroundColor;
-                Color prevContent = GUI.contentColor;
-
-                DrawModeButton(0, left, ref selected, EditorStyles.miniButtonLeft);
-                DrawModeButton(1, right, ref selected, EditorStyles.miniButtonRight);
-
-                GUI.backgroundColor = prevBg;
-                GUI.contentColor = prevContent;
-
-                return selected;
+                EditorGUILayout.PropertyField(pageId, PageAssetContent);
             }
-        }
 
-        private static void DrawModeButton(int index, GUIContent content, ref int selected, GUIStyle style)
-        {
-            bool isSelected = selected == index;
-            GUI.backgroundColor = isSelected ? GetSelectedBackgroundColor() : Color.white;
-            GUI.contentColor = isSelected ? GetSelectedContentColor() : Color.white;
-
-            if (GUILayout.Button(content, style, GUILayout.Height(ModeButtonHeight)))
-            {
-                selected = index;
-            }
-        }
-
-        private static Color GetSelectedBackgroundColor()
-        {
-            return EditorGUIUtility.isProSkin
-                ? new Color(0.25f, 0.55f, 0.95f, 1f)
-                : new Color(0.20f, 0.45f, 0.90f, 1f);
-        }
-
-        private static Color GetSelectedContentColor()
-        {
-            return Color.white;
-        }
-
-        private static PageId[] FindAllPageIds(string folder = null)
-        {
-            return PageIdEditorCache.GetIds(folder);
+            EditorGUILayout.EndVertical();
         }
     }
 }

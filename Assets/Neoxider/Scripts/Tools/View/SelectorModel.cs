@@ -11,6 +11,9 @@ namespace Neo.Tools
     {
         private static readonly Random SharedRandom = new();
 
+        // WHY: a cached delegate; converting the method group on every SetRandom call allocated a new delegate.
+        private static readonly Func<int, int, int> DefaultRandomRangeFunc = DefaultRandomRange;
+
         private readonly HashSet<int> _excludedIndices = new();
         private readonly HashSet<int> _usedIndicesForUnique = new();
 
@@ -87,6 +90,65 @@ namespace Neo.Tools
             IEnumerable<int> excludedIndices,
             IEnumerable<int> usedIndicesForUnique)
         {
+            ConfigureScalars(count, currentIndex, indexOffset, loop, fillMode, allowEmptyEffectiveIndex,
+                uniqueSelectionMode, resetUniqueWhenCycleComplete);
+            SetExcludedIndices(excludedIndices);
+            SetUsedIndicesForUnique(usedIndicesForUnique);
+        }
+
+        /// <summary>
+        ///     <see cref="Configure"/> for an owner that passes its own private sets: same validation and result,
+        ///     but the sets are copied in place instead of through a defensive intermediate collection.
+        /// </summary>
+        /// <remarks>
+        ///     WHY: <see cref="Selector"/> re-synchronizes the model before every command; materializing two
+        ///     replacement sets each time made every command allocate. A private <see cref="HashSet{T}"/> cannot be
+        ///     a deferred, self-derived or throwing input, so the defensive copy buys nothing there.
+        /// </remarks>
+        internal void ConfigureFromOwnedSets(
+            int count,
+            int currentIndex,
+            int indexOffset,
+            bool loop,
+            bool fillMode,
+            bool allowEmptyEffectiveIndex,
+            bool uniqueSelectionMode,
+            bool resetUniqueWhenCycleComplete,
+            HashSet<int> excludedIndices,
+            HashSet<int> usedIndicesForUnique)
+        {
+            ConfigureScalars(count, currentIndex, indexOffset, loop, fillMode, allowEmptyEffectiveIndex,
+                uniqueSelectionMode, resetUniqueWhenCycleComplete);
+            CopySet(excludedIndices, _excludedIndices);
+            CopySet(usedIndicesForUnique, _usedIndicesForUnique);
+        }
+
+        /// <summary>
+        ///     Replaces the contents of <paramref name="destination"/> with the excluded indices, in place.
+        /// </summary>
+        internal void CopyExcludedIndicesTo(HashSet<int> destination)
+        {
+            CopySet(_excludedIndices, destination);
+        }
+
+        /// <summary>
+        ///     Replaces the contents of <paramref name="destination"/> with the used unique indices, in place.
+        /// </summary>
+        internal void CopyUsedIndicesForUniqueTo(HashSet<int> destination)
+        {
+            CopySet(_usedIndicesForUnique, destination);
+        }
+
+        private void ConfigureScalars(
+            int count,
+            int currentIndex,
+            int indexOffset,
+            bool loop,
+            bool fillMode,
+            bool allowEmptyEffectiveIndex,
+            bool uniqueSelectionMode,
+            bool resetUniqueWhenCycleComplete)
+        {
             int normalizedCount = Math.Max(0, count);
             GetBounds(normalizedCount, indexOffset, allowEmptyEffectiveIndex);
             Count = normalizedCount;
@@ -97,8 +159,25 @@ namespace Neo.Tools
             AllowEmptyEffectiveIndex = allowEmptyEffectiveIndex;
             UniqueSelectionMode = uniqueSelectionMode;
             ResetUniqueWhenCycleComplete = resetUniqueWhenCycleComplete;
-            SetExcludedIndices(excludedIndices);
-            SetUsedIndicesForUnique(usedIndicesForUnique);
+        }
+
+        private static void CopySet(HashSet<int> source, HashSet<int> destination)
+        {
+            if (ReferenceEquals(source, destination))
+            {
+                return;
+            }
+
+            destination.Clear();
+            if (source == null)
+            {
+                return;
+            }
+
+            foreach (int index in source)
+            {
+                destination.Add(index);
+            }
         }
 
         public (int min, int max) GetBounds()
@@ -137,22 +216,28 @@ namespace Neo.Tools
 
         public int GetEffectiveIndex()
         {
-            if (Count <= 0)
+            return GetEffectiveIndex(Count, CurrentIndex, IndexOffset, AllowEmptyEffectiveIndex);
+        }
+
+        internal static int GetEffectiveIndex(int count, int currentIndex, int indexOffset,
+            bool allowEmptyEffectiveIndex)
+        {
+            if (count <= 0)
             {
                 return 0;
             }
 
-            int minEffective = AllowEmptyEffectiveIndex ? -1 : 0;
-            GetBounds();
-            long effectiveIndex = (long)CurrentIndex + IndexOffset;
+            int minEffective = allowEmptyEffectiveIndex ? -1 : 0;
+            GetBounds(count, indexOffset, allowEmptyEffectiveIndex);
+            long effectiveIndex = (long)currentIndex + indexOffset;
             if (effectiveIndex < minEffective)
             {
                 return minEffective;
             }
 
-            if (effectiveIndex >= Count)
+            if (effectiveIndex >= count)
             {
-                return Count - 1;
+                return count - 1;
             }
 
             return (int)effectiveIndex;
@@ -160,18 +245,51 @@ namespace Neo.Tools
 
         public int GetLogicalActiveCount()
         {
-            if (Count <= 0)
+            return GetLogicalActiveCount(Count, CurrentIndex, IndexOffset, FillMode, AllowEmptyEffectiveIndex);
+        }
+
+        internal static int GetLogicalActiveCount(int count, int currentIndex, int indexOffset, bool fillMode,
+            bool allowEmptyEffectiveIndex)
+        {
+            if (count <= 0)
             {
                 return 0;
             }
 
-            int effectiveIndex = GetEffectiveIndex();
+            int effectiveIndex = GetEffectiveIndex(count, currentIndex, indexOffset, allowEmptyEffectiveIndex);
             if (effectiveIndex < 0)
             {
                 return 0;
             }
 
-            return FillMode ? Math.Min(Count, effectiveIndex + 1) : 1;
+            return fillMode ? Math.Min(count, effectiveIndex + 1) : 1;
+        }
+
+        /// <summary>
+        ///     Whether the item at a zero-based item position is on for the current selection: only the effective item,
+        ///     or every item up to and including it in fill mode. Nothing is on when the effective index is -1 or
+        ///     <see cref="Count"/> is zero. This is the rule <see cref="Selector"/> applies to its items.
+        /// </summary>
+        /// <param name="itemIndex">Item position (logical index plus offset), not a logical index.</param>
+        /// <exception cref="ArgumentOutOfRangeException">The logical bounds do not fit in Int32.</exception>
+        public bool IsItemActive(int itemIndex)
+        {
+            if (Count <= 0)
+            {
+                return false;
+            }
+
+            return IsItemActive(itemIndex, GetEffectiveIndex(), FillMode);
+        }
+
+        internal static bool IsItemActive(int itemIndex, int effectiveIndex, bool fillMode)
+        {
+            if (effectiveIndex < 0 || itemIndex < 0)
+            {
+                return false;
+            }
+
+            return fillMode ? itemIndex <= effectiveIndex : itemIndex == effectiveIndex;
         }
 
         public SelectorModelResult Next()
@@ -292,15 +410,15 @@ namespace Neo.Tools
                 return SelectorModelResult.NoItems;
             }
 
-            randomRange ??= DefaultRandomRange;
+            randomRange ??= DefaultRandomRangeFunc;
             (int min, int max) = GetBounds();
             if (min > max)
             {
                 return SelectorModelResult.NoChange;
             }
 
-            List<int> availableNonExcluded = GetAvailableNonExcluded(min, max);
-            if (availableNonExcluded.Count == 0)
+            int availableCount = CountCandidates(min, max, false);
+            if (availableCount == 0)
             {
                 return SelectorModelResult.NoChange;
             }
@@ -310,20 +428,19 @@ namespace Neo.Tools
                 return SetRandomUnique(min, max, deactivateOthers, randomRange);
             }
 
-            if (availableNonExcluded.Count == 1)
+            if (availableCount == 1)
             {
-                CurrentIndex = availableNonExcluded[0];
+                CurrentIndex = GetCandidate(min, max, 0, false);
                 MarkIndexUsedInUniqueMode(CurrentIndex);
                 return SelectorModelResult.Changed(deactivateOthers: deactivateOthers);
             }
 
-            int pick = randomRange(0, availableNonExcluded.Count);
-            pick = Math.Clamp(pick, 0, availableNonExcluded.Count - 1);
-            int newIndex = availableNonExcluded[pick];
-            if (newIndex == CurrentIndex && availableNonExcluded.Count > 1)
+            int pick = randomRange(0, availableCount);
+            pick = Math.Clamp(pick, 0, availableCount - 1);
+            int newIndex = GetCandidate(min, max, pick, false);
+            if (newIndex == CurrentIndex)
             {
-                int next = (pick + 1) % availableNonExcluded.Count;
-                newIndex = availableNonExcluded[next];
+                newIndex = GetCandidate(min, max, (pick + 1) % availableCount, false);
             }
 
             CurrentIndex = newIndex;
@@ -461,65 +578,79 @@ namespace Neo.Tools
         private SelectorModelResult SetRandomUnique(int min, int max, bool deactivateOthers,
             Func<int, int, int> randomRange)
         {
-            List<int> available = new();
-            for (long candidate = min; candidate <= max; candidate++)
-            {
-                int i = (int)candidate;
-                if (!_usedIndicesForUnique.Contains(i) && !_excludedIndices.Contains(i))
-                {
-                    available.Add(i);
-                }
-            }
-
+            int availableCount = CountCandidates(min, max, true);
             bool cycleComplete = false;
             bool uniqueReset = false;
-            if (available.Count == 0)
+            if (availableCount == 0)
             {
                 cycleComplete = true;
-                if (ResetUniqueWhenCycleComplete)
-                {
-                    _usedIndicesForUnique.Clear();
-                    uniqueReset = true;
-                    for (long candidate = min; candidate <= max; candidate++)
-                    {
-                        int i = (int)candidate;
-                        if (!_excludedIndices.Contains(i))
-                        {
-                            available.Add(i);
-                        }
-                    }
-                }
-                else
+                if (!ResetUniqueWhenCycleComplete)
                 {
                     return SelectorModelResult.CycleCompleteNoChange;
                 }
+
+                _usedIndicesForUnique.Clear();
+                uniqueReset = true;
+                availableCount = CountCandidates(min, max, true);
             }
 
-            if (available.Count == 0)
+            if (availableCount == 0)
             {
                 return new SelectorModelResult(false, false, cycleComplete, uniqueReset, deactivateOthers);
             }
 
-            int pick = randomRange(0, available.Count);
-            pick = Math.Clamp(pick, 0, available.Count - 1);
-            CurrentIndex = available[pick];
+            int pick = randomRange(0, availableCount);
+            pick = Math.Clamp(pick, 0, availableCount - 1);
+            CurrentIndex = GetCandidate(min, max, pick, true);
             _usedIndicesForUnique.Add(CurrentIndex);
             return new SelectorModelResult(true, false, cycleComplete, uniqueReset, deactivateOthers);
         }
 
-        private List<int> GetAvailableNonExcluded(int min, int max)
+        // WHY: random picks count the candidates and then walk to the picked one instead of materializing a candidate
+        // list, so SetRandom does not allocate per call. The walk visits indices in ascending order, which is the
+        // order the former list had, so the same randomRange result picks the same index.
+        private int CountCandidates(int min, int max, bool skipUsed)
         {
-            List<int> result = new();
+            int count = 0;
             for (long candidate = min; candidate <= max; candidate++)
             {
-                int i = (int)candidate;
-                if (!_excludedIndices.Contains(i))
+                if (IsRandomCandidate((int)candidate, skipUsed))
                 {
-                    result.Add(i);
+                    count++;
                 }
             }
 
-            return result;
+            return count;
+        }
+
+        // WHY: the walk falls back to the last candidate (or the current index) instead of throwing, because a
+        // randomRange callback that changes the sets between counting and walking must not crash a selection.
+        private int GetCandidate(int min, int max, int ordinal, bool skipUsed)
+        {
+            int last = CurrentIndex;
+            for (long candidate = min; candidate <= max; candidate++)
+            {
+                int index = (int)candidate;
+                if (!IsRandomCandidate(index, skipUsed))
+                {
+                    continue;
+                }
+
+                if (ordinal == 0)
+                {
+                    return index;
+                }
+
+                last = index;
+                ordinal--;
+            }
+
+            return last;
+        }
+
+        private bool IsRandomCandidate(int index, bool skipUsed)
+        {
+            return !_excludedIndices.Contains(index) && (!skipUsed || !_usedIndicesForUnique.Contains(index));
         }
 
         private void MarkIndexUsedInUniqueMode(int index)

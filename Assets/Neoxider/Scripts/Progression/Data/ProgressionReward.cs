@@ -12,16 +12,36 @@ namespace Neo.Progression
     [Serializable]
     public sealed class ProgressionReward
     {
-        [SerializeField] private ProgressionRewardType _rewardType;
-        [SerializeField] [Min(0)] private int _amount = 1;
-        [SerializeField] [Min(0f)] private float _moneyAmount = 1f;
-        [SerializeField] private Money _moneyTarget;
-        [SerializeField] private Collection _collectionTarget;
-        [SerializeField] private ItemCollectionData _collectionItem;
-        [SerializeField] private QuestManager _questManager;
-        [SerializeField] private QuestConfig _quest;
-        [SerializeField] [TextArea(2, 4)] private string _description;
-        [SerializeField] private bool _isPremium;
+        [Tooltip("What this reward grants.")] [SerializeField]
+        private ProgressionRewardType _rewardType;
+
+        [Tooltip("Amount for Xp and PerkPoints rewards.")] [SerializeField] [Min(0)]
+        private int _amount = 1;
+
+        [Tooltip("Amount for Money rewards.")] [SerializeField] [Min(0f)]
+        private float _moneyAmount = 1f;
+
+        [Tooltip("Scene-only Money target. Leave empty inside assets: Money.I is used.")] [SerializeField]
+        private Money _moneyTarget;
+
+        [Tooltip("Scene-only Collection target. Leave empty inside assets: Collection.I is used.")] [SerializeField]
+        private Collection _collectionTarget;
+
+        [Tooltip("Collection item unlocked by UnlockCollectionItem rewards.")] [SerializeField]
+        private ItemCollectionData _collectionItem;
+
+        [Tooltip("Scene-only QuestManager target. Leave empty inside assets: QuestManager.Instance is used.")]
+        [SerializeField]
+        private QuestManager _questManager;
+
+        [Tooltip("Quest accepted by AcceptQuest rewards.")] [SerializeField]
+        private QuestConfig _quest;
+
+        [Tooltip("Designer note; not used at runtime.")] [SerializeField] [TextArea(2, 4)]
+        private string _description;
+
+        [Tooltip("Granted only when the profile owns the premium track (see ActivatePremium).")] [SerializeField]
+        private bool _isPremium;
 
         /// <summary>
         ///     Gets whether this reward is only granted to premium track/pass owners.

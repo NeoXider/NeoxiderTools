@@ -135,7 +135,8 @@ namespace Neo.Editor.Tests
             float initialBalance, float amount, float expectedBalance)
         {
             PrepareObservedWallet(initialBalance);
-            _money.MaxMoney = 1f; // Existing overflow is spendable above the income cap.
+            // WHY: an existing balance above the income cap stays spendable.
+            _money.MaxMoney = 1f;
             Assert.That(_money.CanSpend(amount), Is.True);
             Assert.That(_money.CanConfirmSpendNow(amount), Is.True);
 #if MIRROR
@@ -197,7 +198,7 @@ namespace Neo.Editor.Tests
             MethodInfo limiter = typeof(Money).GetMethod("RateLimit", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That((bool)limiter.Invoke(_money, new object[] { sender }), Is.False,
                 "The rejected spend must leave the next eligible operation's window available.");
-            // This invokes the woven server body locally; it is not remote admission or RPC-delivery evidence.
+            // WHY: this invokes the woven server body locally; it is not remote admission or RPC-delivery evidence.
         }
 
         [TestCase(0)]

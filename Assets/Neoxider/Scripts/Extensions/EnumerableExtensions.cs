@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -92,7 +93,23 @@ namespace Neo.Extensions
         /// </summary>
         public static bool IsNullOrEmpty<T>(this IEnumerable<T> collection)
         {
-            return collection == null || !collection.Any();
+            if (collection == null)
+            {
+                return true;
+            }
+
+            // WHY: sized collections answer from Count without allocating an enumerator.
+            switch (collection)
+            {
+                case ICollection<T> typed:
+                    return typed.Count == 0;
+                case IReadOnlyCollection<T> readOnly:
+                    return readOnly.Count == 0;
+                case ICollection untyped:
+                    return untyped.Count == 0;
+                default:
+                    return !collection.Any();
+            }
         }
 
         /// <summary>
@@ -121,7 +138,7 @@ namespace Neo.Extensions
             StringBuilder sb = new("[");
             for (int i = 0; i < list.Count; i++)
             {
-                sb.Append(i + ": ");
+                sb.Append(i).Append(": ");
                 sb.Append(list[i]);
                 if (i < list.Count - 1)
                 {

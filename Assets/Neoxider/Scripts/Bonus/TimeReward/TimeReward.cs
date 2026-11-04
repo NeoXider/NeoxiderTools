@@ -105,6 +105,7 @@ namespace Neo.Bonus
             public UnityEvent OnTimerResumed = new();
 
             private Coroutine _timerRoutine;
+            private WaitForSecondsRealtime _tickWait;
             private bool _waitingForManualStart;
             private bool _claimInProgress;
             private bool canTakeReward;
@@ -159,9 +160,31 @@ namespace Neo.Bonus
                 RefreshTimeState();
             }
 
+            private void OnEnable()
+            {
+                // WHY: OnDisable only suspends the update loop; a timer that is still running resumes ticking here,
+                // otherwise the countdown would freeze until someone called StartTime again.
+                if (!IsTimerRunning)
+                {
+                    return;
+                }
+
+                if (_timerRoutine == null)
+                {
+                    _timerRoutine = StartCoroutine(TimerRoutine());
+                }
+
+                if (!IsTimerPaused)
+                {
+                    RefreshTimeState();
+                }
+            }
+
             private void OnDisable()
             {
-                StopTimeInternal(false);
+                // WHY: an inactive behaviour cannot run coroutines, but the timer keeps its running/paused state, so
+                // StartTime/PauseTime/StopTime called while inactive take effect and are honoured on reactivation.
+                SuspendTimerRoutine();
             }
 
             private void OnValidate()
@@ -246,32 +269,12 @@ namespace Neo.Bonus
 
                 if (!TryGetLastRewardTimeUtc(out DateTime lastUtc))
                 {
-                    return CapToMaxPerTake(_rewardAvailableOnStart ? 1 : 0, _maxRewardsPerTake);
+                    return CooldownSchedule.CountClaimable(false, default, secondsToWaitForReward, default,
+                        _maxRewardsPerTake, _rewardAvailableOnStart);
                 }
 
-                DateTime now = NeoTrustedTime.UtcNow;
-                int accumulated = GetAccumulatedClaimCount(lastUtc, secondsToWaitForReward, now);
-                return CapToMaxPerTake(accumulated, _maxRewardsPerTake);
-            }
-
-            private static int GetAccumulatedClaimCount(DateTime lastClaimUtc, float cooldownSeconds, DateTime nowUtc)
-            {
-                return lastClaimUtc.GetAccumulatedClaimCount(cooldownSeconds, nowUtc);
-            }
-
-            private static int CapToMaxPerTake(int accumulated, int maxPerTake)
-            {
-                if (accumulated <= 0)
-                {
-                    return 0;
-                }
-
-                if (maxPerTake < 0)
-                {
-                    return accumulated;
-                }
-
-                return Math.Min(accumulated, maxPerTake);
+                return CooldownSchedule.CountClaimable(true, lastUtc, secondsToWaitForReward, NeoTrustedTime.UtcNow,
+                    _maxRewardsPerTake, _rewardAvailableOnStart);
             }
 
             private static DateTime AdvanceLastClaimTime(DateTime lastClaimUtc, int claimsGiven, float cooldownSeconds)
@@ -310,7 +313,7 @@ namespace Neo.Bonus
                 _claimInProgress = true;
                 try
                 {
-                    // Persist consumption before exposing the grant to event listeners.
+                    // WHY: Persist consumption before exposing the grant to event listeners.
                     if (_saveTimeOnTakeReward)
                     {
                         if (TryGetLastRewardTimeUtc(out DateTime lastUtc))
@@ -397,18 +400,32 @@ namespace Neo.Bonus
 
                 IsTimerRunning = true;
                 IsTimerPaused = false;
-                _timerRoutine = StartCoroutine(TimerRoutine());
+                if (isActiveAndEnabled)
+                {
+                    // WHY: while inactive the routine is deferred to OnEnable; starting it here would fail on an
+                    // inactive object and leave a second routine running once the object is enabled.
+                    _timerRoutine = StartCoroutine(TimerRoutine());
+                }
+
                 OnTimerStarted?.Invoke();
                 RefreshTimeState();
             }
 
             /// <summary>
-            ///     Stops timer updates.
+            ///     Stops timer updates. A timer stopped while its object is inactive stays stopped on reactivation.
             /// </summary>
             [Button]
             public void StopTime()
             {
-                StopTimeInternal(true);
+                SuspendTimerRoutine();
+                bool wasRunning = IsTimerRunning;
+                IsTimerRunning = false;
+                IsTimerPaused = false;
+
+                if (wasRunning)
+                {
+                    OnTimerStopped?.Invoke();
+                }
             }
 
             /// <summary>
@@ -553,7 +570,19 @@ namespace Neo.Bonus
             {
                 while (IsTimerRunning)
                 {
-                    yield return new WaitForSecondsRealtime(GetSafeUpdateInterval());
+                    // WHY: one reusable wait per component; it re-arms itself after completing.
+                    float interval = GetSafeUpdateInterval();
+                    if (_tickWait == null)
+                    {
+                        _tickWait = new WaitForSecondsRealtime(interval);
+                    }
+                    else
+                    {
+                        _tickWait.waitTime = interval;
+                        _tickWait.Reset();
+                    }
+
+                    yield return _tickWait;
 
                     if (IsTimerRunning && !IsTimerPaused)
                     {
@@ -562,21 +591,12 @@ namespace Neo.Bonus
                 }
             }
 
-            private void StopTimeInternal(bool invokeEvent)
+            private void SuspendTimerRoutine()
             {
                 if (_timerRoutine != null)
                 {
                     StopCoroutine(_timerRoutine);
                     _timerRoutine = null;
-                }
-
-                bool wasRunning = IsTimerRunning;
-                IsTimerRunning = false;
-                IsTimerPaused = false;
-
-                if (invokeEvent && wasRunning)
-                {
-                    OnTimerStopped?.Invoke();
                 }
             }
 

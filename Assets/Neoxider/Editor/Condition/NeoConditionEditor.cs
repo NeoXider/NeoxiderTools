@@ -66,6 +66,82 @@ namespace Neo.Editor.Condition
         private static readonly Color OtherSourceAccent = new(0.96f, 0.46f, 0.70f, 1f);
         private static readonly Color ValueAccent = new(0.34f, 0.90f, 0.50f, 1f);
 
+        private static readonly string[] GameObjectPropertyDisplayNames = BuildGameObjectPropertyDisplayNames();
+
+        private static readonly GUIContent LogicModeContent = new("Logic Mode");
+        private static readonly GUIContent CheckModeContent = new("Check Mode");
+        private static readonly GUIContent IntervalContent = new("Interval (sec)");
+
+        private static readonly GUIContent UseUnscaledTimeContent = new("Use Unscaled Time",
+            "Count the interval in real time, so it keeps running while Time.timeScale is 0 (pause menus).");
+
+        private static readonly GUIContent CheckOnStartContent = new("Check On Start");
+        private static readonly GUIContent OnlyOnChangeContent = new("Only On Change");
+
+        private static readonly GUIContent FindByNameContent = new("Find By Name",
+            "Find a GameObject by name in the scene (GameObject.Find). Cached while the object exists.");
+
+        private static readonly GUIContent ObjectNameContent =
+            new("Object Name", "GameObject name to resolve via GameObject.Find().");
+
+        private static readonly GUIContent WaitForObjectContent = new("Wait For Object",
+            "Wait until the object appears in the scene (no warning). Useful for prefabs spawned later.");
+
+        private static readonly GUIContent FindRetryIntervalContent = new("Find Retry Interval (sec)",
+            "How often GameObject.Find runs again while the object is still missing. Non-blocking. 0 = retry every check. Default 1 s.");
+
+        private static readonly GUIContent PrefabPreviewContent = new("Prefab Preview",
+            "Drag a prefab from Project to configure components/properties before the instance exists.");
+
+        private static readonly GUIContent SourceObjectContent = new("Source Object");
+
+        private static readonly GUIContent CompareWithContent = new("Compare With",
+            "Constant: compare to a number or text. Other Object: compare to another object's field/property. If Other Source Object is empty, the same object as on the left is used.");
+
+        private static readonly GUIContent OtherFindByNameContent = new("Other: Find By Name");
+        private static readonly GUIContent OtherObjectNameContent = new("Other Object Name");
+        private static readonly GUIContent OtherWaitForObjectContent = new("Other: Wait For Object");
+
+        private static readonly GUIContent OtherFindRetryIntervalContent = new("Other: Find Retry Interval (sec)",
+            "How often Other GameObject.Find runs while that object is missing. 0 = every check. Default 1 s.");
+
+        private static readonly GUIContent OtherSourceObjectContent = new("Other Source Object",
+            "Empty = same object as on the left (compare two fields on one object).");
+
+        private static readonly GUIContent ArgumentIntContent = new("Argument (int)");
+        private static readonly GUIContent ArgumentFloatContent = new("Argument (float)");
+        private static readonly GUIContent ArgumentStringContent = new("Argument (string)");
+
+        // WHY: every popup below used to copy its option list into a fresh array on each IMGUI event. The
+        // member and component lists are buffers reused across calls (IMGUI is single-threaded and these
+        // helpers never nest); the arrays handed to the popups come from a cache that only allocates when
+        // the option text actually changes.
+        private static readonly List<string> ComponentNamesBuffer = new();
+        private static readonly List<string> ComponentTypeNamesBuffer = new();
+        private static readonly List<string> MemberNamesBuffer = new();
+        private static readonly List<ValueType> MemberTypesBuffer = new();
+        private static readonly List<string> MemberLabelsBuffer = new();
+        private static readonly List<bool> MemberIsMethodBuffer = new();
+        private static readonly List<ArgumentKind> MemberArgumentKindsBuffer = new();
+
+        // WHY: the live "Current Value" rows ran GetMethods / GetProperty / GetField on every repaint in Play
+        // Mode. Members of a type only change with a domain reload, so lookups are cached per type and name.
+        private static readonly Dictionary<(Type, string), MemberInfo> ValueMemberCache = new();
+        private static readonly Dictionary<(Type, string, ArgumentKind), MethodInfo> ValueMethodCache = new();
+        private static readonly Dictionary<string, PropertyInfo> GameObjectPropertyCache = new(StringComparer.Ordinal);
+        private static readonly object[] SingleArgumentBuffer = new object[1];
+
+        private static string[] BuildGameObjectPropertyDisplayNames()
+        {
+            string[] names = new string[GameObjectProperties.Length];
+            for (int i = 0; i < GameObjectProperties.Length; i++)
+            {
+                names[i] = GameObjectProperties[i].DisplayName;
+            }
+
+            return names;
+        }
+
         /// <summary>
         ///     Enables custom UI inside the Neoxider-branded inspector style.
         /// </summary>
@@ -89,29 +165,44 @@ namespace Neo.Editor.Condition
 
             DrawConditionEditorHints();
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_logicMode"), new GUIContent("Logic Mode"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_logicMode"), LogicModeContent);
 
             EditorGUILayout.Space(6);
 
-            DrawConditionsList();
+            if (serializedObject.isEditingMultipleObjects)
+            {
+                // WHY: the condition rows resolve components, members and live values from the first selected
+                // object only. Editing them for a mixed selection silently copied that object's choices onto
+                // every other one, so the rows are left to single selection.
+                EditorGUILayout.HelpBox(
+                    "Select a single NeoCondition to edit its conditions. Shared settings below apply to every selected object.",
+                    MessageType.Info);
+            }
+            else
+            {
+                DrawConditionsList();
+            }
 
             EditorGUILayout.Space(6);
 
             SerializedProperty checkModeProp = serializedObject.FindProperty("_checkMode");
-            EditorGUILayout.PropertyField(checkModeProp, new GUIContent("Check Mode"));
+            EditorGUILayout.PropertyField(checkModeProp, CheckModeContent);
 
-            if (checkModeProp.enumValueIndex == (int)CheckMode.Interval)
+            if (checkModeProp.hasMultipleDifferentValues || checkModeProp.enumValueIndex == (int)CheckMode.Interval)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("_checkInterval"),
-                    new GUIContent("Interval (sec)"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_checkInterval"), IntervalContent);
+                SerializedProperty unscaledTimeProp = serializedObject.FindProperty("_useUnscaledTime");
+                if (unscaledTimeProp != null)
+                {
+                    EditorGUILayout.PropertyField(unscaledTimeProp, UseUnscaledTimeContent);
+                }
+
                 EditorGUI.indentLevel--;
             }
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_checkOnStart"),
-                new GUIContent("Check On Start"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_onlyOnChange"),
-                new GUIContent("Only On Change"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_checkOnStart"), CheckOnStartContent);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_onlyOnChange"), OnlyOnChangeContent);
 
             EditorGUILayout.Space(6);
 
@@ -162,8 +253,7 @@ namespace Neo.Editor.Condition
             SerializedProperty conditionsProp = serializedObject.FindProperty("_conditions");
 
             EditorGUILayout.BeginHorizontal();
-            GUIStyle headerStyle = new(EditorStyles.boldLabel) { fontSize = 13 };
-            EditorGUILayout.LabelField($"Conditions ({conditionsProp.arraySize})", headerStyle);
+            EditorGUILayout.LabelField($"Conditions ({conditionsProp.arraySize})", Styles.ListHeader);
             GUILayout.FlexibleSpace();
 
             Color oldBg = GUI.backgroundColor;
@@ -238,7 +328,7 @@ namespace Neo.Editor.Condition
             SerializedProperty otherArgFloatProp = entryProp.FindPropertyRelative("_otherPropertyArgumentFloat");
             SerializedProperty otherArgStringProp = entryProp.FindPropertyRelative("_otherPropertyArgumentString");
 
-            var condition = (NeoCondition)target;
+            NeoCondition condition = (NeoCondition)target;
             SerializedProperty logicProp = serializedObject.FindProperty("_logicMode");
             bool isGameObjectMode = sourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
             bool isSceneSearch = useSceneSearchProp.boolValue;
@@ -271,24 +361,13 @@ namespace Neo.Editor.Condition
 
             if (index > 0)
             {
-                string logicLabel = logicProp.enumValueIndex == 0 ? "AND" : "OR";
-                Color logicColor = logicProp.enumValueIndex == 0
-                    ? new Color(0.3f, 0.9f, 1f)
-                    : new Color(1f, 0.9f, 0.3f);
-                GUIStyle logicStyle = new(EditorStyles.miniBoldLabel)
-                {
-                    fontSize = 11,
-                    normal = { textColor = logicColor }
-                };
-                GUILayout.Label(logicLabel, logicStyle, GUILayout.Width(32));
+                bool isAnd = logicProp.enumValueIndex == 0;
+                string logicLabel = isAnd ? "AND" : "OR";
+                GUILayout.Label(logicLabel, Styles.Logic(Styles.LogicColor(isAnd)), GUILayout.Width(32));
             }
             else
             {
-                GUIStyle idxStyle = new(EditorStyles.miniLabel)
-                {
-                    normal = { textColor = new Color(1f, 1f, 1f, 0.5f) }
-                };
-                GUILayout.Label($"#{index}", idxStyle, GUILayout.Width(32));
+                GUILayout.Label("#0", Styles.Index, GUILayout.Width(32));
             }
 
             string summary = BuildConditionSummary(sourceModeProp, useSceneSearchProp, searchNameProp,
@@ -296,19 +375,20 @@ namespace Neo.Editor.Condition
                 thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp, thresholdStringProp,
                 otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp, otherCompTypeProp, otherPropNameProp,
                 invertProp);
-            GUIStyle summaryStyle = new(EditorStyles.miniLabel)
-            {
-                fontStyle = FontStyle.Italic,
-                normal = { textColor = new Color(1f, 1f, 1f, 0.6f) }
-            };
-            GUILayout.Label(summary, summaryStyle);
+            GUILayout.Label(summary, Styles.Summary);
 
             GUILayout.FlexibleSpace();
 
             Color oldBg = GUI.backgroundColor;
             GUI.backgroundColor = invertProp.boolValue ? new Color(1f, 0.4f, 0.4f) : Color.gray;
-            invertProp.boolValue =
+            EditorGUI.BeginChangeCheck();
+            bool inverted =
                 GUILayout.Toggle(invertProp.boolValue, "NOT", EditorStyles.miniButton, GUILayout.Width(36));
+            if (EditorGUI.EndChangeCheck())
+            {
+                invertProp.boolValue = inverted;
+            }
+
             GUI.backgroundColor = oldBg;
 
             GUI.backgroundColor = new Color(0.9f, 0.3f, 0.3f);
@@ -346,12 +426,10 @@ namespace Neo.Editor.Condition
             }
 
             EditorGUI.BeginChangeCheck();
-            useSceneSearchProp.boolValue = EditorGUILayout.Toggle(
-                new GUIContent("Find By Name",
-                    "Find a GameObject by name in the scene (GameObject.Find). Cached while the object exists."),
-                useSceneSearchProp.boolValue);
+            bool useSceneSearch = EditorGUILayout.Toggle(FindByNameContent, useSceneSearchProp.boolValue);
             if (EditorGUI.EndChangeCheck())
             {
+                useSceneSearchProp.boolValue = useSceneSearch;
                 compTypeProp.stringValue = "";
                 compIdxProp.intValue = 0;
                 compOccurrenceProp.intValue = 0;
@@ -364,18 +442,18 @@ namespace Neo.Editor.Condition
 
             if (isSceneSearch)
             {
-                EditorGUILayout.PropertyField(searchNameProp,
-                    new GUIContent("Object Name", "GameObject name to resolve via GameObject.Find()."));
+                EditorGUILayout.PropertyField(searchNameProp, ObjectNameContent);
 
-                waitForObjectProp.boolValue = EditorGUILayout.Toggle(
-                    new GUIContent("Wait For Object",
-                        "Wait until the object appears in the scene (no warning). Useful for prefabs spawned later."),
-                    waitForObjectProp.boolValue);
+                EditorGUI.BeginChangeCheck();
+                bool waitForObject = EditorGUILayout.Toggle(WaitForObjectContent, waitForObjectProp.boolValue);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    waitForObjectProp.boolValue = waitForObject;
+                }
 
                 if (findRetryIntervalProp != null)
                 {
-                    EditorGUILayout.PropertyField(findRetryIntervalProp, new GUIContent("Find Retry Interval (sec)",
-                        "How often GameObject.Find runs again while the object is still missing. Non-blocking. 0 = retry every check. Default 1 s."));
+                    EditorGUILayout.PropertyField(findRetryIntervalProp, FindRetryIntervalContent);
                 }
 
                 if (Application.isPlaying && condition != null)
@@ -398,7 +476,7 @@ namespace Neo.Editor.Condition
 
                 if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
                 {
-                    var found = GameObject.Find(searchNameProp.stringValue);
+                    GameObject found = ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue);
                     if (found != null)
                     {
                         targetObj = found;
@@ -408,11 +486,9 @@ namespace Neo.Editor.Condition
                     }
                     else
                     {
-                        EditorGUILayout.PropertyField(prefabPreviewProp,
-                            new GUIContent("Prefab Preview",
-                                "Drag a prefab from Project to configure components/properties before the instance exists."));
+                        EditorGUILayout.PropertyField(prefabPreviewProp, PrefabPreviewContent);
 
-                        var prefab = prefabPreviewProp.objectReferenceValue as GameObject;
+                        GameObject prefab = prefabPreviewProp.objectReferenceValue as GameObject;
                         if (prefab != null)
                         {
                             targetObj = prefab;
@@ -448,7 +524,7 @@ namespace Neo.Editor.Condition
             else
             {
                 EditorGUI.BeginChangeCheck();
-                EditorGUILayout.PropertyField(sourceObjProp, new GUIContent("Source Object"));
+                EditorGUILayout.PropertyField(sourceObjProp, SourceObjectContent);
                 if (EditorGUI.EndChangeCheck())
                 {
                     compTypeProp.stringValue = "";
@@ -567,8 +643,7 @@ namespace Neo.Editor.Condition
             BeginAccentSection("Compare", CompareAccent);
             SerializedProperty otherCompOccurrenceProp = entryProp.FindPropertyRelative("_otherComponentOccurrence");
 
-            EditorGUILayout.PropertyField(thresholdSourceProp, new GUIContent("Compare With",
-                "Constant: compare to a number or text. Other Object: compare to another object's field/property. If Other Source Object is empty, the same object as on the left is used."));
+            EditorGUILayout.PropertyField(thresholdSourceProp, CompareWithContent);
 
             bool isOtherObject = thresholdSourceProp.enumValueIndex == (int)ThresholdSource.OtherObject;
 
@@ -603,33 +678,39 @@ namespace Neo.Editor.Condition
                     }
                 }
 
-                otherUseSceneSearchProp.boolValue = EditorGUILayout.Toggle(
-                    new GUIContent("Other: Find By Name"), otherUseSceneSearchProp.boolValue);
+                EditorGUI.BeginChangeCheck();
+                bool otherUseSceneSearch =
+                    EditorGUILayout.Toggle(OtherFindByNameContent, otherUseSceneSearchProp.boolValue);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    otherUseSceneSearchProp.boolValue = otherUseSceneSearch;
+                }
 
                 GameObject otherTargetObj = null;
                 if (otherUseSceneSearchProp.boolValue)
                 {
-                    EditorGUILayout.PropertyField(otherSearchNameProp, new GUIContent("Other Object Name"));
-                    otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(
-                        new GUIContent("Other: Wait For Object"),
-                        otherWaitForObjectProp.boolValue);
+                    EditorGUILayout.PropertyField(otherSearchNameProp, OtherObjectNameContent);
+                    EditorGUI.BeginChangeCheck();
+                    bool otherWaitForObject =
+                        EditorGUILayout.Toggle(OtherWaitForObjectContent, otherWaitForObjectProp.boolValue);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        otherWaitForObjectProp.boolValue = otherWaitForObject;
+                    }
+
                     if (otherFindRetryIntervalProp != null)
                     {
-                        EditorGUILayout.PropertyField(otherFindRetryIntervalProp,
-                            new GUIContent("Other: Find Retry Interval (sec)",
-                                "How often Other GameObject.Find runs while that object is missing. 0 = every check. Default 1 s."));
+                        EditorGUILayout.PropertyField(otherFindRetryIntervalProp, OtherFindRetryIntervalContent);
                     }
 
                     if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
                     {
-                        otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
+                        otherTargetObj = ComponentBindingInspectorShared.FindSceneObject(otherSearchNameProp.stringValue);
                     }
                 }
                 else
                 {
-                    EditorGUILayout.PropertyField(otherSourceObjProp,
-                        new GUIContent("Other Source Object",
-                            "Empty = same object as on the left (compare two fields on one object)."));
+                    EditorGUILayout.PropertyField(otherSourceObjProp, OtherSourceObjectContent);
                     otherTargetObj = (GameObject)otherSourceObjProp.objectReferenceValue;
                 }
 
@@ -646,7 +727,7 @@ namespace Neo.Editor.Condition
                 if (otherTargetObj != null)
                 {
                     NeoxiderEditorGUI.DrawKeyValueRow("Resolved Object", otherTargetObj.name,
-                        new Color(0.76f, 0.82f, 1f, 1f));
+                        Styles.ReadableAccent(new Color(0.76f, 0.82f, 1f, 1f)));
 
                     bool otherIsGO = otherSourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
                     if (otherIsGO)
@@ -708,7 +789,7 @@ namespace Neo.Editor.Condition
             SerializedProperty thresholdBoolProp,
             SerializedProperty thresholdStringProp)
         {
-            var vt = (ValueType)valueTypeProp.enumValueIndex;
+            ValueType vt = (ValueType)valueTypeProp.enumValueIndex;
 
             if (vt == ValueType.Bool)
             {
@@ -721,8 +802,13 @@ namespace Neo.Editor.Condition
                 }
 
                 int thresholdIdx = thresholdBoolProp.boolValue ? 0 : 1;
+                EditorGUI.BeginChangeCheck();
                 int newThresholdIdx = EditorGUILayout.Popup(thresholdIdx, BoolThresholdNames, GUILayout.Width(60));
-                thresholdBoolProp.boolValue = newThresholdIdx == 0;
+                if (EditorGUI.EndChangeCheck())
+                {
+                    thresholdBoolProp.boolValue = newThresholdIdx == 0;
+                }
+
                 EditorGUILayout.EndHorizontal();
             }
             else
@@ -735,19 +821,37 @@ namespace Neo.Editor.Condition
                     compareOpProp.enumValueIndex = newOp;
                 }
 
+                EditorGUI.BeginChangeCheck();
                 switch (vt)
                 {
                     case ValueType.Int:
-                        thresholdIntProp.intValue =
-                            EditorGUILayout.IntField(thresholdIntProp.intValue, GUILayout.MinWidth(50));
+                        int thresholdInt = EditorGUILayout.IntField(thresholdIntProp.intValue, GUILayout.MinWidth(50));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            thresholdIntProp.intValue = thresholdInt;
+                        }
+
                         break;
                     case ValueType.Float:
-                        thresholdFloatProp.floatValue =
+                        float thresholdFloat =
                             EditorGUILayout.FloatField(thresholdFloatProp.floatValue, GUILayout.MinWidth(50));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            thresholdFloatProp.floatValue = thresholdFloat;
+                        }
+
                         break;
                     case ValueType.String:
-                        thresholdStringProp.stringValue = EditorGUILayout.TextField(thresholdStringProp.stringValue,
+                        string thresholdString = EditorGUILayout.TextField(thresholdStringProp.stringValue,
                             GUILayout.MinWidth(50));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            thresholdStringProp.stringValue = thresholdString;
+                        }
+
+                        break;
+                    default:
+                        EditorGUI.EndChangeCheck();
                         break;
                 }
 
@@ -759,8 +863,8 @@ namespace Neo.Editor.Condition
             SerializedProperty compIdxProp, SerializedProperty compOccurrenceProp, SerializedProperty propNameProp,
             SerializedProperty isMethodProp = null)
         {
-            List<string> names = new();
-            List<string> typeNames = new();
+            List<string> names = ComponentNamesBuffer;
+            List<string> typeNames = ComponentTypeNamesBuffer;
             ComponentBindingInspectorShared.BuildComponentPickLists(targetObj, names, typeNames);
 
             if (names.Count == 0)
@@ -773,7 +877,8 @@ namespace Neo.Editor.Condition
                 compOccurrenceProp.intValue);
 
             EditorGUI.BeginChangeCheck();
-            int newIndex = EditorGUILayout.Popup("Component", currentIndex, names.ToArray());
+            int newIndex = EditorGUILayout.Popup("Component", currentIndex,
+                ComponentBindingInspectorShared.GetPopupOptions(targetObj, names));
             if (EditorGUI.EndChangeCheck())
             {
                 if (newIndex >= 0 && newIndex < typeNames.Count)
@@ -806,11 +911,11 @@ namespace Neo.Editor.Condition
             SerializedProperty argFloatProp = null,
             SerializedProperty argStringProp = null)
         {
-            List<string> propertyNames = new();
-            List<ValueType> propertyTypes = new();
-            List<string> displayNames = new();
-            List<bool> isMethodList = new();
-            List<ArgumentKind> argumentKinds = new();
+            List<string> propertyNames = MemberNamesBuffer;
+            List<ValueType> propertyTypes = MemberTypesBuffer;
+            List<string> displayNames = MemberLabelsBuffer;
+            List<bool> isMethodList = MemberIsMethodBuffer;
+            List<ArgumentKind> argumentKinds = MemberArgumentKindsBuffer;
 
             ComponentBindingInspectorShared.BuildConditionMemberLists(comp, isMethodProp != null, propertyNames,
                 propertyTypes, displayNames, isMethodList, argumentKinds);
@@ -834,7 +939,8 @@ namespace Neo.Editor.Condition
             }
 
             EditorGUI.BeginChangeCheck();
-            int newIndex = EditorGUILayout.Popup("Property", currentIndex, displayNames.ToArray());
+            int newIndex = EditorGUILayout.Popup("Property", currentIndex,
+                ComponentBindingInspectorShared.GetConditionMemberLabels(comp.GetType(), isMethodProp != null));
             if (EditorGUI.EndChangeCheck() || (currentIndex == 0 && string.IsNullOrEmpty(currentPropName)))
             {
                 if (newIndex >= 0 && newIndex < propertyNames.Count)
@@ -870,13 +976,13 @@ namespace Neo.Editor.Condition
             switch ((ArgumentKind)argKindProp.enumValueIndex)
             {
                 case ArgumentKind.Int:
-                    EditorGUILayout.PropertyField(argIntProp, new GUIContent("Argument (int)"));
+                    EditorGUILayout.PropertyField(argIntProp, ArgumentIntContent);
                     break;
                 case ArgumentKind.Float:
-                    EditorGUILayout.PropertyField(argFloatProp, new GUIContent("Argument (float)"));
+                    EditorGUILayout.PropertyField(argFloatProp, ArgumentFloatContent);
                     break;
                 case ArgumentKind.String:
-                    EditorGUILayout.PropertyField(argStringProp, new GUIContent("Argument (string)"));
+                    EditorGUILayout.PropertyField(argStringProp, ArgumentStringContent);
                     break;
             }
 
@@ -886,11 +992,7 @@ namespace Neo.Editor.Condition
         private void DrawGameObjectPropertyDropdown(SerializedProperty propNameProp,
             SerializedProperty valueTypeProp = null)
         {
-            string[] displayNames = new string[GameObjectProperties.Length];
-            for (int i = 0; i < GameObjectProperties.Length; i++)
-            {
-                displayNames[i] = GameObjectProperties[i].DisplayName;
-            }
+            string[] displayNames = GameObjectPropertyDisplayNames;
 
             int currentIndex = -1;
             string currentPropName = propNameProp.stringValue;
@@ -931,8 +1033,12 @@ namespace Neo.Editor.Condition
             object value = null;
             try
             {
-                PropertyInfo prop =
-                    typeof(GameObject).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+                if (!GameObjectPropertyCache.TryGetValue(propertyName, out PropertyInfo prop))
+                {
+                    prop = typeof(GameObject).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+                    GameObjectPropertyCache[propertyName] = prop;
+                }
+
                 if (prop != null && prop.CanRead)
                 {
                     value = prop.GetValue(go);
@@ -999,21 +1105,11 @@ namespace Neo.Editor.Condition
                     new Color(accent.r, accent.g, accent.b, 0.30f));
             }
 
-            GUIStyle titleStyle = new(EditorStyles.miniBoldLabel)
-            {
-                fontSize = 11,
-                normal = { textColor = Color.Lerp(accent, Color.white, 0.20f) }
-            };
-            EditorGUILayout.LabelField(title, titleStyle);
+            EditorGUILayout.LabelField(title, Styles.AccentTitle(Styles.ReadableAccent(accent)));
 
             if (!string.IsNullOrWhiteSpace(subtitle))
             {
-                GUIStyle subtitleStyle = new(EditorStyles.miniLabel)
-                {
-                    wordWrap = true,
-                    normal = { textColor = new Color(0.80f, 0.84f, 0.92f, 0.92f) }
-                };
-                EditorGUILayout.LabelField(subtitle, subtitleStyle);
+                EditorGUILayout.LabelField(subtitle, Styles.AccentSubtitle);
             }
 
             EditorGUILayout.Space(2f);
@@ -1043,11 +1139,7 @@ namespace Neo.Editor.Condition
                 EditorGUI.DrawRect(rect, new Color(accent.r, accent.g, accent.b, 0.08f));
             }
 
-            GUIStyle valueStyle = new(EditorStyles.textField)
-            {
-                fontStyle = FontStyle.Bold
-            };
-            EditorGUI.TextField(rect, label, value, valueStyle);
+            EditorGUI.TextField(rect, label, value, Styles.ReadOnlyValue);
         }
 
         internal static object GetCurrentValueFromComponent(Component comp, string propertyName, bool isMethod,
@@ -1067,49 +1159,96 @@ namespace Neo.Editor.Condition
                     ArgumentKind.String => argStringProp != null ? argStringProp.stringValue : "",
                     _ => argIntProp.intValue
                 };
-                foreach (MethodInfo method in type.GetMethods(flags))
+                MethodInfo method = FindValueMethod(type, propertyName, kind, flags);
+                if (method == null)
                 {
-                    if (method.Name != propertyName || method.GetParameters().Length != 1)
-                    {
-                        continue;
-                    }
-
-                    if (ComponentBindingInspectorShared.TryGetConditionArgumentKind(method.GetParameters()[0]
-                            .ParameterType) != kind)
-                    {
-                        continue;
-                    }
-
-                    try
-                    {
-                        Type parameterType = method.GetParameters()[0].ParameterType;
-                        object converted = Convert.ChangeType(arg, parameterType, CultureInfo.InvariantCulture);
-                        return method.Invoke(comp, new[] { converted });
-                    }
-                    catch
-                    {
-                        return null;
-                    }
+                    return null;
                 }
 
-                return null;
+                try
+                {
+                    Type parameterType = method.GetParameters()[0].ParameterType;
+                    SingleArgumentBuffer[0] = Convert.ChangeType(arg, parameterType, CultureInfo.InvariantCulture);
+                    return method.Invoke(comp, SingleArgumentBuffer);
+                }
+                catch
+                {
+                    return null;
+                }
+                finally
+                {
+                    SingleArgumentBuffer[0] = null;
+                }
             }
 
             try
             {
-                PropertyInfo prop = type.GetProperty(propertyName, flags);
-                if (prop != null && prop.CanRead)
+                MemberInfo member = FindValueMember(type, propertyName, flags);
+                return member switch
                 {
-                    return prop.GetValue(comp);
-                }
-
-                FieldInfo field = type.GetField(propertyName, flags);
-                return field?.GetValue(comp);
+                    PropertyInfo prop => prop.GetValue(comp),
+                    FieldInfo field => field.GetValue(comp),
+                    _ => null
+                };
             }
             catch
             {
                 return null;
             }
+        }
+
+        private static MethodInfo FindValueMethod(Type type, string methodName, ArgumentKind kind, BindingFlags flags)
+        {
+            (Type, string, ArgumentKind) key = (type, methodName, kind);
+            if (ValueMethodCache.TryGetValue(key, out MethodInfo cached))
+            {
+                return cached;
+            }
+
+            MethodInfo found = null;
+            foreach (MethodInfo method in type.GetMethods(flags))
+            {
+                if (method.Name != methodName)
+                {
+                    continue;
+                }
+
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length != 1 ||
+                    ComponentBindingInspectorShared.TryGetConditionArgumentKind(parameters[0].ParameterType) != kind)
+                {
+                    continue;
+                }
+
+                found = method;
+                break;
+            }
+
+            ValueMethodCache[key] = found;
+            return found;
+        }
+
+        private static MemberInfo FindValueMember(Type type, string memberName, BindingFlags flags)
+        {
+            (Type, string) key = (type, memberName);
+            if (ValueMemberCache.TryGetValue(key, out MemberInfo cached))
+            {
+                return cached;
+            }
+
+            MemberInfo found = null;
+            PropertyInfo prop = type.GetProperty(memberName, flags);
+            if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
+            {
+                found = prop;
+            }
+            else
+            {
+                found = type.GetField(memberName, flags);
+            }
+
+            ValueMemberCache[key] = found;
+            return found;
         }
 
         private void DrawPlayModeInfo()
@@ -1119,13 +1258,15 @@ namespace Neo.Editor.Condition
                 return;
             }
 
-            var nc = (NeoCondition)target;
+            NeoCondition nc = (NeoCondition)target;
 
             EditorGUILayout.Space(4);
 
             bool result = nc.LastResult;
-            string resultText = result ? "TRUE" : "FALSE";
-            Color resultColor = result ? new Color(0.3f, 1f, 0.4f) : new Color(1f, 0.35f, 0.35f);
+            bool dark = EditorGUIUtility.isProSkin;
+            Color resultColor = result
+                ? dark ? new Color(0.3f, 1f, 0.4f) : new Color(0.08f, 0.50f, 0.18f)
+                : dark ? new Color(1f, 0.35f, 0.35f) : new Color(0.72f, 0.10f, 0.10f);
             Color resultBg = result ? new Color(0.1f, 0.4f, 0.15f, 0.3f) : new Color(0.4f, 0.1f, 0.1f, 0.3f);
 
             Rect resultRect = EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
@@ -1134,13 +1275,8 @@ namespace Neo.Editor.Condition
                 EditorGUI.DrawRect(resultRect, resultBg);
             }
 
-            GUIStyle resultStyle = new(EditorStyles.boldLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 16,
-                normal = { textColor = resultColor }
-            };
-            GUILayout.Label($"Result: {resultText}", resultStyle, GUILayout.Height(28));
+            GUILayout.Label(result ? "Result: TRUE" : "Result: FALSE", Styles.Result(resultColor),
+                GUILayout.Height(28));
 
             EditorGUILayout.EndHorizontal();
 
@@ -1200,7 +1336,7 @@ namespace Neo.Editor.Condition
             }
             else
             {
-                var vt = (ValueType)valueTypeProp.enumValueIndex;
+                ValueType vt = (ValueType)valueTypeProp.enumValueIndex;
                 thresholdStr = FormatThreshold(vt, thresholdIntProp, thresholdFloatProp, thresholdBoolProp,
                     thresholdStringProp);
             }
@@ -1298,6 +1434,139 @@ namespace Neo.Editor.Condition
             public string Name;
             public ValueType Type;
             public string DisplayName;
+        }
+
+        /// <summary>
+        ///     Cached text styles. Colours are applied per use and picked for the active editor skin: the old
+        ///     inline styles were rebuilt on every IMGUI event and hard-coded near-white text, which vanished on
+        ///     the light skin.
+        /// </summary>
+        private static class Styles
+        {
+            private static GUIStyle s_listHeader;
+            private static GUIStyle s_logic;
+            private static GUIStyle s_index;
+            private static GUIStyle s_summary;
+            private static GUIStyle s_accentTitle;
+            private static GUIStyle s_accentSubtitle;
+            private static GUIStyle s_readOnlyValue;
+            private static GUIStyle s_result;
+            private static bool s_builtForProSkin;
+
+            /// <summary>
+            ///     Copies of skin styles bake the skin's textures and text colours, so they are rebuilt after the
+            ///     editor switches between the light and dark skin.
+            /// </summary>
+            private static void DropIfSkinChanged()
+            {
+                if (s_builtForProSkin == EditorGUIUtility.isProSkin)
+                {
+                    return;
+                }
+
+                s_builtForProSkin = EditorGUIUtility.isProSkin;
+                s_listHeader = null;
+                s_logic = null;
+                s_index = null;
+                s_summary = null;
+                s_accentTitle = null;
+                s_accentSubtitle = null;
+                s_readOnlyValue = null;
+                s_result = null;
+            }
+
+            public static GUIStyle ListHeader
+            {
+                get
+                {
+                    DropIfSkinChanged();
+                    return s_listHeader ??= new GUIStyle(EditorStyles.boldLabel) { fontSize = 13 };
+                }
+            }
+
+            public static GUIStyle Index
+            {
+                get
+                {
+                    DropIfSkinChanged();
+                    s_index ??= new GUIStyle(EditorStyles.miniLabel);
+                    s_index.normal.textColor = NeoInspectorTheme.MutedText;
+                    return s_index;
+                }
+            }
+
+            public static GUIStyle Summary
+            {
+                get
+                {
+                    DropIfSkinChanged();
+                    s_summary ??= new GUIStyle(EditorStyles.miniLabel) { fontStyle = FontStyle.Italic };
+                    s_summary.normal.textColor = NeoInspectorTheme.MutedText;
+                    return s_summary;
+                }
+            }
+
+            public static GUIStyle AccentSubtitle
+            {
+                get
+                {
+                    DropIfSkinChanged();
+                    s_accentSubtitle ??= new GUIStyle(EditorStyles.miniLabel) { wordWrap = true };
+                    s_accentSubtitle.normal.textColor = NeoInspectorTheme.MutedText;
+                    return s_accentSubtitle;
+                }
+            }
+
+            public static GUIStyle ReadOnlyValue
+            {
+                get
+                {
+                    DropIfSkinChanged();
+                    return s_readOnlyValue ??= new GUIStyle(EditorStyles.textField) { fontStyle = FontStyle.Bold };
+                }
+            }
+
+            public static GUIStyle Logic(Color color)
+            {
+                DropIfSkinChanged();
+                s_logic ??= new GUIStyle(EditorStyles.miniBoldLabel) { fontSize = 11 };
+                s_logic.normal.textColor = color;
+                return s_logic;
+            }
+
+            public static GUIStyle AccentTitle(Color color)
+            {
+                DropIfSkinChanged();
+                s_accentTitle ??= new GUIStyle(EditorStyles.miniBoldLabel) { fontSize = 11 };
+                s_accentTitle.normal.textColor = color;
+                return s_accentTitle;
+            }
+
+            public static GUIStyle Result(Color color)
+            {
+                DropIfSkinChanged();
+                s_result ??= new GUIStyle(EditorStyles.boldLabel)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 16
+                };
+                s_result.normal.textColor = color;
+                return s_result;
+            }
+
+            public static Color LogicColor(bool isAnd)
+            {
+                Color color = isAnd ? new Color(0.3f, 0.9f, 1f) : new Color(1f, 0.9f, 0.3f);
+                return ReadableAccent(color);
+            }
+
+            /// <summary>Lightens a bright accent on the dark skin and darkens it on the light skin.</summary>
+            public static Color ReadableAccent(Color accent)
+            {
+                return EditorGUIUtility.isProSkin
+                    ? Color.Lerp(accent, Color.white, 0.20f)
+                    : Color.Lerp(accent, Color.black, 0.45f);
+            }
         }
     }
 }

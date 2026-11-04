@@ -91,6 +91,25 @@ namespace Neo.Bonus
 
         private void Update()
         {
+            if (State == SpinState.Idle)
+            {
+                return;
+            }
+
+            if (_wheelTransform == null)
+            {
+                // WHY: the wheel graphic was destroyed mid-spin; every frame would otherwise throw.
+                // No sector can be read, so the spin ends without a result.
+                CancelInvoke(nameof(Stop));
+                State = SpinState.Idle;
+                if (_canvasGroup != null)
+                {
+                    _canvasGroup.interactable = _canUse;
+                }
+
+                return;
+            }
+
             if (State == SpinState.Aligning)
             {
                 AlignWheel();
@@ -423,9 +442,15 @@ namespace Neo.Bonus
                 return;
             }
 
-            if (State == SpinState.Idle && (!_singleUse || (_singleUse && _canUse)))
+            if (State == SpinState.Idle && (!_singleUse || _canUse))
             {
-                _canUse = false;
+                // WHY: only a single-use wheel consumes its use. Clearing the flag for a reusable wheel left its
+                // CanvasGroup non-interactable after the first spin, because EndRotation restores interactable from it.
+                if (_singleUse)
+                {
+                    _canUse = false;
+                }
+
                 State = SpinState.Spinning;
                 _currentAngularVelocity = _initialAngularVelocity;
 

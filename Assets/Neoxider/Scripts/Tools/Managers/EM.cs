@@ -5,7 +5,8 @@ using UnityEngine.Serialization;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     EventManager GameStates
+    ///     Event manager singleton: UnityEvents for game-state transitions published by <see cref="GM" />,
+    ///     plus application focus/pause/quit callbacks. The static methods invoke an event without changing GM state.
     /// </summary>
     [CreateFromMenu("Neoxider/Tools/Managers/EM")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(EM))]

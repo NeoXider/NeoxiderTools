@@ -1,10 +1,12 @@
 ﻿# ISaveIdentityProvider
 
-## Overview
-`ISaveIdentityProvider` lets a component provide its own stable save identity instead of relying on the default scene-based identity.
+**What it is:** an interface (`Scripts/Save/ISaveIdentityProvider.cs`, namespace `Neo.Save`) that lets a component
+provide its own stable save identity instead of relying on the default scene-based identity.
 
-- **Namespace**: `Neo.Save`
-- **Path**: `Assets/Neoxider/Scripts/Save/ISaveIdentityProvider.cs`
+**How to use:** implement `SaveIdentity` on a saveable component (for example a [SaveableBehaviour](SaveableBehaviour.md))
+and return a deterministic, unique key such as `player-main`.
+
+---
 
 ## Contract
 - `string SaveIdentity { get; }`

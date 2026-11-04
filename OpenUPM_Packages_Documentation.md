@@ -15,7 +15,7 @@
 - [com.solidalloy - Odin Inspector](#-comsolidalloy---odin-inspector)
 - [com.vrchat - VRChat SDK](#-comvrchat---vrchat-sdk)
 - [com.coffee - Coffee Packages](#-comcoffee---coffee-packages)
-- [Другие scope'ы](#️-другие-полезные-scopes)
+- [Другие scope'ы](#️-другие-полезные-scopeы)
 - [Рекомендации для изучения](#-рекомендуемые-для-изучения-по-приоритету)
 - [Полезные ссылки](#-полезные-ссылки-для-изучения)
 

@@ -1,14 +1,13 @@
 # AudioFocusMute
 
-**Purpose:** Silences all game audio while the application has no focus — a minimized window, another browser tab
+**What it is:** a component that silences all game audio while the application has no focus — a minimized window, another browser tab
 or another application in front — and restores the volume it found when focus returns.
 
 It works through `AudioListener.volume`, so music, effects, footsteps and UI sounds go quiet at once and keep their
 playback position. Nothing is paused: sounds triggered while unfocused do not burst out together on return, and a
 game's own pause logic on `AudioListener.pause` is left alone.
 
-## Setup
-
+**How to use:**
 One call at startup is enough for the whole game:
 
 ```csharp
@@ -18,6 +17,8 @@ private static void Install() => AudioFocusMute.Install();
 
 `Install()` returns the existing instance or creates a persistent one (`DontDestroyOnLoad`). You can also add
 `Add Component > Neoxider > Audio > Audio Focus Mute` to a persistent object by hand.
+
+---
 
 ## Key Fields (Inspector)
 

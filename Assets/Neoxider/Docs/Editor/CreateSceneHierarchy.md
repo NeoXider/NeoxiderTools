@@ -2,7 +2,7 @@
 
 **What it is:** This tool is designed to create and maintain a clean, organized scene hierarchy. It lets you create, with a single click, a standard set of empty `GameObject`s that serve as separators ...
 
-**How to use:** see the sections below.
+**How to use:** configure the container list in **Neoxider > Settings > Scene Hierarchy**, then use **GameObject > Neoxider > Create Scene Hierarchy** in a scene; **Sort Scene Hierarchy** reorders the existing containers.
 
 ---
 

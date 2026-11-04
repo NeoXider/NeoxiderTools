@@ -75,6 +75,12 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdDispatchEvent(NetworkConnectionToClient sender = null)
         {
+            // WHY: a server-side opt-out rejects queued or crafted commands before they spend the sender's budget.
+            if (!isNetworked)
+            {
+                return;
+            }
+
             if (RateLimitCheck(sender))
             {
                 return; // WHY: Too frequent — protects against Cmd spam amplified by the RPC broadcast
@@ -186,7 +192,8 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdDispatchInt(int value, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck(sender) || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
+            if (!isNetworked || RateLimitCheck(sender)
+                             || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
             {
                 return;
             }
@@ -202,7 +209,8 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdDispatchFloat(float value, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck(sender) || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
+            if (!isNetworked || RateLimitCheck(sender)
+                             || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
             {
                 return;
             }
@@ -218,7 +226,8 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdDispatchString(string value, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck(sender) || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
+            if (!isNetworked || RateLimitCheck(sender)
+                             || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
             {
                 return;
             }

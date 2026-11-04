@@ -196,7 +196,7 @@ namespace Neo.Tests.Play
             yield return null;
             Counter rpcReceiver = ObserveValueRpcs(counter);
 
-            // Actual woven handlers with distinct sender identities, in process. This is not a remote session.
+            // WHY: Actual woven handlers with distinct sender identities, in process. This is not a remote session.
             DeliverOperation(counter, CounterModifyOperation.Add, 1f, new NetworkConnectionToClient(1023601));
             DeliverOperation(counter, CounterModifyOperation.Add, 1f, new NetworkConnectionToClient(1023602));
             Assert.That(counter.ValueInt, Is.EqualTo(12));
@@ -337,7 +337,7 @@ namespace Neo.Tests.Play
                 int firstBytes = _counterRpcBytes;
                 double firstBudget = SenderBudgets(probe.Counter)[first.connectionId];
 
-                // No yield: the production unscaled frame clock has not advanced between these receives.
+                // WHY: No yield: the production unscaled frame clock has not advanced between these receives.
                 DeliverAbsolute(probe.Counter, 100f, first);
 
                 AssertAcceptedSequence(probe, new[] { 2.5f }, 2);
@@ -428,7 +428,7 @@ namespace Neo.Tests.Play
                 Assert.That(budgets == null || !budgets.ContainsKey(sender.connectionId), Is.True,
                     "A denied numeric request must not start this sender's window.");
 
-                // Same sender, same frame: finite absolute Set also repairs a preexisting NaN/Infinity balance.
+                // WHY: Same sender, same frame: finite absolute Set also repairs a preexisting NaN/Infinity balance.
                 DeliverAbsolute(probe.Counter, 3f, sender);
 
                 AssertAcceptedSequence(probe, new[] { 3f }, 3);
@@ -541,7 +541,7 @@ namespace Neo.Tests.Play
                     SetCounterField(Counter, "_loadOnStart", false);
                     SetCounterField(Counter, "_invokeRepeatEventOnValueChanged", true);
                     SaveProvider.SetFloat(SaveKey, 77f);
-                    // This memory provider raises OnKeyChanged for every SetFloat, even an identical write.
+                    // WHY: This memory provider raises OnKeyChanged for every SetFloat, even an identical write.
                     SaveProvider.OnKeyChanged += _keyChanged;
                     RpcReceiver = fixture.ObserveValueRpcs(Counter);
                     SetCounterField(RpcReceiver, "_valueMode", mode);
@@ -719,7 +719,7 @@ namespace Neo.Tests.Play
             receiver.isNetworked = true;
             _receiverObject.SetActive(true);
             Assert.That(receiver.netIdentity, Is.SameAs(identity));
-            // Exercise Mirror's generated wire serialization without claiming a second client session.
+            // WHY: Exercise Mirror's generated wire serialization without claiming a second client session.
             using (NetworkWriterPooled writer = NetworkWriterPool.Get())
             {
                 source.OnSerialize(writer, true);

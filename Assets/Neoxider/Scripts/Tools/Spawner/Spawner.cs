@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Neo.Extensions;
 using Neo.Network;
 using UnityEngine;
@@ -52,8 +51,8 @@ namespace Neo.Tools
         [FormerlySerializedAs("_maxSpawnDelay")] [SerializeField]
         public float maxSpawnDelay = 2f;
 
-        [Header("Rotation Settings")]
         /// <summary>Rotation range around X (pitch), degrees.</summary>
+        [Header("Rotation Settings")]
         [SerializeField]
         private Vector2 _rotationX = Vector2.zero;
 
@@ -94,11 +93,11 @@ namespace Neo.Tools
         /// </summary>
         public UnityEvent<GameObject, int> OnWaveObjectSpawned;
 
-        [Space] [Header("Other Settings")] [SerializeField]
-        [Tooltip("Spawn points. Empty = use this spawner's own transform. With several, a random point is picked per spawn.")]
         /// <summary>
         /// Spawn points. If empty, uses this spawner's transform. If several, a random one is chosen per spawn.
         /// </summary>
+        [Space] [Header("Other Settings")] [SerializeField]
+        [Tooltip("Spawn points. Empty = use this spawner's own transform. With several, a random point is picked per spawn.")]
         private Transform[] _spawnPoints;
 
         // WHY: Point chosen for the current spawn (position and rotation must agree). Set in GetSpawnPosition.
@@ -106,10 +105,10 @@ namespace Neo.Tools
 
         [SerializeField] private bool _spawnOnAwake;
 
-        [Header("Parenting")] [SerializeField] [Tooltip("Parent for spawned objects. If null  - spawn without parent.")]
         /// <summary>
         /// Parent for spawned objects. If null, spawned objects have no parent.
         /// </summary>
+        [Header("Parenting")] [SerializeField] [Tooltip("Parent for spawned objects. If null  - spawn without parent.")]
         private Transform _parentTransform;
 
         [Header("Spawn Area")] [SerializeField]
@@ -137,6 +136,9 @@ namespace Neo.Tools
         private Coroutine _spawnRoutine;
         private ulong _productionGeneration;
         private readonly Dictionary<GameObject, int> _spawnGenerations = new();
+        private readonly ReusableWait _spawnDelayWait = new();
+        private readonly ReusableWait _waveDelayWait = new();
+        private readonly ReusableWait _destroyDelayWait = new();
 
         /// <summary>
         ///     Prefab array to spawn from. Validated on assignment.
@@ -234,7 +236,7 @@ namespace Neo.Tools
             ulong generation = ++_productionGeneration;
             isSpawning = true;
             Coroutine routine = StartCoroutine(RunSpawnProduction(generation));
-            // StartCoroutine runs callbacks before returning this handle. A callback may already own a new session.
+            // WHY: StartCoroutine runs callbacks before returning this handle. A callback may already own a new session.
             if (generation == _productionGeneration && isSpawning)
             {
                 _spawnRoutine = routine;
@@ -335,7 +337,7 @@ namespace Neo.Tools
                         }
 
                         float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
-                        yield return new WaitForSeconds(delay);
+                        yield return _spawnDelayWait.Get(delay);
                         if (!IsCurrentProduction(generation))
                         {
                             yield break;
@@ -345,7 +347,7 @@ namespace Neo.Tools
                     if (IsCurrentProduction(generation) && (maxWaves == 0 || CurrentWave < maxWaves))
                     {
                         CurrentWave++;
-                        yield return new WaitForSeconds(_timeBetweenWaves);
+                        yield return _waveDelayWait.Get(_timeBetweenWaves);
                         if (!IsCurrentProduction(generation))
                         {
                             yield break;
@@ -369,7 +371,7 @@ namespace Neo.Tools
 
                     _spawnedCount++;
                     float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
-                    yield return new WaitForSeconds(delay);
+                    yield return _spawnDelayWait.Get(delay);
                     if (!IsCurrentProduction(generation))
                     {
                         yield break;
@@ -491,7 +493,8 @@ namespace Neo.Tools
 
             ulong generation = _productionGeneration;
             int wave = CurrentWave;
-            GameObject spawnedObject = _useObjectPool
+            bool pooled = _useObjectPool;
+            GameObject spawnedObject = pooled
                 ? SpawnUtility.Spawn(prefab, position, rotation, parent)
                 : Instantiate(prefab, position, rotation, parent);
 
@@ -503,8 +506,7 @@ namespace Neo.Tools
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
             {
-                NetworkIdentity id = spawnedObject.GetComponent<NetworkIdentity>();
-                if (id != null)
+                if (spawnedObject.TryGetComponent(out NetworkIdentity _))
                 {
                     NetworkServer.Spawn(spawnedObject);
                 }
@@ -517,7 +519,7 @@ namespace Neo.Tools
             }
 #endif
 
-            TrackSpawnedObject(spawnedObject);
+            TrackSpawnedObject(spawnedObject, pooled);
 
             if (destroyDelay > 0)
             {
@@ -547,8 +549,7 @@ namespace Neo.Tools
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
             {
-                NetworkIdentity netId = spawnedObject.GetComponent<NetworkIdentity>();
-                if (netId != null)
+                if (spawnedObject.TryGetComponent(out NetworkIdentity netId))
                 {
                     RpcNotifyObjectSpawned(netId.gameObject, wave);
                 }
@@ -590,6 +591,28 @@ namespace Neo.Tools
         }
 #endif
 
+        /// <summary>
+        ///     Reuses one <see cref="WaitForSeconds" /> while the requested duration repeats, so fixed delays (equal
+        ///     min/max spawn delay, the wave pause, the destroy delay) allocate once instead of on every wait. Unity
+        ///     reads the duration when a coroutine yields it, so concurrent coroutines can share one instance.
+        /// </summary>
+        private sealed class ReusableWait
+        {
+            private WaitForSeconds _wait;
+            private float _seconds;
+
+            public WaitForSeconds Get(float seconds)
+            {
+                if (_wait == null || _seconds != seconds)
+                {
+                    _seconds = seconds;
+                    _wait = new WaitForSeconds(seconds);
+                }
+
+                return _wait;
+            }
+        }
+
         private IEnumerator DelayedDestroy(GameObject objectToDestroy, float delay)
         {
             // WHY: Snapshot the spawn generation before waiting; a pooled instance can be returned
@@ -601,7 +624,7 @@ namespace Neo.Tools
                 generation = scheduledInfo.SpawnGeneration;
             }
 
-            yield return new WaitForSeconds(delay);
+            yield return _destroyDelayWait.Get(delay);
 
             if (objectToDestroy == null)
             {
@@ -634,9 +657,6 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Spawn position: random point in area collider if set, otherwise spawn transform position.
-        /// </summary>
-        /// <summary>
         ///     Resolves the spawn point for the current spawn: a random non-null entry from
         ///     <see cref="_spawnPoints" />, or this spawner's transform when the list is empty.
         /// </summary>
@@ -655,18 +675,22 @@ namespace Neo.Tools
             return transform;
         }
 
+        /// <summary>
+        ///     Picks the spawn point for the next spawn and returns its position, or a random allowed point inside
+        ///     the 3D/2D spawn area when one is assigned. Allocation-free.
+        /// </summary>
         public Vector3 GetSpawnPosition()
         {
             _activeSpawnPoint = ResolveSpawnPoint();
 
             if (_spawnAreaCollider != null)
             {
-                return ResolveAllowedPosition(() => GetRandomPointInCollider(_spawnAreaCollider));
+                return ResolveAllowedPosition(true);
             }
 
             if (_spawnAreaCollider2D != null)
             {
-                return ResolveAllowedPosition(() => GetRandomPointInCollider2D(_spawnAreaCollider2D));
+                return ResolveAllowedPosition(false);
             }
 
             return _activeSpawnPoint.position;
@@ -701,10 +725,11 @@ namespace Neo.Tools
 
         // WHY: Re-rolls candidates that land inside a deny zone, up to _maxRejectionTries; the last
         // candidate is used as-is when every try was denied (spawning must not silently stop).
-        private Vector3 ResolveAllowedPosition(Func<Vector3> candidateSource)
+        // The area is chosen by flag instead of a Func so every spawn stays free of closure allocations.
+        private Vector3 ResolveAllowedPosition(bool useArea3D)
         {
             bool hasDenyZones = _denyAreas.Length > 0 || _denyAreas2D.Length > 0;
-            Vector3 candidate = candidateSource();
+            Vector3 candidate = SampleSpawnArea(useArea3D);
             if (!hasDenyZones)
             {
                 return candidate;
@@ -712,10 +737,17 @@ namespace Neo.Tools
 
             for (int attempt = 1; attempt < _maxRejectionTries && !IsPositionAllowed(candidate); attempt++)
             {
-                candidate = candidateSource();
+                candidate = SampleSpawnArea(useArea3D);
             }
 
             return candidate;
+        }
+
+        private Vector3 SampleSpawnArea(bool useArea3D)
+        {
+            return useArea3D
+                ? GetRandomPointInCollider(_spawnAreaCollider)
+                : GetRandomPointInCollider2D(_spawnAreaCollider2D);
         }
 
         /// <summary>
@@ -830,20 +862,36 @@ namespace Neo.Tools
         }
 #endif
 
+        /// <summary>Number of tracked spawns that are still current and active in the hierarchy.</summary>
         public int GetActiveObjectCount()
         {
             PruneSpawnedObjects();
-            return SpawnedObjects.Count(obj => obj.activeInHierarchy);
+            int active = 0;
+            for (int i = 0; i < SpawnedObjects.Count; i++)
+            {
+                if (SpawnedObjects[i].activeInHierarchy)
+                {
+                    active++;
+                }
+            }
+
+            return active;
         }
 
-        private void TrackSpawnedObject(GameObject instance)
+        private void TrackSpawnedObject(GameObject instance, bool mayAlreadyBeTracked = true)
         {
             if (SpawnedObjects.Count % 10 == 0)
             {
                 PruneSpawnedObjects();
             }
 
-            SpawnedObjects.Remove(instance);
+            // WHY: A reused pool rental (or a replicated object) can still sit in the list from an earlier spawn;
+            // a fresh Instantiate result cannot, so it skips the linear List.Remove scan.
+            if (mayAlreadyBeTracked)
+            {
+                SpawnedObjects.Remove(instance);
+            }
+
             if (instance.TryGetComponent(out PooledObjectInfo info) && info.OwnerPool != null)
             {
                 _spawnGenerations[instance] = info.SpawnGeneration;

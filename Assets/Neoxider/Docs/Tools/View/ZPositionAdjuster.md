@@ -1,16 +1,25 @@
 ﻿# ZPositionAdjuster
 
-**Purpose:** Derive world Z from normalized world Y for 2D depth ordering. Namespace: `Neo.Tools`;
-assembly: `Neo.Tools.View`.
+**What it is:** a MonoBehaviour that derives world Z from the normalized world Y every `LateUpdate`, for
+2D depth ordering. Script: `Scripts/Tools/View/ZPositionAdjuster.cs`, namespace `Neo.Tools`, assembly
+`Neo.Tools.View`.
+
+**How to use:**
+1. Attach it to the object whose world depth should follow its vertical position.
+2. Set `_ratio` (and the normalization mode) in the Inspector, or `Ratio` / `UseNormalizeToUnit` from code.
+3. Move the object normally; Z follows on the next `LateUpdate`, or call `Adjust()` to apply at once.
+
+---
 
 ## Setup
 
-- Attach to the object whose world depth should follow its vertical position. Configure the ratio in
-  the Inspector. It updates in `LateUpdate` and previews deterministically in `OnValidate`.
+- It updates in `LateUpdate` and previews deterministically in `OnValidate`.
 - X and Y are preserved; only world Z is replaced. A parent transform therefore affects the derived
-  local position. Use ordinary transform movement from C#; no UnityEvent wiring is required.
+  local position. No UnityEvent wiring is required.
+- The transform is written only when Z actually changes, so a resting object triggers no per-frame
+  transform-changed work (child propagation, physics sync) and `OnValidate` does not dirty scenes needlessly.
 
-## Key Fields (Inspector)
+## Fields
 
 | Field | Description |
 |-------|-------------|
@@ -20,6 +29,19 @@ assembly: `Neo.Tools.View`.
 Normalization reuses `Neo.Extensions` defaults (-1,000,000 to 1,000,000), with clamping at those limits.
 This is a normalized depth helper rather than a direct `Z = Y * ratio` mapping.
 
-## See Also
+## C# API
 
-- [Module Root](../README.md)
+| Member | Description |
+|--------|-------------|
+| `Ratio` | Multiplier; negative values are clamped to zero. |
+| `UseNormalizeToUnit` | Normalization mode. |
+| `Adjust()` | Applies the derived Z now. |
+| `static ComputeDepth(float y, bool useNormalizeToUnit, float ratio)` | The Z `Adjust` would assign, without a scene object. |
+
+```csharp
+float z = ZPositionAdjuster.ComputeDepth(unit.position.y, true, 2f);
+```
+
+## See also
+
+- [Module root](README.md)

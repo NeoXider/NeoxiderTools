@@ -1,12 +1,13 @@
 ﻿# SaveProviderSettings
 
-`Neo.Save.SaveProviderSettings` is a ScriptableObject containing provider selection, file name, and optional AES file encryption. It contains configuration rather than scene references. Creating a provider does not activate it in the static facade.
+**What it is:** `Neo.Save.SaveProviderSettings` is a ScriptableObject containing provider selection, file name, and optional AES file encryption. It contains configuration rather than scene references. Creating a provider does not activate it in the static facade. Script: `Scripts/Save/Settings/SaveProviderSettings.cs`.
 
-## Setup
-
+**How to use:**
 1. Create an asset through **Assets → Create → Neoxider → Save → Save Provider Settings**.
 2. Select `PlayerPrefs` or `File`. File saves use `_fileName` under `Application.persistentDataPath`; an empty name uses `save.json`.
 3. For automatic lazy initialization, put the asset at `Resources/SaveProviderSettings.asset`. Alternatively, assign it to [`SaveProviderSettingsComponent`](../SaveProviderSettingsComponent.md), initializing that component before save consumers.
+
+---
 
 ## Key Fields (Inspector)
 

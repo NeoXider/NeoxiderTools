@@ -26,7 +26,7 @@ namespace Neo.Editor.Tests.Abilities
         private static ModifierBlueprint Dot(string id, float duration, float interval, float damage,
             bool tickOnApply = false)
         {
-            var bp = new ModifierBlueprint
+            ModifierBlueprint bp = new ModifierBlueprint
             {
                 Id = id,
                 Duration = duration,
@@ -41,7 +41,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void Dot_DealsPeriodicDamage_ThenExpires()
         {
-            var log = new EventLog(_system);
+            EventLog log = new EventLog(_system);
             _system.Modifiers.Apply(Dot("burn", duration: 3f, interval: 1f, damage: 10f), _attacker.Id, _victim.Id);
 
             _system.Tick(1f);
@@ -95,7 +95,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             _victim = AbilityTestSupport.CreateUnit(_system, team: 2, health: 100f, healthCurrent: 50f);
 
-            var bp = new ModifierBlueprint { Id = "regrowth", Duration = 0f };
+            ModifierBlueprint bp = new ModifierBlueprint { Id = "regrowth", Duration = 0f };
             bp.EventReactions.Add(new ModifierEventReaction
             {
                 EventId = AbilityEvents.TakeDamage,
@@ -113,7 +113,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void Reaction_TargetEventSource_RoutesToAttacker()
         {
-            var thorns = new ModifierBlueprint { Id = "thorns", Duration = 0f };
+            ModifierBlueprint thorns = new ModifierBlueprint { Id = "thorns", Duration = 0f };
             thorns.EventReactions.Add(new ModifierEventReaction
             {
                 EventId = AbilityEvents.TakeDamage,
@@ -131,9 +131,9 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void MutualReactions_TerminateWithinDepthCap()
         {
-            var tankA = AbilityTestSupport.CreateUnit(_system, team: 1, health: 100000f);
-            var tankB = AbilityTestSupport.CreateUnit(_system, team: 2, health: 100000f);
-            var log = new EventLog(_system);
+            AbilityUnit tankA = AbilityTestSupport.CreateUnit(_system, team: 1, health: 100000f);
+            AbilityUnit tankB = AbilityTestSupport.CreateUnit(_system, team: 2, health: 100000f);
+            EventLog log = new EventLog(_system);
 
             _system.Modifiers.Apply(Thorns("thornsA", 5f), tankA.Id, tankA.Id);
             _system.Modifiers.Apply(Thorns("thornsB", 5f), tankB.Id, tankB.Id);
@@ -149,7 +149,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void AreaDamage_WithNestedThornsReaction_StillHitsEveryAreaTarget()
         {
-            var world = new FakeWorldAdapter();
+            FakeWorldAdapter world = new FakeWorldAdapter();
             _system.World = world;
 
             AbilityUnit a = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
@@ -187,7 +187,7 @@ namespace Neo.Editor.Tests.Abilities
             _victim = AbilityTestSupport.CreateUnit(_system, team: 2, health: 100f, healthCurrent: 50f);
             _system.Modifiers.Apply(Thorns("thorns", 15f), _victim.Id, _victim.Id);
 
-            var regrowth = new ModifierBlueprint { Id = "regrowth", Duration = 0f };
+            ModifierBlueprint regrowth = new ModifierBlueprint { Id = "regrowth", Duration = 0f };
             regrowth.EventReactions.Add(new ModifierEventReaction
             {
                 EventId = AbilityEvents.TakeDamage,
@@ -206,7 +206,7 @@ namespace Neo.Editor.Tests.Abilities
 
         private static ModifierBlueprint Thorns(string id, float reflect)
         {
-            var bp = new ModifierBlueprint { Id = id, Duration = 0f };
+            ModifierBlueprint bp = new ModifierBlueprint { Id = id, Duration = 0f };
             bp.EventReactions.Add(new ModifierEventReaction
             {
                 EventId = AbilityEvents.TakeDamage,

@@ -12,8 +12,8 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void XorShift_SameSeed_ProducesIdenticalSequence()
         {
-            var a = new XorShiftRandom(12345u);
-            var b = new XorShiftRandom(12345u);
+            XorShiftRandom a = new XorShiftRandom(12345u);
+            XorShiftRandom b = new XorShiftRandom(12345u);
 
             for (int i = 0; i < 200; i++)
             {
@@ -24,7 +24,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void XorShift_NextInt_StaysInRange()
         {
-            var rng = new XorShiftRandom(99u);
+            XorShiftRandom rng = new XorShiftRandom(99u);
             for (int i = 0; i < 500; i++)
             {
                 int v = rng.NextInt(6);
@@ -37,8 +37,8 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void XorShift_DifferentSeeds_Diverge()
         {
-            var a = new XorShiftRandom(1u);
-            var b = new XorShiftRandom(2u);
+            XorShiftRandom a = new XorShiftRandom(1u);
+            XorShiftRandom b = new XorShiftRandom(2u);
 
             bool anyDifference = false;
             for (int i = 0; i < 50 && !anyDifference; i++)
@@ -55,7 +55,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void XorShift_ZeroSeed_IsHandled()
         {
-            var rng = new XorShiftRandom(0u);
+            XorShiftRandom rng = new XorShiftRandom(0u);
             // WHY: Must not get stuck at 0 forever (xorshift seeds 0 to a fixed non-zero constant).
             Assert.That(rng.NextFloat(), Is.GreaterThanOrEqualTo(0f));
             Assert.That(rng.NextFloat(), Is.LessThan(1f));
@@ -81,11 +81,11 @@ namespace Neo.Editor.Tests.Abilities
         /// <summary>Casts a fireball (guaranteed 50 + a 0.5-chance 30) on a fresh system and returns target HP.</summary>
         private static float RunCast(uint seed)
         {
-            var system = new AbilitySystem();
+            AbilitySystem system = new AbilitySystem();
             AbilityUnit caster = AbilityTestSupport.CreateUnit(system, team: 1, mana: 200f);
             AbilityUnit target = AbilityTestSupport.CreateUnit(system, team: 2, health: 1000f);
 
-            var fireball = new AbilityBlueprint
+            AbilityBlueprint fireball = new AbilityBlueprint
             {
                 Id = "fireball",
                 Targeting = TargetingMode.Unit,

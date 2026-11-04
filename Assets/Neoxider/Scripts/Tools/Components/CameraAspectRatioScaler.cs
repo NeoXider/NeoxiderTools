@@ -77,7 +77,32 @@ namespace Neo.Tools
         [Tooltip("Restores full viewport rect when component is disabled.")] [SerializeField]
         private bool resetViewportRectOnDisable = true;
 
+        [Header("Reference")]
+        [Tooltip(
+            "Orthographic size of the reference composition (at Target Resolution). Follows the Camera's Size whenever " +
+            "it holds a value this scaler did not write; scaling always starts from this value, never from the " +
+            "scaled camera.")]
+        [SerializeField]
+        private float _referenceSize;
+
+        [Tooltip(
+            "Vertical field of view of the reference composition. Follows the Camera's Field of View whenever it holds " +
+            "a value this scaler did not write.")]
+        [SerializeField]
+        private float _referenceFov;
+
+        // WHY: serialized so an Edit Mode preview that rewrites the camera is not captured again as the reference
+        // after a domain reload or scene reopen (each capture of a scaled value compounded the scaling).
+        [SerializeField] [HideInInspector] private bool _referenceCaptured;
+
+        // WHY: the last camera size/FOV the reference already accounts for (captured or written by this scaler).
+        // A camera value that differs was authored by someone else (Camera Inspector, code) and becomes the new
+        // reference, so editing the Camera keeps working without re-capturing the scaler's own scaled output.
+        [SerializeField] [HideInInspector] private float _observedCameraSize;
+        [SerializeField] [HideInInspector] private float _observedCameraFov;
+
         private Camera _camera;
+        private bool _runtimeReferenceSynced;
         private ScaleMode _lastScaleMode;
         private float _lastScaleMultiplier;
         private int _lastScreenHeight = -1;
@@ -88,9 +113,132 @@ namespace Neo.Tools
         private Vector2 _lastTargetResolution;
         private bool _lastUseTargetResolution;
         private bool _lastUseViewportRectInFitBoth;
-        private bool _referenceCaptured;
-        private float _referenceFov;
-        private float _referenceSize;
+        private float _lastReferenceSize;
+        private float _lastReferenceFov;
+        private float _lastMinSize;
+        private float _lastMaxSize;
+
+        /// <summary>Orthographic size of the reference composition; scaling starts from this value.</summary>
+        public float ReferenceOrthographicSize
+        {
+            get => _referenceSize;
+            set
+            {
+                EnsureInitialized();
+                _referenceSize = Mathf.Max(0.01f, value);
+                _referenceCaptured = true;
+                if (_camera != null)
+                {
+                    // WHY: the explicit value wins over a camera edit made before it.
+                    _observedCameraSize = _camera.orthographicSize;
+                }
+            }
+        }
+
+        /// <summary>Vertical field of view (degrees) of the reference composition; scaling starts from this value.</summary>
+        public float ReferenceFieldOfView
+        {
+            get => _referenceFov;
+            set
+            {
+                EnsureInitialized();
+                _referenceFov = Mathf.Clamp(value, 1f, 179f);
+                _referenceCaptured = true;
+                if (_camera != null)
+                {
+                    _observedCameraFov = _camera.fieldOfView;
+                }
+            }
+        }
+
+        /// <summary>Scale mode applied on the next refresh.</summary>
+        public ScaleMode Mode
+        {
+            get => scaleMode;
+            set => scaleMode = value;
+        }
+
+        /// <summary>Reference resolution whose aspect the camera preserves.</summary>
+        public Vector2 TargetResolution
+        {
+            get => targetResolution;
+            set => targetResolution = new Vector2(Mathf.Max(1f, value.x), Mathf.Max(1f, value.y));
+        }
+
+        /// <summary>
+        ///     When true the reference aspect comes from <see cref="TargetResolution" />; when false a 16:9 reference
+        ///     is used.
+        /// </summary>
+        public bool UseTargetResolution
+        {
+            get => useTargetResolution;
+            set => useTargetResolution = value;
+        }
+
+        /// <summary>Extra factor applied to the computed orthographic size or field of view (at least 0.01).</summary>
+        public float ScaleMultiplier
+        {
+            get => scaleMultiplier;
+            set => scaleMultiplier = Mathf.Max(0.01f, value);
+        }
+
+        /// <summary>
+        ///     In <see cref="ScaleMode.FitBoth" />, letterbox or pillarbox through <c>Camera.rect</c> so the target
+        ///     aspect is kept exactly. Cameras that render into a texture never get bars.
+        /// </summary>
+        public bool UseViewportRectInFitBoth
+        {
+            get => useViewportRectInFitBoth;
+            set => useViewportRectInFitBoth = value;
+        }
+
+        /// <summary>
+        ///     Lower clamp for the computed orthographic size, or the field of view of a perspective camera
+        ///     (at least 0.01). Raising it above <see cref="MaxSize" /> raises <see cref="MaxSize" /> too.
+        /// </summary>
+        public float MinSize
+        {
+            get => minSize;
+            set
+            {
+                minSize = Mathf.Max(0.01f, value);
+                maxSize = Mathf.Max(minSize, maxSize);
+            }
+        }
+
+        /// <summary>
+        ///     Upper clamp for the computed orthographic size, or the field of view of a perspective camera; never
+        ///     below <see cref="MinSize" />.
+        /// </summary>
+        public float MaxSize
+        {
+            get => maxSize;
+            set => maxSize = Mathf.Max(minSize, value);
+        }
+
+        /// <summary>
+        ///     Re-applies the scale during Play whenever the screen, the target texture or a setting changes. When
+        ///     false, call <see cref="Refresh" /> after changing settings.
+        /// </summary>
+        public bool UpdateInRuntime
+        {
+            get => updateInRuntime;
+            set => updateInRuntime = value;
+        }
+
+        /// <summary>Applies the scale as an Edit Mode preview on enable, validation and the Inspector buttons.</summary>
+        public bool UpdateInEditor
+        {
+            get => updateInEditor;
+            set => updateInEditor = value;
+        }
+
+        /// <summary>Restores the full-screen <c>Camera.rect</c> when the scaler is disabled.</summary>
+        public bool ResetViewportRectOnDisable
+        {
+            get => resetViewportRectOnDisable;
+            set => resetViewportRectOnDisable = value;
+        }
 
         /// <summary>
         ///     Initializes the component and stores the camera's default values.
@@ -161,6 +309,11 @@ namespace Neo.Tools
             minSize = Mathf.Max(0.01f, minSize);
             maxSize = Mathf.Max(minSize, maxSize);
             scaleMultiplier = Mathf.Max(0.01f, scaleMultiplier);
+            if (_referenceCaptured)
+            {
+                _referenceSize = Mathf.Max(0.01f, _referenceSize);
+                _referenceFov = Mathf.Clamp(_referenceFov, 1f, 179f);
+            }
 
             // WHY: Apply on-demand only when explicitly opted in. This still writes the camera (and may
             // dirty the scene if the editor aspect differs from the reference), but it is a discrete
@@ -182,11 +335,59 @@ namespace Neo.Tools
             ApplyCameraScale(true);
         }
 
+        /// <summary>
+        ///     Recalculates the camera projection and viewport now, even if nothing changed since the last update.
+        /// </summary>
+        public void Refresh()
+        {
+            EnsureInitialized();
+            ApplyCameraScale(true);
+        }
+
+        /// <summary>
+        ///     Takes the Camera's current orthographic size and field of view as the new reference composition.
+        ///     Call it after authoring the camera for <see cref="TargetResolution" />, not while it is scaled.
+        /// </summary>
+        /// <remarks>
+        ///     Editing the Camera's Size / Field of View in Edit Mode is picked up automatically on the next scaler
+        ///     refresh; this call is only needed to adopt a value equal to the one the scaler wrote last.
+        /// </remarks>
+        [Button("Capture Reference From Camera")]
+        public void CaptureReferenceFromCamera()
+        {
+            if (_camera == null)
+            {
+                _camera = GetComponent<Camera>();
+            }
+
+            if (_camera == null)
+            {
+                return;
+            }
+
+            _referenceSize = Mathf.Max(0.01f, _camera.orthographicSize);
+            _referenceFov = Mathf.Clamp(_camera.fieldOfView, 1f, 179f);
+            _observedCameraSize = _camera.orthographicSize;
+            _observedCameraFov = _camera.fieldOfView;
+            _referenceCaptured = true;
+        }
+
+        private void Reset()
+        {
+            _referenceCaptured = false;
+            EnsureInitialized();
+        }
+
         private void ApplyCameraScale(bool force = false)
         {
             if (_camera == null)
             {
                 return;
+            }
+
+            if (force && !Application.isPlaying)
+            {
+                AdoptCameraEdits();
             }
 
             if (!force && !HasRuntimeDataChanged())
@@ -256,6 +457,7 @@ namespace Neo.Tools
             newSize *= scaleMultiplier;
             newSize = Mathf.Clamp(newSize, minSize, maxSize);
             _camera.orthographicSize = newSize;
+            _observedCameraSize = _camera.orthographicSize;
         }
 
         /// <summary>
@@ -289,6 +491,8 @@ namespace Neo.Tools
             newFOV *= scaleMultiplier;
             newFOV = Mathf.Clamp(newFOV, minSize, maxSize);
             _camera.fieldOfView = newFOV;
+            // WHY: read back, a physical camera may store a slightly different FOV than the one assigned.
+            _observedCameraFov = _camera.fieldOfView;
         }
 
         private void EnsureInitialized()
@@ -298,26 +502,77 @@ namespace Neo.Tools
                 _camera = GetComponent<Camera>();
             }
 
-            if (!_referenceCaptured && _camera != null)
+            if (_camera == null)
             {
-                _referenceSize = _camera.orthographicSize;
-                _referenceFov = _camera.fieldOfView;
-                _referenceCaptured = true;
+                return;
+            }
+
+            if (!_referenceCaptured)
+            {
+                CaptureReferenceFromCamera();
+                return;
+            }
+
+            // WHY: at runtime the composition is read once per instance (like the old Awake capture), so gameplay
+            // zoom written to the camera is not adopted; in Edit Mode every refresh re-reads Camera edits.
+            if (!Application.isPlaying || !_runtimeReferenceSynced)
+            {
+                AdoptCameraEdits();
+                _runtimeReferenceSynced = Application.isPlaying;
+            }
+        }
+
+        /// <summary>
+        ///     Adopts the camera's size/FOV as the reference when it differs from the last value the reference
+        ///     accounts for (an authored edit, not the scaler's own output).
+        /// </summary>
+        private void AdoptCameraEdits()
+        {
+            if (!_referenceCaptured)
+            {
+                CaptureReferenceFromCamera();
+                return;
+            }
+
+            if (_camera.orthographic)
+            {
+                float size = _camera.orthographicSize;
+                if (!Mathf.Approximately(size, _observedCameraSize))
+                {
+                    _referenceSize = Mathf.Max(0.01f, size);
+                    _observedCameraSize = size;
+                }
+            }
+            else
+            {
+                float fov = _camera.fieldOfView;
+                if (!Mathf.Approximately(fov, _observedCameraFov))
+                {
+                    _referenceFov = Mathf.Clamp(fov, 1f, 179f);
+                    _observedCameraFov = fov;
+                }
             }
         }
 
         private bool HasRuntimeDataChanged()
         {
+            // WHY: runs every frame; read the target texture through one native call.
+            RenderTexture target = _camera.targetTexture;
+            bool hasTarget = target != null;
             return _lastScreenWidth != Screen.width
                    || _lastScreenHeight != Screen.height
-                   || _lastTargetWidth != (_camera.targetTexture != null ? _camera.targetTexture.width : 0)
-                   || _lastTargetHeight != (_camera.targetTexture != null ? _camera.targetTexture.height : 0)
+                   || _lastTargetWidth != (hasTarget ? target.width : 0)
+                   || _lastTargetHeight != (hasTarget ? target.height : 0)
                    || _lastOrthographic != _camera.orthographic
                    || _lastScaleMode != scaleMode
                    || _lastUseTargetResolution != useTargetResolution
                    || _lastTargetResolution != targetResolution
                    || !Mathf.Approximately(_lastScaleMultiplier, scaleMultiplier)
-                   || _lastUseViewportRectInFitBoth != useViewportRectInFitBoth;
+                   || _lastUseViewportRectInFitBoth != useViewportRectInFitBoth
+                   || !Mathf.Approximately(_lastReferenceSize, _referenceSize)
+                   || !Mathf.Approximately(_lastReferenceFov, _referenceFov)
+                   || _lastMinSize != minSize
+                   || _lastMaxSize != maxSize;
         }
 
         private void CacheCurrentState()
@@ -332,6 +587,10 @@ namespace Neo.Tools
             _lastTargetResolution = targetResolution;
             _lastScaleMultiplier = scaleMultiplier;
             _lastUseViewportRectInFitBoth = useViewportRectInFitBoth;
+            _lastReferenceSize = _referenceSize;
+            _lastReferenceFov = _referenceFov;
+            _lastMinSize = minSize;
+            _lastMaxSize = maxSize;
         }
 
         private float GetTargetAspect()

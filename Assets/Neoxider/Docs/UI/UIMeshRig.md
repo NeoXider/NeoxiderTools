@@ -1,5 +1,17 @@
 # UI Mesh Rig
 
+**What it is:** a sprite deformation rig in `Scripts/UI/MeshRig/` (namespace `Neo.UI`): child
+`UIMeshRigPoint` transforms act as bones, and a renderer-agnostic core (`UIMeshRigGeometryBuilder`) bends a
+grid mesh for uGUI, UI Toolkit, a world mesh or a `SpriteRenderer`.
+
+**How to use:**
+1. Create a rig from the menu (see Quick start) or add an adapter component and assign a Sprite.
+2. Apply a layout (`UIMeshRigLayoutBuilder.Apply`, or the Inspector button) or add `UIMeshRigPoint` children.
+3. Animate the points with an Animator, with `UIMeshRigPointMotion` presets, or from code with
+   `SetProceduralPose`.
+
+---
+
 UI Mesh Rig deforms a single Sprite in four environments from one renderer-agnostic core:
 
 - `UIMeshRigGraphic` — a standard `MaskableGraphic` inside a uGUI Canvas;
@@ -201,6 +213,10 @@ reapplying a layout replaces points only when `replaceExisting` is true.
 
 When a point itself is reparented between rigs, both owners' point lists are invalidated, including points
 below intermediate containers. The nearest ancestor implementing `IUIMeshRigOwner` becomes the owner.
+Adding an owner component to an object between a rig and its points (for example `AddComponent` on a
+grouping object at runtime) moves those points to the new nested rig, and removing that component hands them
+back to the enclosing rig: both rigs re-collect their points, and each point sends its procedural pose to its
+new owner. Disabling a nested owner does not change ownership; its points stay with it.
 
 ### Runtime layout replacement
 
@@ -225,15 +241,50 @@ This preflight is shared by the runtime overloads for all three scene renderer a
 not provide editor Undo and do not switch the authoring mode or start the Inspector's preview workflow.
 The [editor companion](./Editor.md) describes those additional authoring operations.
 
+## Performance
+
+An animated rig rebuilds its mesh every frame, so the steady-state rebuild path does not allocate:
+
+- Every adapter keeps one `UIMeshRigGeometry` and rebuilds into it through
+  `UIMeshRigGeometryBuilder.Build(..., reuse)`. The overload writes into `reuse` when its arrays already have
+  the grid's sizes and returns it; otherwise it returns a new geometry.
+- The public `BuildGeometry()` methods still return new arrays the caller owns, so a returned geometry is
+  never overwritten by a later rebuild.
+- `UIMeshRigWorldRenderer` uploads the index buffer only when the grid topology changes; a pose change writes
+  positions only. UVs are uploaded again when the grid or the sprite's outer UV changes (a sprite swap on the
+  same grid included), and the `MaterialPropertyBlock` is refreshed only after a source change.
+- `UIMeshRigSpriteRenderer` rewrites only the clone's positions on a pose change. UVs and indices are
+  uploaded when the clone is created or the grid changes (including a transposed grid with the same vertex
+  count), and the temporary native buffers it writes through come from `Allocator.Temp`, not the managed heap.
+- `UIMeshRigElement` reuses its geometry, vertex and index buffers and evaluates layout motion from shared,
+  read-only preset profiles instead of creating new `AnimationCurve`s for every point on every repaint. Its
+  16 ms repaint timer runs only while the pose depends on time: with `MotionSpeed = 0`, no sprite or
+  deformation off it repaints once per property change instead.
+- `UIMeshRigOwnerResolver.Find` walks the ancestors with `TryGetComponent`, and the adapters refill their
+  point cache into a reused list, so owner lookups do not allocate either.
+
+```csharp
+UIMeshRigGeometry buffer = null;
+// Each frame: the same instance comes back once the grid size is stable.
+buffer = UIMeshRigGeometryBuilder.Build(columns, rows, space, uvRect, true, pointStates, buffer);
+```
+
+Remaining cost scales with `Columns x Rows x points`; keep the grid as coarse as the silhouette allows.
+`Tests/Edit/UI/UIMeshRigAllocationTests.cs` guards the zero-allocation paths of every adapter (uGUI
+populate, world renderer, SpriteRenderer, UI Toolkit element) and the owner lookup with Unity's `GC.Alloc`
+counter (`Neo.Tests.Performance.GcAllocCounter`).
+
 ## Demo
 
 Import the `Demo Scenes` sample and open `Demo/UI Mesh Rig/UIMeshRigDemo.unity`. The top row keeps the three
-previous uGUI workflows (static pose, procedural motion, Animator). The bottom row shows the three output
-adapters side by side: uGUI Simple Bounce, UI Toolkit Character and world Flag Cloth.
+previous uGUI workflows (static pose, procedural motion, Animator). The bottom row shows the four output
+adapters side by side: uGUI Simple Bounce, UI Toolkit Character, world Flag Cloth and
+`[Demo] World/Sprite Renderer - Character` (`UIMeshRigSpriteRenderer` with the Character layout).
 The Animator card moves only in Play Mode: Unity does not play Animator clips outside Play Mode, while the
 neighboring cards keep moving in the editor thanks to the edit-mode preview of `UIMeshRigPointMotion`.
-There is no `UIMeshRigSpriteRenderer` example in the scene yet — create one with
-`GameObject > 2D Object > Neoxider UI Mesh Rig (Sprite Renderer)`.
+The collapsed info card in the top-left corner (`[Demo] Info Card`, expand it with `+` in Play Mode) names the
+objects to select and the equivalent C# calls. The sprite-renderer adapter and the info card are added by the
+editor builder `UIMeshRigDemoBuilder`; the hand-authored cards and adapters are left untouched.
 
 ## Limitations
 
@@ -242,4 +293,4 @@ There is no `UIMeshRigSpriteRenderer` example in the scene yet — create one wi
 - `UIMeshRigSpriteRenderer` requires `Draw Mode = Simple`; `Sliced` and `Tiled` rebuild the geometry themselves.
 - The bounds of the clone grow only by `Bounds Headroom`; increase the value for extreme deformation.
 - For a multi-layer character, IK and a large set of skeletal clips, a dedicated 2D rig is a better fit.
-- A dense grid and many moving points raise the rebuild cost; measure with the Profiler.
+- A dense grid and many moving points raise the rebuild CPU cost (no GC); measure with the Profiler.

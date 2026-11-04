@@ -323,7 +323,7 @@ namespace Neo.Tests.UI
                 Assert.That(motion, Is.Not.Null);
                 Assert.That(rig.gameObject, Is.SameAs(sourceObject));
 
-                // Conversion adds a bouncing point. Its live deformed mesh legitimately expands the
+                // WHY: Conversion adds a bouncing point. Its live deformed mesh legitimately expands the
                 // effective hit area; inspect the exact captured source padding at the public rest pose.
                 Assert.That(rig.AuthoringMode, Is.EqualTo(UIMeshRigAuthoringMode.Pose));
                 UIMeshRigMotionPreviewDriver.StopPreview(motion);

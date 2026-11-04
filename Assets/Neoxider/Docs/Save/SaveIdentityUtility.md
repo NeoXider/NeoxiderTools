@@ -1,12 +1,13 @@
 ﻿# SaveIdentityUtility
 
-## Overview
-`SaveIdentityUtility` is the helper responsible for building stable save identities for scene components.
+**What it is:** the static helper (`Scripts/Save/SaveIdentityUtility.cs`, namespace `Neo.Save`) that builds stable
+save identities for scene components. It is mainly used internally by `SaveManager`, but it is also useful in
+custom save tooling or debugging workflows.
 
-- **Namespace**: `Neo.Save`
-- **Path**: `Assets/Neoxider/Scripts/Save/SaveIdentityUtility.cs`
+**How to use:** call `SaveIdentityUtility.GetComponentKey(component)` to see the key `SaveManager` uses for a
+component, or `GetStableIdentity(component)` for its identity part.
 
-It is mainly used internally by `SaveManager`, but it is also useful in custom save tooling or debugging workflows.
+---
 
 ## Public API
 - `string GetComponentKey(MonoBehaviour monoBehaviour)`

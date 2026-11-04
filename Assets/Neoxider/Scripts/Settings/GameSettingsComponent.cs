@@ -86,6 +86,8 @@ namespace Neo.Settings
 
         private readonly List<ResolutionPresetEntry> _runtimeResolutions = new();
         private Coroutine _deferredCoroutine;
+        private float _deferredSaveDeadline;
+        private int _deferredTickFrame;
 
         internal string SaveKeyPrefix => _saveKeyPrefix;
 
@@ -196,7 +198,7 @@ namespace Neo.Settings
         {
             if (preset is GraphicsPreset.Custom)
             {
-                return Mathf.Clamp(_defaultCustomQualityLevel, 0, Mathf.Max(0, QualitySettings.names.Length - 1));
+                return Mathf.Clamp(_defaultCustomQualityLevel, 0, Mathf.Max(0, QualitySettings.count - 1));
             }
 
             if (_presetToQuality == null)
@@ -208,7 +210,7 @@ namespace Neo.Settings
             {
                 if (m.Preset == preset)
                 {
-                    return Mathf.Clamp(m.QualityLevelIndex, 0, Mathf.Max(0, QualitySettings.names.Length - 1));
+                    return Mathf.Clamp(m.QualityLevelIndex, 0, Mathf.Max(0, QualitySettings.count - 1));
                 }
             }
 
@@ -218,12 +220,12 @@ namespace Neo.Settings
         /// <summary>Tries to map a quality level index to a named preset; returns Custom if no mapping matches.</summary>
         internal GraphicsPreset GetPresetForQualityLevel(int qualityLevelIndex)
         {
-            if (_presetToQuality == null || QualitySettings.names.Length == 0)
+            if (_presetToQuality == null || QualitySettings.count == 0)
             {
                 return GraphicsPreset.Custom;
             }
 
-            qualityLevelIndex = Mathf.Clamp(qualityLevelIndex, 0, QualitySettings.names.Length - 1);
+            qualityLevelIndex = Mathf.Clamp(qualityLevelIndex, 0, QualitySettings.count - 1);
             foreach (GraphicsPresetLevelMapping m in _presetToQuality)
             {
                 if (m.Preset != GraphicsPreset.Custom && m.QualityLevelIndex == qualityLevelIndex)
@@ -282,17 +284,39 @@ namespace Neo.Settings
                 return;
             }
 
-            if (_deferredCoroutine != null)
+            if (_deferredCoroutine != null && Time.frameCount - _deferredTickFrame > 1)
             {
+                // WHY: a coroutine stopped from outside (StopAllCoroutines, a UnityEvent target) never clears its
+                // handle. A live one stamps every frame it waits, so a stamp older than the previous frame means it
+                // is dead and a fresh one must carry this change.
                 StopCoroutine(_deferredCoroutine);
+                _deferredCoroutine = null;
             }
 
-            _deferredCoroutine = StartCoroutine(DeferredSaveCo());
+            // WHY: a dragged slider reschedules every frame; moving the deadline keeps one running coroutine instead
+            // of stopping and allocating a new coroutine and wait object per change.
+            _deferredSaveDeadline = Time.realtimeSinceStartup + _deferredSaveDelaySeconds;
+            if (_deferredCoroutine == null)
+            {
+                _deferredCoroutine = StartCoroutine(DeferredSaveCo());
+            }
         }
+
+        /// <summary>
+        ///     Whether Deferred changes are still unwritten: the debounce is running, or its coroutine was stopped from
+        ///     outside before it saved.
+        /// </summary>
+        public bool HasPendingDeferredSave => _deferredCoroutine != null;
 
         private IEnumerator DeferredSaveCo()
         {
-            yield return new WaitForSecondsRealtime(_deferredSaveDelaySeconds);
+            // WHY: always yield once, so StartCoroutine returns before the handle is cleared even for a zero delay.
+            do
+            {
+                _deferredTickFrame = Time.frameCount;
+                yield return null;
+            } while (Time.realtimeSinceStartup < _deferredSaveDeadline);
+
             _deferredCoroutine = null;
             if (GameSettings.Context == this)
             {

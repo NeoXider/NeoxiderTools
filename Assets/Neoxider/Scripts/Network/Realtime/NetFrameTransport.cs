@@ -275,7 +275,7 @@ namespace Neo.Network.Realtime
             }
             catch (FormatException)
             {
-                // a malformed frame must disconnect the sender's peer like any malformed Mirror message
+                // WHY: a malformed frame must disconnect the sender's peer like any malformed Mirror message.
                 throw;
             }
             catch (Exception exception)

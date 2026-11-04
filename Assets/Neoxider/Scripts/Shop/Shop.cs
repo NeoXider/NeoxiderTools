@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Neo.Extensions;
 using Neo.Save;
 using UnityEngine;
@@ -123,11 +122,21 @@ namespace Neo.Shop
         /// <summary>Most recently reported observer failure; null until the first fault.</summary>
         public ShopNotificationFault LastNotificationFault { get; private set; }
 
+        private readonly Dictionary<string, int> _itemIndexById = new(StringComparer.Ordinal);
+        private ShopItemData[] _indexedItemDatas;
         private UnityEventDelegateCache _buyDelegates;
         private IMoneySpend _defaultMoney;
         private ShopProfileData _profile = new();
+        private bool _awakened;
         private bool _started;
         private bool _purchaseInProgress;
+        private int _stateVersion;
+
+        /// <summary>
+        ///     Increments whenever ownership, selection, prices, the catalog or the currency source may have
+        ///     changed. Views compare it to skip rebuilding for notifications that carry no new state.
+        /// </summary>
+        internal int StateVersion => _stateVersion;
 
         /// <summary>
         ///     Legacy: prices array. Kept for backwards-compatible serialization. Runtime ignores it —
@@ -169,6 +178,7 @@ namespace Neo.Shop
 
         private void Awake()
         {
+            _awakened = true;
             EnsureMissingItemIds();
             LoadProfile();
             SpawnItems();
@@ -243,6 +253,7 @@ namespace Neo.Shop
         private void EnsureMissingItemIds()
         {
             EnsureMissingItemIds(_shopItemDatas);
+            InvalidateItemIndex();
         }
 
         /// <summary>
@@ -309,6 +320,18 @@ namespace Neo.Shop
             BuyBundle(BundleIdOf(bundleData));
         }
 
+        /// <summary>Typed variant of <see cref="Buy(ShopItemData)"/> that reports what happened.</summary>
+        public ShopPurchaseStatus TryBuy(ShopItemData itemData)
+        {
+            return TryBuy(ItemIdOf(itemData));
+        }
+
+        /// <summary>Typed variant of <see cref="BuyBundle(ShopBundleData)"/> that reports what happened.</summary>
+        public ShopPurchaseStatus TryBuyBundle(ShopBundleData bundleData)
+        {
+            return TryBuyBundle(BundleIdOf(bundleData));
+        }
+
         /// <summary>Selects/equips the item asset. Pass null to clear selection.</summary>
         public void Select(ShopItemData itemData)
         {
@@ -363,36 +386,58 @@ namespace Neo.Shop
         /// </summary>
         public void Buy(string itemId)
         {
-            ExecutePurchase(() => BuyItemInternal(itemId));
+            TryBuy(itemId);
         }
 
-        private void BuyItemInternal(string itemId)
+        /// <summary>
+        ///     Typed variant of <see cref="Buy(string)"/>: runs the same purchase / equip flow and raises the
+        ///     same events, then reports the outcome so C# callers do not need UnityEvent subscriptions.
+        /// </summary>
+        public ShopPurchaseStatus TryBuy(string itemId)
+        {
+            if (_purchaseInProgress)
+            {
+                return ShopPurchaseStatus.Busy;
+            }
+
+            _purchaseInProgress = true;
+            try
+            {
+                return BuyItemInternal(itemId);
+            }
+            finally
+            {
+                _purchaseInProgress = false;
+            }
+        }
+
+        private ShopPurchaseStatus BuyItemInternal(string itemId)
         {
             if (string.IsNullOrEmpty(itemId))
             {
-                return;
+                return ShopPurchaseStatus.Unavailable;
             }
 
             ShopPurchaseFlow flow = _purchaseFlow;
             if (flow == ShopPurchaseFlow.Browse)
             {
-                return;
+                return ShopPurchaseStatus.Unavailable;
             }
 
             ShopItemData data = ResolveItemDataById(itemId);
             if (data == null)
             {
-                return;
+                return ShopPurchaseStatus.Unavailable;
             }
 
             if (flow == ShopPurchaseFlow.EquipOnly)
             {
                 Select(itemId);
                 ShowPreview(itemId);
-                return;
+                return ShopPurchaseStatus.Selected;
             }
 
-            float price = GetPrice(itemId);
+            float price = PriceOf(data);
             bool isOwned = _profile.IsItemOwned(itemId);
             bool isFree = price <= 0f;
             bool singlePurchase = data.isSinglePurchase;
@@ -405,15 +450,16 @@ namespace Neo.Shop
                 }
 
                 ShowPreview(itemId);
-                return;
+                return ShopPurchaseStatus.AlreadyOwned;
             }
 
             IMoneySpend money = isFree ? null : ResolveCurrency(data.CurrencyOverrideSaveKey);
             bool pendingServerAuthority = false;
+            bool commitFailed = false;
             int itemIndex = IndexOfItemDataById(itemId);
             if (isFree || TrySpendCurrency(money, price, out pendingServerAuthority))
             {
-                // Required spending is complete. Free and paid grants share profile rollback and debit compensation.
+                // WHY: required spending is complete. Free and paid grants share profile rollback and debit compensation.
                 if (TryCommitPurchase(itemId, isFree ? 0f : price, money, () =>
                     {
                         if (singlePurchase)
@@ -435,15 +481,16 @@ namespace Neo.Shop
                     }
 
                     InvokePurchaseObserver(itemId, nameof(VisualPreview), () => ShowPreview(itemId), itemId);
-                    return;
+                    return ShopPurchaseStatus.Purchased;
                 }
 
                 pendingServerAuthority = false;
+                commitFailed = true;
             }
 
             if (pendingServerAuthority)
             {
-                return;
+                return ShopPurchaseStatus.PendingServerAuthority;
             }
 
             int failedIndex = IndexOfItemDataById(itemId);
@@ -458,39 +505,63 @@ namespace Neo.Shop
             {
                 ShowPreview(itemId);
             }
+
+            return commitFailed ? ShopPurchaseStatus.CommitFailed : ShopPurchaseStatus.InsufficientFunds;
         }
 
         /// <summary>Purchases the bundle and grants all its items (and per-item inventory hooks) on success.</summary>
         public void BuyBundle(string bundleId)
         {
-            ExecutePurchase(() => BuyBundleInternal(bundleId));
+            TryBuyBundle(bundleId);
         }
 
-        private void BuyBundleInternal(string bundleId)
+        /// <summary>
+        ///     Typed variant of <see cref="BuyBundle(string)"/>: runs the same bundle purchase and raises the
+        ///     same events, then reports the outcome.
+        /// </summary>
+        public ShopPurchaseStatus TryBuyBundle(string bundleId)
+        {
+            if (_purchaseInProgress)
+            {
+                return ShopPurchaseStatus.Busy;
+            }
+
+            _purchaseInProgress = true;
+            try
+            {
+                return BuyBundleInternal(bundleId);
+            }
+            finally
+            {
+                _purchaseInProgress = false;
+            }
+        }
+
+        private ShopPurchaseStatus BuyBundleInternal(string bundleId)
         {
             if (string.IsNullOrEmpty(bundleId))
             {
-                return;
+                return ShopPurchaseStatus.Unavailable;
             }
 
             ShopPurchaseFlow flow = _purchaseFlow;
             if (flow == ShopPurchaseFlow.Browse || flow == ShopPurchaseFlow.EquipOnly)
             {
-                return;
+                return ShopPurchaseStatus.Unavailable;
             }
 
             ShopBundleData bundle = ResolveBundleById(bundleId);
             if (bundle == null)
             {
-                return;
+                return ShopPurchaseStatus.Unavailable;
             }
 
             if (bundle.isSinglePurchase && _profile.IsBundleOwned(bundleId))
             {
-                return;
+                return ShopPurchaseStatus.AlreadyOwned;
             }
 
-            // Capture every id and ownership decision before spending or invoking any external callback.
+            // WHY: capture every id and ownership decision before spending or invoking any external callback.
             List<string> itemIds = new();
             List<string> ownedItemIds = new();
             for (int i = 0; i < bundle.Items.Count; i++)
@@ -517,14 +588,14 @@ namespace Neo.Shop
             {
                 if (pendingServerAuthority)
                 {
-                    return;
+                    return ShopPurchaseStatus.PendingServerAuthority;
                 }
 
                 OnPurchaseFailedId?.Invoke(bundleId);
-                return;
+                return ShopPurchaseStatus.InsufficientFunds;
             }
 
-            // Only profile mutation/persistence can roll back the debit. Delivery events follow the commit.
+            // WHY: only profile mutation/persistence can roll back the debit. Delivery events follow the commit.
             if (!TryCommitPurchase(bundleId, needsSpend ? price : 0f, money, () =>
                 {
                     for (int i = 0; i < ownedItemIds.Count; i++)
@@ -539,7 +610,7 @@ namespace Neo.Shop
                 }))
             {
                 OnPurchaseFailedId?.Invoke(bundleId);
-                return;
+                return ShopPurchaseStatus.CommitFailed;
             }
 
             NotifyPurchaseViews(bundleId);
@@ -550,24 +621,7 @@ namespace Neo.Shop
             }
 
             InvokePurchaseObserver(bundleId, nameof(OnPurchasedBundle), () => OnPurchasedBundle?.Invoke(bundle));
-        }
-
-        private void ExecutePurchase(Action purchase)
-        {
-            if (_purchaseInProgress)
-            {
-                return;
-            }
-
-            _purchaseInProgress = true;
-            try
-            {
-                purchase();
-            }
-            finally
-            {
-                _purchaseInProgress = false;
-            }
+            return ShopPurchaseStatus.Purchased;
         }
 
         /// <summary>Selects the item by id. Fires OnSelectId (and int proxy when index is resolvable).</summary>
@@ -657,7 +711,7 @@ namespace Neo.Shop
                 return true;
             }
 
-            float price = GetPrice(itemId);
+            float price = PriceOf(data);
             if (price <= 0f)
             {
                 return true;
@@ -717,7 +771,8 @@ namespace Neo.Shop
         public void SetItems(ShopItemData[] items, bool resetPreviewToFirst = true)
         {
             _shopItemDatas = items ?? Array.Empty<ShopItemData>();
-            EnsureMissingItemIds(_shopItemDatas);
+            _stateVersion++;
+            EnsureMissingItemIds();
             if (resetPreviewToFirst || ResolveItemDataById(PreviewIdString) == null)
             {
                 PreviewIdString = FirstItemId();
@@ -729,6 +784,16 @@ namespace Neo.Shop
                 SaveProfile();
             }
 
+            // WHY: Shop-owned views are spawned in Awake for the initial catalog only; a larger runtime
+            // catalog would otherwise have entries without a view or a buy-button binding.
+            if (_awakened && _autoSpawnItems && _prefab != null &&
+                (_shopItems == null || _shopItems.Length < _shopItemDatas.Length))
+            {
+                Subscribe(false);
+                SpawnItems();
+                Subscribe(true);
+            }
+
             VisualAll();
             VisualPreview();
         }
@@ -737,6 +802,7 @@ namespace Neo.Shop
         public void SetBundles(ShopBundleData[] bundles)
         {
             _bundles = bundles ?? Array.Empty<ShopBundleData>();
+            _stateVersion++;
             OnShopChanged?.Invoke();
         }
 
@@ -745,6 +811,7 @@ namespace Neo.Shop
         {
             moneySpendSource = source;
             _defaultMoney = ResolveDefaultCurrency();
+            _stateVersion++;
             OnShopChanged?.Invoke();
         }
 
@@ -762,9 +829,48 @@ namespace Neo.Shop
                 return Array.Empty<ShopItemData>();
             }
 
-            return _shopItemDatas
-                .Where(d => d != null && string.Equals(d.Category ?? "", category ?? "", StringComparison.Ordinal))
-                .ToArray();
+            string wanted = category ?? "";
+            List<ShopItemData> matches = new();
+            for (int i = 0; i < _shopItemDatas.Length; i++)
+            {
+                ShopItemData data = _shopItemDatas[i];
+                if (data != null && string.Equals(data.Category ?? "", wanted, StringComparison.Ordinal))
+                {
+                    matches.Add(data);
+                }
+            }
+
+            return matches.Count == 0 ? Array.Empty<ShopItemData>() : matches.ToArray();
+        }
+
+        /// <summary>
+        ///     Non-allocating variant of <see cref="GetItemsInCategory(string)"/>: clears <paramref name="results"/>
+        ///     and fills it with the catalog items of <paramref name="category"/>. Returns the number added.
+        /// </summary>
+        public int GetItemsInCategory(string category, List<ShopItemData> results)
+        {
+            if (results == null)
+            {
+                return 0;
+            }
+
+            results.Clear();
+            if (_shopItemDatas == null)
+            {
+                return 0;
+            }
+
+            string wanted = category ?? "";
+            for (int i = 0; i < _shopItemDatas.Length; i++)
+            {
+                ShopItemData data = _shopItemDatas[i];
+                if (data != null && string.Equals(data.Category ?? "", wanted, StringComparison.Ordinal))
+                {
+                    results.Add(data);
+                }
+            }
+
+            return results.Count;
         }
 
         /// <summary>Distinct category labels from configured items, in first-seen order.</summary>
@@ -848,7 +954,7 @@ namespace Neo.Shop
                 return;
             }
 
-            List<ShopItem> list = _shopItems != null ? _shopItems.ToList() : new List<ShopItem>();
+            List<ShopItem> list = _shopItems != null ? new List<ShopItem>(_shopItems) : new List<ShopItem>();
 
             if (_prefab != null)
             {
@@ -871,36 +977,43 @@ namespace Neo.Shop
 
         private void Subscribe(bool subscribe)
         {
+            if (!subscribe)
+            {
+                // WHY: unsubscribe even when _autoSubscribe was toggled off after subscribing.
+                UnsubscribeBuyButtons();
+                return;
+            }
+
             if (_shopItems == null || _shopItems.Length == 0 || !_autoSubscribe)
             {
                 return;
             }
 
-            if (subscribe)
+            _buyDelegates ??= new UnityEventDelegateCache();
+            // WHY: a repeated subscribe (runtime catalog growth) must not stack a second Buy listener per button.
+            UnsubscribeBuyButtons();
+            for (int i = 0; i < _shopItems.Length; i++)
             {
-                _buyDelegates ??= new UnityEventDelegateCache();
-                _buyDelegates.Clear();
-                for (int i = 0; i < _shopItems.Length; i++)
+                if (_shopItems[i] == null || _shopItems[i].buttonBuy == null)
                 {
-                    if (_shopItems[i] == null || _shopItems[i].buttonBuy == null)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    int index = i;
-                    _buyDelegates.SubscribeAt(i, _shopItems[i].buttonBuy.onClick, () => BuyByIndexInternal(index));
-                }
+                int index = i;
+                _buyDelegates.SubscribeAt(i, _shopItems[i].buttonBuy.onClick, () => BuyByIndexInternal(index));
             }
-            else if (_buyDelegates != null)
+        }
+
+        private void UnsubscribeBuyButtons()
+        {
+            if (_buyDelegates == null)
             {
-                for (int i = 0; i < _shopItems.Length && i < _buyDelegates.Count; i++)
-                {
-                    if (_shopItems[i] != null && _shopItems[i].buttonBuy != null)
-                    {
-                        _buyDelegates.UnsubscribeAt(i, _shopItems[i].buttonBuy.onClick);
-                    }
-                }
+                return;
             }
+
+            // WHY: detach from the event recorded at subscribe time, not the row's current button; a buttonBuy
+            // reassigned after subscribing would otherwise keep a live Buy listener.
+            _buyDelegates.UnsubscribeAll();
         }
 
         private void BuyByIndexInternal(int index)
@@ -962,7 +1075,7 @@ namespace Neo.Shop
                 }
                 catch (Exception reportException)
                 {
-                    // Reporting errors cannot recursively publish faults or escape a settled purchase.
+                    // WHY: reporting errors cannot recursively publish faults or escape a settled purchase.
                     NeoDiagnostics.LogError(
                         $"[Shop] Notification-fault observer failed for '{purchaseId}': {reportException.Message}", this);
                 }
@@ -971,6 +1084,7 @@ namespace Neo.Shop
 
         private void LoadProfile()
         {
+            _stateVersion++;
             string json = SaveProvider.GetString(_keySave, "");
             if (string.IsNullOrEmpty(json))
             {
@@ -992,6 +1106,8 @@ namespace Neo.Shop
 
         private void SaveProfile()
         {
+            // WHY: bumped before the write so a failing provider still invalidates views of the mutated profile.
+            _stateVersion++;
             _profile.Sanitize();
             string json = JsonUtility.ToJson(_profile);
             SaveProvider.SetString(_keySave, json);
@@ -1018,11 +1134,10 @@ namespace Neo.Shop
                 }
 
                 ShopItemData data = i < _shopItemDatas.Length ? _shopItemDatas[i] : null;
-                float price = data != null ? GetPrice(data.Id) : 0f;
+                float price = data != null ? PriceOf(data) : 0f;
                 bool owned = data != null && _profile.IsItemOwned(data.Id);
                 _shopItems[i].Visual(data, owned ? 0 : Mathf.RoundToInt(price));
             }
-
         }
 
         private void VisualPreview()
@@ -1040,8 +1155,17 @@ namespace Neo.Shop
             }
 
             bool owned = _profile.IsItemOwned(data.Id);
-            float price = GetPrice(data.Id);
+            float price = PriceOf(data);
             _shopItemPreview.Visual(data, owned ? 0 : Mathf.RoundToInt(price));
+        }
+
+        /// <summary>
+        ///     Runtime price of a catalog entry the caller already resolved. Skips the id lookup that
+        ///     <see cref="GetPrice(string)"/> needs, which keeps per-row view refreshes linear.
+        /// </summary>
+        internal float PriceOf(ShopItemData data)
+        {
+            return data == null ? 0f : _profile.GetPriceOrDefault(data.Id, data.price);
         }
 
         private void PropagateSelectionVisual(string itemId)
@@ -1214,21 +1338,8 @@ namespace Neo.Shop
 
         private ShopItemData ResolveItemDataById(string itemId)
         {
-            if (string.IsNullOrEmpty(itemId) || _shopItemDatas == null)
-            {
-                return null;
-            }
-
-            for (int i = 0; i < _shopItemDatas.Length; i++)
-            {
-                ShopItemData data = _shopItemDatas[i];
-                if (data != null && data.Id == itemId)
-                {
-                    return data;
-                }
-            }
-
-            return null;
+            int index = IndexOfItemDataById(itemId);
+            return index >= 0 ? _shopItemDatas[index] : null;
         }
 
         private ShopBundleData ResolveBundleById(string bundleId)
@@ -1257,15 +1368,55 @@ namespace Neo.Shop
                 return -1;
             }
 
+            // WHY: every view refresh resolves ids several times, so a linear scan made a refresh of n rows O(n^2).
+            // A hit is re-validated against the live array, so a catalog edited in place still resolves through
+            // the scan below, which then rebuilds the index. A hit is not re-checked for an earlier duplicate of
+            // its id (that would bring the scan back); SetItems and the Awake id pass re-index for that.
+            if (ReferenceEquals(_indexedItemDatas, _shopItemDatas) &&
+                _itemIndexById.TryGetValue(itemId, out int cached) && cached < _shopItemDatas.Length)
+            {
+                ShopItemData candidate = _shopItemDatas[cached];
+                if (candidate != null && candidate.Id == itemId)
+                {
+                    return cached;
+                }
+            }
+
             for (int i = 0; i < _shopItemDatas.Length; i++)
             {
                 if (_shopItemDatas[i] != null && _shopItemDatas[i].Id == itemId)
                 {
+                    RebuildItemIndex();
                     return i;
                 }
             }
 
             return -1;
+        }
+
+        private void InvalidateItemIndex()
+        {
+            _indexedItemDatas = null;
+            _itemIndexById.Clear();
+        }
+
+        private void RebuildItemIndex()
+        {
+            _itemIndexById.Clear();
+            _indexedItemDatas = _shopItemDatas;
+            if (_shopItemDatas == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _shopItemDatas.Length; i++)
+            {
+                ShopItemData data = _shopItemDatas[i];
+                if (data != null && !string.IsNullOrEmpty(data.Id))
+                {
+                    _itemIndexById.TryAdd(data.Id, i);
+                }
+            }
         }
 
         private string ItemIdByIndex(int index)

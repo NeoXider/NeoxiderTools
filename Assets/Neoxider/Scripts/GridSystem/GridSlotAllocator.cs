@@ -9,20 +9,26 @@ namespace Neo.GridSystem
     /// </summary>
     public sealed class GridSlotAllocator
     {
-        private static readonly GridPlacementEntry[] SingleCellEntry =
+        // WHY: per instance rather than static, so allocators never share a mutable entry across boards or threads.
+        private readonly GridPlacementEntry[] _singleCellEntry =
         {
             new(Vector3Int.zero, 0)
         };
 
         private readonly FieldGenerator _field;
 
+        /// <summary>Creates an allocator over a generated field.</summary>
         public GridSlotAllocator(FieldGenerator field)
         {
             _field = field;
         }
 
+        /// <summary>The field slots are allocated on.</summary>
         public FieldGenerator Field => _field;
 
+        /// <summary>
+        ///     Number of linear slots (width x height) on a rectangular single-layer board; zero for other layouts.
+        /// </summary>
         public int Capacity
         {
             get
@@ -194,11 +200,12 @@ namespace Neo.GridSystem
             return false;
         }
 
+        /// <summary>Writes <paramref name="contentId" /> into a free cell and marks it occupied.</summary>
         public GridPlacementResult Allocate(Vector3Int position, int contentId)
         {
-            SingleCellEntry[0].ContentId = contentId;
+            _singleCellEntry[0].ContentId = contentId;
             return _field != null
-                ? _field.PlaceContentFootprint(position, SingleCellEntry)
+                ? _field.PlaceContentFootprint(position, _singleCellEntry)
                 : new GridPlacementResult { FailureReason = "Field is null." };
         }
 
@@ -233,25 +240,37 @@ namespace Neo.GridSystem
                    && Release(position, emptyContentId, notify);
         }
 
+        /// <summary>
+        ///     Empties every enabled cell. Notifications (when <paramref name="notify" /> is set) follow after every cell
+        ///     has been cleared, so listeners observe the final board.
+        /// </summary>
         public void Clear(int emptyContentId = -1, bool notify = true)
         {
-            if (_field == null)
+            FieldCell[,,] cells = _field != null ? _field.Cells : null;
+            if (cells == null)
             {
                 return;
             }
 
-            foreach (FieldCell cell in _field.GetAllCells(false))
+            foreach (FieldCell cell in cells)
             {
-                if (cell == null)
+                if (cell != null && cell.IsEnabled)
                 {
-                    continue;
+                    cell.ContentId = emptyContentId;
+                    cell.IsOccupied = false;
                 }
+            }
 
-                cell.ContentId = emptyContentId;
-                cell.IsOccupied = false;
-                if (notify)
+            if (!notify)
+            {
+                return;
+            }
+
+            foreach (FieldCell cell in cells)
+            {
+                if (cell != null && cell.IsEnabled)
                 {
-                    _field.OnCellStateChanged.Invoke(cell);
+                    _field.OnCellStateChanged?.Invoke(cell);
                 }
             }
         }

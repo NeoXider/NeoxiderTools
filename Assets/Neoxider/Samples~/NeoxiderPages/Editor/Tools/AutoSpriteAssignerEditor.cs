@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -99,9 +98,7 @@ namespace Neo.Pages.Editor
 
                 string objectNameLower = go.name.ToLowerInvariant();
 
-                if (ignoreNames.Any(key =>
-                        !string.IsNullOrEmpty(key) &&
-                        objectNameLower.Contains(key.ToLowerInvariant())))
+                if (ContainsAnyKey(objectNameLower, ignoreNames))
                 {
                     continue;
                 }
@@ -116,14 +113,15 @@ namespace Neo.Pages.Editor
                         assignedCount++;
                     }
 
-                    bool skipNative = ignoreNativeSizeNames.Any(key =>
-                        !string.IsNullOrEmpty(key) &&
-                        objectNameLower.Contains(key.ToLowerInvariant()));
+                    bool skipNative = ContainsAnyKey(objectNameLower, ignoreNativeSizeNames);
 
                     bool stretchedFull = IsStretchedFullScreen(image.rectTransform);
 
                     if ((!skipNative || alwaysSetNativeSize) && !stretchedFull)
                     {
+                        // WHY: SetNativeSize writes the RectTransform; without an Undo record the resize was not
+                        // undoable and did not mark the scene dirty, so it could be lost on save.
+                        Undo.RecordObject(image.rectTransform, "Set Native Size");
                         image.SetNativeSize();
                     }
                 }
@@ -131,6 +129,20 @@ namespace Neo.Pages.Editor
 
             Debug.Log(
                 $"<color=green>[AutoSpriteAssigner]</color> Sprites assigned. Total replacements: <color=yellow>{assignedCount}</color>");
+        }
+
+        private static bool ContainsAnyKey(string objectNameLower, List<string> keys)
+        {
+            for (int i = 0; i < keys.Count; i++)
+            {
+                string key = keys[i];
+                if (!string.IsNullOrEmpty(key) && objectNameLower.Contains(key.ToLowerInvariant()))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void LoadAllSprites()

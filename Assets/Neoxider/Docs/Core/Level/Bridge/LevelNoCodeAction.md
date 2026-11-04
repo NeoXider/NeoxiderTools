@@ -1,13 +1,16 @@
 # LevelNoCodeAction
 
-**What it is:** a UnityEvent-friendly bridge in `Neo.Core.Level.Bridge` (namespace `Neo.Core.Level`) that drives a `LevelComponent` through its `ILevelProvider` runtime API.
+**What it is:** a UnityEvent-friendly bridge in `Neo.Core.Level.Bridge` (namespace `Neo.Core.Level`) that drives a `LevelComponent` through its `ILevelProvider` runtime API. Script: `Scripts/Core/Level/Bridge/LevelNoCodeAction.cs`.
 
-## Setup
-
+**How to use:**
 1. Add the component via **Add Component → Neoxider → Core → Level NoCode Action**.
 2. Assign `Level Provider`, or leave it empty to use a `LevelComponent` on the same GameObject.
 3. Choose an `Action Type` and fill the matching amount.
 4. Call `Execute()` from a `Button`, animation event, or any other UnityEvent source.
+
+---
+
+## Provider resolution
 
 The explicit reference takes priority over the sibling fallback. Resolution runs on every execution, including after a provider is added or an explicit reference is destroyed. It does not search parents, children, or the scene, and does not resolve arbitrary `ILevelProvider` implementations.
 

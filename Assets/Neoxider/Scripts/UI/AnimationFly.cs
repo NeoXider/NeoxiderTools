@@ -159,10 +159,14 @@ namespace Neo.UI
         public float magnetDurationRatio = 0.25f;
 
         public bool useUnscaledTime;
+        private static readonly Vector3[] CornerBuffer = new Vector3[4];
+        private static readonly Action<GameObject> KillTweensBeforeDestroy = KillVisualTweens;
         private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
-        private readonly Dictionary<(UnityEngine.Object Visual, AnimationFlySpawnSpace Space), Stack<GameObject>> _pool = new();
-        private readonly HashSet<GameObject> _ownedVisuals = new();
+        private readonly AnimationFlyVisualPool _visuals = new();
         private Camera _cachedFallbackCamera;
+
+        /// <summary>Number of spawned visuals this fly still owns (in flight or waiting in the pool).</summary>
+        public int OwnedVisualCount => _visuals.OwnedCount;
 
         protected override void Init()
         {
@@ -173,26 +177,7 @@ namespace Neo.UI
         protected override void OnDestroy()
         {
             StopAllCoroutines();
-            foreach (GameObject visual in _ownedVisuals)
-            {
-                if (visual == null)
-                {
-                    continue;
-                }
-
-                KillVisualTweens(visual);
-                if (Application.isPlaying)
-                {
-                    Destroy(visual);
-                }
-                else
-                {
-                    DestroyImmediate(visual);
-                }
-            }
-
-            _ownedVisuals.Clear();
-            _pool.Clear();
+            _visuals.DestroyAll(KillTweensBeforeDestroy);
             base.OnDestroy();
         }
 
@@ -224,6 +209,33 @@ namespace Neo.UI
             FillDictionary();
         }
 
+        // WHY: Init (which fills the cache) runs only for the instance that Set Instance On Awake makes the
+        // singleton, and OnValidate only in the Editor. An additional AnimationFly in a player build therefore
+        // kept an empty cache and rejected every bonus type; a miss rescans the authored list before failing.
+        private bool TryGetPrefabData(int type, out BonusPrefabData data)
+        {
+            if (_prefabDict.TryGetValue(type, out data))
+            {
+                return true;
+            }
+
+            if (bonusPrefabList != null)
+            {
+                for (int i = 0; i < bonusPrefabList.Count; i++)
+                {
+                    if (bonusPrefabList[i].bonusType == type)
+                    {
+                        data = bonusPrefabList[i];
+                        _prefabDict[type] = data;
+                        return true;
+                    }
+                }
+            }
+
+            data = default;
+            return false;
+        }
+
         /// <summary>
         ///     Inspector smoke-test: flies <paramref name="bonusCount" /> items of <paramref name="type" />
         ///     from the spawn parent (or this transform) to the end point configured in <see cref="bonusPrefabList" />.
@@ -235,6 +247,11 @@ namespace Neo.UI
             Execute(type, bonusCount, start);
         }
 
+        /// <summary>
+        ///     Starts a typed flight. The request is copied on entry, so the same instance can be reused or
+        ///     changed for the next call without affecting flights that are already running.
+        /// </summary>
+        /// <returns>Live progress of the flight, or <see cref="AnimationFlyResult.Empty" /> when nothing spawns.</returns>
         public AnimationFlyResult Play(AnimationFlyRequest request)
         {
             if (request == null)
@@ -243,12 +260,17 @@ namespace Neo.UI
                 return AnimationFlyResult.Empty;
             }
 
+            // WHY: the coroutine and tween callbacks read the request long after Play returns, and type
+            // resolution fills in the end transform. Working on a private copy keeps a reused or edited
+            // request from retargeting or re-wiring flights that are already in the air.
+            request = request.Clone();
+            _visuals.PruneDestroyed();
             if (!TryResolveVisual(request, out GameObject prefab, out Sprite sprite, out UnityEngine.Object poolKey))
             {
                 return AnimationFlyResult.Empty;
             }
 
-            Transform parent = request.Parent ?? spawnParent;
+            Transform parent = ResolveParent(request.Parent);
             AnimationFlySpawnSpace resolvedSpawnSpace = ResolveSpawnSpace(parent, prefab, sprite, request.SpawnSpace);
             AnimationFlyCoordinateSpace startSpace = ResolveCoordinateSpace(request.StartSpace, request.StartTransform);
             AnimationFlyCoordinateSpace endSpace = ResolveCoordinateSpace(request.EndSpace, request.EndTransform);
@@ -277,9 +299,8 @@ namespace Neo.UI
             Vector3 resolvedEnd = ResolvePosition(rawEnd, endSpace, resolvedSpawnSpace, parent,
                 request.EndTransform, endDepth);
 
-            int finalCount = Mathf.CeilToInt(request.Count * request.CountMultiplier * countMultiplier);
-            finalCount = Mathf.Clamp(finalCount, 0,
-                request.MaxCount > 0 ? Mathf.Min(request.MaxCount, maxBonusCount) : maxBonusCount);
+            int finalCount = AnimationFlyMath.ResolveCount(request.Count, request.CountMultiplier, countMultiplier,
+                request.MaxCount, maxBonusCount);
             if (finalCount <= 0)
             {
                 return AnimationFlyResult.Empty;
@@ -325,9 +346,9 @@ namespace Neo.UI
         public void Execute(int type, int bonusCount, Vector3 start, Action<GameObject> onStart = null,
             Action<GameObject> onEnd = null)
         {
-            if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            if (!TryGetPrefabData(type, out BonusPrefabData data))
             {
-                NeoDiagnostics.LogError($"[AnimationBonus] No prefab for bonus type {type}");
+                NeoDiagnostics.LogError($"[AnimationFly] No prefab for bonus type {type}", this);
                 return;
             }
 
@@ -338,9 +359,9 @@ namespace Neo.UI
         public void Execute(int type, int bonusCount, Transform start, Action<GameObject> onStart = null,
             Action<GameObject> onEnd = null)
         {
-            if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            if (!TryGetPrefabData(type, out BonusPrefabData data))
             {
-                NeoDiagnostics.LogError($"[AnimationBonus] No prefab for bonus type {type}");
+                NeoDiagnostics.LogError($"[AnimationFly] No prefab for bonus type {type}", this);
                 return;
             }
 
@@ -351,27 +372,27 @@ namespace Neo.UI
         public void Execute(int type, int bonusCount, Transform start, Transform end,
             Transform parent = null, Action<GameObject> onStart = null, Action<GameObject> onEnd = null)
         {
-            if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            if (!TryGetPrefabData(type, out BonusPrefabData data))
             {
-                NeoDiagnostics.LogError($"[AnimationBonus] No prefab for bonus type {type}");
+                NeoDiagnostics.LogError($"[AnimationFly] No prefab for bonus type {type}", this);
                 return;
             }
 
-            parent = parent ?? spawnParent;
+            parent = ResolveParent(parent);
             Execute(data.prefab, bonusCount, start, end, parent, onStart, onEnd);
         }
 
         public void Execute(GameObject prefab, int bonusCount, Transform start, Transform end,
             Transform parent = null, Action<GameObject> onStart = null, Action<GameObject> onEnd = null)
         {
-            parent = parent ?? spawnParent;
+            parent = ResolveParent(parent);
             Play(prefab, bonusCount, start, end, defaultStartSpace, defaultEndSpace, parent, onStart, onEnd);
         }
 
         public void Execute(GameObject prefab, int bonusCount, Vector3 start, Vector3 end,
             Transform parent = null, Action<GameObject> onStart = null, Action<GameObject> onEnd = null)
         {
-            parent = parent ?? spawnParent;
+            parent = ResolveParent(parent);
             Play(prefab, bonusCount, start, end, defaultStartSpace, defaultEndSpace, parent, onStart, onEnd);
         }
 
@@ -409,7 +430,7 @@ namespace Neo.UI
             AnimationFlyCoordinateSpace startSpace, AnimationFlyCoordinateSpace endSpace,
             Action<GameObject> onStart = null, Action<GameObject> onEnd = null)
         {
-            if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            if (!TryGetPrefabData(type, out BonusPrefabData data))
             {
                 NeoDiagnostics.LogError($"[AnimationFly] No prefab for bonus type {type}");
                 return;
@@ -463,14 +484,14 @@ namespace Neo.UI
                 return;
             }
 
-            parent = parent ?? spawnParent;
-            int finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
-            finalBonusCount = Mathf.Clamp(finalBonusCount, 0, maxBonusCount);
+            parent = ResolveParent(parent);
+            int finalBonusCount = AnimationFlyMath.ResolveCount(bonusCount, 1f, countMultiplier, 0, maxBonusCount);
             if (finalBonusCount <= 0)
             {
                 return;
             }
 
+            _visuals.PruneDestroyed();
             AnimationFlySpawnSpace resolvedSpawnSpace = ResolveSpawnSpace(parent, prefab);
             Vector3 resolvedStart = ResolvePosition(start, startSpace, resolvedSpawnSpace, parent, startTransform);
             Vector3 resolvedEnd = ResolvePosition(end, endSpace, resolvedSpawnSpace, parent, endTransform);
@@ -496,13 +517,14 @@ namespace Neo.UI
                 end.z = 0f;
             }
 
+            ItemDelayYield delayYield = default;
             for (int i = 0; i < bonusCount; i++)
             {
-                Vector3 startPos = start + RandomOffset(startRandomOffset);
-                Vector3 endPos = end + RandomOffset(endRandomOffset);
+                Vector3 startPos = start + AnimationFlyMath.RandomOffset(startRandomOffset);
+                Vector3 endPos = end + AnimationFlyMath.RandomOffset(endRandomOffset);
 
                 GameObject bonus = Instantiate(prefab, parent);
-                _ownedVisuals.Add(bonus);
+                _visuals.Track(bonus);
                 ResetVisualForFlight(bonus);
                 SetInitialPosition(bonus.transform, startPos, resolvedSpawnSpace);
                 if (setAsLastSibling)
@@ -510,21 +532,11 @@ namespace Neo.UI
                     bonus.transform.SetAsLastSibling();
                 }
 
-                Vector3 scale;
-                scale = bonus.transform.localScale;
-                scale *= scaleMult;
-                bonus.transform.localScale = scale;
+                bonus.transform.localScale *= scaleMult;
 
-                onStart?.Invoke(bonus);
+                InvokeSafely(onStart, bonus);
 
-                Vector3 midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
-                midPoint += new Vector3(
-                    Random.Range(-arcStrength, arcStrength),
-                    Random.Range(arcStrength * multY, arcStrength),
-                    Random.Range(-arcStrength, arcStrength)
-                );
-                midPoint += RandomOffset(middleRandomOffset);
-
+                Vector3 midPoint = BuildArcPoint(startPos, endPos, middleRandomOffset);
                 Tween moveTween = CreateMoveTween(bonus.transform, midPoint, flyDuration / 2f, resolvedSpawnSpace);
                 moveTween.SetEase(easyStart).SetUpdate(useUnscaledTime)
                     .OnComplete(() =>
@@ -533,8 +545,9 @@ namespace Neo.UI
                         endTween.SetEase(easyEnd).SetUpdate(useUnscaledTime)
                             .OnComplete(() =>
                             {
-                                onEnd?.Invoke(bonus);
-                                _ownedVisuals.Remove(bonus);
+                                // WHY: a throwing onEnd used to skip the release below and leak the visual.
+                                InvokeSafely(onEnd, bonus);
+                                _visuals.Release(bonus);
                                 if (destroyOnComplete)
                                 {
                                     Destroy(bonus);
@@ -553,14 +566,7 @@ namespace Neo.UI
                         .SetLink(bonus);
                 }
 
-                if (useUnscaledTime)
-                {
-                    yield return new WaitForSecondsRealtime(delayBetweenBonuses);
-                }
-                else
-                {
-                    yield return new WaitForSeconds(delayBetweenBonuses);
-                }
+                yield return delayYield.Get(delayBetweenBonuses, useUnscaledTime);
             }
         }
 
@@ -576,10 +582,11 @@ namespace Neo.UI
 
             AnimationFlyCompletionMode completionMode = request.CompletionMode ?? defaultCompletionMode;
             Vector2? resolvedUiSize = ResolveUiSize(request, parent, resolvedSpawnSpace);
+            ItemDelayYield delayYield = default;
             for (int i = 0; i < bonusCount; i++)
             {
-                Vector3 startPos = start + RandomOffset(request.StartRandomOffset ?? startRandomOffset);
-                Vector3 endPos = end + RandomOffset(request.EndRandomOffset ?? endRandomOffset);
+                Vector3 startPos = start + AnimationFlyMath.RandomOffset(request.StartRandomOffset ?? startRandomOffset);
+                Vector3 endPos = end + AnimationFlyMath.RandomOffset(request.EndRandomOffset ?? endRandomOffset);
 
                 GameObject bonus = SpawnVisual(prefab, sprite, poolKey, parent, resolvedSpawnSpace);
                 AnimationFlyVisualState visualState = ResetVisualForFlight(bonus);
@@ -593,7 +600,9 @@ namespace Neo.UI
                 float startScaleMultiplier = request.ScaleMultiplier ?? scaleMult;
                 bonus.transform.localScale = visualState.BaseLocalScale * startScaleMultiplier;
                 result.RegisterStarted(bonus);
-                request.OnItemStarted?.Invoke(bonus);
+                // WHY: an exception here used to end the coroutine with the visual spawned but never
+                // tweened, so it stayed on screen and the result could never complete.
+                InvokeSafely(request.OnItemStarted, bonus);
 
                 Tween flightTween = CreateFlightTween(bonus.transform, startPos, endPos, request, resolvedSpawnSpace);
                 float totalDuration = Mathf.Max(0.001f, flightTween.Duration(false));
@@ -611,25 +620,7 @@ namespace Neo.UI
                 }
 
                 flightTween.OnComplete(() =>
-                {
-                    request.OnItemArrived?.Invoke(bonus);
-                    if (request.RewardTiming == AnimationFlyRewardTiming.OnEachArrived)
-                    {
-                        request.OnReward?.Invoke();
-                    }
-
-                    result.RegisterCompleted(bonus);
-                    CompleteVisual(bonus, poolKey, resolvedSpawnSpace, completionMode);
-                    if (result.IsCompleted)
-                    {
-                        if (request.RewardTiming == AnimationFlyRewardTiming.OnAllArrived)
-                        {
-                            request.OnReward?.Invoke();
-                        }
-
-                        request.OnAllArrived?.Invoke();
-                    }
-                });
+                    HandleItemArrived(request, result, bonus, poolKey, resolvedSpawnSpace, completionMode));
 
                 if (rotateDuringFlight)
                 {
@@ -642,10 +633,69 @@ namespace Neo.UI
                         .SetLink(bonus);
                 }
 
-                float itemDelay = ResolveItemDelay(request);
-                yield return useUnscaledTime
-                    ? new WaitForSecondsRealtime(itemDelay)
-                    : new WaitForSeconds(itemDelay);
+                yield return delayYield.Get(ResolveItemDelay(request), useUnscaledTime);
+            }
+        }
+
+        // WHY: user callbacks run inside DOTween completion. Every callback is isolated so a throwing one
+        // can neither skip the completion bookkeeping (leaking the visual and stalling the result) nor
+        // propagate into DOTween's update loop when safe mode is off.
+        private void HandleItemArrived(AnimationFlyRequest request, AnimationFlyResult result, GameObject bonus,
+            UnityEngine.Object poolKey, AnimationFlySpawnSpace resolvedSpawnSpace,
+            AnimationFlyCompletionMode completionMode)
+        {
+            InvokeSafely(request.OnItemArrived, bonus);
+            if (request.RewardTiming == AnimationFlyRewardTiming.OnEachArrived)
+            {
+                InvokeSafely(request.OnReward);
+            }
+
+            result.RegisterCompleted(bonus);
+            CompleteVisual(bonus, poolKey, resolvedSpawnSpace, completionMode);
+            if (!result.IsCompleted)
+            {
+                return;
+            }
+
+            if (request.RewardTiming == AnimationFlyRewardTiming.OnAllArrived)
+            {
+                InvokeSafely(request.OnReward);
+            }
+
+            InvokeSafely(request.OnAllArrived);
+        }
+
+        private void InvokeSafely(Action callback)
+        {
+            if (callback == null)
+            {
+                return;
+            }
+
+            try
+            {
+                callback();
+            }
+            catch (Exception exception)
+            {
+                NeoDiagnostics.LogException(exception, this);
+            }
+        }
+
+        private void InvokeSafely(Action<GameObject> callback, GameObject item)
+        {
+            if (callback == null)
+            {
+                return;
+            }
+
+            try
+            {
+                callback(item);
+            }
+            catch (Exception exception)
+            {
+                NeoDiagnostics.LogException(exception, this);
             }
         }
 
@@ -656,7 +706,7 @@ namespace Neo.UI
                 Random.Range(-arcStrength, arcStrength),
                 Random.Range(arcStrength * multY, arcStrength),
                 Random.Range(-arcStrength, arcStrength));
-            arcPoint += RandomOffset(randomOffset);
+            arcPoint += AnimationFlyMath.RandomOffset(randomOffset);
             return arcPoint;
         }
 
@@ -700,16 +750,16 @@ namespace Neo.UI
             bool useMagnetFinish)
         {
             Vector3 launchPoint = startPos + (request.BurstOffset ?? burstOffset) +
-                                  RandomOffset(request.BurstRandomOffset ?? burstRandomOffset);
+                                  AnimationFlyMath.RandomOffset(request.BurstRandomOffset ?? burstRandomOffset);
             if (ignoreZ)
             {
                 launchPoint.z = 0f;
             }
 
             float popDuration =
-                duration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio, 0.05f, 0.85f);
+                duration * AnimationFlyMath.ClampStageRatio(request.BurstDurationRatio ?? burstDurationRatio);
             float holdDuration = Mathf.Max(0f, request.BurstHoldDuration ?? burstHoldDuration) /
-                                 ResolveSpeedMultiplier(request);
+                                 AnimationFlyMath.ResolveSpeedMultiplier(request.SpeedMultiplier);
             float remaining = Mathf.Max(0.01f, duration - popDuration);
 
             Sequence sequence = DOTween.Sequence()
@@ -760,8 +810,8 @@ namespace Neo.UI
                 launchPoint.z = 0f;
             }
 
-            float scatterDuration = duration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio,
-                0.05f, 0.85f);
+            float scatterDuration =
+                duration * AnimationFlyMath.ClampStageRatio(request.BurstDurationRatio ?? burstDurationRatio);
             float remaining = Mathf.Max(0.01f, duration - scatterDuration);
             Sequence sequence = DOTween.Sequence()
                 .SetUpdate(useUnscaledTime)
@@ -777,27 +827,16 @@ namespace Neo.UI
         private void AppendMagnetStages(Sequence sequence, Transform target, Vector3 startPos, Vector3 endPos,
             float duration, AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
         {
-            float magnetRatio = Mathf.Clamp(request.MagnetDurationRatio ?? magnetDurationRatio, 0.05f, 0.85f);
+            float magnetRatio = AnimationFlyMath.ClampStageRatio(request.MagnetDurationRatio ?? magnetDurationRatio);
             float magnetDuration = Mathf.Max(0.01f, duration * magnetRatio);
             float approachDuration = Mathf.Max(0.01f, duration - magnetDuration);
-            Vector3 approachPoint = BuildMagnetApproachPoint(startPos, endPos,
+            Vector3 approachPoint = AnimationFlyMath.MagnetApproachPoint(startPos, endPos,
                 request.MagnetDistance ?? magnetDistance);
 
             sequence.Append(CreateMoveTween(target, approachPoint, approachDuration, resolvedSpawnSpace)
                 .SetEase(request.CruiseEase ?? Ease.OutQuad));
             sequence.Append(CreateMoveTween(target, endPos, magnetDuration, resolvedSpawnSpace)
                 .SetEase(request.MagnetEase ?? Ease.InQuad));
-        }
-
-        private static Vector3 BuildMagnetApproachPoint(Vector3 startPos, Vector3 endPos, float distance)
-        {
-            Vector3 direction = startPos - endPos;
-            if (direction.sqrMagnitude < 0.0001f || distance <= 0f)
-            {
-                return Vector3.Lerp(startPos, endPos, 0.85f);
-            }
-
-            return endPos + direction.normalized * distance;
         }
 
         private Tween CreateMoveTween(Transform target, Vector3 position, float duration,
@@ -882,7 +921,7 @@ namespace Neo.UI
                 return null;
             }
 
-            if (!IsFinite(requestedSize.Value.x) || !IsFinite(requestedSize.Value.y))
+            if (!AnimationFlyMath.IsFinite(requestedSize.Value.x) || !AnimationFlyMath.IsFinite(requestedSize.Value.y))
             {
                 NeoDiagnostics.LogWarning("[AnimationFly] UiSize must contain finite values.", this);
                 return null;
@@ -912,7 +951,7 @@ namespace Neo.UI
                 return source.rect.size;
             }
 
-            Vector3[] corners = new Vector3[4];
+            Vector3[] corners = CornerBuffer;
             source.GetWorldCorners(corners);
             Vector3 first = targetParent.InverseTransformPoint(corners[0]);
             float minX = first.x;
@@ -933,38 +972,13 @@ namespace Neo.UI
 
         private float ResolveDuration(AnimationFlyRequest request)
         {
-            float duration = request.Duration ?? flyDuration;
-            if (!IsFinite(duration))
-            {
-                duration = IsFinite(flyDuration) ? flyDuration : 1f;
-            }
-
-            duration = Mathf.Max(0.001f, duration);
-            return duration / ResolveSpeedMultiplier(request);
+            return AnimationFlyMath.ResolveDuration(request.Duration, flyDuration, request.SpeedMultiplier);
         }
 
         private float ResolveItemDelay(AnimationFlyRequest request)
         {
-            float delay = request.DelayBetweenItems ?? delayBetweenBonuses;
-            if (!IsFinite(delay))
-            {
-                delay = IsFinite(delayBetweenBonuses) ? delayBetweenBonuses : 0f;
-            }
-
-            delay = Mathf.Max(0f, delay);
-            return delay / ResolveSpeedMultiplier(request);
-        }
-
-        private static float ResolveSpeedMultiplier(AnimationFlyRequest request)
-        {
-            return IsFinite(request.SpeedMultiplier) && request.SpeedMultiplier > 0f
-                ? request.SpeedMultiplier
-                : 1f;
-        }
-
-        private static bool IsFinite(float value)
-        {
-            return !float.IsNaN(value) && !float.IsInfinity(value);
+            return AnimationFlyMath.ResolveItemDelay(request.DelayBetweenItems, delayBetweenBonuses,
+                request.SpeedMultiplier);
         }
 
         private static void KillVisualTweens(GameObject instance)
@@ -1053,6 +1067,12 @@ namespace Neo.UI
                 : AnimationFlySpawnSpace.World;
         }
 
+        // WHY: explicit Unity null check; `??` keeps a destroyed parent and Instantiate under it fails.
+        private Transform ResolveParent(Transform parent)
+        {
+            return parent != null ? parent : spawnParent;
+        }
+
         private Canvas ResolveCanvas(Transform parent)
         {
             if (parentCanvas != null)
@@ -1097,14 +1117,6 @@ namespace Neo.UI
             return _cachedFallbackCamera;
         }
 
-        private static Vector3 RandomOffset(Vector3 maxAbs)
-        {
-            return new Vector3(
-                Random.Range(-Mathf.Abs(maxAbs.x), Mathf.Abs(maxAbs.x)),
-                Random.Range(-Mathf.Abs(maxAbs.y), Mathf.Abs(maxAbs.y)),
-                Random.Range(-Mathf.Abs(maxAbs.z), Mathf.Abs(maxAbs.z)));
-        }
-
         private Vector3 CanvasLocalPosition(Vector3 position, Canvas canvas, Transform sourceTransform,
             Transform targetParent)
         {
@@ -1132,7 +1144,12 @@ namespace Neo.UI
         {
             if (sourceTransform is RectTransform rect)
             {
-                Canvas sourceCanvas = rect.GetComponentInParent<Canvas>() ?? fallbackCanvas;
+                Canvas sourceCanvas = rect.GetComponentInParent<Canvas>();
+                if (sourceCanvas == null)
+                {
+                    sourceCanvas = fallbackCanvas;
+                }
+
                 Camera camera = ResolveCamera(sourceCanvas);
                 Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(
                     sourceCanvas != null && sourceCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : camera,
@@ -1180,7 +1197,9 @@ namespace Neo.UI
             return canvas != null ? canvas.transform as RectTransform : null;
         }
 
-        private static Vector3 ScreenToWorldPosition(Vector3 screenPosition, Camera camera, float? worldDepth = null)
+        // WHY: an instance method so each AnimationFly uses its own Default Screen To World Depth; reading the
+        // singleton's value gave a second fly the wrong depth, or none when it was the only one in the scene.
+        private Vector3 ScreenToWorldPosition(Vector3 screenPosition, Camera camera, float? worldDepth = null)
         {
             if (camera == null)
             {
@@ -1190,7 +1209,9 @@ namespace Neo.UI
             float z = worldDepth ?? screenPosition.z;
             if (Mathf.Approximately(z, 0f))
             {
-                z = HasInstance ? I.defaultScreenToWorldDepth : Mathf.Abs(camera.transform.position.z);
+                z = defaultScreenToWorldDepth > 0f
+                    ? defaultScreenToWorldDepth
+                    : Mathf.Abs(camera.transform.position.z);
             }
 
             return camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, z));
@@ -1204,7 +1225,7 @@ namespace Neo.UI
 
             if (prefab == null && request.Type.HasValue)
             {
-                if (_prefabDict.TryGetValue(request.Type.Value, out BonusPrefabData data))
+                if (TryGetPrefabData(request.Type.Value, out BonusPrefabData data))
                 {
                     prefab = data.prefab;
                     if (request.EndTransform == null && data.endPos != null)
@@ -1231,7 +1252,7 @@ namespace Neo.UI
         private GameObject SpawnVisual(GameObject prefab, Sprite sprite, UnityEngine.Object poolKey, Transform parent,
             AnimationFlySpawnSpace resolvedSpawnSpace)
         {
-            if (TryTakeFromPool(poolKey, resolvedSpawnSpace, parent, out GameObject pooled))
+            if (_visuals.TryTake(poolKey, resolvedSpawnSpace, parent, out GameObject pooled))
             {
                 pooled.SetActive(true);
                 return pooled;
@@ -1240,7 +1261,7 @@ namespace Neo.UI
             if (prefab != null)
             {
                 GameObject instance = Instantiate(prefab, parent);
-                _ownedVisuals.Add(instance);
+                _visuals.Track(instance);
                 return instance;
             }
 
@@ -1265,33 +1286,8 @@ namespace Neo.UI
                 renderer.sprite = sprite;
             }
 
-            _ownedVisuals.Add(go);
+            _visuals.Track(go);
             return go;
-        }
-
-        private bool TryTakeFromPool(UnityEngine.Object visual, AnimationFlySpawnSpace space, Transform parent,
-            out GameObject instance)
-        {
-            instance = null;
-            if (visual == null || !_pool.TryGetValue((visual, space), out Stack<GameObject> stack))
-            {
-                return false;
-            }
-
-            while (stack.Count > 0)
-            {
-                instance = stack.Pop();
-                if (instance == null)
-                {
-                    continue;
-                }
-
-                instance.transform.SetParent(parent, false);
-
-                return true;
-            }
-
-            return false;
         }
 
         private void CompleteVisual(GameObject instance, UnityEngine.Object poolKey, AnimationFlySpawnSpace space,
@@ -1305,37 +1301,19 @@ namespace Neo.UI
             switch (mode)
             {
                 case AnimationFlyCompletionMode.KeepAlive:
-                    _ownedVisuals.Remove(instance);
+                    _visuals.Release(instance);
                     break;
                 case AnimationFlyCompletionMode.DisableAndPool:
                     KillVisualTweens(instance);
                     instance.SetActive(false);
-                    if (poolKey == null || maxPoolPerKey <= 0)
+                    if (!_visuals.TryReturn(poolKey, space, instance, maxPoolPerKey))
                     {
-                        _ownedVisuals.Remove(instance);
-                        Destroy(instance);
-                        break;
-                    }
-
-                    if (!_pool.TryGetValue((poolKey, space), out Stack<GameObject> stack))
-                    {
-                        stack = new Stack<GameObject>();
-                        _pool.Add((poolKey, space), stack);
-                    }
-
-                    if (stack.Count < maxPoolPerKey)
-                    {
-                        stack.Push(instance);
-                    }
-                    else
-                    {
-                        _ownedVisuals.Remove(instance);
                         Destroy(instance);
                     }
 
                     break;
                 default:
-                    _ownedVisuals.Remove(instance);
+                    _visuals.Release(instance);
                     Destroy(instance);
                     break;
             }
@@ -1343,23 +1321,23 @@ namespace Neo.UI
 
         public GameObject GetPrefab(int type)
         {
-            if (_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            if (TryGetPrefabData(type, out BonusPrefabData data))
             {
                 return data.prefab;
             }
 
-            NeoDiagnostics.LogWarning($"[AnimationBonus] No prefab for bonus type {type}");
+            NeoDiagnostics.LogWarning($"[AnimationFly] No prefab for bonus type {type}", this);
             return null;
         }
 
         public Transform GetPos(int type)
         {
-            if (_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            if (TryGetPrefabData(type, out BonusPrefabData data))
             {
                 return data.endPos;
             }
 
-            NeoDiagnostics.LogWarning($"[AnimationBonus] No spawn point for bonus type {type}");
+            NeoDiagnostics.LogWarning($"[AnimationFly] No spawn point for bonus type {type}", this);
             return null;
         }
 
@@ -1489,7 +1467,9 @@ namespace Neo.UI
             public Ease? CruiseEase;
             public Ease? MagnetEase;
 
-            public static AnimationFlyRequest FromPrefab(GameObject prefab, int count, Transform start, Transform end)
+            /// <summary>Request for <paramref name="count" /> prefab visuals; set the remaining fields afterwards.</summary>
+            public static AnimationFlyRequest FromPrefab(GameObject prefab, int count = 1, Transform start = null,
+                Transform end = null)
             {
                 return new AnimationFlyRequest
                 {
@@ -1500,7 +1480,9 @@ namespace Neo.UI
                 };
             }
 
-            public static AnimationFlyRequest FromSprite(Sprite sprite, int count, Transform start, Transform end)
+            /// <summary>Request for <paramref name="count" /> sprite visuals; set the remaining fields afterwards.</summary>
+            public static AnimationFlyRequest FromSprite(Sprite sprite, int count = 1, Transform start = null,
+                Transform end = null)
             {
                 return new AnimationFlyRequest
                 {
@@ -1509,6 +1491,16 @@ namespace Neo.UI
                     StartTransform = start,
                     EndTransform = end
                 };
+            }
+
+            /// <summary>
+            ///     Shallow copy: scene references and callbacks are shared, values are copied. Use it to keep a
+            ///     configured request as a template. <see cref="AnimationFly.Play(AnimationFlyRequest)" /> already
+            ///     copies the request it receives.
+            /// </summary>
+            public AnimationFlyRequest Clone()
+            {
+                return (AnimationFlyRequest)MemberwiseClone();
             }
         }
 
@@ -1541,6 +1533,28 @@ namespace Neo.UI
             {
                 CompletedCount++;
                 _activeItems.Remove(item);
+            }
+        }
+
+        // WHY: one yield instruction per flight instead of one per spawned item. Rebuilt only when the
+        // delay or the time mode changes; WaitForSecondsRealtime resets itself after each completed wait.
+        internal struct ItemDelayYield
+        {
+            private object _instruction;
+            private float _delay;
+            private bool _unscaled;
+
+            /// <summary>The cached instruction for this delay and time mode, rebuilt only when either changes.</summary>
+            public object Get(float delay, bool unscaled)
+            {
+                if (_instruction == null || _delay != delay || _unscaled != unscaled)
+                {
+                    _instruction = unscaled ? new WaitForSecondsRealtime(delay) : new WaitForSeconds(delay);
+                    _delay = delay;
+                    _unscaled = unscaled;
+                }
+
+                return _instruction;
             }
         }
 

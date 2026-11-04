@@ -1,35 +1,19 @@
-﻿# Health
+﻿# Health (legacy)
 
-**Purpose:** See Inspector fields below for configuration.
+**What it is:** a legacy `MonoBehaviour` health component (`Neo.Tools.Health`) implementing `IDamageable`, `IHealable` and `IRestorable`, with reactive HP, per-hit caps, auto-heal and death events. Kept for existing scenes and C# callers; source: `Scripts/Rpg/Combat/Health.cs`, optional assembly `Neo.Rpg.Combat`.
 
-## Setup
+**How to use:**
+1. Add **Neoxider / Tools / Components / AttackSystem / Health (Legacy)** to an existing actor.
+2. Set **Max Hp** and the heal/damage limits in the Inspector.
+3. Call `TakeDamage`, `Heal`, `Restore`, `SetHp`, `SetMaxHp` from code or UnityEvents; subscribe to `Hp` or `OnDeath`.
 
-- Add the component via the Unity menu.
+---
 
-## Key Fields (Inspector)
+The complete contract (C# API, events, limits, scene setup) is the canonical
+[RPG / Combat compatibility page](../../../Rpg/Combat/README.md#health), which is also the component's
+Inspector help target. For new projects use [RpgCharacter](../../../Rpg/RpgCharacter.md).
 
-| Field | Description |
-|-------|-------------|
-| `CanHeal` | Can Heal. |
-| `Hp` | Hp. |
-| `HpPercent` | Hp Percent. |
-| `HpPercentValue` | Hp Percent Value. |
-| `HpValue` | Hp Value. |
-| `IsAlive` | Is Alive. |
-| `MaxHp` | Max Hp. |
-| `NeedHeal` | Need Heal. |
-| `OnChangeMaxHp` | On Change Max Hp. |
-| `OnDamage` | On Damage. |
-| `OnDeath` | On Death. |
-| `OnHeal` | On Heal. |
-| `healAmount` | Heal Amount. |
-| `healDelay` | Heal Delay. |
-| `hp` | Hp. |
-| `ignoreIsAlive` | Ignore Is Alive. |
-| `maxDamageAmount` | Max Damage Amount. |
-| `maxHealAmount` | Max Heal Amount. |
-| `maxHp` | Max Hp. |
+## See also
 
-## See Also
-
-- [Module Root](../README.md)
+- [AttackSystem](./README.md)
+- [RPG / Combat compatibility](../../../Rpg/Combat/README.md)

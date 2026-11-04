@@ -60,7 +60,8 @@ namespace Neo.Cards.Poker
                 return 1;
             }
 
-            int combinationCompare = Combination.CompareTo(other.Combination);
+            // WHY: enum CompareTo(object) boxes; comparing the underlying ints allocates nothing.
+            int combinationCompare = ((int)Combination).CompareTo((int)other.Combination);
             if (combinationCompare != 0)
             {
                 return combinationCompare;
@@ -136,7 +137,7 @@ namespace Neo.Cards.Poker
 
             for (int i = 0; i < minCount; i++)
             {
-                int compare = a[i].CompareTo(b[i]);
+                int compare = ((int)a[i]).CompareTo((int)b[i]);
                 if (compare != 0)
                 {
                     return compare;

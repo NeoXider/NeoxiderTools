@@ -178,7 +178,7 @@ namespace Neo.Editor.Tests.Edit
             ProbeState first = new("A");
             ProbeState second = new("B");
             int callbacks = 0;
-            // The fixture itself is bounded, even on the old implementation; it never requests an infinite cycle.
+            // WHY: the fixture itself is bounded, even on the old implementation; it never requests an infinite cycle.
             first.EnterAction = () => { if (++callbacks < 140) machine.ChangeState(second); };
             second.EnterAction = () => { if (++callbacks < 140) machine.ChangeState(first); };
 

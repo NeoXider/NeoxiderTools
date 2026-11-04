@@ -33,7 +33,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void RequiredSmokeDemoScenes_Exist()
         {
-            var missing = new List<string>();
+            List<string> missing = new List<string>();
             foreach (string path in RequiredSmokeScenes())
             {
                 if (!SceneFileExists(path))

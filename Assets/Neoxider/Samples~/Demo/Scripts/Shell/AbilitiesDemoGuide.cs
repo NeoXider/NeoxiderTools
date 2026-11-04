@@ -1,136 +1,174 @@
 using Neo.Abilities;
-using Neo.Samples.Survivor;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Neo.Samples
 {
-    /// <summary>Instructions and feedback for the existing, scene-authored NoCode ability wiring.</summary>
+    /// <summary>
+    ///     Behaviour of the authored <b>Neo.Abilities NoCode</b> demo (AbilitiesNoCodeDemo.unity). The scene - frame,
+    ///     NoCode buttons with their <see cref="AbilityNoCodeAction" />, <c>SetProgress</c> bars, the Auto Zap toggle and
+    ///     the persistent listeners from the units and the caster into this component - is saved by the
+    ///     AbilitiesNoCodeDemoBuilder; nothing is built at runtime. This component holds the C# path next to the
+    ///     NoCode one (<see cref="AbilityCasterBehaviour.TryCastAtUnit" />, <see cref="AbilityUnitBehaviour.SetLevel" />)
+    ///     and turns unit events into readable feedback.
+    /// </summary>
+    [AddComponentMenu("Neoxider/Demos/Abilities Demo Guide")]
     public sealed class AbilitiesDemoGuide : MonoBehaviour
     {
+        private const float StatusRefreshInterval = 0.1f;
+
+        [Tooltip("Demo canvas; hidden while this guide is disabled.")]
         [SerializeField] private Canvas _canvas;
+
+        [Header("Units")]
         [SerializeField] private AbilityUnitBehaviour _player;
         [SerializeField] private AbilityUnitBehaviour _dummy;
         [SerializeField] private AbilityCasterBehaviour _caster;
         [SerializeField] private AbilityAutoCaster _autoCaster;
-        private GameObject _panel;
-        private TMP_Text _status;
-        private TMP_Text _feedback;
-        private TMP_Text _autoCaption;
-        private readonly RectTransform[] _buttonRects = new RectTransform[4];
-        private float _panelWidth;
+
+        [Header("Ability ids")]
+        [SerializeField] private string _zapAbilityId = "zap";
+        [SerializeField] private string _healAbilityId = "heal_pulse";
+
+        [Header("Authored UI")]
+        [SerializeField] private TMP_Text _status;
+        [SerializeField] private TMP_Text _feedback;
+        [SerializeField] private Toggle _autoZapToggle;
+        [SerializeField] private DemoLogFeed _log;
+
         private bool _sawHeal;
         private bool _sawHit;
+        private bool _warnedUnbuilt;
+        private float _nextStatusTime;
 
         /// <summary>Live normalized cooldown used by the guide's READY indicator.</summary>
-        public float ZapCooldown => _caster.GetCooldownNormalized("zap");
+        public float ZapCooldown => _caster != null ? _caster.GetCooldownNormalized(_zapAbilityId) : 0f;
 
         /// <summary>Most recent gameplay result shown to the person running this sample.</summary>
         public string LastResult => _feedback != null ? _feedback.text : string.Empty;
 
+        /// <summary>True when the builder assigned every authored reference.</summary>
+        public bool IsSceneBuilt => _player != null && _dummy != null && _caster != null && _autoCaster != null &&
+                                    _status != null && _feedback != null;
+
         private void Start()
         {
-            _autoCaster.enabled = false;
-            Image panel = SurvivorUI.Image("How to play", _canvas.transform, NeoDemoShell.Card);
-            _panel = panel.gameObject;
-            SurvivorUI.Anchor(panel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -350f), new Vector2(1000f, 300f));
-            TMP_Text instructions = SurvivorUI.Label("Goal", panel.transform,
-                "1 Hit Player 20 → Cast Heal. Retry during its 3-second cooldown.\n" +
-                "2 Zap the dummy. Change level for 12 / 20 / 30 damage; Reset to repeat.",
-                22f, NeoDemoShell.Text, TextAlignmentOptions.Left, FontStyles.Normal);
-            SurvivorUI.Anchor(instructions.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(-32f, 64f));
-            _status = SurvivorUI.Label("Live status", panel.transform, "", 24f, NeoDemoShell.Text,
-                TextAlignmentOptions.Left, FontStyles.Bold);
-            SurvivorUI.Anchor(_status.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(-32f, 60f));
-            _feedback = SurvivorUI.Label("Result", panel.transform, "Start with Hit Player 20 above. Watch HP change.",
-                22f, new Color(0.45f, 0.9f, 0.8f), TextAlignmentOptions.Left, FontStyles.Normal);
-            SurvivorUI.Anchor(_feedback.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -160f), new Vector2(-32f, 64f));
-            AddButton(0, "Zap dummy", Zap);
-            _autoCaption = AddButton(1, "Auto Zap: OFF", ToggleAuto);
-            AddButton(2, "Next level", NextLevel);
-            AddButton(3, "Reset demo", ResetDemo);
-            Canvas.ForceUpdateCanvases();
-            FitPanelToCanvas();
-            _player.OnDamaged.AddListener(PlayerDamaged);
-            _player.OnHealed.AddListener(PlayerHealed);
-            _dummy.OnDamaged.AddListener(DummyDamaged);
-            _caster.OnCastFailed.AddListener(CastFailed);
+            if (!IsSceneBuilt)
+            {
+                WarnUnbuilt();
+                return;
+            }
+
+            if (_autoZapToggle != null)
+            {
+                _autoZapToggle.SetIsOnWithoutNotify(_autoCaster.enabled);
+            }
+
+            RefreshStatus();
         }
 
-        private TMP_Text AddButton(int index, string caption, UnityAction action)
+        private void OnEnable()
         {
-            Button button = SurvivorUI.Button(caption, _panel.transform, new Color(0.55f, 0.45f, 0.95f));
-            SurvivorUI.Anchor((RectTransform)button.transform, new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(0f, 0f), new Vector2(16f + index * 244f, 16f), new Vector2(236f, 48f));
-            _buttonRects[index] = (RectTransform)button.transform;
-            TMP_Text label = SurvivorUI.Label("Label", button.transform, caption, 22f, NeoDemoShell.Ink,
-                TextAlignmentOptions.Center, FontStyles.Bold);
-            SurvivorUI.Stretch(label.rectTransform, 4f);
-            button.onClick.AddListener(action);
-            return label;
+            if (_canvas != null)
+            {
+                _canvas.enabled = true;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_canvas != null)
+            {
+                _canvas.enabled = false;
+            }
         }
 
         private void Update()
         {
-            if (_status == null) return;
-            FitPanelToCanvas();
-            string heal = _caster.GetCooldownNormalized("heal_pulse") > 0f ? "cooling down" : "READY";
-            string zap = _caster.GetCooldownNormalized("zap") > 0f ? "cooling down" : "READY";
-            _status.text = "Player " + _player.CurrentHealth.ToString("0") + "/" + _player.MaxHealth.ToString("0") +
-                " HP   ·   Dummy " + _dummy.CurrentHealth.ToString("0") + "/" + _dummy.MaxHealth.ToString("0") +
-                " HP   ·   Level " + (_player.Unit != null ? _player.Unit.Level : 1) +
-                "\nHeal: " + heal + "   ·   Zap: " + zap +
-                (!_dummy.IsAlive || !_player.IsAlive ? "   ·   Unit defeated: Reset to repeat" : "");
+            // WHY: the status line rebuilds strings; 10 Hz is imperceptible and keeps the frame allocation-free.
+            if (Time.unscaledTime < _nextStatusTime)
+            {
+                return;
+            }
+
+            _nextStatusTime = Time.unscaledTime + StatusRefreshInterval;
+            RefreshStatus();
         }
 
-        private void FitPanelToCanvas()
+        /// <summary>Button target: the C# path - <see cref="AbilityCasterBehaviour.TryCastAtUnit" /> on the dummy.</summary>
+        public void Zap()
         {
-            if (_canvas == null || _panel == null) return;
-            float width = Mathf.Min(1000f, Mathf.Max(1f, ((RectTransform)_canvas.transform).rect.width - 32f));
-            if (Mathf.Approximately(width, _panelWidth)) return;
-            _panelWidth = width;
-            RectTransform panel = (RectTransform)_panel.transform;
-            panel.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
-            float buttonWidth = Mathf.Max(1f, (width - 56f) / 4f);
-            for (int i = 0; i < _buttonRects.Length; i++)
+            if (!IsSceneBuilt)
             {
-                RectTransform button = _buttonRects[i];
-                if (button == null) continue;
-                button.anchoredPosition = new Vector2(16f + i * (buttonWidth + 8f), 16f);
-                button.sizeDelta = new Vector2(buttonWidth, 48f);
+                WarnUnbuilt();
+                return;
+            }
+
+            if (!_dummy.IsAlive)
+            {
+                SetFeedback("Dummy defeated. Reset demo to try another level.");
+                return;
+            }
+
+            bool cast = _caster.TryCastAtUnit(_zapAbilityId, _dummy);
+            Log("caster.TryCastAtUnit(\"" + _zapAbilityId + "\", dummy) -> " + (cast ? "cast" : "rejected"));
+        }
+
+        /// <summary>Flips the Auto Zap toggle (or the auto-caster when the toggle is missing).</summary>
+        public void ToggleAuto()
+        {
+            if (_autoZapToggle != null)
+            {
+                _autoZapToggle.isOn = !_autoZapToggle.isOn;
+                return;
+            }
+
+            if (_autoCaster != null)
+            {
+                _autoCaster.enabled = !_autoCaster.enabled;
+                OnAutoZapChanged(_autoCaster.enabled);
             }
         }
 
-        public void Zap()
+        /// <summary>Toggle listener next to the NoCode <c>AbilityAutoCaster.enabled</c> binding: explains the switch.</summary>
+        public void OnAutoZapChanged(bool enabled)
         {
-            if (!_dummy.IsAlive) { _feedback.text = "Dummy defeated. Reset demo to try another level."; return; }
-            _caster.TryCastAtUnit("zap", _dummy);
-        }
-
-        public void ToggleAuto()
-        {
-            _autoCaster.enabled = !_autoCaster.enabled;
-            _autoCaption.text = _autoCaster.enabled ? "Auto Zap: ON" : "Auto Zap: OFF";
-            _feedback.text = _autoCaster.enabled
+            SetFeedback(enabled
                 ? "Auto Zap attacks the opposing dummy whenever the ability is ready."
-                : "Auto Zap paused. Manual buttons let you inspect one result at a time.";
+                : "Auto Zap paused. Manual buttons let you inspect one result at a time.");
+            Log("AbilityAutoCaster.enabled = " + (enabled ? "true" : "false"));
         }
 
+        /// <summary>Button target: cycles the player level 1 → 2 → 3 (Zap damage scales 12 / 20 / 30).</summary>
         public void NextLevel()
         {
+            if (_player == null)
+            {
+                WarnUnbuilt();
+                return;
+            }
+
             int level = _player.Unit != null ? _player.Unit.Level % 3 + 1 : 1;
             _player.SetLevel(level);
-            _feedback.text = "Player level " + level + ". The next Zap uses the same asset's level-scaled damage.";
+            SetFeedback("Player level " + level + ". The next Zap uses the same asset's level-scaled damage.");
+            Log("player.SetLevel(" + level + ")");
         }
 
+        /// <summary>Button target: re-registers both units (full health, no cooldowns) and returns to level 1.</summary>
         public void ResetDemo()
         {
+            if (!IsSceneBuilt)
+            {
+                WarnUnbuilt();
+                return;
+            }
+
+            if (_autoZapToggle != null)
+            {
+                _autoZapToggle.SetIsOnWithoutNotify(false);
+            }
+
             _autoCaster.enabled = false;
             _caster.enabled = false;
             _player.enabled = false;
@@ -141,37 +179,81 @@ namespace Neo.Samples
             _player.SetLevel(1);
             _sawHeal = false;
             _sawHit = false;
-            _autoCaption.text = "Auto Zap: OFF";
-            _feedback.text = "Reset: both units restored, cooldowns cleared, level 1. Hit Player 20, then Cast Heal.";
+            SetFeedback("Reset: both units restored, cooldowns cleared, level 1. Hit Player 20, then Cast Heal.");
+            Log("Reset: units re-registered from their UnitTemplate");
+            RefreshStatus();
         }
 
-        private void PlayerDamaged(float amount) => _feedback.text = "Player lost " + amount.ToString("0") + " HP. Now Cast Heal.";
-        private void PlayerHealed(float amount)
+        /// <summary>Persistent listener of the player's <see cref="AbilityUnitBehaviour.OnDamaged" />.</summary>
+        public void OnPlayerDamaged(float amount)
+        {
+            SetFeedback("Player lost " + amount.ToString("0") + " HP. Now Cast Heal.");
+        }
+
+        /// <summary>Persistent listener of the player's <see cref="AbilityUnitBehaviour.OnHealed" />.</summary>
+        public void OnPlayerHealed(float amount)
         {
             _sawHeal = true;
-            _feedback.text = "Heal restored " + amount.ToString("0") + " HP. " +
-                (_sawHit ? "Completed both healing and damage. Try level scaling or Reset." : "Next, Zap the dummy.");
+            SetFeedback("Heal restored " + amount.ToString("0") + " HP. " +
+                        (_sawHit ? "Completed both healing and damage. Try level scaling or Reset." : "Next, Zap the dummy."));
         }
-        private void DummyDamaged(float amount)
+
+        /// <summary>Persistent listener of the dummy's <see cref="AbilityUnitBehaviour.OnDamaged" />.</summary>
+        public void OnDummyDamaged(float amount)
         {
             _sawHit = true;
-            _feedback.text = "Zap dealt " + amount.ToString("0") + " damage to the dummy. " +
-                (_sawHeal ? "Completed both healing and damage. Try another level." : "Try Hit Player 20, then Cast Heal.");
+            SetFeedback("Zap dealt " + amount.ToString("0") + " damage to the dummy. " +
+                        (_sawHeal ? "Completed both healing and damage. Try another level." : "Try Hit Player 20, then Cast Heal."));
         }
-        private void CastFailed(string reason) => _feedback.text = "Cast rejected: " + reason +
-            ". Wait for READY; defeated units need Reset.";
-        private void OnEnable() { if (_panel != null) _panel.SetActive(true); }
-        private void OnDisable() { if (_panel != null) _panel.SetActive(false); }
-        private void OnDestroy()
+
+        /// <summary>Persistent listener of <see cref="AbilityCasterBehaviour.OnCastFailed" />.</summary>
+        public void OnCastFailed(string reason)
         {
-            if (_player != null)
+            SetFeedback("Cast rejected: " + reason + ". Wait for READY; defeated units need Reset.");
+        }
+
+        private void RefreshStatus()
+        {
+            if (_status == null || _player == null || _dummy == null || _caster == null)
             {
-                _player.OnDamaged.RemoveListener(PlayerDamaged);
-                _player.OnHealed.RemoveListener(PlayerHealed);
+                return;
             }
-            if (_dummy != null) _dummy.OnDamaged.RemoveListener(DummyDamaged);
-            if (_caster != null) _caster.OnCastFailed.RemoveListener(CastFailed);
-            if (_panel != null) Destroy(_panel);
+
+            string heal = _caster.GetCooldownNormalized(_healAbilityId) > 0f ? "cooling down" : "READY";
+            string zap = _caster.GetCooldownNormalized(_zapAbilityId) > 0f ? "cooling down" : "READY";
+            _status.text = "Player " + _player.CurrentHealth.ToString("0") + "/" + _player.MaxHealth.ToString("0") +
+                           " HP   ·   Dummy " + _dummy.CurrentHealth.ToString("0") + "/" + _dummy.MaxHealth.ToString("0") +
+                           " HP   ·   Level " + (_player.Unit != null ? _player.Unit.Level : 1) +
+                           "\nHeal: " + heal + "   ·   Zap: " + zap +
+                           (!_dummy.IsAlive || !_player.IsAlive ? "   ·   Unit defeated: Reset to repeat" : string.Empty);
+        }
+
+        private void SetFeedback(string message)
+        {
+            if (_feedback != null)
+            {
+                _feedback.text = message;
+            }
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[AbilitiesDemoGuide] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
         }
     }
 }

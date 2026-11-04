@@ -1,7 +1,13 @@
 ﻿# ScreenPositioner
 
-Positions an object at a camera screen edge with a pixel offset and a world XY offset. Namespace
-`Neo.Tools`, assembly `Neo.Tools.Move`.
+**What it is:** a `MonoBehaviour` (`Scripts/Tools/Move/ScreenPositioner.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Move`) that places an object at a camera screen edge with a pixel offset and a world XY offset.
+
+**How to use:**
+1. Add **Neoxider > Tools > ScreenPositioner**, assign `Target Camera` (or rely on `Camera.main`) and choose `Screen Edge`.
+2. Set the pixel offset, `Depth` / `Use Depth`, and an optional world `Offset`.
+3. Enable `Update Every Frame` for moving cameras or resolution changes, or call `Configure` from code.
+
+---
 
 ## Setup
 
@@ -11,6 +17,9 @@ Positions an object at a camera screen edge with a pixel offset and a world XY o
 - `Use Depth` keeps the projected 3D point. With it off, the component restores the object's previous
   **world Z** after projection. `Offset` is then added in world XY.
 - Enable `Update Every Frame` for camera/resolution changes, or use **Update Position** while authoring.
+  Each update computes the final position once and writes the transform only when it changed, and a warm update
+  makes no managed allocations (guarded by the EditMode test
+  `ScreenPositioner_WarmEveryFrameUpdate_DoesNotAllocateOrRewriteAnUnmovedTransform`).
 
 ## C# API
 
@@ -46,16 +55,15 @@ camera. Native 3D placement and manual migration acceptance remain part of integ
 
 | Field | Description |
 |-------|-------------|
-| `_offset` | Offset. |
-| `_offsetScreen` | Offset Screen. |
-| `_positionScreen` | Position Screen. |
-| `_screenEdge` | Screen Edge. |
-| `_targetCamera` | Target Camera. |
-| `_depth` | Camera-space depth beyond the near clip plane. |
-| `_updateEveryFrame` | Update Every Frame. |
-| `_useDepth` | Use Depth. |
-| `_useScreenPosition` | Use Screen Position. |
+| `_targetCamera` | Projection camera; `Camera.main` when empty. |
+| `_screenEdge` | Anchor edge or corner of the camera's `pixelRect`. |
+| `_useScreenPosition` / `_positionScreen` | Use `_positionScreen` as the pixel offset instead of `_offsetScreen`. |
+| `_offsetScreen` | Pixel offset from the edge (also set by `Configure`). |
+| `_offset` | World XY offset added after projection. |
+| `_useDepth` / `_depth` | Keep the projected Z at camera-space depth beyond the near clip plane; when off, the previous world Z is kept. |
+| `_updateEveryFrame` | Reapply the placement in every `LateUpdate`. |
+| `_logMissingCameraWarnings` | One-time warning when no camera is available. |
 
 ## See Also
 
-- [Module Root](../README.md)
+- [Tools/Move](./README.md)

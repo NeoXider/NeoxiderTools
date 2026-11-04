@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Neo.Cards.Poker
 {
@@ -101,9 +100,11 @@ namespace Neo.Cards.Poker
         /// <returns>Winning indices.</returns>
         public static List<int> GetWinners(IList<IEnumerable<CardData>> playerCards)
         {
-            var hands = playerCards
-                .Select(cards => cards != null ? PokerHandEvaluator.Evaluate(cards) : null)
-                .ToList();
+            List<PokerHandResult> hands = new(playerCards.Count);
+            foreach (IEnumerable<CardData> cards in playerCards)
+            {
+                hands.Add(cards != null ? PokerHandEvaluator.Evaluate(cards) : null);
+            }
 
             return GetWinners(hands);
         }
@@ -118,8 +119,9 @@ namespace Neo.Cards.Poker
             IEnumerable<CardData> communityCards,
             IList<IEnumerable<CardData>> playerHoleCards)
         {
-            var community = communityCards.ToList();
-            List<PokerHandResult> hands = new();
+            List<CardData> community = new(communityCards);
+            List<PokerHandResult> hands = new(playerHoleCards.Count);
+            List<CardData> allCards = new(community.Count + 2);
 
             foreach (IEnumerable<CardData> holeCards in playerHoleCards)
             {
@@ -129,7 +131,9 @@ namespace Neo.Cards.Poker
                     continue;
                 }
 
-                var allCards = community.Concat(holeCards).ToList();
+                allCards.Clear();
+                allCards.AddRange(community);
+                allCards.AddRange(holeCards);
                 hands.Add(PokerHandEvaluator.Evaluate(allCards));
             }
 
@@ -146,7 +150,8 @@ namespace Neo.Cards.Poker
             IEnumerable<CardData> communityCards,
             IEnumerable<CardData> holeCards)
         {
-            var allCards = communityCards.Concat(holeCards).ToList();
+            List<CardData> allCards = new(communityCards);
+            allCards.AddRange(holeCards);
             return PokerHandEvaluator.Evaluate(allCards);
         }
 
@@ -199,17 +204,20 @@ namespace Neo.Cards.Poker
             PokerCombination targetCombination,
             IEnumerable<CardData> remainingDeck)
         {
-            var current = currentHand.ToList();
+            List<CardData> testHand = new(currentHand);
+            int knownCount = testHand.Count;
+            testHand.Add(default);
             int outs = 0;
 
+            // WHY: one reused buffer and the allocation-free strength path instead of a list and a full
+            // result per candidate card.
             foreach (CardData card in remainingDeck)
             {
-                var testHand = current.Concat(new[] { card }).ToList();
-
+                testHand[knownCount] = card;
                 if (testHand.Count >= 5)
                 {
-                    PokerHandResult result = PokerHandEvaluator.Evaluate(testHand);
-                    if (result.Combination >= targetCombination)
+                    int strength = PokerHandEvaluator.EvaluateStrength(testHand);
+                    if (PokerHandEvaluator.GetCombination(strength) >= targetCombination)
                     {
                         outs++;
                     }

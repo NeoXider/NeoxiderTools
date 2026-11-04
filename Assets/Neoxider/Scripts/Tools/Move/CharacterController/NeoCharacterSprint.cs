@@ -67,11 +67,26 @@ namespace Neo.Tools
                 _input = GetComponent<NeoCharacterInput>();
             }
 
+            if (_controller == null)
+            {
+                NeoDiagnostics.LogWarning(
+                    "NeoCharacterSprint needs an AdvancedWalkerController on the same object or assigned; disabling.",
+                    this);
+                enabled = false;
+                return;
+            }
+
             _walkSpeed = _controller.movementSpeed;
         }
 
         private void Update()
         {
+            if (_controller == null)
+            {
+                enabled = false;
+                return;
+            }
+
             bool sprinting = ShouldSprint();
             if (sprinting != _wasSprinting)
             {
@@ -99,7 +114,10 @@ namespace Neo.Tools
         /// </summary>
         public void RefreshWalkSpeed()
         {
-            _walkSpeed = _controller.movementSpeed;
+            if (_controller != null)
+            {
+                _walkSpeed = _controller.movementSpeed;
+            }
         }
 
         /// <summary>

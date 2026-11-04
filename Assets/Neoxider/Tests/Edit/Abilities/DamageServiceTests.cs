@@ -31,7 +31,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void Physical_ReducedByArmor()
         {
-            _target.SetBaseProperty(AbilityProperties.Armor, 10f); // reduction = 0.06*10/(1+0.6) = 0.375
+            _target.SetBaseProperty(AbilityProperties.Armor, 10f); // WHY: reduction = 0.06*10/(1+0.6) = 0.375
 
             DamageResult result = Deal(100f, AbilityDamageTypes.Physical);
 
@@ -42,7 +42,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void Magical_ReducedByMagicResistPercent()
         {
-            _target.SetBaseProperty(AbilityProperties.MagicResistPercent, 25f); // *0.75
+            _target.SetBaseProperty(AbilityProperties.MagicResistPercent, 25f); // WHY: *0.75
 
             DamageResult result = Deal(100f, AbilityDamageTypes.Magical);
 
@@ -82,7 +82,7 @@ namespace Neo.Editor.Tests.Abilities
             Assert.That(magic.Negated, Is.True);
             Assert.That(_target.Health, Is.EqualTo(1000f));
 
-            DamageResult physical = Deal(100f, AbilityDamageTypes.Physical); // armor 0 => full
+            DamageResult physical = Deal(100f, AbilityDamageTypes.Physical); // WHY: armor 0 => full
             Assert.That(physical.HealthDamage, Is.EqualTo(100f).Within(0.01f));
         }
 
@@ -109,8 +109,8 @@ namespace Neo.Editor.Tests.Abilities
                 AbilityTestSupport.Modifier("barrier", 0f).WithProperty(AbilityProperties.ShieldHp, PropertyOp.Add, 50f),
                 UnitId.None, _target.Id);
 
-            Deal(30f, AbilityDamageTypes.Magical); // consume 30 of 50
-            DamageResult result = Deal(40f, AbilityDamageTypes.Magical); // absorb 20, spill 20
+            Deal(30f, AbilityDamageTypes.Magical); // WHY: consume 30 of 50
+            DamageResult result = Deal(40f, AbilityDamageTypes.Magical); // WHY: absorb 20, spill 20
 
             Assert.That(result.Absorbed, Is.EqualTo(20f).Within(0.01f));
             Assert.That(result.HealthDamage, Is.EqualTo(20f).Within(0.01f));
@@ -123,7 +123,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void PureDamage_BypassesShield()
         {
-            // Pure is true damage: it bypasses shield absorption by design (only invulnerability
+            // WHY: Pure is true damage: it bypasses shield absorption by design (only invulnerability
             // stops it). Documented on AbilityDamageTypes.Pure.
             _system.Modifiers.Apply(
                 AbilityTestSupport.Modifier("barrier", 0f).WithProperty(AbilityProperties.ShieldHp, PropertyOp.Add, 50f),
@@ -195,7 +195,7 @@ namespace Neo.Editor.Tests.Abilities
             _source.SetBaseProperty(AbilityProperties.OutgoingDamageMul, 2f);
             _target.SetBaseProperty(AbilityProperties.IncomingDamageMul, 1.5f);
 
-            DamageResult result = Deal(10f, AbilityDamageTypes.Pure); // 10 * 2 * 1.5
+            DamageResult result = Deal(10f, AbilityDamageTypes.Pure); // WHY: 10 * 2 * 1.5
 
             Assert.That(result.HealthDamage, Is.EqualTo(30f).Within(0.01f));
         }

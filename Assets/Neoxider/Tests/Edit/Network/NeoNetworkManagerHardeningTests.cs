@@ -22,7 +22,7 @@ namespace Neo.Editor.Tests
         private const BindingFlags Static = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         private readonly List<GameObject> _objects = new();
 
-        // Avoid singleton/transport configuration in these transportless EditMode tests.
+        // WHY: Avoid singleton/transport configuration in these transportless EditMode tests.
 
 
 

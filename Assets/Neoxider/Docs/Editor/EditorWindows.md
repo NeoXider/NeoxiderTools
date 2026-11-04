@@ -2,7 +2,7 @@
 
 **What it is:** The Editor Windows module provides an architecture for creating Unity editor windows with a separation between logic and GUI rendering.
 
-**How to use:** see the sections below.
+**How to use:** derive the GUI of a new window from `EditorWindowGUI`, keep the `EditorWindow` itself to lifecycle and menu code, and forward its `OnGUI` to the GUI object (see *Architecture* below).
 
 ---
 
@@ -51,7 +51,7 @@ Editor C# can call the preserved `Neo.Editor.LobbyDemoSceneCreator.CreateLobbyDe
 
 This command writes to the chosen project path, not the package sample folders. Developer `Assets/Neoxider/Samples`, release `Assets/Neoxider/Samples~`, and imported `Assets/Samples/NeoxiderTools/<version>/<sample name>` layouts remain unchanged.
 
-В 11.0 отмена защищает открытые сцены; выберите новый путь `.unity` внутри Assets — существующие assets не перезаписываются. Обе сцены создаются из постоянного Editor-шаблона без сохранения посторонних untitled-сцен. Prefab-ссылки и события presenter сохраняются в assets. Перед запуском добавьте обе сцены в Build Profiles и проверьте Transport.
+Since 11.0, cancelling leaves the open scenes untouched; choose a new `.unity` path inside Assets - existing assets are never overwritten. Both scenes are created from the persistent Editor template without saving unrelated untitled scenes. Prefab references and presenter events are saved into the assets. Before running, add both scenes to Build Profiles and check the Transport.
 
 ### NeoxiderSettingsWindow
 

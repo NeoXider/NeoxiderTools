@@ -1,6 +1,19 @@
 ﻿# NPC module
 
-NPC navigation, patrol/chase logic, animator driver, and modular RPG-ready combat composition. Scripts are in `Scripts/NPC/`.
+**What it is:** NavMesh NPC navigation (follow / patrol / combined aggro), target binding, an animator driver and a
+modular RPG combat brain. Scripts are in `Scripts/NPC/` (`Neo.NPC`, `Neo.NPC.Navigation`, `Neo.NPC.Combat`).
+
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AiMoveExample.jpg" alt="AiMoveExample: chaser, guard, patroller and sentry NPCs on a NavMesh" width="100%" /></p>
+
+*Demo scene: `Scenes/Ai/AiMoveExample.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:** the per-component table below.
+
+**Navigation:** [← Docs](../README.md)
+
+---
 
 ## docs (per-component)
 
@@ -50,8 +63,36 @@ The navigation cores are ordinary C# classes that adapt Unity transforms and Nav
 not engine-independent simulation classes. See [core contracts](./InternalTypes.md) for direct usage
 and [navigation](./Navigation/NPCNavigation.md) for path/failure semantics.
 
+## Crowds and per-frame cost
+
+- A navigation tick does not allocate, on a settled path and on a tick that submits a new path (measured on a
+  real NavMesh agent with the GC.Alloc counter); periodic re-paths are spread over `Path Update Interval` across NPCs
+  (`Stagger Path Updates`, on by default) instead of all running in the same frame.
+- A Combined chase toward an unreachable target is retried once per path interval, not every frame.
+- `NpcRpgCombatBrain` re-applies navigation only when the chase target, mode or activity actually changed, so a
+  sustained chase does not force a new path every decision tick.
+- `NpcAnimatorDriver` checks the controller's parameters once per controller and skips missing ones instead of
+  writing (and warning) every frame.
+
 The RPG combat stack above is maintained for existing projects. New combat systems should use
 `Neo.Abilities`; NPC navigation can be reused independently of the legacy combat brain.
+
+## Demo scene
+
+`Samples~/Demo/Scenes/Ai/AiMoveExample.unity` (`Samples/...` while the samples are unpacked for development) shows
+four NPCs on a baked NavMesh, each driven by one `NpcNavigation`:
+
+| Object | Mode | What to look at |
+|--------|------|-----------------|
+| `NPC Chaser` (blue) | FollowTarget | Follows the orbiting red `target`; the card's Walk / Run / Stop / Resume buttons call `SetRunning`, `Stop` and `Resume` directly (NoCode persistent calls). |
+| `NPC Guard` (white) | switched from the card | Follow (Trigger Distance 10 m), Patrol (the green route) or Combined; the buttons call `NpcDemoController.SetGuardMode` because a persistent UnityEvent cannot pass an enum. |
+| `[Demo] World/NPC Patroller` (green) | Patrol | Walks `Patrol Route/Point 1..4`; `onPatrolPointReached` writes to the card's log. |
+| `[Demo] World/NPC Sentry` (orange) | Combined | Patrols `Sentry Zone` and chases the target within 6 m; `onStartFollowing` / `onStopFollowing` toggle its red `Alert` with `GameObject.SetActive`. |
+
+Everything, including the control card, the event wiring and the info card, is saved in the scene and visible in the
+Inspector without entering Play Mode. The scene is authored by the editor builder
+`Samples~/Demo/Editor/Builders/NPC/AiMoveExampleBuilder.cs` (menu **Neoxider/Demo/Rebuild Active Demo Scene**); it also
+migrated the two original agents from the deprecated `AiNavigation` to `NpcNavigation`.
 
 ## See also
 

@@ -39,10 +39,26 @@ namespace Neo.UI
             [Space] [SerializeField] private float _timeDelay = 1.5f;
             [SerializeField] private Animator _animator;
 
+            [Tooltip("Count the page delays in unscaled time, so SetPageAnim/SetOnePageAnim/SetPageDelay still " +
+                     "switch pages while Time.timeScale is 0 (pause menus). Set the curtain Animator's " +
+                     "Update Mode to Unscaled Time as well.")]
+            [SerializeField]
+            private bool _useUnscaledTime = true;
+
             public UnityEvent<int> OnChangePage;
             public UnityEvent OnStartPage;
 
             private Dictionary<int, GameObject> _pageCache;
+
+            /// <summary>
+            ///     When true the delays of <see cref="SetPageAnim" />, <see cref="SetOnePageAnim" /> and
+            ///     <see cref="SetPageDelay" /> ignore <see cref="Time.timeScale" />.
+            /// </summary>
+            public bool UseUnscaledTime
+            {
+                get => _useUnscaledTime;
+                set => _useUnscaledTime = value;
+            }
 
             private void Awake()
             {
@@ -152,7 +168,19 @@ namespace Neo.UI
             public void SetPageDelay(int id)
             {
                 this.id = id;
+                if (_useUnscaledTime)
+                {
+                    StartCoroutine(SetPageDelayCoroutine());
+                    return;
+                }
+
                 Invoke(nameof(SetPage), _timeDelay);
+            }
+
+            private IEnumerator SetPageDelayCoroutine()
+            {
+                yield return CreateDelay();
+                SetPage();
             }
 
             public void SetPageAnim(int id)
@@ -173,7 +201,9 @@ namespace Neo.UI
                     _animator.gameObject.SetActive(true);
                 }
 
-                yield return new WaitForSeconds(_timeDelay);
+                // WHY: scaled waits never finished under a PausePage (time scale 0), so a page switched from a
+                // pause menu with an animated transition never appeared.
+                yield return CreateDelay();
 
                 if (one)
                 {
@@ -184,12 +214,17 @@ namespace Neo.UI
                     SetPage(id);
                 }
 
-                yield return new WaitForSeconds(_timeDelay);
+                yield return CreateDelay();
 
                 if (_animator != null)
                 {
                     _animator.gameObject.SetActive(false);
                 }
+            }
+
+            private object CreateDelay()
+            {
+                return _useUnscaledTime ? new WaitForSecondsRealtime(_timeDelay) : new WaitForSeconds(_timeDelay);
             }
 
             /// <summary>Toggles the currently selected page without changing the selection.</summary>

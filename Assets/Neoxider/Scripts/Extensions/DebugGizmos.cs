@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Neo.Extensions
@@ -108,23 +107,26 @@ namespace Neo.Extensions
 
             if (!changeColor)
             {
-                foreach (GameObject target in targets.Where(t => t != null))
-                {
-                    Gizmos.DrawLine(from, target.transform.position);
-                }
-
+                DrawLines(from, targets);
                 return;
             }
 
             Color originalColor = Gizmos.color;
             Gizmos.color = color ?? Color.red;
-
-            foreach (GameObject target in targets.Where(t => t != null))
-            {
-                Gizmos.DrawLine(from, target.transform.position);
-            }
-
+            DrawLines(from, targets);
             Gizmos.color = originalColor;
+        }
+
+        private static void DrawLines(Vector3 from, IEnumerable<GameObject> targets)
+        {
+            // WHY: gizmos redraw on every Scene view repaint; a plain null check avoids a LINQ iterator per call.
+            foreach (GameObject target in targets)
+            {
+                if (target != null)
+                {
+                    Gizmos.DrawLine(from, target.transform.position);
+                }
+            }
         }
     }
 }

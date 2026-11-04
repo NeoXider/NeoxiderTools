@@ -102,7 +102,7 @@ namespace Neo.Core.Tests
             _hp.CurrentState.AddListener(_ =>
             {
                 notificationCount++;
-                // Bound the old recursion so a failing regression does not overflow the test process.
+                // WHY: Bound the old recursion so a failing regression does not overflow the test process.
                 if (notificationCount == 1)
                 {
                     observedCurrent = _health.GetCurrent(RpgResourceId.Hp);
@@ -432,7 +432,7 @@ namespace Neo.Core.Tests
 
         private void SetAuthoringField(string name, object value)
         {
-            // Reflection configures private Inspector fields only; all exercised behavior is public API/events.
+            // WHY: Reflection configures private Inspector fields only; all exercised behavior is public API/events.
             FieldInfo field = typeof(HealthComponent).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, name);
             field.SetValue(_health, value);

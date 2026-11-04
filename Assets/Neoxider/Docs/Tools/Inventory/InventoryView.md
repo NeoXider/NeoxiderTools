@@ -1,6 +1,13 @@
 ﻿# InventoryView
 
-**Purpose:** The main UI component for displaying inventory contents as a list. It can automatically spawn `InventoryItemView` cells from a prefab or update pre-placed cells manually (Manual Mode).
+**What it is:** UI `MonoBehaviour` that lists inventory contents, spawning [InventoryItemView](InventoryItemView.md) cells from a prefab or updating pre-placed cells (Manual Mode). `Scripts/Tools/Inventory/UI/InventoryView.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add it to a layout container and assign **Inventory** (or rely on the default inventory).
+2. Choose **View Mode**: assign an **Item View Prefab** for spawn mode, or fill **Manual Views**.
+3. Choose **Source Mode** (database items, current snapshot, or both); it refreshes on inventory changes.
+
+---
 
 ## Fields (Inspector)
 

@@ -22,7 +22,7 @@ namespace Neo.Tests.Edit
         public void SetPressed_PreservesBaseZScale()
         {
             _go = new GameObject("ButtonScale", typeof(RectTransform));
-            var rect = (RectTransform)_go.transform;
+            RectTransform rect = (RectTransform)_go.transform;
             rect.localScale = new Vector3(1f, 1f, 1f);
 
             ButtonScale scale = _go.AddComponent<ButtonScale>();
@@ -41,6 +41,28 @@ namespace Neo.Tests.Edit
             scale.SetPressed(false);
             Assert.That(rect.localScale.x, Is.EqualTo(1f).Within(0.0001f));
             Assert.That(rect.localScale.z, Is.EqualTo(1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void Release_ReturnsToTheScaleTheButtonHadWhenThePressStarted()
+        {
+            _go = new GameObject("ButtonScale", typeof(RectTransform));
+            RectTransform rect = (RectTransform)_go.transform;
+            ButtonScale scale = _go.AddComponent<ButtonScale>();
+            SetPrivateField(scale, "resizeDuration", 0f);
+            InvokePrivate(scale, "Awake");
+            scale.SetPressed(true);
+            scale.SetPressed(false);
+
+            Vector3 laidOut = new Vector3(1.3f, 1.3f, 1f);
+            rect.localScale = laidOut;
+            scale.SetPressed(true);
+            Assert.That(rect.localScale.x, Is.EqualTo(0.85f).Within(0.0001f));
+            scale.SetPressed(true);
+            scale.SetPressed(false);
+
+            Assert.That(rect.localScale, Is.EqualTo(laidOut),
+                "A button rescaled after Awake must come back to its new scale, not the Awake snapshot.");
         }
 
         private static void SetPrivateField(object target, string fieldName, object value)

@@ -9,7 +9,7 @@ namespace Neo.Editor.Tests.Merge
         [Test]
         public void Resolve_FindsConnectedGraphGroup_AndSelectsAnchorResult()
         {
-            var values = new Dictionary<string, int>
+            Dictionary<string, int> values = new Dictionary<string, int>
             {
                 ["A"] = 1,
                 ["B"] = 1,
@@ -48,7 +48,7 @@ namespace Neo.Editor.Tests.Merge
         [Test]
         public void Resolve_SupportsCascadeFromResult()
         {
-            var values = new Dictionary<string, int>
+            Dictionary<string, int> values = new Dictionary<string, int>
             {
                 ["A"] = 1,
                 ["B"] = 1,
@@ -88,7 +88,7 @@ namespace Neo.Editor.Tests.Merge
         [Test]
         public void Resolve_DryRunDoesNotMutateSourceData()
         {
-            var values = new Dictionary<int, int>
+            Dictionary<int, int> values = new Dictionary<int, int>
             {
                 [0] = 5,
                 [1] = 5,
@@ -124,7 +124,7 @@ namespace Neo.Editor.Tests.Merge
         [Test]
         public void Resolve_UsesCustomNeighborPredicateTargetAndResultValue()
         {
-            var values = new Dictionary<int, int>
+            Dictionary<int, int> values = new Dictionary<int, int>
             {
                 [0] = 2,
                 [1] = 4,
@@ -171,7 +171,7 @@ namespace Neo.Editor.Tests.Merge
         [Test]
         public void Resolve_WhenResultItemIsOutsideGroup_MergedValueLandsThere()
         {
-            var values = new Dictionary<string, int>
+            Dictionary<string, int> values = new Dictionary<string, int>
             {
                 ["A"] = 1,
                 ["B"] = 1,
@@ -211,7 +211,7 @@ namespace Neo.Editor.Tests.Merge
         [Test]
         public void Resolve_FlagsCascadeLimit_WhenMergeStillPossibleAtLimit()
         {
-            var values = new Dictionary<int, int>
+            Dictionary<int, int> values = new Dictionary<int, int>
             {
                 [0] = 1,
                 [1] = 1,
@@ -248,7 +248,7 @@ namespace Neo.Editor.Tests.Merge
         [Test]
         public void Resolve_DoesNotFlagCascadeLimit_WhenCascadeFinishesExactlyAtLimit()
         {
-            var values = new Dictionary<string, int>
+            Dictionary<string, int> values = new Dictionary<string, int>
             {
                 ["A"] = 1,
                 ["B"] = 1,

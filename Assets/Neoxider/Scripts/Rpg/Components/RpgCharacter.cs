@@ -18,9 +18,14 @@ namespace Neo.Rpg.Components
     ///     upgrade points, plus an optional transport-neutral network adapter.
     ///     <para>One <see cref="RpgCharacter"/> per character - both for players and NPCs. Drops the
     ///     legacy singleton profile pattern.</para>
-    ///     <para>Public API is UnityEvent-friendly: every method takes one parameter or none and uses
+    ///     <para>Public API is UnityEvent-friendly: the scene-facing methods take one parameter or none and use
     ///     primitive / GameObject / SO arguments. Wire it from <see cref="UnityEvent"/>,
     ///     <c>NetworkContextActionRelay.InvokeComponentMethod</c>, <c>NeoCondition</c>, etc.</para>
+    ///     <para>State lives in plain C# services (<see cref="RpgCharacterResourceService"/>,
+    ///     <see cref="RpgCharacterStatService"/>, <see cref="RpgCharacterProgressionService"/>,
+    ///     <see cref="RpgEffectShelf"/>); this component orchestrates event order, re-entrancy guards,
+    ///     persistence and network routing. Code-only extension points: <see cref="IRpgDamageModifier"/>,
+    ///     <see cref="DamageApplied"/> and <see cref="RuntimeRebuilt"/>.</para>
     /// </summary>
     [NeoDoc("Rpg/RpgCharacter.md")]
     [CreateFromMenu("Neoxider/RPG/RpgCharacter")]
@@ -114,22 +119,27 @@ namespace Neo.Rpg.Components
 
 
         private readonly RpgCharacterResourceService _resourceService = new();
-        private readonly Dictionary<string, RpgStatRuntime> _statRuntime = new();
-        private readonly Dictionary<string, RpgStatUpgradeRule> _upgradeRuleLookup = new();
-        private readonly Dictionary<string, int> _upgradeInvestments = new();
+        private readonly RpgCharacterStatService _statService = new();
+        private readonly RpgCharacterProgressionService _progressionState = new();
         private readonly RpgEffectShelf _effects = new();
         private readonly List<BuffStatModifierApplication> _modifierBuffer = new();
+        private readonly List<ResourceGrant> _grantBuffer = new();
 
-        private int _level = 1;
-        private float _xp;
-        private int _upgradePoints;
+        // WHY: cached once; method-group arguments would allocate three delegates on every Update.
+        private Action<string> _buffExpiredHandler;
+        private Action<string> _statusExpiredHandler;
+        private Action<StatusEffectDefinition, float> _statusTickHandler;
+        private Func<RpgResourceRuntime, float> _maxResolver;
+        private Func<RpgResourceRuntime, float> _regenResolver;
+        private IReadOnlyDictionary<string, RpgResourceSaveEntry> _restoreRows;
+        private IRpgDamageModifier[] _damageModifiers = Array.Empty<IRpgDamageModifier>();
+
         private int _invulnerabilityLocks;
         private bool _initialized;
         private bool _isDead;
         private bool _resourceServiceSubscribed;
         private int _runtimeGeneration;
         private int _derivedGeneration;
-        private int _appliedGrowthLevel = 1;
         private int _publicationDepth;
         private bool _initializing;
         private bool _pendingRebuild;
@@ -143,10 +153,25 @@ namespace Neo.Rpg.Components
         /// <summary>Raised after coherent runtime replacement, before optional auto-load. Rebind cached reactive states here.</summary>
         public event Action RuntimeRebuilt;
 
+        /// <summary>
+        ///     Code-side damage notification raised after <see cref="OnDamagedEvent" /> with the original hit
+        ///     (raw amount, damage type, optional source) and the HP actually removed.
+        /// </summary>
+        /// <remarks>
+        ///     A lethal hit raises <see cref="OnDeathEvent" /> during the HP decrease, so for the killing blow
+        ///     <see cref="IsDead" /> is already true when this event runs.
+        /// </remarks>
+        public event Action<RpgDamageInfo, float> DamageApplied;
+
+        /// <summary>Current level (reactive).</summary>
         public readonly ReactivePropertyInt LevelState = new(1);
+        /// <summary>True while HP is depleted (reactive).</summary>
         public readonly ReactivePropertyBool IsDeadState = new(false);
+        /// <summary>True while at least one invulnerability lock is held (reactive).</summary>
         public readonly ReactivePropertyBool InvulnerableState = new(false);
+        /// <summary>Unspent upgrade points (reactive).</summary>
         public readonly ReactivePropertyInt UpgradePointsState = new(0);
+        /// <summary>Accumulated experience (reactive).</summary>
         public readonly ReactivePropertyFloat XpState = new(0f);
 
 
@@ -188,16 +213,16 @@ namespace Neo.Rpg.Components
         public float ManaPercentValue => GetResourcePercent(RpgResourceId.Mana);
         public float StaminaValue => GetResource(RpgResourceId.Stamina);
         public float StaminaPercentValue => GetResourcePercent(RpgResourceId.Stamina);
-        public int LevelValue => _level;
-        public int UpgradePointsValue => _upgradePoints;
-        public float XpValue => _xp;
+        public int LevelValue => _progressionState.Level;
+        public int UpgradePointsValue => _progressionState.UpgradePoints;
+        public float XpValue => _progressionState.Xp;
         public bool IsInvulnerable => _invulnerabilityLocks > 0;
 
         public float CurrentHp => HpValue;
         public float MaxHp => MaxHpValue;
-        public int Level => _level;
+        public int Level => _progressionState.Level;
         public bool IsDead => _isDead;
-        public bool CanPerformActions => !_isDead && !HasBlockingStatus();
+        public bool CanPerformActions => !_isDead && !_effects.HasBlockingStatus();
         bool INeoOptionalNetworked.IsNetworked => isNetworked;
 
 
@@ -223,18 +248,34 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            if (_networkAdapter != null && _networkAdapter.SuppressLocalSimulation)
+            IRpgCharacterNetworkAdapter adapter = LiveNetworkAdapter;
+            if (adapter != null && adapter.SuppressLocalSimulation)
             {
                 return;
             }
-            float dt = Time.deltaTime;
-            int generation = _runtimeGeneration;
-            _resourceService.TickRegen(dt, _isDead);
-            if (generation != _runtimeGeneration)
+            TickSimulation(Time.deltaTime);
+        }
+
+        private void TickSimulation(float dt)
+        {
+            // WHY: one frame of regeneration and effect ticks publishes one network snapshot. Every changed
+            // resource used to capture and serialize the whole profile on the server, once per resource per frame.
+            BeginPublication();
+            try
             {
-                return;
+                int generation = _runtimeGeneration;
+                _resourceService.TickRegen(dt, _isDead);
+                if (generation != _runtimeGeneration)
+                {
+                    return;
+                }
+                _effects.Tick(dt, _buffExpiredHandler ??= HandleBuffExpired,
+                    _statusExpiredHandler ??= HandleStatusExpired, _statusTickHandler ??= HandleStatusTickDamage);
             }
-            _effects.Tick(dt, HandleBuffExpired, HandleStatusExpired, HandleStatusTickDamage);
+            finally
+            {
+                EndPublication();
+            }
         }
 
         private void OnDisable()
@@ -273,7 +314,7 @@ namespace Neo.Rpg.Components
             BeginPublication();
             try
             {
-                // A callback may replace the template. Bound retries; persistent reentry retries next Update.
+                // WHY: a callback may replace the template. Bound retries; persistent reentry retries next Update.
                 for (int attempt = 0; attempt < 2; attempt++)
                 {
                     _pendingRebuild = false;
@@ -282,11 +323,12 @@ namespace Neo.Rpg.Components
                     {
                         ImportTemplate(_template);
                     }
-                    _upgradeInvestments.Clear();
+                    _statService.ClearInvestments();
                     _effects.ClearAllBuffs();
                     _effects.ClearAllStatuses();
-                    BuildRuntimes();
-                    BuildUpgradeLookup();
+                    _resourceService.Build(_resources);
+                    _statService.Build(_stats);
+                    _statService.BuildUpgradeRules(_progression);
                     _effects.RegisterBuffLibrary(GatherBuffs());
                     _effects.RegisterStatusLibrary(GatherStatuses());
                     _effects.RegisterInlineBuffs(_inlineBuffs);
@@ -297,10 +339,10 @@ namespace Neo.Rpg.Components
                     _subscribedLevelProvider = _levelProvider;
                     if (_subscribedLevelProvider != null)
                     {
-                        _level = Mathf.Max(1, _subscribedLevelProvider.Level);
+                        _progressionState.SetLevel(_subscribedLevelProvider.Level);
                         _subscribedLevelProvider.LevelState.AddListener(HandleLevelProviderChanged);
                     }
-                    _appliedGrowthLevel = UsesAutomaticGrowth() ? _level : 1;
+                    SyncedProgression.ResetGrowthAnchor();
                     if (!RefreshAllDerivedCore(true, null, generation))
                     {
                         continue;
@@ -311,7 +353,7 @@ namespace Neo.Rpg.Components
                     {
                         continue;
                     }
-                    // RuntimeRebuilt intentionally precedes auto-load; transport publication follows both.
+                    // WHY: RuntimeRebuilt intentionally precedes auto-load; transport publication follows both.
                     if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
                     {
                         LoadProfile();
@@ -363,43 +405,6 @@ namespace Neo.Rpg.Components
             if (t.progression != null)
             {
                 _progression = t.progression;
-            }
-        }
-
-        private void BuildRuntimes()
-        {
-            _resourceService.Build(_resources);
-
-            _statRuntime.Clear();
-            for (int i = 0; i < _stats.Length; i++)
-            {
-                RpgStatDefinition def = _stats[i];
-                if (def == null || !def.id.IsValid)
-                {
-                    continue;
-                }
-
-                _statRuntime[def.id.Value] = new RpgStatRuntime(def);
-            }
-        }
-
-        private void BuildUpgradeLookup()
-        {
-            _upgradeRuleLookup.Clear();
-            if (_progression == null || _progression.upgradeRules == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < _progression.upgradeRules.Length; i++)
-            {
-                RpgStatUpgradeRule rule = _progression.upgradeRules[i];
-                if (rule == null || !rule.statId.IsValid)
-                {
-                    continue;
-                }
-
-                _upgradeRuleLookup[rule.statId.Value] = rule;
             }
         }
 
@@ -504,8 +509,7 @@ namespace Neo.Rpg.Components
                     return;
                 }
                 _resourceService.Clear();
-                _statRuntime.Clear();
-                _upgradeRuleLookup.Clear();
+                _statService.Clear();
                 EnsureInitialized();
             }
             finally
@@ -531,16 +535,43 @@ namespace Neo.Rpg.Components
         /// <summary>Typed damage (Fire/Cold/...): applies type-specific resist + global incoming damage modifier.</summary>
         public float DamageType(string damageType, float amount)
         {
-            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Damage, damageType, amount)))
+            return ApplyDamage(new RpgDamageInfo(amount, damageType));
+        }
+
+        /// <summary>
+        ///     Full incoming damage pipeline: network routing, invulnerability, buff/status multipliers for
+        ///     <see cref="RpgDamageInfo.DamageType" />, registered <see cref="IRpgDamageModifier" />s, then HP.
+        ///     The source reaches modifiers and <see cref="DamageApplied" /> but is not sent over the network.
+        /// </summary>
+        /// <returns>HP actually removed (0 when routed to the server, rejected or fully absorbed).</returns>
+        public float ApplyDamage(RpgDamageInfo info)
+        {
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Damage, info.DamageType, info.Amount)))
             {
                 return 0f;
             }
+
+            // WHY: a lethal hit changes HP and then death; one snapshot covers both.
+            BeginPublication();
+            try
+            {
+                return ApplyDamageLocal(info);
+            }
+            finally
+            {
+                EndPublication();
+            }
+        }
+
+        private float ApplyDamageLocal(RpgDamageInfo info)
+        {
+            float amount = info.Amount;
             if (!_initialized)
             {
                 EnsureInitialized();
             }
 
-            if (amount <= 0f)
+            if (!RpgTickUtility.IsFinite(amount) || amount <= 0f)
             {
                 return 0f;
             }
@@ -550,13 +581,24 @@ namespace Neo.Rpg.Components
                 return 0f;
             }
 
-            float multiplier = GetIncomingDamageMultiplier(damageType);
-            float final = Mathf.Max(0f, amount * multiplier);
+            float multiplier = GetIncomingDamageMultiplier(info.DamageType);
             int generation = _runtimeGeneration;
+            float final = ApplyDamageModifiers(info, Mathf.Max(0f, amount * multiplier));
+            if (generation != _runtimeGeneration)
+            {
+                // WHY: a modifier replaced the runtime; the hit belonged to the superseded one.
+                return 0f;
+            }
+
             float applied = Decrease(RpgResourceId.Hp, final);
             if (applied > 0f && generation == _runtimeGeneration)
             {
                 _onDamaged?.Invoke(applied);
+                if (generation != _runtimeGeneration)
+                {
+                    return applied;
+                }
+                DamageApplied?.Invoke(info, applied);
                 if (generation != _runtimeGeneration)
                 {
                     return applied;
@@ -569,6 +611,58 @@ namespace Neo.Rpg.Components
             }
 
             return applied;
+        }
+
+        /// <summary>Registers a damage hook; adding the same instance twice is ignored. See <see cref="IRpgDamageModifier" />.</summary>
+        public void AddDamageModifier(IRpgDamageModifier modifier)
+        {
+            if (modifier == null || Array.IndexOf(_damageModifiers, modifier) >= 0)
+            {
+                return;
+            }
+
+            IRpgDamageModifier[] next = new IRpgDamageModifier[_damageModifiers.Length + 1];
+            Array.Copy(_damageModifiers, next, _damageModifiers.Length);
+            next[next.Length - 1] = modifier;
+            _damageModifiers = next;
+        }
+
+        /// <summary>Unregisters a damage hook. Returns false when it was not registered.</summary>
+        public bool RemoveDamageModifier(IRpgDamageModifier modifier)
+        {
+            int index = modifier == null ? -1 : Array.IndexOf(_damageModifiers, modifier);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            IRpgDamageModifier[] next = new IRpgDamageModifier[_damageModifiers.Length - 1];
+            Array.Copy(_damageModifiers, 0, next, 0, index);
+            Array.Copy(_damageModifiers, index + 1, next, index, next.Length - index);
+            _damageModifiers = next;
+            return true;
+        }
+
+        private float ApplyDamageModifiers(RpgDamageInfo info, float amount)
+        {
+            // WHY: copy-on-write array; a modifier may add/remove modifiers without disturbing this pass.
+            IRpgDamageModifier[] modifiers = _damageModifiers;
+            for (int i = 0; i < modifiers.Length; i++)
+            {
+                IRpgDamageModifier modifier = modifiers[i];
+                if (modifier is UnityEngine.Object unityObject && unityObject == null)
+                {
+                    continue;
+                }
+
+                float next = modifier.ModifyIncomingDamage(this, info, amount);
+                if (RpgTickUtility.IsFinite(next))
+                {
+                    amount = Mathf.Max(0f, next);
+                }
+            }
+
+            return amount;
         }
 
         /// <summary>Heal HP (positive amount).</summary>
@@ -588,22 +682,31 @@ namespace Neo.Rpg.Components
                 return 0f;
             }
 
-            int generation = _runtimeGeneration;
-            float applied = Increase(RpgResourceId.Hp, amount);
-            if (applied > 0f && generation == _runtimeGeneration)
+            // WHY: a revive-heal changes HP and then the dead flag; one snapshot covers both.
+            BeginPublication();
+            try
             {
-                _onHealed?.Invoke(applied);
-                if (generation != _runtimeGeneration)
+                int generation = _runtimeGeneration;
+                float applied = Increase(RpgResourceId.Hp, amount);
+                if (applied > 0f && generation == _runtimeGeneration)
                 {
-                    return applied;
+                    _onHealed?.Invoke(applied);
+                    if (generation != _runtimeGeneration)
+                    {
+                        return applied;
+                    }
+                    if (_isDead && HpValue > 0f)
+                    {
+                        Revive();
+                    }
                 }
-                if (_isDead && HpValue > 0f)
-                {
-                    Revive();
-                }
-            }
 
-            return applied;
+                return applied;
+            }
+            finally
+            {
+                EndPublication();
+            }
         }
 
         /// <summary>Spend resource (e.g. Mana, Stamina). Returns true if the cost was paid.</summary>
@@ -636,6 +739,7 @@ namespace Neo.Rpg.Components
             return Increase(resourceId, amount);
         }
 
+        /// <summary>Adds to a resource locally (no network routing). Returns the amount actually added.</summary>
         public float Increase(string resourceId, float amount)
         {
             if (!_initialized)
@@ -646,6 +750,7 @@ namespace Neo.Rpg.Components
             return _resourceService.Increase(resourceId, amount);
         }
 
+        /// <summary>Subtracts from a resource locally (no resist, no network routing). Returns the amount removed.</summary>
         public float Decrease(string resourceId, float amount)
         {
             if (!_initialized)
@@ -673,11 +778,21 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            _resourceService.RestoreAll();
 
-            if (_isDead && HpValue > 0f)
+            // WHY: every refilled resource used to publish its own snapshot.
+            BeginPublication();
+            try
             {
-                Revive();
+                _resourceService.RestoreAll();
+
+                if (_isDead && HpValue > 0f)
+                {
+                    Revive();
+                }
+            }
+            finally
+            {
+                EndPublication();
             }
         }
 
@@ -692,6 +807,7 @@ namespace Neo.Rpg.Components
             _resourceService.SetMax(resourceId, newMax);
         }
 
+        /// <summary>Adds <paramref name="delta" /> to a resource's effective Max (see <see cref="SetMaxResource" />).</summary>
         public void AddMaxResource(string resourceId, float delta)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddMaxResource, resourceId, delta)))
@@ -702,42 +818,44 @@ namespace Neo.Rpg.Components
         }
 
 
+        /// <summary>Final stat value (base + level growth + upgrades + buffs), or 0 for unknown stats.</summary>
         public float GetStat(string statId)
         {
-            return _statRuntime.TryGetValue(statId ?? string.Empty, out RpgStatRuntime s) ? s.CurrentValue : 0f;
+            return _statService.GetValue(statId);
         }
 
+        /// <summary>Adds to a stat's base value and refreshes every derived value.</summary>
         public void AddStatBase(string statId, float delta)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddStatBase, statId, delta)))
             {
                 return;
             }
-            if (!_statRuntime.TryGetValue(statId ?? string.Empty, out RpgStatRuntime s))
+            if (!_statService.AddBase(statId, delta))
             {
                 return;
             }
 
-            s.BaseValue += delta;
             RefreshAllDerived(false);
         }
 
+        /// <summary>Sets a stat's base value and refreshes every derived value.</summary>
         public void SetStatBase(string statId, float value)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetStatBase, statId, value)))
             {
                 return;
             }
-            if (!_statRuntime.TryGetValue(statId ?? string.Empty, out RpgStatRuntime s))
+            if (!_statService.SetBase(statId, value))
             {
                 return;
             }
 
-            s.BaseValue = value;
             RefreshAllDerived(false);
         }
 
 
+        /// <summary>Applies or stacks an SO buff. Returns false for a null definition or a rejected re-entrant apply.</summary>
         public bool ApplyBuff(BuffDefinition def)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyBuff, def != null ? def.Id : string.Empty)))
@@ -749,9 +867,10 @@ namespace Neo.Rpg.Components
                 return false;
             }
 
-            return ApplyBuffEntry(def.Id, def.Modifiers, () => _effects.ApplyBuff(def));
+            return ApplyBuffEntry(def.Id, def.Modifiers, def, null);
         }
 
+        /// <summary>Applies a known SO buff or inline buff by id. Returns false when the id is unknown.</summary>
         public bool ApplyBuffById(string id)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyBuff, id)))
@@ -786,6 +905,7 @@ namespace Neo.Rpg.Components
             return ApplyInlineEntry(_inlineBuffs[index]);
         }
 
+        /// <summary>Alias of <see cref="ApplyBuffById" /> for inline buffs addressed by name.</summary>
         public bool ApplyInlineBuffByName(string name)
         {
             return ApplyBuffById(name);
@@ -798,7 +918,7 @@ namespace Neo.Rpg.Components
                 return false;
             }
 
-            return ApplyBuffEntry(inline.Id, inline.Modifiers, () => _effects.ApplyInlineBuff(inline));
+            return ApplyBuffEntry(inline.Id, inline.Modifiers, null, inline);
         }
 
         private readonly struct ResourceGrant
@@ -812,8 +932,8 @@ namespace Neo.Rpg.Components
             public float Amount { get; }
         }
 
-        private bool ApplyBuffEntry(string id, BuffStatModifier[] modifiers,
-            Func<RpgEffectShelf.ApplyResult<ActiveBuffEntry>> apply)
+        private bool ApplyBuffEntry(string id, BuffStatModifier[] modifiers, BuffDefinition definition,
+            InlineBuffEntry inline)
         {
             if (_applyingBuff || _applyingProfile)
             {
@@ -830,14 +950,18 @@ namespace Neo.Rpg.Components
             {
                 int generation = _runtimeGeneration;
                 int previousStacks = _effects.GetBuffStackCount(id);
-                RpgEffectShelf.ApplyResult<ActiveBuffEntry> result = apply();
+                RpgEffectShelf.ApplyResult<ActiveBuffEntry> result = definition != null
+                    ? _effects.ApplyBuff(definition)
+                    : _effects.ApplyInlineBuff(inline);
                 if (!result.Success)
                 {
                     return false;
                 }
                 int stacks = _effects.GetBuffStackCount(id);
                 int addedStacks = Mathf.Max(0, stacks - previousStacks);
-                List<ResourceGrant> grants = new();
+                // WHY: _applyingBuff forbids nesting, so one reusable grant list is safe.
+                List<ResourceGrant> grants = _grantBuffer;
+                grants.Clear();
                 for (int i = 0; i < (modifiers?.Length ?? 0); i++)
                 {
                     BuffStatModifier modifier = modifiers[i];
@@ -849,7 +973,7 @@ namespace Neo.Rpg.Components
                         grants.Add(new ResourceGrant(modifier.TargetIdValue, amount));
                     }
                 }
-                // Commit first; derive limits before one-shot current changes and settled observers.
+                // WHY: commit first; derive limits before one-shot current changes and settled observers.
                 if (!RefreshAllDerivedCore(false, null, generation) || !_effects.IsCurrentBuff(result.Entry, stacks))
                 {
                     return true;
@@ -876,11 +1000,13 @@ namespace Neo.Rpg.Components
             }
             finally
             {
+                _grantBuffer.Clear();
                 _applyingBuff = false;
                 EndPublication();
             }
         }
 
+        /// <summary>Removes an active buff, raises <see cref="OnBuffExpiredEvent" /> and refreshes derived values.</summary>
         public bool RemoveBuff(string id)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.RemoveBuff, id)))
@@ -901,6 +1027,7 @@ namespace Neo.Rpg.Components
             return false;
         }
 
+        /// <summary>Removes every active buff and refreshes derived values (no per-buff expiry events).</summary>
         public void ClearAllBuffs()
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ClearBuffs)))
@@ -911,6 +1038,7 @@ namespace Neo.Rpg.Components
             RefreshDerivedFromBuffs();
         }
 
+        /// <summary>Applies or stacks a status effect and raises <see cref="OnStatusAppliedEvent" />.</summary>
         public bool ApplyStatus(StatusEffectDefinition def)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyStatus, def != null ? def.Id : string.Empty)))
@@ -932,11 +1060,13 @@ namespace Neo.Rpg.Components
             return r.Success;
         }
 
+        /// <summary>Applies a known status by id. Returns false when the id is unknown.</summary>
         public bool ApplyStatusById(string id)
         {
             return _effects.TryGetStatus(id, out StatusEffectDefinition def) && ApplyStatus(def);
         }
 
+        /// <summary>Removes an active status and raises <see cref="OnStatusExpiredEvent" />.</summary>
         public bool RemoveStatus(string id)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.RemoveStatus, id)))
@@ -953,6 +1083,7 @@ namespace Neo.Rpg.Components
             return false;
         }
 
+        /// <summary>Removes every active status (no per-status expiry events).</summary>
         public void ClearAllStatuses()
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ClearStatuses)))
@@ -963,17 +1094,20 @@ namespace Neo.Rpg.Components
             PushSnapshotIfServer();
         }
 
+        /// <summary>Whether a buff with this id is active.</summary>
         public bool HasBuff(string id)
         {
             return _effects.HasBuff(id);
         }
 
+        /// <summary>Whether a status with this id is active.</summary>
         public bool HasStatus(string id)
         {
             return _effects.HasStatus(id);
         }
 
 
+        /// <summary>Adds one invulnerability lock (stacking; pair with <see cref="UnlockInvulnerable" />).</summary>
         public void LockInvulnerable()
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetInvulnerable, flag: true)))
@@ -985,6 +1119,7 @@ namespace Neo.Rpg.Components
             PushSnapshotIfServer();
         }
 
+        /// <summary>Releases one invulnerability lock.</summary>
         public void UnlockInvulnerable()
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetInvulnerable, flag: false)))
@@ -996,6 +1131,7 @@ namespace Neo.Rpg.Components
             PushSnapshotIfServer();
         }
 
+        /// <summary><c>true</c> adds a lock; <c>false</c> clears every lock, including ones held by other systems.</summary>
         public void SetInvulnerable(bool on)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetInvulnerable, flag: on)))
@@ -1015,9 +1151,10 @@ namespace Neo.Rpg.Components
 
         float IRpgCombatReceiver.TakeDamage(RpgDamageInfo info)
         {
-            return DamageType(info.DamageType, info.Amount);
+            return ApplyDamage(info);
         }
 
+        /// <summary>Spends a resource with a failure reason for unknown ids or insufficient amounts.</summary>
         public bool TrySpendResource(string resourceId, float amount, out string failReason)
         {
             failReason = null;
@@ -1036,6 +1173,7 @@ namespace Neo.Rpg.Components
             return true;
         }
 
+        /// <summary><see cref="ApplyBuffById" /> with a failure reason.</summary>
         public bool TryApplyBuff(string buffId, out string failReason)
         {
             failReason = null;
@@ -1048,6 +1186,7 @@ namespace Neo.Rpg.Components
             return false;
         }
 
+        /// <summary><see cref="ApplyStatusById" /> with a failure reason.</summary>
         public bool TryApplyStatus(string statusId, out string failReason)
         {
             failReason = null;
@@ -1060,146 +1199,106 @@ namespace Neo.Rpg.Components
             return false;
         }
 
+        /// <summary><see cref="IRpgCombatReceiver" /> alias of <see cref="LockInvulnerable" />.</summary>
         public void AddInvulnerabilityLock()
         {
             LockInvulnerable();
         }
 
+        /// <summary><see cref="IRpgCombatReceiver" /> alias of <see cref="UnlockInvulnerable" />.</summary>
         public void RemoveInvulnerabilityLock()
         {
             UnlockInvulnerable();
         }
 
+        /// <summary>Outgoing damage multiplier from active buffs (see <see cref="RpgModifierMath.GetOutgoingDamageMultiplier" />).</summary>
         public float GetOutgoingDamageMultiplier()
         {
             _effects.BuildModifierApplications(_modifierBuffer);
-            float percent = 0f;
-            for (int i = 0; i < _modifierBuffer.Count; i++)
-            {
-                BuffStatModifierApplication m = _modifierBuffer[i];
-                if (m.Type == BuffStatType.OutgoingDamagePercent)
-                {
-                    percent += m.Value * Mathf.Max(1, m.Stacks);
-                }
-                else if (m.Type == BuffStatType.DamagePercent)
-                {
-                    // WHY: DamagePercent is a legacy alias kept for backward compatibility with older buff data.
-                    percent += m.Value * Mathf.Max(1, m.Stacks);
-                }
-            }
-
-            return Mathf.Max(0f, 1f + percent / 100f);
+            return RpgModifierMath.GetOutgoingDamageMultiplier(_modifierBuffer);
         }
 
+        /// <summary>Movement multiplier: buff speed percent times every active status slow, clamped at 0.</summary>
         public float GetMovementSpeedMultiplier()
         {
             _effects.BuildModifierApplications(_modifierBuffer);
-            float percent = 0f;
-            for (int i = 0; i < _modifierBuffer.Count; i++)
-            {
-                BuffStatModifierApplication m = _modifierBuffer[i];
-                if (m.Type == BuffStatType.MoveSpeedPercent)
-                {
-                    percent += m.Value * Mathf.Max(1, m.Stacks);
-                }
-                else if (m.Type == BuffStatType.MovementSpeedPercent)
-                {
-                    // WHY: MovementSpeedPercent is a legacy alias kept for backward compatibility with older buff data.
-                    percent += m.Value * Mathf.Max(1, m.Stacks);
-                }
-            }
-
-            float statusMultiplier = 1f;
-            foreach (ActiveStatusEntry entry in _effects.ActiveStatuses)
-            {
-                if (_effects.TryGetStatus(entry.StatusId, out StatusEffectDefinition definition) && definition != null)
-                {
-                    statusMultiplier *= Mathf.Max(0f, definition.MovementSpeedMultiplier);
-                }
-            }
-
-            return Mathf.Max(0f, (1f + percent / 100f) * statusMultiplier);
+            float buffMultiplier = RpgModifierMath.GetMovementSpeedBuffMultiplier(_modifierBuffer);
+            return Mathf.Max(0f, buffMultiplier * _effects.GetStatusMovementMultiplier());
         }
 
+        /// <summary>Incoming damage multiplier for a damage type (see <see cref="RpgModifierMath.GetIncomingDamageMultiplier" />).</summary>
         public float GetIncomingDamageMultiplier(string damageType = null)
         {
             _effects.BuildModifierApplications(_modifierBuffer);
-            float percent = 0f;
-            float resist = 0f;
-            for (int i = 0; i < _modifierBuffer.Count; i++)
-            {
-                BuffStatModifierApplication m = _modifierBuffer[i];
-                int stacks = Mathf.Max(1, m.Stacks);
-                if (m.Type == BuffStatType.IncomingDamagePercent)
-                {
-                    percent += m.Value * stacks;
-                }
-                else if (m.Type == BuffStatType.DefensePercent)
-                {
-                    // WHY: DefensePercent is a legacy alias kept for backward compatibility with older buff data.
-                    percent -= m.Value * stacks;
-                }
-                else if (m.Type == BuffStatType.DamageTypeResistPercent &&
-                         !string.IsNullOrEmpty(damageType) && m.DamageType == damageType)
-                {
-                    resist += m.Value * stacks;
-                }
-                else if (m.Type == BuffStatType.SpecificDefensePercent && m.DamageType == damageType)
-                {
-                    resist += m.Value * stacks;
-                }
-            }
+            return RpgModifierMath.GetIncomingDamageMultiplier(_modifierBuffer, damageType);
+        }
 
-            float mult = 1f + percent / 100f - resist / 100f;
-            return Mathf.Max(0f, mult);
+        /// <summary>
+        ///     Attack speed multiplier from <see cref="BuffStatType.AttackSpeedPercent" /> buffs (1 = normal).
+        ///     Consumed by <see cref="RpgAttackController" /> only when its cooldown scaling option is enabled.
+        /// </summary>
+        public float GetAttackSpeedMultiplier()
+        {
+            _effects.BuildModifierApplications(_modifierBuffer);
+            return RpgModifierMath.GetAttackSpeedMultiplier(_modifierBuffer);
         }
 
 
+        /// <summary>
+        ///     Sets the level (min 1). Automatic growth refreshes stats; manual/hybrid progression grants upgrade points
+        ///     for levels gained. Raises <see cref="OnLevelChangedEvent" />.
+        /// </summary>
         public void SetLevel(int level)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetLevel, integer: level)))
             {
                 return;
             }
-            int clamped = Mathf.Max(1, level);
-            if (clamped == _level)
-            {
-                return;
-            }
 
-            int oldLevel = _level;
+            // WHY: a level-up grants points, refreshes every stat and publishes; one snapshot covers all of it.
+            BeginPublication();
+            try
+            {
+                SetLevelLocal(level);
+            }
+            finally
+            {
+                EndPublication();
+            }
+        }
+
+        private void SetLevelLocal(int level)
+        {
+            RpgCharacterProgressionService progression = SyncedProgression;
+            int oldLevel = progression.Level;
             int generation = _runtimeGeneration;
-            _level = clamped;
-            if (UsesAutomaticGrowth())
-            {
-                _appliedGrowthLevel = clamped;
-            }
-            LevelState.Value = _level;
-            if (generation != _runtimeGeneration || _level != clamped)
-            {
-                return;
-            }
-            _onLevelChanged?.Invoke(_level);
-            if (generation != _runtimeGeneration || _level != clamped)
+            if (!progression.SetLevel(level))
             {
                 return;
             }
 
-            if (_progression != null && clamped > oldLevel)
+            int clamped = progression.Level;
+            LevelState.Value = clamped;
+            if (generation != _runtimeGeneration || _progressionState.Level != clamped)
             {
-                int gained = (clamped - oldLevel) * Mathf.Max(0, _progression.upgradePointsPerLevel);
-                if (_progression.growthMode is RpgLevelGrowthMode.ManualUpgradePoints or RpgLevelGrowthMode.Hybrid)
+                return;
+            }
+            _onLevelChanged?.Invoke(clamped);
+            if (generation != _runtimeGeneration || _progressionState.Level != clamped)
+            {
+                return;
+            }
+
+            if (clamped > oldLevel && SyncedProgression.GrantsUpgradePoints)
+            {
+                AddUpgradePoints(_progressionState.GetUpgradePointsForLevelChange(oldLevel, clamped));
+                if (generation != _runtimeGeneration || _progressionState.Level != clamped)
                 {
-                    AddUpgradePoints(gained);
-                    if (generation != _runtimeGeneration || _level != clamped)
-                    {
-                        return;
-                    }
+                    return;
                 }
-
             }
 
-            if (UsesAutomaticGrowth())
+            if (SyncedProgression.UsesAutomaticGrowth)
             {
                 RefreshAllDerived(false);
             }
@@ -1207,10 +1306,14 @@ namespace Neo.Rpg.Components
             PushSnapshotIfServer();
         }
 
-        private bool UsesAutomaticGrowth()
+        /// <summary>Progression state with its rules synced to the serialized (or template) definition.</summary>
+        private RpgCharacterProgressionService SyncedProgression
         {
-            return _progression != null && _progression.autoApplyGrowthOnLevelUp &&
-                   _progression.growthMode is RpgLevelGrowthMode.AllStatsEveryLevel or RpgLevelGrowthMode.Hybrid;
+            get
+            {
+                _progressionState.Definition = _progression;
+                return _progressionState;
+            }
         }
 
         /// <summary>Explicitly applies configured per-level growth at the current level, including deferred/manual modes.</summary>
@@ -1225,62 +1328,48 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            _appliedGrowthLevel = _level;
+            _progressionState.ApplyGrowthAtCurrentLevel();
             RefreshAllDerived(false);
         }
 
+        /// <summary>Changes the level by <paramref name="delta" /> (saturating, min 1).</summary>
         public void AddLevel(int delta)
         {
-            SetLevel(_level + delta);
+            SetLevel(RpgCharacterProgressionService.ClampLevel((long)_progressionState.Level + delta));
         }
 
+        /// <summary>Adds experience; non-positive and non-finite amounts are ignored.</summary>
         public void AddXp(float amount)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddXp, number: amount)))
             {
                 return;
             }
-            if (amount <= 0f)
+            if (!_progressionState.AddXp(amount))
             {
                 return;
             }
 
-            _xp += amount;
-            XpState.Value = _xp;
+            XpState.Value = _progressionState.Xp;
             PushSnapshotIfServer();
         }
 
+        /// <summary>Adds (or removes, when negative) upgrade points, saturating at 0 and int.MaxValue.</summary>
         public void AddUpgradePoints(int amount)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddUpgradePoints, integer: amount)))
             {
                 return;
             }
-            _upgradePoints = Mathf.Max(0, _upgradePoints + amount);
-            UpgradePointsState.Value = _upgradePoints;
+            _progressionState.AddUpgradePoints(amount);
+            UpgradePointsState.Value = _progressionState.UpgradePoints;
             PushSnapshotIfServer();
         }
 
+        /// <summary>Whether the stat has a valid upgrade rule, is below its cap and the points cover the cost.</summary>
         public bool CanUpgradeStat(string statId)
         {
-            if (string.IsNullOrWhiteSpace(statId) || !_statRuntime.ContainsKey(statId) ||
-                !_upgradeRuleLookup.TryGetValue(statId, out RpgStatUpgradeRule rule) || rule == null ||
-                rule.costPerUpgrade <= 0)
-            {
-                return false;
-            }
-
-            if (_upgradePoints < rule.costPerUpgrade)
-            {
-                return false;
-            }
-
-            if (rule.maxUpgradeCount >= 0 && GetUpgradeLevel(statId) >= rule.maxUpgradeCount)
-            {
-                return false;
-            }
-
-            return true;
+            return _statService.CanUpgrade(statId, _progressionState.UpgradePoints);
         }
 
         /// <summary>Local execution returns true once the point debit is accepted. If a debit observer replaces the runtime,
@@ -1296,125 +1385,156 @@ namespace Neo.Rpg.Components
                 return false;
             }
 
-            RpgStatUpgradeRule rule = _upgradeRuleLookup[statId];
-            int generation = _runtimeGeneration;
-            _upgradePoints -= rule.costPerUpgrade;
-            UpgradePointsState.Value = _upgradePoints;
-            if (generation != _runtimeGeneration)
+            BeginPublication();
+            try
             {
+                _statService.TryGetUpgradeRule(statId, out RpgStatUpgradeRule rule);
+                int generation = _runtimeGeneration;
+                _progressionState.TrySpendUpgradePoints(rule.costPerUpgrade);
+                UpgradePointsState.Value = _progressionState.UpgradePoints;
+                if (generation != _runtimeGeneration)
+                {
+                    return true;
+                }
+
+                _statService.AddInvestment(statId);
+                RefreshAllDerived(false);
+                PushSnapshotIfServer();
                 return true;
             }
-
-            _upgradeInvestments.TryGetValue(statId, out int count);
-            _upgradeInvestments[statId] = count + 1;
-            if (_statRuntime.TryGetValue(statId, out RpgStatRuntime stat))
+            finally
             {
-                stat.UpgradeCount = _upgradeInvestments[statId];
+                EndPublication();
             }
-
-            RefreshAllDerived(false);
-            PushSnapshotIfServer();
-            return true;
         }
 
+        /// <summary>Upgrade points invested into a stat.</summary>
         public int GetUpgradeLevel(string statId)
         {
-            return _upgradeInvestments.TryGetValue(statId ?? string.Empty, out int v) ? v : 0;
+            return _statService.GetUpgradeLevel(statId);
         }
 
+        /// <summary>UnityEvent shortcut for <c>UpgradeStat("Strength")</c>.</summary>
         public void UpgradeStrength()
         {
             UpgradeStat(nameof(RpgStatPreset.Strength));
         }
 
+        /// <summary>UnityEvent shortcut for <c>UpgradeStat("Dexterity")</c>.</summary>
         public void UpgradeDexterity()
         {
             UpgradeStat(nameof(RpgStatPreset.Dexterity));
         }
 
+        /// <summary>UnityEvent shortcut for <c>UpgradeStat("Vitality")</c>.</summary>
         public void UpgradeVitality()
         {
             UpgradeStat(nameof(RpgStatPreset.Vitality));
         }
 
+        /// <summary>UnityEvent shortcut for <c>UpgradeStat("Intelligence")</c>.</summary>
         public void UpgradeIntelligence()
         {
             UpgradeStat(nameof(RpgStatPreset.Intelligence));
         }
 
+        /// <summary>UnityEvent shortcut for <c>UpgradeStat("Endurance")</c>.</summary>
         public void UpgradeEndurance()
         {
             UpgradeStat(nameof(RpgStatPreset.Endurance));
         }
 
+        /// <summary>UnityEvent shortcut for <c>Spend("Mana", amount)</c>.</summary>
         public void SpendMana(float amount)
         {
             Spend(RpgResourceId.Mana, amount);
         }
 
+        /// <summary>UnityEvent shortcut for <c>Refill("Mana", amount)</c>.</summary>
         public void RefillMana(float amount)
         {
             Refill(RpgResourceId.Mana, amount);
         }
 
+        /// <summary>UnityEvent shortcut for <c>Spend("Stamina", amount)</c>.</summary>
         public void SpendStamina(float amount)
         {
             Spend(RpgResourceId.Stamina, amount);
         }
 
+        /// <summary>UnityEvent shortcut for <c>Refill("Stamina", amount)</c>.</summary>
         public void RefillStamina(float amount)
         {
             Refill(RpgResourceId.Stamina, amount);
         }
 
+        /// <summary>UnityEvent shortcut for <c>Spend("Shield", amount)</c>.</summary>
         public void SpendShield(float amount)
         {
             Spend(RpgResourceId.Shield, amount);
         }
 
 
+        /// <summary>Reactive Current of a resource, or null. Replaced on rebuild; rebind on <see cref="RuntimeRebuilt" />.</summary>
         public ReactivePropertyFloat GetResourceCurrentState(string id)
         {
             return _resourceService.GetCurrentState(id);
         }
 
+        /// <summary>Reactive Max of a resource, or null. Replaced on rebuild.</summary>
         public ReactivePropertyFloat GetResourceMaxState(string id)
         {
             return _resourceService.GetMaxState(id);
         }
 
+        /// <summary>Reactive Current/Max (0-1) of a resource, or null. Replaced on rebuild.</summary>
         public ReactivePropertyFloat GetResourcePercentState(string id)
         {
             return _resourceService.GetPercentState(id);
         }
 
+        /// <summary>Reactive final value of a stat, or null. Replaced on rebuild.</summary>
         public ReactivePropertyFloat GetStatState(string id)
         {
-            return _statRuntime.TryGetValue(id ?? string.Empty, out RpgStatRuntime s) ? s.ValueState : null;
+            return _statService.GetState(id);
         }
 
+        /// <summary>Current value of a resource, or 0 for unknown ids.</summary>
         public float GetResource(string id)
         {
             return _resourceService.GetCurrent(id);
         }
 
+        /// <summary>Effective Max of a resource, or 0 for unknown ids.</summary>
         public float GetResourceMax(string id)
         {
             return _resourceService.GetMax(id);
         }
 
+        /// <summary>Current/Max clamped to 0-1, or 0 for unknown ids or zero Max.</summary>
         public float GetResourcePercent(string id)
         {
             return _resourceService.GetPercent(id);
         }
 
         public IReadOnlyDictionary<string, RpgResourceRuntime> Resources => _resourceService.Resources;
-        public IReadOnlyDictionary<string, RpgStatRuntime> Stats => _statRuntime;
+        public IReadOnlyDictionary<string, RpgStatRuntime> Stats => _statService.Stats;
 
-        /// <summary>Recalculates max values, regen rates, stat values, and pushes reactive properties.</summary>
+        /// <summary>
+        ///     Recalculates max values, regen rates, stat values, and pushes reactive properties. Publishes one
+        ///     network snapshot of the finished refresh instead of one per refreshed stat.
+        /// </summary>
         public void RefreshAllDerived(bool initial)
         {
-            RefreshAllDerivedCore(initial, null, _runtimeGeneration);
+            BeginPublication();
+            try
+            {
+                RefreshAllDerivedCore(initial, null, _runtimeGeneration);
+            }
+            finally
+            {
+                EndPublication();
+            }
         }
 
         private bool RefreshAllDerivedCore(bool initial,
@@ -1425,7 +1545,7 @@ namespace Neo.Rpg.Components
             _effects.BuildModifierApplications(_modifierBuffer);
 
             // WHY: refresh stats before resources — resource regen may scale off stat values.
-            foreach (KeyValuePair<string, RpgStatRuntime> kv in _statRuntime)
+            foreach (KeyValuePair<string, RpgStatRuntime> kv in _statService.StatTable)
             {
                 if (!RefreshStat(kv.Value, isCurrent))
                 {
@@ -1433,13 +1553,17 @@ namespace Neo.Rpg.Components
                 }
             }
 
-            _resourceService.RefreshDerived(
-                (RpgResourceRuntime resource) => restoreRows != null &&
-                    restoreRows.TryGetValue(resource.Id, out RpgResourceSaveEntry saved)
-                        ? saved.Max
-                        : RpgStatResolver.ResolveResourceMax(resource, _statRuntime, _upgradeRuleLookup, _modifierBuffer),
-                (RpgResourceRuntime resource) => RpgStatResolver.ResolveRegen(resource, _statRuntime,
-                    _modifierBuffer, _upgradeRuleLookup), initial, restoreRows, isCurrent);
+            IReadOnlyDictionary<string, RpgResourceSaveEntry> outerRestoreRows = _restoreRows;
+            _restoreRows = restoreRows;
+            try
+            {
+                _resourceService.RefreshDerived(_maxResolver ??= ResolveResourceMaxForRefresh,
+                    _regenResolver ??= ResolveResourceRegen, initial, restoreRows, isCurrent);
+            }
+            finally
+            {
+                _restoreRows = outerRestoreRows;
+            }
 
             if (!isCurrent())
             {
@@ -1450,8 +1574,21 @@ namespace Neo.Rpg.Components
             {
                 return false;
             }
-            LevelState.Value = _level;
+            LevelState.Value = _progressionState.Level;
             return isCurrent();
+        }
+
+        // WHY: restore-call-only maxima; the saved effective Max wins for this pass and regen never reads restore rows.
+        private float ResolveResourceMaxForRefresh(RpgResourceRuntime resource)
+        {
+            return _restoreRows != null && _restoreRows.TryGetValue(resource.Id, out RpgResourceSaveEntry saved)
+                ? saved.Max
+                : _statService.ResolveResourceMax(resource, _modifierBuffer);
+        }
+
+        private float ResolveResourceRegen(RpgResourceRuntime resource)
+        {
+            return _statService.ResolveRegen(resource, _modifierBuffer);
         }
 
         private void RefreshDerivedFromBuffs()
@@ -1461,7 +1598,7 @@ namespace Neo.Rpg.Components
 
         private bool RefreshStat(RpgStatRuntime s, Func<bool> isCurrent)
         {
-            float value = RpgStatResolver.ResolveStat(s, _appliedGrowthLevel, _modifierBuffer, _upgradeRuleLookup);
+            float value = _statService.ResolveStat(s, _progressionState.AppliedGrowthLevel, _modifierBuffer);
             s.SetCurrent(value, false);
             if (!isCurrent())
             {
@@ -1535,21 +1672,6 @@ namespace Neo.Rpg.Components
             Damage(amount);
         }
 
-        private bool HasBlockingStatus()
-        {
-            for (int i = 0; i < _effects.ActiveStatuses.Count; i++)
-            {
-                ActiveStatusEntry e = _effects.ActiveStatuses[i];
-                if (_effects.TryGetStatus(e.StatusId, out StatusEffectDefinition def) &&
-                    def != null && def.BlocksActions)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         private void HandleLevelProviderChanged(int newLevel)
         {
             SetLevel(newLevel);
@@ -1595,7 +1717,57 @@ namespace Neo.Rpg.Components
                 return;
             }
             _snapshotPending = false;
-            _networkAdapter?.NotifyStateChanged();
+            LiveNetworkAdapter?.NotifyStateChanged();
+        }
+
+        /// <summary>
+        ///     Defers network snapshot publication until the returned scope is disposed. Nested scopes (including the
+        ///     ones the character opens itself) publish one complete snapshot when the outermost scope ends, and only
+        ///     when something changed. Wrap several mutations made in one step (a server command, a scripted combo)
+        ///     so the adapter captures and serializes the final state once instead of after every mutation.
+        /// </summary>
+        /// <remarks>
+        ///     Only the transport publication is deferred: UnityEvents, reactive states and C# events still fire
+        ///     in place. Dispose each scope exactly once, preferably with <c>using</c>. Without a network adapter the
+        ///     scope only counts nesting.
+        /// </remarks>
+        /// <example>
+        ///     <code>
+        /// using (character.DeferSnapshotPublication())
+        /// {
+        ///     character.Damage(25f);
+        ///     character.AddXp(10f);
+        /// }
+        /// </code>
+        /// </example>
+        public SnapshotPublicationScope DeferSnapshotPublication()
+        {
+            BeginPublication();
+            return new SnapshotPublicationScope(this);
+        }
+
+        /// <summary>
+        ///     Scope returned by <see cref="DeferSnapshotPublication" />. Disposing it ends the deferral; a
+        ///     <c>default</c> instance does nothing.
+        /// </summary>
+        public readonly struct SnapshotPublicationScope : IDisposable
+        {
+            private readonly RpgCharacter _owner;
+
+            internal SnapshotPublicationScope(RpgCharacter owner)
+            {
+                _owner = owner;
+            }
+
+            /// <summary>Ends this deferral; the outermost one publishes the pending snapshot.</summary>
+            public void Dispose()
+            {
+                // WHY: reference check, not Unity's null: a destroyed owner must still unwind its depth counter.
+                if (!ReferenceEquals(_owner, null))
+                {
+                    _owner.EndPublication();
+                }
+            }
         }
 
         private void BeginPublication()
@@ -1605,6 +1777,12 @@ namespace Neo.Rpg.Components
 
         private void EndPublication()
         {
+            // WHY: a public scope disposed twice must not drive the depth negative and disable publication.
+            if (_publicationDepth <= 0)
+            {
+                return;
+            }
+
             _publicationDepth--;
             if (_publicationDepth == 0 && !_initializing && _initialized && _snapshotPending)
             {
@@ -1614,15 +1792,21 @@ namespace Neo.Rpg.Components
 
         private void ResolveNetworkAdapter()
         {
-            _networkAdapter = null;
-            MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
-            for (int i = 0; i < behaviours.Length; i++)
+            // WHY: TryGetComponent with the interface type allocates neither an array nor an editor fake-null.
+            _networkAdapter = TryGetComponent(out IRpgCharacterNetworkAdapter adapter) ? adapter : null;
+        }
+
+        /// <summary>The cached adapter, dropped once its component has been destroyed.</summary>
+        private IRpgCharacterNetworkAdapter LiveNetworkAdapter
+        {
+            get
             {
-                if (behaviours[i] is IRpgCharacterNetworkAdapter adapter)
+                if (_networkAdapter is UnityEngine.Object adapterObject && adapterObject == null)
                 {
-                    _networkAdapter = adapter;
-                    return;
+                    _networkAdapter = null;
                 }
+
+                return _networkAdapter;
             }
         }
 
@@ -1644,7 +1828,7 @@ namespace Neo.Rpg.Components
                 return false;
             }
 
-            if (_networkAdapter == null)
+            if (LiveNetworkAdapter == null)
             {
                 ResolveNetworkAdapter();
             }
@@ -1653,6 +1837,7 @@ namespace Neo.Rpg.Components
         }
 
 
+        /// <summary>Serializes <see cref="CaptureProfile" /> to the save provider under the configured key.</summary>
         public void SaveProfile()
         {
             if (string.IsNullOrWhiteSpace(_saveKey))
@@ -1672,9 +1857,9 @@ namespace Neo.Rpg.Components
             EnsureInitialized();
             RpgCharacterProfileData data = new()
             {
-                Level = _level,
-                Xp = _xp,
-                UpgradePoints = _upgradePoints,
+                Level = _progressionState.Level,
+                Xp = _progressionState.Xp,
+                UpgradePoints = _progressionState.UpgradePoints,
                 IsDead = _isDead,
                 InvulnerabilityLocks = _invulnerabilityLocks
             };
@@ -1687,20 +1872,13 @@ namespace Neo.Rpg.Components
                 });
             }
 
-            foreach (KeyValuePair<string, RpgStatRuntime> kv in _statRuntime)
-            {
-                data.Stats.Add(new RpgStatSaveEntry { Id = kv.Key, Base = kv.Value.BaseValue });
-            }
-
-            foreach (KeyValuePair<string, int> kv in _upgradeInvestments)
-            {
-                data.Upgrades.Add(new RpgUpgradeSaveEntry { StatId = kv.Key, Count = kv.Value });
-            }
+            _statService.CaptureTo(data.Stats, data.Upgrades);
 
             _effects.CopyActiveEffectsTo(data.ActiveBuffs, data.ActiveStatuses);
             return data;
         }
 
+        /// <summary>Loads and applies the profile stored under the configured key, then raises <see cref="OnProfileLoadedEvent" />.</summary>
         public void LoadProfile()
         {
             if (string.IsNullOrWhiteSpace(_saveKey) || !SaveProvider.HasKey(_saveKey))
@@ -1762,11 +1940,9 @@ namespace Neo.Rpg.Components
                 int generation = ++_runtimeGeneration;
                 _resourceService.InvalidateOperations();
                 data.Sanitize();
-                _level = data.Level;
-                // v2 has no applied-growth anchor. Deferred/manual profiles require an explicit apply after load.
-                _appliedGrowthLevel = UsesAutomaticGrowth() ? _level : 1;
-                _xp = data.Xp;
-                _upgradePoints = data.UpgradePoints;
+                _progressionState.Restore(data.Level, data.Xp, data.UpgradePoints);
+                // WHY: v2 has no applied-growth anchor. Deferred/manual profiles require an explicit apply after load.
+                SyncedProgression.ResetGrowthAnchor();
                 _isDead = data.IsDead;
                 _invulnerabilityLocks = data.InvulnerabilityLocks;
                 Dictionary<string, RpgResourceSaveEntry> restoreRows = new();
@@ -1777,38 +1953,20 @@ namespace Neo.Rpg.Components
                         restoreRows[resource.Id] = entry;
                     }
                 }
-                foreach (RpgStatSaveEntry entry in data.Stats)
-                {
-                    if (_statRuntime.TryGetValue(entry.Id, out RpgStatRuntime stat))
-                    {
-                        stat.BaseValue = entry.Base;
-                    }
-                }
-                _upgradeInvestments.Clear();
-                foreach (RpgStatRuntime stat in _statRuntime.Values)
-                {
-                    stat.UpgradeCount = 0;
-                }
-                foreach (RpgUpgradeSaveEntry entry in data.Upgrades)
-                {
-                    _upgradeInvestments[entry.StatId] = entry.Count;
-                    if (_statRuntime.TryGetValue(entry.StatId, out RpgStatRuntime stat))
-                    {
-                        stat.UpgradeCount = entry.Count;
-                    }
-                }
+                _statService.RestoreBases(data.Stats);
+                _statService.RestoreInvestments(data.Upgrades);
                 _effects.RestoreActiveEffects(data.ActiveBuffs, data.ActiveStatuses);
-                // Restore-call-only maxima: never copy effective Max into BaseMax or retain the lookup in regen.
+                // WHY: restore-call-only maxima; never copy effective Max into BaseMax or retain the lookup in regen.
                 if (!RefreshAllDerivedCore(false, restoreRows, generation))
                 {
                     return false;
                 }
-                XpState.Value = _xp;
+                XpState.Value = _progressionState.Xp;
                 if (generation != _runtimeGeneration)
                 {
                     return false;
                 }
-                UpgradePointsState.Value = _upgradePoints;
+                UpgradePointsState.Value = _progressionState.UpgradePoints;
                 if (generation != _runtimeGeneration)
                 {
                     return false;
@@ -1828,6 +1986,7 @@ namespace Neo.Rpg.Components
             }
         }
 
+        /// <summary>Deletes the stored profile key; the live state is unchanged.</summary>
         public void ResetProfile()
         {
             if (string.IsNullOrWhiteSpace(_saveKey))
@@ -1839,48 +1998,57 @@ namespace Neo.Rpg.Components
             SaveProvider.Save();
         }
 
-        // Compatibility wrappers retained on the local facade. The Mirror transport itself is supplied
+        // WHY: compatibility wrappers retained on the local facade. The Mirror transport itself is supplied
         // by IRpgCharacterNetworkAdapter; without an adapter these remain ordinary local calls.
+        /// <summary>Compatibility alias of <see cref="Damage" /> (routes through the network adapter when networked).</summary>
         public void NetDamage(float amount)
         {
             Damage(amount);
         }
 
+        /// <summary>Compatibility alias of <see cref="DamageType" />.</summary>
         public void NetDamageType(string damageType, float amount)
         {
             DamageType(damageType, amount);
         }
 
+        /// <summary>Compatibility alias of <see cref="Heal" />.</summary>
         public void NetHeal(float amount)
         {
             Heal(amount);
         }
 
+        /// <summary>Compatibility alias of <see cref="Spend" />.</summary>
         public void NetSpend(string resourceId, float amount)
         {
             Spend(resourceId, amount);
         }
 
+        /// <summary>Compatibility alias of <see cref="Refill" />.</summary>
         public void NetRefill(string resourceId, float amount)
         {
             Refill(resourceId, amount);
         }
 
+        /// <summary>Compatibility alias of <see cref="ApplyBuffById" />.</summary>
         public void NetApplyBuffById(string id)
         {
             ApplyBuffById(id);
         }
 
+        /// <summary>Compatibility alias of <see cref="ApplyInlineBuff" />.</summary>
         public void NetApplyInlineBuff(int index)
         {
             ApplyInlineBuff(index);
         }
 
+        /// <summary>Compatibility alias of <see cref="ApplyStatusById" />.</summary>
         public void NetApplyStatusById(string id)
         {
             ApplyStatusById(id);
         }
 
+        /// <summary>Compatibility alias of <see cref="AddLevel" />.</summary>
         public void NetAddLevel(int delta)
         {
             AddLevel(delta);

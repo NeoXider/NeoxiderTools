@@ -144,6 +144,32 @@ namespace Neo.UI
     /// </summary>
     public static class UIMeshRigMotionPresets
     {
+        private static readonly UIMeshRigMotionProfile[] SharedProfiles = new UIMeshRigMotionProfile[10];
+
+        /// <summary>
+        ///     Read-only profile for <paramref name="preset" />, created once and shared. Per-frame evaluation
+        ///     (the UI Toolkit element) uses it instead of rebuilding five curves per point every frame; never
+        ///     modify the returned profile, use <see cref="Create" /> for an editable copy.
+        /// </summary>
+        internal static UIMeshRigMotionProfile GetShared(UIMeshRigMotionPreset preset)
+        {
+            int index = (int)preset;
+            if (index < 0 || index >= SharedProfiles.Length)
+            {
+                return Create(preset);
+            }
+
+            UIMeshRigMotionProfile profile = SharedProfiles[index];
+            if (profile == null)
+            {
+                profile = Create(preset);
+                SharedProfiles[index] = profile;
+            }
+
+            return profile;
+        }
+
+        /// <summary>Creates a new editable profile with the preset's curves and amplitudes.</summary>
         public static UIMeshRigMotionProfile Create(UIMeshRigMotionPreset preset)
         {
             UIMeshRigMotionProfile profile = new UIMeshRigMotionProfile();

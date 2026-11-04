@@ -9,6 +9,12 @@ namespace Neo.Abilities
 
         public XorShiftRandom(uint seed)
         {
+            Reseed(seed);
+        }
+
+        /// <summary>Restarts the sequence exactly as a new instance built with <paramref name="seed" /> would.</summary>
+        public void Reseed(uint seed)
+        {
             _state = seed == 0 ? 2463534242u : seed;
         }
 

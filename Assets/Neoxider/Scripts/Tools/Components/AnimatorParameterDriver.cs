@@ -25,7 +25,21 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Int parameter name for SetInt(int).")]
         private string intParameterName;
 
+        // WHY: the field-name methods are often wired to per-frame events (speed, aim); hash each name once
+        // instead of hashing the string on every Animator call.
+        private CachedParameter _triggerHash;
+        private CachedParameter _boolHash;
+        private CachedParameter _floatHash;
+        private CachedParameter _intHash;
+
         private Animator Anim => animator != null ? animator : animator = GetComponent<Animator>();
+
+        /// <summary>Target Animator (falls back to the Animator on this GameObject).</summary>
+        public Animator Animator
+        {
+            get => Anim;
+            set => animator = value;
+        }
 
         private void Reset()
         {
@@ -35,7 +49,11 @@ namespace Neo.Tools
         /// <summary>Fires the trigger from the Trigger Parameter Name field.</summary>
         public void SetTrigger()
         {
-            SetTrigger(triggerParameterName);
+            Animator target = Anim;
+            if (target != null && _triggerHash.TryGet(triggerParameterName, out int hash))
+            {
+                target.SetTrigger(hash);
+            }
         }
 
         /// <summary>Fires the trigger by name.</summary>
@@ -53,7 +71,11 @@ namespace Neo.Tools
         /// <summary>Sets bool parameter from the Bool Parameter Name field.</summary>
         public void SetBool(bool value)
         {
-            SetBool(boolParameterName, value);
+            Animator target = Anim;
+            if (target != null && _boolHash.TryGet(boolParameterName, out int hash))
+            {
+                target.SetBool(hash, value);
+            }
         }
 
         /// <summary>Sets a bool parameter by name.</summary>
@@ -82,7 +104,11 @@ namespace Neo.Tools
         /// <summary>Sets float parameter from the Float Parameter Name field.</summary>
         public void SetFloat(float value)
         {
-            SetFloat(floatParameterName, value);
+            Animator target = Anim;
+            if (target != null && _floatHash.TryGet(floatParameterName, out int hash))
+            {
+                target.SetFloat(hash, value);
+            }
         }
 
         /// <summary>Sets a float parameter by name.</summary>
@@ -99,7 +125,11 @@ namespace Neo.Tools
         /// <summary>Sets int parameter from the Int Parameter Name field.</summary>
         public void SetInt(int value)
         {
-            SetInt(intParameterName, value);
+            Animator target = Anim;
+            if (target != null && _intHash.TryGet(intParameterName, out int hash))
+            {
+                target.SetInteger(hash, value);
+            }
         }
 
         /// <summary>Sets an int parameter by name.</summary>
@@ -111,6 +141,31 @@ namespace Neo.Tools
             }
 
             Anim.SetInteger(parameterName, value);
+        }
+
+        /// <summary>Parameter-name hash cache that follows the serialized name (Inspector edits, renames).</summary>
+        private struct CachedParameter
+        {
+            private string _name;
+            private int _hash;
+
+            public bool TryGet(string name, out int hash)
+            {
+                if (string.IsNullOrEmpty(name))
+                {
+                    hash = 0;
+                    return false;
+                }
+
+                if (!ReferenceEquals(name, _name))
+                {
+                    _name = name;
+                    _hash = Animator.StringToHash(name);
+                }
+
+                hash = _hash;
+                return true;
+            }
         }
     }
 }

@@ -8,6 +8,36 @@ namespace Neo.Animations
     /// </summary>
     public static class AnimationUtils
     {
+        /// <summary>Smallest change (color or vector distance) that the value animators report as a change.</summary>
+        public const float ChangeThreshold = 0.001f;
+
+        /// <summary><see cref="ChangeThreshold" /> squared, for comparisons without a square root.</summary>
+        public const float ChangeThresholdSquared = ChangeThreshold * ChangeThreshold;
+
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+
+        /// <summary>Shader property id of <c>_EmissionColor</c>, the property written by the emission helpers.</summary>
+        public static int EmissionColorPropertyId => EmissionColorId;
+
+        /// <summary>
+        ///     Clock step accepted by the animators: negative, NaN and infinite deltas become zero so one bad frame
+        ///     cannot run the clock backwards or poison it.
+        /// </summary>
+        public static float SanitizeDeltaTime(float deltaTime)
+        {
+            return deltaTime > 0f && deltaTime < float.PositiveInfinity ? deltaTime : 0f;
+        }
+
+        /// <summary>Squared RGBA distance between two colors.</summary>
+        public static float ColorDistanceSquared(Color a, Color b)
+        {
+            float r = a.r - b.r;
+            float g = a.g - b.g;
+            float bl = a.b - b.b;
+            float alpha = a.a - b.a;
+            return r * r + g * g + bl * bl + alpha * alpha;
+        }
+
         /// <summary>Gets a Perlin noise value for animation.</summary>
         /// <param name="animationTime">Current animation time.</param>
         /// <param name="speed">Animation speed.</param>
@@ -165,15 +195,49 @@ namespace Neo.Animations
             Color targetColor,
             float colorBlendFactor)
         {
-            Color emission = originalEmission;
-            if (changeColor)
-            {
-                emission = Color.Lerp(originalEmission, targetColor, colorBlendFactor);
-            }
+            mat.SetColor(EmissionColorId,
+                EvaluateEmission(targetIntensity, originalEmission, changeColor, targetColor, colorBlendFactor));
+        }
 
-            Color final = emission * targetIntensity;
+        /// <summary>
+        ///     Writes the animated emission through a <see cref="MaterialPropertyBlock" />, so the renderer keeps its
+        ///     shared material instead of getting a per-object copy. The block is reused by the caller; other
+        ///     properties already set on the renderer's block are preserved.
+        /// </summary>
+        /// <param name="renderer">Renderer whose <c>_EmissionColor</c> is overridden.</param>
+        /// <param name="block">Caller-owned, reused property block (allocate it once, not per frame).</param>
+        /// <param name="targetIntensity">Target intensity.</param>
+        /// <param name="originalEmission">Original emission color.</param>
+        /// <param name="changeColor">Whether to change color.</param>
+        /// <param name="targetColor">Target color.</param>
+        /// <param name="colorBlendFactor">Color blend factor.</param>
+        public static void ApplyToRenderer(
+            Renderer renderer,
+            MaterialPropertyBlock block,
+            float targetIntensity,
+            Color originalEmission,
+            bool changeColor,
+            Color targetColor,
+            float colorBlendFactor)
+        {
+            renderer.GetPropertyBlock(block);
+            block.SetColor(EmissionColorId,
+                EvaluateEmission(targetIntensity, originalEmission, changeColor, targetColor, colorBlendFactor));
+            renderer.SetPropertyBlock(block);
+        }
 
-            mat.SetColor("_EmissionColor", final);
+        /// <summary>Pure emission math shared by the emission helpers: the (optionally blended) color x intensity.</summary>
+        public static Color EvaluateEmission(
+            float targetIntensity,
+            Color originalEmission,
+            bool changeColor,
+            Color targetColor,
+            float colorBlendFactor)
+        {
+            Color emission = changeColor
+                ? Color.Lerp(originalEmission, targetColor, colorBlendFactor)
+                : originalEmission;
+            return emission * targetIntensity;
         }
 
         /// <summary>Gets an animated float value.</summary>

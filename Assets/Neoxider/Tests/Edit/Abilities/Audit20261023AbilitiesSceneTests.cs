@@ -117,7 +117,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             GameObject sourceObject = rig.Own(new GameObject(name));
             LevelComponent source = sourceObject.AddComponent<LevelComponent>();
-            // Keep the regression independent of the user's saved level profile.
+            // WHY: Keep the regression independent of the user's saved level profile.
             typeof(LevelComponent).GetField("_loadOnAwake", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(source, false);
             typeof(LevelComponent).GetField("_autoSave", BindingFlags.Instance | BindingFlags.NonPublic)

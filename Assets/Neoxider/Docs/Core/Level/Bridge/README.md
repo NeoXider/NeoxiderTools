@@ -1,6 +1,12 @@
 # Level bridges
 
-Optional scene adapters for level and XP operations. This is the entry point for `Neo.Core.Level.Bridge`; the namespace is `Neo.Core.Level`.
+**What it is:** Optional scene adapters for level and XP operations. This is the entry point for `Neo.Core.Level.Bridge`; the namespace is `Neo.Core.Level`. Scripts live in `Scripts/Core/Level/Bridge/`.
+
+**Contents:** the task table below.
+
+**Navigation:** [← Core](../../README.md)
+
+---
 
 | Task | Entry point |
 |------|-------------|

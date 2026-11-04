@@ -27,7 +27,7 @@ namespace Neo.Samples.Survivor
 
         private static Sprite BuildDisc(int size, float _)
         {
-            var tex = NewTex(size);
+            Texture2D tex = NewTex(size);
             float r = size * 0.5f;
             float rc = r - 1.5f;
             for (int y = 0; y < size; y++)
@@ -45,7 +45,7 @@ namespace Neo.Samples.Survivor
 
         private static Sprite BuildRing(int size, float thickness)
         {
-            var tex = NewTex(size);
+            Texture2D tex = NewTex(size);
             float r = size * 0.5f;
             float outer = r - 1.5f;
             float inner = outer * (1f - thickness * 2f);
@@ -64,7 +64,7 @@ namespace Neo.Samples.Survivor
 
         private static Sprite BuildGlow(int size)
         {
-            var tex = NewTex(size);
+            Texture2D tex = NewTex(size);
             float r = size * 0.5f;
             for (int y = 0; y < size; y++)
             {
@@ -82,7 +82,7 @@ namespace Neo.Samples.Survivor
 
         private static Sprite BuildRounded(int size, int radius)
         {
-            var tex = NewTex(size);
+            Texture2D tex = NewTex(size);
             for (int y = 0; y < size; y++)
             {
                 for (int x = 0; x < size; x++)
@@ -93,7 +93,7 @@ namespace Neo.Samples.Survivor
             }
 
             tex.Apply();
-            var border = new Vector4(radius, radius, radius, radius);
+            Vector4 border = new Vector4(radius, radius, radius, radius);
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0,
                 SpriteMeshType.FullRect, border);
         }

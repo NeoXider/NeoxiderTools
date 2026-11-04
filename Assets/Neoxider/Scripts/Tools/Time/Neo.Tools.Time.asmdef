@@ -5,7 +5,8 @@
         "Neo.PropertyAttribute",
         "UniTask",
         "Neo.Save",
-        "Neo.Extensions"
+        "Neo.Extensions",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
     ],

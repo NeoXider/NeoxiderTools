@@ -4,6 +4,8 @@
 
 **How to use:** follow the steps below: component in the scene → component settings → creating StateMachineData → states and transitions.
 
+**Demo:** `Scenes/StateMachine/StateMachineDemo.unity` (Demo sample) contains a complete example of this setup. Select `[Demo] World/Guard`: its `StateMachineBehaviourBase` plays `Data/StateMachine/Guard StateMachine.asset` (states `Guard Sleep` / `Guard Alert`). Context Overrides hold the Noise toggle (Override1), `Sleep Look` (Override2) and `Alert Look` (Override3); the transitions read the toggle with a `ConditionEntryPredicate` (`Toggle.isOn`) plus a `StateDurationPredicate`, and the states switch their look with `SetContextGameObjectActiveAction`. The **Force Alert** button calls `ChangeState(StateData)` directly through a persistent UnityEvent.
+
 ---
 **Important:** a ScriptableObject cannot store references to scene objects — so the SO only configures logic (states, transitions, which property to check), while **which GameObject to read** is set on the component in the scene (the **Context for conditions** section).
 
@@ -25,7 +27,7 @@ The same rule applies to actions (`StateAction`): the SO stores only the action 
 - **Context for conditions** — array of scene GameObjects for transition conditions. Element 0 = slot Override1, element 1 = Override2, … (up to 5). Scene references are set **only here**, not in the SO.
 - `Auto Evaluate Transitions` — automatic transition evaluation every frame.
 - `Show State In Insp` — display the current state in the inspector.
-- `Enable Debug Log` — transition logging.
+- `Enable Debug Log` — this component's logs: state changes, its machine's warnings and the `LogStateAction` output of the states it runs. Each component decides for its own machine.
 - `Exit Current State On Disable` — when the component is disabled, call `OnExit` of the current state and clear the current state.
 - `Reload Data On Enable` — reload `StateMachineData` when the component is re-enabled.
 
@@ -64,7 +66,7 @@ Select the `StateMachineData` asset and configure:
 
 ### 3.2 Initial State (`Initial State`)
 
-- Set the starting `StateData`.
+- Set the starting `StateData`. The component enters this exact asset on load; still give every state a unique **State Name**, because `ChangeState(string)` and the legacy **Initial State Name** pick the first state with a matching name.
 
 ### 3.3 Transitions (`Transitions`)
 
@@ -76,6 +78,8 @@ Select the `StateMachineData` asset and configure:
   - `Priority`
   - `Is Enabled`
 - Click `Edit Conditions` to configure the conditions.
+
+Each frame the machine evaluates only the transitions whose `From State` is the active state, highest `Priority` first (equal priorities keep their order in the list). The component's `On Transition Evaluated` event therefore reports only those, and the cost per frame does not grow with the total number of transitions in the asset. Changing `From State` or `Priority` in the Inspector during Play Mode applies on the next evaluation.
 
 ---
 

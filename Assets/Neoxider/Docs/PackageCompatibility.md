@@ -1,6 +1,10 @@
 # Package Compatibility
 
-Compatibility notes for the package metadata, the local Unity project, and optional dependencies.
+**What it is:** compatibility notes for the package metadata, the local Unity project, and optional dependencies, with the recorded verification scope.
+
+**How to use:** check the [Unity](#unity) minimum and the [package dependencies](#package-dependencies) before installing; read [version-sensitive integration](#version-sensitive-integration) before moving a project to another Unity version.
+
+**12.0.0 (next release):** the HTML/CSS → UI Toolkit converter left the package, and its assemblies are no longer compiled here; the Unity minimum and the UPM dependencies are unchanged. No release verification of the 12.0.0 source is recorded yet; the tables below describe 11.0.0. See [Upgrading to 12](./Migration12.md).
 
 Updated for **11.0.0**, 2026-10-27. Windows verification recorded on **26–27 October 2026** covers Unity `6000.3.14f1` and `6000.6.0f1`, including accepted CardGame sizing/gameplay checks and three manual OS-click rounds. Results belong to their tested inputs and qualified unchanged graphs; see [recorded verification and limits](../Verification11.md) and [Migration to 11](./Migration11.md). The tag and release assets identify the published version.
 
@@ -8,7 +12,7 @@ Updated for **11.0.0**, 2026-10-27. Windows verification recorded on **26–27 O
 
 | Source | Version |
 |--------|---------|
-| `Assets/Neoxider/package.json` | `version: 11.0.1`, `unity: 6000.0` |
+| `Assets/Neoxider/package.json` | `version: 12.0.0`, `unity: 6000.0` |
 | Local project `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
 The UPM minimum was raised from `2022.1` to `6000.0` (Unity 6) starting with `9.8.0` — the package is now developed and validated against Unity 6 only. Projects on Unity 2022 LTS should stay on the last `9.7.x` release.
@@ -22,18 +26,17 @@ The UPM minimum was raised from `2022.1` to `6000.0` (Unity 6) starting with `9.
 | Additional dependency/input profiles | Per SDK: GUI **39**, Mirror-absent **6**, NewOnly **17 Edit / 93 Play**, including one actual pointer case. |
 | Current UPM consumer, DOTween Pro absent | Per SDK: fresh P31 public UPM imports of all **three** samples and **20/20 Play**; P30 **28/28 Edit** qualified by unchanged graph identity. |
 | Focused Cards/sample acceptance | Per SDK: P27 Cards **149/149 Edit**, P29 Cards + Samples **46/46 Play**, P31 `SampleRuntimeSceneSmokeTests` **10/10**. The P31 scene click requires exactly one round through the actual EventSystem top-graphic raycast and `ExecuteHierarchy`. |
-| Current HtmlToUitk acceptance | Fresh CLI **2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**, Round3 complete Unity assembly **370/370,0 skipped per SDK**; real CLI/native import/Play UI plus Unity 6.3 OS manual at1280×720. [Exact scope](UI/HtmlToUitkVerification11.md). |
 | Windows player networking | P23 genuine **three-process Windows player** matrix passed for its recorded network inputs. |
 | Current sample/UI acceptance | Eleven scenes examined manually; CardGame completed three OS-click rounds with tutorial advancement. Piles at scale **0.7** fit Free Aspect and 16:9. Audio UI checks do not establish audible output; OS-level Dice dragging remains inconclusive. |
 
-These groups overlap: do not add them together or describe qualified coverage as one fresh all-pass run. The [verification record](../Verification11.md) identifies source inputs, actual runs and qualification of unchanged inputs. A successful run verifies that Editor/profile and scope, not every Unity 6 minor, mobile target, IL2CPP build or device. The declared `6000.0` minimum is not a claim that every version above it was tested. The dated HTML → UITK report below remains historical module evidence.
+These groups overlap: do not add them together or describe qualified coverage as one fresh all-pass run. The [verification record](../Verification11.md) identifies source inputs, actual runs and qualification of unchanged inputs. A successful run verifies that Editor/profile and scope, not every Unity 6 minor, mobile target, IL2CPP build or device. The declared `6000.0` minimum is not a claim that every version above it was tested.
 
 ### Version-sensitive integration
 
 Legacy release archives are choose-one **Core** (`NeoxiderTools.Core.v11.0.0.unitypackage`, no samples)
 or **Complete** (`NeoxiderTools.v11.0.0.unitypackage`, all three visible Samples trees). UPM source remains
-Samples~. The converter is a separate `HtmlToUitk.Cli.v11.0.0.zip`, net9 target/LatestMajor on tested.NET 10;
-SDK 10.0.301 supports source builds. Final archive export/import is a separate release gate. The hosted
+Samples~. The 11.0.0 release also shipped the converter CLI as `HtmlToUitk.Cli.v11.0.0.zip`; the converter now
+lives in the separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package. Final archive export/import is a separate release gate. The hosted
 package check passed for 11.0.0; hosted Unity jobs did not run because GameCI secrets were unavailable.
 GitHub Actions workflows were subsequently removed. Local native receipts remain separate evidence.
 
@@ -42,7 +45,7 @@ Keep compatibility switches in shared helpers and verify each conditional branch
 | Area | Current integration | Verification needed when changing Unity version |
 |------|---------------------|------------------------------------------------|
 | Object identity | Runtime code uses `NeoDiagnostics.StableId(Object)`; editor diagnostics use `NeoComponentHealth.StableId`. The helpers select `GetInstanceID` for Unity 6.0–6.4 and `GetEntityId` for 6.5+. Missing-reference property checks are centralized in the editor helper as well. | Compile on both sides of the version switch; do not duplicate version-specific calls at usage sites. |
-| UI Toolkit | The package uses UI Toolkit in editors and in the [HTML → UITK runtime/editor module](./UI/HtmlToUitk.md). Its external CLI generates UXML/USS; runtime behavior includes controls, actions, and lifecycle. | Compile the editor and exercise generated UI in the intended player target. The [HTML → UITK verification report](https://github.com/NeoXider/NeoxiderTools/blob/main/Docs/Plans/HtmlToUitk-Verification-20261014.md) records a dated module test slice, not package-wide or mobile certification. |
+| UI Toolkit | The package uses UI Toolkit in editor windows and inspectors. The HTML/CSS → UI Toolkit converter moved to the separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package. | Compile the editor assemblies and open the affected windows in the target Unity version. |
 | Optional integrations | Assembly version defines currently cover Mirror, DOTween, the mobile haptics backend, and Unity. The optional Input System adapter uses reflection. | Check the relevant assemblies with each optional dependency present and absent; a fallback path does not validate the enabled branch. |
 | Enter Play Mode Options | Static caches, registries, and events use module-specific reset hooks such as `SubsystemRegistration`. | Exercise repeated enter/exit with domain reload disabled for the modules used by the host project. See each module's lifecycle notes. |
 
@@ -60,6 +63,7 @@ Keep compatibility switches in shared helpers and verify each conditional branch
 | Mirror | Optional; required by `Neo.Network` multiplayer flows. |
 | MobileHapticFeedback | Optional backend for the [Haptics](./Haptics/Haptics.md) module; richer device feedback requires installing it separately. |
 | Character Movement Fundamentals | Bundled runtime/editor dependency under `ThirdParty/CharacterMovementFundamentals`; demo content is the optional **Character Movement Fundamentals** sample. |
+| `com.neoxider.htmltouitk` | Optional separate package for HTML/CSS → UI Toolkit conversion ([HtmlToUitk](https://github.com/NeoXider/HtmlToUitk)); no NeoxiderTools assembly references it. |
 | URP | Optional; project/render-pipeline dependent. |
 
 See the [declared dependency baseline](./Dependencies.md#declared-dependency-baseline) for host pins, SDK-resolved versions and upgrade constraints, and [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) for usage and license pointers.

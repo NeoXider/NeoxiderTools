@@ -113,7 +113,7 @@ namespace Neo.Tests.Play
             root.SetActive(false);
 
             ShopBehaviour shop = root.AddComponent<ShopBehaviour>();
-            var shopItems = new ShopItemBehaviour[datas.Length];
+            ShopItemBehaviour[] shopItems = new ShopItemBehaviour[datas.Length];
             for (int i = 0; i < datas.Length; i++)
             {
                 GameObject child = new($"Item_{i}");

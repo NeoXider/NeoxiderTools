@@ -80,6 +80,11 @@ namespace Neo.Condition
         [Tooltip("Check interval in seconds (for Interval mode).")] [SerializeField]
         private float _checkInterval = 0.2f;
 
+        [Tooltip(
+            "Interval mode counts real time instead of game time, so checks continue while Time.timeScale is 0 (pause menus). EveryFrame mode always uses unscaled time and keeps checking while paused.")]
+        [SerializeField]
+        private bool _useUnscaledTime;
+
         [Tooltip("Check once on start.")] [SerializeField]
         private bool _checkOnStart = true;
 
@@ -131,6 +136,28 @@ namespace Neo.Condition
             set
             {
                 _checkInterval = Mathf.Max(0.01f, value);
+                if (_checkMode == CheckMode.Interval)
+                {
+                    RestartCheckMode();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     When true, Interval mode waits in real time (<see cref="WaitForSecondsRealtime"/>) and keeps checking
+        ///     while <see cref="Time.timeScale"/> is 0. Setting it restarts the interval loop.
+        /// </summary>
+        public bool UseUnscaledTime
+        {
+            get => _useUnscaledTime;
+            set
+            {
+                if (_useUnscaledTime == value)
+                {
+                    return;
+                }
+
+                _useUnscaledTime = value;
                 if (_checkMode == CheckMode.Interval)
                 {
                     RestartCheckMode();
@@ -190,13 +217,15 @@ namespace Neo.Condition
         {
             if (_checkMode == CheckMode.EveryFrame)
             {
-                // WHY: throttle EveryFrame to avoid per-frame reflection overhead (min ~60hz)
-                if (Time.time < _nextEveryFrameCheck)
+                // WHY: throttle EveryFrame to avoid per-frame reflection overhead (min ~60hz). Unscaled time: with
+                // scaled Time.time the gate never reopened while Time.timeScale was 0, freezing pause-menu conditions.
+                float now = Time.unscaledTime;
+                if (now < _nextEveryFrameCheck)
                 {
                     return;
                 }
 
-                _nextEveryFrameCheck = Time.time + 0.016f;
+                _nextEveryFrameCheck = now + 0.016f;
                 Check();
             }
         }
@@ -216,7 +245,7 @@ namespace Neo.Condition
         public void Check()
         {
 #if MIRROR
-            // The server may have changed even when the client's local value has not.
+            // WHY: the server may have changed even when the client's local value has not.
             if (ShouldDispatchToServer() && _authority == ConditionAuthority.ServerRevalidate)
             {
                 CmdRequestCheck();
@@ -476,7 +505,8 @@ namespace Neo.Condition
 
         private IEnumerator IntervalCheck()
         {
-            WaitForSeconds wait = new(Mathf.Max(_checkInterval, 0.01f));
+            float interval = Mathf.Max(_checkInterval, 0.01f);
+            object wait = _useUnscaledTime ? new WaitForSecondsRealtime(interval) : new WaitForSeconds(interval);
             while (true)
             {
                 yield return wait;

@@ -58,7 +58,7 @@ namespace Neo.Tools
         public void Despawn()
         {
             GameObject go = gameObject;
-            PooledObjectInfo info = go.GetComponent<PooledObjectInfo>();
+            go.TryGetComponent(out PooledObjectInfo info);
             int generation = info != null ? info.SpawnGeneration : 0;
             if ((_isDespawning && _despawnGeneration == generation) || (info != null && info.IsInPool))
             {
@@ -84,7 +84,7 @@ namespace Neo.Tools
 
             if (info != null && info.OwnerPool != null)
             {
-                // A listener may return and reissue the same instance during OnDespawn.
+                // WHY: A listener may return and reissue the same instance during OnDespawn.
                 if (info.SpawnGeneration == generation && !info.IsInPool)
                 {
                     info.Return();

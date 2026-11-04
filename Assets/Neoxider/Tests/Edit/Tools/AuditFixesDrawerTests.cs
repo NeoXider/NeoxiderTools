@@ -105,7 +105,7 @@ namespace Neo.Editor.Tests
 
         private LineRenderer GetCurrentLine()
         {
-            var line = (LineRenderer)GetCurrentLineField().GetValue(_drawer);
+            LineRenderer line = (LineRenderer)GetCurrentLineField().GetValue(_drawer);
             Assert.IsFalse(line == null, "Drawer must hold a current LineRenderer");
             return line;
         }

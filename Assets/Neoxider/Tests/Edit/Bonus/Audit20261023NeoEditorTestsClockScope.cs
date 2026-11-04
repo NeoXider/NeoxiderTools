@@ -18,7 +18,7 @@ namespace Neo.Editor.Tests
 
         public Audit20261023NeoEditorTestsClockScope()
         {
-            // Do not read NeoTrustedTime.Clock: its getter restores and mutates the state being borrowed.
+            // WHY: do not read NeoTrustedTime.Clock: its getter restores and mutates the state being borrowed.
             _previousClock = ClockField.GetValue(null);
             _previousRestored = RestoredField.GetValue(null);
             _previousHighWater = HighWaterField.GetValue(null);

@@ -54,19 +54,20 @@ Save/reopen button wiring and two-peer Ready/scene transition still require actu
 
 | Field | Type | Description |
 |------|-----|----------|
-| `_autoAdvertiseOnHost` | `bool` | Automatically start advertising when hosting (default true) |
-| `_autoDiscoverOnClient` | `bool` | Automatically search for servers (default true) |
+| `_autoAdvertiseOnHost` | `bool` | Start advertising once per server/host session start, with any network manager (default true) |
+| `_autoDiscoverOnClient` | `bool` | Search for servers while no session runs (default true); any session start stops Mirror's repeating search once and keeps the list |
 | `_refreshInterval` | `float` | Server-list refresh interval (seconds) |
 
 ### Methods
 
 | Method | Returns | Description |
 |-------|---------|----------|
-| `StartAdvertising()` | `void` | Start advertising the server on the LAN. Call after `StartHost()`. |
-| `StartDiscovery()` | `void` | Start searching for servers. |
-| `StopDiscovery()` | `void` | Stop searching. |
+| `StartAdvertising()` | `void` | Start advertising the server on the LAN. Automatic with `_autoAdvertiseOnHost`; repeated calls while advertising do nothing. |
+| `StartDiscovery()` | `void` | Start searching for servers (stops advertising). |
+| `StopDiscovery()` | `void` | Stop searching and advertising. |
 | `ConnectToServer(string)` | `void` | Connect to a server at the given address. |
 | `ConnectToFirstServer()` | `void` | Connect to the first server found. |
+| `QuickPlay()` / `CancelQuickPlay()` | `void` | Join the first server found or host after a timeout. |
 
 ### Events
 
@@ -83,6 +84,8 @@ Save/reopen button wiring and two-peer Ready/scene transition still require actu
 |----------|-----|----------|
 | `ServerCount` | `int` | Number of servers found |
 | `DiscoveredServers` | `IReadOnlyDictionary` | Dictionary of discovered servers |
+| `IsAdvertising` | `bool` | This machine currently answers LAN discovery requests |
+| `AutoAdvertiseOnHost`, `AutoDiscoverOnClient` | `bool` | Runtime access to the two toggles |
 
 ---
 
@@ -151,7 +154,8 @@ Save/reopen button wiring and two-peer Ready/scene transition still require actu
 |----------|-----|----------|
 | `IsLocal` | `bool` | Is this the local player? |
 | `IsReady` | `bool` | Is this player ready? |
-| `ConnectionId` | `int` | Connection ID |
+| `PlayerId` | `int` | Session-unique player id, identical on every peer. It is the object's `netId`, not the server-side connection id (clients never know other players' connection ids). |
+| `ConnectionId` | `int` | Obsolete since 12.0.0: the old name of `PlayerId` (same value). |
 
 ---
 

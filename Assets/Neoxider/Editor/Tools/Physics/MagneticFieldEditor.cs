@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Neo.Tools;
 using UnityEditor;
 using UnityEngine;
@@ -8,15 +9,49 @@ namespace Neo.Editor.Tools.Physics
     [CanEditMultipleObjects]
     public sealed class MagneticFieldEditor : CustomEditorBase
     {
+        // WHY: OnSceneGUI runs for every Scene view event and, with several fields selected, once per target.
+        // The shared serializedObject spans all targets, so each target keeps its own SerializedObject here
+        // instead of a new one being built on every event.
+        private readonly Dictionary<Object, SerializedObject> _sceneObjects = new();
+
+        protected override void OnDisable()
+        {
+            foreach (SerializedObject sceneObject in _sceneObjects.Values)
+            {
+                sceneObject?.Dispose();
+            }
+
+            _sceneObjects.Clear();
+            base.OnDisable();
+        }
+
+        private SerializedObject GetSceneObject(Object sceneTarget)
+        {
+            if (_sceneObjects.TryGetValue(sceneTarget, out SerializedObject cached) && cached != null &&
+                cached.targetObject == sceneTarget)
+            {
+                return cached;
+            }
+
+            cached?.Dispose();
+            SerializedObject created = new(sceneTarget);
+            _sceneObjects[sceneTarget] = created;
+            return created;
+        }
+
         private void OnSceneGUI()
         {
-            // Do not use serializedObject in OnSceneGUI — use a SerializedObject created from target.
-            SerializedObject so = new(target);
+            if (target == null)
+            {
+                return;
+            }
+
+            SerializedObject so = GetSceneObject(target);
             so.Update();
 
-            var field = (MagneticField)target;
+            MagneticField field = (MagneticField)target;
             SerializedProperty modePropLocal = so.FindProperty("mode");
-            var mode = (MagneticField.FieldMode)modePropLocal.enumValueIndex;
+            MagneticField.FieldMode mode = (MagneticField.FieldMode)modePropLocal.enumValueIndex;
 
             switch (mode)
             {

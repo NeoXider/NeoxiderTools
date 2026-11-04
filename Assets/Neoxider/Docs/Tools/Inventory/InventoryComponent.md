@@ -1,7 +1,15 @@
 ﻿# InventoryComponent
 
-Scene facade over plain C# inventory storage. Namespace `Neo.Tools`, assembly `Neo.Tools.Inventory`.
-It adds database rules, UnityEvents, optional singleton lookup, and SaveProvider persistence.
+**What it is:** Scene `MonoBehaviour` (singleton-capable) facade over plain C# inventory storage that adds
+database rules, UnityEvents, optional singleton lookup and SaveProvider persistence.
+`Scripts/Tools/Inventory/Runtime/InventoryComponent*.cs` (partial class), namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `InventoryComponent`, choose **Storage Mode**, and optionally assign a **Database** and **Save Key**.
+2. Add/remove from C# (`AddItemByIdAmount`, `TryConsume`) or from Inspector buttons/UnityEvents.
+3. Bind UI and gameplay to `OnInventoryChanged`, `OnItemCountChanged` and `OnSelectedItemChanged`.
+
+---
 
 ## Inspector setup
 
@@ -15,6 +23,8 @@ It adds database rules, UnityEvents, optional singleton lookup, and SaveProvider
 | **Load Mode** | Use save, merge initial content once, or ignore save. |
 | **Apply Initial If Result Empty** | Reapply initial content when loading leaves an empty inventory. |
 | **Set Instance On Awake** | Turn off for additional independent containers such as chests. |
+| **Selected Item Id** | Id read by `SelectedItemCount` (NeoCondition-friendly); `InventoryHand` keeps it in sync. |
+| **Debug Entries** | Read-only mirror of the contents in Editor Play Mode; not rebuilt in player builds. |
 
 ## C# API
 
@@ -36,7 +46,12 @@ It adds database rules, UnityEvents, optional singleton lookup, and SaveProvider
 | `TryTakeSlot(int index, int amount, out InventoryItemRecord record)` | Extract a physical grid slot; amount zero takes the whole slot. |
 | `TryTakeRecordAtPackedIndex(int index, int amount, out InventoryItemRecord record)` | Extract a non-empty record by packed index. |
 | `GetSnapshotRecords()` / `GetSnapshotInstances()` | Deep copies in storage order. |
+| `GetSnapshotEntries()` / `GetNonEmptySlotCount()` | Id/count pairs / number of non-empty records in packed order; payloads are not cloned. |
+| `GetFirstItemId()` / `GetLastItemId()` | Item id of the first / last packed record, or -1 when empty. |
+| `SelectedItemId` / `SelectedItemCount` | Id used by NeoCondition-style checks and its current count. Setting a different id raises `OnSelectedItemChanged`. |
 | `Save()` / `Load()` | Persist JSON / restore using the configured load mode. |
+| `AutoSave` | Inspector **Auto Save** from code: write provider JSON after every changing mutation. |
+| `DeferAutoSave()` / `IsAutoSaveDeferred` | Hold Auto Save back until the returned `AutoSaveScope` is disposed; the outermost scope saves once if a mutation changed the contents. Events still fire per mutation. |
 
 ```csharp
 [SerializeField] private InventoryComponent _inventory;
@@ -45,7 +60,22 @@ public bool SpendCoins(int amount)
 {
     return _inventory.TryConsume(10, amount);
 }
+
+public void GrantStarterPack()
+{
+    using (_inventory.DeferAutoSave())
+    {
+        _inventory.AddItemByIdAmount(1, 50);
+        _inventory.AddItemByIdAmount(2, 3);
+        _inventory.AddItemByIdAmount(3, 1);
+    }
+}
 ```
+
+Scopes nest; only the outermost one writes, and a scope in which nothing changed writes nothing. An explicit
+`Save()` inside a scope clears the pending write. Dispose every scope once (a `using` block does); a repeated
+or stale dispose is ignored, even after newer scopes were opened at the same depth, and disposing an outer scope
+first also closes the inner ones.
 
 Prefer assigned references; `InventoryComponent.FindDefault()` is a fallback. Packed record indices skip
 empty slots and differ from physical indices. See [core contracts](InternalTypes.md).
@@ -60,6 +90,7 @@ empty slots and differ from physical indices. See [core contracts](InternalTypes
 | `OnCapacityRejected` | item id, rejected amount | Add request could not fit or was invalid. |
 | `OnBeforeLoad` / `OnLoaded` | none | Before restoration / after resulting contents are ready. |
 | `OnSaved` | none | JSON has been written to SaveProvider; this does not mean it was flushed to disk. |
+| `OnSelectedItemChanged` | new selected id | `SelectedItemId` changed from code (for example by `InventoryHand`). Not a mutation: no save and no `OnInventoryChanged`. |
 
 Successful moves, swaps, and slot replacements publish `OnInventoryChanged` and trigger Auto Save even
 when per-id totals are equal. `TrySetSlot` also publishes payload-only writes. Invalid moves and rejected
@@ -125,6 +156,13 @@ Auto Save writes provider memory. Call `Neo.Save.SaveProvider.Save()` at the des
 An attempted write can itself fail. Finalization is neither a retry queue nor an atomic transaction
 across provider keys or disk writes. `OnSaved` exceptions occur after the corresponding provider write;
 do not interpret them as a failed storage mutation.
+
+Inside `DeferAutoSave()` the per-mutation write is skipped and the outermost scope's dispose calls `Save()`
+once; an exception from that write (or from `OnSaved`) surfaces from `Dispose`. A scope left open keeps
+Auto Save off for this component until it is disposed.
+
+Начиная с 12.0 серию изменений можно сохранить одной записью: `using (inventory.DeferAutoSave()) { ... }`
+откладывает Auto Save до закрытия внешней области; события по-прежнему приходят на каждое изменение.
 
 В 11.0 ошибка подписчика не отменяет уже выполненную мутацию: Auto Save всё равно пытается записать
 состояние, а перенос между контейнерами завершает обе стороны перед повторным выбросом первой ошибки.

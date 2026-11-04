@@ -1,237 +1,260 @@
+using System.Globalization;
 using Neo.Core.Level;
 using Neo.Level;
+using Neo.Save;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Bright, self-contained demo for the level modules. The primary section drives a real
-    ///     <b>Neo.Core.Level</b> <see cref="LevelComponent" /> fed by a <see cref="LevelCurveDefinition" />
-    ///     created at runtime (linear, 100 XP/level): buttons add XP, a bar shows XP-to-next, a hero label
-    ///     shows the level, and the component's OnLevelUp event is logged. The secondary section drives the
-    ///     scene-flow <b>Neo.Level</b> <see cref="LevelManager" />, which runs headless here (its default
-    ///     infinite Map persists the level number through SaveProvider — no build scenes required).
-    ///     Robust in an empty scene.
+    ///     Controller of the authored level demo scene (LevelFlowDemo.unity, built by LevelFlowDemoBuilder). The left
+    ///     card drives a <b>Neo.Core.Level</b> <see cref="LevelComponent" /> (linear curve asset, 100 XP per level):
+    ///     the level and XP-to-next labels are bound to its reactive states in the scene (NoCode), the NoCode buttons
+    ///     call <see cref="LevelNoCodeAction" /> components, and the C# buttons call <see cref="AddXp" /> and
+    ///     <see cref="LevelUp" /> here. The right card drives a <b>Neo.Level</b> <see cref="LevelManager" /> with a
+    ///     finite and an infinite map, a level-select grid of <see cref="LevelButton" />s and a completion badge from
+    ///     <see cref="Map.IsComplete" />. Module events reach this component through persistent listeners authored in
+    ///     the scene; it builds no UI at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Demos/Level Demo")]
     public sealed class LevelDemoController : MonoBehaviour
     {
-        private NeoDemoShell.Context _shell;
+        private static readonly string GoodHex = "#" + ColorUtility.ToHtmlStringRGB(DemoPalette.Good);
 
-        private LevelComponent _level;
-        private LevelNoCodeAction _levelNoCode;
-        private LevelCurveDefinition _curve;
-        private GameObject _levelHost;
-        private TMP_Text _levelBig;
-        private TMP_Text _xpValue;
-        private TMP_Text _toNextValue;
-        private Image _xpBar;
+        [Header("Neo.Core.Level · XP")]
+        [SerializeField] private LevelComponent _level;
+        [SerializeField] private TMP_Text _totalXpValue;
+        [SerializeField] private Image _xpFill;
 
-        private LevelManager _levelManager;
-        private UnityEvent<int> _mapLevelChanged;
-        private UnityEvent<int> _mapMaxLevelChanged;
-        private TMP_Text _mapValue;
+        [Header("Neo.Level · maps")]
+        [SerializeField] private LevelManager _levelManager;
 
-        private void OnEnable() => _shell?.SetVisible(true);
-        private void OnDisable() => _shell?.SetVisible(false);
+        [Tooltip("Must match the LevelManager save key; used only by ResetMapProgress.")]
+        [SerializeField] private string _mapSaveKey = "LevelManager";
+
+        [SerializeField] private string[] _mapNames = { "World 1", "Endless" };
+        [SerializeField] private TMP_Text _mapValue;
+        [SerializeField] private TMP_Text _completeValue;
+
+        [Tooltip("Shown instead of the level grid while the selected map is infinite.")]
+        [SerializeField] private GameObject _infiniteMapHint;
+
+        [Header("Feed")]
+        [SerializeField] private DemoLogFeed _log;
+
+        private bool _warnedUnbuilt;
+
+        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _level != null && _levelManager != null && _totalXpValue != null && _xpFill != null &&
+                                    _mapValue != null && _completeValue != null && _log != null;
+
+        public LevelComponent Level => _level;
+        public LevelManager Manager => _levelManager;
 
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Level", new Color(0.49f, 0.36f, 0.94f), transform);
-
-            NeoDemoShell.ShowInfoCardOnce(
-                "Neo.Core.Level + Neo.Level",
-                "LevelComponent turns XP into levels via a curve. LevelManager tracks scene/level flow.",
-                "+10 / +50 XP call LevelComponent.AddXp(n)",
-                "Level up fills the remaining Xp-to-next; OnLevelUp is logged",
-                "LevelManager runs headless — no scene assets needed");
-
-            BuildLevelComponent();
-
-            _levelBig = _shell.AddBigLabel("Level 1");
-            _xpBar = _shell.AddBar("XP to next level", _shell.Accent);
-            _xpValue = _shell.AddValueLabel("Total XP");
-            _toNextValue = _shell.AddValueLabel("XP to next");
-
-            _shell.AddButtonRow(
-                ("+10 XP", () => AddXp(10)),
-                ("+50 XP", () => AddXp(50)),
-                ("Level up", LevelUp));
-
-            // WHY: same LevelComponent, driven entirely through the serialized LevelNoCodeAction bridge —
-            // exactly how a designer wires it to a UnityEvent button, no gameplay C# in the call path.
-            _shell.AddButtonRow(
-                ("+25 XP (NoCode)", () => RunBridge(LevelNoCodeActionType.AddXp, 25, 0)),
-                ("Set Lv 3 (NoCode)", () => RunBridge(LevelNoCodeActionType.SetLevel, 0, 3)));
-
-            BuildLevelManager();
-
-            RefreshLevel();
-            _shell.Log("LevelComponent ready (linear curve, 100 XP/level)");
-        }
-
-        private void OnDestroy()
-        {
-            try
+            if (!IsSceneBuilt)
             {
-                if (_level != null) _level.OnLevelUp?.RemoveListener(HandleLevelUp);
-                // Detach from the exact events borrowed at setup, even if their public fields changed.
-                _mapLevelChanged?.RemoveListener(HandleMapLevel);
-                _mapMaxLevelChanged?.RemoveListener(HandleMapMax);
+                WarnUnbuilt();
             }
-            finally
+
+            RefreshXp();
+            RefreshMap();
+            if (_level != null)
             {
-                _mapLevelChanged = null;
-                _mapMaxLevelChanged = null;
-                try
-                {
-                    if (_levelHost != null) _levelHost.SetActive(false);
-                    if (_level != null) _level.LevelCurveDefinition = null;
-                }
-                finally
-                {
-                    NeoDemoShell.DestroyOwnedObject(_levelHost);
-                    NeoDemoShell.DestroyOwnedObject(_curve);
-                    _shell?.Dispose();
-                }
+                Log("LevelComponent ready · Level " + _level.Level + " · " + _level.TotalXp + " XP (profile is saved)");
             }
         }
 
-        private void BuildLevelComponent()
+        /// <summary>Button target (C# path): <see cref="LevelComponent.AddXp" />.</summary>
+        public void AddXp(int amount)
         {
-            // WHY: runtime curve — no ScriptableObject asset on disk.
-            _curve = ScriptableObject.CreateInstance<LevelCurveDefinition>();
-            _curve.SetLinear(100);
-
-            _levelHost = new GameObject("LevelComponent");
-            _levelHost.transform.SetParent(transform, false);
-            _level = _levelHost.AddComponent<LevelComponent>(); // Awake → EnsureInitialized builds the model
-            _level.LevelCurveDefinition = _curve; // model already exists, so this re-applies the curve
-            _level.SetLevel(1); // clean, predictable start (XP 0, level 1) before we listen
-            _level.OnLevelUp.AddListener(HandleLevelUp);
-
-            _levelNoCode = _levelHost.AddComponent<LevelNoCodeAction>();
-            _levelNoCode.LevelProvider = _level;
-            _levelNoCode.OnSuccess.AddListener(() => _shell.Log("LevelNoCodeAction.Execute()"));
-        }
-
-        private void RunBridge(LevelNoCodeActionType type, int xp, int level)
-        {
-            _levelNoCode.ActionType = type;
-            if (type == LevelNoCodeActionType.AddXp)
+            if (!HasLevel())
             {
-                _levelNoCode.SetXpAmount(xp);
-            }
-            else
-            {
-                _levelNoCode.SetTargetLevel(level);
-            }
-
-            _levelNoCode.Execute();
-            RefreshLevel();
-        }
-
-        private void BuildLevelManager()
-        {
-            if (!LevelManager.HasInstance)
-            {
-                LevelManager.CreateInstance = true;
-            }
-
-            _levelManager = LevelManager.I; // Init loads its default infinite Map from SaveProvider
-            _mapValue = _shell.AddValueLabel("LevelManager  level / max");
-            if (_levelManager == null)
-            {
-                _mapValue.text = "Unavailable";
                 return;
             }
 
-            _mapLevelChanged = _levelManager.OnChangeLevel;
-            _mapMaxLevelChanged = _levelManager.OnChangeMaxLevel;
-            _mapLevelChanged?.AddListener(HandleMapLevel);
-            _mapMaxLevelChanged?.AddListener(HandleMapMax);
-
-            _shell.AddButtonRow(
-                ("Map: Complete", () =>
-                {
-                    _levelManager.SaveLevel(); // persists max level via SaveProvider
-                    _shell.Log($"LevelManager.SaveLevel() → max {_levelManager.MaxLevel}");
-                    RefreshMap();
-                }),
-                ("Map: Next", () =>
-                {
-                    _levelManager.NextLevel(); // advances current level (capped at max+1)
-                    _shell.Log($"LevelManager.NextLevel() → level {_levelManager.CurrentLevel}");
-                    RefreshMap();
-                }));
-
-            RefreshMap();
-            _shell.Log("LevelManager headless — infinite Map, no scenes");
-        }
-
-        private void AddXp(int amount)
-        {
+            Log("LevelComponent.AddXp(" + amount + ")");
             _level.AddXp(amount);
-            _shell.Log($"LevelComponent.AddXp({amount}) → total {_level.TotalXp}");
-            RefreshLevel();
+            RefreshXp();
         }
 
-        private void LevelUp()
+        /// <summary>Button target (C# path): adds exactly the XP missing to the next level.</summary>
+        public void LevelUp()
         {
+            if (!HasLevel())
+            {
+                return;
+            }
+
             int toNext = _level.XpToNextLevel;
             if (toNext > 0)
             {
+                Log("LevelComponent.AddXp(XpToNextLevel = " + toNext + ")");
                 _level.AddXp(toNext);
-                _shell.Log($"AddXp(XpToNextLevel={toNext}) to force a level-up");
             }
             else
             {
+                Log("LevelComponent.SetLevel(" + (_level.Level + 1) + ")");
                 _level.SetLevel(_level.Level + 1);
-                _shell.Log($"SetLevel({_level.Level})");
             }
 
-            RefreshLevel();
+            RefreshXp();
         }
 
-        private void HandleLevelUp(int newLevel)
+        /// <summary>Persistent listener of <see cref="LevelComponent.XpState" />.OnChanged.</summary>
+        public void OnXpChanged(int totalXp)
         {
-            _shell.Log($"event OnLevelUp → Level {newLevel}");
-            RefreshLevel();
+            RefreshXp();
         }
 
-        private void HandleMapLevel(int level)
+        /// <summary>Persistent listener of <see cref="LevelComponent.OnLevelUp" />.</summary>
+        public void OnLevelUp(int level)
         {
-            _shell.Log($"event OnChangeLevel → {level}");
+            Log("event LevelComponent.OnLevelUp -> Level " + level);
+            RefreshXp();
         }
 
-        private void HandleMapMax(int max)
+        /// <summary>Persistent listener of <see cref="LevelManager.OnChangeLevel" /> (zero-based level).</summary>
+        public void OnMapLevelChanged(int level)
         {
-            _shell.Log($"event OnChangeMaxLevel → {max}");
+            Log("event LevelManager.OnChangeLevel -> level " + (level + 1));
+            RefreshMap();
         }
 
-        private void RefreshLevel()
+        /// <summary>Persistent listener of <see cref="LevelManager.OnChangeMaxLevel" /> (levels cleared).</summary>
+        public void OnMapProgressChanged(int cleared)
         {
+            Log("event LevelManager.OnChangeMaxLevel -> " + cleared + " cleared");
+            RefreshMap();
+        }
+
+        /// <summary>Persistent listener of <see cref="LevelManager.OnChangeMap" />.</summary>
+        public void OnMapChanged(int mapId)
+        {
+            Log("event LevelManager.OnChangeMap -> " + MapName(mapId));
+            RefreshMap();
+        }
+
+        /// <summary>Button target (C# path): forgets the saved progress of the selected map and selects level 1.</summary>
+        public void ResetMapProgress()
+        {
+            Map map = _levelManager != null ? _levelManager.Map : null;
+            if (map == null)
+            {
+                Log("ResetMapProgress: no LevelManager map assigned");
+                return;
+            }
+
+            int mapId = _levelManager.MapId;
+            // WHY: LevelManager has no reset API; the documented key format is Map_<saveKey>_<mapId>__level.
+            SaveProvider.DeleteKey("Map_" + _mapSaveKey + "_" + mapId + "__level");
+            map.Load(mapId, _mapSaveKey);
+            Log("SaveProvider.DeleteKey(Map_" + _mapSaveKey + "_" + mapId + "__level) + Map.Load");
+            _levelManager.SetMapId(mapId);
+            _levelManager.SetLevel(0);
+        }
+
+        private bool HasLevel()
+        {
+            if (_level != null)
+            {
+                return true;
+            }
+
+            WarnUnbuilt();
+            return false;
+        }
+
+        private void RefreshXp()
+        {
+            if (_level == null)
+            {
+                return;
+            }
+
             int level = _level.Level;
-            _levelBig.text = "Level " + level;
-            _xpValue.text = _level.TotalXp.ToString();
-            _toNextValue.text = _level.XpToNextLevel.ToString();
+            int totalXp = _level.TotalXp;
+            if (_totalXpValue != null)
+            {
+                _totalXpValue.text = totalXp.ToString(CultureInfo.InvariantCulture);
+            }
 
-            int reqCur = _curve.GetRequiredXpForLevel(level);
-            int reqNext = _curve.GetRequiredXpForLevel(level + 1);
-            int span = reqNext - reqCur;
-            float progress = span > 0 ? (_level.TotalXp - reqCur) / (float)span : 1f;
-            Neo.Samples.Survivor.SurvivorUI.SetFill(_xpBar, Mathf.Clamp01(progress));
+            if (_xpFill == null)
+            {
+                return;
+            }
+
+            LevelCurveDefinition curve = _level.LevelCurveDefinition;
+            float progress = 1f;
+            if (curve != null)
+            {
+                int current = curve.GetRequiredXpForLevel(level);
+                int next = curve.GetRequiredXpForLevel(level + 1);
+                int span = next - current;
+                progress = span > 0 ? (totalXp - current) / (float)span : 1f;
+            }
+
+            RectTransform fill = _xpFill.rectTransform;
+            fill.anchorMax = new Vector2(Mathf.Clamp01(progress), 1f);
         }
 
         private void RefreshMap()
         {
+            Map map = _levelManager != null ? _levelManager.Map : null;
+            if (map == null)
+            {
+                return;
+            }
+
             if (_mapValue != null)
             {
-                _mapValue.text = $"{_levelManager.CurrentLevel} / {_levelManager.MaxLevel}";
+                string name = MapName(_levelManager.MapId);
+                _mapValue.text = map.isInfinity ? name + " · infinite" : name + " · " + map.countLevels + " levels";
             }
+
+            if (_completeValue != null)
+            {
+                _completeValue.text = map.isInfinity
+                    ? "never (infinite)"
+                    : map.IsComplete
+                        ? "<color=" + GoodHex + ">YES</color> · " + map.countLevels + " of " + map.countLevels
+                        : "no · " + map.level + " of " + map.countLevels;
+            }
+
+            if (_infiniteMapHint != null && _infiniteMapHint.activeSelf != map.isInfinity)
+            {
+                _infiniteMapHint.SetActive(map.isInfinity);
+            }
+        }
+
+        private string MapName(int mapId)
+        {
+            return _mapNames != null && mapId >= 0 && mapId < _mapNames.Length && !string.IsNullOrEmpty(_mapNames[mapId])
+                ? _mapNames[mapId]
+                : "Map " + mapId;
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[LevelDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
         }
     }
 }

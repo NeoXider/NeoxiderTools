@@ -1,12 +1,18 @@
 # AM (Audio Manager)
 
-**Purpose:** Central manager for sound effects and music. Singleton (`AM.I`), with separate `AudioSource`
+**What it is:** Central manager for sound effects and music. Singleton (`AM.I`), with separate `AudioSource`
 channels for music and effects, and two sound channels — **Sfx** and **UI** — with their own volume,
 mute and mixer group (see [Sound channels](#sound-channels-sfx--ui); since 10.13.11 on the 10.13 line and
 the first `main` release after 10.19.0).
 
 Sounds and music share **one record contract**, so there is one thing to learn rather than two. Music
 records are additionally **pools**, and every music change **crossfades** by default.
+
+**How to use:** add `AM` to a global object and fill its sound and music entries ([Setup](#setup)), then
+call `AM.I.Play("id")` and `AM.I.PlayMusicPool("id")` from code ([Code Usage](#code-usage)), or use
+[PlayAudio](PlayAudio.md), [PlayAudioBtn](PlayAudioBtn.md) and [MusicControl](MusicControl.md) without code.
+
+---
 
 ## The record contract
 

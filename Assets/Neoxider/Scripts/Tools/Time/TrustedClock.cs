@@ -27,8 +27,10 @@ namespace Neo.Tools
     {
         private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
 
+        /// <inheritdoc />
         public DateTime UtcNow => DateTime.UtcNow;
 
+        /// <inheritdoc />
         public double MonotonicSeconds => _stopwatch.Elapsed.TotalSeconds;
     }
 
@@ -133,6 +135,16 @@ namespace Neo.Tools
             return seconds < 0d ? 0d : seconds;
         }
 
+        /// <summary>
+        ///     Exposes this guarded clock through the <see cref="INeoClock" /> seam, so APIs that accept a clock
+        ///     (for example <see cref="TimerObject.UtcClock" />) read guarded UTC. <c>MonotonicSeconds</c> forwards the
+        ///     underlying source.
+        /// </summary>
+        public INeoClock AsNeoClock()
+        {
+            return _neoClockView ??= new TrustedClockView(this);
+        }
+
         /// <summary>Drops session state so the next read re-anchors. Used by tests and by domain reload.</summary>
         public void ResetSessionAnchor()
         {
@@ -147,6 +159,22 @@ namespace Neo.Tools
         ///     corrections, suspended-process drift and timer granularity.
         /// </summary>
         private const double ForwardToleranceSeconds = 90d;
+
+        private INeoClock _neoClockView;
+
+        private sealed class TrustedClockView : INeoClock
+        {
+            private readonly TrustedClock _owner;
+
+            public TrustedClockView(TrustedClock owner)
+            {
+                _owner = owner;
+            }
+
+            public DateTime UtcNow => _owner.ReadUtcNow();
+
+            public double MonotonicSeconds => _owner._clock.MonotonicSeconds;
+        }
     }
 
     /// <summary>
@@ -187,6 +215,13 @@ namespace Neo.Tools
                 return now;
             }
         }
+
+        /// <summary>
+        ///     The process-wide trusted time as an <see cref="INeoClock" />: <c>UtcNow</c> reads
+        ///     <see cref="UtcNow" /> (including high-water persistence). Pass it wherever a clock seam is accepted,
+        ///     for example <see cref="TimerObject.UtcClock" />.
+        /// </summary>
+        public static INeoClock AsClock => SharedTrustedNeoClock.Instance;
 
         /// <summary>Non-negative seconds elapsed since <paramref name="sinceUtc" />, guarded against clock changes.</summary>
         public static double SecondsSince(DateTime sinceUtc)
@@ -235,6 +270,17 @@ namespace Neo.Tools
                 _persistedHighWater = stored;
                 _clock.Restore(stored);
             }
+        }
+
+        private sealed class SharedTrustedNeoClock : INeoClock
+        {
+            internal static readonly SharedTrustedNeoClock Instance = new();
+
+            private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
+
+            public DateTime UtcNow => NeoTrustedTime.UtcNow;
+
+            public double MonotonicSeconds => _stopwatch.Elapsed.TotalSeconds;
         }
 
         private static void PersistIfAdvanced()

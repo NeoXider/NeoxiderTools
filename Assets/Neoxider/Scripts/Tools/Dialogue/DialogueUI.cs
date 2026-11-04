@@ -28,6 +28,9 @@ namespace Neo.Tools
         public UnityEvent<string> OnCharacterChange;
 
         private string _lastCharacterName = string.Empty;
+        private bool _limitsVisibleCharacters;
+        private TMP_Text _limitedLabel;
+        private int _limitedLabelOwnVisibleCharacters;
 
         /// <summary>
         ///     Whether a TMP font validation error was detected.
@@ -187,7 +190,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Sets dialogue body text.
+        ///     Sets dialogue body text, fully visible.
         /// </summary>
         public void SetDialogueText(string text)
         {
@@ -196,7 +199,52 @@ namespace Neo.Tools
                 return;
             }
 
+            RestoreVisibleCharacters();
             dialogueText.text = text;
+        }
+
+        /// <summary>
+        ///     Sets the whole body text at once but shows only its first <paramref name="visibleCharacters" />
+        ///     characters (TMP <c>maxVisibleCharacters</c>; rich-text tags do not count). Used by the
+        ///     MaxVisibleCharacters typewriter mode: the layout is final from the first character, so words do not
+        ///     jump between lines, and revealing more needs no new string.
+        /// </summary>
+        public void SetDialogueTextRevealed(string text, int visibleCharacters)
+        {
+            if (dialogueText == null || !IsFontValid(dialogueText))
+            {
+                return;
+            }
+
+            LimitVisibleCharacters(visibleCharacters);
+            dialogueText.text = text;
+        }
+
+        /// <summary>
+        ///     Shows the first <paramref name="visibleCharacters" /> characters of the current body text without
+        ///     reassigning it. <see cref="ShowAllCharacters" />, <see cref="SetDialogueText" /> and
+        ///     <see cref="ClearDialogueText" /> lift the limit again.
+        /// </summary>
+        public void SetVisibleCharacters(int visibleCharacters)
+        {
+            // WHY: same skip rule as the text setters, so a label they ignore never gets a limit they cannot lift.
+            if (dialogueText == null || !IsFontValid(dialogueText))
+            {
+                return;
+            }
+
+            LimitVisibleCharacters(visibleCharacters);
+        }
+
+        /// <summary>
+        ///     Lifts a limit set by <see cref="SetDialogueTextRevealed" /> or <see cref="SetVisibleCharacters" />
+        ///     without reassigning the text: the label gets back the <c>maxVisibleCharacters</c> it had before this
+        ///     component first lowered it (TMP's default, 99999, means no limit). Does nothing when no such limit is
+        ///     active.
+        /// </summary>
+        public void ShowAllCharacters()
+        {
+            RestoreVisibleCharacters();
         }
 
         /// <summary>
@@ -206,7 +254,40 @@ namespace Neo.Tools
         {
             if (dialogueText != null && IsFontValid(dialogueText))
             {
+                RestoreVisibleCharacters();
                 dialogueText.text = string.Empty;
+            }
+        }
+
+        // WHY: the label's own maxVisibleCharacters is captured when this component first lowers it, so lifting the
+        // reveal limit restores a limit the project assigned to the label instead of replacing it with "unlimited".
+        private void LimitVisibleCharacters(int visibleCharacters)
+        {
+            if (!_limitsVisibleCharacters || _limitedLabel != dialogueText)
+            {
+                RestoreVisibleCharacters();
+                _limitsVisibleCharacters = true;
+                _limitedLabel = dialogueText;
+                _limitedLabelOwnVisibleCharacters = dialogueText.maxVisibleCharacters;
+            }
+
+            dialogueText.maxVisibleCharacters = Mathf.Max(0, visibleCharacters);
+        }
+
+        // WHY: only a limit this component set is lifted, and on the label it was set on, even after a rebind.
+        private void RestoreVisibleCharacters()
+        {
+            if (!_limitsVisibleCharacters)
+            {
+                return;
+            }
+
+            _limitsVisibleCharacters = false;
+            TMP_Text label = _limitedLabel;
+            _limitedLabel = null;
+            if (label != null)
+            {
+                label.maxVisibleCharacters = _limitedLabelOwnVisibleCharacters;
             }
         }
     }

@@ -1,8 +1,25 @@
 # Merge
 
-`Neo.Merge` is a generic pure C# merge engine for connected groups. It is not tied to Unity scenes, grids, inventory slots, or any specific game.
+**What it is:** `Neo.Merge` (`Scripts/Merge/`, assembly `Neo.Merge`, no Unity engine dependency) is a generic pure C# merge engine for connected groups. It is not tied to Unity scenes, grids, inventory slots, or any specific game. Use it when a mechanic needs to find equivalent connected items, choose the result item, compute a new value, clear the rest, and optionally continue cascading from the result.
 
-Use it when a mechanic needs to find equivalent connected items, choose the result item, compute a new value, clear the rest, and optionally continue cascading from the result.
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemDiceMergeDemo.jpg" alt="GridSystemDiceMergeDemo: connected dice groups merged by the merge engine" width="100%" /></p>
+
+*Demo scene: `Scenes/GridSystem/GridSystemDiceMergeDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**How to use:**
+1. Build a `MergeRequest<TItem, TValue>` with your items, value accessors and a neighbor callback.
+2. Call `MergeResolver.Resolve(request)` with `Mutate = false` for a preview or `true` to apply.
+3. Read `MergeResult.Groups` / `ChangedItems` to update views. For `FieldGenerator` boards use `GridMergeResolver` instead of writing the adapter yourself.
+
+**Contents:** [runtime API](#runtime-api) (request and graph contracts, dry runs and cascades, performance,
+[C# example](#c-example)), [11.0 compatibility](#110-compatibility),
+[scene and NoCode workflow](#scene-and-nocode-workflow) and [examples](#examples).
+
+**Navigation:** [← Docs](../README.md)
+
+---
 
 ## Runtime API
 
@@ -32,6 +49,10 @@ Items use `EqualityComparer<TItem>.Default` for identity. Their equality and has
 With `Mutate = true`, evaluation still happens first. Once every seed succeeds, the resolver calls `SetValue` once per affected item with its final simulated value. Exceptions during evaluation prevent these writes. A throwing `SetValue` can leave partially applied changes; the resolver does not provide rollback or guarantee setter invocation order. Setter callbacks should not assume all other items already contain their final values.
 
 `CascadeMode.None` resolves at most one group per seed. `FromResult` continues from each selected result item. `MaxCascadeIterations` defaults to 128 per seed occurrence; values below 1 allow one iteration. `CascadeLimitReached` is true only when another qualifying group remains after that limit. A cascade that finishes exactly at the limit leaves the flag false. Repeated seeds are evaluated again against the accumulated simulated state.
+
+### Performance
+
+One `Resolve` call allocates its search collections once and reuses them for every seed and cascade step; each search costs `O(group size x neighbors)`, also after a very large group. When `GetNeighbors` returns an `IReadOnlyList<TItem>` (a list or array), it is indexed instead of enumerated, so no enumerator is boxed per visited item. The resolver consumes each returned neighbor list before requesting the next one, so a callback may return the same reused buffer every time (as `GridMergeResolver` does). `SelectResultItem` receives the group list that is later reported as `MergeGroupResult.Items`.
 
 ### C# example
 

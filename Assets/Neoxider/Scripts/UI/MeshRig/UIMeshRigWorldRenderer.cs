@@ -15,6 +15,9 @@ namespace Neo.UI
     [NeoDoc("UI/UIMeshRig.md")]
     public sealed class UIMeshRigWorldRenderer : MonoBehaviour, IUIMeshRigOwner
     {
+        private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
+        private static readonly int MainTexPropertyId = Shader.PropertyToID("_MainTex");
+
         [Header("Source")]
         [Tooltip("Sprite drawn by the rig. Without it the renderer produces an empty mesh.")]
         [SerializeField] private Sprite _sprite;
@@ -63,6 +66,12 @@ namespace Neo.UI
         private MaterialPropertyBlock _propertyBlock;
         private bool _pointCacheDirty = true;
         private bool _geometryDirty = true;
+        private bool _rendererDirty = true;
+        private UIMeshRigGeometry _meshGeometry;
+        private int _meshVertexCount = -1;
+        private int _meshColumns = -1;
+        private int _meshRows = -1;
+        private Vector4 _meshOuterUv;
 
         public Sprite Sprite => _sprite;
         public int Columns => _columns;
@@ -91,6 +100,7 @@ namespace Neo.UI
             _sprite = sprite;
             _color = tint;
             _material = sourceMaterial;
+            _rendererDirty = true;
             MarkGeometryDirty();
         }
 
@@ -173,6 +183,7 @@ namespace Neo.UI
             MarkGeometryDirty();
         }
 
+        /// <summary>Builds the current deformed grid into new arrays the caller owns.</summary>
         public UIMeshRigGeometry BuildGeometry()
         {
             if (_sprite == null)
@@ -180,6 +191,11 @@ namespace Neo.UI
                 return new UIMeshRigGeometry(new Vector3[0], new int[0], new Vector2[0]);
             }
 
+            return BuildSpriteGeometry(null);
+        }
+
+        private UIMeshRigGeometry BuildSpriteGeometry(UIMeshRigGeometry reuse)
+        {
             CollectPointStates();
             Vector4 outerUv = DataUtility.GetOuterUV(_sprite);
             Rect uvRect = Rect.MinMaxRect(outerUv.x, outerUv.y, outerUv.z, outerUv.w);
@@ -189,7 +205,8 @@ namespace Neo.UI
                 GetCoordinateSpace(),
                 uvRect,
                 IsDeformationActive(),
-                _pointStates);
+                _pointStates,
+                reuse);
         }
 
         public Vector2 WorldToNormalized(Vector3 worldPosition)
@@ -238,13 +255,20 @@ namespace Neo.UI
         {
             CacheRendererComponents();
             _pointCacheDirty = true;
+            _rendererDirty = true;
             MarkGeometryDirty();
+            UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
             RebuildIfNeeded();
         }
 
         private void OnDisable()
         {
             ReleaseRuntimeResources();
+        }
+
+        private void OnDestroy()
+        {
+            UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
         }
 
         private void OnValidate()
@@ -255,6 +279,7 @@ namespace Neo.UI
             _pivot = new Vector2(Mathf.Clamp01(_pivot.x), Mathf.Clamp01(_pivot.y));
             _pixelsPerUnit = Mathf.Max(0.01f, _pixelsPerUnit);
             _pointCacheDirty = true;
+            _rendererDirty = true;
             MarkGeometryDirty();
         }
 
@@ -310,18 +335,59 @@ namespace Neo.UI
 
             CacheRendererComponents();
             EnsureMesh();
-            UIMeshRigGeometry geometry = BuildGeometry();
-            _mesh.Clear();
-            if (geometry.Vertices.Length > 0)
+            WriteMesh();
+            if (_rendererDirty || _meshRenderer.sharedMaterial == null)
             {
-                _mesh.vertices = geometry.Vertices;
-                _mesh.triangles = geometry.Indices;
-                _mesh.uv = geometry.UV;
-                _mesh.RecalculateBounds();
+                ApplyRendererSettings();
+                _rendererDirty = false;
             }
 
-            ApplyRendererSettings();
             _geometryDirty = false;
+        }
+
+        // WHY: an animated rig rebuilds every frame. Clearing the mesh and re-uploading the unchanged index
+        // buffer each time cost a full topology rebuild. A pose moves positions only; UVs follow the grid and
+        // the sprite's outer UV, so they are uploaded again only when one of those changes.
+        private void WriteMesh()
+        {
+            if (_sprite == null)
+            {
+                _mesh.Clear();
+                _meshVertexCount = -1;
+                return;
+            }
+
+            _meshGeometry = BuildSpriteGeometry(_meshGeometry);
+            UIMeshRigGeometry geometry = _meshGeometry;
+            int columns = Mathf.Clamp(_columns, 2, 40);
+            int rows = Mathf.Clamp(_rows, 2, 40);
+            bool topologyChanged = _meshVertexCount != geometry.Vertices.Length ||
+                                   _meshColumns != columns ||
+                                   _meshRows != rows ||
+                                   _mesh.vertexCount != geometry.Vertices.Length;
+            if (topologyChanged)
+            {
+                _mesh.Clear();
+                _mesh.SetVertices(geometry.Vertices);
+                _mesh.SetUVs(0, geometry.UV);
+                _mesh.SetTriangles(geometry.Indices, 0);
+                _meshVertexCount = geometry.Vertices.Length;
+                _meshColumns = columns;
+                _meshRows = rows;
+                _meshOuterUv = DataUtility.GetOuterUV(_sprite);
+            }
+            else
+            {
+                _mesh.SetVertices(geometry.Vertices);
+                Vector4 outerUv = DataUtility.GetOuterUV(_sprite);
+                if (outerUv != _meshOuterUv)
+                {
+                    _mesh.SetUVs(0, geometry.UV);
+                    _meshOuterUv = outerUv;
+                }
+            }
+
+            _mesh.RecalculateBounds();
         }
 
         private void EnsurePointCache()
@@ -331,17 +397,7 @@ namespace Neo.UI
                 return;
             }
 
-            _points.Clear();
-            List<UIMeshRigPoint> candidates = new List<UIMeshRigPoint>();
-            GetComponentsInChildren(true, candidates);
-            for (int index = 0; index < candidates.Count; index++)
-            {
-                if (UIMeshRigOwnerResolver.OwnsPoint(this, candidates[index]))
-                {
-                    _points.Add(candidates[index]);
-                }
-            }
-
+            UIMeshRigOwnerResolver.CollectOwnedPoints(this, this, _points);
             _pointCacheDirty = false;
         }
 
@@ -424,6 +480,7 @@ namespace Neo.UI
             };
             _mesh.MarkDynamic();
             _meshFilter.sharedMesh = _mesh;
+            _meshVertexCount = -1;
         }
 
         private void ApplyRendererSettings()
@@ -436,8 +493,8 @@ namespace Neo.UI
             }
 
             _meshRenderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetColor("_Color", _color);
-            _propertyBlock.SetTexture("_MainTex", _sprite != null ? _sprite.texture : Texture2D.whiteTexture);
+            _propertyBlock.SetColor(ColorPropertyId, _color);
+            _propertyBlock.SetTexture(MainTexPropertyId, _sprite != null ? _sprite.texture : Texture2D.whiteTexture);
             _meshRenderer.SetPropertyBlock(_propertyBlock);
         }
 
@@ -478,6 +535,8 @@ namespace Neo.UI
             DestroyRuntimeObject(_runtimeMaterial);
             _mesh = null;
             _runtimeMaterial = null;
+            _meshVertexCount = -1;
+            _rendererDirty = true;
         }
 
         private static void DestroyRuntimeObject(Object target)

@@ -1,13 +1,22 @@
 ﻿# Bonus / Slot / Data
 
-## Purpose
+**What it is:** the reusable `ScriptableObject` assets a slot machine reads: symbol visuals, payout multipliers,
+paylines and bets. Scripts live in `Scripts/Bonus/Slot/Data/`, namespace `Neo.Bonus`. The assets hold
+configuration only and never reference scene objects.
 
-Data definitions for slot symbols, lines and betting rules.
+**Contents:**
 
-## Documents
+| Page | Asset |
+|------|-------|
+| [SpritesData](./SpritesData.md) | Symbol catalog: id, sprite, description. |
+| [SpriteMultiplayerData](./SpriteMultiplayerData.md) | Payout multiplier per symbol and run length. |
+| [LinesData](./LinesData.md) | Payline definitions (window row per column). |
+| [BetsData](./BetsData.md) | Selectable bets (price per line). |
 
-- [SpritesData](./SpritesData.md)
-- [SpriteMultiplayerData](./SpriteMultiplayerData.md)
-- [LinesData](./LinesData.md)
-- [BetsData](./BetsData.md)
+**Navigation:** [← Slot](../README.md)
 
+---
+
+Assign all four to [SpinController](../SpinController.md): **All Sprites Data** and **Bets Data** on the
+controller, **Lines Data** and the multiplier asset under **Check Spin**. Per-machine economy rules live in
+[SlotEconomyDefinition](../SlotEconomyDefinition.md).

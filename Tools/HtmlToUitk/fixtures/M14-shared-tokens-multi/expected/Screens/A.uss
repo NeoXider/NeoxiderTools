@@ -1,7 +1,0 @@
-:root {
-    --a-pad: 4px;
-}
-
-.a__p {
-    padding-top: var(--a-pad);
-}

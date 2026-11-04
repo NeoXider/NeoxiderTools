@@ -9,10 +9,30 @@ namespace Neo.Abilities
     ///     One context accompanies a whole cast (or tick / event reaction) so depth limits and
     ///     deterministic rolls stay consistent.
     /// </summary>
+    /// <remarks>
+    ///     Contexts the <see cref="AbilitySystem" /> creates itself (casts, projectile hits, modifier ticks,
+    ///     event reactions) are pooled and recycled as soon as their effects finish. An
+    ///     <see cref="IEffectOperation" /> must not keep such a context, its <see cref="PrimaryTargets" />
+    ///     or its <see cref="Random" /> after <see cref="IEffectOperation.Execute" /> returns; copy the values
+    ///     it needs instead. <see cref="CreateNested" /> children of such a context share its RNG and expire
+    ///     with it. Once expired, <see cref="IsReleased" /> is true and
+    ///     <see cref="AbilitySystem.ExecuteEffects" /> ignores the context. Contexts built with the public
+    ///     constructor (and their nested children) are never pooled.
+    /// </remarks>
     public sealed class EffectContext
     {
         /// <summary>Hard cap for nested effect execution (event reactions triggering reactions...).</summary>
         public const int MaxDepth = 3;
+
+        // WHY: a pooled context owns one reseedable RNG so recycling it allocates nothing.
+        private XorShiftRandom _ownedRandom;
+
+        // WHY: a pooled context bumps _lease every time it is recycled. Contexts derived from one lease
+        // (the pooled context itself and its CreateNested children) remember the lease they belong to,
+        // so a kept context is detectably stale instead of silently running with another cast's state.
+        private EffectContext _leaseOwner;
+        private int _ownerLease;
+        private int _lease;
 
         public EffectContext(AbilitySystem system, UnitId caster, string abilityId, IRandomSource random)
         {
@@ -23,10 +43,15 @@ namespace Neo.Abilities
             PrimaryTargets = new List<UnitId>(4);
         }
 
-        public AbilitySystem System { get; }
-        public UnitId Caster { get; }
-        public string AbilityId { get; }
-        public IRandomSource Random { get; }
+        private EffectContext()
+        {
+            PrimaryTargets = new List<UnitId>(4);
+        }
+
+        public AbilitySystem System { get; private set; }
+        public UnitId Caster { get; private set; }
+        public string AbilityId { get; private set; }
+        public IRandomSource Random { get; private set; }
 
         /// <summary>Cast id this context executes under (0 for ticks/reactions outside a cast).</summary>
         public uint CastId { get; set; }
@@ -47,7 +72,7 @@ namespace Neo.Abilities
             {
                 for (int i = 0; i < Specials.Count; i++)
                 {
-                    if (string.Equals(Specials[i].Name, name, StringComparison.OrdinalIgnoreCase))
+                    if (AbilityIdComparer.Same(Specials[i].Name, name))
                     {
                         value = Specials[i].Value;
                         return true;
@@ -70,6 +95,19 @@ namespace Neo.Abilities
         /// <summary>Current nesting depth (0 = direct cast). Incremented for reactions.</summary>
         public int Depth { get; set; }
 
+        /// <summary>
+        ///     True when the system-created context this one belongs to has finished its effects: a pooled
+        ///     context while it waits in the pool for its next use, a <see cref="CreateNested" /> child of it
+        ///     from then on. A released context must not be used; <see cref="AbilitySystem.ExecuteEffects" />
+        ///     ignores it. Always false for contexts built with the public constructor and their children.
+        /// </summary>
+        public bool IsReleased => _leaseOwner != null && _leaseOwner._lease != _ownerLease;
+
+        /// <summary>
+        ///     Builds a child context one level deeper that shares this context's RNG, cast id, point,
+        ///     level and specials. Use it when an operation runs further effect nodes on its own. A child of
+        ///     a system-created context has the same lifetime as its parent.
+        /// </summary>
         public EffectContext CreateNested(UnitId newCaster, string abilityId, List<UnitId> targets)
         {
             EffectContext nested = new EffectContext(System, newCaster, abilityId, Random)
@@ -81,12 +119,65 @@ namespace Neo.Abilities
                 AbilityLevel = AbilityLevel,
                 Specials = Specials
             };
+            nested._leaseOwner = _leaseOwner;
+            nested._ownerLease = _ownerLease;
             if (targets != null)
             {
-                nested.PrimaryTargets.AddRange(targets);
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    nested.PrimaryTargets.Add(targets[i]);
+                }
             }
 
             return nested;
+        }
+
+        internal static EffectContext CreatePooled()
+        {
+            return new EffectContext();
+        }
+
+        /// <summary>Prepares a pooled context exactly like a fresh one seeded with <paramref name="seed" />.</summary>
+        internal void ResetPooled(AbilitySystem system, UnitId caster, string abilityId, uint seed)
+        {
+            if (_ownedRandom == null)
+            {
+                _ownedRandom = new XorShiftRandom(seed);
+            }
+            else
+            {
+                _ownedRandom.Reseed(seed);
+            }
+
+            System = system;
+            Caster = caster;
+            AbilityId = abilityId;
+            Random = _ownedRandom;
+            CastId = 0;
+            AbilityLevel = 1;
+            Specials = null;
+            TargetPoint = default;
+            HasTargetPoint = false;
+            Depth = 0;
+            PrimaryTargets.Clear();
+            _leaseOwner = this;
+            _ownerLease = _lease;
+        }
+
+        /// <summary>
+        ///     Drops references held by a pooled context before it waits for its next use and expires every
+        ///     context of the finished lease.
+        /// </summary>
+        internal void ClearPooled()
+        {
+            unchecked
+            {
+                _lease++;
+            }
+
+            AbilityId = null;
+            Specials = null;
+            PrimaryTargets.Clear();
         }
     }
 }

@@ -57,7 +57,7 @@ namespace Neo.Tests.Network.Integration
                     throw new IOException("Cannot create the owned bootstrap scene folder.");
                 ownsFolder = true;
                 string scenePath = sceneFolder + "/Empty.unity";
-                // Building from a persistent copy also works beside Unity's untitled startup
+                // WHY: Building from a persistent copy also works beside Unity's untitled startup
                 // scene and preserves any borrowed scene setup and unsaved work.
                 string seedPath = AssetDatabase.GUIDToAssetPath("0ac7559d257e48f1b4a921a9753ec320");
                 if (AssetDatabase.LoadAssetAtPath<SceneAsset>(seedPath) == null ||

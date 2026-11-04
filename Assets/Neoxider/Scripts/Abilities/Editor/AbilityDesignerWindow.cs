@@ -19,9 +19,22 @@ namespace Neo.Abilities.Editor
         private readonly List<ModifierDefinition> _modifiers = new List<ModifierDefinition>();
         private List<AbilityIssue> _issues = new List<AbilityIssue>();
 
-        private ScriptableObject _selected;
+        // WHY: the selection and the search survive a domain reload and an editor restart.
+        [SerializeField] private ScriptableObject _selected;
+        [SerializeField] private string _search = string.Empty;
         private SerializedObject _serialized;
-        private string _search = string.Empty;
+
+        // WHY: focusing the window used to re-scan the whole AssetDatabase and rebuild every pane, including
+        // the inspector (losing its scroll position and an active text field). The library is now re-scanned
+        // only after the project changed; a plain focus refreshes validation and rebuilds the board only when
+        // the selected asset was edited elsewhere (see _boardSnapshot).
+        private bool _libraryDirty = true;
+
+        // WHY: the board is built from a snapshot - one card per array element, with static op/summary labels
+        // and fields bound by index. An edit made in another inspector (an effect added, removed or reordered)
+        // left cards whose labels named one effect while their fields edited another. The serialized state the
+        // board was built from is kept, and a focus rebuilds the board when the asset no longer matches it.
+        private string _boardSnapshot;
 
         private VisualElement _libraryPane;
         private VisualElement _centerPane;
@@ -47,21 +60,74 @@ namespace Neo.Abilities.Editor
 
         private void OnEnable()
         {
+            Undo.undoRedoPerformed -= OnUndoRedo;
             Undo.undoRedoPerformed += OnUndoRedo;
+            EditorApplication.projectChanged -= MarkLibraryDirty;
+            EditorApplication.projectChanged += MarkLibraryDirty;
         }
 
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedo;
+            EditorApplication.projectChanged -= MarkLibraryDirty;
             ReleaseSerializedObject();
+        }
+
+        private void MarkLibraryDirty()
+        {
+            _libraryDirty = true;
         }
 
         private void OnFocus()
         {
-            if (rootVisualElement.childCount > 0)
+            if (rootVisualElement.childCount == 0)
+            {
+                return;
+            }
+
+            if (_libraryDirty || HasDestroyedLibraryEntries())
             {
                 RefreshLibrary();
+                return;
             }
+
+            RefreshValidationAndLibrary();
+            if (IsBoardStale())
+            {
+                RebuildCenter();
+            }
+        }
+
+        private bool IsBoardStale()
+        {
+            return _selected != null &&
+                   !string.Equals(CaptureBoardSnapshot(), _boardSnapshot, StringComparison.Ordinal);
+        }
+
+        private string CaptureBoardSnapshot()
+        {
+            return _selected != null ? EditorJsonUtility.ToJson(_selected) : null;
+        }
+
+        private bool HasDestroyedLibraryEntries()
+        {
+            for (int i = 0; i < _abilities.Count; i++)
+            {
+                if (_abilities[i] == null)
+                {
+                    return true;
+                }
+            }
+
+            for (int i = 0; i < _modifiers.Count; i++)
+            {
+                if (_modifiers[i] == null)
+                {
+                    return true;
+                }
+            }
+
+            return _selected == null && !ReferenceEquals(_selected, null);
         }
 
         public void CreateGUI()
@@ -176,6 +242,7 @@ namespace Neo.Abilities.Editor
 
         private void RefreshLibrary()
         {
+            _libraryDirty = false;
             _abilities.Clear();
             _modifiers.Clear();
 
@@ -356,6 +423,7 @@ namespace Neo.Abilities.Editor
             }
 
             _centerPane.Clear();
+            _boardSnapshot = CaptureBoardSnapshot();
 
             if (_selected == null)
             {
@@ -489,6 +557,9 @@ namespace Neo.Abilities.Editor
                 card.AddToClassList(opClass);
                 opLabel.text = string.IsNullOrEmpty(node.OpId) ? "op?" : node.OpId;
                 summary.text = AbilityDesignerUI.NodeSummary(node);
+                // WHY: the card was updated in place, so the board matches the asset again; without this the
+                // next focus would rebuild the board and collapse the foldout being edited.
+                _boardSnapshot = CaptureBoardSnapshot();
                 RefreshValidationAndLibrary();
             });
             card.Add(foldout);

@@ -1,6 +1,11 @@
 ﻿# IState
 
-**Purpose:** Contract for state machine states. Defines five lifecycle methods: enter, update (three variants), exit. All concrete states must implement this interface.
+**What it is:** the contract for state machine states: five lifecycle methods (enter, three update variants, exit). Path: `Scripts/StateMachine/IState.cs`, namespace `Neo.StateMachine`. `StateData` implements it for NoCode states.
+
+**How to use:**
+1. Implement `IState` in a plain C# class (leave unused hooks empty).
+2. Enter it with `stateMachine.ChangeState(new PatrolState(...))`, `ChangeState<T>()` (parameterless constructor, cached instance) or as a transition target type.
+3. For a scene object, host the machine in `StateMachineBehaviourBase` / `StateMachineBehaviour<TState>`, which drive `OnUpdate` / `OnFixedUpdate` / `OnLateUpdate`.
 
 ---
 

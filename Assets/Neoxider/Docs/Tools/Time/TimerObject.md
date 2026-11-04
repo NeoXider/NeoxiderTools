@@ -1,6 +1,13 @@
 ﻿# TimerObject
 
-**Purpose:** A highly versatile timer for cooldowns, buffs, level timers, or day/night cycles. Supports state persistence (`SaveProvider`), unscaled time, automatic UI updates, and firing events at various progression stages.
+**What it is:** A MonoBehaviour timer (`Scripts/Tools/Time/TimerObject.cs`, namespace `Neo.Tools`) for cooldowns, buffs, level timers and day/night cycles, with state persistence (`SaveProvider`), unscaled time, automatic `Image`/TMP display, milestones and UnityEvents. It can also be driven entirely from code through `Tick(deltaTime)`.
+
+**How to use:**
+1. Add **Neoxider > Tools > TimerObject** and set **Duration**, **Count Up** and **Auto Start**.
+2. Optionally assign a filled `Image` (**Progress Image**) and a TMP label (**Time Text**) with a **Time Format** such as `{0:F1}s`.
+3. Wire `OnTimerCompleted` and the other events, or call `Play()` / `Pause()` / `Stop()` from buttons or C#.
+
+---
 
 ## Fields (Inspector)
 
@@ -10,9 +17,11 @@
 | **Count Up** | Count time from 0 to `Duration` (True) or from `Duration` to 0 (False). |
 | **Use Unscaled Time** | Ignore game pauses (`Time.timeScale`). |
 | **Looping** / **Infinite** | Restart the timer automatically when completed, or count infinitely. |
+| **Carry Loop Overshoot** | Looping only, off by default. Starts the next cycle with the time the completing tick ran past the end, so the long-run period matches elapsed time. Whole cycles skipped by one long tick are dropped. Also `CarryLoopOvershoot` in C#. |
 | **Random Duration** | Randomize the duration between a min/max range on every start. |
 | **Auto Start** | Automatically begin counting on `OnEnable`. |
 | **Progress Image** | Reference to a UI `Image`. The timer will automatically update its `fillAmount` (No-Code). |
+| **Time Text** / **Time Format** | Optional `TMP_Text` and a .NET composite format: `{0}` = time, `{1}` = progress (0–1), `{2}` = percent. Assign the label explicitly: it is never auto-found, so a label on the same GameObject that [TimeToText](TimeFormatting.md) or your code drives is left alone. Day cycles use **Day Time Format** with `{0}` hours, `{1}` minutes, `{2}` seconds. The label is updated without per-frame string allocation and only when its text changes. An invalid format (for example `{3}` or `{time}`) shows `{0:F1}s` (day cycles: `{0:00}:{1:00}`) instead of throwing; a gated `NeoDiagnostics` warning reports it once. |
 | **Save Progress** | Persist timer state. Can save "seconds" (pauses while game is closed) or "real time" (timer continues running while game is closed). |
 
 ## API
@@ -32,6 +41,8 @@
 | `float Progress { get; }` | Returns the current progress from 0.0 to 1.0. |
 | `float CurrentTime { get; }` | Returns the current time value in seconds. |
 | `ReactivePropertyFloat Time` / `float TimeValue` | Reactive/public current seconds; `Time.AddListener(...)` subscribes from C#. |
+| `IFrameClock FrameClock { get; set; }` | Frame time source for `Update` and the `pauseOnTimeScaleZero` check. Defaults to `UnityFrameClock.Instance`; `null` restores it. See [Clocks](Clocks.md). |
+| `INeoClock UtcClock { get; set; }` | UTC source of the default `GetUtcNow()` used by RealTime persistence; `null` means device UTC. |
 
 ## Unity Events
 
@@ -44,6 +55,8 @@
 | `OnMilestoneReached` | `float progress` | Fired once per threshold per run. `Play`/`Reset` rearms milestones; resizing the threshold array rearms the new configuration. |
 
 Completion handlers can call `Stop()` or `Play()` even when looping: the automatic loop restart respects that choice. Initialize optional UnityEvents before subscribing when adding components from code, for example `timer.OnTimerCompleted ??= new UnityEvent();`.
+
+By default a looping cycle restarts at its start value; with **Carry Loop Overshoot** it starts with the time by which the previous cycle's last tick overshot its end, so the long-run period matches elapsed time. When one long tick spans several cycles, the skipped whole cycles are dropped: `OnTimerCompleted` fires once, the phase is kept, and the new cycle never starts already complete. Elapsed time is always accumulated with a double-precision residual, so day-length (86400 s) and infinite timers do not drift from float rounding of small frame deltas. The optional start pulse (**Enable Start Animation**) is owned by the timer: restarting or disabling it mid-pulse restores the original scale.
 
 Time commands called from a listener supersede the timer's outstanding notification batch. For example, a terminal progress listener calling `SetTime(5f)` on a ten-second timer publishes the new 50% value and suppresses the superseded 100% notification, UI update, and completion. This applies to `SetTime`, `SetProgress`, `SetDuration`, and `AddTime`, as well as restart/reset/stop continuations and day/infinite UI paths. The current UnityEvent invocation finishes its normal listener dispatch; subsequent work from the old timer state is abandoned when it returns. Setters do not start playback. Use the typed commands inside callbacks: direct writes to public serialized fields do not participate in this revision contract.
 
@@ -71,7 +84,7 @@ public void UseAbility()
 
 ### Custom clock and deterministic tests
 
-`Tick` is the supported entry point when Unity's frame clock is not the owner of time—for example in deterministic tests, replay playback, or a server simulation. Pass elapsed seconds in the timer's selected clock domain. `timeScale`, `updateInterval`, active state, and pause policy remain owned by `TimerObject`. Override `Update()` in a derived timer to suppress automatic ticking when supplying an external clock; calling both advances time twice. Non-positive, NaN, and infinite deltas are ignored. Other numeric configuration should be finite.
+Assign `timer.FrameClock = new ManualFrameClock(0.1f);` to keep the built-in `Update` but make every frame's delta deterministic. `Tick` is the supported entry point when Unity's frame clock is not the owner of time—for example in deterministic tests, replay playback, or a server simulation. Pass elapsed seconds in the timer's selected clock domain. `timeScale`, `updateInterval`, active state, and pause policy remain owned by `TimerObject`. Override `Update()` in a derived timer to suppress automatic ticking when supplying an external clock; calling both advances time twice. Non-positive, NaN, and infinite deltas are ignored. Other numeric configuration should be finite.
 
 ```csharp
 timer.Play();
@@ -129,4 +142,5 @@ public sealed class MatchTimer : TimerObject
 
 ## See Also
 - [GameTimeController](GameTimeController.md)
+- [Clocks](Clocks.md)
 - ← [Tools/Time](README.md)

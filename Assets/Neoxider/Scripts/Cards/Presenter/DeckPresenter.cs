@@ -14,6 +14,7 @@ namespace Neo.Cards
         private readonly List<CardPresenter> _activeCards = new();
         private readonly CardView _cardPrefab;
         private readonly DeckConfig _config;
+        private bool _showTrump;
 
         /// <summary>
         ///     Creates a deck presenter.
@@ -74,20 +75,9 @@ namespace Neo.Cards
         /// <param name="shuffle">Shuffle after build.</param>
         public void Initialize(bool shuffle = true)
         {
+            _showTrump = !_config.UseCustomDeck && _config.GameDeckType == DeckType.Standard36;
             Model.Initialize(_config.GenerateDeck(), shuffle);
-
-            if (!_config.UseCustomDeck && _config.GameDeckType == DeckType.Standard36)
-            {
-                CardData? trumpCard = Model.PeekBottom();
-                if (trumpCard.HasValue)
-                {
-                    View.ShowTopCard(trumpCard.Value);
-                }
-            }
-            else
-            {
-                View.HideTopCard();
-            }
+            RefreshTrump();
         }
 
         /// <summary>
@@ -235,6 +225,21 @@ namespace Neo.Cards
         private void HandleDeckChanged()
         {
             View.UpdateVisual(Model.RemainingCount);
+            // WHY: the trump is the bottom card; Shuffle, Reset and ReturnCard(toTop: false) change it too.
+            RefreshTrump();
+        }
+
+        private void RefreshTrump()
+        {
+            CardData? trumpCard = _showTrump ? Model.PeekBottom() : null;
+            if (trumpCard.HasValue)
+            {
+                View.ShowTopCard(trumpCard.Value);
+            }
+            else
+            {
+                View.HideTopCard();
+            }
         }
 
         private void HandleDeckEmpty()

@@ -95,6 +95,28 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void Box_ResetProgress_SavesZeroAndRaisesTheProgressEvents()
+        {
+            Box box = _root.AddComponent<Box>();
+            Image bar = NewChild("Progress").AddComponent<Image>();
+            SetField(box, "_bar", bar);
+            box.progress = box.MaxProgress;
+            List<bool> changed = new();
+            int notReached = 0;
+            box.OnChangeProgress.AddListener(changed.Add);
+            box.OnProgressNotReached.AddListener(() => notReached++);
+
+            box.ResetProgress();
+
+            Assert.That(box.progress, Is.Zero);
+            Assert.That(box.ProgressValue, Is.Zero);
+            Assert.That(SaveProvider.GetFloat("BoxPrizeprogress"), Is.Zero);
+            Assert.That(bar.fillAmount, Is.Zero);
+            Assert.That(changed, Is.EqualTo(new[] { false }));
+            Assert.That(notReached, Is.EqualTo(1));
+        }
+
+        [Test]
         public void Box_ReentrantCollectionCallback_ConsumesOnePrizeAndOneProgressThreshold()
         {
             Collection collection = NewCollection(NewItem(), NewItem());
@@ -119,7 +141,8 @@ namespace Neo.Editor.Tests
             Assert.That(box.progress, Is.EqualTo(box.MaxProgress));
             Assert.That(SaveProvider.GetFloat("BoxPrizeprogress"), Is.EqualTo(box.MaxProgress));
             Assert.That(taken, Is.EqualTo(1));
-            box.TakePrize(); // A later call is allowed after the first dispatch releases its guard.
+            // WHY: a later call is allowed after the first dispatch releases its guard.
+            box.TakePrize();
             Assert.That(collection.UnlockedCount, Is.EqualTo(2));
             Assert.That(box.progress, Is.Zero);
             Assert.That(taken, Is.EqualTo(2));
@@ -272,7 +295,8 @@ namespace Neo.Editor.Tests
                 if (nestedCredit)
                 {
                     box.AddProgress(5f);
-                    box.TakePrize(); // Still affordable; the active claim guard must reject it.
+                    // WHY: still affordable, so only the active claim guard can reject it.
+                    box.TakePrize();
                 }
             };
             SaveProvider.OnKeyChanged += observer;
@@ -292,7 +316,8 @@ namespace Neo.Editor.Tests
                     ? new[] { "progress", "progress", "item", "get", "take" }
                     : new[] { "progress", "item", "get", "take" }, notifications);
 
-                box.ChangeProgress(2f); // A later independent command must still publish normally.
+                // WHY: a later independent command must still publish normally.
+                box.ChangeProgress(2f);
                 Assert.That(box.progress, Is.EqualTo(expected + 2f));
                 Assert.That(SaveProvider.GetFloat("BoxPrizeprogress"), Is.EqualTo(expected + 2f));
                 Assert.That(box.ProgressValue, Is.EqualTo(expected + 2f));
@@ -400,7 +425,8 @@ namespace Neo.Editor.Tests
                 Assert.That(changedKeys, Is.Empty);
                 Assert.That(notifications, Is.Empty);
 
-                SetField(box, "_maxProgress", 5f); // Same usable collection; rounded positive cost is admissible.
+                // WHY: same usable collection; a rounded positive cost is admissible.
+                SetField(box, "_maxProgress", 5f);
                 Assert.That(box.CheckProgress, Is.True);
                 box.TakePrize();
                 CollectionAssert.AreEqual(new[] { 0 }, collection.GetUnlockedIds());
@@ -504,13 +530,14 @@ namespace Neo.Editor.Tests
             CollectionVisualManager manager = _root.AddComponent<CollectionVisualManager>();
             ItemCollection item = NewChild("Item").AddComponent<ItemCollection>();
             ItemCollection outside = NewChild("Outside").AddComponent<ItemCollection>();
-            SetField(manager, "_items", new[] { item });
+            manager.SetItems(new[] { item });
             manager.OnSetItem = new UnityEvent<int>();
             int selected = -1;
             int selections = 0;
             manager.OnSetItem.AddListener(id => { selected = id; selections++; });
 
-            manager.SetItem(0); // An unlock-gated view without a Collection cannot select.
+            // WHY: an unlock-gated view without a Collection cannot select.
+            manager.SetItem(0);
             Assert.That(selections, Is.Zero);
             manager.EnableSetItem = false;
             manager.SetItem(-1);

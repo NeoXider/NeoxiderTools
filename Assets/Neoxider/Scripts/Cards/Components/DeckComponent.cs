@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -21,6 +20,13 @@ namespace Neo.Cards
 
         [SerializeField] private bool _initializeOnStart = true;
         [SerializeField] private bool _shuffleOnStart = true;
+
+        [Tooltip("Use a fixed seed so every Initialize/Reset produces the same deck order (replays, tutorials, tests).")]
+        [SerializeField]
+        private bool _useFixedShuffleSeed;
+
+        [Tooltip("Seed used when 'Use Fixed Shuffle Seed' is enabled.")] [SerializeField]
+        private int _shuffleSeed;
 
         [Header("Visual")] [SerializeField] private Transform _spawnPoint;
 
@@ -90,6 +96,8 @@ namespace Neo.Cards
         public UnityEvent<CardComponent, HandComponent> OnCardDealt;
 
         private readonly List<CardComponent> _activeCards = new();
+        private readonly List<Vector3> _stackLayoutPositions = new();
+        private readonly List<Quaternion> _stackLayoutRotations = new();
 
         private CancellationToken _ct;
         private CancellationTokenSource _sourceCancellation;
@@ -141,12 +149,34 @@ namespace Neo.Cards
         public CardAnimationConfig AnimationConfig => _animationConfig;
 
         /// <summary>
+        ///     When true, <see cref="Initialize" /> and <see cref="Reset" /> shuffle with <see cref="ShuffleSeed" />,
+        ///     so the deck order is reproducible. Takes effect on the next Initialize/Reset.
+        /// </summary>
+        public bool UseFixedShuffleSeed
+        {
+            get => _useFixedShuffleSeed;
+            set => _useFixedShuffleSeed = value;
+        }
+
+        /// <summary>
+        ///     Seed used when <see cref="UseFixedShuffleSeed" /> is enabled.
+        /// </summary>
+        public int ShuffleSeed
+        {
+            get => _shuffleSeed;
+            set => _shuffleSeed = value;
+        }
+
+        /// <summary>
         ///     Resets the deck.
         /// </summary>
         [Button]
         public void Reset()
         {
             InvalidateDeals();
+            // WHY: the stack visualizes the old composition; leaving destroyed members on the board made the
+            // next deals pop stale entries and return null.
+            bool clearedStack = ClearVisualStack();
             foreach (CardComponent card in _activeCards)
             {
                 if (card != null)
@@ -157,7 +187,20 @@ namespace Neo.Cards
 
             _activeCards.Clear();
 
-            Model?.Reset(_shuffleOnStart);
+            if (Model != null)
+            {
+                if (_useFixedShuffleSeed)
+                {
+                    Model.ShuffleRandom = CreateShuffleRandom();
+                }
+
+                Model.Reset(_shuffleOnStart);
+            }
+
+            if (clearedStack)
+            {
+                OnVisualStackChanged?.Invoke();
+            }
         }
 
         private void Awake()
@@ -187,6 +230,7 @@ namespace Neo.Cards
             if (Model != null)
             {
                 Model.OnDeckEmpty -= HandleDeckEmpty;
+                Model.OnDeckChanged -= HandleDeckChanged;
             }
         }
 
@@ -205,10 +249,13 @@ namespace Neo.Cards
             if (Model != null)
             {
                 Model.OnDeckEmpty -= HandleDeckEmpty;
+                Model.OnDeckChanged -= HandleDeckChanged;
             }
 
-            Model = new DeckModel();
+            bool clearedStack = !_spawnVisualOnInitialize && ClearVisualStack();
+            Model = new DeckModel(CreateShuffleRandom());
             Model.OnDeckEmpty += HandleDeckEmpty;
+            Model.OnDeckChanged += HandleDeckChanged;
             Model.Initialize(_config.GenerateDeck(), _shuffleOnStart);
 
             UpdateTrumpDisplay();
@@ -219,6 +266,43 @@ namespace Neo.Cards
             {
                 BuildVisualStackAsync().SuppressCancellationThrow().Forget();
             }
+            else if (clearedStack)
+            {
+                OnVisualStackChanged?.Invoke();
+            }
+        }
+
+        /// <summary>
+        ///     Creates the random source for a new deck model. Override to share a game-wide random source or to
+        ///     plug in custom seeding; the default honours <see cref="UseFixedShuffleSeed" />.
+        /// </summary>
+        /// <returns>Random source used for shuffling.</returns>
+        protected virtual System.Random CreateShuffleRandom()
+        {
+            return _useFixedShuffleSeed ? new System.Random(_shuffleSeed) : new System.Random();
+        }
+
+        private bool ClearVisualStack()
+        {
+            if (_visualStackBoard == null || _visualStackBoard.Count == 0)
+            {
+                return false;
+            }
+
+            IReadOnlyList<CardComponent> stackCards = _visualStackBoard.Cards;
+            for (int i = 0; i < stackCards.Count; i++)
+            {
+                _activeCards.Remove(stackCards[i]);
+            }
+
+            _visualStackBoard.Clear();
+            return true;
+        }
+
+        private void HandleDeckChanged()
+        {
+            // WHY: the trump is the bottom card; Shuffle, Reset and ReturnCard(toTop: false) change it too.
+            UpdateTrumpDisplay();
         }
 
         private void InvalidateDeals()
@@ -238,12 +322,15 @@ namespace Neo.Cards
 
             CardData? trump = TrumpCard;
             bool visible = _showTrumpCard && trump.HasValue;
-            if (visible)
+            if (visible && (!_trumpCardDisplay.IsFaceUp || !_trumpCardDisplay.Data.Equals(trump.Value)))
             {
                 _trumpCardDisplay.SetData(trump.Value);
             }
 
-            _trumpCardDisplay.gameObject.SetActive(visible);
+            if (_trumpCardDisplay.gameObject.activeSelf != visible)
+            {
+                _trumpCardDisplay.gameObject.SetActive(visible);
+            }
         }
 
         /// <summary>
@@ -269,7 +356,25 @@ namespace Neo.Cards
         ///     Builds the visual card stack on the assigned BoardComponent.
         ///     Cards come from the current DeckModel order without reordering.
         /// </summary>
-        public async UniTask BuildVisualStackAsync()
+        /// <remarks>
+        ///     The stack is created and placed synchronously with one board layout pass
+        ///     (<see cref="BoardComponent.PlaceCardsImmediate" />), so the stack board's <c>OnCardPlaced</c> events
+        ///     arrive after the whole stack is on the board. The returned task is already complete.
+        /// </remarks>
+        public UniTask BuildVisualStackAsync()
+        {
+            try
+            {
+                BuildVisualStackNow();
+                return UniTask.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return UniTask.FromException(exception);
+            }
+        }
+
+        private void BuildVisualStackNow()
         {
             if (_visualStackBoard == null || _cardPrefab == null || Model == null)
             {
@@ -282,17 +387,27 @@ namespace Neo.Cards
             sourceBoard.Clear();
             if (!IsVisualStackSourceCurrent(generation, sourceModel, sourceBoard)) return;
             int modelRevision = sourceModel.Revision;
-            CardData[] sourceCards = new List<CardData>(sourceModel.Cards).ToArray();
+            IReadOnlyList<CardData> modelCards = sourceModel.Cards;
+            CardData[] sourceCards = new CardData[modelCards.Count];
+            for (int i = 0; i < sourceCards.Length; i++)
+            {
+                sourceCards[i] = modelCards[i];
+            }
+
             bool IsCurrent() => IsVisualStackSourceCurrent(generation, sourceModel, sourceBoard) &&
                                 sourceModel.Revision == modelRevision;
             _activeCards.RemoveAll(card => card == null);
 
+            // WHY: the stack is placed in one batch, so the board runs one layout pass for the whole deck instead
+            // of one pass per card (O(n) instead of O(n^2) transform writes).
+            List<CardComponent> created = new(sourceCards.Length);
             foreach (CardData cardData in sourceCards)
             {
                 CardComponent card = InstantiateCardAtSpawnPoint();
                 if (!IsCurrent() || card == null)
                 {
                     if (card != null) Destroy(card.gameObject);
+                    DiscardUnplacedStackCards(created);
                     return;
                 }
                 card.Config = _config;
@@ -300,13 +415,16 @@ namespace Neo.Cards
                 if (!IsCurrent() || card == null)
                 {
                     if (card != null) Destroy(card.gameObject);
+                    DiscardUnplacedStackCards(created);
                     return;
                 }
                 card.SetDeckCleanupOwner(this);
                 _activeCards.Add(card);
-                await sourceBoard.PlaceCardAsync(card, false, false);
-                if (!IsCurrent()) return;
+                created.Add(card);
             }
+
+            sourceBoard.PlaceCardsImmediate(created, false);
+            if (!IsCurrent()) return;
 
             ApplyVisualLayout(sourceBoard.Cards);
             if (!IsCurrent()) return;
@@ -319,6 +437,22 @@ namespace Neo.Cards
         {
             return this != null && generation == _sourceGeneration && ReferenceEquals(Model, sourceModel) &&
                    sourceBoard != null && ReferenceEquals(_visualStackBoard, sourceBoard);
+        }
+
+        /// <summary>
+        ///     Destroys stack cards an aborted build created but never placed. Cards a reset already destroyed, or a
+        ///     callback handed to another owner, are no longer tracked here and are left alone.
+        /// </summary>
+        private void DiscardUnplacedStackCards(List<CardComponent> created)
+        {
+            for (int i = 0; i < created.Count; i++)
+            {
+                CardComponent card = created[i];
+                if (card != null && _activeCards.Remove(card))
+                {
+                    Destroy(card.gameObject);
+                }
+            }
         }
 
         /// <summary>
@@ -343,39 +477,57 @@ namespace Neo.Cards
                 return;
             }
 
+            int generation = _sourceGeneration;
+            CancellationToken sourceToken = _sourceCancellation?.Token ?? _ct;
             OnShuffleVisualStarted?.Invoke(type);
             Model.Shuffle();
             OnShuffled?.Invoke();
 
-            if (_visualStackBoard != null && _visualStackBoard.Cards.Count > 0)
+            BoardComponent stack = _visualStackBoard;
+            if (stack != null && stack.Cards.Count > 0 && generation == _sourceGeneration)
             {
-                List<CardComponent> all = _visualStackBoard.ClearAndReturn();
+                List<CardComponent> all = stack.ClearAndReturn();
                 List<CardComponent> reordered = ReorderByModel(all);
-                foreach (CardComponent card in reordered)
+                stack.PlaceCardsImmediate(reordered, false);
+                if (generation != _sourceGeneration)
                 {
-                    await _visualStackBoard.PlaceCardAsync(card, false, false);
+                    return;
                 }
 
-                ApplyVisualLayout(_visualStackBoard.Cards);
+                ApplyVisualLayout(stack.Cards);
 
-                switch (type)
+                try
                 {
-                    case ShuffleVisualType.Shake:
-                        await PlayShakeAnimation(duration ??
-                                                 (_animationConfig != null ? _animationConfig.ShakeDuration : 1f));
-                        break;
-                    case ShuffleVisualType.Cut:
-                        await UniTask.Delay(
-                            (int)((duration ?? (_animationConfig != null ? _animationConfig.CutDuration : 0.8f)) *
-                                  1000f), cancellationToken: _ct);
-                        break;
-                    case ShuffleVisualType.Riffle:
-                        await UniTask.Delay((int)((duration ??
-                                                   (_animationConfig != null
-                                                       ? _animationConfig.RiffleDuration
-                                                       : 1.2f)) * 1000f), cancellationToken: _ct);
-                        break;
+                    switch (type)
+                    {
+                        case ShuffleVisualType.Shake:
+                            await PlayShakeAnimation(duration ??
+                                                     (_animationConfig != null ? _animationConfig.ShakeDuration : 1f),
+                                sourceToken);
+                            break;
+                        case ShuffleVisualType.Cut:
+                            await UniTask.Delay(
+                                ToMilliseconds(duration ?? (_animationConfig != null ? _animationConfig.CutDuration : 0.8f)),
+                                cancellationToken: sourceToken);
+                            break;
+                        case ShuffleVisualType.Riffle:
+                            await UniTask.Delay(
+                                ToMilliseconds(duration ??
+                                               (_animationConfig != null ? _animationConfig.RiffleDuration : 1.2f)),
+                                cancellationToken: sourceToken);
+                            break;
+                    }
                 }
+                catch (OperationCanceledException) when (sourceToken.IsCancellationRequested)
+                {
+                    // WHY: Reset/Initialize/destroy replaced the deck; the old shuffle must not report completion.
+                    return;
+                }
+            }
+
+            if (generation != _sourceGeneration)
+            {
+                return;
             }
 
             OnShuffleVisualCompleted?.Invoke();
@@ -420,6 +572,13 @@ namespace Neo.Cards
                     card = stack.Cards[stack.Count - 1];
                     stack.RemoveCard(card);
                     drawnData = source.Draw();
+                    if (card != null && drawnData.HasValue && !card.Data.Equals(drawnData.Value))
+                    {
+                        // WHY: the model is the source of truth; a model-only Shuffle/ReturnCard may have reordered
+                        // it under the visual stack, and the dealt card must carry the data that left the model.
+                        card.SetData(drawnData.Value, faceUp);
+                    }
+
                     if (card != null)
                     {
                         card.IsFaceUp = faceUp;
@@ -451,13 +610,13 @@ namespace Neo.Cards
                     return null;
                 }
 
-                // A draw observer may already have admitted this exact card to the requested hand.
-                accepted = hand.Cards.Contains(card);
+                // WHY: a draw observer may already have admitted this exact card to the requested hand.
+                accepted = hand.Contains(card);
                 if (!accepted)
                 {
-                    // Admission is synchronous before this task's first animation await.
+                    // WHY: admission is synchronous before this task's first animation await.
                     UniTask<bool> admission = hand.TryAddCardAsync(card);
-                    accepted = hand.Cards.Contains(card);
+                    accepted = hand.Contains(card);
                     accepted = await admission;
                 }
 
@@ -485,7 +644,7 @@ namespace Neo.Cards
             }
             finally
             {
-                // Hand admission releases cleanup ownership before any model/component observer can reset us.
+                // WHY: hand admission releases cleanup ownership before any model/component observer can reset us.
                 bool transferred = card != null && !card.IsDeckCleanupOwnedBy(this);
                 if (!accepted && !transferred)
                 {
@@ -637,6 +796,9 @@ namespace Neo.Cards
                 return;
             }
 
+            // WHY: the card is destroyed below; a hand or board that still lists it would keep a dead member
+            // (wrong Count, gaps in layout, model/view mismatch).
+            DetachFromContainer(card);
             _activeCards.Remove(card);
 
             if (toTop)
@@ -649,6 +811,24 @@ namespace Neo.Cards
             }
 
             Destroy(card.gameObject);
+        }
+
+        private static void DetachFromContainer(CardComponent card)
+        {
+            Transform parent = card.transform.parent;
+            if (parent == null)
+            {
+                return;
+            }
+
+            if (parent.TryGetComponent(out HandComponent hand))
+            {
+                hand.RemoveCard(card);
+            }
+            else if (parent.TryGetComponent(out BoardComponent board))
+            {
+                board.RemoveCard(card);
+            }
         }
 
         private void HandleDeckEmpty()
@@ -686,15 +866,26 @@ namespace Neo.Cards
             }
 
             List<CardComponent> ordered = new(cards.Count);
-            foreach (CardData data in Model.Cards)
+            HashSet<CardComponent> placed = new();
+            IReadOnlyList<CardData> modelCards = Model.Cards;
+            for (int i = 0; i < modelCards.Count; i++)
             {
-                if (map.TryGetValue(data, out Queue<CardComponent> queue) && queue.Count > 0)
+                if (map.TryGetValue(modelCards[i], out Queue<CardComponent> queue) && queue.Count > 0)
                 {
-                    ordered.Add(queue.Dequeue());
+                    CardComponent card = queue.Dequeue();
+                    ordered.Add(card);
+                    placed.Add(card);
                 }
             }
 
-            ordered.AddRange(cards.Where(card => card != null && !ordered.Contains(card)));
+            foreach (CardComponent card in cards)
+            {
+                if (card != null && placed.Add(card))
+                {
+                    ordered.Add(card);
+                }
+            }
+
             return ordered;
         }
 
@@ -712,9 +903,10 @@ namespace Neo.Cards
             settings.RotationJitter =
                 _animationConfig != null ? _animationConfig.StackRotationJitter : _stackRotationJitter;
 
-            List<Vector3> positions = CardLayoutCalculator.CalculatePositions(_visualLayoutType, cards.Count, settings);
-            List<Quaternion> rotations =
-                CardLayoutCalculator.CalculateRotations(_visualLayoutType, cards.Count, settings);
+            CardLayoutCalculator.CalculatePositions(_visualLayoutType, cards.Count, settings, _stackLayoutPositions);
+            CardLayoutCalculator.CalculateRotations(_visualLayoutType, cards.Count, settings, _stackLayoutRotations);
+            List<Vector3> positions = _stackLayoutPositions;
+            List<Quaternion> rotations = _stackLayoutRotations;
 
             for (int i = 0; i < cards.Count; i++)
             {
@@ -735,9 +927,10 @@ namespace Neo.Cards
             }
         }
 
-        private async UniTask PlayShakeAnimation(float duration)
+        private async UniTask PlayShakeAnimation(float duration, CancellationToken cancellation)
         {
-            if (_visualStackBoard == null || _visualStackBoard.Cards.Count == 0)
+            BoardComponent stack = _visualStackBoard;
+            if (stack == null || stack.Cards.Count == 0)
             {
                 return;
             }
@@ -745,9 +938,21 @@ namespace Neo.Cards
             int frames = _animationConfig != null ? _animationConfig.ShakeFrames : 20;
             float intensity = _animationConfig != null ? _animationConfig.ShakeIntensity : 0.12f;
 
-            List<CardComponent> cards = _visualStackBoard.Cards.ToList();
-            List<Vector3> basePositions =
-                cards.Select(card => card != null ? card.transform.localPosition : Vector3.zero).ToList();
+            IReadOnlyList<CardComponent> stackCards = stack.Cards;
+            int count = stackCards.Count;
+            CardComponent[] cards = new CardComponent[count];
+            Transform[] parents = new Transform[count];
+            Vector3[] basePositions = new Vector3[count];
+            for (int i = 0; i < count; i++)
+            {
+                CardComponent card = stackCards[i];
+                cards[i] = card;
+                if (card != null)
+                {
+                    parents[i] = card.transform.parent;
+                    basePositions[i] = card.transform.localPosition;
+                }
+            }
 
             for (int i = 0; i < frames; i++)
             {
@@ -756,24 +961,37 @@ namespace Neo.Cards
                     Random.Range(-intensity * 0.4f, intensity * 0.4f),
                     Random.Range(-intensity, intensity));
 
-                for (int index = 0; index < cards.Count; index++)
+                for (int index = 0; index < count; index++)
                 {
-                    if (cards[index] != null)
+                    if (IsStillShaken(cards[index], parents[index]))
                     {
                         cards[index].transform.localPosition = basePositions[index] + offset;
                     }
                 }
 
-                await UniTask.Delay((int)(duration * 1000f / frames), cancellationToken: _ct);
+                await UniTask.Delay(ToMilliseconds(duration / frames), cancellationToken: cancellation);
             }
 
-            for (int i = 0; i < cards.Count; i++)
+            for (int i = 0; i < count; i++)
             {
-                if (cards[i] != null)
+                if (IsStillShaken(cards[i], parents[i]))
                 {
                     cards[i].transform.localPosition = basePositions[i];
                 }
             }
+        }
+
+        // WHY: UniTask.Delay throws for negative delays; a negative inspector/caller duration means "no wait".
+        private static int ToMilliseconds(float seconds)
+        {
+            return (int)(Mathf.Max(0f, seconds) * 1000f);
+        }
+
+        // WHY: a card dealt during the shake is reparented to its hand; writing stack-local offsets to it would
+        // teleport it away from the deal tween.
+        private static bool IsStillShaken(CardComponent card, Transform stackParent)
+        {
+            return card != null && card.transform.parent == stackParent;
         }
     }
 }

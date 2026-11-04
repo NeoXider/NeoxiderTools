@@ -1,16 +1,17 @@
 ﻿# PhysicsEvents2D
 
-`PhysicsEvents2D` forwards Unity 2D physics messages (`OnTriggerEnter2D`, `OnCollisionEnter2D`, etc.) into
+**What it is:** `PhysicsEvents2D` forwards Unity 2D physics messages (`OnTriggerEnter2D`, `OnCollisionEnter2D`, etc.) into
 UnityEvents and typed C# events. Supports layer/tag filters and optional Mirror replication. File:
 `Assets/Neoxider/Scripts/Tools/InteractableObject/PhysicsEvents2D.cs`, namespace: `Neo.Tools`.
 
-## Typical use
-
+**How to use:**
 1. Add `PhysicsEvents2D` to a GameObject with a `Collider2D`.
 2. For trigger events: enable `Is Trigger` on the collider.
 3. Ensure at least one participant has a `Rigidbody2D`, and that body types/layers permit the interaction.
 4. Enable `filterByLayer` / `filterByTag` and configure the corresponding filter values as needed.
 5. Subscribe to the desired events in the Inspector.
+
+---
 
 ## Main fields
 

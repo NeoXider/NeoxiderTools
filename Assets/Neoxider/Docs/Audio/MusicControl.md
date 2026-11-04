@@ -1,19 +1,20 @@
 # MusicControl
 
-**Purpose:** Drives [AM](AM.md)'s music from the inspector, with no code. Start a music pool by id when the
+**What it is:** a component that drives [AM](AM.md)'s music from the inspector, with no code. Start a music pool by id when the
 object is enabled or from a UnityEvent, move to another track of the current pool, or stop the music.
 
 Every public method takes zero or one argument, so all of them appear in a UnityEvent dropdown - a button,
 a trigger volume or a state machine can drive the soundtrack directly.
 
-## Setup
-
+**How to use:**
 1. Configure the music pools on `AM` first: one entry per soundtrack, each with an **id** (`menu`,
    `gameplay`, `boss`) and its clips.
 2. Add `Add Component > Neoxider > Audio > MusicControl` to whatever owns that music - the screen root, the
    boss arena, the wave controller.
 3. Pick the **Pool Id** from the dropdown. It lists the ids actually configured on `AM`, so a typo is not
    possible.
+
+---
 
 ## Key Fields (Inspector)
 

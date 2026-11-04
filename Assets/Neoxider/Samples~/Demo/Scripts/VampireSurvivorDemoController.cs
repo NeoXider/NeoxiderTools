@@ -3,25 +3,49 @@ using System.Collections.Generic;
 using Neo.NPC;
 using Neo.Rpg;
 using Neo.Rpg.Components;
-using Neo.Samples.Survivor;
+using Neo.Samples;
 using Neo.Tools;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Neo.Rpg.Demo
 {
+    /// <summary>
+    ///     Run controller of the first-person Vampire Survivor demo (VampireSurvivorMCP.unity): starts the scene
+    ///     <see cref="Spawner" />s, points every spawned enemy at the player and tracks it in the
+    ///     <see cref="RpgWorldHealthBars" />, counts kills and handles the player's death. An enemy is configured once
+    ///     per life: on its <see cref="Spawner.OnObjectSpawned" /> event, or when the fallback scene search first sees
+    ///     it (hand-placed enemies, or one enabled again after it died or was disabled). While it feeds the bars it
+    ///     turns their own tag search off. Enemy death (deactivation) is the job of the RpgDeathHandler authored on the
+    ///     enemy prefabs. The HUD (status card, buttons, log feed, death overlay, health-bar canvas) is authored by the
+    ///     VampireSurvivorDemoBuilder; buttons call the public methods below through persistent UnityEvents and this
+    ///     component only refreshes the authored labels. It builds no UI at runtime.
+    /// </summary>
     [AddComponentMenu("Neoxider/Samples/Vampire Survivor Demo Controller")]
     public sealed class VampireSurvivorDemoController : MonoBehaviour
     {
+        private const float HudRefreshInterval = 0.1f;
+        private const string EnemyTag = "Enemy";
+
         [Header("Scene References")]
         [SerializeField] private RpgCharacter _player;
         [SerializeField] private Spawner[] _spawners = Array.Empty<Spawner>();
 
+        [Tooltip("Enemy health bars. Falls back to the component on this GameObject.")]
+        [SerializeField] private RpgWorldHealthBars _healthBars;
+
+        [Tooltip("Track every configured enemy in the health bars. When the bars search for the same 'Enemy' tag and " +
+                 "Configure Spawned Enemies is on, their own scene search is turned off at Awake, since the enemy " +
+                 "search of this controller already finds those characters.")]
+        [SerializeField] private bool _feedHealthBars = true;
+
         [Header("Run Settings")]
         [SerializeField] private bool _startSpawnersOnPlay = true;
         [SerializeField] private bool _configureSpawnedEnemies = true;
+
+        [Tooltip("Interval of the fallback scene search for 'Enemy' characters no wired Spawner reported. Enemies " +
+                 "configured in their current life are skipped.")]
         [SerializeField] [Min(0.1f)] private float _scanInterval = 0.5f;
         [SerializeField] [Min(1)] private int _enemyContactDamage = 12;
         [SerializeField] private bool _fallbackCloseRangeDamage = true;
@@ -29,7 +53,25 @@ namespace Neo.Rpg.Demo
         [SerializeField] [Min(0.1f)] private float _fallbackDamageInterval = 0.8f;
         [SerializeField] private bool _disablePlayerControlOnDeath = true;
 
+        [Header("Authored HUD")]
+        [Tooltip("Fill of the player health bar; width and color follow the health fraction.")]
+        [SerializeField] private Image _hpFill;
+
+        [SerializeField] private TMP_Text _playerValue;
+        [SerializeField] private TMP_Text _enemiesValue;
+        [SerializeField] private TMP_Text _spawnersValue;
+
+        [Tooltip("Shown while the player is dead.")]
+        [SerializeField] private GameObject _deathOverlay;
+
+        [Tooltip("Event feed; every run event is logged here.")]
+        [SerializeField] private DemoLogFeed _log;
+
+        [SerializeField] private Color _healthFull = new(0.26f, 0.85f, 0.64f);
+        [SerializeField] private Color _healthEmpty = new(1f, 0.36f, 0.48f);
+
         private readonly HashSet<RpgCharacter> _trackedEnemies = new();
+        private readonly HashSet<RpgCharacter> _configuredEnemies = new();
         private readonly Dictionary<RpgCharacter, UnityEngine.Events.UnityAction> _enemyDeathListeners = new();
         private readonly List<Behaviour> _disabledOnDeath = new();
 
@@ -39,15 +81,9 @@ namespace Neo.Rpg.Demo
         private int _killCount;
         private bool _playerDead;
         private string _lastEvent = "Ready";
-
-        private Canvas _hudCanvas;
-        private TMP_Text _playerText;
-        private Image _hpFill;
-        private TMP_Text _statsText;
-        private TMP_Text _spawnerText;
-        private TMP_Text _eventText;
-        private GameObject _deathOverlay;
         private float _nextHudRefreshTime;
+        private bool _warnedUnbuilt;
+        private bool _warnedMissingDeathHandler;
 
         public RpgCharacter Player => _player;
         public int SpawnedCount => _spawnedCount;
@@ -56,13 +92,23 @@ namespace Neo.Rpg.Demo
         public bool PlayerDead => _playerDead || (_player != null && _player.IsDead);
         public string LastEvent => _lastEvent;
 
+        /// <summary>True when the builder assigned the authored HUD references.</summary>
+        public bool IsHudBuilt => _hpFill != null && _playerValue != null && _enemiesValue != null &&
+                                  _spawnersValue != null && _deathOverlay != null;
+
         private void Awake()
         {
             AutoResolve();
+            ClaimHealthBarFeed();
         }
 
         private void Start()
         {
+            if (!IsHudBuilt)
+            {
+                WarnUnbuilt();
+            }
+
             RegisterPlayer();
             RegisterSpawners();
             ScanEnemies();
@@ -72,7 +118,7 @@ namespace Neo.Rpg.Demo
                 StartSpawners();
             }
 
-            BuildHud();
+            RefreshHud(true);
         }
 
         private void OnDestroy()
@@ -117,9 +163,10 @@ namespace Neo.Rpg.Demo
                 _nextFallbackDamageTime = Time.time + _fallbackDamageInterval;
             }
 
-            RefreshHud();
+            RefreshHud(false);
         }
 
+        /// <summary>Scene-search fallback for references the builder did not assign.</summary>
         [Button]
         public void AutoResolve()
         {
@@ -150,8 +197,14 @@ namespace Neo.Rpg.Demo
             {
                 _spawners = FindObjectsByType<Spawner>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             }
+
+            if (_healthBars == null)
+            {
+                _healthBars = GetComponent<RpgWorldHealthBars>();
+            }
         }
 
+        /// <summary>Button target: <see cref="Spawner.StartSpawn" /> on every scene spawner.</summary>
         [Button]
         public void StartSpawners()
         {
@@ -165,9 +218,10 @@ namespace Neo.Rpg.Demo
                 _spawners[i]?.StartSpawn();
             }
 
-            _lastEvent = "Spawners started";
+            SetEvent("Spawners started (Spawner.StartSpawn)");
         }
 
+        /// <summary>Button target: <see cref="Spawner.StopSpawn" /> on every scene spawner.</summary>
         [Button]
         public void StopSpawners()
         {
@@ -181,9 +235,10 @@ namespace Neo.Rpg.Demo
                 _spawners[i]?.StopSpawn();
             }
 
-            _lastEvent = "Spawners stopped";
+            SetEvent("Spawners stopped (Spawner.StopSpawn)");
         }
 
+        /// <summary>Button target: restores the player, re-enables control and hides the tracked enemies.</summary>
         [Button]
         public void ResetRun()
         {
@@ -202,10 +257,13 @@ namespace Neo.Rpg.Demo
             }
 
             _trackedEnemies.Clear();
-            _lastEvent = "Run reset";
+            _configuredEnemies.Clear();
+            SetEvent("Run reset (RpgCharacter.Restore)");
             ScanEnemies();
+            RefreshHud(true);
         }
 
+        /// <summary>Button target: typed damage through <see cref="RpgCharacter.DamageType" />.</summary>
         public void DamagePlayer(float amount)
         {
             if (_player == null || _player.IsDead)
@@ -214,20 +272,21 @@ namespace Neo.Rpg.Demo
             }
 
             float dealt = _player.DamageType("Demo", amount);
-            _lastEvent = dealt > 0f ? $"Player took {dealt:0}" : "Player damage blocked";
+            SetEvent(dealt > 0f ? $"Player took {dealt:0} (RpgCharacter.DamageType)" : "Player damage blocked");
         }
 
+        /// <summary>Button target: lethal damage to the nearest living tracked enemy.</summary>
         public void KillNearestEnemy()
         {
             RpgCharacter enemy = FindNearestLivingEnemy();
             if (enemy == null)
             {
-                _lastEvent = "No living enemy";
+                SetEvent("No living enemy");
                 return;
             }
 
             enemy.Damage(enemy.MaxHpValue + 999f);
-            _lastEvent = $"Killed {enemy.name}";
+            SetEvent($"Killed {CleanName(enemy.name)}");
         }
 
         private void RegisterPlayer()
@@ -265,7 +324,7 @@ namespace Neo.Rpg.Demo
         {
             _spawnedCount++;
             ConfigureEnemy(spawned != null ? spawned.GetComponentInChildren<RpgCharacter>(true) : null);
-            _lastEvent = spawned != null ? $"Spawned {spawned.name}" : "Spawner emitted null";
+            SetEvent(spawned != null ? $"Spawned {CleanName(spawned.name)}" : "Spawner emitted null");
         }
 
         private void ScanEnemies()
@@ -275,14 +334,41 @@ namespace Neo.Rpg.Demo
                 return;
             }
 
+            // WHY: an enemy disabled without dying (or without a spawner event) is configured again once it is back.
+            foreach (RpgCharacter enemy in _trackedEnemies)
+            {
+                if (enemy == null || !enemy.gameObject.activeInHierarchy)
+                {
+                    _configuredEnemies.Remove(enemy);
+                }
+            }
+
             foreach (RpgCharacter character in FindObjectsByType<RpgCharacter>(FindObjectsInactive.Exclude,
                          FindObjectsSortMode.None))
             {
-                if (character != null && character != _player && character.CompareTag("Enemy"))
+                if (character != null && character != _player && !character.IsDead &&
+                    !_configuredEnemies.Contains(character) && character.CompareTag(EnemyTag))
                 {
                     ConfigureEnemy(character);
                 }
             }
+        }
+
+        /// <summary>
+        ///     Lets this controller be the only target feed of the health bars when its enemy search covers the same
+        ///     characters as theirs.
+        /// </summary>
+        private void ClaimHealthBarFeed()
+        {
+            if (!_feedHealthBars || !_configureSpawnedEnemies || _healthBars == null ||
+                !string.Equals(_healthBars.TargetTag, EnemyTag, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            // WHY: ScanEnemies already finds and tracks every active 'Enemy' character, so the bars' own search
+            // would only repeat it on each of their scans.
+            _healthBars.ScanSceneForTargets = false;
         }
 
         private void ConfigureEnemy(RpgCharacter enemy)
@@ -293,6 +379,7 @@ namespace Neo.Rpg.Demo
             }
 
             _trackedEnemies.Add(enemy);
+            _configuredEnemies.Add(enemy);
 
             if (!_enemyDeathListeners.ContainsKey(enemy))
             {
@@ -319,22 +406,31 @@ namespace Neo.Rpg.Demo
                 }
             }
 
-            if (enemy.GetComponent<RpgDeathHandler>() == null)
+            if (_feedHealthBars && _healthBars != null)
             {
-                enemy.gameObject.AddComponent<RpgDeathHandler>();
+                _healthBars.Track(enemy);
             }
         }
 
         private void HandleEnemyDeath(RpgCharacter enemy)
         {
             _killCount++;
-            _lastEvent = enemy != null ? $"{enemy.name} died" : "Enemy died";
+            _configuredEnemies.Remove(enemy);
+            SetEvent(enemy != null ? $"{CleanName(enemy.name)} died" : "Enemy died");
+
+            // WHY: the enemy prefabs carry an authored RpgDeathHandler; this only keeps hand-made enemies from
+            // standing around dead, matching the handler's default Deactivate action.
+            if (enemy != null && !enemy.TryGetComponent(out RpgDeathHandler _))
+            {
+                WarnMissingDeathHandler(enemy);
+                enemy.gameObject.SetActive(false);
+            }
         }
 
         private void HandlePlayerDeath()
         {
             _playerDead = true;
-            _lastEvent = "Player died";
+            SetEvent("Player died - Reset Run restarts");
             if (_disablePlayerControlOnDeath)
             {
                 SetPlayerControlEnabled(false);
@@ -358,7 +454,7 @@ namespace Neo.Rpg.Demo
             float dealt = _player.DamageType("Enemy", _enemyContactDamage);
             if (dealt > 0f)
             {
-                _lastEvent = $"{enemy.name} hit player for {dealt:0}";
+                SetEvent($"{CleanName(enemy.name)} hit player for {dealt:0}");
             }
         }
 
@@ -467,150 +563,87 @@ namespace Neo.Rpg.Demo
             _disabledOnDeath.Clear();
         }
 
-        /// <summary>Builds the whole demo HUD in code: compact top-left status panel plus a death overlay.</summary>
-        private void BuildHud()
+        private void RefreshHud(bool force)
         {
-            var canvasGo = new GameObject("VampireDemo HUD", typeof(Canvas), typeof(CanvasScaler),
-                typeof(GraphicRaycaster));
-            canvasGo.transform.SetParent(transform, false);
-            _hudCanvas = canvasGo.GetComponent<Canvas>();
-            _hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _hudCanvas.sortingOrder = 100;
-            var scaler = canvasGo.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            if (FindFirstObjectByType<EventSystem>() == null)
+            if (_player != null && _hpFill != null)
             {
-                var eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-                eventSystem.transform.SetParent(transform, false);
-            }
-
-            var root = (RectTransform)canvasGo.transform;
-            BuildStatusPanel(root);
-            BuildDeathOverlay(root);
-            RefreshHud();
-        }
-
-        private void BuildStatusPanel(RectTransform root)
-        {
-            Image panel = SurvivorUI.Image("StatusPanel", root, SurvivorUI.Ink);
-            SurvivorUI.Anchor(panel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(16f, -16f), new Vector2(400f, 236f));
-
-            TMP_Text title = SurvivorUI.Label("Title", panel.transform, "Vampire Survivor Demo", 20f,
-                SurvivorUI.Text, TextAlignmentOptions.Left, FontStyles.Bold);
-            Row((RectTransform)title.transform, -10f, 26f);
-
-            _playerText = SurvivorUI.Label("Player", panel.transform, "Player: missing", 14f, SurvivorUI.Text);
-            Row((RectTransform)_playerText.transform, -38f, 20f);
-
-            _hpFill = SurvivorUI.Bar("HPBar", panel.transform, SurvivorUI.Good, out RectTransform hpTrack);
-            Row(hpTrack, -60f, 12f);
-
-            _statsText = SurvivorUI.Label("Stats", panel.transform, "", 14f, SurvivorUI.Text);
-            Row((RectTransform)_statsText.transform, -78f, 20f);
-
-            _spawnerText = SurvivorUI.Label("Spawners", panel.transform, "", 14f, SurvivorUI.Text);
-            Row((RectTransform)_spawnerText.transform, -98f, 20f);
-
-            _eventText = SurvivorUI.Label("Event", panel.transform, "Last: Ready", 14f, SurvivorUI.Muted);
-            Row((RectTransform)_eventText.transform, -118f, 20f);
-
-            RectTransform rowA = Row(SurvivorUI.Rect("ButtonsA", panel.transform), -146f, 34f);
-            HudButton(rowA, "Start", SurvivorUI.Good, 0f, 121f, StartSpawners);
-            HudButton(rowA, "Stop", SurvivorUI.Danger, 127f, 121f, StopSpawners);
-            HudButton(rowA, "Damage Player", SurvivorUI.Accent, 254f, 122f, () => DamagePlayer(25f));
-
-            RectTransform rowB = Row(SurvivorUI.Rect("ButtonsB", panel.transform), -186f, 34f);
-            HudButton(rowB, "Kill Nearest", SurvivorUI.Cyan, 0f, 185f, KillNearestEnemy);
-            HudButton(rowB, "Reset Run", SurvivorUI.Panel, 191f, 185f, ResetRun);
-        }
-
-        private void BuildDeathOverlay(RectTransform root)
-        {
-            Image panel = SurvivorUI.Image("DeathOverlay", root, new Color(0.04f, 0.04f, 0.07f, 0.9f));
-            SurvivorUI.Anchor(panel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(380f, 150f));
-            _deathOverlay = panel.gameObject;
-
-            TMP_Text title = SurvivorUI.Label("Title", panel.transform, "YOU DIED", 34f, SurvivorUI.Danger,
-                TextAlignmentOptions.Center, FontStyles.Bold);
-            SurvivorUI.Anchor((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(360f, 44f));
-
-            TMP_Text hint = SurvivorUI.Label("Hint", panel.transform, "Use Reset Run to restart.", 16f,
-                SurvivorUI.Muted, TextAlignmentOptions.Center);
-            SurvivorUI.Anchor((RectTransform)hint.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -86f), new Vector2(360f, 26f));
-
-            _deathOverlay.SetActive(false);
-        }
-
-        private void RefreshHud()
-        {
-            if (_hudCanvas == null)
-            {
-                return;
-            }
-
-            if (_player != null)
-            {
-                float hp01 = _player.HpPercentValue;
-                SurvivorUI.SetFill(_hpFill, hp01);
-                _hpFill.color = Color.Lerp(SurvivorUI.Danger, SurvivorUI.Good, hp01);
+                float hp01 = Mathf.Clamp01(_player.HpPercentValue);
+                RectTransform fill = _hpFill.rectTransform;
+                fill.anchorMax = new Vector2(hp01, fill.anchorMax.y);
+                _hpFill.color = Color.Lerp(_healthEmpty, _healthFull, hp01);
             }
 
             bool dead = PlayerDead;
-            if (_deathOverlay.activeSelf != dead)
+            if (_deathOverlay != null && _deathOverlay.activeSelf != dead)
             {
                 _deathOverlay.SetActive(dead);
             }
 
             // WHY: rebuilding label strings allocates; 10 Hz is imperceptible for a status readout.
-            if (Time.unscaledTime < _nextHudRefreshTime)
+            if (!force && Time.unscaledTime < _nextHudRefreshTime)
             {
                 return;
             }
 
-            _nextHudRefreshTime = Time.unscaledTime + 0.1f;
+            _nextHudRefreshTime = Time.unscaledTime + HudRefreshInterval;
 
-            _playerText.text = _player == null
-                ? "Player: missing"
-                : $"Player HP: {_player.HpValue:0}/{_player.MaxHpValue:0} | " +
-                  $"Level {_player.LevelValue} | Dead {_player.IsDead}";
-            _statsText.text = $"Enemies: {ActiveEnemyCount} active | Spawned: {_spawnedCount} | Killed: {_killCount}";
-            _spawnerText.text = $"Spawners: {CountRunningSpawners()}/{(_spawners != null ? _spawners.Length : 0)} running";
-            _eventText.text = $"Last: {_lastEvent}";
+            if (_playerValue != null)
+            {
+                _playerValue.text = _player == null
+                    ? "missing"
+                    : $"{_player.HpValue:0} / {_player.MaxHpValue:0} HP · Lv {_player.LevelValue}" +
+                      (_player.IsDead ? " · DEAD" : string.Empty);
+            }
+
+            if (_enemiesValue != null)
+            {
+                _enemiesValue.text = $"{ActiveEnemyCount} active · {_spawnedCount} spawned · {_killCount} killed";
+            }
+
+            if (_spawnersValue != null)
+            {
+                _spawnersValue.text = $"{CountRunningSpawners()} / {(_spawners != null ? _spawners.Length : 0)} running";
+            }
         }
 
-        /// <summary>Anchors a child to the panel top edge, stretched horizontally with side padding.</summary>
-        private static RectTransform Row(RectTransform rt, float top, float height)
+        private void SetEvent(string message)
         {
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.offsetMin = new Vector2(12f, top - height);
-            rt.offsetMax = new Vector2(-12f, top);
-            return rt;
+            _lastEvent = message;
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
         }
 
-        private static void HudButton(RectTransform parent, string label, Color color, float x, float width,
-            UnityEngine.Events.UnityAction onClick)
+        private static string CleanName(string objectName)
         {
-            Button button = SurvivorUI.Button(label, parent, color);
-            var rt = (RectTransform)button.transform;
-            rt.anchorMin = new Vector2(0f, 0f);
-            rt.anchorMax = new Vector2(0f, 1f);
-            rt.pivot = new Vector2(0f, 0.5f);
-            rt.anchoredPosition = new Vector2(x, 0f);
-            rt.sizeDelta = new Vector2(width, 0f);
-            button.onClick.AddListener(onClick);
+            return string.IsNullOrEmpty(objectName) ? "Enemy" : objectName.Replace("(Clone)", string.Empty).Trim();
+        }
 
-            TMP_Text text = SurvivorUI.Label("Label", button.transform, label, 15f, Color.white,
-                TextAlignmentOptions.Center, FontStyles.Bold);
-            SurvivorUI.Stretch((RectTransform)text.transform);
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[VampireSurvivorDemoController] The HUD is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                this);
+        }
+
+        private void WarnMissingDeathHandler(RpgCharacter enemy)
+        {
+            if (_warnedMissingDeathHandler)
+            {
+                return;
+            }
+
+            _warnedMissingDeathHandler = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[VampireSurvivorDemoController] '" + CleanName(enemy.name) + "' has no RpgDeathHandler, so the " +
+                "controller deactivates it on death. Add RpgDeathHandler to the enemy prefab.", enemy);
         }
     }
 }

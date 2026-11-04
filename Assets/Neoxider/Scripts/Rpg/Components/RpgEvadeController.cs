@@ -43,6 +43,7 @@ namespace Neo.Rpg
         private float _evadeEndAt;
         private bool _grantedInvulnerability;
         private IRpgCombatReceiver _invulnerabilityReceiver;
+        private bool _publishStateOnNextUpdate = true;
 
         /// <summary>
         ///     Gets whether evade is active right now.
@@ -72,10 +73,21 @@ namespace Neo.Rpg
                 TryStartEvade();
             }
 
-            RemainingCooldownState.SetValueWithoutNotify(GetRemainingCooldown());
-            IsEvadingState.SetValueWithoutNotify(IsEvading);
-            RemainingCooldownState.ForceNotify();
-            IsEvadingState.ForceNotify();
+            if (_publishStateOnNextUpdate)
+            {
+                // WHY: the first frame after enable still publishes both states so bound UI starts in sync.
+                _publishStateOnNextUpdate = false;
+                RemainingCooldownState.SetValueWithoutNotify(GetRemainingCooldown());
+                IsEvadingState.SetValueWithoutNotify(IsEvading);
+                RemainingCooldownState.ForceNotify();
+                IsEvadingState.ForceNotify();
+            }
+            else
+            {
+                // WHY: later frames notify only on change; forcing both every frame invoked idle UI listeners per frame.
+                RemainingCooldownState.Value = GetRemainingCooldown();
+                IsEvadingState.Value = IsEvading;
+            }
 
             if (_grantedInvulnerability && !IsEvading)
             {
@@ -90,6 +102,11 @@ namespace Neo.Rpg
                 _cooldownReadyInvoked = true;
                 _onCooldownReady?.Invoke();
             }
+        }
+
+        private void OnEnable()
+        {
+            _publishStateOnNextUpdate = true;
         }
 
         private void OnDisable()
@@ -172,7 +189,8 @@ namespace Neo.Rpg
                 return _character;
             }
 
-            return GetComponent<RpgCharacter>() ?? GetComponentInParent<RpgCharacter>();
+            // WHY: TryGetComponent avoids the editor fake-null that would short-circuit the parent fallback.
+            return TryGetComponent(out RpgCharacter own) ? own : GetComponentInParent<RpgCharacter>();
         }
     }
 }

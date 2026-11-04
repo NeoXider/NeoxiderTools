@@ -1,6 +1,10 @@
 ﻿# ShopItem
 
-**Purpose:** The visual representation of a shop item (`ShopItemData`) in the User Interface. It binds data (image, text) to UI elements and the purchase button.
+**What it is:** the row view of a shop item or bundle (`MonoBehaviour`, `Scripts/Shop/ShopItem.cs`, namespace `Neo.Shop`). It binds data (image, text, price) to UI elements and exposes the purchase button.
+
+**How to use:** add it to a row prefab, assign texts/images/`buttonBuy`, and let `Shop` or `ShopListView` call `Visual(data, price)` / `Select(bool)`.
+
+---
 
 ## Setup
 

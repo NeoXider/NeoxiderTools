@@ -100,149 +100,71 @@ namespace Neo.Tools
             (int min, int max) = GetCurrentBounds();
             _currentIndex = Math.Clamp(_currentIndex, min, max);
 
-            int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
-            int effectiveIndex = (int)Math.Clamp((long)_currentIndex + _indexOffset, minEff, (long)total - 1L);
-
+            int effectiveIndex = SelectorModel.GetEffectiveIndex(total, _currentIndex, _indexOffset,
+                _allowEmptyEffectiveIndex);
             bool exclusiveApply = deactivateNonSelected || _fillMode || effectiveIndex < 0;
 
             GameObject[] items = _items;
-            if (items != null && items.Length > 0)
+            if (items != null && items.Length > 0 && (_notifySelectorItemsOnly || _controlGameObjectActive))
             {
-                if (_notifySelectorItemsOnly)
+                bool forceBootstrap = _notifySelectorItemsOnly && !_selectorItemBootstrapNotifyDone &&
+                                      _controlGameObjectActive;
+                for (int i = 0; i < items.Length; i++)
                 {
-                    bool forceBootstrap = !_selectorItemBootstrapNotifyDone && _controlGameObjectActive;
-                    for (int i = 0; i < items.Length; i++)
+                    GameObject item = items[i];
+                    if (item == null)
                     {
-                        GameObject item = items[i];
-                        if (item == null)
+                        continue;
+                    }
+
+                    bool shouldBeActive = SelectorModel.IsItemActive(i, effectiveIndex, _fillMode);
+                    if (_notifySelectorItemsOnly && item.TryGetComponent(out SelectorItem selectorItem))
+                    {
+                        selectorItem.Index = i;
+                        if (_controlGameObjectActive && (exclusiveApply || shouldBeActive))
                         {
-                            continue;
+                            selectorItem.SetActive(shouldBeActive, forceBootstrap);
                         }
 
-                        bool shouldBeActive = effectiveIndex >= 0 &&
-                                              (_fillMode ? i <= effectiveIndex : i == effectiveIndex);
-                        SelectorItem si = item.GetComponent<SelectorItem>();
-                        if (si != null)
-                        {
-                            si.Index = i;
-                            if (_controlGameObjectActive)
-                            {
-                                if (exclusiveApply)
-                                {
-                                    si.SetActive(shouldBeActive, forceBootstrap);
-                                }
-                                else if (shouldBeActive)
-                                {
-                                    si.SetActive(true, forceBootstrap);
-                                }
-                            }
-                        }
-                        else if (_controlGameObjectActive)
-                        {
-                            if (exclusiveApply && item.activeSelf != shouldBeActive)
-                            {
-                                try
-                                {
-                                    item.SetActive(shouldBeActive);
-                                }
-                                catch (Exception) { }
-                            }
-                            else if (!exclusiveApply && shouldBeActive && !item.activeSelf)
-                            {
-                                try
-                                {
-                                    item.SetActive(true);
-                                }
-                                catch (Exception) { }
-                            }
-                        }
+                        continue;
                     }
 
                     if (_controlGameObjectActive)
                     {
-                        _selectorItemBootstrapNotifyDone = true;
+                        ApplyItemActiveState(item, shouldBeActive, exclusiveApply);
                     }
                 }
-                else if (effectiveIndex < 0 && _controlGameObjectActive)
+
+                if (_notifySelectorItemsOnly && _controlGameObjectActive)
                 {
-                    for (int i = 0; i < items.Length; i++)
-                    {
-                        GameObject item = items[i];
-                        if (item != null && item.activeSelf)
-                        {
-                            try
-                            {
-                                item.SetActive(false);
-                            }
-                            catch (Exception)
-                            {
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    if (_controlGameObjectActive && _fillMode)
-                    {
-                        for (int i = 0; i < items.Length; i++)
-                        {
-                            GameObject item = items[i];
-                            if (item != null)
-                            {
-                                bool shouldBeActive = i <= effectiveIndex;
-                                if (item.activeSelf != shouldBeActive)
-                                {
-                                    try
-                                    {
-                                        item.SetActive(shouldBeActive);
-                                    }
-                                    catch (Exception)
-                                    {
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else if (_controlGameObjectActive)
-                    {
-                        for (int i = 0; i < items.Length; i++)
-                        {
-                            GameObject item = items[i];
-                            if (item != null)
-                            {
-                                bool shouldBeActive = i == effectiveIndex;
-                                if (exclusiveApply)
-                                {
-                                    if (item.activeSelf != shouldBeActive)
-                                    {
-                                        try
-                                        {
-                                            item.SetActive(shouldBeActive);
-                                        }
-                                        catch (Exception)
-                                        {
-                                        }
-                                    }
-                                }
-                                else if (shouldBeActive && !item.activeSelf)
-                                {
-                                    try
-                                    {
-                                        item.SetActive(true);
-                                    }
-                                    catch (Exception)
-                                    {
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    _selectorItemBootstrapNotifyDone = true;
                 }
             }
 
             if (publish)
             {
                 PublishSelection(true);
+            }
+        }
+
+        /// <summary>
+        ///     Exclusive apply turns the item on or off to match the rule; additive apply only turns the item on.
+        /// </summary>
+        private static void ApplyItemActiveState(GameObject item, bool shouldBeActive, bool exclusiveApply)
+        {
+            if (item.activeSelf == shouldBeActive || (!exclusiveApply && !shouldBeActive))
+            {
+                return;
+            }
+
+            try
+            {
+                item.SetActive(shouldBeActive);
+            }
+            catch (Exception)
+            {
+                // WHY: one item failing to toggle (for example while it is being destroyed) must not abort the
+                // selection pass for the remaining items or skip the selection events.
             }
         }
 
@@ -446,8 +368,8 @@ namespace Neo.Tools
         /// </summary>
         private int ComputeLogicalCountActive()
         {
-            SyncModelFromFields();
-            return _model.GetLogicalActiveCount();
+            return SelectorModel.GetLogicalActiveCount(Count, _currentIndex, _indexOffset, _fillMode,
+                _allowEmptyEffectiveIndex);
         }
 
         /// <summary>
@@ -471,22 +393,10 @@ namespace Neo.Tools
                     continue;
                 }
 
-                if (_notifySelectorItemsOnly)
-                {
-                    SelectorItem si = item.GetComponent<SelectorItem>();
-                    if (si != null)
-                    {
-                        if (si.ActiveValue)
-                        {
-                            n++;
-                        }
-                    }
-                    else if (item.activeSelf)
-                    {
-                        n++;
-                    }
-                }
-                else if (item.activeSelf)
+                bool active = _notifySelectorItemsOnly && item.TryGetComponent(out SelectorItem selectorItem)
+                    ? selectorItem.ActiveValue
+                    : item.activeSelf;
+                if (active)
                 {
                     n++;
                 }
@@ -497,17 +407,7 @@ namespace Neo.Tools
 
         private int ComputeCountActive()
         {
-            if (_count > 0)
-            {
-                return ComputeLogicalCountActive();
-            }
-
-            if (HasItems)
-            {
-                return CountActiveItemsInArray();
-            }
-
-            return ComputeLogicalCountActive();
+            return _count <= 0 && HasItems ? CountActiveItemsInArray() : ComputeLogicalCountActive();
         }
 
         private void NotifyCountActiveChangedIfNeeded()
@@ -621,6 +521,9 @@ namespace Neo.Tools
         [Tooltip("Update selection in editor when values change")] [SerializeField]
         private bool _changeDebug = true;
 
+        // WHY: cached once; passing the Random.Range method group allocated a new delegate on every SetRandom.
+        private static readonly Func<int, int, int> UnityRandomRange = Random.Range;
+
         private int _startIndex;
         private bool _hasStarted;
         private int _lastCountActiveNotified = int.MinValue;
@@ -638,6 +541,7 @@ namespace Neo.Tools
         [Tooltip(
             "Snapshot of excluded pool indices for Random (ExcludeIndex/IncludeIndex/IncludeAllIndices). " +
             "In the Editor you can pre-fill this list: on play start Selector builds a HashSet from it. " +
+            "With saving of Excluded Indices on, a saved set replaces it once one exists (also an emptied one). " +
             "In Play Mode it updates automatically.")]
         [SerializeField]
         private List<int> _excludedIndicesInspector = new();
@@ -778,7 +682,7 @@ namespace Neo.Tools
         {
             get
             {
-                (int min, int max) = GetCurrentBounds();
+                (_, int max) = GetCurrentBounds();
                 return _currentIndex >= max;
             }
         }
@@ -790,7 +694,7 @@ namespace Neo.Tools
         {
             get
             {
-                (int min, int max) = GetCurrentBounds();
+                (int min, _) = GetCurrentBounds();
                 return _currentIndex <= min;
             }
         }
@@ -924,6 +828,14 @@ namespace Neo.Tools
         private void Awake()
         {
             _startIndex = _currentIndex;
+
+            // WHY: OnValidate never runs in a player build and does not apply the list in Play Mode, so the set is
+            // still null here. The start command in OnEnable would then sync an empty set over the Inspector-authored
+            // exclusions before Start reads them; building the set first keeps them.
+            if (_excludedIndices == null)
+            {
+                ApplyExcludedIndicesFromInspector();
+            }
         }
 
         private void Start()
@@ -1011,7 +923,7 @@ namespace Neo.Tools
 
         private void SaveState()
         {
-            // Automatic OnEnable/child sync must not overwrite persisted data before Start loads it.
+            // WHY: automatic OnEnable/child sync must not overwrite persisted data before Start loads it.
             if ((Application.isPlaying && !_hasStarted) || !_saveEnabled || string.IsNullOrEmpty(_saveKey))
             {
                 return;
@@ -1026,19 +938,12 @@ namespace Neo.Tools
 
             if ((_saveMode & SelectorSaveMode.ExcludedIndices) != 0)
             {
-                string excludedKey = keyBase + "_Excluded";
-                if (_excludedIndices == null || _excludedIndices.Count == 0)
-                {
-                    if (SaveProvider.HasKey(excludedKey))
-                    {
-                        SaveProvider.DeleteKey(excludedKey);
-                    }
-                }
-                else
-                {
-                    string data = SerializeIndices(_excludedIndices);
-                    SaveProvider.SetString(excludedKey, data);
-                }
+                // WHY: an empty set is stored as an empty string instead of a deleted key, so LoadState can tell
+                // "saved empty" from "never saved" and keep the Inspector-authored exclusions only in the latter case.
+                string data = _excludedIndices == null || _excludedIndices.Count == 0
+                    ? string.Empty
+                    : SerializeIndices(_excludedIndices);
+                SaveProvider.SetString(keyBase + "_Excluded", data);
             }
         }
 
@@ -1063,13 +968,16 @@ namespace Neo.Tools
             if ((_saveMode & SelectorSaveMode.ExcludedIndices) != 0)
             {
                 string excludedKey = keyBase + "_Excluded";
-                _excludedIndices ??= new HashSet<int>();
-                _excludedIndices.Clear();
-
+                // WHY: no key means nothing was saved yet (an emptied set is saved as an empty string), so the
+                // Inspector-authored exclusions applied in Awake stay the starting pool instead of being discarded.
                 if (SaveProvider.HasKey(excludedKey))
                 {
                     string data = SaveProvider.GetString(excludedKey, string.Empty);
                     _excludedIndices = DeserializeIndices(data);
+                }
+                else if (_excludedIndices == null)
+                {
+                    ApplyExcludedIndicesFromInspector();
                 }
             }
 
@@ -1092,7 +1000,7 @@ namespace Neo.Tools
                 _excludedIndicesInspector.Add(idx);
             }
 
-            _excludedIndicesInspector.Sort();
+            SortAscending(_excludedIndicesInspector);
 
             SyncIncludedIndicesInspector();
         }
@@ -1112,7 +1020,74 @@ namespace Neo.Tools
                 _usedIndicesForUniqueInspector.Add(idx);
             }
 
-            _usedIndicesForUniqueInspector.Sort();
+            SortAscending(_usedIndicesForUniqueInspector);
+        }
+
+        /// <summary>Sorts <paramref name="values" /> ascending in place without allocating.</summary>
+        /// <remarks>
+        ///     WHY: <see cref="List{T}.Sort()" /> makes one GC allocation per call on the Editor's Mono runtime, and both
+        ///     Inspector snapshots are rebuilt on every command (two allocations per Set/Next). Snapshots copied from a
+        ///     set filled in order are usually ascending already, which this detects in O(n); otherwise an in-place
+        ///     heap sort keeps the worst case at O(n log n).
+        /// </remarks>
+        private static void SortAscending(List<int> values)
+        {
+            int count = values.Count;
+            bool ascending = true;
+            for (int i = 1; i < count; i++)
+            {
+                if (values[i - 1] > values[i])
+                {
+                    ascending = false;
+                    break;
+                }
+            }
+
+            if (ascending)
+            {
+                return;
+            }
+
+            for (int root = count / 2 - 1; root >= 0; root--)
+            {
+                SiftDown(values, root, count);
+            }
+
+            for (int end = count - 1; end > 0; end--)
+            {
+                int largest = values[0];
+                values[0] = values[end];
+                values[end] = largest;
+                SiftDown(values, 0, end);
+            }
+        }
+
+        private static void SiftDown(List<int> values, int root, int count)
+        {
+            int value = values[root];
+            while (true)
+            {
+                int child = root * 2 + 1;
+                if (child >= count)
+                {
+                    break;
+                }
+
+                if (child + 1 < count && values[child + 1] > values[child])
+                {
+                    child++;
+                }
+
+                if (values[child] <= value)
+                {
+                    break;
+                }
+
+                values[root] = values[child];
+                root = child;
+            }
+
+            values[root] = value;
         }
 
         private void SyncIncludedIndicesInspector()
@@ -1142,8 +1117,6 @@ namespace Neo.Tools
 
                 _includedIndicesInspector.Add(i);
             }
-
-            _includedIndicesInspector.Sort();
         }
 
         private void ApplyExcludedIndicesFromInspector()
@@ -1311,7 +1284,7 @@ namespace Neo.Tools
         private void ExecuteSetRandom(bool deactivateOthers)
         {
             SyncModelFromFields();
-            SelectorModelResult result = _model.SetRandom(deactivateOthers, Random.Range);
+            SelectorModelResult result = _model.SetRandom(deactivateOthers, UnityRandomRange);
             if (Count == 0)
             {
                 NeoDiagnostics.LogWarning(
@@ -1634,9 +1607,13 @@ namespace Neo.Tools
 
         #region Helpers
 
+        /// <summary>
+        ///     Loads the serialized fields into the private model before a command runs on it. Fields stay the source
+        ///     of truth (Inspector, save and network write them directly), so every command re-reads them.
+        /// </summary>
         private void SyncModelFromFields()
         {
-            _model.Configure(
+            _model.ConfigureFromOwnedSets(
                 Count,
                 _currentIndex,
                 _indexOffset,
@@ -1654,8 +1631,10 @@ namespace Neo.Tools
             _currentIndex = _model.CurrentIndex;
             _indexOffset = _model.IndexOffset;
             _fillMode = _model.FillMode;
-            _excludedIndices = new HashSet<int>(_model.ExcludedIndices);
-            _usedIndicesForUnique = new HashSet<int>(_model.UsedIndicesForUnique);
+            _excludedIndices ??= new HashSet<int>();
+            _model.CopyExcludedIndicesTo(_excludedIndices);
+            _usedIndicesForUnique ??= new HashSet<int>();
+            _model.CopyUsedIndicesForUniqueTo(_usedIndicesForUnique);
             SyncExcludedIndicesInspector();
             SyncUsedIndicesForUniqueInspector();
         }
@@ -1687,10 +1666,13 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     Logical bounds from the live serialized fields. Pure read: does not touch the private model.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">The bounds for the current offset do not fit in Int32.</exception>
         private (int min, int max) GetCurrentBounds()
         {
-            SyncModelFromFields();
-            return _model.GetBounds();
+            return SelectorModel.GetBounds(Count, _indexOffset, _allowEmptyEffectiveIndex);
         }
 
         private void ApplyExcludeIndex(int index)
@@ -1843,13 +1825,18 @@ namespace Neo.Tools
 
         private bool HasChildObjectsForItemsSync()
         {
-            if (transform == null)
+            Transform root = transform;
+            if (root == null)
             {
                 return false;
             }
 
-            foreach (Transform child in transform)
+            // WHY: indexed access instead of foreach; Transform's enumerator is a heap object, and this check runs on
+            // every command of a virtual pool with auto-update from children (the default).
+            int childCount = root.childCount;
+            for (int i = 0; i < childCount; i++)
             {
+                Transform child = root.GetChild(i);
                 if (child != null && child.gameObject != null && child.gameObject != gameObject)
                 {
                     return true;
@@ -1861,7 +1848,8 @@ namespace Neo.Tools
 
         private bool IsItemsSyncedWithChildren()
         {
-            if (transform == null)
+            Transform root = transform;
+            if (root == null)
             {
                 return true;
             }
@@ -1871,9 +1859,13 @@ namespace Neo.Tools
                 return false;
             }
 
+            // WHY: indexed access instead of foreach (see HasChildObjectsForItemsSync); runs on every command with
+            // auto-update from children.
             int index = 0;
-            foreach (Transform child in transform)
+            int childCount = root.childCount;
+            for (int i = 0; i < childCount; i++)
             {
+                Transform child = root.GetChild(i);
                 if (child == null || child.gameObject == null || child.gameObject == gameObject)
                 {
                     continue;
@@ -1910,10 +1902,15 @@ namespace Neo.Tools
                 return;
             }
 
-            List<GameObject> childs = new();
+            Transform root = transform;
+            int childCount = root.childCount;
+            List<GameObject> childs = new(childCount);
 
-            foreach (Transform child in transform)
+            // WHY: indexed access (see HasChildObjectsForItemsSync); this runs on every hierarchy change with
+            // auto-update from children.
+            for (int childIndex = 0; childIndex < childCount; childIndex++)
             {
+                Transform child = root.GetChild(childIndex);
                 if (child != null && child.gameObject != null && child.gameObject != gameObject)
                 {
                     childs.Add(child.gameObject);

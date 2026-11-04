@@ -185,7 +185,7 @@ namespace Neo.Editor.Tests.Edit
         {
             GameObject go = CreateOwnedObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
-            var entry = new ConditionEntry();
+            ConditionEntry entry = new ConditionEntry();
 
             nc.AddCondition(entry);
             Assert.AreEqual(1, nc.Conditions.Count);

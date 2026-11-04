@@ -53,9 +53,20 @@ namespace Neo.Tools
             return _storage.CreateInstanceSnapshot();
         }
 
-        /// <summary>Legacy-friendly list of id/count pairs derived from <see cref="GetSnapshotRecords" />.</summary>
+        /// <summary>
+        ///     Legacy-friendly list of id/count pairs in <see cref="GetSnapshotRecords" /> order.
+        ///     Cheaper than the record snapshot: instance payloads are not cloned.
+        /// </summary>
         public List<InventoryEntry> GetSnapshotEntries()
         {
+            EnsureRuntimeInitialized();
+            if (_storage is IInventoryRecordReader reader)
+            {
+                List<InventoryEntry> packed = new();
+                reader.AppendEntries(packed);
+                return packed;
+            }
+
             List<InventoryItemRecord> records = GetSnapshotRecords();
             List<InventoryEntry> entries = new(records.Count);
             for (int i = 0; i < records.Count; i++)
@@ -73,7 +84,10 @@ namespace Neo.Tools
         /// <summary>Number of non-empty records in the packed snapshot (not always equal to physical slot count).</summary>
         public int GetNonEmptySlotCount()
         {
-            return GetSnapshotRecords().Count;
+            EnsureRuntimeInitialized();
+            return _storage is IInventoryRecordReader reader
+                ? reader.PackedRecordCount
+                : GetSnapshotRecords().Count;
         }
 
         /// <summary>Gets the record at packed index (iteration order of <see cref="GetSnapshotRecords" />).</summary>
@@ -83,9 +97,21 @@ namespace Neo.Tools
             return _storage.TryGetRecordAtPackedIndex(packedIndex, out record);
         }
 
-        /// <summary>Item id at packed index, or -1 if out of range or empty.</summary>
+        /// <summary>Item id at packed index, or -1 if out of range or empty. Clone-free for the built-in storages.</summary>
         public int GetItemIdAtSlotIndex(int slotIndex)
         {
+            EnsureRuntimeInitialized();
+            // WHY: hands and NeoCondition poll this; the record path cloned the record and its instance payload per read.
+            if (_storage is AggregatedInventory aggregated)
+            {
+                return aggregated.PeekItemIdAtPackedIndex(slotIndex);
+            }
+
+            if (_storage is SlotGridInventory grid)
+            {
+                return ((IInventoryRecordReader)grid).GetPackedItemId(slotIndex);
+            }
+
             return TryGetRecordAtPackedIndex(slotIndex, out InventoryItemRecord record) ? record.EffectiveItemId : -1;
         }
 
@@ -117,22 +143,19 @@ namespace Neo.Tools
         public bool TryTakeFirstRecordByItemId(int itemId, int amount, out InventoryItemRecord record)
         {
             record = null;
-            List<InventoryItemRecord> records = GetSnapshotRecords();
-            for (int i = 0; i < records.Count; i++)
-            {
-                InventoryItemRecord current = records[i];
-                if (current != null && current.EffectiveItemId == itemId)
-                {
-                    return TryTakeRecordAtPackedIndex(i, amount, out record);
-                }
-            }
-
-            return false;
+            int packedIndex = FindPackedIndex(itemId);
+            return packedIndex >= 0 && TryTakeRecordAtPackedIndex(packedIndex, amount, out record);
         }
 
         /// <summary>First item id with positive count in packed order, or -1 if empty.</summary>
         public int GetFirstItemId()
         {
+            EnsureRuntimeInitialized();
+            if (_storage is IInventoryRecordReader reader)
+            {
+                return reader.GetPackedItemId(0);
+            }
+
             List<InventoryItemRecord> records = GetSnapshotRecords();
             for (int i = 0; i < records.Count; i++)
             {
@@ -148,6 +171,12 @@ namespace Neo.Tools
         /// <summary>Last item id with positive count in packed order, or -1 if empty.</summary>
         public int GetLastItemId()
         {
+            EnsureRuntimeInitialized();
+            if (_storage is IInventoryRecordReader reader)
+            {
+                return reader.GetPackedItemId(reader.PackedRecordCount - 1);
+            }
+
             List<InventoryItemRecord> records = GetSnapshotRecords();
             for (int i = records.Count - 1; i >= 0; i--)
             {

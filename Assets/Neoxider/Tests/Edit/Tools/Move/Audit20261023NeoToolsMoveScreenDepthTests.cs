@@ -50,7 +50,7 @@ namespace Neo.Editor.Tests
                 _camera.pixelRect.xMax + _pixelOffset.x,
                 _camera.pixelRect.yMax + _pixelOffset.y,
                 _camera.nearClipPlane + depth));
-            // Native projection/readback is not an exact inverse, even for an orthographic camera.
+            // WHY: native projection/readback is not an exact inverse, even for an orthographic camera.
             // Use the independent native point's readback, retaining the full XYZ position oracle below.
             float expectedNativeDepth = _camera.WorldToScreenPoint(expected).z;
             if (!useDepth)

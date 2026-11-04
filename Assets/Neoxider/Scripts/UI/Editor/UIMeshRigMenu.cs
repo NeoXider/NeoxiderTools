@@ -13,6 +13,26 @@ namespace Neo.UI.Editor
     {
         private const string DefaultPanelSettingsPath = "Assets/Neoxider UI Mesh Rig Panel Settings.asset";
 
+        /// <summary>Console notice after Convert To Neoxider UI Mesh Rig replaced an Image.</summary>
+        internal const string ConvertedNotice =
+            "[UI Mesh Rig] The Image was replaced by a UI Mesh Rig on the same object. Button targeting and layout " +
+            "are kept, but check scripts and AnimationClips that reference UnityEngine.UI.Image by type; the " +
+            "operation supports Undo. To keep such references, use Create Non-Destructive Neoxider Mesh Rig Child.";
+
+        /// <summary>Console warning when Convert To Neoxider UI Mesh Rig refuses a non-Simple Image.</summary>
+        internal static string GetConvertRefusedMessage(UIImage.Type imageType)
+        {
+            return "[UI Mesh Rig] Conversion cancelled: Image Type is " + imageType + ". Only Simple images " +
+                   "convert without changing how they render; switch Image Type to Simple.";
+        }
+
+        /// <summary>Console warning when Create Non-Destructive Neoxider Mesh Rig Child refuses a non-Simple Image.</summary>
+        internal static string GetChildRefusedMessage(UIImage.Type imageType)
+        {
+            return "[UI Mesh Rig] The rig child was not created: Image Type is " + imageType +
+                   ". Only Simple images are supported.";
+        }
+
         [MenuItem("GameObject/UI/Neoxider UI Mesh Rig", false, 2050)]
         private static void Create(MenuCommand command)
         {
@@ -131,8 +151,8 @@ namespace Neo.UI.Editor
                 "</ui:UXML>\n";
             Texture2D icon = EditorGUIUtility.IconContent("VisualTreeAsset Icon").image as Texture2D;
 #if UNITY_6000_5_OR_NEWER
-            // CreateAssetWithContent помечен obsolete УРОВНЯ ОШИБКИ начиная с Unity 6.5: его вызов
-            // роняет компиляцию, а не просто предупреждает. Замена принимает Action<EntityId>.
+            // WHY: Unity 6.5 made CreateAssetWithContent obsolete as an error, so calling it breaks the build
+            // instead of warning; the replacement takes an Action<EntityId>.
             ProjectWindowUtil.CreateAssetWithTextContent("UIMeshRig.uxml", contents, icon);
 #else
             ProjectWindowUtil.CreateAssetWithContent("UIMeshRig.uxml", contents, icon);
@@ -145,23 +165,16 @@ namespace Neo.UI.Editor
             UIImage source = (UIImage)command.context;
             if (source.type != UIImage.Type.Simple)
             {
-                // Как и предупреждение о конвертации: в консоль, а не в модальное окно — пункт вызывают
-                // и автоматизацией через MCP, где модальный диалог вешает редактор.
-                Debug.LogWarning(
-                    "[UI Mesh Rig] Конвертация отменена: Image Type = " + source.type + ". Без изменения "
-                    + "рендеринга конвертируются только Simple-изображения — переключите Image Type на Simple.",
-                    source);
+                // WHY: reported in the console, not in a modal dialog, like the conversion notice below: the item
+                // is also run by automation (MCP), where a modal dialog blocks the editor. It is the explicit
+                // answer to a menu command, so it is not gated.
+                Debug.LogWarning(GetConvertRefusedMessage(source.type), source);
                 return;
             }
 
-            // Предупреждение идёт в консоль, а не в модальное окно: пункт вызывают и руками,
-            // и автоматизацией через MCP в обычном редакторе, где модальный диалог вешает процесс.
-            Debug.LogWarning(
-                "[UI Mesh Rig] Image заменён на UI Mesh Rig на том же объекте. Таргетинг кнопок и раскладка "
-                + "сохранены, но скрипты и AnimationClip, ссылающиеся на UnityEngine.UI.Image по типу, надо "
-                + "проверить вручную; операция поддерживает Undo. Если ссылки должны уцелеть — используйте "
-                + "пункт Create Non-Destructive Mesh Rig Child.",
-                source);
+            // WHY: in the console, not in a modal dialog: the item is run by hand and by automation (MCP) in a
+            // regular editor, where a modal dialog blocks the process.
+            Debug.LogWarning(ConvertedNotice, source);
 
             Sprite activeSprite = source.overrideSprite != null ? source.overrideSprite : source.sprite;
             GameObject targetObject = source.gameObject;
@@ -217,10 +230,7 @@ namespace Neo.UI.Editor
             UIImage source = (UIImage)command.context;
             if (source.type != UIImage.Type.Simple)
             {
-                Debug.LogWarning(
-                    "[UI Mesh Rig] Дочерний риг не создан: Image Type = " + source.type
-                    + ". Поддерживаются только Simple-изображения.",
-                    source);
+                Debug.LogWarning(GetChildRefusedMessage(source.type), source);
                 return;
             }
 

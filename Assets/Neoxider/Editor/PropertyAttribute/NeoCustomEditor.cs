@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Neo.Editor
 {
@@ -12,22 +13,33 @@ namespace Neo.Editor
     [CanEditMultipleObjects]
     public class NeoCustomEditor : CustomEditorBase
     {
-        // WHY: debug hook to verify the editor instance is constructed
-        static NeoCustomEditor()
-        {
-        }
-
+        // WHY: with several objects selected the attributes used to be applied to the first one only; every
+        // selected object is processed, through the inspector throttle so unresolved lookups do not rescan the
+        // scene or the Resources on every IMGUI event.
         protected override void ProcessAttributeAssignments()
         {
-            var targetObject = target as MonoBehaviour;
+            Object[] inspected = targets;
+            if (inspected == null || inspected.Length <= 1)
+            {
+                ProcessTarget(target as MonoBehaviour);
+                return;
+            }
+
+            for (int i = 0; i < inspected.Length; i++)
+            {
+                ProcessTarget(inspected[i] as MonoBehaviour);
+            }
+        }
+
+        private static void ProcessTarget(MonoBehaviour targetObject)
+        {
             if (targetObject == null)
             {
                 return;
             }
 
-            ComponentDrawer.ProcessComponentAttributes(targetObject);
-
-            ResourceDrawer.ProcessResourceAttributes(targetObject);
+            ComponentDrawer.ProcessComponentAttributes(targetObject, InjectionLookupThrottle.InspectorComponents);
+            ResourceDrawer.ProcessResourceAttributes(targetObject, InjectionLookupThrottle.InspectorResources);
         }
     }
 

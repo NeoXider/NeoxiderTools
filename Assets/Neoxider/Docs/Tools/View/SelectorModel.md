@@ -1,6 +1,14 @@
 # SelectorModel
 
-`SelectorModel` is the plain C# selection rule class used by `Selector`.
+**What it is:** `SelectorModel` is the plain C# selection rule class used by `Selector`
+(`Scripts/Tools/View/SelectorModel.cs`, namespace `Neo.Tools`): index bounds, loop, offset, fill mode, random,
+unique and excluded indices, without any `GameObject` state.
+
+**How to use:** create `new SelectorModel()`, call `Configure(...)` once, then drive it with `Set`, `Next`,
+`Previous`, `SetFirst`, `SetLast` and `SetRandom`, and read `CurrentIndex` / `IsItemActive(i)` to update your own
+view. See the [minimal example](#minimal-example).
+
+---
 
 ## Use It When
 
@@ -34,7 +42,17 @@ model.SetRandom(deactivateOthers: true, randomRange: null);
 
 int index = model.CurrentIndex;
 int activeCount = model.GetLogicalActiveCount();
+bool secondItemOn = model.IsItemActive(1);
 ```
+
+## Item activation rule
+
+`IsItemActive(itemIndex)` applies the rule `Selector` uses for its items, so a custom view built on the
+model switches the same items on. `itemIndex` is an item position (logical index plus `IndexOffset`), not a
+logical index. It returns false when `Count` is 0 or the effective index is -1. Otherwise only the effective
+item is active, or, in fill mode, every item from 0 up to and including it. Like the other bounds-dependent
+members it throws `ArgumentOutOfRangeException` (parameter `indexOffset`) when the logical bounds do not
+fit in `Int32`.
 
 ## Boundary and unique-selection contracts
 
@@ -64,8 +82,19 @@ exception leaves that destination set unchanged. Direct self-assignment stays a 
 requested set. This is a per-set replacement contract, not a transaction over arbitrary iterator side
 effects or the whole `Configure` call.
 
-Candidate enumeration still scales with pool size and replacement inputs are materialized. These fixes
-do not establish zero-allocation getters or a per-frame cost bound for large virtual pools.
+## Cost
+
+The getters (`IsAtStart`, `IsAtEnd`, `IsValidIndex`, `GetEffectiveIndex`, `GetLogicalActiveCount`,
+`IsItemActive`) and the commands `Set`, `Next`, `Previous`, `SetFirst`, `SetLast` and `SetRandom` do not
+allocate. `SetRandom` counts the eligible indices and walks to the picked one, so its time grows with the
+pool size, but it builds no candidate list; candidates are visited in ascending order, so a given
+`randomRange` result always maps to the same index. Passing `randomRange: null` uses a shared
+`System.Random` through a cached delegate, so that path does not allocate either. A `randomRange` callback
+that changes the excluded or used sets during the pick does not make `SetRandom` throw: a ticket past the
+remaining candidates falls back to the last one, and with no candidate left the current index is kept.
+`UniqueRemainingCount` is also O(pool). The replacement setters (`SetExcludedIndices`,
+`SetUsedIndicesForUnique`, `Configure`) materialize their input by design, and `GetIncludedIndices()`
+returns a new list on every call.
 
 ## Component Interop
 

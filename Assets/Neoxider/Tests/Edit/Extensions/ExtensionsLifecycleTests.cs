@@ -30,7 +30,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void CoroutineExtensions_SubsystemReset_ClearsStaticHelperReference()
         {
-            var helperObject = new GameObject("CoroutineHelperTest");
+            GameObject helperObject = new GameObject("CoroutineHelperTest");
             CoroutineHelper helper = helperObject.AddComponent<CoroutineHelper>();
             SetCoroutineHelperInstance(helper);
 
@@ -43,7 +43,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void CoroutineLifecycleTracker_CompleteAll_InvalidatesHandles()
         {
-            var ownerObject = new GameObject("CoroutineOwner");
+            GameObject ownerObject = new GameObject("CoroutineOwner");
             CoroutineExtensions.CoroutineHandle handle = null;
 
             try

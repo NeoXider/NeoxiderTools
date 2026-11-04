@@ -1,18 +1,16 @@
 ﻿# SaveableBehaviour
 
-## Overview
-`SaveableBehaviour` is the simplest way to connect a scene component to the `Save` module.
+**What it is:** the simplest way to connect a scene component to the `Save` module: an abstract `MonoBehaviour`
+(`Scripts/Save/SaveableBehaviour.cs`, namespace `Neo.Save`) that implements `ISaveableComponent` and automatically
+registers and unregisters itself in `SaveManager`.
 
-- **Namespace**: `Neo.Save`
-- **Path**: `Assets/Neoxider/Scripts/Save/SaveableBehaviour.cs`
-
-It already implements `ISaveableComponent` and automatically registers and unregisters itself in `SaveManager`.
-
-## How to use
+**How to use:**
 1. Inherit your component from `SaveableBehaviour`.
 2. Mark fields with `[SaveField("key")]`.
 3. Override `OnDataLoaded()` when you need post-load refresh logic.
 4. Implement `ISaveIdentityProvider` if the component needs a custom stable key.
+
+---
 
 ## Lifecycle behavior
 - `OnEnable()` calls `SaveManager.Register(this)`.

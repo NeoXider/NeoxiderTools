@@ -1,13 +1,14 @@
 ﻿# SwipeController
 
-Detect cardinal swipe gestures from touch or the left mouse button. The component uses namespace `Neo.Tools`, assembly `Neo.Tools.Input`.
+**What it is:** a component that detects cardinal swipe gestures from touch or the left mouse button. The component uses namespace `Neo.Tools`, assembly `Neo.Tools.Input`. Script: `Scripts/Tools/Input/SwipeController.cs`.
 
-## Setup
-
+**How to use:**
 1. Add `SwipeController` from the Neoxider Tools component menu.
 2. Set the minimum X/Y distances in screen pixels. Movement must strictly exceed the corresponding threshold.
 3. Enable `detectSwipeOnlyAfterRelease` for one deliberate decision at release, or leave it disabled to detect movement segments while dragging.
 4. Wire `OnSwipe` in the Inspector or subscribe from C#.
+
+---
 
 ## Key Fields (Inspector)
 
@@ -38,7 +39,7 @@ if (SwipeController.GetSwipeDirection(out SwipeDirection direction))
 
 Legacy input uses `Input.GetTouch` without allocating an `Input.touches` array. The first begun contact owns the gesture until Ended/Canceled; other finger IDs cannot replace its origin or release it. Mouse dragging requires an observed button-down. Cancellation, component disable, application pause and focus loss clear active gestures and pending polling state.
 
-Mouse and touch share `InputBackendCompat` selection with keyboard readers: Both prefers legacy, New-only skips it, and a rejected legacy read is remembered until reset. With legacy input disabled, mouse reads use `MouseInputCompat` and touch reads use the optional Input System's `Touchscreen.primaryTouch`. This is a single-contact recognizer, not a multi-touch gesture system. If the Input System package/device is absent, no gesture is produced. Input System primary-touch lifetime can span additional fingers; verify that policy on the target device when multi-touch is relevant.
+Mouse and touch share `InputBackendCompat` selection with keyboard readers: Both prefers legacy, New-only skips it, and a rejected legacy read is remembered until reset. With legacy input disabled, mouse reads use `MouseInputCompat` and touch reads use the optional Input System's `Touchscreen.primaryTouch`; touch id, position and phase are read through bound getters without per-frame allocation. This is a single-contact recognizer, not a multi-touch gesture system. If the Input System package/device is absent, no gesture is produced. Input System primary-touch lifetime can span additional fingers; verify that policy on the target device when multi-touch is relevant.
 
 ## See Also
 

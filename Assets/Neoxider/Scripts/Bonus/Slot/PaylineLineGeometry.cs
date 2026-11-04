@@ -14,18 +14,9 @@ namespace Neo.Bonus
                 return Vector3.zero;
             }
 
-            if (row.SlotElements != null)
-            {
-                foreach (SlotElement se in row.SlotElements)
-                {
-                    if (se != null && row.TryGetWindowRowFromBottom(se, out int rfb) && rfb == rowFromBottom)
-                    {
-                        return se.transform.position;
-                    }
-                }
-            }
-
-            return GetApproxCellWorld(row, rowFromBottom);
+            // WHY: one window classification per cell instead of one per reel element (each used to allocate).
+            SlotElement visible = row.GetVisibleElement(rowFromBottom);
+            return visible != null ? visible.transform.position : GetApproxCellWorld(row, rowFromBottom);
         }
 
         private static Vector3 GetApproxCellWorld(Row row, int rowFromBottom)

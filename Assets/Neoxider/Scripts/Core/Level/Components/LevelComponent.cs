@@ -43,6 +43,18 @@ namespace Neo.Core.Level
 
         private LevelModel _model;
 
+        private ReactiveStates _publishedInCall;
+
+        [Flags]
+        private enum ReactiveStates
+        {
+            None = 0,
+            Level = 1,
+            Xp = 2,
+            XpToNext = 4,
+            All = Level | Xp | XpToNext
+        }
+
         public LevelCurveDefinition LevelCurveDefinition
         {
             get => _levelCurve;
@@ -169,15 +181,31 @@ namespace Neo.Core.Level
         public void AddXp(int amount)
         {
             EnsureInitialized();
-            _model.AddXp(amount);
-            SyncReactiveFromModel();
+            ReactiveStates outerCall = BeginReactiveCall();
+            try
+            {
+                _model.AddXp(amount);
+                PublishStatesNotYetPublished();
+            }
+            finally
+            {
+                EndReactiveCall(outerCall);
+            }
         }
 
         public void SetLevel(int level)
         {
             EnsureInitialized();
-            _model.SetLevel(level);
-            SyncReactiveFromModel();
+            ReactiveStates outerCall = BeginReactiveCall();
+            try
+            {
+                _model.SetLevel(level);
+                PublishStatesNotYetPublished();
+            }
+            finally
+            {
+                EndReactiveCall(outerCall);
+            }
         }
 
         /// <summary>
@@ -192,7 +220,7 @@ namespace Neo.Core.Level
             }
 
             EnsureModel();
-            // Queries from load/reactive listeners must see initialization in progress instead of starting it again.
+            // WHY: Queries from load/reactive listeners must see initialization in progress instead of starting it again.
             _initialized = true;
             try
             {
@@ -268,7 +296,7 @@ namespace Neo.Core.Level
 
         private void RestoreModelState(int totalXp, int level, int maxLevel)
         {
-            // Restore under the incoming cap; observers must not receive an intermediate clamp of the old profile.
+            // WHY: Restore under the incoming cap; observers must not receive an intermediate clamp of the old profile.
             _model.OnLevelChanged -= HandleLevelChanged;
             try
             {
@@ -307,30 +335,103 @@ namespace Neo.Core.Level
                 return;
             }
 
-            LevelState.SetValueWithoutNotify(_model.CurrentLevel);
-            XpState.SetValueWithoutNotify(_model.TotalXp);
-            XpToNextLevelState.SetValueWithoutNotify(_model.XpToNextLevel);
-            LevelState.ForceNotify();
+            WriteReactiveValues();
+            _publishedInCall = ReactiveStates.All;
+            // WHY: XP and XP-to-next are published before the level, so a level listener never finds an XP binding
+            // that still shows the previous profile.
             XpState.ForceNotify();
             XpToNextLevelState.ForceNotify();
+            LevelState.ForceNotify();
         }
 
-        private void HandleLevelChanged(int previousLevel, int newLevel)
+        private void WriteReactiveValues()
         {
             LevelState.SetValueWithoutNotify(_model.CurrentLevel);
             XpState.SetValueWithoutNotify(_model.TotalXp);
             XpToNextLevelState.SetValueWithoutNotify(_model.XpToNextLevel);
+        }
+
+        private ReactiveStates BeginReactiveCall()
+        {
+            ReactiveStates outerCall = _publishedInCall;
+            _publishedInCall = ReactiveStates.None;
+            return outerCall;
+        }
+
+        private void EndReactiveCall(ReactiveStates outerCall)
+        {
+            // WHY: a nested AddXp/SetLevel (an OnLevelUp reward, for example) has already published its final values,
+            // so the enclosing call does not repeat those notifications.
+            _publishedInCall |= outerCall;
+        }
+
+        /// <summary>
+        ///     Ends an <see cref="AddXp" /> or <see cref="SetLevel" /> call: every state is published at least once per
+        ///     call, but a state the model events already published with its final value is not notified again.
+        /// </summary>
+        private void PublishStatesNotYetPublished()
+        {
+            ReactiveStates published = _publishedInCall;
+            bool xpPending = (published & ReactiveStates.Xp) == 0 || XpState.CurrentValue != _model.TotalXp;
+            bool xpToNextPending = (published & ReactiveStates.XpToNext) == 0 ||
+                                   XpToNextLevelState.CurrentValue != _model.XpToNextLevel;
+            bool levelPending = (published & ReactiveStates.Level) == 0 ||
+                                LevelState.CurrentValue != _model.CurrentLevel;
+            WriteReactiveValues();
+            _publishedInCall = ReactiveStates.All;
+            if (xpPending)
+            {
+                XpState.ForceNotify();
+            }
+
+            if (xpToNextPending)
+            {
+                XpToNextLevelState.ForceNotify();
+            }
+
+            if (levelPending)
+            {
+                LevelState.ForceNotify();
+            }
+        }
+
+        private void HandleLevelChanged(int previousLevel, int newLevel)
+        {
+            // WHY: SetLevel moves TotalXp to the level's threshold without raising OnXpGained, so XP and XP-to-next
+            // listeners (NoCode bindings included) hear the new values here, before the level listeners and OnLevelUp
+            // run. A value HandleXpGained already published in this AddXp is not notified again.
+            bool xpChanged = XpState.CurrentValue != _model.TotalXp;
+            bool xpToNextChanged = XpToNextLevelState.CurrentValue != _model.XpToNextLevel;
+            WriteReactiveValues();
+            _publishedInCall |= ReactiveStates.Level;
+            if (xpChanged)
+            {
+                _publishedInCall |= ReactiveStates.Xp;
+                XpState.ForceNotify();
+            }
+
+            if (xpToNextChanged)
+            {
+                _publishedInCall |= ReactiveStates.XpToNext;
+                XpToNextLevelState.ForceNotify();
+            }
+
             LevelState.ForceNotify();
-            XpToNextLevelState.ForceNotify();
             _onLevelUp?.Invoke(newLevel);
         }
 
         private void HandleXpGained(int added, int newTotal)
         {
-            LevelState.SetValueWithoutNotify(_model.CurrentLevel);
-            XpState.SetValueWithoutNotify(_model.TotalXp);
-            XpToNextLevelState.SetValueWithoutNotify(_model.XpToNextLevel);
+            bool xpToNextChanged = XpToNextLevelState.CurrentValue != _model.XpToNextLevel;
+            WriteReactiveValues();
+            _publishedInCall |= ReactiveStates.Xp;
             XpState.ForceNotify();
+            if (xpToNextChanged)
+            {
+                _publishedInCall |= ReactiveStates.XpToNext;
+                XpToNextLevelState.ForceNotify();
+            }
+
             _onXpGained?.Invoke();
         }
     }

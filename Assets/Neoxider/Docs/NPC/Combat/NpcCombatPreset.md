@@ -1,6 +1,14 @@
 # NpcCombatPreset
 
-**Purpose:** ScriptableObject data preset for `NpcRpgCombatBrain`. Bundles an `RpgAttackPreset` with the distances and behaviour flags that shape chase / hold / attack decisions.
+**What it is:** a `ScriptableObject` (`Scripts/NPC/Combat/NpcCombatPreset.cs`, namespace `Neo.NPC.Combat`) holding
+the data for `NpcRpgCombatBrain`: an `RpgAttackPreset` plus the distances and behaviour flags that shape chase /
+hold / attack decisions.
+
+**How to use:**
+1. Create it via `Assets -> Create -> Neoxider/NPC/Npc Combat Preset` and assign an `RpgAttackPreset`.
+2. Reference it from `NpcRpgCombatBrain` (Inspector or `brain.Preset = preset`).
+
+---
 
 ## Setup
 

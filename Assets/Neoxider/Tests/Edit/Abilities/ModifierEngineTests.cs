@@ -189,11 +189,11 @@ namespace Neo.Editor.Tests.Abilities
             _system.Modifiers.Apply(debuff, _caster.Id, _unit.Id);
             _system.Modifiers.Apply(stubborn, _caster.Id, _unit.Id);
 
-            var dispel = new EffectNodeData { OpId = AbilityEffectOps.Dispel, Target = EffectTargetSelector.Target };
+            EffectNodeData dispel = new EffectNodeData { OpId = AbilityEffectOps.Dispel, Target = EffectTargetSelector.Target };
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: _unit.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(dispel), ctx);
 
-            var remaining = new List<string>();
+            List<string> remaining = new List<string>();
             foreach (ModifierInstance m in AbilityTestSupport.ActiveModifiers(_system, _unit.Id))
             {
                 remaining.Add(m.Blueprint.Id);
@@ -214,7 +214,7 @@ namespace Neo.Editor.Tests.Abilities
             _system.Modifiers.Apply(buff, _caster.Id, _unit.Id);
             _system.Modifiers.Apply(debuff, _caster.Id, _unit.Id);
 
-            var dispel = new EffectNodeData
+            EffectNodeData dispel = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Dispel,
                 Target = EffectTargetSelector.Target,
@@ -223,7 +223,7 @@ namespace Neo.Editor.Tests.Abilities
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: _unit.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(dispel), ctx);
 
-            var remaining = new List<string>();
+            List<string> remaining = new List<string>();
             foreach (ModifierInstance m in AbilityTestSupport.ActiveModifiers(_system, _unit.Id))
             {
                 remaining.Add(m.Blueprint.Id);
@@ -341,7 +341,7 @@ namespace Neo.Editor.Tests.Abilities
             Apply(bp);
             Apply(bp); // WHY: 3 stacks => 2 + 2*2 = 6
 
-            var contributions = new List<ResolvedContribution>();
+            List<ResolvedContribution> contributions = new List<ResolvedContribution>();
             _system.Modifiers.CollectContributions(_unit.Id, AbilityProperties.Armor, contributions);
 
             Assert.That(contributions.Count, Is.EqualTo(1));

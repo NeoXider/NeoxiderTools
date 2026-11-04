@@ -64,8 +64,17 @@ namespace Neo.Shop
         [Space] public UnityEvent<string> OnVariantEquipped = new();
         public UnityEvent OnUnequipped = new();
 
+        // WHY: bounds the re-renders requested by IShopVariantView callbacks (for example an OnOwned listener that
+        // calls Equip) so a callback that keeps changing the state cannot loop forever.
+        private const int MaxRenderPasses = 4;
+
         private readonly List<IShopVariantView> _viewBuffer = new();
+        private readonly List<PushedSlot> _pushedSlots = new();
         private Shop _subscribedShop;
+        private int _refreshBatchDepth;
+        private bool _rendering;
+        private bool _renderRequested;
+        private bool _pushAllRequested;
 
         /// <summary>List view the panel renders (may be null before resolution).</summary>
         public ShopListView ListView => _listView;
@@ -83,7 +92,7 @@ namespace Neo.Shop
 
             if (_listView != null)
             {
-                _listView.OnRefreshed.AddListener(RefreshStates);
+                _listView.OnRefreshed.AddListener(HandleStateNotification);
             }
 
             UpdateShopSubscription(ShopRef);
@@ -100,7 +109,7 @@ namespace Neo.Shop
         {
             if (_listView != null)
             {
-                _listView.OnRefreshed.RemoveListener(RefreshStates);
+                _listView.OnRefreshed.RemoveListener(HandleStateNotification);
             }
 
             UpdateShopSubscription(null);
@@ -111,7 +120,10 @@ namespace Neo.Shop
             }
         }
 
-        /// <summary>Equips the item (EquipmentManager when assigned, otherwise Shop selection).</summary>
+        /// <summary>
+        ///     Equips the item (EquipmentManager when assigned, otherwise Shop selection). Slots whose state changed are
+        ///     pushed once, after both changes and before <see cref="OnVariantEquipped" />.
+        /// </summary>
         public void Equip(string itemId)
         {
             if (string.IsNullOrEmpty(itemId))
@@ -119,40 +131,55 @@ namespace Neo.Shop
                 return;
             }
 
-            if (_equipment != null)
+            BeginRefreshBatch();
+            try
             {
-                _equipment.EquipById(itemId);
-            }
+                if (_equipment != null)
+                {
+                    _equipment.EquipById(itemId);
+                }
 
-            Shop shop = ShopRef;
-            if (shop != null && !string.Equals(shop.EquippedId, itemId, StringComparison.Ordinal))
+                Shop shop = ShopRef;
+                if (shop != null && !string.Equals(shop.EquippedId, itemId, StringComparison.Ordinal))
+                {
+                    shop.Select(itemId);
+                }
+            }
+            finally
             {
-                shop.Select(itemId);
+                EndRefreshBatch();
             }
 
             OnVariantEquipped?.Invoke(itemId);
-            RefreshStates();
         }
 
         /// <summary>
         ///     Empty/none state: clears the equipment category (when an EquipmentManager is assigned)
-        ///     and the Shop selection. Wire an optional "empty slot" button here.
+        ///     and the Shop selection. Wire an optional "empty slot" button here. Slots whose state changed are pushed
+        ///     once, before <see cref="OnUnequipped" />.
         /// </summary>
         public void Unequip()
         {
-            if (_equipment != null)
+            BeginRefreshBatch();
+            try
             {
-                _equipment.Unequip(_unequipCategoryId);
-            }
+                if (_equipment != null)
+                {
+                    _equipment.Unequip(_unequipCategoryId);
+                }
 
-            Shop shop = ShopRef;
-            if (shop != null && !string.IsNullOrEmpty(shop.EquippedId))
+                Shop shop = ShopRef;
+                if (shop != null && !string.IsNullOrEmpty(shop.EquippedId))
+                {
+                    shop.Select("");
+                }
+            }
+            finally
             {
-                shop.Select("");
+                EndRefreshBatch();
             }
 
             OnUnequipped?.Invoke();
-            RefreshStates();
         }
 
         /// <summary>Current state of one item id, using the same rules the slot rendering uses.</summary>
@@ -174,36 +201,16 @@ namespace Neo.Shop
                 : ShopVariantState.Unowned;
         }
 
-        /// <summary>Pushes the current state of every visible slot to its <see cref="IShopVariantView"/> components.</summary>
+        /// <summary>
+        ///     Pushes the current state of every visible slot to its <see cref="IShopVariantView"/> components, including
+        ///     slots whose state did not change. Called while <see cref="Equip" />, <see cref="Unequip" />, a forwarded
+        ///     selection or a slot callback is still applying its changes, it is deferred to one push when that change
+        ///     completes. Shop, list and equipment notifications do not use this full push: they push only the slots
+        ///     whose state or bound item changed.
+        /// </summary>
         public void RefreshStates()
         {
-            if (isActiveAndEnabled)
-            {
-                UpdateShopSubscription(ShopRef);
-            }
-
-            if (_listView == null)
-            {
-                return;
-            }
-
-            IReadOnlyList<ShopItem> views = _listView.Views;
-            for (int i = 0; i < views.Count; i++)
-            {
-                ShopItem view = views[i];
-                if (view == null || view.BoundItemData == null)
-                {
-                    continue;
-                }
-
-                ShopVariantState state = GetState(view.BoundItemData.Id);
-
-                view.GetComponentsInChildren(true, _viewBuffer);
-                for (int v = 0; v < _viewBuffer.Count; v++)
-                {
-                    _viewBuffer[v]?.ApplyVariantState(state, view.BoundItemData);
-                }
-            }
+            RequestRender(true);
         }
 
         private bool IsEquipped(Shop shop, string itemId)
@@ -224,23 +231,144 @@ namespace Neo.Shop
                 return;
             }
 
-            RefreshStates();
+            RequestRender(false);
         }
 
         private void HandleSelected(string itemId)
         {
-            if (_equipment != null && _forwardSelectionToEquipment && !string.IsNullOrEmpty(itemId) &&
-                !_equipment.IsEquipped(itemId))
+            BeginRefreshBatch();
+            try
             {
-                _equipment.EquipById(itemId);
+                if (_equipment != null && _forwardSelectionToEquipment && !string.IsNullOrEmpty(itemId) &&
+                    !_equipment.IsEquipped(itemId))
+                {
+                    _equipment.EquipById(itemId);
+                }
             }
-
-            RefreshStates();
+            finally
+            {
+                EndRefreshBatch();
+            }
         }
 
         private void HandleEquipChanged(string categoryId, string itemId)
         {
-            RefreshStates();
+            RequestRender(false);
+        }
+
+        // WHY: one shop change reaches the panel several times (Shop.OnShopChanged, OnSelectId, the ShopListView
+        // refresh it triggers, the forwarded equipment change), in an order set by subscription order. Pushing only
+        // the slots that changed renders each change once in every order, and a render that runs before the
+        // selection reaches the EquipmentManager pushes nothing instead of a stale state.
+        private void HandleStateNotification()
+        {
+            RequestRender(false);
+        }
+
+        private void BeginRefreshBatch()
+        {
+            _refreshBatchDepth++;
+        }
+
+        /// <summary>Closes one batch level; closing the outermost level renders the changed slots once.</summary>
+        private void EndRefreshBatch()
+        {
+            _refreshBatchDepth--;
+            if (_refreshBatchDepth > 0)
+            {
+                return;
+            }
+
+            RequestRender(false);
+        }
+
+        private void RequestRender(bool pushAll)
+        {
+            _renderRequested = true;
+            _pushAllRequested |= pushAll;
+            // WHY: a render requested from an IShopVariantView callback runs after the current pass instead of
+            // inside it; a nested pass would refill _viewBuffer while the outer loop still iterates it.
+            if (_refreshBatchDepth > 0 || _rendering)
+            {
+                return;
+            }
+
+            _rendering = true;
+            try
+            {
+                for (int pass = 0; pass < MaxRenderPasses && _renderRequested; pass++)
+                {
+                    bool pushAllSlots = _pushAllRequested;
+                    _renderRequested = false;
+                    _pushAllRequested = false;
+                    PushSlotStates(pushAllSlots);
+                }
+            }
+            finally
+            {
+                _rendering = false;
+                _renderRequested = false;
+                _pushAllRequested = false;
+            }
+        }
+
+        private void PushSlotStates(bool pushAll)
+        {
+            if (isActiveAndEnabled)
+            {
+                UpdateShopSubscription(ShopRef);
+            }
+
+            if (_listView == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<ShopItem> views = _listView.Views;
+            for (int i = 0; i < views.Count; i++)
+            {
+                ShopItem view = views[i];
+                ShopItemData data = view != null ? view.BoundItemData : null;
+                if (data == null)
+                {
+                    continue;
+                }
+
+                ShopVariantState state = GetState(data.Id);
+                if (!pushAll && WasPushed(i, view, data, state))
+                {
+                    continue;
+                }
+
+                view.GetComponentsInChildren(true, _viewBuffer);
+                for (int v = 0; v < _viewBuffer.Count; v++)
+                {
+                    _viewBuffer[v]?.ApplyVariantState(state, data);
+                }
+
+                StorePushed(i, view, data, state);
+            }
+        }
+
+        private bool WasPushed(int slot, ShopItem view, ShopItemData data, ShopVariantState state)
+        {
+            if (slot >= _pushedSlots.Count)
+            {
+                return false;
+            }
+
+            PushedSlot pushed = _pushedSlots[slot];
+            return pushed.State == state && ReferenceEquals(pushed.View, view) && ReferenceEquals(pushed.Data, data);
+        }
+
+        private void StorePushed(int slot, ShopItem view, ShopItemData data, ShopVariantState state)
+        {
+            while (_pushedSlots.Count <= slot)
+            {
+                _pushedSlots.Add(default);
+            }
+
+            _pushedSlots[slot] = new PushedSlot(view, data, state);
         }
 
         private void UpdateShopSubscription(Shop shop)
@@ -254,7 +382,7 @@ namespace Neo.Shop
             {
                 _subscribedShop.OnPurchasedId.RemoveListener(HandlePurchased);
                 _subscribedShop.OnSelectId.RemoveListener(HandleSelected);
-                _subscribedShop.OnShopChanged.RemoveListener(RefreshStates);
+                _subscribedShop.OnShopChanged.RemoveListener(HandleStateNotification);
             }
 
             _subscribedShop = shop;
@@ -262,7 +390,7 @@ namespace Neo.Shop
             {
                 _subscribedShop.OnPurchasedId.AddListener(HandlePurchased);
                 _subscribedShop.OnSelectId.AddListener(HandleSelected);
-                _subscribedShop.OnShopChanged.AddListener(RefreshStates);
+                _subscribedShop.OnShopChanged.AddListener(HandleStateNotification);
             }
         }
 
@@ -280,6 +408,21 @@ namespace Neo.Shop
             if (_equipment == null)
             {
                 _equipment = GetComponentInParent<EquipmentManager>();
+            }
+        }
+
+        /// <summary>Last state pushed to one slot, used to skip notifications that change nothing.</summary>
+        private readonly struct PushedSlot
+        {
+            public readonly ShopItem View;
+            public readonly ShopItemData Data;
+            public readonly ShopVariantState State;
+
+            public PushedSlot(ShopItem view, ShopItemData data, ShopVariantState state)
+            {
+                View = view;
+                Data = data;
+                State = state;
             }
         }
     }

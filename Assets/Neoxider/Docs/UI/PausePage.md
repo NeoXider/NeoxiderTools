@@ -1,8 +1,15 @@
 ﻿# PausePage
 
-`Neo.Tools.PausePage` applies pause behavior while its GameObject is active. It can change
-`Time.timeScale`, call `GM.Pause`/`Resume`, and unlock/show the cursor. Active pages share ownership of
-each channel, so overlapping screens can close in either order without restoring another page's snapshot.
+**What it is:** `Neo.Tools.PausePage` (`Scripts/UI/PausePage.cs`) is a `MonoBehaviour` that applies pause
+behavior while its GameObject is active. It can change `Time.timeScale`, call `GM.Pause`/`Resume`, and
+unlock/show the cursor. Active pages share ownership of each channel, so overlapping screens can close in
+either order without restoring another page's snapshot.
+
+**How to use:**
+1. Put the component on the pause screen root and keep that screen inactive.
+2. Activate the screen to pause and deactivate it to resume (`SetActive`, UnityEvents or code).
+
+---
 
 ## Setup
 
@@ -22,12 +29,16 @@ pauseScreen.SetActive(false); // Release this page; the last owner restores the 
 There is no separate `PausePage.Pause()` API. The optional same-object Animator is configured to use
 unscaled time during Inspector validation so its pause-screen animation can run at time scale zero.
 
+Other UI inside a paused screen keeps working at time scale zero by default: [ButtonScale](./ButtonScale.md),
+[ButtonShake](./ButtonShake.md) and [FakeLoad](./FakeLoad.md) animate in unscaled time, and the delayed and
+animated switches of the [UI](./UI.md) page manager (also used by [ButtonChangePage](./ButtonChangePage.md))
+wait in unscaled time.
+
 ## Key Fields (Inspector)
 
 | Field | Description |
 |-------|-------------|
-| `AfterPauseCursorBehavior` | After Pause Cursor Behavior. |
-| `_afterPauseCursor` | Restore the first cursor baseline, or request a final locked/hidden cursor. |
+| `_afterPauseCursor` | `AfterPauseCursorBehavior`: `RestorePrevious` restores the first cursor baseline, `ForceLockedHidden` requests a final locked/hidden cursor. |
 | `_controlCursor` | Join cursor ownership; active cursor owners keep it visible and unlocked. |
 | `_useTimeScale` | Join shared time ownership. |
 | `_sendPause` | Join the shared GM pause request. Only the exact acquired transition can be resumed. |
@@ -70,6 +81,13 @@ This is scoped page ownership, not an arbitration service for arbitrary direct `
 writers. Avoid mixing raw time writes or `SceneFlowController.Pause(bool)` with a page-owned pause. Cursor
 controllers and other global owners retain their own contracts. No ScriptableObject scene references or
 UnityEvent-only game rules are needed; the active-object workflow above is the public C# and scene path.
+
+## Testing
+
+`Tests/Play/UI/Audit20261023NeoUIPausePageTests.cs` covers the time, GM and cursor ownership matrix. The cursor
+case needs a host that can hold a native cursor lock (an interactive Editor with the Game view focused); a
+batch or unfocused run reports it as Ignored (`PAUSEPAGE_NATIVE_CURSOR_CAPABILITY`), which is missing evidence,
+not a pass.
 
 ## See Also
 

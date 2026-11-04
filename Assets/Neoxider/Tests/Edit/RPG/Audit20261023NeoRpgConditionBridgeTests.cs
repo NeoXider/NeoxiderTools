@@ -225,6 +225,31 @@ namespace Neo.Tests.Edit.RPG
             Assert.That(_adapter.LastResult, Is.False);
         }
 
+        [Test]
+        public void Refresh_PersistentUnityEventListenerEvaluatesAndReportsThroughResultEvents()
+        {
+            MethodInfo refresh = typeof(RpgConditionAdapter).GetMethod(nameof(RpgConditionAdapter.Refresh),
+                BindingFlags.Instance | BindingFlags.Public, null, System.Type.EmptyTypes, null);
+            Assert.That(refresh, Is.Not.Null);
+            Assert.That(refresh.ReturnType, Is.EqualTo(typeof(void)), "persistent UnityEvent targets must be void");
+            RpgCharacter character = CreateCharacter("RefreshCharacter");
+            _adapter.transform.SetParent(character.transform);
+            _root.SetActive(true);
+            List<bool> results = new();
+            GetEvent<UnityEvent>("_onTrue").AddListener(() => results.Add(true));
+            GetEvent<UnityEvent>("_onFalse").AddListener(() => results.Add(false));
+            UnityEvent trigger = new();
+            UnityEditor.Events.UnityEventTools.AddVoidPersistentListener(trigger, _adapter.Refresh);
+            trigger.SetPersistentListenerState(0, UnityEventCallState.EditorAndRuntime);
+
+            trigger.Invoke();
+            character.Damage(50f);
+            trigger.Invoke();
+
+            Assert.That(results, Is.EqualTo(new[] { true, false }));
+            Assert.That(_adapter.LastResult, Is.False);
+        }
+
         [TestCase(RpgConditionEvaluationMode.HpAtLeast, 75f, true)]
         [TestCase(RpgConditionEvaluationMode.HpAtLeast, 75.1f, false)]
         [TestCase(RpgConditionEvaluationMode.HpPercentAtLeast, 75f, true)]
@@ -283,7 +308,7 @@ namespace Neo.Tests.Edit.RPG
             return character;
         }
 
-        // Reflection only wires Inspector-owned events; assertions observe public results and notifications.
+        // WHY: reflection only wires Inspector-owned events; assertions observe public results and notifications.
         private TEvent GetEvent<TEvent>(string fieldName) where TEvent : UnityEventBase
         {
             FieldInfo field = typeof(RpgConditionAdapter).GetField(fieldName,

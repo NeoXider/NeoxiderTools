@@ -1,6 +1,13 @@
 # CursorLockController
 
-**Purpose:** Owns mouse cursor visibility/lock through a controller stack and **drives referenced `PlayerController3DPhysics` instances**. Each controller can suspend look and optionally movement. Overlapping controllers share ownership of each player gate: only the last release restores the value captured by the first request. Features presets for gameplay and UI panels.
+**What it is:** a `MonoBehaviour` (`Scripts/Tools/Move/CursorLockController.cs`, namespace `Neo.Tools`) that owns mouse cursor visibility/lock through a controller stack and **drives referenced `PlayerController3DPhysics` instances**. Each controller can suspend look and optionally movement. Overlapping controllers share ownership of each player gate: only the last release restores the value captured by the first request. Features presets for gameplay and UI panels.
+
+**How to use:**
+1. Add **Neoxider > Tools > CursorLockController** to the player or to a UI root, and pick a **Preset** (or `Custom`).
+2. Reference the players it should drive in *Player Control* (or enable automatic discovery).
+3. Configure Escape with *Allow Toggle* / *Toggle Key*, and call `ShowCursor`, `HideCursor` or `SetCursorLocked` from menus.
+
+---
 
 ## Cursor ownership rule
 
@@ -32,7 +39,7 @@
 | `void ReleaseControl()` | Relinquishes cursor control. Hands authority back to the previous active `CursorLockController` in the stack. |
 | `void RegisterPlayer(PlayerController3DPhysics player)` | Adds a player at runtime (e.g. a network-spawned player), binds this controller as its cursor owner and applies the current cursor state to it. |
 | `void UnregisterPlayer(PlayerController3DPhysics player)` | Removes a player and releases only this controller's gate requests. |
-| `bool IsLocked { get; }` | Returns the current system state of `Cursor.lockState`. |
+| `bool IsLocked { get; }` | Returns the current system state of `Cursor.lockState`. In the Editor, Unity holds a lock only while the Game view has focus: with the Game view unfocused, or in batch mode, `Cursor.lockState` reads `None`, so `IsLocked` is `false` there even right after a lock request. Use `HasCursorOwnership` and your own requested state for logic that must not depend on focus. |
 | `bool ManageCursor { get; set; }` | Runtime access to the per-instance master switch. |
 | `bool DisableLookWhileCursorVisible { get; set; }` | Runtime access to the look toggle. |
 | `bool DisableMovementWhileCursorVisible { get; set; }` | Runtime access to the movement toggle. |
@@ -69,6 +76,19 @@ B another unlock event, acquire new gate baselines, or replace the player's assi
 When a top controller closes and exposes a lower controller, the existing activation notification for
 that lower controller still applies. With no surviving cursor owner, the player's ordinary standalone
 `SetLookEnabled(true)` auto-lock behavior remains available with its default cursor-control settings.
+
+The way an owner leaves does not change that result. `DisableController()`, `enabled = false`, deactivating
+its GameObject and destroying it all hand look back the same way: while the controller cleans up in
+`OnDisable`/`OnDestroy` the player no longer defers to it, so with no surviving owner the restored look
+locks and hides the cursor. Before 12.0, a destroyed or deactivated owner without a configured disable
+state left the cursor unlocked and visible after giving look back. A player that leaves play together with
+its owner is the exception: while the player's own scene unloads, or while its own GameObject is deactivated
+or destroyed (for example a controller on the player root during a despawn), the player keeps deferring and
+nothing is re-locked. Once `OnDisable` has finished, an inactive controller counts as absent, the same as one
+with `enabled = false`: the player keeps the binding, but it handles Escape and lock-on-start itself and writes
+the cursor directly until the controller is active again. Before 12.0 the player kept deferring to an inactive
+controller, so nothing handled Escape and a forwarded `SetCursorLocked` pushed the inactive controller onto the
+cursor stack.
 
 > The rows below name the **legacy** `PlayerController3DPhysics`. With the current [CharacterController module](./CharacterController/README.md) the split is different: `NeoCameraInput` never writes `Cursor` state at all — it only *reads* `Cursor.visible` (`Pause Look When Cursor Visible`) — so a `CursorLockController` is always the owner. The character prefabs ship with one on the root; if your scene already has an owner, remove the prefab's. To gate movement as well, call `NeoCharacterInput.SetMovementEnabled(false)`.
 

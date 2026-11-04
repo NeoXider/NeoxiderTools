@@ -1,11 +1,26 @@
 ﻿# Core module
 
-## Purpose
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/core.jpg" alt="Concept art for the Core module" width="100%" /></p>
+<!-- module-art:end -->
 
-Core gameplay runtime primitives: levels, XP, and health-style resources. Reference assembly `Neo.Core`
+**What it is:** core gameplay runtime primitives: levels, XP, and health-style resources. Reference assembly `Neo.Core`
 for the plain C# models and interfaces. Domain logic has no UnityEngine dependency; serializable profile
 DTOs and `UnityEventFloatFloat` use Unity types. Scene components, curve assets, and NoCode bridges live
 in separate assemblies and are optional.
+
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/LevelFlowDemo.jpg" alt="LevelFlowDemo: LevelComponent XP curve next to the LevelManager map flow" width="100%" /></p>
+
+*Demo scene: `Scenes/Level/LevelFlowDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:** [entry points](#entry-points) (module pages), [levels from C#](#levels-from-c),
+[resource pools from C#](#resource-pools-from-c) and [persistence and scene workflows](#persistence-and-scene-workflows).
+
+**Navigation:** [← Docs](../README.md)
+
+---
 
 ## Entry points
 
@@ -14,6 +29,7 @@ in separate assemblies and are optional.
 - [Level bridges](./Level/Bridge/README.md) — optional condition and UnityEvent adapters over the level API
 - [HealthComponent](./Resources/Components/HealthComponent.md) — runtime health/mana-style resource component
 - [Diagnostics](./Diagnostics.md) — shared runtime logging gate for package modules
+- [Level types](../Level/InternalTypes.md) — index of the `Neo.Core.Level` enums, models and interfaces
 
 ## Levels from C#
 
@@ -126,9 +142,77 @@ Every successful `AddPool` call creates a fresh registration and resets both tim
 the same mutable entry is registered again with the same id or different id casing. `Tick` checks
 the captured registration before regen and before heal, so a callback's new registration receives
 no elapsed time from the old snapshot. Its timers begin advancing on the next `Tick`.
+A warm `Tick` does not allocate (an EditMode test counts `GC.Alloc` calls with regenerating and full pools).
+Each registration owns its regen/heal remainders. The tick reuses its registration snapshot until the next
+`AddPool`/`RemovePool` (a stale snapshot is dropped at once, so it never keeps a removed entry alive), the
+registration check only does a dictionary lookup after such a call during the tick, and a timer that
+completes no cycle this frame costs one addition and one comparison, with the same remainders as the full
+division path. The common case is therefore O(pools) arithmetic without a dictionary walk.
+Full pools still complete their cycles but publish nothing.
 `Decrease` and `TrySpend` capture their own positive-to-zero transition before notifying listeners,
 then deliver Changed before Depleted. Nested operations cannot duplicate or erase that operation's
 depletion event; a listener may already have revived the pool when its depletion notification arrives.
+
+### Paying several costs at once
+
+`TrySpendAll(IReadOnlyList<ResourceCost> costs, out string failReason)` pays a multi-resource cost (mana plus
+HP, two currencies, the same pool twice) completely or not at all. It first validates the list as the payments
+would run: each cost uses the `TrySpend` rules, costs on the same pool (ids compare case-insensitively) must be
+covered by the balance the earlier ones leave, and the decrease limit applies to each cost on its own. A failure
+returns the first failing cost's reason and changes nothing. Then it pays the costs in order inside one
+notification batch, so no listener runs between two payments and none can invalidate a later one; listeners
+receive each payment's Changed (and Depleted) notification in order afterwards. `CanSpendAll` runs only the
+validation, and the overloads with `out int failedIndex` name the failing entry (-1 on success) so a UI can say
+which resource is missing. Finite nonpositive costs are skipped, an empty list succeeds, a null list throws
+`ArgumentNullException`. `ResourceCost` is a value type, so a reused `List<ResourceCost>` makes warm calls
+allocation-free. `HealthComponent` forwards `CanSpend`, `CanSpendAll` and `TrySpendAll` to its model.
+
+```csharp
+private readonly List<ResourceCost> _cost = new();
+
+bool TryCastBloodSpell(ResourcePoolModel resources)
+{
+    _cost.Clear();
+    _cost.Add(new ResourceCost(RpgResourceId.Mana, 30f));
+    _cost.Add(new ResourceCost(RpgResourceId.Hp, 10f));
+    if (!resources.TrySpendAll(_cost, out string reason, out int failedIndex))
+    {
+        ShowMissing(_cost[failedIndex].ResourceId, reason);
+        return false;
+    }
+
+    return true; // listeners ran after both payments
+}
+```
+
+For a custom payment flow, the underlying batch is public. `BeginNotificationBatch()` / `EndNotificationBatch()`
+let a caller run several mutations without any listener in between. Inside a batch, mutations apply
+immediately and return their own results, while `OnResourceChanged`/`OnResourceDepleted` are queued with each
+operation's values and delivered in order by the outermost `EndNotificationBatch`. Batches nest; an unmatched
+end does nothing; `IsBatchingNotifications` reports an open batch. Mutations a listener makes during delivery
+are queued behind the notifications already waiting, so every listener sees each pool's notifications in order
+and the last one carries the live value. If a listener throws, the rest of the queue is still delivered (the
+batch's operations were already applied, so their Changed and Depleted events must not be lost), and the first
+exception is rethrown afterwards. A warm batch does not allocate.
+
+```csharp
+resources.BeginNotificationBatch();
+try
+{
+    resources.TrySpend("mana", 10f, out _);
+    resources.Increase("rage", 5f);
+}
+finally
+{
+    resources.EndNotificationBatch(); // listeners run here, after both operations
+}
+```
+
+**По-русски:** `TrySpendAll` списывает набор стоимостей целиком или не списывает ничего: сначала проверяет
+список как последовательные платежи (несколько стоимостей одного пула должны уместиться в остаток), затем
+платит внутри одного пакета уведомлений, так что слушатели срабатывают только после последнего платежа.
+`CanSpendAll` только проверяет; перегрузки с `failedIndex` называют неоплатимую позицию. Для собственных
+сценариев доступны `BeginNotificationBatch`/`EndNotificationBatch`.
 
 ## Persistence and scene workflows
 

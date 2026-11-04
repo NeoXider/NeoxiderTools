@@ -72,10 +72,91 @@ namespace Neo.Editor.Tests
             }
         }
 
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        public void ReparentWholeContainer_MovesEveryPointInsideToTheNewOwner(int adapter)
+        {
+            GameObject root = new GameObject("Container move audit");
+            try
+            {
+                IUIMeshRigOwner first = CreateOwner(root.transform, adapter);
+                IUIMeshRigOwner second = CreateOwner(root.transform, adapter);
+                GameObject container = new GameObject("Moved container", typeof(RectTransform));
+                container.transform.SetParent(first.RigTransform, false);
+                GameObject group = new GameObject("Inner group", typeof(RectTransform));
+                group.transform.SetParent(container.transform, false);
+                UIMeshRigPoint shallow = new GameObject("Shallow", typeof(RectTransform), typeof(UIMeshRigPoint))
+                    .GetComponent<UIMeshRigPoint>();
+                shallow.transform.SetParent(container.transform, false);
+                UIMeshRigPoint deep = new GameObject("Deep", typeof(RectTransform), typeof(UIMeshRigPoint))
+                    .GetComponent<UIMeshRigPoint>();
+                deep.transform.SetParent(group.transform, false);
+                Assert.That(first.RigPoints, Is.EquivalentTo(new[] { shallow, deep }));
+                Assert.That(second.RigPoints, Is.Empty);
+
+                container.transform.SetParent(second.RigTransform, false);
+
+                Assert.That(first.RigPoints, Is.Empty,
+                    "Moving an ancestor of the points must invalidate the rig they left.");
+                Assert.That(second.RigPoints, Is.EquivalentTo(new[] { shallow, deep }));
+                Assert.That(deep.BoundOwner, Is.SameAs(second));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [TestCase(0, 0)]
+        [TestCase(1, 1)]
+        [TestCase(2, 2)]
+        [TestCase(0, 1)]
+        [TestCase(1, 2)]
+        [TestCase(2, 0)]
+        public void AddingAndRemovingANestedOwner_MovesItsPointsBetweenTheRigs(int outerAdapter, int nestedAdapter)
+        {
+            GameObject root = new GameObject("Nested owner audit");
+            try
+            {
+                IUIMeshRigOwner outer = CreateOwner(root.transform, outerAdapter);
+                GameObject container = new GameObject("Container", typeof(RectTransform));
+                container.transform.SetParent(outer.RigTransform, false);
+                GameObject pointObject = new GameObject("Point", typeof(RectTransform), typeof(UIMeshRigPoint));
+                pointObject.transform.SetParent(container.transform, false);
+                UIMeshRigPoint point = pointObject.GetComponent<UIMeshRigPoint>();
+                Assert.That(outer.RigPoints, Is.EquivalentTo(new[] { point }));
+                Assert.That(point.BoundOwner, Is.SameAs(outer));
+
+                IUIMeshRigOwner nested = AddOwner(container, nestedAdapter);
+
+                Assert.That(outer.RigPoints, Is.Empty,
+                    "A nested owner added between the rig and its point takes the point without any parent change.");
+                Assert.That(nested.RigPoints, Is.EquivalentTo(new[] { point }));
+                Assert.That(point.BoundOwner, Is.SameAs(nested),
+                    "Procedural pose changes must reach the nested owner, not the rig the point was bound to.");
+
+                Object.DestroyImmediate((Component)nested);
+
+                Assert.That(outer.RigPoints, Is.EquivalentTo(new[] { point }),
+                    "Removing the nested owner hands its points back to the enclosing rig.");
+                Assert.That(point.BoundOwner, Is.SameAs(outer));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static IUIMeshRigOwner CreateOwner(Transform parent, int adapter)
         {
             GameObject owner = new GameObject("Owner", typeof(RectTransform));
             owner.transform.SetParent(parent, false);
+            return AddOwner(owner, adapter);
+        }
+
+        private static IUIMeshRigOwner AddOwner(GameObject owner, int adapter)
+        {
             switch (adapter)
             {
                 case 1:

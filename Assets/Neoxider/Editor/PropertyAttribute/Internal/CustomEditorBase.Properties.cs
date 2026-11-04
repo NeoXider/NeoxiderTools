@@ -10,20 +10,83 @@ namespace Neo.Editor
 {
     public abstract partial class CustomEditorBase
     {
-        private void DrawNeoPropertiesWithCollapsibleUnityEvents()
+        /// <summary>
+        ///     The top-level layout of one inspected type, resolved once per editor: the visible properties in order,
+        ///     their [Header] sections, the UnityEvents and the replication flags.
+        /// </summary>
+        /// <remarks>
+        ///     WHY: the property pass runs on every IMGUI event. Walking the iterator, copying every property and
+        ///     reading its name, type and path (each a native string) plus the header lookup cost several allocations
+        ///     per field per event. The set of top-level visible fields of a type cannot change while the editor
+        ///     lives, and cached SerializedProperty objects stay valid across <c>serializedObject.Update()</c>, the
+        ///     same way Unity's own editors cache them in OnEnable.
+        /// </remarks>
+        private sealed class PropertyPlan
         {
-            if (serializedObject == null)
+            public SerializedObject Owner;
+            public Type TargetType;
+            public SerializedProperty Script;
+            public readonly List<SerializedProperty> Properties = new();
+            public readonly List<string> HeaderTitles = new();
+            public readonly List<SerializedProperty> UnityEvents = new();
+            public readonly List<HeaderSection> Sections = new();
+
+            // WHY: keyed by the cached property instances themselves; displayName and tooltip are native strings
+            // that every boolean row used to read twice per event.
+            public readonly Dictionary<SerializedProperty, GUIContent> BoolLabels =
+                new(ReferenceComparer.Instance);
+
+            public bool HasAnyHeader;
+            public SerializedProperty Networked;
+            public ReplicatedMembers Replicated;
+        }
+
+        /// <summary>Reference identity for <see cref="SerializedProperty" /> keys of the property plan.</summary>
+        private sealed class ReferenceComparer : IEqualityComparer<SerializedProperty>
+        {
+            public static readonly ReferenceComparer Instance = new();
+
+            public bool Equals(SerializedProperty x, SerializedProperty y)
             {
-                return;
+                return ReferenceEquals(x, y);
             }
 
-            serializedObject.Update();
+            public int GetHashCode(SerializedProperty obj)
+            {
+                return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+            }
+        }
 
-            List<SerializedProperty> unityEvents = new();
-            List<SerializedProperty> properties = new();
-            SerializedProperty scriptProp = null;
+        private PropertyPlan _plan;
+        private int _planBuildCount;
+        private SerializedProperty _suppressedBodyProperty;
+        private Action _drawSuppressedBody;
+        private SerializedProperty _noHeaderProperty;
+        private Action _drawNoHeaderBody;
 
-            SerializedProperty iterator = serializedObject.GetIterator();
+        /// <summary>How often this editor resolved its property plan (test hook: once per editor lifetime).</summary>
+        internal int PropertyPlanBuildCount => _planBuildCount;
+
+        private static readonly Dictionary<(Type, string), string> s_sectionFoldoutKeys = new();
+
+        private PropertyPlan GetPropertyPlan()
+        {
+            SerializedObject owner = serializedObject;
+            Type targetType = target != null ? target.GetType() : null;
+            if (_plan != null && ReferenceEquals(_plan.Owner, owner) && _plan.TargetType == targetType)
+            {
+                return _plan;
+            }
+
+            _plan = BuildPropertyPlan(owner, targetType);
+            _planBuildCount++;
+            return _plan;
+        }
+
+        private PropertyPlan BuildPropertyPlan(SerializedObject owner, Type targetType)
+        {
+            PropertyPlan plan = new() { Owner = owner, TargetType = targetType };
+            SerializedProperty iterator = owner.GetIterator();
             bool enterChildren = true;
             while (iterator.NextVisible(enterChildren))
             {
@@ -31,33 +94,69 @@ namespace Neo.Editor
 
                 if (iterator.name == "m_Script")
                 {
-                    scriptProp = iterator.Copy();
+                    plan.Script = iterator.Copy();
                     continue;
                 }
 
                 if (IsUnityEventProperty(iterator))
                 {
-                    unityEvents.Add(iterator.Copy());
+                    plan.UnityEvents.Add(iterator.Copy());
                     continue;
                 }
 
-                properties.Add(iterator.Copy());
+                SerializedProperty copy = iterator.Copy();
+                plan.Properties.Add(copy);
+                if (copy.propertyType == SerializedPropertyType.Boolean)
+                {
+                    plan.BoolLabels[copy] = new GUIContent(copy.displayName, copy.tooltip);
+                }
+
+                string title = TryGetHeaderTitleForProperty(iterator);
+                plan.HeaderTitles.Add(title);
+                plan.HasAnyHeader |= !string.IsNullOrEmpty(title);
             }
 
-            if (scriptProp != null)
+            if (plan.HasAnyHeader)
+            {
+                BuildHeaderSections(plan);
+            }
+
+            plan.Replicated = GetReplicatedMembers(targetType);
+            if (plan.Replicated != null)
+            {
+                SerializedProperty networked = owner.FindProperty("isNetworked") ?? owner.FindProperty("_isNetworked");
+                plan.Networked = networked != null && networked.propertyType == SerializedPropertyType.Boolean
+                    ? networked
+                    : null;
+            }
+
+            return plan;
+        }
+
+        private void DrawNeoPropertiesWithCollapsibleUnityEvents()
+        {
+            if (serializedObject == null || target == null)
+            {
+                return;
+            }
+
+            serializedObject.Update();
+            PropertyPlan plan = GetPropertyPlan();
+
+            if (plan.Script != null)
             {
                 using (new EditorGUI.DisabledScope(true))
                 {
-                    EditorGUILayout.PropertyField(scriptProp, true);
+                    EditorGUILayout.PropertyField(plan.Script, true);
                 }
             }
 
-            DrawHeaderSections(properties);
+            DrawHeaderSections(plan);
 
-            if (unityEvents.Count > 0)
+            if (plan.UnityEvents.Count > 0)
             {
-                EditorGUILayout.Space(4);
-                DrawUnityEventsFoldout(unityEvents);
+                NeoInspectorStyles.Space(4);
+                DrawUnityEventsFoldout(plan.UnityEvents);
             }
 
             DrawActionsFoldout();
@@ -65,111 +164,100 @@ namespace Neo.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawHeaderSections(List<SerializedProperty> properties)
+        private void DrawHeaderSections(PropertyPlan plan)
         {
-            if (properties == null || properties.Count == 0 || target == null)
+            List<SerializedProperty> properties = plan.Properties;
+            if (properties.Count == 0)
             {
                 return;
             }
 
-            bool hasAnyHeader = false;
-            for (int i = 0; i < properties.Count; i++)
-            {
-                if (!string.IsNullOrEmpty(TryGetHeaderTitleForProperty(properties[i])))
-                {
-                    hasAnyHeader = true;
-                    break;
-                }
-            }
-
-            if (!hasAnyHeader)
+            if (!plan.HasAnyHeader)
             {
                 for (int i = 0; i < properties.Count; i++)
                 {
-                    DrawPropertyField(properties[i], false);
+                    DrawPropertyFieldResolved(properties[i], false);
                 }
 
                 return;
             }
 
-            List<HeaderSection> sections = BuildHeaderSections(properties);
-            Color baseGreen = CustomEditorSettings.ScriptNameColor;
-            var darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
+            Color accent = NeoxiderEditorGUI.SectionAccent(true);
             int minFieldsForCategory = Mathf.Max(0, CustomEditorSettings.MinFieldsForHeaderCategory);
 
-            for (int i = 0; i < sections.Count; i++)
+            for (int i = 0; i < plan.Sections.Count; i++)
             {
-                HeaderSection section = sections[i];
+                HeaderSection section = plan.Sections[i];
                 if (section.IsWarningHeader)
                 {
                     DrawWarningHeader(section.Title);
-                    for (int p = 0; p < section.Properties.Count; p++)
-                    {
-                        DrawPropertyField(section.Properties[p], true);
-                    }
-
+                    DrawSectionProperties(section);
                     continue;
                 }
-
-                bool excludeFromMinFieldsRule =
-                    string.Equals(section.Title, "Actions", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(section.Title, "Events", StringComparison.OrdinalIgnoreCase);
 
                 bool shouldForceFoldout = ShouldForceFoldoutHeader(section);
 
                 // WHY: the one-field shortcut has to yield to the force-foldout rule, or a section holding a
                 // single list renders as a bare label while its neighbour holding a list plus two settings
                 // renders as a folder - the same content styled two different ways in one inspector.
-                if (!excludeFromMinFieldsRule && !shouldForceFoldout && section.Properties.Count == 1)
+                if (!section.ExcludeFromMinFieldsRule && !shouldForceFoldout &&
+                    (section.Properties.Count == 1 ||
+                     (minFieldsForCategory > 0 && section.Properties.Count < minFieldsForCategory)))
                 {
                     DrawPlainHeader(section.Title);
-                    for (int p = 0; p < section.Properties.Count; p++)
-                    {
-                        DrawPropertyField(section.Properties[p], true);
-                    }
-
+                    DrawSectionProperties(section);
                     continue;
                 }
 
-                if (!excludeFromMinFieldsRule &&
-                    !shouldForceFoldout &&
-                    minFieldsForCategory > 0 &&
-                    section.Properties.Count < minFieldsForCategory)
-                {
-                    DrawPlainHeader(section.Title);
-                    for (int p = 0; p < section.Properties.Count; p++)
-                    {
-                        DrawPropertyField(section.Properties[p], true);
-                    }
-
-                    continue;
-                }
-
-                string key = $"{target.GetType().FullName}.NeoFoldout.Header.{section.Title}";
+                string key = section.FoldoutKey;
                 bool expanded = GetFoldoutState(key, true);
-
-                Color accent = expanded ? darkGreen : baseGreen;
-                Color titleColor = expanded ? Color.white : baseGreen;
-                expanded = DrawNeoSectionHeader(expanded, section.Title, section.Properties.Count, accent,
-                    "d_Folder Icon", titleColor);
+                float amount = GetFoldAmount(key, expanded);
+                bool hasOverride = amount < 1f && SectionHasPrefabOverride(section);
+                expanded = DrawNeoSectionHeader(expanded, amount, section.Title, section.Properties.Count, accent,
+                    "Folder Icon", hasOverride);
                 _neoFoldouts[key] = expanded;
+                amount = GetFoldAmount(key, expanded);
 
-                if (!expanded)
-                {
-                    continue;
-                }
-
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                if (BeginSectionBody(amount, accent, out bool fading))
                 {
                     EditorGUI.indentLevel++;
-                    for (int p = 0; p < section.Properties.Count; p++)
-                    {
-                        DrawPropertyField(section.Properties[p], true);
-                    }
-
+                    DrawSectionProperties(section);
                     EditorGUI.indentLevel--;
+                    EndSectionBody(fading);
                 }
             }
+        }
+
+        // WHY: a section starts at the one property carrying its [Header] and the rest of it has none, so the header
+        // question is answered here instead of being reflected again for every drawn property.
+        private void DrawSectionProperties(HeaderSection section)
+        {
+            for (int p = 0; p < section.Properties.Count; p++)
+            {
+                SerializedProperty property = section.Properties[p];
+                if (property != null)
+                {
+                    DrawPropertyFieldResolved(property, section.StartsAtHeader && p == 0);
+                }
+            }
+        }
+
+        /// <summary>Foldout persistence key of a [Header] section, built once per (type, title).</summary>
+        internal static string GetSectionFoldoutKey(Type targetType, string title)
+        {
+            (Type, string) cacheKey = (targetType, title);
+            if (!s_sectionFoldoutKeys.TryGetValue(cacheKey, out string key))
+            {
+                key = $"{(targetType != null ? targetType.FullName : "Neo")}.NeoFoldout.Header.{title}";
+                if (s_sectionFoldoutKeys.Count >= MaxReflectionCacheEntries)
+                {
+                    s_sectionFoldoutKeys.Clear();
+                }
+
+                s_sectionFoldoutKeys[cacheKey] = key;
+            }
+
+            return key;
         }
 
         private static bool ShouldForceFoldoutHeader(HeaderSection section)
@@ -201,120 +289,123 @@ namespace Neo.Editor
             return false;
         }
 
-        private void DrawAutoSections(List<SerializedProperty> properties)
+        /// <summary>
+        ///     True when a field of a closed section is overridden on this prefab instance; the closed header then
+        ///     shows Unity's override marker instead of hiding the change.
+        /// </summary>
+        private bool SectionHasPrefabOverride(HeaderSection section)
         {
-            if (properties == null || properties.Count == 0 || target == null)
-            {
-                return;
-            }
-
-            List<SerializedProperty> references = new();
-            List<SerializedProperty> settings = new();
-            List<SerializedProperty> debug = new();
-
-            for (int i = 0; i < properties.Count; i++)
-            {
-                SerializedProperty p = properties[i];
-                if (p == null)
-                {
-                    continue;
-                }
-
-                if (IsDebugProperty(p))
-                {
-                    debug.Add(p);
-                }
-                else if (IsReferenceProperty(p))
-                {
-                    references.Add(p);
-                }
-                else
-                {
-                    settings.Add(p);
-                }
-            }
-
-            Color baseGreen = CustomEditorSettings.ScriptNameColor;
-            var darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
-
-            DrawAutoSection("References", references, baseGreen, darkGreen);
-            DrawAutoSection("Settings", settings, baseGreen, darkGreen);
-            DrawAutoSection("Debug", debug, baseGreen, darkGreen);
-        }
-
-        private void DrawAutoSection(string title, List<SerializedProperty> props, Color baseColor, Color darkColor)
-        {
-            if (props == null || props.Count == 0 || target == null)
-            {
-                return;
-            }
-
-            string key = $"{target.GetType().FullName}.NeoFoldout.Auto.{title}";
-            bool expanded = GetFoldoutState(key, true);
-
-            Color accent = expanded ? darkColor : baseColor;
-            Color titleColor = expanded ? Color.white : baseColor;
-            expanded = DrawNeoSectionHeader(expanded, title, props.Count, accent, "d_Folder Icon", titleColor);
-            _neoFoldouts[key] = expanded;
-
-            if (!expanded)
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUI.indentLevel++;
-                for (int i = 0; i < props.Count; i++)
-                {
-                    DrawPropertyField(props[i], false);
-                }
-
-                EditorGUI.indentLevel--;
-            }
-        }
-
-        private bool IsReferenceProperty(SerializedProperty property)
-        {
-            if (property == null || target == null)
+            if (target == null || !PrefabUtility.IsPartOfPrefabInstance(target))
             {
                 return false;
             }
 
-            if (property.propertyType == SerializedPropertyType.ObjectReference)
+            for (int i = 0; i < section.Properties.Count; i++)
             {
-                return true;
-            }
-
-            if (!TryGetFieldInfoForPropertyPath(target.GetType(), property.propertyPath, out FieldInfo fieldInfo))
-            {
-                return false;
-            }
-
-            Type t = fieldInfo.FieldType;
-            if (t == null)
-            {
-                return false;
-            }
-
-            if (typeof(Object).IsAssignableFrom(t))
-            {
-                return true;
-            }
-
-            if (t.IsArray)
-            {
-                Type element = t.GetElementType();
-                return element != null && typeof(Object).IsAssignableFrom(element);
-            }
-
-            if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
-            {
-                Type element = t.GetGenericArguments()[0];
-                return element != null && typeof(Object).IsAssignableFrom(element);
+                SerializedProperty property = section.Properties[i];
+                if (property != null && property.prefabOverride && !property.isDefaultOverride)
+                {
+                    return true;
+                }
             }
 
             return false;
+        }
+
+        private sealed class FoldMotion
+        {
+            public bool Target;
+            public double Start;
+            public float From;
+            public float Value;
+        }
+
+        private readonly Dictionary<string, FoldMotion> _foldMotions = new();
+
+        /// <summary>
+        ///     Openness (0..1) of the foldout with <paramref name="key" />: eases towards <paramref name="expanded" />
+        ///     over <see cref="NeoInspectorAnimation.FoldDuration" /> while transitions are on, snaps otherwise. The
+        ///     value depends only on this frame's clock, so Layout and the following event lay out the same height.
+        /// </summary>
+        internal float GetFoldAmount(string key, bool expanded)
+        {
+            float target = expanded ? 1f : 0f;
+            // WHY: without the per-frame clock (an editor that overrides OnInspectorGUI and never samples it) two
+            // events of one frame could read different times and lay out different heights; such editors snap.
+            if (string.IsNullOrEmpty(key) || _motionNow < 0.0)
+            {
+                return target;
+            }
+
+            if (!_foldMotions.TryGetValue(key, out FoldMotion motion))
+            {
+                motion = new FoldMotion { Target = expanded, Start = -1000.0, From = target, Value = target };
+                _foldMotions[key] = motion;
+                return target;
+            }
+
+            if (motion.Target != expanded)
+            {
+                motion.From = motion.Value;
+                motion.Target = expanded;
+                motion.Start = MotionNow;
+            }
+
+            if (motion.Value == target)
+            {
+                return target;
+            }
+
+            if (!NeoInspectorAnimation.TransitionsActive())
+            {
+                motion.Value = target;
+                return target;
+            }
+
+            double duration = NeoInspectorAnimation.FoldDuration * Mathf.Abs(target - motion.From);
+            float t = NeoInspectorAnimation.Progress(MotionNow, motion.Start, duration);
+            motion.Value = t >= 1f ? target : Mathf.Lerp(motion.From, target, NeoInspectorAnimation.EaseOutCubic(t));
+            if (t < 1f)
+            {
+                // WHY: the open/close lasts a fifth of a second; repaint the inspector every frame for it instead of
+                // waiting for the throttled ticker, which would turn it into a few visible steps.
+                Repaint();
+            }
+
+            return motion.Value;
+        }
+
+        /// <summary>
+        ///     Opens the body of a section at openness <paramref name="amount" />: nothing at 0, a fade group (height
+        ///     and alpha follow the amount) while animating, a plain inset column with the accent guide line at 1.
+        ///     Pair a true result with <see cref="EndSectionBody" />.
+        /// </summary>
+        private static bool BeginSectionBody(float amount, Color accent, out bool fading)
+        {
+            fading = false;
+            if (amount <= 0f)
+            {
+                return false;
+            }
+
+            if (amount < 1f)
+            {
+                fading = true;
+                EditorGUILayout.BeginFadeGroup(amount);
+            }
+
+            Rect body = EditorGUILayout.BeginVertical(NeoInspectorStyles.BodyPanel);
+            NeoxiderEditorGUI.DrawSectionBodyGuide(body, accent);
+            return true;
+        }
+
+        private static void EndSectionBody(bool fading)
+        {
+            EditorGUILayout.EndVertical();
+            if (fading)
+            {
+                EditorGUILayout.EndFadeGroup();
+            }
         }
 
         private static bool IsDebugProperty(SerializedProperty property)
@@ -341,6 +432,12 @@ namespace Neo.Editor
                 return;
             }
 
+            DrawPropertyFieldResolved(property,
+                suppressUnityHeaderDecorators && !string.IsNullOrEmpty(TryGetHeaderTitleForProperty(property)));
+        }
+
+        private void DrawPropertyFieldResolved(SerializedProperty property, bool suppressHeaderDecorator)
+        {
             DrawNetworkReplicationMarker(property);
 
             if (property.propertyType == SerializedPropertyType.Boolean)
@@ -352,13 +449,29 @@ namespace Neo.Editor
             // WHY: we already render the [Header] title as our own section header, so suppress Unity's built-in
             // header decorator around EVERY draw path (collection/nested/plain) to avoid doubling the title —
             // previously arrays/generics returned early and their [Header] rendered a second time.
-            if (suppressUnityHeaderDecorators && !string.IsNullOrEmpty(TryGetHeaderTitleForProperty(property)))
+            if (suppressHeaderDecorator)
             {
-                RunWithHeaderDecoratorsSuppressed(property, () => DrawPropertyFieldBody(property));
+                _drawSuppressedBody ??= DrawSuppressedBody;
+                SerializedProperty previous = _suppressedBodyProperty;
+                _suppressedBodyProperty = property;
+                try
+                {
+                    RunWithHeaderDecoratorsSuppressed(property, _drawSuppressedBody);
+                }
+                finally
+                {
+                    _suppressedBodyProperty = previous;
+                }
+
                 return;
             }
 
             DrawPropertyFieldBody(property);
+        }
+
+        private void DrawSuppressedBody()
+        {
+            DrawPropertyFieldBody(_suppressedBodyProperty);
         }
 
         /// <summary>
@@ -366,16 +479,39 @@ namespace Neo.Editor
         ///     other field keeps the standard pass - a list that also accepts asset drops, for instance.
         ///     Return <c>true</c> once the property has been drawn; the base draw is then skipped.
         /// </summary>
+        /// <remarks>
+        ///     <paramref name="property" /> is a copy owned by this call: advancing it (<c>Next</c>/<c>NextVisible</c>
+        ///     to walk children) is allowed and does not move the field the standard pass draws next.
+        /// </remarks>
         protected virtual bool DrawCustomProperty(SerializedProperty property)
         {
             return false;
         }
 
+        // WHY: -1 unknown, 0 no override, 1 the editor overrides DrawCustomProperty; resolved once per editor.
+        private int _customPropertyHook = -1;
+
+        private bool HasCustomPropertyHook()
+        {
+            if (_customPropertyHook < 0)
+            {
+                MethodInfo method = GetType().GetMethod(nameof(DrawCustomProperty),
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null,
+                    new[] { typeof(SerializedProperty) }, null);
+                _customPropertyHook = method != null && method.DeclaringType != typeof(CustomEditorBase) ? 1 : 0;
+            }
+
+            return _customPropertyHook == 1;
+        }
+
         private void DrawPropertyFieldBody(SerializedProperty property)
         {
-            // Inside the body rather than in DrawPropertyField so the override still runs with the
+            // WHY: inside the body rather than in DrawPropertyField so the override still runs with the
             // [Header] decorator suppressed - the section header already printed that title.
-            if (DrawCustomProperty(property))
+            // WHY: the property pass hands out SerializedProperty objects cached for the editor's lifetime. An
+            // override that walked the property with Next/NextVisible (a common idiom) would move the cached entry to
+            // another path for good, so an override gets its own copy, as it did before the plan cached them.
+            if (HasCustomPropertyHook() && DrawCustomProperty(property.Copy()))
             {
                 return;
             }
@@ -395,9 +531,10 @@ namespace Neo.Editor
                 return;
             }
 
-            if (ShouldUseNestedPropertyFoldout(property))
+            int nestedChildren = GetNestedFoldoutChildCount(property);
+            if (nestedChildren > 0)
             {
-                DrawNestedPropertyFoldout(property);
+                DrawNestedPropertyFoldout(property, nestedChildren);
                 return;
             }
 
@@ -415,70 +552,58 @@ namespace Neo.Editor
                 ? new Color(0.94f, 0.34f, 0.34f, 1f)
                 : new Color(0.92f, 0.72f, 0.28f, 1f);
 
-            property.isExpanded = DrawNestedFoldoutHeader(property.displayName, property.arraySize, property.isExpanded,
-                accent);
+            property.isExpanded = DrawNestedFoldoutHeader(property, property.displayName, property.arraySize,
+                property.isExpanded, accent);
             if (!property.isExpanded)
             {
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                SerializedProperty iterator = property.Copy();
-                SerializedProperty endProperty = iterator.GetEndProperty();
-                int directChildDepth = property.depth + 1;
-                bool enterChildren = true;
-
-                while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
-                {
-                    enterChildren = false;
-                    if (iterator.depth != directChildDepth)
-                    {
-                        continue;
-                    }
-
-                    DrawPropertyField(iterator.Copy(), false);
-                }
-            }
+            DrawDirectChildren(property, accent);
         }
 
-        private void DrawNestedPropertyFoldout(SerializedProperty property)
+        private void DrawNestedPropertyFoldout(SerializedProperty property, int childCount)
         {
             if (property == null)
             {
                 return;
             }
 
-            int childCount = CountDirectVisibleChildren(property);
             Color accent = IsDebugProperty(property)
                 ? new Color(0.92f, 0.30f, 0.30f, 1f)
                 : new Color(0.40f, 0.66f, 0.98f, 1f);
 
             property.isExpanded =
-                DrawNestedFoldoutHeader(property.displayName, childCount, property.isExpanded, accent);
+                DrawNestedFoldoutHeader(property, property.displayName, childCount, property.isExpanded, accent);
             if (!property.isExpanded)
             {
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            DrawDirectChildren(property, accent);
+        }
+
+        private void DrawDirectChildren(SerializedProperty property, Color accent)
+        {
+            Rect body = EditorGUILayout.BeginVertical(NeoInspectorStyles.BodyPanel);
+            NeoxiderEditorGUI.DrawSectionBodyGuide(body, accent);
+            SerializedProperty iterator = property.Copy();
+            SerializedProperty endProperty = iterator.GetEndProperty();
+            int directChildDepth = property.depth + 1;
+            bool enterChildren = true;
+
+            while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
             {
-                SerializedProperty iterator = property.Copy();
-                SerializedProperty endProperty = iterator.GetEndProperty();
-                int directChildDepth = property.depth + 1;
-                bool enterChildren = true;
-
-                while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
+                enterChildren = false;
+                if (iterator.depth != directChildDepth)
                 {
-                    enterChildren = false;
-                    if (iterator.depth != directChildDepth)
-                    {
-                        continue;
-                    }
-
-                    DrawPropertyField(iterator.Copy(), false);
+                    continue;
                 }
+
+                DrawPropertyField(iterator.Copy(), false);
             }
+
+            EditorGUILayout.EndVertical();
         }
 
         private static bool ShouldUseCollectionPropertyFoldout(SerializedProperty property)
@@ -496,36 +621,36 @@ namespace Neo.Editor
             return property.isArray && property.propertyType != SerializedPropertyType.String;
         }
 
-        private static bool ShouldUseNestedPropertyFoldout(SerializedProperty property)
+        /// <summary>
+        ///     Number of direct visible children when <paramref name="property" /> is drawn as a nested foldout
+        ///     (a serializable class without its own drawer); 0 when it is drawn by PropertyField instead.
+        /// </summary>
+        private static int GetNestedFoldoutChildCount(SerializedProperty property)
         {
             if (property == null)
             {
-                return false;
+                return 0;
+            }
+
+            if (property.propertyType != SerializedPropertyType.Generic || !property.hasVisibleChildren ||
+                property.isArray)
+            {
+                return 0;
             }
 
             if (IsUnityEventProperty(property))
             {
-                return false;
+                return 0;
             }
 
             // WHY: Let CustomPropertyDrawer run for the whole serialized class (e.g. ComponentFloatBinding), instead of
             // expanding child fields and bypassing the drawer.
             if (string.Equals(property.type, "ComponentFloatBinding", StringComparison.Ordinal))
             {
-                return false;
+                return 0;
             }
 
-            if (property.propertyType != SerializedPropertyType.Generic || !property.hasVisibleChildren)
-            {
-                return false;
-            }
-
-            if (property.isArray)
-            {
-                return false;
-            }
-
-            return CountDirectVisibleChildren(property) > 0;
+            return CountDirectVisibleChildren(property);
         }
 
         private static int CountDirectVisibleChildren(SerializedProperty property)
@@ -553,64 +678,70 @@ namespace Neo.Editor
             return count;
         }
 
-        private static bool DrawNestedFoldoutHeader(string title, int count, bool expanded, Color accent)
+        // WHY: BeginProperty reads the label during the call and keeps no reference to it.
+        private static readonly GUIContent s_nestedLabel = new();
+
+        /// <summary>
+        ///     Header row of a nested class or custom-drawn list. Wrapped in BeginProperty/EndProperty so the row
+        ///     carries the prefab-override marker and the Copy/Paste/Revert context menu of the whole property.
+        /// </summary>
+        private static bool DrawNestedFoldoutHeader(SerializedProperty property, string title, int count,
+            bool expanded, Color accent)
         {
-            const float height = 22f;
+            const float height = 20f;
 
-            Rect row = GUILayoutUtility.GetRect(0f, height + 2f, GUILayout.ExpandWidth(true));
+            Rect row = GUILayoutUtility.GetRect(0f, height + 2f, NeoInspectorStyles.ExpandWidth);
             row = EditorGUI.IndentedRect(row);
-            Rect rect = new(row.x, row.y + 1f, row.width, height);
+            Rect rect = NeoInspectorTheme.Snap(new Rect(row.x, row.y + 1f, row.width, height));
 
-            bool isHover = rect.Contains(Event.current.mousePosition);
-            bool pro = NeoInspectorTheme.IsDark;
-            Color background = Color.Lerp(NeoInspectorTheme.SectionBackground, accent,
-                expanded ? 0.14f : isHover ? 0.11f : 0.07f);
+            s_nestedLabel.text = title;
+            s_nestedLabel.tooltip = null;
+            EditorGUI.BeginProperty(rect, s_nestedLabel, property);
 
-            NeoInspectorTheme.DrawRoundedRect(rect, background,
-                new Color(accent.r, accent.g, accent.b, isHover || expanded ? 0.35f : 0.18f),
-                NeoInspectorTheme.RadiusRow, 1f);
-            NeoInspectorTheme.DrawAccentRail(rect, accent, 2.5f, 4f);
+            Event current = Event.current;
+            if (Event.current.type == EventType.Repaint)
+            {
+                bool pro = NeoInspectorTheme.IsDark;
+                float hover = GUI.enabled
+                    ? NeoInspectorAnimation.Hover(NeoInspectorAnimation.ControlKey(rect),
+                        rect.Contains(current.mousePosition))
+                    : 0f;
+                float open = expanded ? 1f : 0f;
+                Color background = Color.Lerp(NeoInspectorTheme.SectionBackground, accent, 0.05f + 0.04f * open);
+                Color hoverOverlay = NeoInspectorTheme.HoverOverlay;
+                background = Color.Lerp(background, new Color(hoverOverlay.r, hoverOverlay.g, hoverOverlay.b, 1f),
+                    hoverOverlay.a * hover);
+                Color edge = Color.Lerp(NeoInspectorTheme.Separator,
+                    new Color(accent.r, accent.g, accent.b, pro ? 0.36f : 0.45f), Mathf.Max(open * 0.7f, hover * 0.5f));
+                NeoInspectorTheme.DrawRoundedRect(rect, background, edge, NeoInspectorTheme.RadiusRow, 1f);
+                NeoInspectorTheme.DrawAccentRail(rect, accent, 2f, 4f);
 
-            if (Event.current.type == EventType.MouseDown &&
-                Event.current.button == 0 &&
-                rect.Contains(Event.current.mousePosition))
+                Color accentText = NeoInspectorTheme.AccentText(accent);
+                NeoInspectorTheme.DrawChevron(new Rect(rect.x + 6f, rect.y, 12f, rect.height), open,
+                    Color.Lerp(NeoInspectorTheme.MutedText, accentText, 0.5f + 0.5f * open), 6f, 1.6f);
+
+                GUIStyle countStyle = NeoInspectorStyles.NestedCount(accentText);
+                string countText = NeoInspectorStyles.CountText(count);
+                float countW = Mathf.Max(20f, countStyle.CalcSize(NeoInspectorStyles.TempContent(countText)).x + 10f);
+                Rect countRect = NeoInspectorTheme.Snap(new Rect(rect.xMax - countW - 6f,
+                    rect.y + (rect.height - 14f) * 0.5f, countW, 14f));
+                Rect titleRect = new(rect.x + 22f, rect.y, Mathf.Max(0f, countRect.x - rect.x - 28f), rect.height);
+
+                GUI.Label(titleRect, title, NeoInspectorStyles.NestedTitle(NeoInspectorTheme.TitleText));
+                NeoInspectorTheme.DrawRoundedRect(countRect, NeoInspectorTheme.AccentFill(accent),
+                    NeoInspectorTheme.RadiusPill);
+                GUI.Label(countRect, countText, countStyle);
+            }
+
+            if (current.type == EventType.MouseDown && current.button == 0 && GUI.enabled &&
+                rect.Contains(current.mousePosition))
             {
                 expanded = !expanded;
                 GUI.FocusControl(null);
-                Event.current.Use();
+                current.Use();
             }
 
-            GUIStyle arrowStyle = new(EditorStyles.miniBoldLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = pro ? Color.Lerp(Color.white, accent, 0.15f) : Color.Lerp(accent, Color.black, 0.2f) }
-            };
-            GUIStyle titleStyle = new(EditorStyles.miniBoldLabel)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                clipping = TextClipping.Clip,
-                normal = { textColor = NeoInspectorTheme.TitleText }
-            };
-
-            Color pillBg = Color.Lerp(accent, pro ? Color.black : Color.white, 0.08f);
-            pillBg.a = expanded ? 0.92f : 0.78f;
-            GUIStyle countStyle = new(EditorStyles.miniBoldLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = NeoInspectorTheme.ReadableOn(pillBg) }
-            };
-
-            float countW = Mathf.Max(24f, countStyle.CalcSize(new GUIContent(count.ToString())).x + 14f);
-            Rect arrowRect = new(rect.x + 8f, rect.y, 12f, rect.height);
-            Rect countRect = new(rect.xMax - countW - 8f, rect.y + (rect.height - 16f) * 0.5f, countW, 16f);
-            Rect titleRect = new(arrowRect.xMax + 5f, rect.y, countRect.x - arrowRect.xMax - 10f, rect.height);
-
-            GUI.Label(arrowRect, expanded ? "▼" : "▶", arrowStyle);
-            GUI.Label(titleRect, title, titleStyle);
-
-            NeoInspectorTheme.DrawRoundedRect(countRect, pillBg, NeoInspectorTheme.RadiusPill);
-            GUI.Label(countRect, count.ToString(), countStyle);
-
+            EditorGUI.EndProperty();
             return expanded;
         }
 
@@ -627,21 +758,36 @@ namespace Neo.Editor
                 return;
             }
 
-            // WHY: match the standard property pass — booleans render as the styled ON/OFF toggle, not a
-            // plain checkbox. DrawBooleanToggle draws no [Header] decorator, so it never doubles the title.
+            // WHY: match the standard property pass — booleans render as the styled switch, not a plain checkbox.
+            // DrawBooleanToggle draws no [Header] decorator, so it never doubles the title.
             if (property.propertyType == SerializedPropertyType.Boolean)
             {
                 DrawBooleanToggle(property);
                 return;
             }
 
-            RunWithHeaderDecoratorsSuppressed(property, () => EditorGUILayout.PropertyField(property, true));
+            _drawNoHeaderBody ??= DrawNoHeaderBody;
+            SerializedProperty previous = _noHeaderProperty;
+            _noHeaderProperty = property;
+            try
+            {
+                RunWithHeaderDecoratorsSuppressed(property, _drawNoHeaderBody);
+            }
+            finally
+            {
+                _noHeaderProperty = previous;
+            }
+        }
+
+        private void DrawNoHeaderBody()
+        {
+            EditorGUILayout.PropertyField(_noHeaderProperty, true);
         }
 
         /// <summary>
-        ///     Draws a collapsible section in the STANDARD Neoxider style (green foldout bar + count badge,
-        ///     body in a help box) for module editors that keep manual control over which fields they show.
-        ///     Use <see cref="DrawPropertyFieldNoHeader" /> inside <paramref name="drawBody" /> so a field's
+        ///     Draws a collapsible section in the STANDARD Neoxider style (section bar + count pill, animated
+        ///     open/close, body with the accent guide) for module editors that keep manual control over which fields
+        ///     they show. Use <see cref="DrawPropertyFieldNoHeader" /> inside <paramref name="drawBody" /> so a field's
         ///     <c>[Header]</c> does not double the section title. Reuses the same look/persistence as the
         ///     auto-generated <c>[Header]</c> sections so custom component editors match the rest of the package.
         /// </summary>
@@ -652,26 +798,47 @@ namespace Neo.Editor
                 return;
             }
 
-            Color baseGreen = CustomEditorSettings.ScriptNameColor;
-            var darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
-            string key = $"{(target != null ? target.GetType().FullName : "Neo")}.NeoFoldout.Header.{title}";
+            Color accent = NeoxiderEditorGUI.SectionAccent(true);
+            string key = GetSectionFoldoutKey(target != null ? target.GetType() : null, title);
             bool expanded = GetFoldoutState(key, true);
-
-            Color accent = expanded ? darkGreen : baseGreen;
-            Color titleColor = expanded ? Color.white : baseGreen;
-            expanded = DrawNeoSectionHeader(expanded, title, count, accent, "d_Folder Icon", titleColor);
+            float amount = GetFoldAmount(key, expanded);
+            expanded = DrawNeoSectionHeader(expanded, amount, title, count, accent, "Folder Icon", false);
             _neoFoldouts[key] = expanded;
-            if (!expanded)
-            {
-                return;
-            }
+            amount = GetFoldAmount(key, expanded);
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            if (BeginSectionBody(amount, accent, out bool fading))
             {
                 EditorGUI.indentLevel++;
-                drawBody();
-                EditorGUI.indentLevel--;
+                try
+                {
+                    drawBody();
+                }
+                finally
+                {
+                    EditorGUI.indentLevel--;
+                }
+
+                // WHY: outside the finally - when drawBody exits the GUI (an object picker opening), Unity unwinds
+                // the layout itself and closing the groups again would log a mismatch.
+                EndSectionBody(fading);
             }
+        }
+
+        // WHY: the handler type is Unity's internal PropertyHandler; look its field up once, not per drawn header.
+        private static readonly object[] s_getHandlerArgs = new object[1];
+        private static Type s_decoratorsHandlerType;
+        private static FieldInfo s_decoratorsField;
+
+        private static FieldInfo GetDecoratorsField(Type handlerType)
+        {
+            if (handlerType != s_decoratorsHandlerType)
+            {
+                s_decoratorsHandlerType = handlerType;
+                s_decoratorsField =
+                    handlerType.GetField("m_DecoratorDrawers", BindingFlags.Instance | BindingFlags.NonPublic);
+            }
+
+            return s_decoratorsField;
         }
 
         // WHY: temporarily strip the built-in HeaderDrawer from the property handler so `draw` renders the
@@ -692,14 +859,20 @@ namespace Neo.Editor
             }
 
             object handler = null;
+            object[] args = s_getHandlerArgs;
             try
             {
-                handler = _getHandlerMethod.Invoke(null, new object[] { property });
+                args[0] = property;
+                handler = _getHandlerMethod.Invoke(null, args);
             }
             catch
             {
                 draw();
                 return;
+            }
+            finally
+            {
+                args[0] = null;
             }
 
             if (handler == null)
@@ -708,8 +881,7 @@ namespace Neo.Editor
                 return;
             }
 
-            FieldInfo decoratorsField =
-                handler.GetType().GetField("m_DecoratorDrawers", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo decoratorsField = GetDecoratorsField(handler.GetType());
             if (decoratorsField == null)
             {
                 draw();
@@ -744,7 +916,7 @@ namespace Neo.Editor
             }
             catch
             {
-                // Decorator suppression is optional; the draw callback must still run exactly once.
+                // WHY: decorator suppression is optional; the draw callback must still run exactly once.
             }
 
             try
@@ -766,29 +938,41 @@ namespace Neo.Editor
             }
         }
 
-        // WHY delegated: the pill is the package's boolean, and a PropertyDrawer (which cannot inherit this
+        // WHY delegated: the switch is the package's boolean, and a PropertyDrawer (which cannot inherit this
         // class) needs to draw the same thing inside nested serialized types. One definition, in
         // NeoxiderEditorGUI; this stays as the layout-based entry point the property pass uses.
+        // WHY: BeginProperty/PrefixLabel read the label immediately and keep no reference, so one scratch content
+        // serves every boolean row instead of a new GUIContent per row per event.
+        private static readonly GUIContent s_boolLabel = new();
+
         private void DrawBooleanToggle(SerializedProperty property)
         {
             Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
-            GUIContent label = new(property.displayName, property.tooltip);
+            if (_plan == null || !_plan.BoolLabels.TryGetValue(property, out GUIContent label))
+            {
+                s_boolLabel.text = property.displayName;
+                s_boolLabel.tooltip = property.tooltip;
+                label = s_boolLabel;
+            }
+
             NeoxiderEditorGUI.DrawPillToggleField(rect, property, label);
         }
 
-        private List<HeaderSection> BuildHeaderSections(List<SerializedProperty> properties)
+        private static void BuildHeaderSections(PropertyPlan plan)
         {
-            List<HeaderSection> sections = new();
+            List<SerializedProperty> properties = plan.Properties;
+            List<string> headerTitles = plan.HeaderTitles;
+            List<HeaderSection> sections = plan.Sections;
+            sections.Clear();
             int i = 0;
             while (i < properties.Count)
             {
-                SerializedProperty p = properties[i];
-                string headerTitle = TryGetHeaderTitleForProperty(p);
+                string headerTitle = headerTitles[i];
 
                 if (string.IsNullOrEmpty(headerTitle))
                 {
                     List<SerializedProperty> general = new();
-                    while (i < properties.Count && string.IsNullOrEmpty(TryGetHeaderTitleForProperty(properties[i])))
+                    while (i < properties.Count && string.IsNullOrEmpty(headerTitles[i]))
                     {
                         general.Add(properties[i]);
                         i++;
@@ -796,17 +980,16 @@ namespace Neo.Editor
 
                     if (general.Count > 0)
                     {
-                        sections.Add(new HeaderSection("General", general, false));
+                        sections.Add(new HeaderSection("General", general, false, false, plan.TargetType));
                     }
 
                     continue;
                 }
 
-                List<SerializedProperty> sectionProps = new();
-                sectionProps.Add(p);
+                List<SerializedProperty> sectionProps = new() { properties[i] };
                 i++;
 
-                while (i < properties.Count && string.IsNullOrEmpty(TryGetHeaderTitleForProperty(properties[i])))
+                while (i < properties.Count && string.IsNullOrEmpty(headerTitles[i]))
                 {
                     sectionProps.Add(properties[i]);
                     i++;
@@ -818,11 +1001,8 @@ namespace Neo.Editor
                     headerTitle.Contains("warning", StringComparison.OrdinalIgnoreCase) ||
                     headerTitle.Contains("error", StringComparison.OrdinalIgnoreCase);
 
-                bool isWarningHeader = looksLikeWarning;
-                sections.Add(new HeaderSection(headerTitle, sectionProps, isWarningHeader));
+                sections.Add(new HeaderSection(headerTitle, sectionProps, looksLikeWarning, true, plan.TargetType));
             }
-
-            return sections;
         }
 
         private void DrawWarningHeader(string text)
@@ -832,31 +1012,30 @@ namespace Neo.Editor
                 return;
             }
 
-            bool pro = NeoInspectorTheme.IsDark;
-            Rect row = GUILayoutUtility.GetRect(0f, 30f, GUILayout.ExpandWidth(true));
+            Rect row = GUILayoutUtility.GetRect(0f, 26f, NeoInspectorStyles.ExpandWidth);
             row = EditorGUI.IndentedRect(row);
-            Rect rect = new(row.x, row.y + 2f, row.width, 26f);
+            Rect rect = NeoInspectorTheme.Snap(new Rect(row.x, row.y + 2f, row.width, 22f));
 
-            Color accent = new(1f, 0.34f, 0.34f, 1f);
-            Color background = pro
-                ? new Color(0.34f, 0.11f, 0.11f, 0.85f)
-                : new Color(0.98f, 0.90f, 0.90f, 1f);
-
-            NeoInspectorTheme.DrawRoundedRect(rect, background,
-                new Color(accent.r, accent.g, accent.b, 0.4f), NeoInspectorTheme.RadiusRow, 1f);
-            NeoInspectorTheme.DrawAccentRail(rect, accent, 4f, 5f);
-
-            GUIStyle style = new(EditorStyles.boldLabel)
+            if (Event.current.type == EventType.Repaint)
             {
-                fontSize = 14,
-                wordWrap = false,
-                clipping = TextClipping.Clip,
-                alignment = TextAnchor.MiddleLeft,
-                normal = { textColor = pro ? new Color(1f, 0.86f, 0.86f, 1f) : new Color(0.55f, 0.12f, 0.12f, 1f) }
-            };
+                bool pro = NeoInspectorTheme.IsDark;
+                Color accent = new(1f, 0.38f, 0.36f, 1f);
+                Color background = pro
+                    ? new Color(0.30f, 0.11f, 0.11f, 0.90f)
+                    : new Color(0.99f, 0.91f, 0.90f, 1f);
 
-            GUI.Label(new Rect(rect.x + 13f, rect.y, rect.width - 20f, rect.height), text, style);
-            EditorGUILayout.Space(2);
+                NeoInspectorTheme.DrawRoundedRect(rect, background,
+                    new Color(accent.r, accent.g, accent.b, 0.40f), NeoInspectorTheme.RadiusRow, 1f);
+                NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 5f);
+
+                GUIStyle style = NeoInspectorStyles.WarningHeader(pro
+                    ? new Color(1f, 0.86f, 0.85f, 1f)
+                    : new Color(0.55f, 0.11f, 0.10f, 1f));
+
+                GUI.Label(new Rect(rect.x + 12f, rect.y, rect.width - 18f, rect.height), text, style);
+            }
+
+            NeoInspectorStyles.Space(2);
         }
 
         private static bool IsDebugHeaderTitle(string text)
@@ -877,30 +1056,28 @@ namespace Neo.Editor
                 return;
             }
 
-            bool isDebug = IsDebugHeaderTitle(text);
-            Rect row = GUILayoutUtility.GetRect(0f, 24f, GUILayout.ExpandWidth(true));
+            Rect row = GUILayoutUtility.GetRect(0f, 22f, NeoInspectorStyles.ExpandWidth);
             row = EditorGUI.IndentedRect(row);
-            Rect rect = new(row.x, row.y + 2f, row.width, 20f);
+            Rect rect = NeoInspectorTheme.Snap(new Rect(row.x, row.y + 3f, row.width, 18f));
 
-            Color accent = isDebug
-                ? new Color(0.94f, 0.34f, 0.34f, 1f)
-                : new Color(0.44f, 0.62f, 0.96f, 1f);
-            Color background = Color.Lerp(NeoInspectorTheme.HeaderRowBackground, accent, 0.10f);
-
-            NeoInspectorTheme.DrawRoundedRect(rect, background, NeoInspectorTheme.RadiusRow);
-            NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 4f);
-
-            GUIStyle style = new(EditorStyles.boldLabel)
+            if (Event.current.type == EventType.Repaint)
             {
-                fontSize = 12,
-                wordWrap = false,
-                clipping = TextClipping.Clip,
-                alignment = TextAnchor.MiddleLeft,
-                normal = { textColor = isDebug ? Color.Lerp(NeoInspectorTheme.TitleText, accent, 0.35f) : NeoInspectorTheme.TitleText }
-            };
+                bool isDebug = IsDebugHeaderTitle(text);
+                Color accent = isDebug
+                    ? new Color(0.94f, 0.34f, 0.34f, 1f)
+                    : NeoxiderEditorGUI.SectionAccent(true);
+                NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 3f);
+                EditorGUI.DrawRect(new Rect(rect.x + 10f, rect.yMax - 1f, rect.width - 10f, 1f),
+                    NeoInspectorTheme.Separator);
 
-            GUI.Label(new Rect(rect.x + 12f, rect.y, rect.width - 18f, rect.height), text, style);
-            EditorGUILayout.Space(1);
+                GUIStyle style = NeoInspectorStyles.PlainHeader(isDebug
+                    ? Color.Lerp(NeoInspectorTheme.TitleText, accent, 0.35f)
+                    : NeoInspectorTheme.TitleText);
+
+                GUI.Label(new Rect(rect.x + 10f, rect.y, rect.width - 14f, rect.height), text, style);
+            }
+
+            NeoInspectorStyles.Space(2);
         }
 
         // WHY: Header titles and field lookups depend only on (type, property path) and are requested several
@@ -1004,8 +1181,7 @@ namespace Neo.Editor
                     continue;
                 }
 
-                currentField = currentType.GetField(part,
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                currentField = FindFieldInHierarchy(currentType, part);
 
                 if (currentField == null)
                 {
@@ -1027,6 +1203,23 @@ namespace Neo.Editor
 
             fieldInfo = currentField;
             return fieldInfo != null;
+        }
+
+        // WHY: Type.GetField does not return private fields declared on a base class, so a [Header] on a private
+        // field of an inherited component was invisible and its section silently merged into the one above.
+        private static FieldInfo FindFieldInHierarchy(Type type, string name)
+        {
+            for (Type current = type; current != null && current != typeof(object); current = current.BaseType)
+            {
+                FieldInfo field = current.GetField(name,
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                if (field != null)
+                {
+                    return field;
+                }
+            }
+
+            return null;
         }
 
         private bool GetFoldoutState(string key, bool defaultValue)
@@ -1074,136 +1267,186 @@ namespace Neo.Editor
                 return;
             }
 
-            Rect rect = GUILayoutUtility.GetRect(0f, 18f, GUILayout.ExpandWidth(true));
-            rect = EditorGUI.IndentedRect(rect);
+            Rect rect = GUILayoutUtility.GetRect(0f, 16f, NeoInspectorStyles.ExpandWidth);
+            rect = NeoInspectorTheme.Snap(EditorGUI.IndentedRect(rect));
 
-            bool pro = NeoInspectorTheme.IsDark;
-            Color accent = new(0.22f, 0.78f, 1f, 1f);
-            Color background = pro ? new Color(0.06f, 0.16f, 0.23f, 0.92f) : new Color(0.86f, 0.94f, 0.99f, 1f);
-            NeoInspectorTheme.DrawRoundedRect(rect, background, NeoInspectorTheme.RadiusRow);
-            NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 3f);
-
-            GUIStyle style = new(EditorStyles.miniBoldLabel)
+            if (Event.current.type == EventType.Repaint)
             {
-                normal = { textColor = pro ? new Color(0.68f, 0.92f, 1f, 1f) : new Color(0.12f, 0.40f, 0.55f, 1f) },
-                alignment = TextAnchor.MiddleLeft
+                bool pro = NeoInspectorTheme.IsDark;
+                Color accent = new(0.22f, 0.78f, 1f, 1f);
+                Color background = pro ? new Color(0.06f, 0.16f, 0.23f, 0.92f) : new Color(0.86f, 0.94f, 0.99f, 1f);
+                NeoInspectorTheme.DrawRoundedRect(rect, background, NeoInspectorTheme.RadiusRow);
+                NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 3f);
+
+                GUIStyle style = NeoInspectorStyles.NetworkMarker(pro
+                    ? new Color(0.68f, 0.92f, 1f, 1f)
+                    : new Color(0.10f, 0.36f, 0.52f, 1f));
+
+                GUI.Label(new Rect(rect.x + 10f, rect.y, rect.width - 10f, rect.height),
+                    "NETWORK REPLICATED when isNetworked is enabled", style);
+            }
+        }
+
+        /// <summary>Serialized members a replicating Neo component sends over the network while it is networked.</summary>
+        private sealed class ReplicatedMembers
+        {
+            private readonly string[] _events;
+            private readonly string[] _eventPathSuffixes;
+            private readonly string[] _reactive;
+
+            public ReplicatedMembers(string[] events, string[] reactive = null, bool matchNestedEventPaths = false)
+            {
+                _events = events ?? Array.Empty<string>();
+                _reactive = reactive ?? Array.Empty<string>();
+                _eventPathSuffixes = Array.Empty<string>();
+                if (matchNestedEventPaths)
+                {
+                    _eventPathSuffixes = new string[_events.Length];
+                    for (int i = 0; i < _events.Length; i++)
+                    {
+                        _eventPathSuffixes[i] = "." + _events[i];
+                    }
+                }
+            }
+
+            public bool HasNestedEventPaths => _eventPathSuffixes.Length > 0;
+
+            public bool MatchesEventName(string propertyName)
+            {
+                return Array.IndexOf(_events, propertyName) >= 0;
+            }
+
+            public bool MatchesEventPath(string propertyPath)
+            {
+                for (int i = 0; i < _eventPathSuffixes.Length; i++)
+                {
+                    if (propertyPath.EndsWith(_eventPathSuffixes[i], StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            public bool MatchesReactiveName(string propertyName)
+            {
+                return Array.IndexOf(_reactive, propertyName) >= 0;
+            }
+        }
+
+        // WHY: the single source for the NETWORK REPLICATED marker. The type gate and the per-property checks both
+        // read it, so a component added here can never show up in one and silently miss the other. Keyed by type
+        // name because these components live in assemblies this editor assembly does not reference.
+        private static readonly Dictionary<string, ReplicatedMembers> s_replicatedMembersByTypeName =
+            new(StringComparer.Ordinal)
+            {
+                {
+                    "InteractiveObject",
+                    new ReplicatedMembers(new[]
+                    {
+                        "onInteractDown", "onInteractUp", "onClick", "onDoubleClick", "onRightClick", "onMiddleClick"
+                    })
+                },
+                { "NetworkEventDispatcher", new ReplicatedMembers(new[] { "onNetworkEvent" }) },
+                {
+                    "NetworkActionRelay",
+                    new ReplicatedMembers(new[] { "onTriggered", "onTriggeredFloat", "onTriggeredString" },
+                        matchNestedEventPaths: true)
+                },
+                {
+                    "Counter",
+                    new ReplicatedMembers(new[] { "OnValueChangedInt", "OnValueChangedFloat", "OnRepeatByCounterValue" },
+                        new[] { "Value" })
+                },
+                { "RandomRange", new ReplicatedMembers(new[] { "OnGeneratedInt", "OnGeneratedFloat" }, new[] { "Value" }) },
+                {
+                    "Selector",
+                    new ReplicatedMembers(new[]
+                        { "OnSelectionChanged", "OnSelectionChangedGameObject", "OnCountActiveChanged" })
+                },
+                { "NeoCondition", new ReplicatedMembers(new[] { "_onTrue", "_onFalse", "_onResult", "_onInvertedResult" }) },
+                {
+                    "Spawner",
+                    new ReplicatedMembers(new[] { "OnObjectSpawned", "OnWaveStarted", "OnWaveObjectSpawned" })
+                }
             };
 
-            GUI.Label(new Rect(rect.x + 10f, rect.y, rect.width - 10f, rect.height),
-                "NETWORK REPLICATED when isNetworked is enabled", style);
+        private static readonly Dictionary<Type, ReplicatedMembers> s_replicatedMembersByType = new();
+
+        private static ReplicatedMembers GetReplicatedMembers(Type targetType)
+        {
+            if (targetType == null)
+            {
+                return null;
+            }
+
+            if (!s_replicatedMembersByType.TryGetValue(targetType, out ReplicatedMembers members))
+            {
+                s_replicatedMembersByTypeName.TryGetValue(targetType.Name, out members);
+                s_replicatedMembersByType[targetType] = members;
+            }
+
+            return members;
+        }
+
+        // WHY: checking the type first keeps the FindProperty("isNetworked") lookups, which ran for every drawn
+        // property of every inspector, off all components that never replicate anything.
+        internal static bool CanShowReplicationMarker(Type targetType)
+        {
+            return GetReplicatedMembers(targetType) != null;
+        }
+
+        /// <summary>True when <paramref name="targetType" /> replicates the UnityEvent at this name/path.</summary>
+        internal static bool IsReplicatedEventMember(Type targetType, string propertyName, string propertyPath)
+        {
+            ReplicatedMembers members = GetReplicatedMembers(targetType);
+            return members != null &&
+                   (members.MatchesEventName(propertyName ?? string.Empty) ||
+                    members.MatchesEventPath(propertyPath ?? string.Empty));
+        }
+
+        /// <summary>True when <paramref name="targetType" /> replicates the reactive property with this name.</summary>
+        internal static bool IsReplicatedReactiveMember(Type targetType, string propertyName)
+        {
+            ReplicatedMembers members = GetReplicatedMembers(targetType);
+            return members != null && members.MatchesReactiveName(propertyName ?? string.Empty);
         }
 
         private bool IsNetworkReplicationHighlighted(SerializedProperty property)
         {
-            if (property == null || target == null || !IsNetworkedEnabled())
+            if (property == null || target == null)
             {
                 return false;
             }
 
-            if (IsUnityEventProperty(property))
+            ReplicatedMembers members = GetReplicatedMembers(target.GetType());
+            if (members == null || !IsNetworkedEnabled())
             {
-                return IsReplicatedUnityEventProperty(property);
+                return false;
             }
 
-            return IsReplicatedReactiveProperty(property);
+            string propertyName = property.name ?? string.Empty;
+            if (IsUnityEventProperty(property))
+            {
+                return members.MatchesEventName(propertyName) ||
+                       (members.HasNestedEventPaths && members.MatchesEventPath(property.propertyPath ?? string.Empty));
+            }
+
+            string propertyType = property.type ?? string.Empty;
+            return propertyType.Contains("ReactiveProperty", StringComparison.Ordinal) &&
+                   members.MatchesReactiveName(propertyName);
         }
 
         private bool IsNetworkedEnabled()
         {
-            SerializedProperty networked = serializedObject?.FindProperty("isNetworked");
-            if (networked != null && networked.propertyType == SerializedPropertyType.Boolean)
-            {
-                return networked.boolValue;
-            }
-
-            SerializedProperty privateNetworked = serializedObject?.FindProperty("_isNetworked");
-            return privateNetworked != null &&
-                   privateNetworked.propertyType == SerializedPropertyType.Boolean &&
-                   privateNetworked.boolValue;
-        }
-
-        private bool IsReplicatedUnityEventProperty(SerializedProperty property)
-        {
-            string propertyName = property.name ?? string.Empty;
-            string propertyPath = property.propertyPath ?? string.Empty;
-            string targetName = target.GetType().Name;
-
-            if (targetName == "InteractiveObject")
-            {
-                return propertyName == "onInteractDown" ||
-                       propertyName == "onInteractUp" ||
-                       propertyName == "onClick" ||
-                       propertyName == "onDoubleClick" ||
-                       propertyName == "onRightClick" ||
-                       propertyName == "onMiddleClick";
-            }
-
-            if (targetName == "NetworkEventDispatcher")
-            {
-                return propertyName == "onNetworkEvent";
-            }
-
-            if (targetName == "NetworkActionRelay")
-            {
-                return propertyName == "onTriggered" ||
-                       propertyName == "onTriggeredFloat" ||
-                       propertyName == "onTriggeredString" ||
-                       propertyPath.EndsWith(".onTriggered", StringComparison.Ordinal) ||
-                       propertyPath.EndsWith(".onTriggeredFloat", StringComparison.Ordinal) ||
-                       propertyPath.EndsWith(".onTriggeredString", StringComparison.Ordinal);
-            }
-
-            if (targetName == "Counter")
-            {
-                return propertyName == "OnValueChangedInt" ||
-                       propertyName == "OnValueChangedFloat" ||
-                       propertyName == "OnRepeatByCounterValue";
-            }
-
-            if (targetName == "RandomRange")
-            {
-                return propertyName == "OnGeneratedInt" ||
-                       propertyName == "OnGeneratedFloat";
-            }
-
-            if (targetName == "Selector")
-            {
-                return propertyName == "OnSelectionChanged" ||
-                       propertyName == "OnSelectionChangedGameObject" ||
-                       propertyName == "OnCountActiveChanged";
-            }
-
-            if (targetName == "NeoCondition")
-            {
-                return propertyName == "_onTrue" ||
-                       propertyName == "_onFalse" ||
-                       propertyName == "_onResult" ||
-                       propertyName == "_onInvertedResult";
-            }
-
-            if (targetName == "Spawner")
-            {
-                return propertyName == "OnObjectSpawned" ||
-                       propertyName == "OnWaveStarted" ||
-                       propertyName == "OnWaveObjectSpawned";
-            }
-
-            return false;
-        }
-
-        private bool IsReplicatedReactiveProperty(SerializedProperty property)
-        {
-            string propertyType = property.type ?? string.Empty;
-            if (!propertyType.Contains("ReactiveProperty", StringComparison.Ordinal))
+            if (serializedObject == null || target == null)
             {
                 return false;
             }
 
-            string targetName = target.GetType().Name;
-            string propertyName = property.name ?? string.Empty;
-
-            return (targetName == "Counter" || targetName == "RandomRange") &&
-                   propertyName == "Value";
+            SerializedProperty networked = GetPropertyPlan().Networked;
+            return networked != null && networked.boolValue;
         }
 
         private static SerializedProperty GetPersistentCallsArray(SerializedProperty unityEventProperty)
@@ -1306,7 +1549,7 @@ namespace Neo.Editor
                 return null;
             }
 
-            string preview = string.Join(", ", parts);
+            string preview = "→ " + string.Join(", ", parts);
             if (calls.arraySize > maxItems)
             {
                 preview += $" … (+{calls.arraySize - maxItems})";
@@ -1326,86 +1569,54 @@ namespace Neo.Editor
         {
             return _neoPropertyPanelStyle ??= new GUIStyle
             {
-                padding = new RectOffset(12, 12, 10, 10),
-                margin = new RectOffset(0, 0, 2, 4)
+                padding = new RectOffset(12, 8, 8, 8),
+                margin = new RectOffset(0, 0, 0, 4)
             };
         }
 
         /// <summary>Rounded card behind the default property fields with a faint accent tint.</summary>
         private static void DrawNeoPropertyPanelBackground(Rect rect)
         {
-            Color fill = Color.Lerp(NeoInspectorTheme.PanelBackground, NeoPropAccent, 0.05f);
-            Color edge = new(NeoPropAccent.r, NeoPropAccent.g, NeoPropAccent.b, 0.14f);
-            NeoInspectorTheme.DrawRoundedRect(rect, fill, edge, NeoInspectorTheme.RadiusCard, 1f);
+            Color fill = Color.Lerp(NeoInspectorTheme.PanelBackground, NeoPropAccent, 0.035f);
+            Color edge = Color.Lerp(NeoInspectorTheme.Separator,
+                new Color(NeoPropAccent.r, NeoPropAccent.g, NeoPropAccent.b, 0.16f), 0.5f);
+            NeoInspectorTheme.DrawRoundedRect(NeoInspectorTheme.Snap(rect), fill, edge, NeoInspectorTheme.RadiusCard, 1f);
         }
 
-        /// <summary>A non-collapsible themed section label (accent rail + icon + title) for the property block.</summary>
-        private void DrawNeoSectionLabel(string title, string iconName)
-        {
-            const float height = 26f;
-            Rect row = GUILayoutUtility.GetRect(0, height + 2f, GUILayout.ExpandWidth(true));
-            row = EditorGUI.IndentedRect(row);
-            Rect rect = new(row.x, row.y + 1f, row.width, height);
-
-            bool pro = NeoInspectorTheme.IsDark;
-            Color accent = NeoPropAccent;
-            Color bg = Color.Lerp(NeoInspectorTheme.HeaderRowBackground, accent, 0.08f);
-            NeoInspectorTheme.DrawRoundedRect(rect, bg, new Color(accent.r, accent.g, accent.b, 0.22f),
-                NeoInspectorTheme.RadiusSection, 1f);
-            NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 6f);
-
-            float x = rect.x + 14f;
-            GUIContent iconContent = string.IsNullOrEmpty(iconName) ? null : EditorGUIUtility.IconContent(iconName);
-            if (iconContent != null && iconContent.image != null && Event.current.type == EventType.Repaint)
-            {
-                Rect iconRect = new(x, rect.y + (rect.height - 15f) * 0.5f, 15f, 15f);
-                Color old = GUI.color;
-                GUI.color = pro ? Color.Lerp(Color.white, accent, 0.14f) : Color.Lerp(accent, Color.black, 0.15f);
-                GUI.DrawTexture(iconRect, (Texture2D)iconContent.image, ScaleMode.ScaleToFit, true);
-                GUI.color = old;
-                x += 20f;
-            }
-
-            GUIStyle titleStyle = new(EditorStyles.boldLabel)
-            {
-                fontSize = 12,
-                alignment = TextAnchor.MiddleLeft,
-                clipping = TextClipping.Clip,
-                normal = { textColor = pro ? new Color(0.88f, 0.90f, 0.96f, 1f) : NeoInspectorTheme.TitleText }
-            };
-            GUI.Label(new Rect(x, rect.y, Mathf.Max(20f, rect.width - (x - rect.x) - 8f), rect.height), title,
-                titleStyle);
-        }
-
-        private bool DrawNeoSectionHeader(bool expanded,
-            string title,
-            int count,
-            Color accent,
-            string iconName,
-            Color titleColor)
+        private static bool DrawNeoSectionHeader(bool expanded, float openness, string title, int count, Color accent,
+            string iconName, bool hasOverride)
         {
             // WHY delegated: this bar IS the Neoxider section, and nested drawers need to draw the same one.
             // The single definition lives in NeoxiderEditorGUI; this keeps the layout/indent handling.
-            Rect row = GUILayoutUtility.GetRect(0, NeoxiderEditorGUI.SectionHeaderHeight + 3f,
-                GUILayout.ExpandWidth(true));
+            Rect row = GUILayoutUtility.GetRect(0f, NeoxiderEditorGUI.SectionHeaderHeight + 4f,
+                NeoInspectorStyles.ExpandWidth);
             row = EditorGUI.IndentedRect(row);
             Rect rect = new(row.x, row.y + 2f, row.width, NeoxiderEditorGUI.SectionHeaderHeight);
 
-            return NeoxiderEditorGUI.DrawSectionHeaderRect(rect, expanded, title, count, accent, iconName,
-                titleColor);
+            return NeoxiderEditorGUI.DrawSectionHeader(rect, expanded, openness, title, count, accent, iconName,
+                hasOverride);
         }
 
-        private readonly struct HeaderSection
+        private sealed class HeaderSection
         {
             public readonly string Title;
             public readonly List<SerializedProperty> Properties;
             public readonly bool IsWarningHeader;
+            public readonly bool StartsAtHeader;
+            public readonly bool ExcludeFromMinFieldsRule;
+            public readonly string FoldoutKey;
 
-            public HeaderSection(string title, List<SerializedProperty> properties, bool isWarningHeader)
+            public HeaderSection(string title, List<SerializedProperty> properties, bool isWarningHeader,
+                bool startsAtHeader, Type targetType)
             {
                 Title = title;
                 Properties = properties;
                 IsWarningHeader = isWarningHeader;
+                StartsAtHeader = startsAtHeader;
+                ExcludeFromMinFieldsRule =
+                    string.Equals(title, "Actions", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(title, "Events", StringComparison.OrdinalIgnoreCase);
+                FoldoutKey = GetSectionFoldoutKey(targetType, title);
             }
         }
     }

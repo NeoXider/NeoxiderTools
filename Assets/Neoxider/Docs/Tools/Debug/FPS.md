@@ -1,14 +1,20 @@
 ﻿# FPS
 
-Displays a rolling average of per-frame FPS in an assigned `TMP_Text` label. Sampling and display scheduling use unscaled time, so the counter continues while `Time.timeScale` is zero. Namespace: `Neo.Tools`; assembly: `Neo.Tools.Debug`.
+**What it is:** a `MonoBehaviour` that displays a color-coded rolling average of per-frame FPS in an assigned
+`TMP_Text` label. Sampling and display scheduling use unscaled time, so the counter continues while
+`Time.timeScale` is zero. Script: `Scripts/Tools/Debug/FPS.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Debug`.
 
-## Setup
-
+**How to use:**
 1. Add `FPS` using **Add Component → Neoxider → Tools → FPS**.
 2. Assign **Text** before entering Play Mode. A missing reference reports through `NeoDiagnostics` and disables the component in `Awake`.
 3. Set the sample count, refresh interval, thresholds and display format in the Inspector.
 
-The first samples are averaged over the filled part of the buffer. The component does not change the project's frame-rate or VSync settings by default.
+---
+
+The first samples are averaged over the filled part of the buffer. The component does not change the project's
+frame-rate or VSync settings by default. A refresh that shows the same number as the previous one reuses the
+existing label string (no formatting, no allocation); with **Show Decimals** the value is rounded to one decimal
+before formatting.
 
 ## Key Fields (Inspector)
 

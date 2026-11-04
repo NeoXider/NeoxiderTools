@@ -1,6 +1,8 @@
 # NeoDebugOverlay
 
-An on-screen debug panel rendered with a runtime-built **uGUI canvas and TextMeshPro**. It shows smoothed FPS/frame time, the active scene and time scale, and existing `AM`/`SaveManager` state. Namespace: `Neo.Tools`; assembly: `Neo.Tools.Debug`. Source: `Scripts/Tools/Debug/NeoDebugOverlay.cs`.
+**What it is:** a `MonoBehaviour` that builds an on-screen debug panel at runtime (**uGUI canvas and TextMeshPro**)
+showing smoothed FPS/frame time, the active scene and time scale, and existing `AM`/`SaveManager` state. Script:
+`Scripts/Tools/Debug/NeoDebugOverlay.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Debug`.
 
 **How to use:**
 
@@ -8,6 +10,8 @@ An on-screen debug panel rendered with a runtime-built **uGUI canvas and TextMes
 2. Press the toggle key (default **F3**) at runtime to show/hide the overlay.
 3. Toggle individual sections (FPS, scene, manager states) in the Inspector.
 4. Supply an optional TMP font or ensure a TMP default font is available in the project.
+
+---
 
 The hotkey reuses `Neo.Tools.KeyInputCompat` from the optional `Neo.Tools.Input` module through a cached delegate. This supports legacy input and Input System-only projects without a direct assembly reference. If that module is absent, legacy input is attempted; unavailable input leaves the readout updating without a hotkey.
 
@@ -29,7 +33,7 @@ Destroying the owner removes the generated canvas. Keep the owner alive explicit
 
 Manager reads use reflection without direct dependencies on the Audio/Save assemblies. Only already-resolved singletons are displayed. An absent or inactive unresolved `AM` remains absent: inspecting the panel does not invoke singleton discovery or lazy creation. The `random` value is the audio manager's legacy random-music flag.
 
-Each enabled overlay polls input and samples FPS every frame, including when hidden. **Update Interval** throttles visible text reconstruction, not input or sampling. Optional-member discovery and the keyboard delegate are cached per overlay; multiple overlay components remain independent instances.
+Each enabled overlay polls input and samples FPS every frame, including when hidden. **Update Interval** throttles visible text reconstruction, not input or sampling. Optional-member discovery and the keyboard delegate are cached per overlay; multiple overlay components remain independent instances. The readout is built in a reused `StringBuilder`; the active scene name is cached until the active scene changes, and the audio manager instance, music source, current clip and manager flags are read through typed delegates (no reflection invoke or boxed results per refresh). The clip name (`Object.name`, a new native string per read) is cached until the music clip changes, so a warm refresh with an `AM` present does not allocate.
 
 ## Fields
 

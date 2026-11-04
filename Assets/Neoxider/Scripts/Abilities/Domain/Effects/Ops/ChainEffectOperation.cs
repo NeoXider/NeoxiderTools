@@ -17,6 +17,11 @@ namespace Neo.Abilities
 
         private readonly List<UnitId> _queryScratch = new List<UnitId>(16);
 
+        // WHY: each bounce's damage can trigger reactions that run another chain before this one ends,
+        // so every nesting level borrows its own visited set instead of allocating one per execution.
+        private readonly List<HashSet<UnitId>> _visitedPool = new List<HashSet<UnitId>>(2);
+        private int _depth;
+
         public string Id => AbilityEffectOps.Chain;
 
         public void Execute(EffectContext context, EffectNodeData node, List<UnitId> targets)
@@ -35,32 +40,47 @@ namespace Neo.Abilities
             AbilityUnit caster = context.System.GetUnit(context.Caster);
             IAbilityWorldAdapter world = context.System.World;
 
-            HashSet<UnitId> visited = new HashSet<UnitId>();
-            float multiplier = 1f;
-
-            for (int hit = 0; hit < maxHits && current.IsValid; hit++)
+            while (_visitedPool.Count <= _depth)
             {
-                float amount = LeveledValueResolver.ResolveAmount(node, context, current) * multiplier;
-                if (amount > 0f)
-                {
-                    DamageService.ApplyDamage(context.System, context.Caster, current, amount,
-                        node.DamageType, context.AbilityId, context.CastId, context.Random);
-                }
+                _visitedPool.Add(new HashSet<UnitId>());
+            }
 
-                visited.Add(current);
-                if (hit + 1 >= maxHits || !world.TryGetPosition(current, out Vector3 from))
-                {
-                    break;
-                }
+            HashSet<UnitId> visited = _visitedPool[_depth];
+            _depth++;
+            try
+            {
+                visited.Clear();
+                float multiplier = 1f;
 
-                UnitId next = FindNearest(world, from, radius, visited, caster, node.TeamFilter, context.System);
-                if (!next.IsValid)
+                for (int hit = 0; hit < maxHits && current.IsValid; hit++)
                 {
-                    break;
-                }
+                    float amount = LeveledValueResolver.ResolveAmount(node, context, current) * multiplier;
+                    if (amount > 0f)
+                    {
+                        DamageService.ApplyDamage(context.System, context.Caster, current, amount,
+                            node.DamageType, context.AbilityId, context.CastId, context.Random);
+                    }
 
-                current = next;
-                multiplier *= falloff;
+                    visited.Add(current);
+                    if (hit + 1 >= maxHits || !world.TryGetPosition(current, out Vector3 from))
+                    {
+                        break;
+                    }
+
+                    UnitId next = FindNearest(world, from, radius, visited, caster, node.TeamFilter, context.System);
+                    if (!next.IsValid)
+                    {
+                        break;
+                    }
+
+                    current = next;
+                    multiplier *= falloff;
+                }
+            }
+            finally
+            {
+                visited.Clear();
+                _depth--;
             }
         }
 
@@ -76,7 +96,9 @@ namespace Neo.Abilities
             world.QueryUnitsInRadius(from, radius, _queryScratch);
 
             UnitId best = UnitId.None;
-            float bestDistSq = float.MaxValue;
+            // WHY: double ranking; a far unit the exact radius query admitted has an infinite float square
+            // and could never beat a float.MaxValue start.
+            double bestDistSq = double.PositiveInfinity;
             for (int i = 0; i < _queryScratch.Count; i++)
             {
                 UnitId id = _queryScratch[i];
@@ -101,7 +123,7 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                float distSq = (pos - from).sqrMagnitude;
+                double distSq = AbilitySpatialGrid.SqrDistance(pos, from);
                 if (distSq < bestDistSq || (distSq == bestDistSq && id.Value < best.Value))
                 {
                     best = id;

@@ -99,6 +99,36 @@ namespace Neo.GridSystem
             new Vector3Int(+1, -1, 0), new Vector3Int(-1, +1, 0)
         });
 
+        /// <summary>
+        ///     Creates the rule for a built-in preset.
+        /// </summary>
+        /// <param name="preset">Preset to create.</param>
+        /// <returns>A new rule, or null for <see cref="GridMovementPreset.UseMovementRule" /> and unknown values.</returns>
+        public static MovementRule FromPreset(GridMovementPreset preset)
+        {
+            switch (preset)
+            {
+                case GridMovementPreset.FourDirections2D:
+                    return FourDirections2D;
+                case GridMovementPreset.EightDirections2D:
+                    return EightDirections2D;
+                case GridMovementPreset.DiagonalDirections2D:
+                    return DiagonalDirections2D;
+                case GridMovementPreset.HexDirectionsX:
+                    return HexDirectionsX;
+                case GridMovementPreset.HexDirectionsY:
+                    return HexDirectionsY;
+                case GridMovementPreset.SixDirections3D:
+                    return SixDirections3D;
+                case GridMovementPreset.EighteenDirections3D:
+                    return EighteenDirections3D;
+                case GridMovementPreset.TwentySixDirections3D:
+                    return TwentySixDirections3D;
+                default:
+                    return null;
+            }
+        }
+
         private static IEnumerable<Vector3Int> Get26Directions3D()
         {
             for (int x = -1; x <= 1; x++)

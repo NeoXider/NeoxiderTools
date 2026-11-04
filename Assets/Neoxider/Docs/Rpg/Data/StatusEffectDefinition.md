@@ -1,11 +1,12 @@
 ﻿# StatusEffectDefinition
 
-**Purpose:** reusable ScriptableObject for status damage, movement multiplier and action blocking.
+**What it is:** reusable ScriptableObject for status damage, movement multiplier and action blocking. Script: `Scripts/Rpg/Data/StatusEffectDefinition.cs`.
 
-## Setup
-
+**How to use:**
 - Create an asset via `Create -> Neoxider -> RPG -> Status Effect Definition`, then call
   `RpgCharacter.ApplyStatus(definition)` or author an `ApplyStatus` NoCode action.
+
+---
 
 ## Key Fields (Inspector)
 

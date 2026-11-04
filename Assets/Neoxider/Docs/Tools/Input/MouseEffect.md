@@ -1,6 +1,14 @@
 # MouseEffect
 
-`MouseEffect` is a cursor visual-effects component driven by `MouseInputManager` events: press, hold, release and click. It does not own input rules; it is a scene-facing wrapper for trails, follower objects and prefab spawn effects.
+**What it is:** `MouseEffect` is a cursor visual-effects component driven by `MouseInputManager` events: press, hold, release and click. It does not own input rules; it is a scene-facing wrapper for trails, follower objects and prefab spawn effects. Script: `Scripts/Tools/Input/MouseEffect.cs`.
+
+**How to use:**
+1. Add `MouseInputManager` to the scene.
+2. Add `MouseEffect` to an effect object.
+3. Assign `trail`, `followObject` and/or `spawnPrefab`.
+4. Assign `Target Camera` directly, or inject it from code with `SetTargetCamera(Camera)`.
+
+---
 
 ## Features
 
@@ -9,13 +17,6 @@
 - spawns `spawnPrefab` on `Press`, `Hold`, `Release` or `Click`;
 - supports single-shot and repeated spawn while holding;
 - exposes `onStartFollow`, `onStopFollow` and `onSpawn` UnityEvents.
-
-## Setup
-
-1. Add `MouseInputManager` to the scene.
-2. Add `MouseEffect` to an effect object.
-3. Assign `trail`, `followObject` and/or `spawnPrefab`.
-4. Assign `Target Camera` directly, or inject it from code with `SetTargetCamera(Camera)`.
 
 ## Camera Resolution
 
@@ -46,11 +47,17 @@ Following reads screen position through `MouseInputCompat`, so legacy-disabled p
 | `followDepth` | Z-depth used by `ScreenToWorldPoint`. |
 | `spawnParent` | Parent for spawned prefabs. Defaults to this component's transform. |
 
+## Hold and Click need manager support
+
+- **Hold spawning needs `MouseInputManager.enableHold`.** The `Hold` trigger and `spawnDuringHold` react only to `OnHold`, and the manager raises it only while `enableHold` is on. That switch is off by default, also on a manager created automatically by `MouseInputManager.I`. Place a `MouseInputManager` with **Enable Hold** in the scene, or set `MouseInputManager.I.enableHold = true` from code. `RequiresHoldEvents` tells whether the current settings need it; with `NeoDiagnostics` warnings enabled, the effect warns once when it subscribes to a manager whose hold events are off.
+- **The `Click` trigger needs a collider under the cursor.** The manager raises `OnClick` only when press and release hit the same non-null `HitObject` (a collider on `interactableLayers`). Over empty space the `Click` trigger never spawns; use `Release` there.
+
 ## API
 
 ```csharp
 public Camera TargetCamera { get; }
 public void SetTargetCamera(Camera camera);
+public bool RequiresHoldEvents { get; } // a prefab with the Hold trigger or spawnDuringHold
 ```
 
 Prefer `SetTargetCamera` from scene setup/bootstrap code when cameras are created dynamically. This keeps samples and game scenes independent from `Camera.main`.
@@ -59,7 +66,7 @@ Configure the public fields from C# before enabling the component, or use the sa
 
 ## Lifecycle and ownership
 
-The component subscribes to the current `MouseInputManager.I` when enabled and unsubscribes when disabled. Enable the manager's Press/Release notifications for normal follow start/stop and Hold notifications for hold spawning. It also subscribes to `OnCanceled`: disabling/destroying the manager or losing its camera/input stops subscribed visuals even while the effect itself remains enabled. Cancellation never spawns a Release effect. Replacing the manager requires re-enabling the effect to bind it again.
+The component subscribes to the current `MouseInputManager.I` when enabled and unsubscribes when disabled. Enable the manager's Press/Release notifications for normal follow start/stop and Hold notifications for hold spawning (see [Hold and Click need manager support](#hold-and-click-need-manager-support)). It also subscribes to `OnCanceled`: disabling/destroying the manager or losing its camera/input stops subscribed visuals even while the effect itself remains enabled. Cancellation never spawns a Release effect. Replacing the manager requires re-enabling the effect to bind it again.
 
 Release stops active following and emits `onStopFollow` once per started follow. `disableOnRelease = false` retains visible trail/follower objects after normal release. Disabling the component, losing application focus, pausing the application or setting `interactable = false` stops following and hides the visuals; an unmatched later release does not emit another stop. Changing `interactable` is applied on the next update or release.
 
@@ -72,3 +79,19 @@ Spawned instances belong to `spawnParent`, or this transform when no parent is a
 ## Dependencies
 
 `MouseEffect` requires an active `MouseInputManager` in the scene. If the manager is missing, no input events are received. Missing-manager warnings are disabled by default and can be enabled with `_logMissingManagerWarning`.
+
+On touch-only devices both input backends report the first finger as the left mouse button, so press, hold and release effects follow it (see [Input README](README.md#touch-as-mouse)).
+
+## Demo scene
+
+`Scenes/Tools/MouseEffectorExample.unity` (sample "Demo Scenes", root `Assets/Neoxider/Samples~/Demo/` in the package or `Samples/` while developing samples) is authored by `MouseEffectorExampleBuilder` (**Neoxider > Demo > Rebuild Active Demo Scene**). It keeps three hand-authored effects under `Effects` (prefab spawning, trail, follower) and adds:
+
+- `[Demo] Mouse Input`: a `MouseInputManager` with **Enable Hold** on, so hold spawning works;
+- toggles that call `GameObject.SetActive` on each effect object directly;
+- trigger, `spawnDuringHold`, interval and lifetime controls for the spawning effect (the `Click` trigger is left out because the scene has no colliders under the cursor);
+- `onSpawn`, `onStartFollow` and `onStopFollow` wired to a spawn counter and the on-screen log;
+- a pointer gate that keeps presses on the demo UI from spawning effects.
+
+## Кратко по-русски
+
+`MouseEffect` рисует след, двигает объект-последователь и спавнит префаб по событиям `MouseInputManager`. Спавн по удержанию (триггер `Hold` или `spawnDuringHold`) работает только при включённом **Enable Hold** у менеджера, а у автосозданного менеджера он выключен: добавьте в сцену `MouseInputManager` с Enable Hold или задайте `MouseInputManager.I.enableHold = true`. `RequiresHoldEvents` показывает, нужен ли он текущим настройкам. Триггер `Click` срабатывает, только если нажатие и отпускание попали в один и тот же коллайдер; над пустым местом используйте `Release`. Демо-сцена `Scenes/Tools/MouseEffectorExample.unity` собирается билдером `MouseEffectorExampleBuilder`.

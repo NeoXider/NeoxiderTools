@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using Neo.Abilities;
+using Neo.Tools;
 using UnityEngine;
 
 namespace Neo.Samples.Survivor
 {
     /// <summary>
-    ///     The player avatar: WASD movement scaled by the unit's move_speed property (so Swift upgrades
-    ///     and slows apply automatically) and an auto-caster that fires every granted ability the moment
-    ///     it comes off cooldown — unit-targeted abilities lock onto the nearest enemy, the rest self-cast.
+    ///     The player avatar: WASD / arrow-key / gamepad movement (MoveInputCompat, either input backend) scaled by
+    ///     the unit's move_speed property (so Swift upgrades and slows apply automatically) and an auto-caster that
+    ///     fires every granted ability the moment it comes off cooldown — unit-targeted abilities lock onto the nearest
+    ///     enemy, the rest self-cast.
     /// </summary>
     [RequireComponent(typeof(AbilityUnitBehaviour))]
     public sealed class SurvivorPlayerController : MonoBehaviour
@@ -65,7 +67,9 @@ namespace Neo.Samples.Survivor
 
         private void Move(AbilityUnit unit)
         {
-            var input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), 0f);
+            // WHY: MoveInputCompat reads the legacy axes or the Input System, so Input-System-only projects work too.
+            Vector2 move = MoveInputCompat.ReadMove();
+            Vector3 input = new Vector3(move.x, move.y, 0f);
             if (input.sqrMagnitude > 1f)
             {
                 input.Normalize();

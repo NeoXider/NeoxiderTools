@@ -80,7 +80,8 @@ namespace Neo.Tools
         [Header("Limits")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Limits")]
-        [InfoBox("If the range is [0..360], limits are disabled.", InfoMessageType.None)]
+        [InfoBox("A range spanning 360 degrees or more ([0..360], [-180..180], [-360..360]) disables limits.",
+            InfoMessageType.None)]
         [LabelText("Limited Axis (Local)")]
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
 #endif
@@ -88,6 +89,8 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
         [FoldoutGroup("Limits")] [LabelText("Range (°)")] [MinMaxSlider(-360f, 360f, true)]
 #endif
+        [Tooltip("Allowed angle range on the limited axis, in degrees. A range spanning 360 degrees or more " +
+                 "([0, 360], [-180, 180], [-360, 360]) disables limits.")]
         public Vector2 limitRange = new(0f, 360f);
 #if ODIN_INSPECTOR
         [FoldoutGroup("Limits")]
@@ -414,7 +417,7 @@ namespace Neo.Tools
 
         private bool LimitsActive()
         {
-            return !(Approximately(limitRange.x, 0f) && Approximately(limitRange.y, 360f));
+            return !AngleSector.SpansFullTurn(limitRange.x, limitRange.y);
         }
 
         private void ApplyRotationInstant(Quaternion desiredWorld)
@@ -586,31 +589,16 @@ namespace Neo.Tools
             return angle;
         }
 
-        private static float ClampAngleToRange(float a, float min, float max)
+        /// <summary>
+        ///     Limits <paramref name="a" /> to the sector from <paramref name="min" /> to <paramref name="max" />
+        ///     (degrees) with the sector rules of <see cref="AngleSector" />, shared with <see cref="Follow" />: the
+        ///     sector may cross 180, a range whose max is below its min wraps through 180, an angle outside the sector
+        ///     returns the nearer edge by angular distance, and a range of a full turn or more returns the angle
+        ///     unchanged. The result is normalized to [-180, 180].
+        /// </summary>
+        internal static float ClampAngleToRange(float a, float min, float max)
         {
-            a = Normalize180(a);
-            min = Normalize180(min);
-            max = Normalize180(max);
-
-            if (min <= max)
-            {
-                return Mathf.Clamp(a, min, max);
-            }
-
-            bool inside = a >= min || a <= max;
-            if (inside)
-            {
-                return a;
-            }
-
-            float dMin = Mathf.Abs(Mathf.DeltaAngle(a, min));
-            float dMax = Mathf.Abs(Mathf.DeltaAngle(a, max));
-            return dMin < dMax ? min : max;
-        }
-
-        private static bool Approximately(float a, float b)
-        {
-            return Mathf.Abs(a - b) <= 0.0001f;
+            return Normalize180(AngleSector.Clamp(Normalize180(a), min, max));
         }
     }
 }

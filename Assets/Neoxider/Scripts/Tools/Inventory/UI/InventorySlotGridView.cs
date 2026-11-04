@@ -120,7 +120,8 @@ namespace Neo.Tools
                 return;
             }
 
-            EnsureSlotViews(_inventory.SlotCapacity);
+            int capacity = _inventory.SlotCapacity;
+            EnsureSlotViews(capacity);
             for (int i = 0; i < _spawnedSlots.Count; i++)
             {
                 InventorySlotView slotView = _spawnedSlots[i];
@@ -129,13 +130,15 @@ namespace Neo.Tools
                     continue;
                 }
 
-                slotView.gameObject.SetActive(i < _inventory.SlotCapacity);
-                if (i >= _inventory.SlotCapacity)
+                slotView.gameObject.SetActive(i < capacity);
+                if (i >= capacity)
                 {
                     continue;
                 }
 
-                InventorySlotState slot = _inventory.GetSlot(i);
+                // WHY: Bind reads the slot immediately and keeps no reference, so the live state is enough;
+                // GetSlot would deep-clone every slot (and its instance payload) on each refresh.
+                InventorySlotState slot = _inventory.PeekSlotForView(i);
                 InventoryItemData data = !slot.IsEmpty ? _inventory.GetItemData(slot.EffectiveItemId) : null;
                 bool selected = ReferenceEquals(_selectedGrid, this) && _selectedSlot == i;
                 slotView.Bind(this, i, data, slot, selected);
@@ -173,7 +176,11 @@ namespace Neo.Tools
             InventorySlotGridView sourceGrid = _selectedGrid;
             _selectedGrid = null;
             _selectedSlot = -1;
-            sourceGrid?.Refresh();
+            if (sourceGrid != null)
+            {
+                sourceGrid.Refresh();
+            }
+
             Refresh();
         }
 

@@ -1,7 +1,13 @@
 ﻿# CameraRotationController
 
-Drag-rotates an object's local Euler axes with independent speed and angle limits. Namespace `Neo.Tools`,
-assembly `Neo.Tools.Move`.
+**What it is:** a `MonoBehaviour` (`Scripts/Tools/Move/CameraRotationController.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Move`) that drag-rotates an object's local Euler axes with independent speed and angle limits.
+
+**How to use:**
+1. Add **Neoxider > Tools > CameraRotationController** to the object to rotate (an orbit pivot or a camera).
+2. Set the drag mouse button, optional modifier key, sensitivity and the per-axis settings.
+3. Wire `onRotateStart` / `onRotateEnd`, or configure the axes from C# (see below).
+
+---
 
 ## Setup
 
@@ -42,20 +48,13 @@ rotation.enabled = false; // ends an active drag through the normal component li
 
 | Field | Description |
 |-------|-------------|
-| `AxisRotationSettings` | Axis Rotation Settings. |
-| `isEnabled` | Is Enabled. |
-| `maxAngle` | Max Angle. |
-| `minAngle` | Min Angle. |
-| `modifierKey` | Modifier Key. |
-| `mouseButton` | Mouse Button. |
-| `mouseSensitivity` | Mouse Sensitivity. |
-| `onRotateEnd` | On Rotate End. |
-| `onRotateStart` | On Rotate Start. |
-| `rotationSpeed` | Rotation Speed. |
-| `xAxisSettings` | X Axis Settings. |
-| `yAxisSettings` | Y Axis Settings. |
-| `zAxisSettings` | Z Axis Settings. |
+| `mouseButton` | Drag button: 0 left, 1 right, 2 middle. |
+| `modifierKey` | Optional key that must be held while dragging (`None` = no gate). |
+| `mouseSensitivity` | Multiplier for pointer deltas. |
+| `xAxisSettings` / `yAxisSettings` / `zAxisSettings` | `AxisRotationSettings`: `isEnabled`, `rotationSpeed`, `minAngle`, `maxAngle`. |
+| `onRotateStart` / `onRotateEnd` | Raised once when a drag becomes active and when it ends. |
 
 ## See Also
 
-- [Module Root](../README.md)
+- [FreeFlyCameraController](./FreeFlyCameraController.md)
+- [Tools/Move](./README.md)

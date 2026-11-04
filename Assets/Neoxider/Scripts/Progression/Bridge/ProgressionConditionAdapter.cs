@@ -11,15 +11,65 @@ namespace Neo.Progression
     [AddComponentMenu("Neoxider/Progression/" + nameof(ProgressionConditionAdapter))]
     public sealed class ProgressionConditionAdapter : MonoBehaviour, IConditionEvaluator
     {
-        [SerializeField] private ProgressionManager _manager;
+        [Tooltip("Explicit manager. Empty: a manager on the context GameObject, then the singleton.")] [SerializeField]
+        private ProgressionManager _manager;
 
-        [SerializeField]
+        [Tooltip("Which progression fact is checked.")] [SerializeField]
         private ProgressionConditionEvaluationMode _mode = ProgressionConditionEvaluationMode.LevelAtLeast;
 
-        [SerializeField] private string _nodeId = string.Empty;
-        [SerializeField] private string _perkId = string.Empty;
-        [SerializeField] [Min(0)] private int _threshold = 1;
-        [SerializeField] private bool _invert;
+        [Tooltip("Unlock node id for HasUnlockedNode.")] [SerializeField]
+        private string _nodeId = string.Empty;
+
+        [Tooltip("Perk id for HasPurchasedPerk.")] [SerializeField]
+        private string _perkId = string.Empty;
+
+        [Tooltip("Minimum value for LevelAtLeast, XpAtLeast and PerkPointsAtLeast.")] [SerializeField] [Min(0)]
+        private int _threshold = 1;
+
+        [Tooltip("Negate the result.")] [SerializeField]
+        private bool _invert;
+
+        /// <summary>Gets or sets the explicit manager (falls back to the context GameObject, then the singleton).</summary>
+        public ProgressionManager Manager
+        {
+            get => _manager;
+            set => _manager = value;
+        }
+
+        /// <summary>Gets or sets the evaluated progression fact.</summary>
+        public ProgressionConditionEvaluationMode Mode
+        {
+            get => _mode;
+            set => _mode = value;
+        }
+
+        /// <summary>Gets or sets the node id used by HasUnlockedNode.</summary>
+        public string NodeId
+        {
+            get => _nodeId;
+            set => _nodeId = value ?? string.Empty;
+        }
+
+        /// <summary>Gets or sets the perk id used by HasPurchasedPerk.</summary>
+        public string PerkId
+        {
+            get => _perkId;
+            set => _perkId = value ?? string.Empty;
+        }
+
+        /// <summary>Gets or sets the minimum value used by the AtLeast modes (clamped to zero).</summary>
+        public int Threshold
+        {
+            get => _threshold;
+            set => _threshold = value < 0 ? 0 : value;
+        }
+
+        /// <summary>Gets or sets whether the result is negated.</summary>
+        public bool Invert
+        {
+            get => _invert;
+            set => _invert = value;
+        }
 
         /// <summary>
         ///     Gets the last evaluated result.
@@ -46,6 +96,7 @@ namespace Neo.Progression
                 ProgressionConditionEvaluationMode.LevelAtLeast => manager.CurrentLevel >= _threshold,
                 ProgressionConditionEvaluationMode.XpAtLeast => manager.TotalXp >= _threshold,
                 ProgressionConditionEvaluationMode.PerkPointsAtLeast => manager.AvailablePerkPoints >= _threshold,
+                ProgressionConditionEvaluationMode.HasPremium => manager.HasPremium,
                 _ => false
             };
 

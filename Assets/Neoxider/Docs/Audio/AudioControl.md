@@ -1,6 +1,6 @@
 # AudioControl
 
-**Purpose:** Bridge component that connects a `Toggle` or `Slider` to `AMSettings` (Master/Music/Efx volume, mute), with optional custom mode via events. Namespace: `Neo.Audio`. Script: `Scripts/Audio/View/AudioControl.cs`.
+**What it is:** Bridge component that connects a `Toggle` or `Slider` to `AMSettings` (Master/Music/Efx volume, mute), with optional custom mode via events. Namespace: `Neo.Audio`. Script: `Scripts/Audio/View/AudioControl.cs`.
 
 **How to use:** Add to a GameObject with a `Toggle` or `Slider`, select a channel (`Master`, `Music`, `Efx`, or `Custom`); synchronization with `AMSettings` is automatic. For `Slider`, values use a normalized range `0..1`.
 

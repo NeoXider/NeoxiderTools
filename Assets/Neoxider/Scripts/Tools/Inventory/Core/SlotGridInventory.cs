@@ -7,7 +7,7 @@ namespace Neo.Tools
     ///     Pure C# fixed slot array implementing both <see cref="IInventoryStorage" /> and <see cref="ISlottedInventory" />.
     /// </summary>
     [Serializable]
-    public sealed class SlotGridInventory : IInventoryStorage, ISlottedInventory
+    public sealed class SlotGridInventory : IInventoryStorage, ISlottedInventory, IInventoryRecordReader
     {
         private InventoryConstraints _constraints = new();
         private InventorySlotState[] _slots;
@@ -41,6 +41,8 @@ namespace Neo.Tools
         {
             get
             {
+                // WHY: A local set keeps this getter free of shared state, so concurrent readers stay safe; the Add
+                // path only reads it when a unique-item cap is configured.
                 HashSet<int> unique = new();
                 for (int i = 0; i < SlotCapacity; i++)
                 {
@@ -53,6 +55,106 @@ namespace Neo.Tools
 
                 return unique.Count;
             }
+        }
+
+        int IInventoryRecordReader.PackedRecordCount
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < SlotCapacity; i++)
+                {
+                    if (!_slots[i].IsEmpty)
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+        }
+
+        void IInventoryRecordReader.AccumulateCounts(Dictionary<int, int> counts)
+        {
+            for (int i = 0; i < SlotCapacity; i++)
+            {
+                InventorySlotState slot = _slots[i];
+                if (slot.IsEmpty)
+                {
+                    continue;
+                }
+
+                counts.TryGetValue(slot.EffectiveItemId, out int current);
+                counts[slot.EffectiveItemId] = current + slot.EffectiveCount;
+            }
+        }
+
+        void IInventoryRecordReader.AppendEntries(List<InventoryEntry> entries)
+        {
+            for (int i = 0; i < SlotCapacity; i++)
+            {
+                InventorySlotState slot = _slots[i];
+                if (!slot.IsEmpty)
+                {
+                    entries.Add(new InventoryEntry(slot.EffectiveItemId, slot.EffectiveCount));
+                }
+            }
+        }
+
+        int IInventoryRecordReader.GetPackedItemId(int packedIndex)
+        {
+            if (packedIndex < 0)
+            {
+                return -1;
+            }
+
+            int current = 0;
+            for (int i = 0; i < SlotCapacity; i++)
+            {
+                InventorySlotState slot = _slots[i];
+                if (slot.IsEmpty)
+                {
+                    continue;
+                }
+
+                if (current++ == packedIndex)
+                {
+                    return slot.EffectiveItemId;
+                }
+            }
+
+            return -1;
+        }
+
+        int IInventoryRecordReader.FindPackedIndex(int itemId)
+        {
+            int current = 0;
+            for (int i = 0; i < SlotCapacity; i++)
+            {
+                InventorySlotState slot = _slots[i];
+                if (slot.IsEmpty)
+                {
+                    continue;
+                }
+
+                if (slot.EffectiveItemId == itemId)
+                {
+                    return current;
+                }
+
+                current++;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        ///     Live (not cloned) slot state for read-only callers inside the assembly, or null for an invalid index.
+        ///     Callers must not mutate or retain it.
+        /// </summary>
+        internal InventorySlotState PeekSlot(int slotIndex)
+        {
+            return IsValidSlotIndex(slotIndex) ? _slots[slotIndex] : null;
         }
 
         /// <summary>Changes slot count; copies overlapping indices from the previous array.</summary>
@@ -99,6 +201,8 @@ namespace Neo.Tools
                 return 0;
             }
 
+            // WHY: Running total instead of re-summing every slot per stack keeps a bulk add O(slots), not O(slots^2).
+            int total = TotalCount;
             for (int i = 0; i < SlotCapacity && added < amount; i++)
             {
                 InventorySlotState slot = _slots[i];
@@ -107,7 +211,7 @@ namespace Neo.Tools
                     continue;
                 }
 
-                int addable = InventoryStackRules.GetAddableAmount(slot.Count, amount - added, maxStack, TotalCount,
+                int addable = InventoryStackRules.GetAddableAmount(slot.Count, amount - added, maxStack, total,
                     _constraints.MaxTotalItems);
                 if (addable <= 0)
                 {
@@ -116,6 +220,7 @@ namespace Neo.Tools
 
                 slot.Count += addable;
                 added += addable;
+                total += addable;
             }
 
             for (int i = 0; i < SlotCapacity && added < amount; i++)
@@ -126,7 +231,7 @@ namespace Neo.Tools
                     continue;
                 }
 
-                int addable = InventoryStackRules.GetAddableAmount(0, amount - added, maxStack, TotalCount,
+                int addable = InventoryStackRules.GetAddableAmount(0, amount - added, maxStack, total,
                     _constraints.MaxTotalItems);
                 if (addable <= 0)
                 {
@@ -139,6 +244,7 @@ namespace Neo.Tools
                     Count = addable
                 };
                 added += addable;
+                total += addable;
             }
 
             return added;

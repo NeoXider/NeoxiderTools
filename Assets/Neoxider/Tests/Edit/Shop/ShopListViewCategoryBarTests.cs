@@ -57,7 +57,7 @@ namespace Neo.Editor.Tests
 
         private static ShopItemData CreateItem(string id, string category)
         {
-            var data = ScriptableObject.CreateInstance<ShopItemData>();
+            ShopItemData data = ScriptableObject.CreateInstance<ShopItemData>();
             SetPrivate(data, "_id", id);
             SetPrivate(data, "_category", category);
             return data;

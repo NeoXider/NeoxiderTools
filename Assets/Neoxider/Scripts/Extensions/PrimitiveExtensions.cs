@@ -59,7 +59,7 @@ namespace Neo.Extensions
                 return Mathf.Round(scaled) / multiplier;
             }
 
-            // A finite float can overflow during scaling even though its rounded result fits.
+            // WHY: A finite float can overflow during scaling even though its rounded result fits.
             double wideMultiplier = Math.Pow(10d, places);
             return (float)(Math.Round((double)value * wideMultiplier) / wideMultiplier);
         }

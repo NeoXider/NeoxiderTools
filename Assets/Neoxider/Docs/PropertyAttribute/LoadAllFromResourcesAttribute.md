@@ -1,8 +1,14 @@
 ﻿# LoadAllFromResourcesAttribute
 
-**Namespace:** Global. **Assembly:** `Neo.PropertyAttribute`.
+**What it is:** `[LoadAllFromResources]` (`Scripts/PropertyAttribute/InjectAttribute/LoadAllFromResourcesAttribute.cs`,
+global namespace, assembly `Neo.PropertyAttribute`) marks a Unity Object array/list for editor asset assignment
+from a `Resources` path.
 
-`[LoadAllFromResources("Audio")]` marks a Unity Object array/list for editor asset assignment.
+**How to use:**
+1. Put `[LoadAllFromResources("Audio")]` on a serialized array or list of assets.
+2. Select the object with attribute search enabled; an empty collection is filled from that `Resources` folder.
+
+---
 
 ```csharp
 [LoadAllFromResources("Audio")]

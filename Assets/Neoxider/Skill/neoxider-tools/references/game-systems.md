@@ -10,14 +10,24 @@ Dense API reference for gameplay modules. Verified against source in
 
 ## Bonus / Slot — `Neo.Bonus`
 
+Every Bonus mechanic has a plain C# core (12.0.0) — use it for tests, servers, replays and custom UI, and
+the components as scene wrappers:
+
+| Core | What it owns |
+|---|---|
+| `CollectionSet` (`IReadOnlyCollectionSet`) | independent unlock sets: `new CollectionSet(itemCount, saveKeyPrefix)`, `TryUnlock/TryLock/IsUnlocked`, `TryClaimNext(out index, random, randomIndex)`, `PickLockedIndex`, `Save()/Load()`; events `ItemUnlocked/ItemLocked/CompletionChanged` |
+| `BoxProgress` + `BoxProgressRules` | integer piggy bank: `new BoxProgress(threshold)`, `Add(long)`, `CanClaim`, `TryClaim(claimId, out BoxClaimReceipt receipt)` (a retried claim id returns the original receipt with `IsReplay`, never pays twice), `Capture()/Restore(state)`; events `ProgressChanged/Claimed` |
+| `CooldownSchedule` | reward cooldown on an injected `INeoClock` (default `NeoTrustedTime`): `new CooldownSchedule(cooldownSeconds, maxClaimsPerTake, availableInitially, clock)`, `TryClaim(out grantedCount)`, `CooldownBacklogMode`, `SaveTo(key)/TryLoadFrom(key)`; static `CountClaimable(...)` is the rule `CooldownReward`/`TimeReward` share |
+| `SlotSpinMath` | `ComputeSpinPrice(lineBet, activeLines, pricePerLine)`, `ComputePayout(lineMultipliers, lineBet)` — what the slot charges and pays |
+
 ### `SpinController` (MonoBehaviour)
 Slot-machine orchestrator. Deducts bet, drives `Row` reels, evaluates paylines.
 
 | Member | Notes |
 |---|---|
 | `void StartSpin()` | Kicks off spin coroutine |
-| `bool IsStop()` | True when all reels idle |
-| `SpinResult GetLastResult(bool refreshIfIdle = true)` | Returns immutable result struct |
+| `bool IsStop()` | True when all reels idle (no allocation when polled) |
+| `SpinResult GetLastResult(bool refreshIfIdle = true)` | Returns the nested immutable `SpinController.SpinResult` struct |
 | `float ChanceWin {get;set}` | 0–1 forced-win probability |
 | `int ActivePaylineCount {get;set}` | |
 | `int BetSelectionIndex {get;set}` | |
@@ -27,22 +37,22 @@ Slot-machine orchestrator. Deducts bet, drives `Row` reels, evaluates paylines.
 | `void AddLine()` / `RemoveLine()` | |
 | `int LastPayout` | |
 | `IReadOnlyList<int> LastWinningPaylineIndices` | |
-| `void StartEconomySpin()` | 9.13.0: builds the whole outcome from the assigned `SlotEconomyDefinition` (weighted pick per cell + special/wild conversion per active payline), queues via `ForceNextOutcome`, spins — no hand-rolled economy chain |
+| `bool StartEconomySpin()` | 9.13.0: builds the whole outcome from the assigned `SlotEconomyDefinition` (weighted pick per cell + special/wild conversion per active payline), queues via `ForceNextOutcome`, spins — no hand-rolled economy chain |
 | `int[,] BuildEconomyOutcomeMatrix()` | building block (+ deterministic `Func<int>`-picker overload for tests/replays/server) |
-| `List<LineResult> EvaluateActivePaylinesWithEconomy()` | one `LineResult` per active payline of the settled grid |
+| `SlotEconomyDefinition.LineResult[] EvaluateActivePaylinesWithEconomy(bool refreshIfIdle = true)` | one `LineResult` per active payline of the settled grid |
 
 Events: `OnStartSpin`, `OnEndSpin`, `OnEnd<bool>`, `OnWin<int>`, `OnLose`,
 `OnWinLines<int[]>`, `OnChangeBet<string>`, `OnChangeMoneyWin<string>`
 
-`SpinResult` struct: `int[,] SymbolIds`, `int[] WinningLines`,
+`SpinController.SpinResult` (nested readonly struct): `int[,] SymbolIds`, `int[] WinningLines`,
 `int[,] WinningLineSymbolIds`, `int Payout`, `bool IsWin`
 
 ```csharp
-var spin = GetComponent<SpinController>();
+SpinController spin = GetComponent<SpinController>();
 spin.ChanceWin = 0.3f;
 spin.OnWin.AddListener(payout => Debug.Log($"Won {payout}"));
 spin.StartSpin();
-SpinResult r = spin.GetLastResult();
+SpinController.SpinResult r = spin.GetLastResult();
 Debug.Log(r.IsWin);
 ```
 
@@ -52,7 +62,8 @@ Single reel column; driven by `SpinController`.
 ```csharp
 void Spin(SpritesData allSpritesData, int[] targetVisibleIdsBottomUp)
 void Stop(bool animate = true)
-SlotElement[] GetVisibleTopDown()
+SlotElement GetVisibleElement(int rowFromBottom)   // allocation-free single cell
+SlotElement[] GetVisibleTopDown()                  // new array (Array.Empty for an empty reel)
 SlotElement[] GetVisibleBottomUp()
 bool is_spinning
 UnityEvent OnStop
@@ -72,7 +83,7 @@ void SetMotionStretch(float yScale)
 Prize wheel.
 
 ```csharp
-void Spin()              // respects _singleUse flag
+void Spin()              // respects _singleUse flag (Single Use off keeps the wheel usable)
 void Stop()              // begin deceleration
 SpinState State          // Idle/Spinning/Decelerating/Aligning
 bool canUse {get;set}
@@ -84,13 +95,15 @@ UnityEvent<int> OnWinIdVariant
 
 ### `WheelMoneyWin` (MonoBehaviour) — companion to WheelFortune
 ```csharp
-void Win(int id)         // looks up wins[id], calls Money.I.Add(wins[id])
+void Win(int id)         // looks up wins[id] and adds it to Wallet (fallback Money.I)
 int[] wins               // serialized prize amounts per sector
+Money Wallet {get;set}   // optional explicit wallet
 ```
 
 ### `LineRoulett` (MonoBehaviour) — roulette-style line picker
 ```csharp
 void StartRolling()
+bool UseUnscaledTime {get;set}   // finish during a pause
 UnityEvent<int> OnWin
 ```
 
@@ -99,17 +112,20 @@ UnityEvent<int> OnWin
 void AddProgress()                    // adds AddProgressAmount
 void AddProgress(float amount)
 void ChangeProgress(float amount)     // delta (can be negative)
+void ResetProgress()                  // writes 0 and raises the progress events (NoCode reset)
 void TakePrize()                      // requires CheckProgress == true
 bool CheckProgress                    // progress >= _maxProgress
 float progress {get;set}              // persisted
 ReactivePropertyFloat Progress
 float MaxProgress
 float AddProgressAmount
+Collection TargetCollection {get;set} // optional explicit Collection (fallback Collection.I)
 UnityEvent OnTakePrize
 UnityEvent OnProgressReached
 UnityEvent OnProgressNotReached
 UnityEvent<bool> OnChangeProgress
 ```
+`Box` keeps float progress for existing scenes; for an integer, idempotent box use `BoxProgress` directly.
 
 ### `ItemCollection` (MonoBehaviour) — single collectible item in a collection
 ```csharp
@@ -123,7 +139,7 @@ UnityEvent OnActive
 UnityEvent OnDeactivated
 ```
 
-`Collection` (MonoBehaviour, singleton `.I`) — manages an `ItemCollectionData[]`. Key API: `ItemCollectionData GetPrize()` (picks a random locked item, unlocks + saves it, fires `OnGetItem`; returns null if all items already unlocked), `void AddItem(int id)`, `bool TryAddItem(int id)`, `void AddItem(ItemCollectionData data)`, `void RemoveItem(int id)`, `bool HasItem(int id)`, `void ClearCollection()`, `void UnlockAllItems()`, `float GetCompletionPercentage()`, `string GetCompletionCountText()`, `int ItemCount`, `int UnlockedCount`. Events: `OnGetItem<int>`, `OnLoadItems`, `OnItemAdded<int>`, `OnItemRemoved<int>`, `OnCompletionChanged<int,int>`, `OnCompletionPercentageChanged<float>`.
+`Collection` (MonoBehaviour, singleton `.I`) — manages an `ItemCollectionData[]`. Key API: `ItemCollectionData GetPrize()` (picks a random locked item, unlocks + saves it, fires `OnGetItem`; returns null if all items already unlocked), `void AddItem(int id)`, `bool TryAddItem(int id)`, `void AddItem(ItemCollectionData data)`, `void RemoveItem(int id)`, `bool HasItem(int id)`, `void ClearCollection()`, `void UnlockAllItems()`, `float GetCompletionPercentage()`, `string GetCompletionCountText()`, `int ItemCount`, `int UnlockedCount`, `IReadOnlyCollectionSet Set` (read-only queries + C# events; change state through the component), `Func<int,int> RandomIndexSource` (deterministic prize picks). Events: `OnGetItem<int>`, `OnLoadItems`, `OnItemAdded<int>`, `OnItemRemoved<int>`, `OnCompletionChanged<int,int>`, `OnCompletionPercentageChanged<float>`.
 
 ---
 
@@ -134,20 +150,21 @@ Full deck lifecycle with optional async deal animations.
 
 ```csharp
 void Initialize()
-void Shuffle()
+void Shuffle()                       // model only; ShuffleVisualAsync also reorders the stack visuals
 void Reset()
 CardComponent DrawCard(bool faceUp = true)
 List<CardComponent> DrawCards(int count, bool faceUp = true)
 async UniTask<CardComponent> DrawCardAsync(Vector3 targetPos, bool faceUp = true, float duration = 0.3f)
 void DealToHand(HandComponent hand, bool faceUp = true)
 async UniTask<CardComponent> DealToHandAsync(HandComponent hand, bool faceUp, float? moveDuration = null)
-void ReturnCard(CardComponent card, bool toTop = false)
+void ReturnCard(CardComponent card, bool toTop = false)   // detaches it from the hand/board that holds it
 // props
 DeckModel Model
 int RemainingCount
 bool IsEmpty
 CardData? TrumpCard
 Suit? TrumpSuit
+bool UseFixedShuffleSeed {get;set}   // + int ShuffleSeed: reproducible deals; override CreateShuffleRandom()
 // events
 OnInitialized, OnShuffled, OnDeckEmpty
 OnCardDrawn<CardComponent>
@@ -158,11 +175,15 @@ OnShuffleVisualCompleted
 ```
 
 ```csharp
-var deck = GetComponent<DeckComponent>();
+DeckComponent deck = GetComponent<DeckComponent>();
 deck.Initialize();
 deck.Shuffle();
-var card = await deck.DrawCardAsync(hand.transform.position, faceUp: true);
+CardComponent card = await deck.DrawCardAsync(hand.transform.position, faceUp: true);
 ```
+
+`DeckModel` (plain C#): `new DeckModel()`, `new DeckModel(int seed)`, `new DeckModel(System.Random random)`,
+`System.Random ShuffleRandom {get;set}`, `Shuffle()`, `Shuffle(System.Random random)` — seeded shuffles for
+replays, tests and lock-step multiplayer.
 
 ### `HandComponent` (MonoBehaviour)
 Player or AI hand of cards.
@@ -172,14 +193,18 @@ void AddCard(CardComponent card)
 async UniTask AddCardAsync(CardComponent card, bool animate = true)
 void RemoveCard(CardComponent card)
 async UniTask RemoveCardAsync(CardComponent card, bool animate = true)
+bool Contains(CardComponent card)
 CardComponent DrawFirst()
 CardComponent DrawRandom()
-void SortByRank(bool ascending = true)
+CardComponent DrawRandom(System.Random random)
+void SortByRank(bool ascending = true)                 // stable
 void SortBySuit(bool ascending = true)
+UniTask SortAsync(IComparer<CardData> comparer, bool animate = true)   // any comparer, custom card data
+UniTask SortAsync(Comparison<CardData> comparison, bool animate = true)
 void Clear()
 List<CardComponent> GetCardsThatCanBeat(CardData attackCard, Suit? trump)
 // props
-HandModel Model
+HandModel Model                                         // HandModel.Sort(comparer | comparison)
 IReadOnlyList<CardComponent> Cards
 int Count
 bool IsEmpty
@@ -192,17 +217,26 @@ OnHandChanged
 OnCardCountChanged<int>
 ```
 
+`CardComparer` (static): `ByValueAscending`, `ByValueDescending`, `ByGroupThenValueAscending` (also for
+custom card data; the legacy `ByRank*`/`BySuit*` treat custom cards as equal). `CardLayoutCalculator` has
+list-filling overloads `CalculatePositions(type, count, settings, results, seed = 0)` /
+`CalculateRotations(...)`; scatter and jitter are deterministic per card index.
+
 ### `PokerHandEvaluator` — `Neo.Cards.Poker` (static)
 ```csharp
-static PokerHandResult Evaluate(IEnumerable<CardData> cards)
-// needs 5–7 non-joker cards
-// PokerHandResult: Combination, MainRanks, Kickers, Cards — implements IComparable<PokerHandResult>
+static PokerHandResult Evaluate(IEnumerable<CardData> cards)   // 5+ non-joker cards; null throws
+static int EvaluateStrength(IReadOnlyList<CardData> cards)     // comparable strength, zero allocation
+static PokerCombination GetCombination(int strength)
+// PokerHandResult: Combination, CombinationRanks, Kickers, BestHand — IComparable<PokerHandResult>,
+//   IsStrongerThan(other), IsEqualTo(other)
 ```
-`PokerCombination` enum: `RoyalFlush` → `HighCard`
+`PokerCombination` enum: `HighCard` (0) → `RoyalFlush` (ascending, so `>=` compares strength)
 
 ```csharp
-var result = PokerHandEvaluator.Evaluate(hand.Cards.Select(c => c.Data));
-if (result.Combination >= PokerCombination.Flush) AwardPrize();
+_handBuffer.Clear();
+for (int i = 0; i < hand.Cards.Count; i++) _handBuffer.Add(hand.Cards[i].Data);   // List<CardData>, reused
+int strength = PokerHandEvaluator.EvaluateStrength(_handBuffer);
+if (PokerHandEvaluator.GetCombination(strength) >= PokerCombination.Flush) AwardPrize();
 ```
 
 ---
@@ -220,31 +254,45 @@ FieldCell GetCell(Vector3Int pos)
 FieldCell GetCell(int x, int y)
 FieldCell GetCell(Vector2Int pos)
 FieldCell GetCellFromWorld(Vector3 worldPosition)
+FieldCell GetNearestCellFromWorld(Vector3 worldPosition, bool includeDisabled = false)   // O(1) on gapless rectangular grids
 bool TryGetCellPositionFromWorld(Vector3 worldPosition, out Vector3Int position)
 bool TrySnapWorldToCellCenter(Vector3 worldPosition, out Vector3 snappedWorldPosition)
-IEnumerable<FieldCell> GetAllCells(bool enabledOnly = false)
-IEnumerable<FieldCell> GetNeighbors(FieldCell cell, IEnumerable<Vector3Int> directions)
-GridPlacementResult PlaceContentFootprint(Vector3Int origin, GridPlacementEntry[] footprint)
+IEnumerable<FieldCell> GetAllCells(bool includeDisabled = true)
+List<FieldCell> GetNeighbors(FieldCell cell, IEnumerable<Vector3Int> directions = null)
+int CollectNeighbors(FieldCell cell, List<FieldCell> results, IEnumerable<Vector3Int> directions = null)  // allocation-free
+bool CanPlaceContentFootprint(Vector3Int anchor, IEnumerable<GridPlacementEntry> entries,
+    bool requireEnabled = true, bool requireWalkable = true, bool requireUnoccupied = true)
+GridPlacementResult PlaceContentFootprint(Vector3Int anchor, IEnumerable<GridPlacementEntry> entries,
+    bool requireEnabled = true, bool requireWalkable = true, bool requireUnoccupied = true, bool notify = true)
 // 9.11.0: rule-driven layer - new GridPlacementService(field).Place(GridPlacementRequest)
 //   GridPlacementRequest: Anchor, Entries, RequireEnabled/Walkable/Unoccupied,
 //   CellPredicate, GridOverwritePolicy.Reject|Overwrite, Notify; .Single(pos, contentId)
+void SetCell(Vector3Int pos, int type, bool isWalkable)   // + SetWalkable/SetEnabled/SetOccupied/SetContentId (notify)
 bool InBounds(Vector3Int position)
 // props
 FieldCell[,,] Cells
 FieldCell[,] Cells2D
-FieldGeneratorConfig Config
+FieldGeneratorConfig Config        // MovementPreset: FourDirections2D/EightDirections2D/DiagonalDirections2D/
+                                   //   HexDirectionsX/HexDirectionsY/3D presets; UseMovementRule keeps a code-set rule
 Grid UnityGrid
 // events
 UnityEvent OnFieldGenerated
-CellChangedEvent OnCellChanged
-CellStateChangedEvent OnCellStateChanged
+CellChangedEvent OnCellChanged          // UnityEvent<FieldCell>
+CellStateChangedEvent OnCellStateChanged // UnityEvent<FieldCell>
 ```
 
 ```csharp
-FieldCell cell = FieldGenerator.I.GetCell(new Vector3Int(2, 3, 0));
-cell.IsOccupied = true;
-FieldGenerator.I.OnCellChanged.AddListener((c, prev) => RefreshView(c));
+FieldGenerator.I.OnCellStateChanged.AddListener(cell => RefreshView(cell));
+FieldGenerator.I.SetOccupied(new Vector3Int(2, 3, 0), true);   // write through the generator so views are notified
 ```
+
+Who notifies per cell: `FieldGenerator` setters, `TicTacToeBoardService` (moves and resets, after the round
+state is committed), `SlidingMergeBoardService`/`DiceBoard`/`GridSlotAllocator` (after the whole board is
+written). `Match3BoardService` publishes only board-level events (`OnBoardChanged`, `OnResolvePhase`).
+
+`GridShapeMask` (ScriptableObject): `GridShapeMask.Create(GridShapeMaskMode mode, IEnumerable<Vector3Int>
+cells)` for code-built shapes, `SetCells(...)`, `Contains(pos)`, `Mode {get;set}` — editing an asset changes
+it for every board that uses it.
 
 ### `GridSlotAllocator` (pure C# class)
 Named-slot manager on top of a `FieldGenerator`. Only `GridType.Rectangular` with `Size.z == 1`.
@@ -268,28 +316,29 @@ FieldGenerator Field
 ```
 
 ```csharp
-var alloc = new GridSlotAllocator(FieldGenerator.I);
-if (alloc.HasAvailableSlot)
-    alloc.TryAllocateFirstAvailable(alloc.Field.GetAllCells().Select(c => c.Position),
-        contentId: itemId, out _, out _);
+GridSlotAllocator alloc = new GridSlotAllocator(FieldGenerator.I);
+GridPlacementResult placed = alloc.Allocate(slotIndex: 0, contentId: itemId);
+if (!placed.Placed) Debug.Log(placed.FailureReason);
 ```
 
 ### `GridPathfinder` (static)
-BFS pathfinding across a `FieldGenerator`.
+BFS pathfinding across a `FieldGenerator` over reusable buffers (unit cost per step).
 
 ```csharp
 static GridPathResult FindPath(FieldGenerator generator, GridPathRequest request)
+static bool TryFindPath(FieldGenerator generator, GridPathRequest request, List<FieldCell> path,
+    out NoPathReason reason)                                   // allocation-free with a reused list
+static int CollectReachableCells(FieldGenerator generator, GridPathRequest request, int maxSteps,
+    List<FieldCell> results, List<int> stepCounts = null)      // movement ranges, flood fill
 // GridPathRequest: Start, End, IgnoreOccupied, IgnoreDisabled, IgnoreWalkability,
-//   Func<FieldCell,bool> CustomPassabilityPredicate, IEnumerable<Vector3Int> Directions
+//   Func<FieldCell,bool> CustomPassabilityPredicate (evaluated at most once per cell), IEnumerable<Vector3Int> Directions
 // GridPathResult: List<FieldCell> Path, NoPathReason Reason, bool HasPath
 ```
 
 ```csharp
-var result = GridPathfinder.FindPath(FieldGenerator.I, new GridPathRequest {
-    Start = unitCell.Position, End = targetCell.Position,
-    IgnoreOccupied = false
-});
-if (result.HasPath) MoveAlongPath(result.Path);
+GridPathRequest request = new GridPathRequest { Start = unitCell.Position, End = targetCell.Position };
+if (GridPathfinder.TryFindPath(FieldGenerator.I, request, _path, out NoPathReason reason)) MoveAlongPath(_path);
+GridPathfinder.CollectReachableCells(FieldGenerator.I, request, maxSteps: 3, _reachable);   // highlight move range
 ```
 
 ### `GridMergeResolver` — `Neo.GridSystem.Merge` (static)
@@ -303,6 +352,11 @@ static GridMergeResult Resolve(FieldGenerator generator, GridMergeRequest reques
 //   List<FieldCell> Cells, List<FieldCell> ClearedCells, List<Vector3Int> Positions
 ```
 
+### `FieldObjectSpawner` (MonoBehaviour)
+Spawns prefabs into cells: `SpawnAt(cellPos, prefabIndex, occupiesSpace, ...)`, `GetObjectsInCell(pos)`,
+`bool Unregister(GameObject)` (hand an object to your pool without destroying it), `int PruneDestroyedObjects()`
+(frees cells of objects destroyed elsewhere).
+
 ### Sub-games — `Neo.GridSystem.*`
 
 #### `Match3BoardService` (MonoBehaviour) — `Neo.GridSystem.Match3`
@@ -310,9 +364,9 @@ Full match-3 runtime on a `FieldGenerator`. Requires `FieldGenerator` on same ob
 
 ```csharp
 void InitializeBoard()                            // fill board, optionally resolve spawn matches
-bool TrySwapAndResolve(Vector3Int a, Vector3Int b) // swap + cascade; returns false if no match
+bool TrySwapAndResolve(Vector3Int a, Vector3Int b) // (+ Vector2Int overload) swap + cascade; false if no match
 List<List<FieldCell>> FindMatches()
-bool TryFindValidSwap(out Vector3Int a, out Vector3Int b)
+bool TryFindValidSwap(out Vector3Int a, out Vector3Int b)   // one board copy per call, allocation-free when warm
 bool ShuffleIfNoMoves()                           // auto-shuffles if no swap creates a match
 // events
 UnityEvent OnBoardChanged, UnityEvent<int> OnMatchesResolved, UnityEvent OnBoardShuffled
@@ -320,18 +374,30 @@ event Action<Match3ResolvePhase, int> OnResolvePhase   // Swap|Clear|Collapse|Re
 ```
 
 #### `TicTacToeBoardService` (MonoBehaviour) — `Neo.GridSystem.TicTacToe`
-Turn-based tic-tac-toe on a `FieldGenerator`. Tracks `CurrentPlayer` (X/O), `Winner`, `IsFinished`.
+Turn-based tic-tac-toe / Gomoku on a `FieldGenerator`. Tracks `CurrentPlayer` (X/O), `Winner`, `IsFinished`.
 
 ```csharp
 void ResetBoard()
-bool TryMakeMove(Vector2Int pos)    // or (Vector3Int pos)
+bool TryMakeMove(Vector2Int pos)    // or (Vector3Int pos); raises FieldGenerator.OnCellStateChanged
 bool IsBoardFull()
 TicTacToeCellState CurrentPlayer, Winner
 bool IsFinished
+int WinLineLength {get;set}         // 0 = automatic (3, or the smallest dimension when all exceed 3); 5 = Gomoku
+IReadOnlyList<Vector3Int> WinningLine   // cells to highlight
 // events
 UnityEvent<int> OnPlayerChanged, OnWinnerDetected
 UnityEvent OnDrawDetected, OnBoardReset
 ```
+Static `TicTacToeWinChecker.TryGetWinningLine(field, line, out winner, winLineLength, winDirections)` and
+`GetWinner(field, winLineLength, winDirections)` work on any generator.
+
+#### `SlidingMergeBoardService` (MonoBehaviour) — `Neo.GridSystem.SlidingMerge`
+2048-like sliding/merge loop: `SlidingMergeResult Slide(SlidingMergeDirection)`, `CanSlide(dir)`,
+`HasAnyMove()`; `OnNoMovesLeft`, `OnContentSpawned<Vector3Int>`, C# `Slid` / `ContentSpawned`;
+`DefaultSpawnContentId`, `SpawnAfterSuccessfulSlide`, `RandomIndexProvider` (seeded spawns), custom
+`CanMergeRule` / `MergeRule`. Steps report the consumed tile (`SlidingMergeStep.MergedFrom`/`MergedValue`);
+listeners are notified after the whole board is written. Static core: `SlidingMergeResolver.Slide`,
+`HasAnyMove`, `TrySpawnRandomContent(field, contentId, out cell, emptyContentId, requireWalkable, randomIndex)`.
 
 #### `DicePieceGenerator` (pure C# class) — `Neo.GridSystem.Dice`
 Generates single/pair dice pieces from a value pool, with uniform or weighted distribution.
@@ -349,14 +415,17 @@ static List<int> CreateDefaultPool()                    // values 1–5
 
 9.12.0: dice placement/merge logic is a plain-C# core — `Neo.GridSystem.Dice.DiceBoard` (constructible
 over any generated `FieldGenerator`; C# events `BoardChanged`/`MergesResolved`) for tests/server/replay
-logic. `DiceBoardService` keeps the scene API and exposes the core via its `Board` property.
+logic. `DiceBoardService` keeps the scene API and exposes the core via its `Board` property. Both have
+`CanPlaceAnywhere(piece, allowRotations = true)` (game over check) and
+`TryFindPlacement(piece, allowRotations, out anchor, out clockwiseTurns)` (hints).
 
 ---
 
 ## Merge — `Neo.Merge`
 
 ### `MergeResolver` (static class)
-Low-level merge engine used by `GridMergeResolver`; operate at GridSystem level for grid use.
+Low-level merge engine used by `GridMergeResolver`; operate at GridSystem level for grid use. Reuses its
+search collections per resolve (whole-board scans do not allocate per seed).
 
 ```csharp
 // Non-generic static class; method is generic:
@@ -379,27 +448,29 @@ Prefer `GridMergeResolver.Resolve` when operating on a `FieldGenerator`.
 NavMeshAgent wrapper with follow, patrol, and combined modes.
 
 ```csharp
-// enums
-NavigationMode: FollowTarget | Patrol | Combined
-RotationPolicy: Agent | ManualVelocity
+// nested enums
+NpcNavigation.NavigationMode: FollowTarget | Patrol | Combined
+NpcNavigation.RotationPolicy: Agent | ManualVelocity
 
 // key methods
 void SetFollowTarget(Transform target)
 void SetCombinedTarget(Transform target)
-void SetMode(NavigationMode mode)
+void SetMode(NpcNavigation.NavigationMode mode)
 void SetRunning(bool enable)
 void SetSpeed(float speed)
 bool SetDestination(Vector3 destination)
+bool RefreshPath()                  // fresh follow path without raising onTargetChanged
 void Stop()
 void Resume()
 // Stop/Resume are also Play Mode-only Inspector buttons
+bool IsActive {get;set}, bool IsRunning, bool AutoUpdatePath {get;set}
 // key inspector fields
-bool isActive
 float walkSpeed, runSpeed, stoppingDistance
 float aggroDistance, maxFollowDistance
 Transform followTarget
 Transform[] patrolPoints
 BoxCollider patrolZone
+Stagger Path Updates (default on: NPCs spawned together re-path at different moments)
 
 // events
 onMovementStarted, onMovementStopped
@@ -415,11 +486,12 @@ onPathUpdated<Vector3>
 ```
 
 ```csharp
-var nav = GetComponent<NpcNavigation>();
+NpcNavigation nav = GetComponent<NpcNavigation>();
 nav.SetFollowTarget(player);
-nav.SetMode(NavigationMode.FollowTarget);
+nav.SetMode(NpcNavigation.NavigationMode.FollowTarget);
 nav.onDestinationReached.AddListener(pos => PlayArriveAnim());
 ```
+Combined mode retries an unreachable chase after **Path Update Interval**, not every frame.
 
 ### `NpcTargetFinder` (MonoBehaviour)
 Auto-locates player and assigns to `NpcNavigation`.
@@ -432,7 +504,8 @@ Transform TargetOverride {get;set}   // skip search, use this
 **[no-code]** for simple player-follow: attach `NpcTargetFinder` + `NpcNavigation`, set tag to `"Player"`.
 
 ### `NpcAnimatorDriver` (MonoBehaviour)
-Reads `NavMeshAgent` speed → drives Animator `Speed` / `IsMoving` params.
+Reads `NavMeshAgent` speed → drives Animator `Speed` / `IsMoving` params (validated once per controller;
+missing parameters are skipped, see `NpcAnimationCore.HasSpeedParameter`/`HasIsMovingParameter`).
 **[no-code]**: attach and configure param names in inspector (`speedParameter`, `isMovingParameter`, `dampTime`).
 
 ### `NpcRpgCombatBrain` (MonoBehaviour) — `Neo.NPC.Combat`
@@ -441,13 +514,16 @@ Combines `NpcNavigation`, `RpgTargetSelector`, and `RpgAttackController` into a 
 ```csharp
 GameObject CurrentTarget { get; }
 bool HasTarget { get; }
+bool IsActive { get; set; }
+NpcCombatPreset Preset { get; set; }
+NpcCombatDecisionCore.Decision? CurrentDecision { get; }
 void AutoResolveReferences()    // fills missing refs from same GameObject
 void EvaluateNow()              // force an immediate decision
 GameObject AcquireTarget()      // calls RpgTargetSelector.SelectTarget()
 void ClearCombatTarget()        // clears target, restores nav mode if AutoRestoreNavigationMode
 bool ForceAttack()              // execute configured NpcCombatPreset attack now
-// events: OnTargetAcquired<GameObject>, OnTargetLost<GameObject>,
-//         OnChaseStarted, OnHoldingPosition, OnAttackTriggered,
+// events (public accessors): OnTargetAcquired<GameObject>, OnTargetLost<GameObject>,
+//         OnChaseStarted (once per chase), OnHoldingPosition, OnAttackTriggered,
 //         OnAttackFailed<string>, OnDecisionChanged<string>
 ```
 
@@ -461,12 +537,17 @@ Handles buy, equip, preview, and bundle logic. Persists owned items + equipped i
 `ShopPurchaseFlow` enum: `BuyAndEquip | EquipOnly | BuyOnly | Browse`
 
 ```csharp
-// typed API (preferred)
-void Buy(ShopItemData item)
+// typed API (preferred) — the outcome without UnityEvents
+ShopPurchaseStatus TryBuy(ShopItemData item)        // Purchased, AlreadyOwned, Selected, InsufficientFunds,
+ShopPurchaseStatus TryBuy(string id)                //   CommitFailed, PendingServerAuthority, Unavailable, Busy
+ShopPurchaseStatus TryBuyBundle(ShopBundleData bundle)
+ShopPurchaseStatus TryBuyBundle(string bundleId)
+void Buy(ShopItemData item)                         // same, for UnityEvents
 void BuyBundle(ShopBundleData bundle)
 void Select(ShopItemData item)
 void ShowPreview(ShopItemData item)
 bool IsOwned(ShopItemData item)
+bool CanAfford(ShopItemData item)
 float GetPrice(ShopItemData item)
 void SetRuntimePrice(ShopItemData item, float price)
 void ClearRuntimePrice(ShopItemData item)
@@ -477,10 +558,11 @@ void BuyBundle(string bundleId)
 void Select(string id)
 bool IsOwned(string id)
 float GetPrice(string id)
-void SetItems(ShopItemData[] items, bool notify = false)
+void SetItems(ShopItemData[] items, bool resetPreviewToFirst = true)   // spawns missing rows when Auto Spawn is on
 void SetBundles(ShopBundleData[] bundles)
-List<ShopItemData> GetItemsInCategory(string category)
-List<string> GetCategories(bool includeEmpty = false)
+IReadOnlyList<ShopItemData> GetItemsInCategory(string category)
+int GetItemsInCategory(string category, List<ShopItemData> results)   // non-allocating
+IReadOnlyList<string> GetCategories(bool includeEmpty = false)
 
 // props
 string EquippedId
@@ -498,12 +580,12 @@ OnShopChanged
 ```
 
 ```csharp
-var shop = GetComponent<Shop>();
-shop.OnPurchasedId.AddListener(id => UnlockSkin(id));
-shop.OnPurchaseFailedId.AddListener(id => ShowNotEnoughCoins());
-shop.Buy(skinData);
-if (shop.IsOwned(skinData)) ApplySkin(shop.EquippedId);
+Shop shop = GetComponent<Shop>();
+ShopPurchaseStatus status = shop.TryBuy(skinData);
+if (status == ShopPurchaseStatus.InsufficientFunds) ShowNotEnoughCoins();
+else if (shop.IsOwned(skinData)) ApplySkin(shop.EquippedId);
 ```
+`PendingServerAuthority` is a local no-op: the Shop never completes it later.
 
 ### `ShopItem` (MonoBehaviour)
 View cell for a single shop item or bundle.
@@ -524,7 +606,10 @@ UnityEvent OnSelectItem, OnDeselectItem
 Buy/Select/Selected/Unaffordable button that formats and displays a price. Calls `SetPrice(int)` to update text and auto-switch type (price==0 → Select state). 9.11.0: `ButtonType.Unaffordable` (+ optional `Visual.unaffordable` group, `OnUnaffordable`, `CurrentType`) — normally driven by `ShopPurchaseButtonView`.
 
 ### `ShopListView` (MonoBehaviour)
-Dynamic storefront view: spawns/recycles `ShopItem` rows, filters by category/owned state, auto-wires buy buttons to `Shop`. Key methods: `Refresh()`, `SetCategory(string)`, `SetShop(Shop)`, `SetButtonAction(ShopListButtonAction)`. Events: `OnCategoryChanged`, `OnRefreshed`.
+Dynamic storefront view: spawns/recycles `ShopItem` rows, filters by category/owned state, auto-wires buy buttons to `Shop`. Key methods: `Refresh()`, `SetCategory(string)`, `SetShop(Shop)`, `SetButtonAction(ShopListButtonAction)`. Events: `OnCategoryChanged`, `OnRefreshed` (once per purchase or bundle).
+
+`TextMoney` binds when a wallet registers (no per-frame scene scan while none exists); `BoundMoney` is the
+wallet it shows.
 
 For optional scene wiring, use `ShopResolver.Resolve<T>(context)` / `TryResolve<T>(...)`: it applies the
 module's shared parent-first, scene-fallback lookup policy. Prefer explicit serialized references for
@@ -589,9 +674,10 @@ Scene service that wires `GameSettings` save context. Most code only touches sta
 ```csharp
 void ReloadFromDisk()                         // calls GameSettings.LoadState()
 void SaveNow()                                // calls GameSettings.SaveState()
-void SetMouseSensitivityForMenu(float value)  // deferred persist
+void SetMouseSensitivityForMenu(float value)  // deferred persist (a slider drag = one write)
 void SetMouseSensitivityForMenuImmediate(float value)
 void FlushDeferredSaveCoroutine()
+bool HasPendingDeferredSave                   // a Deferred change is still unwritten
 ```
 
 ```csharp
@@ -617,11 +703,18 @@ All animators share the same lifecycle API. `Play`, `Stop`, `Pause`, and `Resume
 Inspector buttons for runtime preview. `AnimationType` enum (`Neo.Animations`): `RandomFlicker`, `Pulsing`,
 `SmoothTransition`, `PerlinNoise`, `SinWave`, `Exponential`, `BounceEase`, `ElasticEase`, `CustomCurve`.
 
+Manual clock (12.0.0): `FloatAnimator`, `ColorAnimator`, `Vector3Animator`, `TransformAnimator` (and
+`Neo.Tools.LightAnimator`) have `bool ManualUpdate {get;set}` + `void Tick(float deltaTime)` (a no-op while
+stopped, paused or disabled) for a shared clock or deterministic tests. The value animators also expose
+`float AnimationTime`, `bool RandomizeStartTime {get;set}` (default on) and `bool UseUnscaledTime {get;set}`.
+`AnimationUtils.ApplyToRenderer(renderer, MaterialPropertyBlock block, intensity, originalEmission, changeColor,
+targetColor, colorBlend)` animates emission through a property block — no `renderer.material` copies.
+
 ### `ColorAnimator` (MonoBehaviour)
 Drives a color channel (typically on a `Renderer` or `Graphic`).
 
 ```csharp
-void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()
+void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()  void Tick(float dt)
 Color CurrentColor
 bool IsPlaying, bool IsPaused
 Color StartColor {get;set}
@@ -637,7 +730,7 @@ UnityEvent OnAnimationStarted, OnAnimationStopped, OnAnimationPaused
 Animates a float value; exposes `ReactivePropertyFloat` for binding.
 
 ```csharp
-void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()
+void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()  void Tick(float dt)
 float CurrentValue
 bool IsPlaying, bool IsPaused
 float MinValue {get;set}
@@ -651,7 +744,7 @@ UnityEvent OnAnimationStarted, OnAnimationStopped, OnAnimationPaused
 Animates a Vector3.
 
 ```csharp
-void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()
+void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()  void Tick(float dt)
 Vector3 CurrentVector
 bool IsPlaying, bool IsPaused
 Vector3 StartVector {get;set}
@@ -675,7 +768,7 @@ Universal transform animator: constant rotation, curve-eased float (bob) along a
 scale pulse, continuous Perlin shake and one-shot impulse shake — combinable channels on a shared clock.
 
 ```csharp
-void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()
+void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()  void Tick(float dt)
 void Shake(float strength)          // one-shot impulse; strength < 0 clamps to 0 (null-safe)
 void Shake()                        // full-strength impulse ([Button], Play Mode only)
 void CaptureBase()                  // re-capture the current local pose as the animation base
@@ -683,7 +776,7 @@ void ApplyCurrentState()            // evaluate + apply to the target immediatel
 bool IsPlaying, bool IsPaused
 float Time
 Transform Target                    // null-safe: falls back to this transform when unset
-bool PlayOnEnable, bool RandomizeStartTime, bool UseUnscaledTime
+bool PlayOnEnable, bool RandomizeStartTime, bool UseUnscaledTime, bool ManualUpdate
 TransformAnimationSettings Settings // per-channel config; every eased channel takes an AnimationCurve
 UnityEvent OnAnimationStarted, OnAnimationStopped, OnAnimationPaused
 ```
@@ -699,12 +792,13 @@ randomSeed, impulseTime = -1f, impulseStrength = 1f)` — no MonoBehaviour depen
 ## Parallax — `Neo.Parallax`
 
 ### `ParallaxLayer` (MonoBehaviour)
-Seamlessly tiling parallax layer driven from camera movement.
+Seamlessly tiling parallax layer driven from camera movement. A resting camera costs no transform writes;
+warm frames allocate nothing.
 
 **[no-code]** for standard use: add to a layer GameObject, set `parallaxMultiplier` in inspector (0=fixed, 1=full-inverse-parallax), configure `scrollSpeed`, `tileHorizontally/Vertically`.
 
 ```csharp
-void SetTargetCamera(Camera camera)     // override auto-detected main camera
+void SetTargetCamera(Camera camera)     // override auto-detected main camera (also after the camera is destroyed)
 Camera TargetCamera                     // read-only
 ```
 
@@ -734,7 +828,7 @@ static int GetLoopLevel(int idLevel, int count)
 int CurrentLevel
 int MaxLevel
 int MapId
-Map Map                     // plain [Serializable] class (not a ScriptableObject/MonoBehaviour)
+Map Map                     // plain [Serializable] class; Map.IsComplete (GetCopmplete() is obsolete)
 // events
 UnityEvent<int> OnChangeLevel
 UnityEvent<int> OnChangeMap
@@ -781,7 +875,7 @@ OnLoadStarted, OnProgress<float>, OnReadyToProceed, OnLoadCompleted
 ```
 
 ```csharp
-var flow = GetComponent<SceneFlowController>();
+SceneFlowController flow = GetComponent<SceneFlowController>();
 flow.OnProgress.AddListener(p => loadBar.fillAmount = p);
 flow.OnReadyToProceed.AddListener(() => proceedButton.SetActive(true));
 flow.LoadScene("GameScene");
@@ -800,7 +894,7 @@ static UI I                           // set on Awake; last initialized instance
 void SetPage(int id)                  // deactivates all pages, activates page[id]
 void SetPage()                        // uses current serialized id field
 void SetOnePage(int id)               // activates only page[id] without touching others
-void SetPageAnim(int id)              // animated transition via Animator, then SetPage
+void SetPageAnim(int id)              // animated transition via Animator, then SetPage (scaled time)
 void SetOnePageAnim(int id)           // animated transition via Animator, then SetOnePage
 void SetPageDelay(int id)             // delayed SetPage via Invoke
 void SetCurrtentPage(bool active)     // toggle active page on/off
@@ -817,12 +911,13 @@ Fly animations: coins/XP/items flying from a source to a destination.
 
 ```csharp
 // typed API (preferred)
-AnimationFlyResult Play(AnimationFlyRequest request)
+AnimationFlyResult Play(AnimationFlyRequest request)   // works on a copy of the request
 AnimationFlyResult PlaySprite(Sprite sprite, int count, Transform start, Transform end,
     Transform parent = null, Action onReward = null)
 AnimationFlyResult PlaySpriteWorldToCanvas(Sprite sprite, int count,
     Transform worldStart, RectTransform canvasEnd,
     Transform parent = null, Action onReward = null)
+int OwnedVisualCount                                   // visuals the service currently owns (pool + flights)
 
 // type-index API (legacy, uses bonusPrefabList)
 void Execute(int type, int bonusCount, Vector3 start, ...)
@@ -836,7 +931,7 @@ static Vector3 CanvasToWorldPosition(Vector2 uiPos, Canvas canvas = null, Camera
 static Vector2 WorldToCanvasPosition(Vector3 worldPos, Canvas canvas = null, Camera camera = null)
 ```
 
-`AnimationFlyRequest` (class):
+`AnimationFly.AnimationFlyRequest` (nested sealed class):
 - `int? Type` / `GameObject Prefab` / `Sprite Sprite` — source
 - `int Count = 1`, `int MaxCount`
 - `Transform StartTransform / EndTransform`
@@ -844,7 +939,11 @@ static Vector2 WorldToCanvasPosition(Vector3 worldPos, Canvas canvas = null, Cam
 - `Action OnReward`, `Action OnAllArrived`
 - `Action<GameObject> OnItemStarted`, `Action<GameObject> OnItemArrived`
 - `AnimationFlyMotionPreset? MotionPreset`
-- Static factories: `AnimationFlyRequest.FromPrefab(...)`, `AnimationFlyRequest.FromSprite(...)`
+- Static factories: `FromPrefab(prefab, count = 1, start = null, end = null)`, `FromSprite(sprite, count = 1, start = null, end = null)`; `Clone()` for templates
+
+`Play` copies the request on entry: set every field (callbacks included) **before** `Play`; later edits do not
+affect running flights. A throwing callback is logged, and the visual is still released and the result still
+completes.
 
 `AnimationFlyResult` (class): `int TotalCount`, `int StartedCount`, `int CompletedCount`,
 `bool IsCompleted`, `IReadOnlyList<GameObject> ActiveItems`
@@ -857,15 +956,24 @@ AnimationFly.I.PlaySprite(coinSprite, count: 15,
     start: pickupTransform, end: coinCounterTransform,
     onReward: () => Money.I.Add(100));
 
-// or typed (AnimationFlyRequest is a class — set properties, don't use `with`):
-var req = AnimationFlyRequest.FromSprite(coinSprite);
-req.Count = 10;
-req.StartTransform = pickup;
-req.EndTransform = coinUI;
+// or typed (a class — set fields, don't use `with`):
+AnimationFly.AnimationFlyRequest req = AnimationFly.AnimationFlyRequest.FromSprite(coinSprite, 10, pickup, coinUI);
 req.MotionPreset = AnimationFlyMotionPreset.Arc;
 req.OnAllArrived = () => Money.I.Add(100);
 AnimationFly.I.Play(req);
 ```
+
+### Small UI components — `Neo.UI`
+- **`CategoryBar`** — `Select/Next/Prev` (calls before `Start` become the initial selection), C# `event
+  Action<int, string> SelectionChanged` (raised before the UnityEvents), `IsInitialized`; `SetEntryDisabled(i, b)`
+  plus the one-argument UnityEvent targets `DisableEntry(i)` / `EnableEntry(i)`.
+- **`VariantView`** — `SetCurrentState/NextState/PreviousState`, `CurrentStateIndex` (`currentStateIndex` is
+  obsolete), C# `event Action<int> StateChanged` + `OnStateChanged` UnityEvent, raised once per real change;
+  `Awake` applies the saved state, so spawned views show it at once.
+- **`ButtonScale`**, **`ButtonShake`**, **`FakeLoad`** — `UseUnscaledTime` (default **on**: press feedback and
+  fake loaders keep working at `Time.timeScale` 0); `ButtonShake.IsShaking`; a repeated `FakeLoad.Load()`
+  restarts the load; a one-shot revisit completes on the next frame, a deactivated load resumes on activation,
+  `FakeLoad.IsLoading`; `ButtonScale` releases to the scale the button had when the press started.
 
 ### `ButtonChangePage` (MonoBehaviour) — `Neo.UI`
 Animated button that navigates pages via `UI.I`.
@@ -881,7 +989,8 @@ UnityEvent OnClick
 **[no-code]**: wire `_idPage` in inspector; calls `UI.I.SetPage` automatically on click.
 
 ### `AnchorMove` (MonoBehaviour) — `Neo.UI`
-**[no-code]**: sets anchor min/max in `OnValidate`. No runtime public API. Configure `x`/`y` (0–1) in inspector.
+**[no-code]**: sets anchor min/max in `OnValidate`; at runtime `Apply()`, `SetX(float)`, `SetY(float)`,
+`SetAnchor(Vector2)` (clamped 0–1) re-anchor it from code or a UnityEvent. Configure `x`/`y` (0–1) in inspector.
 
 
 ## New in 9.7.0

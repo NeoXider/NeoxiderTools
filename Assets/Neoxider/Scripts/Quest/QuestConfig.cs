@@ -60,6 +60,48 @@ namespace Neo.Quest
         /// <summary>IDs of quests that unlock after this one completes.</summary>
         public IReadOnlyList<string> NextQuestIds => _nextQuestIds;
 
+        /// <summary>
+        ///     Reports authoring problems that make the quest unreachable or unsaveable: empty or whitespace-only id,
+        ///     no objectives, null objectives, and target-driven objectives (KillCount/CollectCount/ReachPoint/Talk)
+        ///     without a target id. An empty list means the definition is valid.
+        /// </summary>
+        public IReadOnlyList<string> ValidateDefinition()
+        {
+            List<string> issues = new();
+            if (string.IsNullOrEmpty(_id))
+            {
+                issues.Add("Quest id is empty; it cannot be accepted, resolved by id or saved.");
+            }
+            else if (string.IsNullOrWhiteSpace(_id))
+            {
+                issues.Add("Quest id is whitespace only; it works at runtime, but use a stable non-blank id.");
+            }
+
+            if (_objectives == null || _objectives.Count == 0)
+            {
+                issues.Add("Quest has no objectives; it can be accepted but never completes.");
+                return issues;
+            }
+
+            for (int i = 0; i < _objectives.Count; i++)
+            {
+                QuestObjectiveData objective = _objectives[i];
+                if (objective == null)
+                {
+                    issues.Add($"Objectives[{i}] is null.");
+                    continue;
+                }
+
+                if (objective.Type != QuestObjectiveType.CustomCondition && string.IsNullOrEmpty(objective.TargetId))
+                {
+                    issues.Add(
+                        $"Objectives[{i}] ({objective.Type}) has an empty Target Id; target notifications cannot address it, only CompleteObjective by index.");
+                }
+            }
+
+            return issues;
+        }
+
         private void OnValidate()
         {
             if (string.IsNullOrEmpty(_id) && !string.IsNullOrEmpty(_title))

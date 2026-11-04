@@ -4,7 +4,8 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     GameManager
+    ///     Game manager singleton: owns the <see cref="GameState" /> flow (Menu, Game, Pause, Win, Lose...),
+    ///     the optional time-scale pause and publishes every transition through <see cref="EM" />.
     /// </summary>
     [CreateFromMenu("Neoxider/Tools/Managers/GM")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(GM))]
@@ -16,8 +17,12 @@ namespace Neo.Tools
 
         [SerializeField] private GameState _lastState;
         [SerializeField] private bool _debugLog;
+
+        [Tooltip("Pause() sets Time.timeScale to 0 and leaving Pause restores the previous scale.")]
         public bool useTimeScalePause = true;
-        [Space] public int fps = 60;
+
+        [Space] [Tooltip("Applied to Application.targetFrameRate on Init. -1 keeps the platform default.")]
+        public int fps = 60;
         private float lastTimeScale = 1;
         private bool _ownsTimeScalePause;
         private ulong _transitionVersion;
@@ -47,7 +52,7 @@ namespace Neo.Tools
             get => _state;
             set
             {
-                // A listener may repeat its current payload. Keep ordinary explicit notifications,
+                // WHY: A listener may repeat its current payload. Keep ordinary explicit notifications,
                 // but do not recursively publish the same transition from inside a state callback.
                 if (_state == value && _isNotifyingStateChange &&
                     _lastStateChangeVersion == _transitionVersion)
@@ -91,7 +96,9 @@ namespace Neo.Tools
             }
         }
 
+        [Tooltip("On Init, re-applies the serialized state so EM.OnStateChange publishes the starting state.")]
         public bool startOnAwake = true;
+
         public bool IsPlaying => State == GameState.Game;
         public bool IsNotPlaying => State != GameState.Game;
 
@@ -334,7 +341,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            // Lazy EM initialization can itself change GM state. Fence both sides of resolution.
+            // WHY: Lazy EM initialization can itself change GM state. Fence both sides of resolution.
             em = EM.I;
             return em != null && IsTransitionCurrent(transitionVersion);
         }

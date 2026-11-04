@@ -2,6 +2,12 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    /// <summary>
+    ///     Scene singleton base: the first enabled instance wins in <c>Awake</c>, later duplicates destroy their
+    ///     GameObject. <see cref="I" /> resolves lazily (scene search, optional creation) and the statics are
+    ///     cleared before each Editor play session, so it is safe with domain reload disabled.
+    /// </summary>
+    /// <typeparam name="T">The concrete singleton type (<c>class GameAudio : Singleton&lt;GameAudio&gt;</c>).</typeparam>
     [NeoDoc("Tools/Managers/Singleton.md")]
     public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
@@ -150,14 +156,26 @@ namespace Neo.Tools
         /// <summary>
         ///     Destroys the current singleton instance and clears the cached reference.
         /// </summary>
+        /// <remarks>
+        ///     In Play Mode the GameObject is destroyed at the end of the frame (<c>Destroy</c>); in Edit Mode, where
+        ///     <c>Destroy</c> is not allowed, it is destroyed immediately.
+        /// </remarks>
         public static void DestroyInstance()
         {
             if (_instance != null)
             {
-                _instance._isBeingDestroyed = true;
-                Destroy(_instance.gameObject);
+                T instance = _instance;
+                instance._isBeingDestroyed = true;
                 _instance = null;
                 _searchFailed = false;
+                if (Application.isPlaying)
+                {
+                    Destroy(instance.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(instance.gameObject);
+                }
             }
         }
 

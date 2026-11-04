@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 2996841892656055854}
   - component: {fileID: 4533077820975781969}
   - component: {fileID: 7139254201228416904}
+  - component: {fileID: 3628862341136210561}
   m_Layer: 0
   m_Name: CubeEnemy
   m_TagString: Enemy
@@ -372,5 +373,26 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   _onAttack:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3628862341136210561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6866284234529158041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6ab33014411caa4ba594a590e80e120, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  action: 0
+  destroyDelay: 2
+  debugLog: 0
+  _onDeathBegin:
+    m_PersistentCalls:
+      m_Calls: []
+  _onDeathComplete:
     m_PersistentCalls:
       m_Calls: []

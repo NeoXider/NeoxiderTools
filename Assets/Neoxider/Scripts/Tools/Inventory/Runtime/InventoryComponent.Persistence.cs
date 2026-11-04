@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Neo.Save;
 
@@ -5,10 +6,97 @@ namespace Neo.Tools
 {
     public sealed partial class InventoryComponent
     {
-        [Button(PlayModeOnly = true)]
+        private int _autoSaveDeferDepth;
+        private bool _autoSavePending;
+        private int _autoSaveScopeSerial;
+
+        // WHY: serial of the scope open at each depth (index = depth - 1). A depth alone cannot tell a stale scope
+        // from a later one opened at the same depth, so a repeated dispose could close the newer scope early.
+        private int[] _autoSaveScopeSerials;
+
+        /// <summary>True while at least one <see cref="DeferAutoSave" /> scope is open.</summary>
+        public bool IsAutoSaveDeferred => _autoSaveDeferDepth > 0;
+
+        /// <summary>
+        ///     Holds back Auto Save until the returned scope is disposed, so a burst of mutations (a loot bundle, a
+        ///     shop grant, a scripted refill) writes the inventory JSON once instead of once per change. Events still
+        ///     fire per mutation. Scopes nest; disposing the outermost one calls <see cref="Save" /> when a deferred
+        ///     mutation changed the contents. Dispose each scope once, ideally with a <c>using</c> block; a repeated or
+        ///     stale dispose is ignored, even after newer scopes were opened.
+        /// </summary>
+        /// <example>
+        ///     <code>
+        ///     using (inventory.DeferAutoSave())
+        ///     {
+        ///         inventory.AddItemByIdAmount(1, 10);
+        ///         inventory.AddItemByIdAmount(2, 3);
+        ///     }
+        ///     </code>
+        /// </example>
+        public AutoSaveScope DeferAutoSave()
+        {
+            int depth = _autoSaveDeferDepth + 1;
+            if (_autoSaveScopeSerials == null)
+            {
+                _autoSaveScopeSerials = new int[4];
+            }
+            else if (_autoSaveScopeSerials.Length < depth)
+            {
+                Array.Resize(ref _autoSaveScopeSerials, _autoSaveScopeSerials.Length * 2);
+            }
+
+            _autoSaveScopeSerial = unchecked(_autoSaveScopeSerial + 1);
+            _autoSaveScopeSerials[depth - 1] = _autoSaveScopeSerial;
+            _autoSaveDeferDepth = depth;
+            return new AutoSaveScope(this, depth, _autoSaveScopeSerial);
+        }
+
+        private void EndAutoSaveDeferral(int depth, int serial)
+        {
+            // WHY: a repeated, stale or out-of-order dispose closes its own level (and any inner ones) only while
+            // that exact scope is still open.
+            if (depth <= 0 || _autoSaveDeferDepth < depth || _autoSaveScopeSerials[depth - 1] != serial)
+            {
+                return;
+            }
+
+            _autoSaveDeferDepth = depth - 1;
+            if (_autoSaveDeferDepth == 0 && _autoSavePending)
+            {
+                Save();
+            }
+        }
+
+        /// <summary>Scope returned by <see cref="DeferAutoSave" />; disposing it ends that deferral level.</summary>
+        public readonly struct AutoSaveScope : IDisposable
+        {
+            private readonly InventoryComponent _owner;
+            private readonly int _depth;
+            private readonly int _serial;
+
+            internal AutoSaveScope(InventoryComponent owner, int depth, int serial)
+            {
+                _owner = owner;
+                _depth = depth;
+                _serial = serial;
+            }
+
+            /// <summary>Ends this deferral level; the outermost level writes the deferred save.</summary>
+            public void Dispose()
+            {
+                // WHY: reference check, not Unity null: mutations made before a destroy still deserve their save.
+                if (!ReferenceEquals(_owner, null))
+                {
+                    _owner.EndAutoSaveDeferral(_depth, _serial);
+                }
+            }
+        }
+
         /// <summary>Serializes and writes to SaveProvider using <see cref="SaveKey" />.</summary>
+        [Button(PlayModeOnly = true)]
         public void Save()
         {
+            _autoSavePending = false;
             if (string.IsNullOrEmpty(_saveKey) || _storage == null)
             {
                 return;
@@ -22,10 +110,10 @@ namespace Neo.Tools
                 StorageMode = (int)_storageMode,
                 SlotCapacity = _slotCount,
                 Slots = _storageMode == InventoryStorageMode.SlotGrid && _storage is ISlottedInventory sc
-                    ? sc.CreateSlotSnapshot()
+                    ? CaptureSlotsForSave(sc)
                     : new List<InventorySlotState>(),
                 Records = _storageMode != InventoryStorageMode.SlotGrid
-                    ? _storage.CreateRecordSnapshot()
+                    ? CaptureRecordsForSave()
                     : new List<InventoryItemRecord>()
             };
             string json = data.ToJson();
@@ -33,8 +121,38 @@ namespace Neo.Tools
             OnSaved?.Invoke();
         }
 
-        [Button(PlayModeOnly = true)]
+        // WHY: Save serializes these rows before it returns and never exposes them, so the built-in storages lend
+        // their live rows instead of deep clones; with autosave this runs after every mutation.
+        private static List<InventorySlotState> CaptureSlotsForSave(ISlottedInventory slotted)
+        {
+            if (slotted is not SlotGridInventory grid)
+            {
+                return slotted.CreateSlotSnapshot();
+            }
+
+            List<InventorySlotState> slots = new(grid.SlotCapacity);
+            for (int i = 0; i < grid.SlotCapacity; i++)
+            {
+                slots.Add(grid.PeekSlot(i));
+            }
+
+            return slots;
+        }
+
+        private List<InventoryItemRecord> CaptureRecordsForSave()
+        {
+            if (_storage is not AggregatedInventory aggregated)
+            {
+                return _storage.CreateRecordSnapshot();
+            }
+
+            List<InventoryItemRecord> records = new();
+            aggregated.AppendLiveRecords(records);
+            return records;
+        }
+
         /// <summary>Restores state via SaveProvider; clears inventory first and respects LoadMode.</summary>
+        [Button(PlayModeOnly = true)]
         public void Load()
         {
             if (_isLoading)

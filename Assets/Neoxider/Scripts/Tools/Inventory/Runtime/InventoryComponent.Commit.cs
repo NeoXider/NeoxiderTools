@@ -6,7 +6,7 @@ namespace Neo.Tools
 {
     public sealed partial class InventoryComponent
     {
-        // Internal ownership handoff for world items. Storage commits before any user notification;
+        // WHY: Internal ownership handoff for world items. Storage commits before any user notification;
         // the caller settles its exact accepted/extracted quantity before publishing this receipt.
         internal sealed class MutationReceipt
         {
@@ -150,6 +150,12 @@ namespace Neo.Tools
 
         internal int FindPackedIndex(int itemId)
         {
+            EnsureRuntimeInitialized();
+            if (_storage is IInventoryRecordReader reader)
+            {
+                return reader.FindPackedIndex(itemId);
+            }
+
             List<InventoryItemRecord> records = GetSnapshotRecords();
             for (int i = 0; i < records.Count; i++)
             {
@@ -236,7 +242,7 @@ namespace Neo.Tools
             return new MutationReceipt(this, before, restored);
         }
 
-        private static bool SameInstanceState(InventoryItemInstance first, InventoryItemInstance second)
+        internal static bool SameInstanceState(InventoryItemInstance first, InventoryItemInstance second)
         {
             if (first.InstanceId != second.InstanceId || first.ItemId != second.ItemId ||
                 first.StateVersion != second.StateVersion || first.ComponentStates.Count != second.ComponentStates.Count)

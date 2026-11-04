@@ -1,6 +1,15 @@
 ﻿# ReactiveProperty
 
-**Purpose:** A reactive variable (R3-style). Stores a value and fires a `UnityEvent` when it changes. Works in Inspector (No-Code) through concrete wrappers and from code through generic `ReactiveProperty<T>`.
+**What it is:** a reactive variable (R3-style naming): a serializable class that stores a value and notifies code
+subscribers and a `UnityEvent` when the value changes. Inspector (NoCode) fields use the concrete wrappers
+`ReactivePropertyFloat` / `Int` / `Bool`; code uses generic `ReactiveProperty<T>`. File:
+`Scripts/Reactive/ReactiveProperty.cs`, namespace `Neo.Reactive`.
+
+**How to use:**
+1. Declare a field: `[SerializeField] private ReactivePropertyFloat _health = new(100f);`.
+2. Subscribe from code with `Subscribe(handler, invokeImmediately)` and dispose the handle in `OnDisable`, or wire
+   **On Changed** in the Inspector.
+3. Change the value with `Value = x` / `OnNext(x)`; use `SetValueWithoutNotify` + `ForceNotify` when loading.
 
 ---
 
@@ -45,9 +54,11 @@ Code subscriptions (`AddListener` / `Subscribe` and their weak variants) come wi
 - **A listener that throws is logged and skipped.** The remaining listeners still run, and the exception
   never reaches the gameplay code that set the value.
 - **A subscription whose target is gone is dropped, not thrown on.** A listener owned by a destroyed
-  `UnityEngine.Object` is unsubscribed automatically. During notification it is reported through a
-  throttled warning naming the method when `NeoDiagnostics` warnings are enabled; collected weak targets
-  are dropped silently. Reading `ListenerCount` also prunes dead code targets without notifying or logging.
+  `UnityEngine.Object` is unsubscribed automatically. For a strong subscription this is a forgotten
+  unsubscribe, reported during notification through a throttled warning naming the method when
+  `NeoDiagnostics` warnings are enabled. Weak subscriptions opted into automatic cleanup, so their collected
+  or destroyed targets are dropped silently. Reading `ListenerCount` also prunes dead code targets without
+  notifying or logging.
 
 Cleanup does not guarantee a warning for each registration: a count read can remove a destroyed target
 before the next notification, and the shared diagnostic throttle can suppress warnings with the same key.
@@ -69,7 +80,8 @@ callback order and exception behavior: a throwing UnityEvent callback can stop l
 | IL2CPP/AOT without reflective open-delegate creation | `SubscribeWeak(this, static (self, v) => self.Handle(v))` |
 
 `ReactiveListenerMode.Weak` keeps only a weak reference to the delegate target, so a forgotten
-`RemoveListener` cannot leak the subscriber - the subscription drops itself once the target is collected.
+`RemoveListener` cannot leak the subscriber - the subscription drops itself silently once the target is
+collected or, for a `UnityEngine.Object` target, destroyed.
 Only pass delegates whose target you keep alive yourself (a method group on a field or component). A
 closure that captures locals has no other owner and may be collected immediately.
 
@@ -175,14 +187,21 @@ void LoadFromSave(int savedScore)
 `NotifySubscribers` takes a **real snapshot** of code listeners into a reusable buffer: every listener
 registered at notification time is invoked exactly once, even when another listener adds/removes
 subscriptions inside its callback. Listeners added during a notification can receive the next notification,
-including a nested notification started by a reentrant assignment.
+including a nested notification started by a reentrant assignment (for example a listener that clamps the
+value). Each re-entrancy depth owns its own buffer, so a nested notification never overwrites the outer one.
 Not thread-safe — Unity main thread only.
 
 ## Performance and naming notes
 
 - The `Value` setter compares via `EqualityComparer<T>.Default`: custom structs without
   `IEquatable<T>` box on every set — implement `IEquatable<T>` for hot values.
-- Notification reuses a snapshot buffer after its initial allocation; nested notifications allocate their
-  own buffer. Reading `ListenerCount` scans code registrations, so avoid polling it in a hot loop.
+- Notification reuses one snapshot buffer per re-entrancy depth, so after warm-up neither ordinary nor
+  nested notifications allocate (EditMode tests count `GC.Alloc` calls for 2, 16 and 128 listeners and for a
+  clamping listener that re-enters the setter). Warning messages are only
+  built while `NeoDiagnostics` warnings are enabled.
+- Deduplication compares delegates by target and method. A lambda created in a loop over the same closure is
+  therefore *one* registration, however many times it is added; give each subscriber its own target (for
+  example one listener object per subscription) when you need N independent listeners, as benchmarks do. Reading `ListenerCount` scans code registrations, so avoid
+  polling it in a hot loop.
 - "R3-style" means familiar naming (`OnNext`, `CurrentValue`, `ForceNotify`), not R3/IObservable
   compatibility: the module has disposable subscriptions, but no observable operator pipeline.

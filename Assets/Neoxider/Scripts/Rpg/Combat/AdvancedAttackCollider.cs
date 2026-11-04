@@ -136,11 +136,12 @@ namespace Neo.Tools
                 hitColliders3D.Add(collision.collider);
             }
 
-            Vector3 contact = collision.contacts.Length > 0
-                ? collision.contacts[0].point
-                : collision.transform.position;
-            Vector3 normal = collision.contacts.Length > 0
-                ? collision.contacts[0].normal
+            // WHY: collision.contacts allocates a new array on every access; GetContact reads in place.
+            bool hasContact = collision.contactCount > 0;
+            ContactPoint firstContact = hasContact ? collision.GetContact(0) : default;
+            Vector3 contact = hasContact ? firstContact.point : collision.transform.position;
+            Vector3 normal = hasContact
+                ? firstContact.normal
                 : (collision.transform.position - transform.position).normalized;
             HandleAttack(collision.gameObject, contact, normal, true);
         }
@@ -164,11 +165,11 @@ namespace Neo.Tools
                 hitColliders2D.Add(collision.collider);
             }
 
-            Vector3 contact = collision.contacts.Length > 0
-                ? collision.contacts[0].point
-                : collision.transform.position;
-            Vector3 normal = collision.contacts.Length > 0
-                ? collision.contacts[0].normal
+            bool hasContact = collision.contactCount > 0;
+            ContactPoint2D firstContact = hasContact ? collision.GetContact(0) : default;
+            Vector3 contact = hasContact ? (Vector3)firstContact.point : collision.transform.position;
+            Vector3 normal = hasContact
+                ? (Vector3)firstContact.normal
                 : (collision.transform.position - transform.position).normalized;
             HandleAttack(collision.gameObject, contact, normal, true);
         }

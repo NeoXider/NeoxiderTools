@@ -1,13 +1,17 @@
 ﻿# WheelFortune
 
-Scene prize wheel with manual/automatic stop, optional alignment, and one sector result per completed spin.
+**What it is:** a scene prize wheel (`MonoBehaviour`, `Scripts/Bonus/WheelFortune/WheelFortune.cs`) with manual/automatic stop, optional alignment, and one sector result per completed spin. The sector math is the static, component-free `ResolveSectorIndex`.
 
-## Setup
+**How to use:**
+1. Assign the wheel RectTransform, optional arrow/CanvasGroup, and ordered prize objects.
+2. Bind a button to `Spin()`, optionally bind another to `Stop()`, and grant through `OnWinIdVariant(int)` (for money prizes add [WheelMoneyWin](WheelMoneyWin.md)).
+3. For automatic stops, set **Auto Stop Time** and optional **Extra Spin Time**. Re-enable `canUse` to permit another spin when **Single Use** is enabled.
 
-- Assign the wheel RectTransform, optional arrow/CanvasGroup, and ordered prize objects.
-- Bind a button to `Spin()`, optionally bind another to `Stop()`, and grant through `OnWinIdVariant(int)`.
-- For automatic stops, set **Auto Stop Time** and optional **Extra Spin Time**. Re-enable `canUse` to
-  permit another spin when **Single Use** is enabled.
+---
+
+**Single Use** wheels consume `canUse` on a spin and leave their CanvasGroup non-interactable afterwards.
+Reusable wheels (**Single Use** off) keep `canUse` and become interactable again when each spin ends. If the
+wheel RectTransform is destroyed mid-spin, the wheel returns to Idle without a result instead of throwing every frame.
 
 The equivalent C# flow is `wheel.OnWinIdVariant.AddListener(id => Grant(wheel.GetPrize(id))); wheel.Spin();`.
 `State` exposes Idle/Spinning/Decelerating/Aligning. `ResolveSectorIndex` evaluates wheel/arrow angles without

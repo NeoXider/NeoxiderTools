@@ -2,7 +2,7 @@
 
 **What it is:** This tool provides a simple Unity editor window for bulk-changing the `Max Size` setting of textures. This is especially useful for project optimization, when you need to quickly reduce the maxi...
 
-**How to use:** see the sections below.
+**How to use:** open **Neoxider > Tools > Texture Max Size**, pick the texture type and the new Max Size, then apply it; every texture of that type in the project is reimported with the new limit.
 
 ---
 

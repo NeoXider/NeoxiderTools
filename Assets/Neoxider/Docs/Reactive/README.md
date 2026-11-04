@@ -1,6 +1,17 @@
 ﻿# Reactive module
 
-The `Reactive` module provides small reactive properties: Inspector-friendly wrappers for `float`, `int`, and `bool`, plus code-first generic `ReactiveProperty<T>` for any C# type.
+**What it is:** small reactive properties in `Scripts/Reactive` (assembly `Neo.Reactive`, namespace `Neo.Reactive`):
+Inspector-friendly wrappers for `float`, `int`, and `bool`, plus code-first generic `ReactiveProperty<T>` for any C# type.
+
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeBindingDemo.jpg" alt="NoCodeBindingDemo: a reactive counter driving bindings in Reactive, Poll and Once modes" width="100%" /></p>
+
+*Demo scene: `Scenes/NoCode/NoCodeBindingDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:** [ReactiveProperty](ReactiveProperty.md) — API, subscription lifetime, notification and allocation rules.
+
+---
 
 ## Included types
 
@@ -111,9 +122,10 @@ Important: the generic bridge accepts any `T` on the Reactive API side. Mirror o
 - These are serializable helper types, not standalone `MonoBehaviour` components.
 - Access and notify on the Unity main thread. Code subscriptions use snapshot semantics and isolate
   callback exceptions through `NeoDiagnostics`; `OnChanged` uses UnityEvent's own invocation semantics.
-- Collected weak targets and cleanup triggered by `ListenerCount` are silent. Destroyed code targets
-  encountered during notification use gated, throttled `NeoDiagnostics` warnings; cleanup does not
-  guarantee a warning for each registration.
+- Collected or destroyed weak targets and cleanup triggered by `ListenerCount` are silent. Destroyed targets
+  of strong subscriptions encountered during notification use gated, throttled `NeoDiagnostics` warnings;
+  cleanup does not guarantee a warning for each registration.
+- Notifications do not allocate after warm-up, including nested notifications started from a listener.
 
 ## See also
 

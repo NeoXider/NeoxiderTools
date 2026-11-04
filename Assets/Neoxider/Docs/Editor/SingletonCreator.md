@@ -2,7 +2,7 @@
 
 **What it is:** The template already contains all the necessary boilerplate for a class inherited from `Singleton<T>`, letting you focus on writing the singleton's logic rather than repetitive code.
 
-**How to use:** see the sections below.
+**How to use:** in the Project window choose **Assets > Create > Neoxider > Singleton**, enter the class name and confirm; a script deriving from `Singleton<T>` is created in the selected folder.
 
 ---
 

@@ -38,20 +38,28 @@ namespace Neo.Animations
         [Header("Control")] [Tooltip("Auto-start animation on Start")]
         public bool playOnStart = true;
 
+        [Tooltip("Randomize the clock and noise offset in Start so several animators do not move in sync. " +
+                 "Off = deterministic start at time 0, or at the time set by ResetTime before Start.")]
+        [SerializeField] private bool _randomizeStartTime = true;
+
+        [Tooltip("Advance on unscaled time (ignores Time.timeScale), e.g. for UI shown during pause.")]
+        [SerializeField] private bool _useUnscaledTime;
+
         [Tooltip("Reactive value; subscribe via Value.OnChanged")]
         public ReactivePropertyFloat Value = new();
 
         [Tooltip("Invoked when animation starts")]
-        public UnityEvent OnAnimationStarted;
+        public UnityEvent OnAnimationStarted = new();
 
         [Tooltip("Invoked when animation stops")]
-        public UnityEvent OnAnimationStopped;
+        public UnityEvent OnAnimationStopped = new();
 
         [Tooltip("Invoked when animation is paused")]
-        public UnityEvent OnAnimationPaused;
+        public UnityEvent OnAnimationPaused = new();
 
         private float animationTime;
         private Vector2 randomOffset;
+        private bool _disabled;
 
         /// <summary>Current animated value (read-only).</summary>
         public float CurrentValue => Value.CurrentValue;
@@ -64,6 +72,29 @@ namespace Neo.Animations
 
         /// <summary>Whether the animation is paused.</summary>
         public bool IsPaused { get; private set; }
+
+        /// <summary>
+        ///     When true, <c>Update</c> does nothing and the owner advances the animation through <see cref="Tick" />
+        ///     (custom update loops, deterministic tests, frame-stepped replays). Not serialized.
+        /// </summary>
+        public bool ManualUpdate { get; set; }
+
+        /// <summary>Whether <c>Start</c> randomizes the clock and noise offset (the legacy default).</summary>
+        public bool RandomizeStartTime
+        {
+            get => _randomizeStartTime;
+            set => _randomizeStartTime = value;
+        }
+
+        /// <summary>Whether <c>Update</c> advances on <see cref="Time.unscaledDeltaTime" />.</summary>
+        public bool UseUnscaledTime
+        {
+            get => _useUnscaledTime;
+            set => _useUnscaledTime = value;
+        }
+
+        /// <summary>Current animation clock in seconds.</summary>
+        public float AnimationTime => animationTime;
 
         /// <summary>Minimum value (writable from outside).</summary>
         public float MinValue
@@ -95,9 +126,12 @@ namespace Neo.Animations
 
         private void Start()
         {
-            animationTime = Random.Range(0f, 1000f);
-            randomOffset = new Vector2(Random.Range(-1000f, 1000f),
-                Random.Range(-1000f, 1000f));
+            if (_randomizeStartTime)
+            {
+                animationTime = Random.Range(0f, 1000f);
+                randomOffset = new Vector2(Random.Range(-1000f, 1000f),
+                    Random.Range(-1000f, 1000f));
+            }
 
             if (playOnStart)
             {
@@ -105,14 +139,39 @@ namespace Neo.Animations
             }
         }
 
+        private void OnEnable()
+        {
+            _disabled = false;
+        }
+
+        private void OnDisable()
+        {
+            _disabled = true;
+        }
+
         private void Update()
         {
-            if (!IsPlaying || IsPaused)
+            if (ManualUpdate)
             {
                 return;
             }
 
-            animationTime += Time.deltaTime;
+            Tick(_useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+        }
+
+        /// <summary>
+        ///     Advances the clock by <paramref name="deltaTime" /> seconds and publishes the sampled value. Does
+        ///     nothing while stopped, paused or disabled (like <c>Update</c>); a negative or non-finite delta samples
+        ///     without advancing.
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            if (_disabled || !IsPlaying || IsPaused)
+            {
+                return;
+            }
+
+            animationTime += AnimationUtils.SanitizeDeltaTime(deltaTime);
 
             float newValue = AnimationUtils.GetTargetValue(
                 animationType,
@@ -121,7 +180,8 @@ namespace Neo.Animations
                 use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
-            // The reactive property compares against its actual value and suppresses unchanged notifications.
+            // WHY no change check here: the reactive property compares against its actual value and suppresses
+            // unchanged notifications.
             Value.Value = newValue;
         }
 

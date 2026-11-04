@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 
 namespace Neo.Cards
@@ -157,7 +156,15 @@ namespace Neo.Cards
         /// <returns>Presenter or null.</returns>
         public CardPresenter FindCard(CardData cardData)
         {
-            return _cardPresenters.FirstOrDefault(p => p.Data.Equals(cardData));
+            for (int i = 0; i < _cardPresenters.Count; i++)
+            {
+                if (_cardPresenters[i].Data.Equals(cardData))
+                {
+                    return _cardPresenters[i];
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -168,9 +175,17 @@ namespace Neo.Cards
         /// <returns>Matching presenters.</returns>
         public List<CardPresenter> GetCardsThatCanBeat(CardData attackCard, Suit? trump)
         {
-            return _cardPresenters
-                .Where(p => p.Data.CanCover(attackCard, trump))
-                .ToList();
+            List<CardPresenter> result = new();
+            for (int i = 0; i < _cardPresenters.Count; i++)
+            {
+                CardPresenter presenter = _cardPresenters[i];
+                if (presenter.Data.CanCover(attackCard, trump))
+                {
+                    result.Add(presenter);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -181,66 +196,82 @@ namespace Neo.Cards
         public List<CardPresenter> GetCardsMatchingRanks(IEnumerable<Rank> ranks)
         {
             HashSet<Rank> rankSet = new(ranks);
-            return _cardPresenters
-                .Where(p => !p.Data.IsJoker && rankSet.Contains(p.Data.Rank))
-                .ToList();
+            List<CardPresenter> result = new();
+            for (int i = 0; i < _cardPresenters.Count; i++)
+            {
+                CardPresenter presenter = _cardPresenters[i];
+                if (!presenter.Data.IsJoker && rankSet.Contains(presenter.Data.Rank))
+                {
+                    result.Add(presenter);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
-        ///     Sorts by rank.
+        ///     Sorts by rank. The sort is stable: equal ranks keep their current order.
         /// </summary>
         /// <param name="ascending">Ascending if true.</param>
         /// <param name="animate">Animate rearrange.</param>
-        public async UniTask SortByRankAsync(bool ascending = true, bool animate = true)
+        public UniTask SortByRankAsync(bool ascending = true, bool animate = true)
         {
-            int revision = ++_revision;
-            Model.SortByRank(ascending);
-            if (revision != _revision)
-            {
-                return;
-            }
-
-            if (ascending)
-            {
-                _cardPresenters.Sort((a, b) => a.Data.Rank.CompareTo(b.Data.Rank));
-            }
-            else
-            {
-                _cardPresenters.Sort((a, b) => b.Data.Rank.CompareTo(a.Data.Rank));
-            }
-
-            await SynchronizeViewOrderAsync(animate, revision);
+            return SortAsync(ascending ? CardOrdering.RankAscending : CardOrdering.RankDescending, animate);
         }
 
         /// <summary>
-        ///     Sorts by suit, then rank.
+        ///     Sorts by suit, then rank. The sort is stable.
         /// </summary>
         /// <param name="ascending">Ascending if true.</param>
         /// <param name="animate">Animate rearrange.</param>
-        public async UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
+        public UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
+        {
+            return SortAsync(ascending ? CardOrdering.SuitThenRankAscending : CardOrdering.SuitThenRankDescending,
+                animate);
+        }
+
+        /// <summary>
+        ///     Sorts model, presenters and view with any comparer (for example <see cref="CardComparer" /> or a
+        ///     comparer for custom card data). The sort is stable, so model and presenter indices stay aligned.
+        /// </summary>
+        /// <param name="comparer">Card comparer.</param>
+        /// <param name="animate">Animate rearrange.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="comparer" /> is null.</exception>
+        public UniTask SortAsync(IComparer<CardData> comparer, bool animate = true)
+        {
+            if (comparer == null)
+            {
+                throw new ArgumentNullException(nameof(comparer));
+            }
+
+            return SortAsync(comparer.Compare, animate);
+        }
+
+        /// <summary>
+        ///     Sorts model, presenters and view with a comparison delegate. The sort is stable.
+        /// </summary>
+        /// <param name="comparison">Card comparison.</param>
+        /// <param name="animate">Animate rearrange.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="comparison" /> is null.</exception>
+        public UniTask SortAsync(Comparison<CardData> comparison, bool animate = true)
+        {
+            if (comparison == null)
+            {
+                throw new ArgumentNullException(nameof(comparison));
+            }
+
+            return SortCoreAsync(comparison, animate);
+        }
+
+        private async UniTask SortCoreAsync(Comparison<CardData> comparison, bool animate)
         {
             int revision = ++_revision;
-            Model.SortBySuit(ascending);
+            // WHY: presenters are sorted before the model so model observers already see the final order.
+            CardOrdering.StableSort(_cardPresenters, (a, b) => comparison(a.Data, b.Data));
+            Model.Sort(comparison);
             if (revision != _revision)
             {
                 return;
-            }
-
-            if (ascending)
-            {
-                _cardPresenters.Sort((a, b) =>
-                {
-                    int suitCompare = a.Data.Suit.CompareTo(b.Data.Suit);
-                    return suitCompare != 0 ? suitCompare : a.Data.Rank.CompareTo(b.Data.Rank);
-                });
-            }
-            else
-            {
-                _cardPresenters.Sort((a, b) =>
-                {
-                    int suitCompare = b.Data.Suit.CompareTo(a.Data.Suit);
-                    return suitCompare != 0 ? suitCompare : b.Data.Rank.CompareTo(a.Data.Rank);
-                });
             }
 
             await SynchronizeViewOrderAsync(animate, revision);
@@ -261,7 +292,7 @@ namespace Neo.Cards
                 return;
             }
 
-            // Older custom views keep their existing membership-based synchronization path.
+            // WHY: older custom views keep their existing membership-based synchronization path.
             foreach (CardPresenter presenter in snapshot)
             {
                 await View.RemoveCardAsync(presenter.View, false);

@@ -1,8 +1,13 @@
 # ModifyCounterByKey
 
-**Purpose:** A NoCode component that finds a `Counter` or `Money` instance by save key and applies a numeric operation.
+**What it is:** a NoCode `MonoBehaviour` that finds a `Counter` or `Money` instance by save key and applies a
+configured numeric operation. Script: `Scripts/Tools/Components/ModifyCounterByKey.cs`, namespace `Neo.Tools`,
+assembly `Neo.Tools.Components`.
 
-**Location:** `Assets/Neoxider/Scripts/Tools/Components/ModifyCounterByKey.cs`, menu `Neoxider/Tools/ModifyCounterByKey`.
+**How to use:**
+1. Add **Neoxider / Tools / ModifyCounterByKey** to a button, trigger or reward object.
+2. Set **Target Save Key**, **Operation** and **Value**.
+3. Call `Execute()` from a UnityEvent (for example `Button.onClick`).
 
 ---
 

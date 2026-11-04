@@ -84,7 +84,11 @@ namespace Neo.UI
 
         private void Awake()
         {
-            _toggle ??= GetComponent<Toggle>();
+            if (_toggle == null)
+            {
+                _toggle = GetComponent<Toggle>();
+            }
+
             if (_toggle != null)
             {
                 _toggle.onValueChanged.AddListener(OnToggleValueChanged);

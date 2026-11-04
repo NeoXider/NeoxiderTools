@@ -1,6 +1,13 @@
 # GridGameBuilder
 
-**Purpose:** scene-facing GridSystem constructor. It adds and keeps selected grid modules on one GameObject: debug drawer, spawners, Match3, TicTacToe, and SlidingMerge.
+**What it is:** `GridGameBuilder` (`Scripts/GridSystem/GridGameBuilder.cs`, namespace `Neo.GridSystem`) is the scene-facing GridSystem constructor. It adds and keeps selected grid modules on one GameObject: debug drawer, spawners, Match3, TicTacToe, and SlidingMerge.
+
+**How to use:**
+1. Add `GridGameBuilder` to a GameObject (a `Grid` and `FieldGenerator` are required and added with it).
+2. Select `Features` and press **Ensure Grid Components** (also runs in `Awake`).
+3. Configure the added components; `Generate Field On Awake` regenerates the field at startup.
+
+---
 
 **Use it when:** you want fast Inspector setup without manually adding every component. Production code can still use the same components directly.
 

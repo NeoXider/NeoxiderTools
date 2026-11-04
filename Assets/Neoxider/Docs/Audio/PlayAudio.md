@@ -1,16 +1,17 @@
 ﻿# PlayAudio
 
-**Purpose:** A utility for simply playing a sound via the `AM.I` manager. It supports playing a sound entry by **id**, a specific `AudioClip`, a random clip from a list, or a sound by its index (Legacy mode).
+**What it is:** A utility for simply playing a sound via the `AM.I` manager. It supports playing a sound entry by **id**, a specific `AudioClip`, a random clip from a list, or a sound by its index (Legacy mode).
 
 The sources are tried in that order of precedence: explicit clips win, then `_soundId`, then the legacy index - so a component that only has an index set behaves exactly as it always did.
 
-## Setup
-
+**How to use:**
 1. Add `Add Component > Neoxider > Audio > PlayAudio` to an object.
 2. Assign an `AudioClip` (or several) to the `_clips` array.
 3. Call the `AudioPlay()` method (e.g., from a UnityEvent or another script) to play the sound.
 4. Alternatively, check `_playOnAwake` to play once in `Start()`. Re-enabling the object does not play again;
    call `AudioPlay()` from the relevant UnityEvent for repeated activation.
+
+---
 
 ## Key Fields (Inspector)
 

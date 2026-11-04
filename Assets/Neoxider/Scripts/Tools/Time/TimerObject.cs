@@ -3,16 +3,11 @@ using System.Collections;
 using System.Globalization;
 using Neo.Reactive;
 using Neo.Save;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
-#if DG_TWEENING
-using DG.Tweening;
-#endif
-#if UNITY_TEXTMESHPRO
-using TMPro;
-#endif
 
 
 namespace Neo.Tools
@@ -58,6 +53,12 @@ namespace Neo.Tools
         public bool looping;
 
         [Tooltip(
+            "Looping only: start the next cycle with the time by which the last tick ran past the end, so the " +
+            "long-run period matches elapsed time. Off keeps the legacy restart from the start value.")]
+        [SerializeField]
+        private bool _carryLoopOvershoot;
+
+        [Tooltip(
             "Infinite time (no max). Time only increases; progress is not updated. Disables looping/random in OnValidate.")]
         public bool infiniteDuration;
 
@@ -88,13 +89,15 @@ namespace Neo.Tools
         [Tooltip("Image component to automatically update fillAmount (0-1). Auto-finds if on same GameObject")]
         public Image progressImage;
 
-#if UNITY_TEXTMESHPRO
-        [Tooltip("TextMeshPro component to automatically display time. Auto-finds if on same GameObject")]
+        [Tooltip(
+            "Optional TextMeshPro label that displays the time through Time Format. Assign it explicitly: it is " +
+            "never auto-found, so a label driven by another component (for example TimeToText) is left alone.")]
         public TMP_Text timeText;
-#endif
 
-        [Tooltip("Format for time display: {0} = time, {1} = progress, {2} = percent")]
-        public string timeFormat = "{0:F1}s";
+        [Tooltip(
+            "Format for time display: {0} = time, {1} = progress, {2} = percent. An invalid format falls back to " +
+            "\"{0:F1}s\".")]
+        public string timeFormat = DefaultTimeFormat;
 
         [Tooltip("If true, progress image fills from left to right. If false, fills from right to left")]
         public bool fillImageNormal = true;
@@ -108,15 +111,15 @@ namespace Neo.Tools
         [Tooltip("Duration of start animation in seconds")] [Min(0.01f)]
         public float startAnimationDuration = 0.2f;
 
-        [Tooltip("Called when timer starts")] public UnityEvent OnTimerStarted;
+        [Tooltip("Called when timer starts")] public UnityEvent OnTimerStarted = new();
 
         [Tooltip("Called when timer is paused")]
-        public UnityEvent OnTimerPaused;
+        public UnityEvent OnTimerPaused = new();
 
         [Tooltip("Called when timer is resumed")]
-        public UnityEvent OnTimerResumed;
+        public UnityEvent OnTimerResumed = new();
 
-        [Tooltip("Called when timer stops")] public UnityEvent OnTimerStopped;
+        [Tooltip("Called when timer stops")] public UnityEvent OnTimerStopped = new();
 
         [Tooltip("Reactive current time; subscribe via Time.OnChanged")]
         public ReactivePropertyFloat Time = new();
@@ -125,13 +128,13 @@ namespace Neo.Tools
         public float TimeValue => Time.CurrentValue;
 
         [Tooltip("Called with progress (0-1) on each update")]
-        public UnityEvent<float> OnProgressChanged;
+        public UnityEvent<float> OnProgressChanged = new();
 
         [Tooltip("Called with progress percent (0-100) on each update")]
-        public UnityEvent<int> OnProgressPercentChanged;
+        public UnityEvent<int> OnProgressPercentChanged = new();
 
         [Tooltip("Called when timer completes. Also called on each loop completion if looping is enabled")]
-        public UnityEvent OnTimerCompleted;
+        public UnityEvent OnTimerCompleted = new();
 
         [Header("Progress Milestones")] [Tooltip("Enable milestone events at specific progress percentages")]
         public bool enableMilestones;
@@ -140,7 +143,7 @@ namespace Neo.Tools
         public float[] milestonePercentages = { 0.25f, 0.5f, 0.75f };
 
         [Tooltip("Called when timer reaches a milestone percentage")]
-        public UnityEvent<float> OnMilestoneReached;
+        public UnityEvent<float> OnMilestoneReached = new();
 
         [Header("Day Time (00:00–24:00)")]
         [Tooltip(
@@ -152,13 +155,13 @@ namespace Neo.Tools
         [Tooltip(
             "Format for day time display when day length > 0. {0}=hours, {1}=minutes, {2}=seconds (e.g. \"{0:00}:{1:00}\" for HH:mm)")]
         [SerializeField]
-        private string _dayTimeFormat = "{0:00}:{1:00}";
+        private string _dayTimeFormat = DefaultDayTimeFormat;
 
         [Tooltip("Called when day cycle wraps (midnight) — only when dayLengthSeconds > 0 and looping.")]
-        public UnityEvent OnNewDay;
+        public UnityEvent OnNewDay = new();
 
         [Tooltip("Called when day time updates (hours, minutes, seconds) — only when dayLengthSeconds > 0.")]
-        public UnityEvent<float, float, float> OnDayTimeChanged;
+        public UnityEvent<float, float, float> OnDayTimeChanged = new();
 
         [Header("Save")]
         [Tooltip("Save and restore timer state (current time and running state). Disabled by default.")]
@@ -188,8 +191,46 @@ namespace Neo.Tools
         /// </summary>
         protected virtual DateTime GetUtcNow()
         {
-            return DateTime.UtcNow;
+            return _utcClock != null ? _utcClock.UtcNow : DateTime.UtcNow;
         }
+
+        /// <summary>
+        ///     UTC source used by the default <see cref="GetUtcNow" /> for RealTime persistence. Defaults to the device
+        ///     clock; assign <see cref="NeoTrustedTime.AsClock" /> for tamper-resistant offline progress or a fake
+        ///     <see cref="INeoClock" /> in tests. Derived timers that override <see cref="GetUtcNow" /> ignore it.
+        ///     Assign it before the GameObject is activated (<c>Awake</c> restores the save) so restore and save share
+        ///     one clock domain; scene-placed timers should override <see cref="GetUtcNow" /> instead.
+        /// </summary>
+        public INeoClock UtcClock
+        {
+            get => _utcClock;
+            set => _utcClock = value;
+        }
+
+        /// <summary>
+        ///     Frame time source used by <see cref="Update" /> and by the <see cref="pauseOnTimeScaleZero" /> check.
+        ///     Defaults to <see cref="UnityFrameClock.Instance" />; assign <see cref="ManualFrameClock" /> for
+        ///     deterministic pacing. Assigning <c>null</c> restores the default.
+        /// </summary>
+        public IFrameClock FrameClock
+        {
+            get => _frameClock ?? UnityFrameClock.Instance;
+            set => _frameClock = value;
+        }
+
+        private INeoClock _utcClock;
+        private IFrameClock _frameClock;
+
+        // WHY: currentTime is a float; at day-cycle magnitudes (86400 s) one ulp is ~8 ms, so adding a 16 ms frame
+        // delta rounds by up to 50%. Carrying the rounding residual in double keeps long timers exact.
+        private double _timeCarry;
+        private TimerTextFormatter _textFormatter;
+        private TMP_Text _formattedTextTarget;
+
+        // WHY: A format that once threw is remembered, so a broken stored format costs one exception and one
+        // warning instead of an exception (and a parse) on every update.
+        private string _rejectedTimeFormat;
+        private string _rejectedDayTimeFormat;
 
         private bool _loadedFromSave;
         private float timeSinceLastUpdate;
@@ -197,6 +238,21 @@ namespace Neo.Tools
         private float lastProgress = -1f;
         private Vector3 originalScale;
         private int playbackGeneration;
+        private Coroutine _startAnimation;
+
+        private const string DefaultTimeFormat = "{0:F1}s";
+        private const string DefaultDayTimeFormat = "{0:00}:{1:00}";
+
+        /// <summary>
+        ///     Looping only: when true, the next cycle starts with the time by which the completing tick overshot the
+        ///     end, keeping the long-run period exact. Whole cycles skipped by one long tick are dropped (one completion,
+        ///     phase kept), so the new cycle never starts already complete. Default false keeps the legacy restart.
+        /// </summary>
+        public bool CarryLoopOvershoot
+        {
+            get => _carryLoopOvershoot;
+            set => _carryLoopOvershoot = value;
+        }
 
         /// <summary>
         ///     Day cycle length in seconds (0 = disabled). When > 0, time wraps at this value and DayTime* / OnNewDay /
@@ -287,10 +343,8 @@ namespace Neo.Tools
                 progressImage = GetComponent<Image>();
             }
 
-#if UNITY_TEXTMESHPRO
-            if (timeText == null)
-                timeText = GetComponent<TMP_Text>();
-#endif
+            // WHY: timeText is deliberately not auto-found. The field used to be compiled out, so auto-binding it now
+            // would make existing timers (and CooldownReward) overwrite labels that TimeToText or game code drive.
 
             if (milestonePercentages != null)
             {
@@ -338,6 +392,7 @@ namespace Neo.Tools
                 _loadedFromSave = LoadState();
             }
 
+            _timeCarry = 0d;
             Time.Value = GetCurrentTime();
         }
 
@@ -395,6 +450,7 @@ namespace Neo.Tools
         /// </summary>
         protected virtual void OnDisable()
         {
+            StopStartAnimation();
             if (saveProgress && !string.IsNullOrEmpty(GetSaveKey()))
             {
                 SaveState();
@@ -563,6 +619,7 @@ namespace Neo.Tools
             int generation = ++playbackGeneration;
             timeSinceLastUpdate = 0f;
             currentTime = infiniteDuration ? 0f : GetStartTimeForCurrentDuration();
+            _timeCarry = 0d;
             Time.Value = currentTime;
             if (generation != playbackGeneration)
             {
@@ -587,8 +644,7 @@ namespace Neo.Tools
         /// </summary>
         protected virtual void Update()
         {
-            float deltaTime = useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime;
-            Tick(deltaTime);
+            Tick(FrameClock.GetDeltaTime(useUnscaledTime));
         }
 
         /// <summary>
@@ -605,7 +661,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (pauseOnTimeScaleZero && !useUnscaledTime && UnityEngine.Time.timeScale == 0f)
+            if (pauseOnTimeScaleZero && !useUnscaledTime && FrameClock.TimeScale == 0f)
             {
                 return;
             }
@@ -631,7 +687,7 @@ namespace Neo.Tools
             int generation = playbackGeneration;
             if (infiniteDuration)
             {
-                currentTime += deltaTime;
+                AdvanceCurrentTime(deltaTime);
                 Time.Value = currentTime;
                 if (generation != playbackGeneration)
                 {
@@ -642,7 +698,7 @@ namespace Neo.Tools
                 return;
             }
 
-            currentTime += countUp ? deltaTime : -deltaTime;
+            AdvanceCurrentTime(countUp ? deltaTime : -deltaTime);
 
             if (_dayLengthSeconds > 0f && countUp && currentTime >= _dayLengthSeconds)
             {
@@ -670,7 +726,10 @@ namespace Neo.Tools
             bool reachedEnd = countUp ? currentTime >= duration : currentTime <= 0f;
             if (reachedEnd)
             {
+                double preciseTime = currentTime + _timeCarry;
+                float overshoot = (float)(countUp ? preciseTime - duration : -preciseTime);
                 currentTime = countUp ? duration : 0f;
+                _timeCarry = 0d;
 
                 if (!looping)
                 {
@@ -696,6 +755,10 @@ namespace Neo.Tools
                 {
                     ApplyRandomDurationIfNeeded();
                     currentTime = GetStartTimeForCurrentDuration();
+                    if (_carryLoopOvershoot)
+                    {
+                        ApplyLoopOvershoot(overshoot);
+                    }
                     isActive = true;
                     timeSinceLastUpdate = 0f;
 
@@ -721,6 +784,33 @@ namespace Neo.Tools
             else
             {
                 InvokeEvents();
+            }
+        }
+
+        private void AdvanceCurrentTime(float signedDelta)
+        {
+            double precise = currentTime + _timeCarry + signedDelta;
+            currentTime = (float)precise;
+            _timeCarry = precise - currentTime;
+        }
+
+        // WHY: The tick that completes a looping cycle usually runs past the end. Carrying that remainder into the
+        // next cycle keeps the long-run period exact. Whole skipped cycles are dropped (modulo), so a hitch keeps the
+        // phase without a burst of completions and the new cycle never starts already complete.
+        private void ApplyLoopOvershoot(float overshoot)
+        {
+            float start = currentTime;
+            float cycleLength = countUp ? duration - start : start;
+            if (!(overshoot > 0f) || !(cycleLength > 0f))
+            {
+                return;
+            }
+
+            float carried = overshoot % cycleLength;
+            float next = countUp ? start + carried : start - carried;
+            if (countUp ? next < duration : next > 0f)
+            {
+                currentTime = next;
             }
         }
 
@@ -824,26 +914,25 @@ namespace Neo.Tools
             int generation = playbackGeneration;
             if (infiniteDuration)
             {
-#if UNITY_TEXTMESHPRO
                 if (timeText != null)
                 {
+                    float t = timeValue >= 0 ? timeValue : currentTime;
                     if (_dayLengthSeconds > 0f)
                     {
-                        float t = timeValue >= 0 ? timeValue : currentTime;
                         float secs = t % _dayLengthSeconds;
-                        if (secs < 0f) secs += _dayLengthSeconds;
-                        int h = (int)(secs / 3600f) % 24;
-                        int m = (int)((secs % 3600f) / 60f);
-                        int sec = (int)(secs % 60f);
-                        timeText.text = string.Format(_dayTimeFormat, h, m, sec);
+                        if (secs < 0f)
+                        {
+                            secs += _dayLengthSeconds;
+                        }
+
+                        WriteDayTimeText(secs);
                     }
                     else
                     {
-                        float t = timeValue >= 0 ? timeValue : currentTime;
-                        timeText.text = string.Format(timeFormat, t, 0f, 0f);
+                        WriteTimeText(t, 0f, 0f);
                     }
                 }
-#endif
+
                 return;
             }
 
@@ -863,24 +952,100 @@ namespace Neo.Tools
                 }
             }
 
-#if UNITY_TEXTMESHPRO
             if (timeText != null)
             {
                 if (_dayLengthSeconds > 0f)
                 {
-                    float secs = GetDayTimeSeconds();
-                    int h = (int)(secs / 3600f) % 24;
-                    int m = (int)((secs % 3600f) / 60f);
-                    int sec = (int)(secs % 60f);
-                    timeText.text = string.Format(_dayTimeFormat, h, m, sec);
+                    WriteDayTimeText(GetDayTimeSeconds());
                 }
                 else
                 {
-                    string formattedText = string.Format(timeFormat, timeValue, progress, progress * 100f);
-                    timeText.text = formattedText;
+                    WriteTimeText(timeValue, progress, progress * 100f);
                 }
             }
-#endif
+        }
+
+        private void WriteDayTimeText(float secondsOfDay)
+        {
+            int h = (int)(secondsOfDay / 3600f) % 24;
+            int m = (int)(secondsOfDay % 3600f / 60f);
+            int sec = (int)(secondsOfDay % 60f);
+            TimerTextFormatter formatter = PrepareTextFormatter();
+            string format = _dayTimeFormat;
+            if (format != null && format == _rejectedDayTimeFormat)
+            {
+                format = DefaultDayTimeFormat;
+            }
+
+            bool changed;
+            try
+            {
+                changed = formatter.Format(format, h, m, sec);
+            }
+            catch (FormatException)
+            {
+                _rejectedDayTimeFormat = format;
+                WarnInvalidFormat("Day Time Format", format, DefaultDayTimeFormat);
+                changed = formatter.Format(DefaultDayTimeFormat, h, m, sec);
+            }
+
+            if (changed)
+            {
+                timeText.SetText(formatter.Buffer, 0, formatter.Length);
+            }
+        }
+
+        private void WriteTimeText(float timeValue, float progress, float percent)
+        {
+            TimerTextFormatter formatter = PrepareTextFormatter();
+            string format = timeFormat;
+            if (format != null && format == _rejectedTimeFormat)
+            {
+                format = DefaultTimeFormat;
+            }
+
+            bool changed;
+            try
+            {
+                changed = formatter.Format(format, timeValue, progress, percent);
+            }
+            catch (FormatException)
+            {
+                _rejectedTimeFormat = format;
+                WarnInvalidFormat("Time Format", format, DefaultTimeFormat);
+                changed = formatter.Format(DefaultTimeFormat, timeValue, progress, percent);
+            }
+
+            if (changed)
+            {
+                timeText.SetText(formatter.Buffer, 0, formatter.Length);
+            }
+        }
+
+        private void WarnInvalidFormat(string fieldName, string format, string fallback)
+        {
+            if (!NeoDiagnostics.RuntimeWarningsEnabled)
+            {
+                return;
+            }
+
+            NeoDiagnostics.LogWarning(
+                $"[TimerObject] {name}: {fieldName} \"{format}\" is not a valid composite format for this timer; " +
+                $"showing \"{fallback}\" instead.", this);
+        }
+
+        // WHY: Formatting into a reused buffer and pushing only changed text avoids a boxed, freshly allocated
+        // string (and a TMP mesh rebuild) on every timer update.
+        private TimerTextFormatter PrepareTextFormatter()
+        {
+            _textFormatter ??= new TimerTextFormatter();
+            if (!ReferenceEquals(_formattedTextTarget, timeText))
+            {
+                _formattedTextTarget = timeText;
+                _textFormatter.Invalidate();
+            }
+
+            return _textFormatter;
         }
 
         /// <summary>
@@ -919,6 +1084,7 @@ namespace Neo.Tools
             int generation = ++playbackGeneration;
             ApplyRandomDurationIfNeeded();
             currentTime = infiniteDuration ? 0f : GetStartTimeForCurrentDuration();
+            _timeCarry = 0d;
 
             if (milestoneReached != null)
             {
@@ -935,7 +1101,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (enableStartAnimation && Application.isPlaying)
+            if (enableStartAnimation && Application.isPlaying && isActiveAndEnabled)
             {
                 PlayStartAnimation();
             }
@@ -943,20 +1109,26 @@ namespace Neo.Tools
             InvokeEvents();
         }
 
+        // WHY: The pulse is a plain coroutine on the timer's own frame clock and time domain. The former DOTween branch
+        // sat behind a define that no asmdef sets, so it never compiled; the coroutine is the only implementation.
         private void PlayStartAnimation()
         {
-#if DG_TWEENING
+            StopStartAnimation();
+            _startAnimation = StartCoroutine(StartAnimationCoroutine());
+        }
+
+        // WHY: A restart or disable in the middle of the pulse used to leave the scale wherever the stopped (or a
+        // second, competing) animation had put it. Only the timer's own animation is stopped; others are untouched.
+        private void StopStartAnimation()
+        {
+            if (_startAnimation == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_startAnimation);
+            _startAnimation = null;
             transform.localScale = originalScale;
-            transform.DOScale(originalScale * startAnimationScale, startAnimationDuration * 0.5f)
-                .SetEase(DG.Tweening.Ease.OutQuad)
-                .OnComplete(() =>
-                {
-                    transform.DOScale(originalScale, startAnimationDuration * 0.5f)
-                        .SetEase(DG.Tweening.Ease.InQuad);
-                });
-#else
-            StartCoroutine(StartAnimationCoroutine());
-#endif
         }
 
         private IEnumerator StartAnimationCoroutine()
@@ -966,7 +1138,7 @@ namespace Neo.Tools
 
             while (elapsed < halfDuration)
             {
-                elapsed += UnityEngine.Time.deltaTime;
+                elapsed += FrameClock.GetDeltaTime(useUnscaledTime);
                 float t = elapsed / halfDuration;
                 float scale = Mathf.Lerp(1f, startAnimationScale, t);
                 transform.localScale = originalScale * scale;
@@ -977,7 +1149,7 @@ namespace Neo.Tools
 
             while (elapsed < halfDuration)
             {
-                elapsed += UnityEngine.Time.deltaTime;
+                elapsed += FrameClock.GetDeltaTime(useUnscaledTime);
                 float t = elapsed / halfDuration;
                 float scale = Mathf.Lerp(startAnimationScale, 1f, t);
                 transform.localScale = originalScale * scale;
@@ -985,6 +1157,7 @@ namespace Neo.Tools
             }
 
             transform.localScale = originalScale;
+            _startAnimation = null;
         }
 
         /// <summary>
@@ -1057,6 +1230,7 @@ namespace Neo.Tools
         public void SetTime(float time)
         {
             playbackGeneration++;
+            _timeCarry = 0d;
             if (infiniteDuration)
             {
                 currentTime = Mathf.Max(0f, time);
@@ -1086,6 +1260,7 @@ namespace Neo.Tools
         public void SetProgress(float progress)
         {
             playbackGeneration++;
+            _timeCarry = 0d;
             progress = Mathf.Clamp01(progress);
             if (countUp)
             {
@@ -1127,6 +1302,7 @@ namespace Neo.Tools
         public void SetDuration(float newDuration, bool keepProgress)
         {
             playbackGeneration++;
+            _timeCarry = 0d;
             if (newDuration < 0f)
             {
                 newDuration = 0f;

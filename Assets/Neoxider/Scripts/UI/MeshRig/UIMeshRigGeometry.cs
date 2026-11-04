@@ -107,6 +107,7 @@ namespace Neo.UI
     /// </summary>
     public static class UIMeshRigGeometryBuilder
     {
+        /// <summary>Builds a new geometry for the grid. Each call allocates fresh arrays the caller owns.</summary>
         public static UIMeshRigGeometry Build(
             int columns,
             int rows,
@@ -115,11 +116,35 @@ namespace Neo.UI
             bool deformationEnabled,
             IReadOnlyList<UIMeshRigPointState> points)
         {
+            return Build(columns, rows, space, uvRect, deformationEnabled, points, null);
+        }
+
+        /// <summary>
+        ///     Builds the grid into <paramref name="reuse" /> when its arrays already have the grid's sizes and
+        ///     returns it, so a rig rebuilt every frame does not allocate. Otherwise (null or another grid size)
+        ///     returns a new geometry. The returned instance is overwritten by the next call that reuses it.
+        /// </summary>
+        public static UIMeshRigGeometry Build(
+            int columns,
+            int rows,
+            UIMeshRigCoordinateSpace space,
+            Rect uvRect,
+            bool deformationEnabled,
+            IReadOnlyList<UIMeshRigPointState> points,
+            UIMeshRigGeometry reuse)
+        {
             int safeColumns = Mathf.Clamp(columns, 2, 40);
             int safeRows = Mathf.Clamp(rows, 2, 40);
             int vertexCount = (safeColumns + 1) * (safeRows + 1);
-            Vector3[] vertices = new Vector3[vertexCount];
-            Vector2[] uv = new Vector2[vertexCount];
+            int indexCount = safeColumns * safeRows * 6;
+            UIMeshRigGeometry geometry = reuse != null &&
+                                         reuse.Vertices.Length == vertexCount &&
+                                         reuse.UV.Length == vertexCount &&
+                                         reuse.Indices.Length == indexCount
+                ? reuse
+                : new UIMeshRigGeometry(new Vector3[vertexCount], new int[indexCount], new Vector2[vertexCount]);
+            Vector3[] vertices = geometry.Vertices;
+            Vector2[] uv = geometry.UV;
 
             for (int y = 0; y <= safeRows; y++)
             {
@@ -137,7 +162,7 @@ namespace Neo.UI
                 }
             }
 
-            int[] indices = new int[safeColumns * safeRows * 6];
+            int[] indices = geometry.Indices;
             int writeIndex = 0;
             int stride = safeColumns + 1;
             for (int y = 0; y < safeRows; y++)
@@ -157,7 +182,7 @@ namespace Neo.UI
                 }
             }
 
-            return new UIMeshRigGeometry(vertices, indices, uv);
+            return geometry;
         }
 
         public static Vector2 DeformPoint(

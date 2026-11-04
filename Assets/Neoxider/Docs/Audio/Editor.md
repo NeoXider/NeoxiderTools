@@ -1,11 +1,10 @@
 # Audio editor authoring
 
-The [Audio module](README.md) is the canonical module entry point. `Neo.Audio.Editor` supplies the AM
-inspector and the drawers for audio entries and audio ids. It is an Editor-only assembly; game code
-uses [AM](AM.md) and the runtime `Neo.Audio` assembly.
+**What it is:** the authoring guide for `Neo.Audio.Editor`, the Editor-only assembly that supplies the AM
+inspector and the drawers for audio entries and audio ids. Game code uses [AM](AM.md) and the runtime `Neo.Audio`
+assembly; the [Audio module](README.md) is the canonical module entry point.
 
-## Authoring entries
-
+**How to use:**
 1. Add **Neoxider > Audio > AM** to a scene object.
 2. Drop selected `AudioClip` assets onto the **Sound Entries** or **Music Entries** list to create one
    entry per clip. Each new entry uses the clip name as its id and starts with default volume, pitch,
@@ -14,6 +13,10 @@ uses [AM](AM.md) and the runtime `Neo.Audio` assembly.
    per-clip object fields to replace a particular clip.
 4. Expand an entry to edit its clip list, per-clip trim, volume, pitch and placeholder flag. Sound entries
    also expose channel and positional spatial blend; music entries expose pool mode and fade override.
+
+---
+
+## Authoring entries
 
 For an empty or single-clip entry, the collapsed header also provides a clip picker. **+** adds an empty
 clip slot; **-** removes a clip and its matching trim. Clearing the single clip using the header picker

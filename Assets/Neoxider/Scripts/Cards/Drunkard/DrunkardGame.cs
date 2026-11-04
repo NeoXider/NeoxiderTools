@@ -400,7 +400,7 @@ namespace Neo.Cards
             }
             catch (OperationCanceledException) when (!IsCurrent(operation))
             {
-                // Restart/destruction owns cleanup and the replacement game's flags.
+                // WHY: restart/destruction owns cleanup and the replacement game's flags.
             }
             finally
             {
@@ -1038,17 +1038,19 @@ namespace Neo.Cards
                     EnsureCurrent(operation);
                 }
 
-                List<CardComponent> allCards = await BuildInitialCardsAsync(operation);
+                List<CardComponent> allCards = BuildInitialCards(operation);
                 EnsureCurrent(operation);
+                if (_initialBoard != null)
+                {
+                    // WHY: one batch removal replaces per-card removal, which re-arranged the remaining board each time
+                    // (O(n^2) transform writes per restart), and unlike ClearAndReturn raises no extra OnBoardCleared.
+                    _initialBoard.RemoveCards(allCards);
+                    EnsureCurrent(operation);
+                }
+
                 bool toPlayer = true;
                 foreach (CardComponent cardObj in allCards)
                 {
-                    EnsureCurrent(operation);
-                    if (_initialBoard != null)
-                    {
-                        _initialBoard.RemoveCard(cardObj);
-                    }
-
                     EnsureCurrent(operation);
                     HandComponent hand = toPlayer ? PlayerHand : OpponentHand;
                     Queue<CardData> reserve = toPlayer ? _playerCards : _opponentCards;
@@ -1073,7 +1075,7 @@ namespace Neo.Cards
             }
             catch (OperationCanceledException) when (!IsCurrent(operation))
             {
-                // A later restart owns all shared queues, views and flags.
+                // WHY: a later restart owns all shared queues, views and flags.
             }
             finally
             {
@@ -1084,7 +1086,7 @@ namespace Neo.Cards
             }
         }
 
-        private async UniTask<List<CardComponent>> BuildInitialCardsAsync(GameOperation operation)
+        private List<CardComponent> BuildInitialCards(GameOperation operation)
         {
             EnsureCurrent(operation);
             List<CardComponent> allCards = new();
@@ -1106,16 +1108,22 @@ namespace Neo.Cards
                 if (_cardsParent != null)
                 {
                     cardObj.transform.SetParent(_cardsParent, true);
-                }
-
-                if (_initialBoard != null)
-                {
-                    await _initialBoard.PlaceCardAsync(cardObj, false, false);
                     EnsureCurrent(operation);
-                    _initialBoard.RegisterInitialCard(cardObj);
                 }
 
                 allCards.Add(cardObj);
+            }
+
+            if (_initialBoard != null)
+            {
+                // WHY: one batch keeps the initial board at a single layout pass for the whole deck instead of one
+                // pass per drawn card.
+                _initialBoard.PlaceCardsImmediate(allCards, false);
+                EnsureCurrent(operation);
+                for (int i = 0; i < allCards.Count; i++)
+                {
+                    _initialBoard.RegisterInitialCard(allCards[i]);
+                }
             }
 
             if (_debug && _initialBoard != null)

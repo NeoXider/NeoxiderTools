@@ -61,7 +61,7 @@ Validation failures are routed to **On Failed** without console spam. Exceptions
 
 - **Cast actions need the ability granted.** `CastById` with an ungranted id fails with `NotGranted` — grant it via the caster's **Abilities** list, a `UnitTemplate`, or a `GrantAbility` action first.
 - **`GrantAbility` keeps an existing slot.** Assigning a replacement asset registers it for future grants, but does not replace an already granted blueprint reference. To update that unit explicitly, invoke `RevokeAbility`, then `GrantAbility`; the new slot starts at level 1 with ready cooldown/full charges. Use `SetAbilityLevel` afterwards if the game should restore its level. The equivalent C# flow is described in [AbilityLibrary](./AbilityLibrary.md#pitfalls).
-- **Cast failure reasons also fire on the caster's `OnCastFailed`** — both events carry the same `CastFailureReason` name.
+- **Cast failure reasons also fire on the caster's `OnCastFailed`** — both events carry the same `CastFailureReason` name. Cast actions go through `AbilityCasterBehaviour.Cast(CastRequest)`, the typed C# equivalent: code that needs the reason reads the returned `CastResult.Failure` instead of the message string.
 - Unit actions require the unit to be registered (Play mode, component enabled).
 
 ## See also

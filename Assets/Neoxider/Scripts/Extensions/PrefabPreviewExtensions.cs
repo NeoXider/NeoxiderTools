@@ -11,7 +11,7 @@ namespace Neo.Extensions
     {
         private static readonly Dictionary<Texture2D, Sprite> CachedPreviewSprites = new();
 
-        // Release owned sprites on editor reload/quit and across play sessions, including disabled domain reload.
+        // WHY: Release owned sprites on editor reload/quit and across play sessions, including disabled domain reload.
         // The lifecycle attribute is source-generated, so the containing class must stay partial.
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]

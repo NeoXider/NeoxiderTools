@@ -94,6 +94,12 @@ namespace Neo.Tools
         [Tooltip("Invoked for each affected object")]
         public UnityEvent<GameObject> OnObjectAffected = new();
 
+        private const int InitialOverlapCapacity = 32;
+
+        private readonly HashSet<Rigidbody> _affectedBodies = new();
+        private Collider[] _overlapBuffer;
+        private int _explosionDepth;
+
         /// <summary>
         ///     Current explosion force.
         /// </summary>
@@ -108,6 +114,15 @@ namespace Neo.Tools
         ///     Whether the explosion has already fired (non-manual modes).
         /// </summary>
         public bool HasExploded { get; private set; }
+
+        /// <summary>
+        ///     Layers queried by the explosion. Changes apply to the next <see cref="Explode()" />.
+        /// </summary>
+        public LayerMask AffectedLayers
+        {
+            get => affectedLayers;
+            set => affectedLayers = value;
+        }
 
         private void Awake()
         {
@@ -177,11 +192,70 @@ namespace Neo.Tools
 
             Vector3 explosionCenter = transform.position;
             Rigidbody sourceBody = GetComponentInParent<Rigidbody>();
-            HashSet<Rigidbody> affectedBodies = new();
-            Collider[] colliders = Physics.OverlapSphere(explosionCenter, radius, affectedLayers);
-
-            foreach (Collider col in colliders)
+            HashSet<Rigidbody> affectedBodies;
+            Collider[] colliders;
+            int colliderCount;
+            if (_explosionDepth == 0)
             {
+                colliderCount = PhysicsOverlap.OverlapSphereComplete(explosionCenter, radius, affectedLayers,
+                    ref _overlapBuffer, InitialOverlapCapacity);
+                colliders = _overlapBuffer;
+                affectedBodies = _affectedBodies;
+                affectedBodies.Clear();
+            }
+            else
+            {
+                // WHY: a listener exploded again while the outer pass still iterates the shared buffers.
+                colliders = Physics.OverlapSphere(explosionCenter, radius, affectedLayers);
+                colliderCount = colliders.Length;
+                affectedBodies = new HashSet<Rigidbody>();
+            }
+
+            _explosionDepth++;
+            try
+            {
+                if (!ApplyExplosion(colliders, colliderCount, affectedBodies, explosionCenter, sourceBody,
+                        finalForce))
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                _explosionDepth--;
+                if (ReferenceEquals(colliders, _overlapBuffer))
+                {
+                    System.Array.Clear(colliders, 0, colliderCount);
+                    affectedBodies.Clear();
+                }
+            }
+
+            OnExplode?.Invoke();
+            if (this == null)
+            {
+                return;
+            }
+
+            if (destroyAfterExplosion)
+            {
+                if (destroyDelay > 0f)
+                {
+                    Destroy(gameObject, destroyDelay);
+                }
+                else
+                {
+                    Destroy(gameObject);
+                }
+            }
+        }
+
+        /// <summary>Applies the impulse to every body in the prefix; false when a listener destroyed the emitter.</summary>
+        private bool ApplyExplosion(Collider[] colliders, int colliderCount, HashSet<Rigidbody> affectedBodies,
+            Vector3 explosionCenter, Rigidbody sourceBody, float finalForce)
+        {
+            for (int i = 0; i < colliderCount; i++)
+            {
+                Collider col = colliders[i];
                 if (col == null || col.gameObject == gameObject)
                 {
                     continue;
@@ -220,7 +294,7 @@ namespace Neo.Tools
 
                 if (forceMode == ForceMode.AddExplosionForce)
                 {
-                    // Falloff is already applied above; a zero Unity radius avoids applying it twice.
+                    // WHY: falloff is already applied above; a zero Unity radius avoids applying it twice.
                     rb.AddExplosionForce(forceAtDistance, explosionCenter, 0f, 0f,
                         UnityEngine.ForceMode.Impulse);
                 }
@@ -232,27 +306,11 @@ namespace Neo.Tools
                 OnObjectAffected?.Invoke(col.gameObject);
                 if (this == null)
                 {
-                    return;
+                    return false;
                 }
             }
 
-            OnExplode?.Invoke();
-            if (this == null)
-            {
-                return;
-            }
-
-            if (destroyAfterExplosion)
-            {
-                if (destroyDelay > 0f)
-                {
-                    Destroy(gameObject, destroyDelay);
-                }
-                else
-                {
-                    Destroy(gameObject);
-                }
-            }
+            return true;
         }
 
         /// <summary>

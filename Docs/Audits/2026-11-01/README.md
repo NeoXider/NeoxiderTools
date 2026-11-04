@@ -37,4 +37,4 @@ Root сохраняет старые неудачные прогоны и skips 
 - [Runtime contracts](RuntimeWebContracts.md), [независимое runtime review](NativeRuntimeReview.md), [gree inspection](GreeBackendInspection.md).
 - [Editor UX](EditorWindowUX.md), [независимое Editor/demo review](NativeDemoEditorReview.md), [CTA readback](CTAReadback.md).
 - [Доступность native toolchain и план spike](WebBackendFeasibility.md), [сравнение готовых OSS WebView](WebViewAlternatives.md). Ни один browser backend здесь не принят как готовый.
-- [Историческая приёмка 11.0.0](../../../Assets/Neoxider/Verification11.md), [текущий HTML runtime TODO](../../../Assets/Neoxider/Docs/UI/HtmlToUitkRuntimeTODO.md).
+- [Историческая приёмка 11.0.0](../../../Assets/Neoxider/Verification11.md), [текущий HTML runtime TODO](https://github.com/NeoXider/HtmlToUitk).

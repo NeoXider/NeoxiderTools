@@ -68,7 +68,21 @@ namespace Neo.Cards
             CustomId = string.Empty;
             DisplayName = string.Empty;
             SortValue = (int)rank;
-            Group = suit.ToString();
+            Group = GetSuitGroup(suit);
+        }
+
+        // WHY: Enum.ToString allocates a new string per call; standard cards are created in bulk
+        // (deck builds, poker outs, AI search), so the group name of every defined suit is cached.
+        private static string GetSuitGroup(Suit suit)
+        {
+            return suit switch
+            {
+                Suit.Hearts => "Hearts",
+                Suit.Diamonds => "Diamonds",
+                Suit.Clubs => "Clubs",
+                Suit.Spades => "Spades",
+                _ => suit.ToString()
+            };
         }
 
         /// <summary>
@@ -153,7 +167,7 @@ namespace Neo.Cards
                 return -1;
             }
 
-            return Rank.CompareTo(other.Rank);
+            return ((int)Rank).CompareTo((int)other.Rank);
         }
 
         /// <summary>

@@ -2601,21 +2601,26 @@ namespace Neo.Audio
             // needs no such copy: AMSettings.SetMusicVolume goes through SetMusicVolume.
             private void LateUpdate()
             {
-                if (_music != null)
+                if (_music == null)
                 {
-                    for (int index = 0; index < _musicFadeSources.Length; index++)
+                    return;
+                }
+
+                // WHY one read and change-only writes: every AudioSource property is a native call, and this runs
+                // every frame for the whole life of the game while the mute changes a handful of times.
+                bool musicMuted = _music.mute;
+                for (int index = 0; index < _musicFadeSources.Length; index++)
+                {
+                    AudioSource fade = _musicFadeSources[index];
+                    if (fade != null && fade.mute != musicMuted)
                     {
-                        AudioSource fade = _musicFadeSources[index];
-                        if (fade != null)
-                        {
-                            fade.mute = _music.mute;
-                        }
+                        fade.mute = musicMuted;
                     }
                 }
 
-                if (_ambience != null && _music != null && _ambience.mute != _music.mute)
+                if (_ambience != null && _ambience.mute != musicMuted)
                 {
-                    _ambience.mute = _music.mute;
+                    _ambience.mute = musicMuted;
                 }
             }
 

@@ -1,3 +1,4 @@
+using Neo.Tests.Performance;
 using Neo.UI;
 using NUnit.Framework;
 using UnityEngine;
@@ -59,6 +60,37 @@ namespace Neo.Tests.UI
         }
 
         [Test]
+        public void ApplyPreset_GivesEachMotionItsOwnCurvesAndLeavesTheSharedPresetUntouched()
+        {
+            GameObject firstObject = new GameObject("First motion", typeof(RectTransform), typeof(UIMeshRigPoint));
+            GameObject secondObject = new GameObject("Second motion", typeof(RectTransform), typeof(UIMeshRigPoint));
+            try
+            {
+                UIMeshRigPointMotion first = firstObject.AddComponent<UIMeshRigPointMotion>();
+                UIMeshRigPointMotion second = secondObject.AddComponent<UIMeshRigPointMotion>();
+                first.ApplyPreset(UIMeshRigMotionPreset.Wave);
+                second.ApplyPreset(UIMeshRigMotionPreset.Wave);
+                UIMeshRigMotionProfile shared = UIMeshRigMotionPresets.GetShared(UIMeshRigMotionPreset.Wave);
+                float sharedValue = shared.PositionY.keys[0].value;
+
+                Assert.That(first.Profile.PositionY, Is.Not.SameAs(shared.PositionY));
+                Assert.That(first.Profile.PositionY, Is.Not.SameAs(second.Profile.PositionY));
+                Keyframe[] keys = first.Profile.PositionY.keys;
+                keys[0].value = sharedValue + 42f;
+                first.Profile.PositionY.keys = keys;
+
+                Assert.That(second.Profile.PositionY.keys[0].value, Is.EqualTo(sharedValue));
+                Assert.That(shared.PositionY.keys[0].value, Is.EqualTo(sharedValue),
+                    "Editing an applied preset must never write into the shared read-only preset.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(firstObject);
+                Object.DestroyImmediate(secondObject);
+            }
+        }
+
+        [Test]
         public void Wave_UsesPointPositionAsTravelPhase()
         {
             UIMeshRigMotionProfile profile = UIMeshRigMotionPresets.Create(UIMeshRigMotionPreset.Wave);
@@ -111,7 +143,8 @@ namespace Neo.Tests.UI
             UIMeshRigMotionEvaluator.Evaluate(wave, 0f, 1f, 0f, pointPosition, 12);
             UIMeshRigMotionEvaluator.Evaluate(noise, 0f, 1f, 0f, pointPosition, 12);
 
-            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            using GcAllocCounter allocationCounter = GcAllocCounter.CreateOrIgnore();
+            allocationCounter.Begin();
             int index;
             for (index = 0; index < 1000; index++)
             {
@@ -119,9 +152,9 @@ namespace Neo.Tests.UI
                 UIMeshRigMotionEvaluator.Evaluate(wave, time, 1f, 0f, pointPosition, 12);
                 UIMeshRigMotionEvaluator.Evaluate(noise, time, 1f, 0f, pointPosition, 12);
             }
-            long after = System.GC.GetAllocatedBytesForCurrentThread();
+            long allocationCalls = allocationCounter.End();
 
-            Assert.That(after - before, Is.EqualTo(0L));
+            Assert.That(allocationCalls, Is.EqualTo(0L));
         }
 
         [Test]

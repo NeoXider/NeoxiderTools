@@ -1,8 +1,8 @@
 ﻿# StateCondition
 
-**Purpose:** Abstract base class for state transition conditions in `StateMachine`. Has a single method `Evaluate()` → `bool`. Three built-in implementations: `BoolStateCondition`, `FloatStateCondition`, `EventStateCondition`.
+**What it is:** the legacy abstract base class for state conditions (`Evaluate()` → `bool`) with three built-in implementations: `BoolStateCondition`, `FloatStateCondition`, `EventStateCondition`. Path: `Scripts/StateMachine/StateCondition.cs`, namespace `Neo.StateMachine`. Transitions do not consume it; it is kept for backward compatibility.
 
-> For new projects, prefer `StatePredicate` — a more flexible replacement.
+**How to use:** evaluate it yourself from code (see the example). For transition gating use `StatePredicate` — the more flexible replacement that `StateTransition` evaluates.
 
 ---
 
@@ -47,15 +47,9 @@ Condition via UnityEvent: on `Evaluate()`, fires `OnEvaluate`; a listener calls 
 
 ## Examples
 
-### No-Code (Inspector)
-1. In `StateMachineBehaviour`, add a transition with `FloatStateCondition`.
-2. Bind **Value** to the character's health.
-3. Set **Comparison** = `LessThan`, **Threshold** = `0`.
-4. The transition fires when health drops below zero.
-
 ### Code
 ```csharp
-var condition = new FloatStateCondition();
+FloatStateCondition condition = new();
 condition.Value = player.Health;
 condition.Comparison = ComparisonType.LessThan;
 condition.Threshold = 0f;

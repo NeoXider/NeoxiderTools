@@ -2,7 +2,12 @@
 
 **What it is:** `Singleton<MonoBehaviour>` — inspector config: SaveProvider key prefix, preset→quality mapping, resolution/FPS lists, debounced save, reset defaults. File: `Scripts/Settings/GameSettingsComponent.cs`.
 
-**How to use:** Create via **Neoxider/Settings/Game Settings Service**, configure mappings and persist flags.
+**How to use:**
+1. Create via **Neoxider/Settings/Game Settings Service** (or add the component to a bootstrap object).
+2. Configure the key prefix, persist flags, preset mappings, resolution/FPS lists and defaults.
+3. Read and change settings through the static [GameSettings](./GameSettings.md) API or bind UI with [SettingsView](./SettingsView.md).
+
+---
 
 ## Scene configuration
 
@@ -24,12 +29,13 @@ Initialization attaches this service and loads settings. The inherited singleton
 | `SetMouseSensitivityForMenu(float)` | Applies sensitivity and requests debounced persistence. |
 | `SetMouseSensitivityForMenuImmediate(float)` | Applies sensitivity and writes enabled groups immediately. |
 | `FlushDeferredSaveCoroutine()` | Cancels the callback only. Use `GameSettings.FlushPendingSettingsSave()` to also write values. |
+| `HasPendingDeferredSave` | Read-only: whether `Deferred` changes are still unwritten (the debounce is running, or its coroutine was stopped from outside before it saved). |
 
 These typed methods can be called directly or connected to UI UnityEvents. `SettingsView` supplies the common bindings automatically.
 
 ## Deferred-save lifecycle
 
-The debounce delay uses real time, so pausing gameplay through `Time.timeScale` does not delay the save. A later deferred request replaces the scheduled callback. Disabling the owning service flushes its pending save before the callback is lost, including when its GameObject is destroyed. A deferred request made while the attached service is inactive writes synchronously because it cannot schedule a coroutine. Application pause also flushes settings.
+The debounce delay uses real time, so pausing gameplay through `Time.timeScale` does not delay the save. A later deferred request moves the deadline of the pending save, so a dragged slider runs one coroutine per burst instead of restarting one per change; the save happens once the delay passes after the last change. If something stops the pending coroutine from outside (for example `StopAllCoroutines()` wired to a UnityEvent), the next deferred request notices it and starts a new one; until such a request, disable, pause or `SettingsView` close arrives, the value stays pending and `HasPendingDeferredSave` keeps reporting `true`. Disabling the owning service flushes its pending save before the callback is lost, including when its GameObject is destroyed. A deferred request made while the attached service is inactive writes synchronously because it cannot schedule a coroutine. Application pause also flushes settings.
 
 A former service's delayed callback must not save a replacement context. Explicitly changing contexts is not a profile migration: flush before replacing a service if its current state must be retained. Closing a `SettingsView` flushes enabled groups even if that panel did not start the pending change.
 

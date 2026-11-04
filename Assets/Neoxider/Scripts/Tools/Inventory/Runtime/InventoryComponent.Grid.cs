@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using System.Runtime.ExceptionServices;
+using UnityEngine.Pool;
 
 namespace Neo.Tools
 {
@@ -157,7 +158,8 @@ namespace Neo.Tools
                 return false;
             }
 
-            InventorySlotState next = state != null ? state.Clone() : InventorySlotState.Empty();
+            // WHY: The candidate is only read below, so it needs no defensive deep copy.
+            InventorySlotState next = state ?? InventorySlotState.Empty();
             if (!next.IsEmpty)
             {
                 if (next.EffectiveItemId < 0 || !CanUseItemId(next.EffectiveItemId))
@@ -172,39 +174,57 @@ namespace Neo.Tools
                 }
             }
 
-            List<InventorySlotState> slots = slotted.CreateSlotSnapshot();
-            if (slotIndex < 0 || slotIndex >= slots.Count)
+            int capacity = slotted.SlotCapacity;
+            if (slotIndex < 0 || slotIndex >= capacity)
             {
                 return false;
             }
 
-            slots[slotIndex] = next;
-
+            // WHY: The built-in grid is read in place; cloning every slot per validation made each slot import
+            // during Load O(slots) clones, i.e. O(slots^2) for a full grid. Custom backends keep the snapshot path.
+            SlotGridInventory grid = slotted as SlotGridInventory;
+            List<InventorySlotState> snapshot = grid == null ? slotted.CreateSlotSnapshot() : null;
             long total = 0;
-            HashSet<int> unique = new();
-            for (int i = 0; i < slots.Count; i++)
+            HashSet<int> unique = HashSetPool<int>.Get();
+            try
             {
-                InventorySlotState slot = slots[i];
-                if (slot == null || slot.IsEmpty)
+                for (int i = 0; i < capacity; i++)
                 {
-                    continue;
+                    InventorySlotState slot = i == slotIndex ? next
+                        : grid != null ? grid.PeekSlot(i)
+                        : i < snapshot.Count ? snapshot[i] : null;
+                    if (slot == null || slot.IsEmpty)
+                    {
+                        continue;
+                    }
+
+                    total += slot.EffectiveCount;
+                    unique.Add(slot.EffectiveItemId);
                 }
 
-                total += slot.EffectiveCount;
-                unique.Add(slot.EffectiveItemId);
-            }
+                if (total > int.MaxValue || (_maxTotalItems > 0 && total > _maxTotalItems))
+                {
+                    return false;
+                }
 
-            if (total > int.MaxValue || (_maxTotalItems > 0 && total > _maxTotalItems))
+                return _maxUniqueItems <= 0 || unique.Count <= _maxUniqueItems;
+            }
+            finally
             {
-                return false;
+                HashSetPool<int>.Release(unique);
             }
+        }
 
-            if (_maxUniqueItems > 0 && unique.Count > _maxUniqueItems)
+        /// <summary>Live slot for one-shot UI binding inside this assembly; never null, must not be mutated.</summary>
+        internal InventorySlotState PeekSlotForView(int slotIndex)
+        {
+            EnsureRuntimeInitialized();
+            if (_storage is SlotGridInventory grid)
             {
-                return false;
+                return grid.PeekSlot(slotIndex) ?? InventorySlotState.Empty();
             }
 
-            return true;
+            return GetSlot(slotIndex);
         }
     }
 }

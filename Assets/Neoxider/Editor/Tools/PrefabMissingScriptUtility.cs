@@ -48,7 +48,7 @@ namespace Neo.Editor.Tools
                 return 0;
             }
 
-            var validRoots = new List<string>();
+            List<string> validRoots = new List<string>();
             for (int i = 0; i < roots.Length; i++)
             {
                 if (AssetDatabase.IsValidFolder(roots[i]))

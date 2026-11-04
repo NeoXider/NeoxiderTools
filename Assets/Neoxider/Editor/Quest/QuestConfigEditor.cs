@@ -9,6 +9,8 @@ namespace Neo.Editor.Quest
     [CanEditMultipleObjects]
     public sealed class QuestConfigEditor : CustomEditorBase
     {
+        private readonly DefinitionValidationCache _definitionIssues = new();
+
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
         protected override void ProcessAttributeAssignments()
@@ -103,7 +105,23 @@ namespace Neo.Editor.Quest
                     MessageType.Warning);
             }
 
-            if (objectivesProp.arraySize == 0)
+            // WHY: the runtime's own definition check (empty ids, objectives without targets, bad counts)
+            // was only reachable from code. It is shown here for a single selection and re-run only when the
+            // asset changes.
+            if (!serializedObject.isEditingMultipleObjects && target is QuestConfig quest)
+            {
+                if (_definitionIssues.NeedsRefresh(quest))
+                {
+                    _definitionIssues.Store(quest, quest.ValidateDefinition());
+                }
+
+                IReadOnlyList<string> issues = _definitionIssues.Issues;
+                for (int i = 0; i < issues.Count; i++)
+                {
+                    EditorGUILayout.HelpBox(issues[i], MessageType.Warning);
+                }
+            }
+            else if (objectivesProp.arraySize == 0)
             {
                 EditorGUILayout.HelpBox("This quest has no objectives yet.", MessageType.Info);
             }
@@ -127,14 +145,58 @@ namespace Neo.Editor.Quest
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
-                EditorGUI.BeginDisabledGroup(string.IsNullOrWhiteSpace(titleProp.stringValue));
+                bool multiple = serializedObject.isEditingMultipleObjects;
+                EditorGUI.BeginDisabledGroup(!multiple && string.IsNullOrWhiteSpace(titleProp.stringValue));
                 if (GUILayout.Button("Generate ID", GUILayout.Width(110f)))
                 {
-                    idProp.stringValue = titleProp.stringValue.Replace(" ", "_");
+                    if (multiple)
+                    {
+                        GenerateIdsFromOwnTitles();
+                    }
+                    else
+                    {
+                        idProp.stringValue = titleProp.stringValue.Replace(" ", "_");
+                    }
                 }
 
                 EditorGUI.EndDisabledGroup();
             }
+        }
+
+        /// <summary>
+        ///     Multi-selection variant of Generate ID. The shared property shows the first quest's title, so
+        ///     writing it through <c>idProp</c> gave every selected quest the same id; each quest now derives its
+        ///     id from its own title, as one undo step.
+        /// </summary>
+        private void GenerateIdsFromOwnTitles()
+        {
+            serializedObject.ApplyModifiedProperties();
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            foreach (Object selected in targets)
+            {
+                if (selected == null)
+                {
+                    continue;
+                }
+
+                using (SerializedObject single = new(selected))
+                {
+                    SerializedProperty title = single.FindProperty("_title");
+                    SerializedProperty id = single.FindProperty("_id");
+                    if (title == null || id == null || string.IsNullOrWhiteSpace(title.stringValue))
+                    {
+                        continue;
+                    }
+
+                    id.stringValue = title.stringValue.Replace(" ", "_");
+                    single.ApplyModifiedProperties();
+                }
+            }
+
+            Undo.SetCurrentGroupName("Generate Quest IDs");
+            Undo.CollapseUndoOperations(group);
+            serializedObject.Update();
         }
 
         private static bool HasDuplicateValues(SerializedProperty arrayProp)

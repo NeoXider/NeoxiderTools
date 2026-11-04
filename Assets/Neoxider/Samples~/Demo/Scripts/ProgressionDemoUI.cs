@@ -1,6 +1,7 @@
+using System.Collections.Generic;
+using System.Text;
 using Neo.Core.Level;
 using Neo.Progression;
-using Neo.Samples.Survivor;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,270 +9,310 @@ using UnityEngine.UI;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Demo UI for the LevelComponent + LevelCurveDefinition system, built at runtime with uGUI
-    ///     through <see cref="NeoDemoShell" /> (no prefabs, no IMGUI). Shows level, XP, XP-to-next,
-    ///     an XP progress bar, and provides buttons for adding XP and resetting progress.
+    ///     Controller of the authored <b>Neo.Progression</b> demo scene (Progression_Demo.unity). The whole UI, the
+    ///     ProgressionNoCodeAction objects, the NoCodeBindText readouts and every persistent listener are saved in
+    ///     the scene by its DemoSceneKit builder (ProgressionDemoBuilder); this component builds nothing at runtime.
+    ///     XP buttons call <see cref="AddXp" /> (the C# path: <see cref="LevelComponent.AddXp" />), perk/unlock/premium
+    ///     buttons call ProgressionNoCodeAction.Execute directly (the NoCode path), and the LevelComponent and
+    ///     ProgressionManager UnityEvents call the Handle* methods below to refresh the authored labels and log.
     /// </summary>
+    [AddComponentMenu("Neoxider/Demos/Progression Demo")]
     public class ProgressionDemoUI : MonoBehaviour
     {
-        private static readonly Color Accent = new Color(0.26f, 0.85f, 0.64f);
-        private static readonly Color LevelYellow = new Color(1f, 0.84f, 0.35f);
+        private const string OwnedColor = "#43D9A3";
+        private const string AvailableColor = "#EDEFFA";
+        private const string LockedColor = "#7C7F92";
 
-        [Header("References")] [SerializeField]
+        [Header("References")]
+        [Tooltip("Core XP/level source. Falls back to the first LevelComponent in the scene when empty.")]
+        [SerializeField]
         private LevelComponent _levelComponent;
 
-        [Header("Settings")] [SerializeField] private int _xpPerClick = 25;
-
-        private NeoDemoShell.Context _shell;
-        private TMP_Text _levelBig;
-        private TMP_Text _totalXpValue;
-        private TMP_Text _toNextValue;
-        private TMP_Text _currentLevelXpValue;
-        private Image _xpFill;
-        private GameObject _currentLevelXpRow;
-        private GameObject _xpBarRow;
-
+        [Tooltip("Meta progression (perk points, unlock tree, perk tree, premium). Falls back to the singleton.")]
+        [SerializeField]
         private ProgressionManager _progression;
-        private ProgressionNoCodeAction _progressionNoCode;
-        private TMP_Text _perkPointsValue;
 
-        private void OnEnable() => _shell?.SetVisible(true);
-        private void OnDisable() => _shell?.SetVisible(false);
+        [Header("Settings")]
+        [Tooltip("XP step used by AddSmallXp / AddMediumXp (x5) / AddLargeXp (x20).")]
+        [SerializeField]
+        private int _xpPerClick = 25;
+
+        [Header("Authored UI")]
+        [SerializeField] private TMP_Text _levelLabel;
+        [SerializeField] private TMP_Text _currentLevelXpValue;
+        [SerializeField] private Image _xpFill;
+        [SerializeField] private TMP_Text _premiumValue;
+        [SerializeField] private TMP_Text _unlockTreeValue;
+        [SerializeField] private TMP_Text _perkTreeValue;
+        [SerializeField] private DemoLogFeed _log;
+
+        private readonly StringBuilder _text = new();
+        private bool _warnedUnbuilt;
+
+        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _log != null && _levelLabel != null && _xpFill != null && _unlockTreeValue != null &&
+                                    _perkTreeValue != null;
+
+        public LevelComponent LevelComponent => _levelComponent;
+        public ProgressionManager Progression => _progression;
 
         private void Start()
         {
+            if (!IsSceneBuilt)
+            {
+                WarnUnbuilt();
+            }
+
             if (_levelComponent == null)
             {
+                // WHY: scene search is only the fallback for an unbuilt scene; the builder assigns the reference.
                 _levelComponent = FindFirstObjectByType<LevelComponent>();
             }
 
-            // WHY: the shell header is single-line; a long title wraps onto the overline text.
-            _shell = NeoDemoShell.Build("Neo.Level Progression", Accent, transform);
-            NeoDemoShell.ShowInfoCardOnce(
-                "Progression (Level System)",
-                "LevelComponent turns XP into levels via a LevelCurveDefinition curve.",
-                "XP buttons call LevelComponent.AddXp(amount)",
-                "OnLevelUp / OnXpGained events drive the readout and log",
-                "Reset Progress restores the starting level and XP");
+            if (_progression == null)
+            {
+                _progression = ProgressionManager.I;
+            }
 
             if (_levelComponent == null)
             {
-                TMP_Text status = _shell.AddValueLabel("Status");
-                status.text = "No LevelComponent found in scene!";
-                status.color = SurvivorUI.Danger;
-                Log("<color=red>No LevelComponent found in scene!</color>");
+                Log("<color=#FF5C7A>No LevelComponent in the scene - run Neoxider/Demo/Rebuild Active Demo Scene.</color>");
                 return;
             }
 
-            _levelComponent.OnLevelUp.AddListener(OnLevelUp);
-            _levelComponent.OnXpGained.AddListener(OnXpGained);
-
-            BuildStatsRows();
-            BuildButtonRows();
-            BuildProgressionBridge();
-            RefreshStats();
-
-            Log("Progression Demo started. Use buttons below to add XP and level up!");
+            RefreshView();
+            Log("Progression demo ready: XP buttons call LevelComponent.AddXp, the right column runs NoCode actions");
         }
 
-        private void OnDestroy()
+        /// <summary>Button target (C# path): adds XP through <see cref="LevelComponent.AddXp" />.</summary>
+        public void AddXp(int amount)
+        {
+            if (_levelComponent == null || amount <= 0)
+            {
+                return;
+            }
+
+            // WHY: logged before the call so the level-up line it may trigger appears above it (newest first).
+            Log("LevelComponent.AddXp(" + amount + ")");
+            _levelComponent.AddXp(amount);
+            RefreshView();
+        }
+
+        /// <summary>ProgressionNoCodeAction.OnResultMessage listener: shows the NoCode result in the log.</summary>
+        public void LogNoCodeResult(string message)
+        {
+            Log("NoCode -> " + message);
+        }
+
+        /// <summary>Adds <c>XP Per Click</c>.</summary>
+        public void AddSmallXp()
+        {
+            AddXp(_xpPerClick);
+        }
+
+        /// <summary>Adds five times <c>XP Per Click</c>.</summary>
+        public void AddMediumXp()
+        {
+            AddXp(_xpPerClick * 5);
+        }
+
+        /// <summary>Adds twenty times <c>XP Per Click</c>.</summary>
+        public void AddLargeXp()
+        {
+            AddXp(_xpPerClick * 20);
+        }
+
+        /// <summary>LevelComponent.OnLevelUp listener.</summary>
+        public void HandleLevelUp(int newLevel)
+        {
+            Log("<color=#FFD659>LevelComponent.OnLevelUp -> level " + newLevel +
+                "</color> · ProgressionManager pays the Reward Track entry");
+            RefreshView();
+        }
+
+        /// <summary>ProgressionManager.OnNodeUnlocked listener.</summary>
+        public void HandleNodeUnlocked(string nodeId)
+        {
+            Log("ProgressionManager.OnNodeUnlocked -> " + nodeId);
+            RefreshView();
+        }
+
+        /// <summary>ProgressionManager.OnPerkPurchased listener.</summary>
+        public void HandlePerkPurchased(string perkId)
+        {
+            Log("ProgressionManager.OnPerkPurchased -> " + perkId);
+            RefreshView();
+        }
+
+        /// <summary>ProgressionManager.OnPremiumActivated listener.</summary>
+        public void HandlePremiumActivated()
+        {
+            Log("ProgressionManager.OnPremiumActivated -> premium rewards of reached levels granted retroactively");
+            RefreshView();
+        }
+
+        /// <summary>ProgressionManager.OnProfileReset listener.</summary>
+        public void HandleProgressionReset()
+        {
+            Log("<color=#FF5C7A>ProgressionManager.OnProfileReset -> level, XP, perks and unlocks cleared</color>");
+            RefreshView();
+        }
+
+        /// <summary>Re-reads the level provider and the progression profile into the authored labels.</summary>
+        public void RefreshView()
         {
             if (_levelComponent != null)
             {
-                _levelComponent.OnLevelUp.RemoveListener(OnLevelUp);
-                _levelComponent.OnXpGained.RemoveListener(OnXpGained);
+                if (_levelLabel != null)
+                {
+                    _levelLabel.text = "Level " + _levelComponent.Level;
+                }
+
+                RefreshXpBar();
             }
 
-            NeoDemoShell.DestroyOwnedObject(_progressionNoCode);
-            _shell?.Dispose();
-        }
-
-        private void BuildStatsRows()
-        {
-            _levelBig = _shell.AddBigLabel("Level 1");
-            _levelBig.color = LevelYellow;
-
-            _totalXpValue = _shell.AddValueLabel("Total XP");
-            _toNextValue = _shell.AddValueLabel("XP To Next Level");
-
-            _currentLevelXpValue = _shell.AddValueLabel("Current Level XP");
-            _currentLevelXpRow = _currentLevelXpValue.transform.parent.gameObject;
-
-            _xpFill = _shell.AddBar("XP Progress", Accent);
-            // WHY: AddBar nests fill → track → row; the row is what layout shows/hides.
-            _xpBarRow = _xpFill.transform.parent.parent.gameObject;
-        }
-
-        private void BuildButtonRows()
-        {
-            _shell.AddButtonRow(($"+ {_xpPerClick} XP", AddSmallXp));
-            _shell.AddButtonRow(($"+ {_xpPerClick * 5} XP (Medium)", AddMediumXp));
-            _shell.AddButtonRow(($"+ {_xpPerClick * 20} XP (Large)", AddLargeXp));
-
-            Button[] reset = _shell.AddButtonRow(("Reset Progress", ResetLevel));
-            ((Image)reset[0].targetGraphic).color = SurvivorUI.Danger;
-        }
-
-        private void BuildProgressionBridge()
-        {
-            // WHY: the meta-progression layer (ProgressionManager) sits on top of the LevelComponent;
-            // both actions below run through the serialized ProgressionNoCodeAction bridge — no gameplay C#.
-            // ProgressionManager is a self-managing Singleton — AddComponent on THIS GameObject would
-            // let a duplicate's Awake Destroy the whole demo UI, so resolve it via the singleton accessor.
-            _progression = ProgressionManager.I;
-            _progression.AutoSave = false; // WHY: demo state must not persist into the shared default profile key
-            _progression.LevelProvider = _levelComponent; // post-Awake assignment rebinds level-up rewards
-
-            _progressionNoCode = gameObject.AddComponent<ProgressionNoCodeAction>();
-            _progressionNoCode.Manager = _progression;
-            _progressionNoCode.OnResultMessage.AddListener(message => Log($"NoCode: {message}"));
-
-            _perkPointsValue = _shell.AddValueLabel("Perk Points (ProgressionManager)");
-
-            _shell.AddButtonRow(
-                ("+50 XP (NoCode)", () => RunProgressionBridge(ProgressionNoCodeActionType.AddXp, 50)),
-                ("Grant 1 PP (NoCode)", () => RunProgressionBridge(ProgressionNoCodeActionType.GrantPerkPoints, 1)));
-        }
-
-        private void RunProgressionBridge(ProgressionNoCodeActionType type, int amount)
-        {
-            _progressionNoCode.ActionType = type;
-            if (type == ProgressionNoCodeActionType.AddXp)
-            {
-                _progressionNoCode.XpAmount = amount;
-            }
-            else
-            {
-                _progressionNoCode.PerkPointsAmount = amount;
-            }
-
-            _progressionNoCode.Execute();
-            RefreshStats();
-        }
-
-        private void AddSmallXp()
-        {
-            if (_levelComponent == null)
+            if (_progression == null)
             {
                 return;
             }
 
-            _levelComponent.AddXp(_xpPerClick);
-            Log($"+{_xpPerClick} XP added.");
+            if (_premiumValue != null)
+            {
+                _premiumValue.text = _progression.HasPremium ? "<color=#FFD659>ACTIVE</color>" : "off";
+            }
+
+            if (_unlockTreeValue != null)
+            {
+                _unlockTreeValue.text = DescribeNodes();
+            }
+
+            if (_perkTreeValue != null)
+            {
+                _perkTreeValue.text = DescribePerks();
+            }
         }
 
-        private void AddMediumXp()
+        private void RefreshXpBar()
         {
-            if (_levelComponent == null)
+            Neo.Core.Level.LevelCurveDefinition curve = _levelComponent.LevelCurveDefinition;
+            if (curve == null)
             {
+                if (_currentLevelXpValue != null)
+                {
+                    _currentLevelXpValue.text = "no curve";
+                }
+
                 return;
             }
 
-            int amount = _xpPerClick * 5;
-            _levelComponent.AddXp(amount);
-            Log($"+{amount} XP added.");
-        }
-
-        private void AddLargeXp()
-        {
-            if (_levelComponent == null)
-            {
-                return;
-            }
-
-            int amount = _xpPerClick * 20;
-            _levelComponent.AddXp(amount);
-            Log($"+{amount} XP added.");
-        }
-
-        private void ResetLevel()
-        {
-            if (_levelComponent == null)
-            {
-                return;
-            }
-
-            _levelComponent.ResetProgress();
-            Log("<color=red>Progress reset to Start values.</color>");
-            RefreshStats();
-        }
-
-        private void OnLevelUp(int newLevel)
-        {
-            Log($"<color=yellow>LEVEL UP! You are now Level {newLevel}</color>");
-            RefreshStats();
-        }
-
-        private void OnXpGained()
-        {
-            RefreshStats();
-        }
-
-        private void RefreshStats()
-        {
-            if (_levelComponent == null || _shell == null)
-            {
-                return;
-            }
-
-            _levelBig.text = "Level " + _levelComponent.Level;
-            _totalXpValue.text = _levelComponent.TotalXp.ToString();
-            _toNextValue.text = _levelComponent.XpToNextLevel.ToString();
-
-            if (_perkPointsValue != null && _progression != null)
-            {
-                _perkPointsValue.text = _progression.AvailablePerkPoints.ToString();
-            }
-
-            bool hasCurve = _levelComponent.LevelCurveDefinition != null;
-            _currentLevelXpRow.SetActive(hasCurve);
-            _xpBarRow.SetActive(hasCurve);
-            if (hasCurve)
-            {
-                XpProgressSnapshot progressSnapshot = GetXpProgressSnapshot(_levelComponent);
-                _currentLevelXpValue.text =
-                    $"{progressSnapshot.CurrentLevelXp} / {progressSnapshot.RequiredForCurrentLevel}";
-                SurvivorUI.SetFill(_xpFill, progressSnapshot.Progress01);
-            }
-        }
-
-        private void Log(string msg)
-        {
-            _shell?.Log($"[{Time.time:F1}] {msg}");
-        }
-
-        private static XpProgressSnapshot GetXpProgressSnapshot(LevelComponent levelComponent)
-        {
-            Neo.Core.Level.LevelCurveDefinition curve = levelComponent.LevelCurveDefinition;
-            int currentLevelRequired = curve.GetRequiredXpForLevel(levelComponent.Level);
-            int nextLevelRequired = curve.GetRequiredXpForLevel(levelComponent.Level + 1);
-            int currentLevelXp = Mathf.Max(0, levelComponent.TotalXp - currentLevelRequired);
-            int requiredForCurrentLevel = nextLevelRequired > currentLevelRequired
+            int level = _levelComponent.Level;
+            int currentLevelRequired = curve.GetRequiredXpForLevel(level);
+            int nextLevelRequired = curve.GetRequiredXpForLevel(level + 1);
+            int currentLevelXp = Mathf.Max(0, _levelComponent.TotalXp - currentLevelRequired);
+            int requiredForLevel = nextLevelRequired > currentLevelRequired
                 ? nextLevelRequired - currentLevelRequired
-                : currentLevelXp + Mathf.Max(0, levelComponent.XpToNextLevel);
+                : currentLevelXp + Mathf.Max(0, _levelComponent.XpToNextLevel);
+            float progress = requiredForLevel > 0 ? Mathf.Clamp01(currentLevelXp / (float)requiredForLevel) : 1f;
 
-            if (requiredForCurrentLevel <= 0)
+            if (_currentLevelXpValue != null)
             {
-                return new XpProgressSnapshot(1f, currentLevelXp, 0);
+                _currentLevelXpValue.text = Mathf.Min(currentLevelXp, requiredForLevel) + " / " + requiredForLevel;
             }
 
-            int clampedCurrentLevelXp = Mathf.Clamp(currentLevelXp, 0, requiredForCurrentLevel);
-            float progress = Mathf.Clamp01(clampedCurrentLevelXp / (float)requiredForCurrentLevel);
-            return new XpProgressSnapshot(progress, clampedCurrentLevelXp, requiredForCurrentLevel);
+            if (_xpFill != null)
+            {
+                RectTransform fill = _xpFill.rectTransform;
+                fill.anchorMax = new Vector2(progress, 1f);
+            }
         }
 
-        private readonly struct XpProgressSnapshot
+        private string DescribeNodes()
         {
-            public XpProgressSnapshot(float progress01, int currentLevelXp, int requiredForCurrentLevel)
+            UnlockTreeDefinition tree = _progression.UnlockTree;
+            if (tree == null || tree.Nodes.Count == 0)
             {
-                Progress01 = progress01;
-                CurrentLevelXp = currentLevelXp;
-                RequiredForCurrentLevel = requiredForCurrentLevel;
+                return "no unlock tree assigned";
             }
 
-            public float Progress01 { get; }
-            public int CurrentLevelXp { get; }
-            public int RequiredForCurrentLevel { get; }
+            _text.Clear();
+            IReadOnlyList<UnlockNodeDefinition> nodes = tree.Nodes;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                UnlockNodeDefinition node = nodes[i];
+                if (node == null)
+                {
+                    continue;
+                }
+
+                bool owned = _progression.HasUnlockedNode(node.Id);
+                bool available = !owned && _progression.CanUnlockNode(node.Id, out _);
+                AppendEntry(node.DisplayName, owned, available, "Lv " + node.RequiredLevel);
+            }
+
+            return _text.ToString();
+        }
+
+        private string DescribePerks()
+        {
+            PerkTreeDefinition tree = _progression.PerkTree;
+            if (tree == null || tree.Perks.Count == 0)
+            {
+                return "no perk tree assigned";
+            }
+
+            _text.Clear();
+            IReadOnlyList<PerkDefinition> perks = tree.Perks;
+            for (int i = 0; i < perks.Count; i++)
+            {
+                PerkDefinition perk = perks[i];
+                if (perk == null)
+                {
+                    continue;
+                }
+
+                bool owned = _progression.HasPurchasedPerk(perk.Id);
+                bool available = !owned && _progression.CanBuyPerk(perk.Id, out _);
+                AppendEntry(perk.DisplayName, owned, available, perk.Cost + " PP");
+            }
+
+            return _text.ToString();
+        }
+
+        private void AppendEntry(string displayName, bool owned, bool available, string requirement)
+        {
+            if (_text.Length > 0)
+            {
+                _text.Append("   ");
+            }
+
+            string color = owned ? OwnedColor : available ? AvailableColor : LockedColor;
+            _text.Append("<color=").Append(color).Append('>').Append(displayName);
+            if (!owned)
+            {
+                _text.Append(" <size=80%>(").Append(requirement).Append(")</size>");
+            }
+
+            _text.Append("</color>");
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[ProgressionDemoUI] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
         }
     }
 }

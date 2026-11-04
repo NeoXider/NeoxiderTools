@@ -1,6 +1,15 @@
 ﻿# CameraShake
 
-**Purpose:** A camera (or any object) shake component built on DOTween. Supports separate position and/or rotation shake, configurable strength, vibrato, fade-out, and `Time.timeScale`-independent operation.
+**What it is:** a `MonoBehaviour` that shakes a camera (or any object) with DOTween: position and/or rotation,
+configurable strength, vibrato, fade-out and `Time.timeScale`-independent playback. Script:
+`Scripts/Tools/Other/CameraShake.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Other`.
+
+**How to use:**
+1. Add **Neoxider / Tools / CameraShake** to the camera (or to a child pivot of a camera controller).
+2. Pick **Shake Type**, **Duration**, **Strength** and the axes.
+3. Call `StartShake()` from an explosion/hit UnityEvent, or `StartShake(duration, strength)` from code.
+
+---
 
 ## Fields (Inspector)
 
@@ -15,7 +24,7 @@
 | **Shake X / Y / Z** | Which axes to shake (position). |
 | **Rotate X / Y / Z** | Which axes to shake (rotation). |
 | **Use Unscaled Time** | Ignore `Time.timeScale` (for shaking during pause). |
-| **Relative Shake** | Start from the current local pose when enabled; otherwise start from the pose captured in `Awake`, for the selected channels. |
+| **Relative Shake** | Start from the current local pose and settle back to it when enabled; otherwise start from (and return to) the pose captured in `Awake`, for the selected channels. |
 | **Ease Type** | DOTween easing applied to each shake channel. |
 
 ## API
@@ -24,8 +33,8 @@
 |-------------------|-------------|
 | `void StartShake()` | Start shaking with inspector settings. |
 | `void StartShake(float duration, float strength)` | Start with custom parameters. |
-| `void StopShake()` | Stop shaking and restore the original values of the affected position/rotation channels. |
-| `void ResetTransform()` | Reset position/rotation to original values. |
+| `void StopShake()` | Stop shaking and restore the affected position/rotation channels to the pose the shake started from (relative) or the `Awake` pose (non-relative). |
+| `void ResetTransform()` | Reset position/rotation to the pose captured in `Awake`. |
 | `void StopAndReset()` | Stop an active shake, then restore both the original local position and rotation. |
 | `bool IsShaking { get; }` | Whether the object is currently shaking. |
 
@@ -33,7 +42,13 @@ Position shake preserves fractional movement; `Fade Out` controls amplitude deca
 
 Unscaled mode ignores Unity's `Time.timeScale`; DOTween's global `timeScale` and `unscaledTimeScale` still affect playback. The native DOTween driver must be active and receiving frames. This component preserves the project's DOTween clock settings.
 
-`Awake` captures the reset pose. `StopShake()` restores the channels selected when that shake started, even if `shakeType` changes during playback. `ResetTransform()` restores both channels without canceling an active tween; use `StopAndReset()` when both actions are required. For a moving camera, put this component on a dedicated child pivot so a stop/reset does not replace the parent camera controller's pose.
+`Awake` captures the reset pose. Each shake remembers where it started: with **Relative Shake** that is the current
+local pose, so stopping or interrupting a shake on a camera that has moved since `Awake` (a follow camera) returns
+it to its pre-shake pose instead of snapping it back to the `Awake` pose. `StopShake()` restores the channels
+selected when that shake started, even if `shakeType` changes during playback. `ResetTransform()` restores both
+channels to the `Awake` pose without canceling an active tween; use `StopAndReset()` when both actions are required.
+A camera controller that writes the same Transform every frame still competes with the shake tween; put this
+component on a dedicated child pivot in that case.
 
 Disabling or destroying the component stops its owned sequence. Starting while disabled/inactive does nothing. A listener may stop or replace a shake from `OnShakeStart` or `OnShakeStop`; the latest request wins, and canceled sequences do not emit `OnShakeComplete`.
 

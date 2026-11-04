@@ -115,6 +115,12 @@ The WebGL path is a small, deliberate code path that has not been exercised in a
 
 A second bootstrap in the scene disables itself and logs an error; the first keeps ownership.
 
+A session that ends without `StopNetwork()` (the server shut down, the connection failed, game code called
+`NeoNetworkManager.StopNetwork()` directly) no longer blocks the bootstrap: on the next frame, with or without the
+status log, the bootstrap notices that no Mirror session is active and clears `HasStartedNetwork`, so UI bound to
+it stops showing the session and the next `StartNetwork` / `StartAs*` call starts the new role. The periodic status
+line stops for the same reason.
+
 Without Mirror the parser still describes the requested role, but `StartNetwork` returns `false`,
 keeps `HasStartedNetwork` false and does not raise `OnNetworkStartedEvent`. C# callers can check the
 return value; scene UI can use the started event to navigate only after an available network start.

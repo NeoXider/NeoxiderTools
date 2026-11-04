@@ -1,5 +1,9 @@
 # Third-Party Notices
 
+**What it is:** the third-party code bundled with NeoxiderTools and the external packages its modules reference, with license pointers. NeoxiderTools itself is licensed under the [PolyForm Small Business License 1.0.0](./LICENSE.md) since 11.0.1.
+
+The HTML/CSS → UI Toolkit converter and its repository-only Velora showcase (with the Geist font and their license files) are no longer part of this repository; they moved to the separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package.
+
 ## Bundled code
 
 One third-party component ships **inside** this package and its license travels with it.
@@ -23,13 +27,14 @@ NeoxiderTools does **not** bundle any of the packages below — none of their co
 
 | Package | Used by | Required? | License | Source |
 |---------|---------|-----------|---------|--------|
-| [UniTask](https://github.com/Cysharp/UniTask) | Async-heavy modules (Cards, Dialogue, Timers, animation await flows) | Required | MIT | Install via UPM Git URL — see package README |
-| [DOTween](https://dotween.demigiant.com/) (HOTween v2) | UI/gameplay tweening used across runtime modules | Required | Custom (free) — DOTween's own license, see the Asset Store listing / [dotween.demigiant.com](https://dotween.demigiant.com/) | Unity Asset Store |
-| [DOTween Pro](https://assetstore.unity.com/packages/tools/visual-scripting/dotween-pro-32416) | Optional, project-specific UI animation workflows (NeoxiderPages sample) | Optional | Commercial (Asset Store) | Unity Asset Store |
+| [UniTask](https://github.com/Cysharp/UniTask) | Async-heavy modules (Audio, Cards, Dialogue, Time, Tools/Components) | Required | MIT | Install via UPM Git URL — see package README |
+| [DOTween](https://dotween.demigiant.com/) (HOTween v2) | UI/gameplay tweening used across runtime modules (UI, Cards, Bonus, Tools/View, Tools/Text) | Required | Custom (free) — DOTween's own license, see the Asset Store listing / [dotween.demigiant.com](https://dotween.demigiant.com/) | Unity Asset Store |
+| [DOTween Pro](https://assetstore.unity.com/packages/tools/visual-scripting/dotween-pro-32416) | Optional, your own project-specific animation workflows; no package or sample code requires it (NeoxiderPages imports without it) | Optional | Commercial (Asset Store) | Unity Asset Store |
 | [Mirror Networking](https://github.com/MirrorNetworking/Mirror) | `Neo.Network` — all multiplayer NoCode bridges. Every affected script compiles and runs solo without it (`#if MIRROR`) | Optional | MIT | Unity Asset Store / GitHub |
 | [Spine Unity Runtime](http://esotericsoftware.com/spine-unity-download) | Optional Spine skeletal-animation integrations | Optional | Spine Runtimes License (separate Spine Editor license required for use) | esotericsoftware.com |
 | [Odin Inspector](https://odininspector.com/) | Optional — package components work fully without it; if present, some inspectors adapt to it | Optional | Commercial (Asset Store) | Unity Asset Store |
 | [Markdown Renderer](https://github.com/NeoXider/MarkdownRenderer) | Optional — richer Markdown preview for `[NeoDoc]` documentation links in the Inspector | Optional | See the linked repository | GitHub |
+| [MobileHapticFeedback](./Docs/Haptics/Haptics.md) | Optional backend for `Neo.Haptics` device feedback | Optional | See the backend's own repository | GitHub / UPM |
 
 ## Why this matters
 

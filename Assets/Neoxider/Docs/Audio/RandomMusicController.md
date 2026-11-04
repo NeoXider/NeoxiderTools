@@ -1,8 +1,14 @@
 ﻿# RandomMusicController
 
-**Purpose:** A standalone C# helper that plays random tracks on a supplied `AudioSource`. It is not a
-`MonoBehaviour` and cannot be added through the component menu. For scene/UnityEvent authoring, use
-[AM music pools](AM.md#music-pools) and [MusicControl](MusicControl.md).
+**What it is:** a standalone C# class (`Scripts/Audio/RandomMusicController.cs`, namespace `Neo.Audio`) that
+plays random tracks on a supplied `AudioSource`. It is not a `MonoBehaviour` and cannot be added through the
+component menu. For scene/UnityEvent authoring, use [AM music pools](AM.md#music-pools) and
+[MusicControl](MusicControl.md).
+
+**How to use:** create one per owner, call `Initialize(source, tracks)`, then `Start()`; call `Stop()` from the
+owner's disable/shutdown path (example below).
+
+---
 
 ## Runtime ownership
 
@@ -31,7 +37,7 @@ public sealed class LocalMusic : MonoBehaviour
 | API | Behaviour |
 |-----|-----------|
 | `Initialize(AudioSource, AudioClip[])` | Stops an existing session before replacing its source and tracks. Null source rejects the request; null track array becomes empty. |
-| `Start()` | Starts random playback; several track slots avoid an immediate index repeat. An empty list does not start. |
+| `Start()` | Starts random playback; several playable tracks avoid an immediate repeat. Empty (null) slots are skipped. An empty list does not start. |
 | `Stop()` | Cancels the loop, releases its cancellation source and stops active playback. Repeated calls do not repeat `OnStopped`. |
 | `Pause()` / `Resume()` | Pause/unpause this controller's source without advancing its track timer. |
 | `CurrentTrack` | The source's assigned clip, including the last clip after stopping. |
@@ -42,8 +48,8 @@ The timer uses unscaled time and the source's absolute pitch. `AudioListener.pau
 source has `ignoreListenerPause` enabled. Zero pitch holds the track; changing `Time.timeScale` does not
 change audio timing.
 
-A selected null clip or a destroyed source ends the session, clears playing/paused state and raises
-`OnStopped` once. Cancellation from an older session cannot stop its replacement. Call `Stop()` from
+Null slots are never picked; a list with no playable clip or a destroyed source ends the session, clears
+playing/paused state and raises `OnStopped` once. Cancellation from an older session cannot stop its replacement. Call `Stop()` from
 your owner's shutdown/disable path rather than leaving a detached asynchronous loop alive.
 
 `Initialize` owns a bounded rebind transition: `Start()` or another `Initialize(...)` called from its

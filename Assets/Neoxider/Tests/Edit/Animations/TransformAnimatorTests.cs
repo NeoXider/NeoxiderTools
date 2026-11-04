@@ -348,5 +348,46 @@ namespace Neo.Editor.Tests.Animations
                 Object.DestroyImmediate(gameObject);
             }
         }
+
+        [Test]
+        public void Component_ManualTickWhileDisabled_KeepsTheRestoredBasePose()
+        {
+            GameObject gameObject = new("AnimTest");
+            try
+            {
+                Vector3 basePosition = new Vector3(1f, 2f, 3f);
+                Vector3 raisedPosition = new Vector3(1f, 4f, 3f);
+                gameObject.transform.localPosition = basePosition;
+                TransformAnimator animator = gameObject.AddComponent<TransformAnimator>();
+                animator.Settings = AllDisabled();
+                animator.Settings.FloatEnabled = true;
+                animator.Settings.FloatHeight = 2f;
+                animator.Settings.FloatDuration = 2f;
+                animator.Settings.FloatCurve = AnimationCurve.Constant(0f, 1f, 1f);
+                animator.RandomizeStartTime = false;
+                animator.ManualUpdate = true;
+
+                InvokeLifecycle(animator, "OnEnable");
+                animator.Play();
+                animator.Tick(0.1f);
+                Assert.That(gameObject.transform.localPosition, Is.EqualTo(raisedPosition));
+
+                InvokeLifecycle(animator, "OnDisable");
+                Assert.That(gameObject.transform.localPosition, Is.EqualTo(basePosition));
+                animator.Play();
+                animator.Tick(0.1f);
+                Assert.That(gameObject.transform.localPosition, Is.EqualTo(basePosition),
+                    "A manual clock must not move a disabled animator's target off the restored base pose.");
+
+                InvokeLifecycle(animator, "OnEnable");
+                animator.Tick(0.1f);
+                Assert.That(gameObject.transform.localPosition, Is.EqualTo(raisedPosition),
+                    "Re-enabling resumes the manual clock.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
     }
 }

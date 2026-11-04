@@ -150,7 +150,7 @@ namespace Neo.Tests.Network.Integration
                 serverPort = options.Port,
                 processId = Process.GetCurrentProcess().Id
             };
-            // This record precedes the first provider construction/load and every save-mutating scenario.
+            // WHY: This record precedes the first provider construction/load and every save-mutating scenario.
             _artifacts.Write("environment", "Identity verified; scenario stores will use the declared task-owned file root.",
                 environment: _environment);
             _saveProvider = new FileSaveProvider("matrix-save.json",

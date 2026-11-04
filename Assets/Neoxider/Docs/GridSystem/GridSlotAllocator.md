@@ -1,6 +1,13 @@
 # GridSlotAllocator
 
-**Purpose:** a small helper for one-cell slot allocation on top of `FieldGenerator`.
+**What it is:** `GridSlotAllocator` (`Scripts/GridSystem/GridSlotAllocator.cs`, namespace `Neo.GridSystem`) is a small plain C# helper for one-cell slot allocation on top of `FieldGenerator`.
+
+**How to use:**
+1. Create it over a generated field: `GridSlotAllocator slots = new GridSlotAllocator(field);`.
+2. Call `Allocate(slotIndex or position, contentId)` or `TryAllocateFirstAvailable(...)` to fill a free cell.
+3. Call `Release(...)` or `Clear()` to free cells.
+
+---
 
 Use it when a game needs ordered slot placement without duplicating bounds, walkability, and occupancy checks: benches, autobattler boards, hotbars, tactical rows, inventory quick slots, or market rows.
 

@@ -23,7 +23,7 @@ namespace Neo.Editor.Tests
             typeof(QuestConfig)
                 .GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(config, id);
-            var objectives = new List<QuestObjectiveData>();
+            List<QuestObjectiveData> objectives = new List<QuestObjectiveData>();
             for (int i = 0; i < objectiveCount; i++)
             {
                 objectives.Add(new QuestObjectiveData());
@@ -52,7 +52,7 @@ namespace Neo.Editor.Tests
                 ?.SetValue(_questManager, false);
 
             _questConfig = CreateTestConfig("test_quest", 2);
-            var knownQuests = typeof(QuestManager)
+            List<QuestConfig> knownQuests = typeof(QuestManager)
                 .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.GetValue(_questManager) as List<QuestConfig>;
             knownQuests?.Add(_questConfig);
@@ -171,7 +171,7 @@ namespace Neo.Editor.Tests
                 otherKillQuest.Objectives[0].TargetId = "orc";
                 otherKillQuest.Objectives[0].RequiredCount = 1;
 
-                var knownQuests = typeof(QuestManager)
+                List<QuestConfig> knownQuests = typeof(QuestManager)
                     .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
                     ?.GetValue(_questManager) as List<QuestConfig>;
                 knownQuests?.Add(killQuest);
@@ -209,7 +209,7 @@ namespace Neo.Editor.Tests
                 collectQuest.Objectives[0].TargetId = "gem";
                 collectQuest.Objectives[0].RequiredCount = 3;
 
-                var knownQuests = typeof(QuestManager)
+                List<QuestConfig> knownQuests = typeof(QuestManager)
                     .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
                     ?.GetValue(_questManager) as List<QuestConfig>;
                 knownQuests?.Add(collectQuest);
@@ -256,7 +256,7 @@ namespace Neo.Editor.Tests
             _questManager.Save();
 
             // WHY: simulate a config update that ships an extra objective after the save was made
-            var objectives = typeof(QuestConfig)
+            List<QuestObjectiveData> objectives = typeof(QuestConfig)
                 .GetField("_objectives", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.GetValue(_questConfig) as List<QuestObjectiveData>;
             objectives?.Add(new QuestObjectiveData());

@@ -1,13 +1,20 @@
 ﻿# TimeReward
 
-**Purpose:** Legacy time reward component kept for existing scenes and prefabs.
+**What it is:** the legacy, `[Obsolete]` time reward component (`MonoBehaviour`, `Scripts/Bonus/TimeReward/TimeReward.cs`) kept for existing scenes and prefabs. It counts claims with the shared `CooldownSchedule.CountClaimable` rule and preserves unclaimed cooldown remainder between takes.
 
-Use [CooldownReward](./CooldownReward.md) for new setups. `TimeReward` is hidden from new `Add Component` / `CreateFromMenu` flows so new scenes do not accidentally depend on the legacy implementation.
+**How to use:**
+1. Keep the component only on old scenes/prefabs that already use it; for new scenes add [CooldownReward](./CooldownReward.md), or use [CooldownSchedule](./CooldownSchedule.md) with `BacklogMode = PreserveElapsedRemainder` from code.
+2. Bind a claim button to `Take()` and grant through `OnRewardClaimed` / `OnRewardsClaimed`.
 
-## Setup
+---
 
-- Keep the component only on old scenes/prefabs that already use it.
-- For new scenes, add `CooldownReward` instead.
+`TimeReward` is hidden from new `Add Component` / `CreateFromMenu` flows so new scenes do not accidentally depend on the legacy implementation.
+
+Deactivating the object (or disabling the component) only suspends the update loop: `IsTimerRunning` and
+`IsTimerPaused` keep their values, and reactivating resumes ticking. `StartTime()`, `PauseTime()`,
+`ResumeTime()` and `StopTime()` called while the object is inactive take effect immediately (with their events)
+and are honoured on reactivation, so a timer stopped while inactive stays stopped. Only one update loop ever
+runs, and it reuses one `WaitForSecondsRealtime` instead of allocating one per tick.
 
 ## Key Fields (Inspector)
 
@@ -30,7 +37,6 @@ Use [CooldownReward](./CooldownReward.md) for new setups. `TimeReward` is hidden
 | `_displaySeparator` | Display Separator. |
 | `_displayTimeFormat` | Display Time Format. |
 | `_rewardAvailableOnStart` | Reward Available On Start. |
-| `accumulated` | Accumulated. |
 | `lastRewardTimeStr` | Last Reward Time Str. |
 | `secondsToWaitForReward` | Seconds To Wait For Reward. |
 | `startTakeReward` | Start Take Reward. |

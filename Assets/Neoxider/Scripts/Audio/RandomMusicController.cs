@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Audio
@@ -214,20 +213,15 @@ namespace Neo.Audio
                         break;
                     }
 
-                    int newTrackIndex;
-                    do
+                    int newTrackIndex = PickTrackIndex(tracks, _lastTrackIndex);
+                    if (newTrackIndex < 0)
                     {
-                        newTrackIndex = tracks.GetRandomIndex();
-                    } while (newTrackIndex == _lastTrackIndex && tracks.Length > 1);
+                        NeoDiagnostics.LogWarning("[RandomMusicController] Track list has no playable clip.");
+                        break;
+                    }
 
                     _lastTrackIndex = newTrackIndex;
                     AudioClip track = tracks[newTrackIndex];
-
-                    if (track == null)
-                    {
-                        NeoDiagnostics.LogWarning($"[RandomMusicController] Track at index {newTrackIndex} is null.");
-                        break;
-                    }
 
                     source.clip = track;
                     source.Play();
@@ -260,6 +254,49 @@ namespace Neo.Audio
                     Stop();
                 }
             }
+        }
+
+        /// <summary>
+        ///     A random playable track other than <paramref name="lastIndex" />, the last one again when it is the
+        ///     only playable clip, or -1 when the list has none.
+        /// </summary>
+        /// <remarks>
+        ///     WHY not a random index plus a null check: one empty slot in the list stopped the whole playlist
+        ///     whenever the roll landed on it.
+        /// </remarks>
+        private static int PickTrackIndex(AudioClip[] tracks, int lastIndex)
+        {
+            int alternatives = 0;
+            for (int index = 0; index < tracks.Length; index++)
+            {
+                if (index != lastIndex && tracks[index] != null)
+                {
+                    alternatives++;
+                }
+            }
+
+            if (alternatives == 0)
+            {
+                return lastIndex >= 0 && lastIndex < tracks.Length && tracks[lastIndex] != null ? lastIndex : -1;
+            }
+
+            int pick = UnityEngine.Random.Range(0, alternatives);
+            for (int index = 0; index < tracks.Length; index++)
+            {
+                if (index == lastIndex || tracks[index] == null)
+                {
+                    continue;
+                }
+
+                if (pick == 0)
+                {
+                    return index;
+                }
+
+                pick--;
+            }
+
+            return -1;
         }
     }
 }

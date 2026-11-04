@@ -62,6 +62,10 @@ namespace Neo.Tools
         [Tooltip("Invoked when impulse is applied")]
         public UnityEvent<GameObject> OnImpulseApplied = new();
 
+        private const float ProcessedPurgeInterval = 1f;
+
+        private static readonly System.Predicate<Rigidbody> IsDestroyedBody = body => body == null;
+
         private readonly Dictionary<Rigidbody, float> cooldownTimers = new();
 
         private readonly HashSet<Rigidbody> processedRigidbodies = new();
@@ -69,6 +73,8 @@ namespace Neo.Tools
         private readonly List<Rigidbody> expiredCooldowns = new();
 
         private Collider zoneCollider;
+        private float _nextCooldownExpiry;
+        private float _nextProcessedPurgeTime;
 
         private void Awake()
         {
@@ -81,20 +87,41 @@ namespace Neo.Tools
 
         private void Update()
         {
-            processedRigidbodies.RemoveWhere(body => body == null);
+            // WHY: this is bookkeeping only (cooldowns are checked against their deadline on use), so the scans
+            // run when something can actually expire instead of on every frame of every zone.
+            float now = Time.time;
+            if (processedRigidbodies.Count > 0 && now >= _nextProcessedPurgeTime)
+            {
+                _nextProcessedPurgeTime = now + ProcessedPurgeInterval;
+                processedRigidbodies.RemoveWhere(IsDestroyedBody);
+            }
+
+            if (cooldownTimers.Count == 0 || now < _nextCooldownExpiry)
+            {
+                return;
+            }
+
             expiredCooldowns.Clear();
+            float nextExpiry = float.PositiveInfinity;
             foreach (KeyValuePair<Rigidbody, float> entry in cooldownTimers)
             {
-                if (entry.Key == null || Time.time >= entry.Value)
+                if (entry.Key == null || now >= entry.Value)
                 {
                     expiredCooldowns.Add(entry.Key);
                 }
+                else if (entry.Value < nextExpiry)
+                {
+                    nextExpiry = entry.Value;
+                }
             }
 
-            foreach (Rigidbody body in expiredCooldowns)
+            for (int i = 0; i < expiredCooldowns.Count; i++)
             {
-                cooldownTimers.Remove(body);
+                cooldownTimers.Remove(expiredCooldowns[i]);
             }
+
+            expiredCooldowns.Clear();
+            _nextCooldownExpiry = nextExpiry;
         }
 
         private void OnDrawGizmosSelected()
@@ -166,6 +193,61 @@ namespace Neo.Tools
             impulseForce = Mathf.Max(0f, newForce);
         }
 
+        /// <summary>Current impulse direction mode.</summary>
+        public ImpulseDirection CurrentDirection => direction;
+
+        /// <summary>
+        ///     Selects how the impulse direction is computed.
+        /// </summary>
+        public void SetDirection(ImpulseDirection newDirection)
+        {
+            direction = newDirection;
+        }
+
+        /// <summary>
+        ///     Sets the direction by its <see cref="ImpulseDirection" /> index, for UnityEvents, which cannot pass an
+        ///     enum. An undefined index is ignored.
+        /// </summary>
+        public void SetDirectionIndex(int directionIndex)
+        {
+            if (System.Enum.IsDefined(typeof(ImpulseDirection), directionIndex))
+            {
+                SetDirection((ImpulseDirection)directionIndex);
+            }
+        }
+
+        /// <summary>
+        ///     Sets a world-space impulse direction and selects <see cref="ImpulseDirection.Custom" />.
+        /// </summary>
+        public void SetCustomDirection(Vector3 newDirection)
+        {
+            customDirection = newDirection;
+            direction = ImpulseDirection.Custom;
+        }
+
+        /// <summary>
+        ///     Sets the per-Rigidbody cooldown in seconds. 0 disables the cooldown check, including running deadlines;
+        ///     a positive value is checked against the deadlines recorded when each impulse was applied.
+        /// </summary>
+        public void SetCooldown(float seconds)
+        {
+            cooldown = Mathf.Max(0f, seconds);
+        }
+
+        /// <summary>
+        ///     Current impulse force.
+        /// </summary>
+        public float ImpulseForce => impulseForce;
+
+        /// <summary>
+        ///     Layers that can receive the impulse. Changes apply to the next contact or manual call.
+        /// </summary>
+        public LayerMask AffectedLayers
+        {
+            get => affectedLayers;
+            set => affectedLayers = value;
+        }
+
         /// <summary>
         ///     Clears processed objects (allows impulse to apply again).
         /// </summary>
@@ -229,7 +311,9 @@ namespace Neo.Tools
 
                 if (cooldown > 0f)
                 {
-                    cooldownTimers[rb] = Time.time + cooldown;
+                    float cooldownDeadline = Time.time + cooldown;
+                    cooldownTimers[rb] = cooldownDeadline;
+                    _nextCooldownExpiry = Mathf.Min(_nextCooldownExpiry, cooldownDeadline);
                 }
 
                 OnImpulseApplied?.Invoke(col.gameObject);

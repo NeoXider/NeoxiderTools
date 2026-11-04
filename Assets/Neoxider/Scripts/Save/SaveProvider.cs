@@ -16,6 +16,10 @@ namespace Neo.Save
         private static bool _lifecycleHooksAttached;
         private static readonly object _lockObject = new();
 
+        /// <summary>
+        ///     Enables informational, warning and error logs of the save system. Failures that lose player data are
+        ///     always logged.
+        /// </summary>
         public static bool DebugLoggingEnabled { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -226,6 +230,28 @@ namespace Neo.Save
         {
             Initialize();
             _provider.SetInt(key, value);
+        }
+
+        /// <summary>
+        ///     Gets a 64-bit integer by key (money in cents, large scores, timestamps). Keys written earlier with
+        ///     <see cref="SetInt" /> or as an invariant-culture integer string read back unchanged.
+        /// </summary>
+        /// <seealso cref="SaveProviderExtensions.GetLong" />
+        public static long GetLong(string key, long defaultValue = 0L)
+        {
+            Initialize();
+            return _provider.GetLong(key, defaultValue);
+        }
+
+        /// <summary>
+        ///     Sets a 64-bit integer by key. Providers without native 64-bit storage keep it as an invariant-culture
+        ///     string, so the value survives a device locale change.
+        /// </summary>
+        /// <seealso cref="SaveProviderExtensions.SetLong" />
+        public static void SetLong(string key, long value)
+        {
+            Initialize();
+            _provider.SetLong(key, value);
         }
 
         /// <summary>

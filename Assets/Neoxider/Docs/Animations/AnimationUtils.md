@@ -1,6 +1,12 @@
 ﻿# AnimationUtils
 
-Static helper class for computing animated values over time. Core of the animation system (`Neo.Animations`, `Scripts/Animations/AnimationUtils.cs`). No instances; call static methods from code or use via animator components.
+**What it is:** a static helper class that computes animated values over time; the core shared by every
+animator component. Script: `Scripts/Animations/AnimationUtils.cs`, namespace `Neo.Animations`.
+
+**How to use:** call the static methods with your own time (`GetAnimatedFloat`, `GetAnimatedColor`,
+`GetAnimatedVector3`) and apply the result, or use the animator components that call them for you.
+
+---
 
 ## Main API
 
@@ -12,6 +18,13 @@ Static helper class for computing animated values over time. Core of the animati
 - **GetTargetValue**(...) — low-level target value by type and parameters
 - **GetPerlinNoiseValue**(...), **GetColorBlendFactor**(...) — public lower-level helpers
 - **ApplyToLight**(ILightAccessor, ...), **ApplyToMesh**(Material, ...) — apply intensity/color to light or material emission
+- **ApplyToRenderer**(Renderer, MaterialPropertyBlock, ...) — the same emission through a caller-owned
+  `MaterialPropertyBlock`, so the renderer keeps its shared material (no per-object material copy)
+- **EvaluateEmission**(...) — the pure emission math behind both, for custom receivers
+- **EmissionColorPropertyId** — cached `_EmissionColor` property id used by the emission helpers
+- **SanitizeDeltaTime**(float) — the clock step the animators accept (negative/NaN/infinite become 0)
+- **ColorDistanceSquared**(Color, Color), **ChangeThreshold**, **ChangeThresholdSquared** — the change test
+  used by the animators' change events (distance greater than 0.001)
 
 For `GetTargetValue` and the `GetAnimated*` methods, `speed <= 0` returns the minimum/initial value.
 `CustomCurve` with a null curve also returns that initial value. An assigned curve is evaluated at
@@ -50,6 +63,23 @@ These APIs use Unity math types but do not require a scene component.
 not create or dispose a material, enable a shader's emission keyword, or choose shared versus per-object
 material ownership. Configure the material/shader and its lifetime at the receiver; see
 [Tools/View](../Tools/View/README.md) for existing scene wrappers.
+
+Avoid `renderer.material` for per-object emission: it silently clones the material for every object.
+`ApplyToRenderer` writes through a `MaterialPropertyBlock` instead; allocate the block once and reuse it.
+Property blocks keep the shared material but opt the renderer out of the SRP Batcher, so prefer a shared
+material when many objects animate in lockstep.
+
+```csharp
+private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
+
+private void Update()
+{
+    float pulse = AnimationUtils.GetAnimatedFloat(AnimationType.SinWave, 0.5f, 2f, Time.time, 1f);
+    AnimationUtils.ApplyToRenderer(_renderer, _block, pulse, _baseEmission, false, Color.white, 0f);
+}
+```
+
+The emission keyword (`_EMISSION`) must already be enabled on the shared material.
 
 ## See also
 

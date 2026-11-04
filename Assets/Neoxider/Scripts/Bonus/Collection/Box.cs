@@ -16,6 +16,10 @@ namespace Neo.Bonus
     {
         [SerializeField] private string _saveName = "BoxPrize";
 
+        [Tooltip("Collection that receives prizes. Empty uses the global Collection.I.")]
+        [SerializeField]
+        private Collection _collection;
+
         [Space] [Header("View")] [SerializeField]
         private Image _boxImage;
 
@@ -37,16 +41,23 @@ namespace Neo.Bonus
         private bool _takingPrize;
         private ulong _progressWriteRevision;
 
-        [Space] public UnityEvent OnTakePrize;
-        public UnityEvent OnProgressReached;
-        public UnityEvent OnProgressNotReached;
-        public UnityEvent<bool> OnChangeProgress;
+        [Space] public UnityEvent OnTakePrize = new();
+        public UnityEvent OnProgressReached = new();
+        public UnityEvent OnProgressNotReached = new();
+        public UnityEvent<bool> OnChangeProgress = new();
 
         [Tooltip("Reactive progress value; subscribe via Progress.OnChanged")]
         public ReactivePropertyFloat Progress = new();
 
         public float AddProgressAmount => _addProgress;
         public float MaxProgress => _maxProgress;
+
+        /// <summary>Collection that receives prizes: the assigned one, otherwise the global <c>Collection.I</c>.</summary>
+        public Collection TargetCollection
+        {
+            get => _collection != null ? _collection : Collection.I;
+            set => _collection = value;
+        }
 
         /// <summary>Current progress (for NeoCondition and reflection).</summary>
         public float ProgressValue => Progress.CurrentValue;
@@ -56,7 +67,7 @@ namespace Neo.Bonus
             get => _progress;
             set
             {
-                // Save observers can supersede this write, including with the same value.
+                // WHY: Save observers can supersede this write, including with the same value.
                 ulong revision = ++_progressWriteRevision;
                 _progress = value;
                 SaveProvider.SetFloat(_saveName + nameof(progress), value);
@@ -73,17 +84,7 @@ namespace Neo.Bonus
             }
         }
 
-        public bool CheckProgress
-        {
-            get
-            {
-                float currentProgress = progress;
-                return currentProgress >= _maxProgress &&
-                       (_maxProgress <= 0f ||
-                        (float.IsFinite(currentProgress) && float.IsFinite(_maxProgress) &&
-                         GetProgressAfterPrize(currentProgress) < currentProgress));
-            }
-        }
+        public bool CheckProgress => BoxProgressRules.CanClaim(progress, _maxProgress);
 
         private void Awake()
         {
@@ -120,6 +121,17 @@ namespace Neo.Bonus
             Events();
         }
 
+        /// <summary>
+        ///     Empties the box: writes 0 and raises <see cref="OnChangeProgress" /> and the reached/not-reached event,
+        ///     unlike a direct <see cref="progress" /> write, which only saves and redraws. A NoCode reset target.
+        /// </summary>
+        [Button]
+        public void ResetProgress()
+        {
+            progress = 0f;
+            Events();
+        }
+
         private void Events()
         {
             bool progressOpen = CheckProgress;
@@ -141,7 +153,7 @@ namespace Neo.Bonus
         {
             if (CheckProgress && !_takingPrize)
             {
-                Collection collection = Collection.I;
+                Collection collection = TargetCollection;
                 if (collection == null)
                 {
                     NeoDiagnostics.LogWarning("[Box] No Collection in the scene — cannot take a prize.", this);
@@ -186,7 +198,7 @@ namespace Neo.Bonus
 
         private float GetProgressAfterPrize(float currentProgress)
         {
-            return Mathf.Max(0f, currentProgress - _maxProgress);
+            return BoxProgressRules.GetProgressAfterClaim(currentProgress, _maxProgress);
         }
 
         [Button]
@@ -194,7 +206,7 @@ namespace Neo.Bonus
         {
             if (_bar != null)
             {
-                _bar.fillAmount = _maxProgress > 0f ? Mathf.Clamp01(progress / _maxProgress) : 0f;
+                _bar.fillAmount = BoxProgressRules.GetFillRatio(progress, _maxProgress);
             }
 
             if (_boxImage != null && _boxSpritesCloseOpen != null && _boxSpritesCloseOpen.Length >= 2)

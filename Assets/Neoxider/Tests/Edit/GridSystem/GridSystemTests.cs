@@ -35,7 +35,7 @@ namespace Neo.Editor.Tests
             Grid grid = _goGrid.AddComponent<Grid>();
             FieldGenerator generator = _goGrid.AddComponent<FieldGenerator>();
 
-            var config = new FieldGeneratorConfig();
+            FieldGeneratorConfig config = new FieldGeneratorConfig();
             config.Size = new Vector3Int(5, 5, 1);
             config.GridType = GridType.Rectangular;
 
@@ -55,20 +55,19 @@ namespace Neo.Editor.Tests
             Grid grid = _goGrid.AddComponent<Grid>();
             FieldGenerator generator = _goGrid.AddComponent<FieldGenerator>();
 
-            var config = new FieldGeneratorConfig();
+            FieldGeneratorConfig config = new FieldGeneratorConfig();
             config.Size = new Vector3Int(3, 3, 1);
             config.GridType = GridType.Rectangular;
 
-            // Allow adjacent directional movements
             config.MovementRule = MovementRule.FourDirections2D;
 
             generator.GenerateField(config);
 
-            // Create a blocker on (1,0,0) and (1,1,0) to force a path around
+            // WHY: blockers on (1,0,0) and (1,1,0) force the path around them through the top row.
             generator.SetWalkable(new Vector3Int(1, 0, 0), false);
             generator.SetWalkable(new Vector3Int(1, 1, 0), false);
 
-            var request = new GridPathRequest
+            GridPathRequest request = new GridPathRequest
             {
                 Start = new Vector3Int(0, 0, 0),
                 End = new Vector3Int(2, 0, 0),
@@ -79,7 +78,7 @@ namespace Neo.Editor.Tests
 
             Assert.IsNotNull(result, "Result should not be null");
             Assert.IsTrue(result.HasPath, $"Path should be found. Reason: {result.Reason}");
-            // Expected path: (0,0)->(0,1)->(0,2)->(1,2)->(2,2)->(2,1)->(2,0)
+            // WHY: the only detour is (0,0)->(0,1)->(0,2)->(1,2)->(2,2)->(2,1)->(2,0).
             Assert.AreEqual(7, result.Path.Count, "Path should be 7 nodes long (including start and end)");
         }
 

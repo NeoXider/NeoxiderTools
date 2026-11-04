@@ -1,8 +1,21 @@
 ﻿# AiNavigation (Legacy)
 
-**Purpose:** A NavMeshAgent-based AI navigation component. Supports three modes: target following (`FollowTarget`), waypoint or zone patrol (`Patrol`), and a combined mode (`Combined` — patrols until a target enters aggro range, then chases).
+**What it is:** a legacy NavMeshAgent-based AI navigation `MonoBehaviour` with three modes: target following
+(`FollowTarget`), waypoint or zone patrol (`Patrol`), and `Combined` (patrols until a target enters aggro range, then
+chases). Script: `Scripts/Tools/Other/AiNavigation.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Other`.
 
-> ⚠️ **Deprecated.** Use `Neo.NPC.NpcNavigation + modules` instead.
+**How to use:**
+1. Bake a NavMesh and add a `NavMeshAgent` plus **AiNavigation** to the agent.
+2. Choose **Movement Mode**, assign **Target** and/or patrol points or a patrol zone.
+3. Drive it from code with `SetTarget`, `SetDestination`, `StartPatrol`, `Stop` / `Resume`.
+
+> ⚠️ **Deprecated.** Use `Neo.NPC.NpcNavigation + modules` instead. The demo scene
+> `Samples~/Demo/Scenes/Ai/AiMoveExample.unity` (`Samples/Demo/...` while the sample folder is unpacked for development,
+> `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...` after a Package Manager import) is the migration example:
+> its builder converts the legacy chaser and guard to `NpcNavigation` (the guard's mode is switched with `SetMode`)
+> and adds a waypoint patroller and a zone sentry in `Combined` mode.
+
+---
 
 ## Fields (Inspector)
 
@@ -33,6 +46,9 @@
 | `void SetPatrolPoints(Transform[] points)` | Replace waypoints; an active waypoint patrol restarts at the first valid point. Null/empty/all-null routes stop it. |
 | `void SetPatrolZone(BoxCollider zone)` / `void ClearPatrolZone()` | Select zone patrol, or return to waypoints when the zone is cleared. |
 | `bool WarpToPosition(Vector3 position)` | Sample the NavMesh and return the agent's actual warp result; returns `false` while disabled. |
+| `void SetSpeed(float speed)` | Set the agent's speed (at least 0.1) and raise `onSpeedChanged`; ignored before initialization. |
+| `bool IsPositionReachable(Vector3 position)` | Sample the NavMesh near `position` and report whether a complete path exists from the agent. Reuses one internal `NavMeshPath`, so it can be polled. |
+| `NavMeshPath GetPathToPosition(Vector3 position)` | Return a new path to the sampled position (an empty path when sampling fails); the caller owns it. |
 | `bool IsMoving { get; }` | Whether the adapter has requested movement that has not stopped or arrived. Use `CurrentSpeed` to inspect actual velocity, and `IsPathBlocked` to inspect blockage. |
 | `float RemainingDistance { get; }` | Distance remaining to the current destination. |
 | `bool HasReachedDestination { get; }` | A complete path reached its destination. Explicit stop, resume, and new movement requests clear this state. |
@@ -64,6 +80,8 @@ Request state and the next interval are committed before `onPathUpdated`. Listen
 A `true` result from `SetDestination` acknowledges submission; it does not guarantee successful arrival or continued movement after a listener cancels/replaces that request.
 
 Waypoint waits and zone retries are canceled when stopped, disabled, replaced, or interrupted by a combined-mode chase. Delayed work from the previous route cannot advance a replacement route. Null/destroyed waypoints are skipped with a bounded search; an unusable route stops instead of recursing. Disabling this adapter cancels its scheduling but does not disable the separate `NavMeshAgent`; call `Stop()` first if the physical agent must also halt.
+
+Patrol waits reuse one `WaitForSeconds` while **Patrol Wait Time** is unchanged (the zone retry uses a shared 0.5 s wait), so a waiting agent allocates only its coroutine, not a new wait object per stop. The timing is unchanged.
 
 ## Examples
 

@@ -146,7 +146,7 @@ namespace Neo.Editor.Tests
             Assert.That(_bar == null, Is.True, "Only the CategoryBar component must have been destroyed.");
             int destroyedFrame = Time.frameCount;
             double cleanupDeadline = EditorApplication.timeSinceStartup + 5d;
-            // Editor polls are not native frames. Observe a later frame after the confirmed OnDestroy.
+            // WHY: Editor polls are not native frames. Observe a later frame after the confirmed OnDestroy.
             while (Time.frameCount == destroyedFrame && EditorApplication.timeSinceStartup < cleanupDeadline)
             {
                 yield return null;
@@ -242,7 +242,7 @@ namespace Neo.Editor.Tests
                     Assert.That(_bar == null, Is.True);
                     int destroyedFrame = Time.frameCount;
                     double cleanupDeadline = EditorApplication.timeSinceStartup + 5d;
-                    // Require actual replacement destruction and a later native frame, not two Editor polls.
+                    // WHY: Require actual replacement destruction and a later native frame, not two Editor polls.
                     while ((replacementView != null || Time.frameCount == destroyedFrame) &&
                            EditorApplication.timeSinceStartup < cleanupDeadline)
                     {

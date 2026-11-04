@@ -304,6 +304,205 @@ namespace Neo.Level.Tests
             Assert.That(_manager.CurrentLevel, Is.EqualTo(2));
         }
 
+        [Test]
+        public void TryResetProgress_SelectedMap_ClearsFrontierKeyAndRefreshesButtons()
+        {
+            SaveProvider.SetInt(ProgressKey(0), 2);
+            SaveProvider.SetInt(ProgressKey(1), 3);
+            ConfigureMaps(new Map { isInfinity = false, countLevels = 3 },
+                new Map { isInfinity = false, countLevels = 3 });
+            LevelButton[] buttons = { CreateButton("Level 0"), CreateButton("Level 1"), CreateButton("Level 2") };
+            int[] states = { -1, -1, -1 };
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                int index = i;
+                buttons[i].OnChangeVisual = new UnityEvent<int>();
+                buttons[i].OnChangeVisual.AddListener(value => states[index] = value);
+            }
+
+            SetField(_manager, "_lvlBtns", buttons);
+            _manager.SetMapId(0);
+            _manager.SetLevel(2);
+            Assert.That(states, Is.EqualTo(new[] { 2, 2, 1 }));
+            List<int> frontierEvents = new();
+            _manager.OnChangeMaxLevel.AddListener(frontierEvents.Add);
+
+            Assert.That(_manager.TryResetProgress(0), Is.True);
+
+            Assert.That(_manager.MaxLevel, Is.Zero);
+            Assert.That(_manager.Map.IsComplete, Is.False);
+            Assert.That(SaveProvider.HasKey(ProgressKey(0)), Is.False);
+            Assert.That(SaveProvider.GetInt(ProgressKey(1)), Is.EqualTo(3), "another map keeps its progress");
+            Assert.That(frontierEvents, Is.EqualTo(new[] { 0 }));
+            Assert.That(states, Is.EqualTo(new[] { 1, 0, 0 }));
+            Assert.That(_manager.CurrentLevel, Is.EqualTo(2), "the selected level is kept");
+        }
+
+        [Test]
+        public void TryResetProgress_OtherOrInvalidMap_LeavesSelectedMapUntouched()
+        {
+            SaveProvider.SetInt(ProgressKey(0), 1);
+            SaveProvider.SetInt(ProgressKey(1), 4);
+            ConfigureMaps(new Map { isInfinity = false, countLevels = 5 }, new Map(), null);
+            _manager.SetMapId(0);
+            int frontierEvents = 0;
+            _manager.OnChangeMaxLevel.AddListener(_ => frontierEvents++);
+
+            Assert.That(_manager.TryResetProgress(1), Is.True);
+            Assert.That(_manager.TryResetProgress(2), Is.False, "null map entry");
+            Assert.That(_manager.TryResetProgress(-1), Is.False);
+            Assert.That(_manager.TryResetProgress(3), Is.False);
+
+            Assert.That(SaveProvider.HasKey(ProgressKey(1)), Is.False);
+            Assert.That(_manager.MaxLevel, Is.EqualTo(1));
+            Assert.That(frontierEvents, Is.Zero, "resetting a map that is not selected raises no frontier event");
+
+            _manager.SetMapId(1);
+            Assert.That(_manager.MaxLevel, Is.Zero);
+        }
+
+        [Test]
+        public void ResetAllProgress_ClearsEveryMapAndRaisesOneFrontierEvent()
+        {
+            SaveProvider.SetInt(ProgressKey(0), 2);
+            SaveProvider.SetInt(ProgressKey(1), 5);
+            ConfigureMaps(new Map { isInfinity = false, countLevels = 3 }, new Map(), null);
+            _manager.SetMapId(1);
+            List<int> frontierEvents = new();
+            _manager.OnChangeMaxLevel.AddListener(frontierEvents.Add);
+
+            _manager.ResetAllProgress();
+
+            Assert.That(SaveProvider.HasKey(ProgressKey(0)), Is.False);
+            Assert.That(SaveProvider.HasKey(ProgressKey(1)), Is.False);
+            Assert.That(frontierEvents, Is.EqualTo(new[] { 0 }));
+            Assert.That(_manager.GetLastIdMap(), Is.Zero, "map 0 is incomplete again");
+        }
+
+        [Test]
+        public void MapResetProgress_WithoutLoad_ResetsMemoryOnly()
+        {
+            SaveProvider.SetInt("Map__0__level", 7);
+            Map map = new() { isInfinity = false, countLevels = 3 };
+            SetField(map, "_level", 3);
+            Assert.That(map.IsComplete, Is.True);
+
+            map.ResetProgress();
+
+            Assert.That(map.level, Is.Zero);
+            Assert.That(map.IsComplete, Is.False);
+            Assert.That(SaveProvider.GetInt("Map__0__level"), Is.EqualTo(7), "an unbound map knows no save key");
+        }
+
+        [Test]
+        public void MapResetProgress_AfterLoadWithNullKey_DeletesTheKeyLoadRead()
+        {
+            SaveProvider.SetInt("Map__0__level", 2);
+            Map map = new() { isInfinity = false, countLevels = 3 };
+            map.Load(0, null);
+            Assert.That(map.level, Is.EqualTo(2), "a null key reads the same key as an empty one");
+
+            map.ResetProgress();
+            map.Load(0, null);
+
+            Assert.That(SaveProvider.HasKey("Map__0__level"), Is.False);
+            Assert.That(map.level, Is.Zero, "the reload must not restore the reset progress");
+        }
+
+        [Test]
+        public void TryResetProgress_WhenTheProviderRejectsTheDelete_KeepsFrontierKeyAndEventsUnchanged()
+        {
+            SaveProvider.SetInt(ProgressKey(0), 2);
+            ConfigureMaps(new Map { isInfinity = false, countLevels = 3 });
+            _manager.SetMapId(0);
+            int frontierEvents = 0;
+            _manager.OnChangeMaxLevel.AddListener(_ => frontierEvents++);
+            _provider.RejectWrites = true;
+
+            Assert.Throws<InvalidOperationException>(() => _manager.TryResetProgress(0));
+
+            Assert.That(_manager.MaxLevel, Is.EqualTo(2), "memory must keep agreeing with the stored frontier");
+            Assert.That(frontierEvents, Is.Zero);
+            _provider.RejectWrites = false;
+            Assert.That(SaveProvider.GetInt(ProgressKey(0)), Is.EqualTo(2));
+
+            Assert.That(_manager.TryResetProgress(0), Is.True, "a retry after the provider recovers resets the map");
+            Assert.That(_manager.MaxLevel, Is.Zero);
+            Assert.That(SaveProvider.HasKey(ProgressKey(0)), Is.False);
+            Assert.That(frontierEvents, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ResetBeforeInit_BindsUnboundMapsAndDeletesTheirSavedFrontier()
+        {
+            SaveProvider.SetInt(ProgressKey(0), 2);
+            SaveProvider.SetInt(ProgressKey(1), 4);
+            Map first = new() { isInfinity = false, countLevels = 3 };
+            Map second = new() { isInfinity = false, countLevels = 5 };
+            SetField(_manager, "_maps", new[] { first, second });
+
+            Assert.That(_manager.TryResetProgress(0), Is.True);
+
+            Assert.That(SaveProvider.HasKey(ProgressKey(0)), Is.False, "the reset must reach storage, not only memory");
+            Assert.That(SaveProvider.GetInt(ProgressKey(1)), Is.EqualTo(4), "another map keeps its progress");
+            Assert.That(first.level, Is.Zero);
+
+            _manager.ResetAllProgress();
+
+            Assert.That(SaveProvider.HasKey(ProgressKey(1)), Is.False);
+            Assert.That(second.level, Is.Zero);
+            second.Load(1, _saveKey);
+            Assert.That(second.level, Is.Zero, "the next Init must not read the old frontier back");
+        }
+
+        [Test]
+        public void ResetAllProgress_WhenTheProviderThrowsPartway_StillNotifiesTheResetSelectedMap()
+        {
+            SaveProvider.SetInt(ProgressKey(0), 2);
+            SaveProvider.SetInt(ProgressKey(1), 3);
+            SaveProvider.SetInt(ProgressKey(2), 1);
+            ConfigureMaps(new Map { isInfinity = false, countLevels = 3 }, new Map(), new Map());
+            LevelButton[] buttons = { CreateButton("Level 0"), CreateButton("Level 1"), CreateButton("Level 2") };
+            int[] states = { -1, -1, -1 };
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                int index = i;
+                buttons[i].OnChangeVisual = new UnityEvent<int>();
+                buttons[i].OnChangeVisual.AddListener(value => states[index] = value);
+            }
+
+            SetField(_manager, "_lvlBtns", buttons);
+            _manager.SetMapId(0);
+            Assert.That(states, Is.EqualTo(new[] { 2, 2, 1 }));
+            List<int> frontierEvents = new();
+            _manager.OnChangeMaxLevel.AddListener(frontierEvents.Add);
+            _provider.RejectDeleteOf = ProgressKey(1);
+
+            Assert.Throws<InvalidOperationException>(() => _manager.ResetAllProgress());
+
+            Assert.That(SaveProvider.HasKey(ProgressKey(0)), Is.False);
+            Assert.That(_manager.MaxLevel, Is.Zero);
+            Assert.That(frontierEvents, Is.EqualTo(new[] { 0 }), "the selected map was reset before the failure");
+            Assert.That(states, Is.EqualTo(new[] { 1, 0, 0 }), "the buttons show the reset frontier");
+            Assert.That(SaveProvider.GetInt(ProgressKey(1)), Is.EqualTo(3));
+            Assert.That(SaveProvider.GetInt(ProgressKey(2)), Is.EqualTo(1), "maps after the failing one are not reached");
+            _manager.SetMapId(1);
+            Assert.That(_manager.MaxLevel, Is.EqualTo(3), "the failing map keeps agreeing with storage");
+        }
+
+        [TestCase(nameof(LevelManager.ResetProgress))]
+        [TestCase(nameof(LevelManager.ResetAllProgress))]
+        public void ResetInspectorButtons_ArePlayModeOnly(string methodName)
+        {
+            MethodInfo method = typeof(LevelManager).GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(method, Is.Not.Null, methodName);
+            ButtonAttribute button = method.GetCustomAttribute<ButtonAttribute>();
+
+            Assert.That(button, Is.Not.Null, methodName);
+            Assert.That(button.PlayModeOnly, Is.True,
+                "an Edit Mode click must not change saved progress or the authored level buttons");
+        }
+
         private void ConfigureMaps(params Map[] maps)
         {
             SetField(_manager, "_maps", maps);
@@ -336,6 +535,7 @@ namespace Neo.Level.Tests
         {
             private readonly Dictionary<string, object> _values = new();
             public bool RejectWrites { get; set; }
+            public string RejectDeleteOf { get; set; }
             public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
             public event Action OnDataSaved;
             public event Action OnDataLoaded;
@@ -391,7 +591,16 @@ namespace Neo.Level.Tests
             }
 
             public bool HasKey(string key) => _values.ContainsKey(key);
-            public void DeleteKey(string key) => _values.Remove(key);
+            public void DeleteKey(string key)
+            {
+                if (RejectWrites || key == RejectDeleteOf)
+                {
+                    throw new InvalidOperationException("The test provider rejected the delete.");
+                }
+
+                _values.Remove(key);
+            }
+
             public void DeleteAll() => _values.Clear();
             public void Save() => OnDataSaved?.Invoke();
             public void Load() => OnDataLoaded?.Invoke();

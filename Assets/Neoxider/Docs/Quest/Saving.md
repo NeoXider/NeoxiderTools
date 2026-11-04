@@ -1,8 +1,8 @@
 # Saving Quest Progress
 
-**Purpose:** Describes how quest progress is persisted. `QuestManager` ships with built-in persistence: quest states are serialized to JSON and stored through `SaveProvider` under the `Save Key` field (default `Settings_Quests`).
+**What it is:** how quest progress is persisted. `QuestManager` ships with built-in persistence: quest states are serialized to JSON and stored through `SaveProvider` under the `Save Key` field (default `Settings_Quests`).
 
-**How to use:** Keep `Auto Save` and `Auto Load` enabled on `QuestManager` — states are saved on accept/complete/fail/reset and restored during initialization. Call `Save()` / `Load()` for manual control (e.g. custom save points).
+**How to use:** Keep `Auto Save` and `Auto Load` enabled on `QuestManager` — states are saved after accept/progress/fail/reset (once per top-level operation) and restored during initialization. Call `Save()` / `Load()` for manual control (e.g. custom save points).
 
 **Steps:**
 1. Set `Save Key` on `QuestManager` (or keep the default `Settings_Quests`).
@@ -40,7 +40,7 @@ For each quest:
 
 ## Loading and config changes
 
-`Load()` does not replay acceptance, progress, or completion events. Refresh UI from `AllQuests`/`GetState` after loading.
+`Load()` does not replay acceptance, progress, or completion events. It raises the C# event `QuestsLoaded` after the restored registry is published; refresh UI from `AllQuests`/`GetState` there.
 
 - Empty quest IDs and null states are skipped. For duplicate IDs, the first saved state wins.
 - Missing progress/completion lists are recreated, and both lists grow to the largest saved/config count without discarding entries.
@@ -53,6 +53,10 @@ Objective identity is positional. Append objectives to preserve existing indices
 `UnregisterQuest(expected)` removes only the exact current config registration. It retains the state and stored JSON, including active, completed and failed quests. Use it before disposing an owned runtime config; later registration of the same ID can resume that progress. `ResetQuest` deliberately removes progress and serves a different purpose. No save-format or key migration is required for these registration APIs.
 
 `QuestManager.Save()` calls `SaveProvider.SetString`. Disk flush policy belongs to the selected provider; call `SaveProvider.Save()` at an application save checkpoint when an immediate flush is required. Quest Auto Save does not imply an immediate provider flush on every objective.
+
+## Auto Save batching
+
+Auto Save serializes once per top-level call. A `NotifyKill` that completes a quest whose `QuestCompleted` handler accepts the next chain quest writes one JSON snapshot containing both changes, and `RestartQuest` writes once for its reset and acceptance. The write happens when the outermost operation finishes, also when a listener throws after a change was committed, so the stored JSON matches the in-memory registry after the call returns. A throwing objective listener does not skip quest completion, so the save never holds an Active quest whose objectives are all completed. Code that reads the saved JSON from inside a quest callback sees the state before the current operation. Toggle the behaviour at runtime with `QuestManager.AutoSave`.
 
 ---
 

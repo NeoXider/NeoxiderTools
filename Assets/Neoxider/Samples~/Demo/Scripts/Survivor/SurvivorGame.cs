@@ -2,49 +2,62 @@ using System.Collections.Generic;
 using Neo.Abilities;
 using Neo.Tools;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace Neo.Samples.Survivor
 {
     /// <summary>
-    ///     A compact, modular Vampire-Survivors-style demo built entirely on Neo.Abilities + the Core
-    ///     resource/level systems. Everything — arena, camera, player, enemies, projectiles and HUD —
-    ///     is assembled in code from a single <see cref="SurvivorConfig" /> asset, so swapping the config
-    ///     (templates, abilities, modifiers, upgrades) produces a different game on the same code. Drop
-    ///     this one component into an empty scene, assign a config, and press Play.
+    ///     Game loop of the compact Vampire-Survivors-style demo built on Neo.Abilities + the Core resource/level
+    ///     systems. The scene is authored (SurvivorDemoBuilder): camera, arena, <see cref="AbilitySystemBehaviour" />
+    ///     with the config's library and projectile archetypes, the pooled enemy/orb/projectile templates, the player
+    ///     and the <see cref="SurvivorHudView" /> are saved objects referenced below, so the whole wiring is visible
+    ///     in the Hierarchy without entering Play Mode. This component only runs the game from its
+    ///     <see cref="SurvivorConfig" />: spawning, XP and level-ups, upgrades, camera follow and game over.
     /// </summary>
     [AddComponentMenu("Neoxider/Survivor Demo/Survivor Game")]
     public sealed class SurvivorGame : MonoBehaviour
     {
-        [Tooltip("The game as data. Swap it to build a different survivor game on the same code.")]
+        [Tooltip("The game as data: player, enemy spawn table, upgrades and tuning.")]
         [SerializeField] private SurvivorConfig _config;
 
-        [Tooltip("Camera background color.")]
+        [Tooltip("Camera background color (applied by the scene builder).")]
         [SerializeField] private Color _background = new Color(0.05f, 0.06f, 0.12f);
+
+        [Header("Authored scene")]
+        [Tooltip("Ability hub holding the config's library and the projectile archetype templates.")]
+        [SerializeField] private AbilitySystemBehaviour _hub;
+
+        [SerializeField] private SurvivorHudView _hud;
+        [SerializeField] private Camera _camera;
+
+        [Tooltip("Parent of spawned enemies and XP orbs.")]
+        [SerializeField] private Transform _actors;
+
+        [Tooltip("Player avatar; re-registered from its UnitTemplate at the start of every run.")]
+        [SerializeField] private SurvivorPlayerController _player;
+
+        [Tooltip("Inactive enemy templates; matched to the config's enemy types by their AbilityUnitBehaviour template.")]
+        [SerializeField] private SurvivorEnemy[] _enemyTemplates = System.Array.Empty<SurvivorEnemy>();
+
+        [Tooltip("Inactive XP orb template.")]
+        [SerializeField] private SurvivorXpOrb _orbTemplate;
+
+        [Tooltip("Projectile templates bound in the hub's archetypes (their pools are retired with this game).")]
+        [SerializeField] private GameObject[] _projectileTemplates = System.Array.Empty<GameObject>();
 
         private readonly List<SurvivorEnemy> _enemies = new List<SurvivorEnemy>();
         private readonly List<SurvivorXpOrb> _orbs = new List<SurvivorXpOrb>();
         private readonly Dictionary<SurvivorUpgrade, int> _upgradeTaken = new Dictionary<SurvivorUpgrade, int>();
         private readonly List<SurvivorUpgrade> _offerScratch = new List<SurvivorUpgrade>(3);
+        private readonly List<SurvivorUpgrade> _offerPool = new List<SurvivorUpgrade>(16);
         private readonly List<AbilitySlot> _slotScratch = new List<AbilitySlot>(8);
+        private readonly List<string> _pipLabels = new List<string>(8);
 
-        private AbilitySystemBehaviour _hub;
-        private SurvivorHud _hud;
-        private Camera _camera;
-        private Transform _actors;
-        private Transform _templates;
-        private GameObject _playerTemplateContainer;
-
-        private readonly Dictionary<SurvivorEnemyType, GameObject> _enemyTemplates =
+        private readonly Dictionary<SurvivorEnemyType, GameObject> _enemyTemplateByType =
             new Dictionary<SurvivorEnemyType, GameObject>();
 
-        // Exact source identities survive Unity's destroyed-object comparison during scene teardown.
-        // Storage roots may be shared by unrelated sources with the same name.
+        // WHY: exact source identities survive Unity's destroyed-object comparison during scene teardown;
+        // storage roots may be shared by unrelated sources with the same name.
         private readonly List<GameObject> _pooledTemplates = new List<GameObject>();
-
-        private GameObject _orbTemplate;
-        private SurvivorPlayerController _player;
 
         private float _time;
         private float _spawnTimer;
@@ -54,16 +67,34 @@ namespace Neo.Samples.Survivor
         private int _kills;
         private bool _built;
         private bool _gameOver;
+        private bool _levelUpOpen;
+        private bool _warnedUnbuilt;
 
         public static SurvivorGame Active { get; private set; }
 
         public SurvivorConfig Config => _config;
         public SurvivorPlayerController Player => _player;
+        public SurvivorHudView Hud => _hud;
         public bool IsPaused { get; private set; }
+        public bool IsRunning => _built && !_gameOver;
+        public bool IsGameOver => _gameOver;
+        public bool IsLevelUpOpen => _levelUpOpen;
+        public int Level => _level;
+        public int Kills => _kills;
+        public float SurvivedSeconds => _time;
+        public int ActiveEnemyCount => _enemies.Count;
+
+        /// <summary>True when the scene builder assigned every reference the game loop needs.</summary>
+        public bool IsSceneBuilt => _config != null && _hub != null && _hud != null && _camera != null &&
+                                    _actors != null && _player != null && _orbTemplate != null &&
+                                    _enemyTemplates != null && _enemyTemplates.Length > 0;
 
         private void Awake()
         {
             Active = this;
+            // WHY: capture the exact template identities while the references are alive, so removing this game
+            // retires their pools even when it never started (unauthored scene) or is destroyed during teardown.
+            TrackPooledTemplates();
         }
 
         private void OnDestroy()
@@ -77,44 +108,38 @@ namespace Neo.Samples.Survivor
             finally { RetireOwnedPools(); }
         }
 
-        /// <summary>
-        ///     Retires registrations and inactive clones for this game's exact templates. Outstanding
-        ///     rentals remain valid until returned; unrelated pools and shared storage roots survive.
-        /// </summary>
-        private void RetireOwnedPools()
-        {
-            foreach (GameObject template in _pooledTemplates)
-            {
-                // RetirePool accepts an already-destroyed Unity source; do not use template == null.
-                SpawnUtility.RetirePool(template);
-            }
-
-            _pooledTemplates.Clear();
-        }
-
-        private void TrackPooledTemplate(GameObject template)
-        {
-            _pooledTemplates.Add(template);
-        }
-
         private void Start()
         {
             if (_config == null)
             {
-                Debug.LogError("SurvivorGame: no SurvivorConfig assigned.", this);
+                WarnOnce("SurvivorGame: no SurvivorConfig assigned. Run Neoxider/Demo/Rebuild Active Demo Scene.");
                 enabled = false;
                 return;
             }
 
-            BuildOnce();
+            if (!IsSceneBuilt || _hud != null && !_hud.IsBuilt)
+            {
+                WarnOnce("SurvivorGame: the scene is not authored (hub, HUD, camera, player or templates missing). " +
+                         "Run Neoxider/Demo/Rebuild Active Demo Scene.");
+                enabled = false;
+                return;
+            }
+
+            if (PoolManager.I == null)
+            {
+                WarnOnce("SurvivorGame: the scene has no PoolManager. Run Neoxider/Demo/Rebuild Active Demo Scene.");
+                enabled = false;
+                return;
+            }
+
+            RegisterContent();
+            MapEnemyTemplates();
+            _built = true;
             StartRun();
         }
 
         private void Update()
         {
-            float unscaled = Time.unscaledDeltaTime;
-            _hud?.Tick(unscaled);
-
             if (!_built || IsPaused || _gameOver)
             {
                 return;
@@ -135,81 +160,74 @@ namespace Neo.Samples.Survivor
             RefreshHud();
         }
 
-        private void BuildOnce()
+        /// <summary>Button target (game-over screen and the kit panel): starts a fresh run in the same scene.</summary>
+        public void RestartRun()
         {
             if (_built)
+            {
+                StartRun();
+            }
+        }
+
+        /// <summary>Button target (upgrade cards): applies the card at <paramref name="offerIndex" /> of the open offer.</summary>
+        public void PickUpgrade(int offerIndex)
+        {
+            if (!_levelUpOpen)
             {
                 return;
             }
 
-            if (PoolManager.I == null)
+            if (offerIndex >= 0 && offerIndex < _offerScratch.Count)
             {
-                // WHY: Left at scene root so its DontDestroyOnLoad promotion is clean.
-                new GameObject("PoolManager").AddComponent<PoolManager>();
+                ApplyUpgrade(_offerScratch[offerIndex]);
             }
 
-            _actors = new GameObject("Actors").transform;
-            _actors.SetParent(transform, false);
-            _templates = new GameObject("Templates").transform;
-            _templates.SetParent(transform, false);
-            _templates.gameObject.SetActive(false);
+            _levelUpOpen = false;
+            _pendingLevelUps = Mathf.Max(0, _pendingLevelUps - 1);
+            _hud.HideUpgrades();
 
-            SetupCamera();
-            SetupArena();
-            SetupSystem();
-            SetupTemplates();
-            SetupCanvas();
-
-            _built = true;
+            if (_pendingLevelUps > 0)
+            {
+                OpenLevelUp();
+            }
+            else
+            {
+                CloseLevelUp();
+            }
         }
 
-        private void SetupCamera()
+        /// <summary>Button target (kit panel): adds exactly the XP missing for the next level to open the picker.</summary>
+        public void GrantLevelUp()
         {
-            _camera = Camera.main;
-            if (_camera == null)
+            if (!_built || _gameOver || IsPaused)
             {
-                var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
-                _camera = camGo.AddComponent<Camera>();
+                return;
             }
 
-            _camera.orthographic = true;
-            _camera.orthographicSize = _config.CameraSize;
-            _camera.backgroundColor = _background;
-            _camera.clearFlags = CameraClearFlags.SolidColor;
-            _camera.transform.position = new Vector3(0f, 0f, -10f);
-            _camera.transform.rotation = Quaternion.identity;
+            AddXp(Mathf.Max(1, _config.XpForLevel(_level) - _xp));
         }
 
-        private void SetupArena()
+        private void RetireOwnedPools()
         {
-            float e = _config.ArenaExtent;
+            foreach (GameObject template in _pooledTemplates)
+            {
+                // WHY: RetirePool accepts an already-destroyed Unity source; do not use template == null.
+                SpawnUtility.RetirePool(template);
+            }
 
-            // WHY: Neon frame (behind) — a bright rounded rect whose edge peeks around the darker floor.
-            SpriteRenderer frame = NewSprite("Frame", _actors, SurvivorArt.RoundedRect,
-                new Color(0.49f, 0.36f, 0.94f, 0.85f), -21);
-            frame.drawMode = SpriteDrawMode.Sliced;
-            frame.size = new Vector2(e * 2f + 0.9f, e * 2f + 0.9f);
-
-            // WHY: Dark playfield floor (front) leaves a thin neon border showing.
-            SpriteRenderer floor = NewSprite("Floor", _actors, SurvivorArt.RoundedRect,
-                new Color(0.08f, 0.09f, 0.15f), -20);
-            floor.drawMode = SpriteDrawMode.Sliced;
-            floor.size = new Vector2(e * 2f + 0.4f, e * 2f + 0.4f);
+            _pooledTemplates.Clear();
         }
 
-        private void SetupSystem()
+        private void RegisterContent()
         {
-            var hubGo = new GameObject("AbilitySystem");
-            hubGo.transform.SetParent(transform, false);
-            _hub = hubGo.AddComponent<AbilitySystemBehaviour>();
-            AbilitySystem system = _hub.System;
-
+            // WHY: the authored hub already lists the library; registering again is idempotent and keeps a
+            // config swapped in the Inspector playable without rebuilding the scene.
             if (_config.Library != null)
             {
                 _hub.AddLibrary(_config.Library);
             }
 
-            // WHY: Make sure every upgrade's content is registered even if omitted from the library.
+            AbilitySystem system = _hub.System;
             for (int i = 0; i < _config.Upgrades.Count; i++)
             {
                 SurvivorUpgrade up = _config.Upgrades[i];
@@ -228,61 +246,11 @@ namespace Neo.Samples.Survivor
                     system.RegisterAbility(up.Ability.Blueprint);
                 }
             }
-
-            RegisterProjectileArchetypes(system);
         }
 
-        private void RegisterProjectileArchetypes(AbilitySystem system)
+        private void MapEnemyTemplates()
         {
-            var seen = new HashSet<string>();
-            if (_config.Library != null)
-            {
-                for (int i = 0; i < _config.Library.Abilities.Count; i++)
-                {
-                    RegisterProjectileArchetype(_config.Library.Abilities[i], seen);
-                }
-            }
-
-            // WHY: Upgrade abilities may be omitted from the library (SetupSystem registers their
-            // blueprints anyway); without their archetypes a projectile upgrade would cast but
-            // never spawn anything.
-            for (int i = 0; i < _config.Upgrades.Count; i++)
-            {
-                SurvivorUpgrade up = _config.Upgrades[i];
-                if (up != null)
-                {
-                    RegisterProjectileArchetype(up.Ability, seen);
-                }
-            }
-        }
-
-        private void RegisterProjectileArchetype(AbilityDefinition def, HashSet<string> seen)
-        {
-            string archetype = def != null ? def.Blueprint.ProjectileArchetypeId : null;
-            if (!string.IsNullOrEmpty(archetype) && seen.Add(archetype))
-            {
-                _hub.AddArchetype(archetype, BuildProjectileTemplate(archetype));
-            }
-        }
-
-        private GameObject BuildProjectileTemplate(string archetype)
-        {
-            var go = new GameObject("Projectile_" + archetype);
-            go.transform.SetParent(_templates, false);
-            SpriteRenderer glow = NewSprite("Glow", go.transform, SurvivorArt.Glow,
-                new Color(0.25f, 0.79f, 0.94f, 0.55f), 3);
-            glow.transform.localScale = Vector3.one * 0.9f;
-            SpriteRenderer core = NewSprite("Core", go.transform, SurvivorArt.Disc,
-                new Color(0.85f, 0.98f, 1f), 4);
-            core.transform.localScale = Vector3.one * 0.4f;
-            go.AddComponent<AbilityProjectileBehaviour>();
-            go.SetActive(false);
-            TrackPooledTemplate(go);
-            return go;
-        }
-
-        private void SetupTemplates()
-        {
+            _enemyTemplateByType.Clear();
             for (int i = 0; i < _config.Enemies.Count; i++)
             {
                 SurvivorEnemyType type = _config.Enemies[i];
@@ -291,52 +259,63 @@ namespace Neo.Samples.Survivor
                     continue;
                 }
 
-                var go = new GameObject("Enemy_" + type.Template.name);
-                go.transform.SetParent(_templates, false);
-                go.SetActive(false);
-                SpriteRenderer body = NewSprite("Body", go.transform, SurvivorArt.Disc, type.Color, 1);
-                body.transform.localScale = Vector3.one * (type.Radius * 2f);
-                var unit = go.AddComponent<AbilityUnitBehaviour>();
-                unit.SetTemplate(type.Template);
-                go.AddComponent<SurvivorEnemy>();
-                _enemyTemplates[type] = go;
-                TrackPooledTemplate(go);
+                GameObject template = FindEnemyTemplate(type.Template);
+                if (template != null)
+                {
+                    _enemyTemplateByType[type] = template;
+                }
+                else
+                {
+                    WarnOnce("SurvivorGame: no authored enemy template for unit template '" + type.Template.name +
+                             "'. Rebuild the scene after changing the config's enemy list.");
+                }
             }
-
-            _orbTemplate = new GameObject("XpOrb");
-            _orbTemplate.transform.SetParent(_templates, false);
-            _orbTemplate.SetActive(false);
-            SpriteRenderer orbGlow = NewSprite("Glow", _orbTemplate.transform, SurvivorArt.Glow,
-                new Color(1f, 0.85f, 0.3f, 0.5f), 1);
-            orbGlow.transform.localScale = Vector3.one * 0.55f;
-            SpriteRenderer orbCore = NewSprite("Core", _orbTemplate.transform, SurvivorArt.Disc,
-                new Color(1f, 0.82f, 0.28f), 2);
-            orbCore.transform.localScale = Vector3.one * 0.28f;
-            _orbTemplate.AddComponent<SurvivorXpOrb>();
-            TrackPooledTemplate(_orbTemplate);
         }
 
-        private void SetupCanvas()
+        private GameObject FindEnemyTemplate(UnitTemplate unitTemplate)
         {
-            var canvasGo = new GameObject("Survivor HUD", typeof(Canvas), typeof(CanvasScaler),
-                typeof(GraphicRaycaster));
-            canvasGo.transform.SetParent(transform, false);
-            var canvas = canvasGo.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
-            var scaler = canvasGo.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            if (Object.FindFirstObjectByType<EventSystem>() == null)
+            for (int i = 0; i < _enemyTemplates.Length; i++)
             {
-                var es = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-                es.transform.SetParent(transform, false);
+                SurvivorEnemy candidate = _enemyTemplates[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                // WHY: templates stay inactive, so read the serialized template instead of the Awake-cached unit.
+                AbilityUnitBehaviour unit = candidate.GetComponent<AbilityUnitBehaviour>();
+                if (unit != null && unit.Template == unitTemplate)
+                {
+                    return candidate.gameObject;
+                }
             }
 
-            _hud = new SurvivorHud();
-            _hud.Build((RectTransform)canvasGo.transform);
+            return null;
+        }
+
+        private void TrackPooledTemplates()
+        {
+            _pooledTemplates.Clear();
+            for (int i = 0; _enemyTemplates != null && i < _enemyTemplates.Length; i++)
+            {
+                if (_enemyTemplates[i] != null)
+                {
+                    _pooledTemplates.Add(_enemyTemplates[i].gameObject);
+                }
+            }
+
+            if (_orbTemplate != null)
+            {
+                _pooledTemplates.Add(_orbTemplate.gameObject);
+            }
+
+            for (int i = 0; _projectileTemplates != null && i < _projectileTemplates.Length; i++)
+            {
+                if (_projectileTemplates[i] != null)
+                {
+                    _pooledTemplates.Add(_projectileTemplates[i]);
+                }
+            }
         }
 
         private void StartRun()
@@ -351,10 +330,12 @@ namespace Neo.Samples.Survivor
             _pendingLevelUps = 0;
             _kills = 0;
             _gameOver = false;
+            _levelUpOpen = false;
             IsPaused = false;
             _hub.Paused = false;
 
-            SpawnPlayer();
+            RespawnPlayer();
+            _camera.transform.position = new Vector3(0f, 0f, -10f);
 
             _hud.HideUpgrades();
             _hud.HideGameOver();
@@ -366,27 +347,21 @@ namespace Neo.Samples.Survivor
             RefreshHud();
         }
 
-        private void SpawnPlayer()
+        private void RespawnPlayer()
         {
-            if (_player != null)
+            // WHY: a disable/enable cycle destroys the domain unit and registers a fresh one from the UnitTemplate,
+            // which resets health, granted abilities, modifiers and cooldowns without recreating the object.
+            GameObject avatar = _player.gameObject;
+            avatar.SetActive(false);
+            avatar.transform.position = Vector3.zero;
+            AbilityUnitBehaviour unit = avatar.GetComponent<AbilityUnitBehaviour>();
+            if (unit != null && _config.PlayerTemplate != null)
             {
-                Destroy(_player.gameObject);
+                // WHY: SetTemplate only applies while disabled; following the config keeps a swapped config playable.
+                unit.SetTemplate(_config.PlayerTemplate);
             }
 
-            var go = new GameObject("Player");
-            go.transform.SetParent(_actors, false);
-            go.SetActive(false);
-            go.transform.position = Vector3.zero;
-            SpriteRenderer glow = NewSprite("Glow", go.transform, SurvivorArt.Glow,
-                new Color(_config.PlayerColor.r, _config.PlayerColor.g, _config.PlayerColor.b, 0.4f), 4);
-            glow.transform.localScale = Vector3.one * 1.4f;
-            SpriteRenderer body = NewSprite("Body", go.transform, SurvivorArt.Disc, _config.PlayerColor, 5);
-            body.transform.localScale = Vector3.one * (_config.PlayerRadius * 2f);
-
-            var unit = go.AddComponent<AbilityUnitBehaviour>();
-            unit.SetTemplate(_config.PlayerTemplate);
-            _player = go.AddComponent<SurvivorPlayerController>();
-            go.SetActive(true);
+            avatar.SetActive(true);
             _player.Initialize(this);
         }
 
@@ -405,7 +380,7 @@ namespace Neo.Samples.Survivor
         private void SpawnEnemy()
         {
             SurvivorEnemyType type = PickEnemyType();
-            if (type == null || !_enemyTemplates.TryGetValue(type, out GameObject template))
+            if (type == null || !_enemyTemplateByType.TryGetValue(type, out GameObject template))
             {
                 return;
             }
@@ -426,7 +401,7 @@ namespace Neo.Samples.Survivor
             }
 
             go.transform.SetParent(_actors, true);
-            var enemy = go.GetComponent<SurvivorEnemy>();
+            SurvivorEnemy enemy = go.GetComponent<SurvivorEnemy>();
             enemy.Spawned(type, this, _config.EnemyHealthMultiplier(_time));
             _enemies.Add(enemy);
         }
@@ -437,7 +412,7 @@ namespace Neo.Samples.Survivor
             for (int i = 0; i < _config.Enemies.Count; i++)
             {
                 SurvivorEnemyType t = _config.Enemies[i];
-                if (t != null && t.Template != null && _time >= t.UnlockTime)
+                if (IsSpawnable(t))
                 {
                     total += Mathf.Max(0f, t.SpawnWeight);
                 }
@@ -452,7 +427,7 @@ namespace Neo.Samples.Survivor
             for (int i = 0; i < _config.Enemies.Count; i++)
             {
                 SurvivorEnemyType t = _config.Enemies[i];
-                if (t == null || t.Template == null || _time < t.UnlockTime)
+                if (!IsSpawnable(t))
                 {
                     continue;
                 }
@@ -465,6 +440,12 @@ namespace Neo.Samples.Survivor
             }
 
             return null;
+        }
+
+        private bool IsSpawnable(SurvivorEnemyType type)
+        {
+            return type != null && type.Template != null && _time >= type.UnlockTime &&
+                   _enemyTemplateByType.ContainsKey(type);
         }
 
         /// <summary>Nearest living enemy to a point within range, or null. Used by the player's auto-caster.</summary>
@@ -515,14 +496,14 @@ namespace Neo.Samples.Survivor
             }
 
             position.z = 0f;
-            GameObject go = PoolManager.Get(_orbTemplate, position, Quaternion.identity);
+            GameObject go = PoolManager.Get(_orbTemplate.gameObject, position, Quaternion.identity);
             if (go == null)
             {
                 return;
             }
 
             go.transform.SetParent(_actors, true);
-            var orb = go.GetComponent<SurvivorXpOrb>();
+            SurvivorXpOrb orb = go.GetComponent<SurvivorXpOrb>();
             orb.Spawned(this, value);
             _orbs.Add(orb);
         }
@@ -556,35 +537,18 @@ namespace Neo.Samples.Survivor
             BuildOffer(_offerScratch);
             if (_offerScratch.Count == 0)
             {
+                _pendingLevelUps = 0;
                 CloseLevelUp();
                 return;
             }
 
-            _hud.ShowUpgrades(_offerScratch, PickUpgrade);
-        }
-
-        private void PickUpgrade(int offerIndex)
-        {
-            if (offerIndex >= 0 && offerIndex < _offerScratch.Count)
-            {
-                ApplyUpgrade(_offerScratch[offerIndex]);
-            }
-
-            _pendingLevelUps = Mathf.Max(0, _pendingLevelUps - 1);
-            _hud.HideUpgrades();
-
-            if (_pendingLevelUps > 0)
-            {
-                OpenLevelUp();
-            }
-            else
-            {
-                CloseLevelUp();
-            }
+            _levelUpOpen = true;
+            _hud.ShowUpgrades(_offerScratch);
         }
 
         private void CloseLevelUp()
         {
+            _levelUpOpen = false;
             IsPaused = false;
             _hub.Paused = false;
         }
@@ -592,7 +556,7 @@ namespace Neo.Samples.Survivor
         private void ApplyUpgrade(SurvivorUpgrade upgrade)
         {
             AbilityUnit unit = _player != null ? _player.Unit : null;
-            if (unit == null)
+            if (unit == null || upgrade == null)
             {
                 return;
             }
@@ -633,7 +597,7 @@ namespace Neo.Samples.Survivor
         private void BuildOffer(List<SurvivorUpgrade> result)
         {
             result.Clear();
-            var pool = new List<SurvivorUpgrade>();
+            _offerPool.Clear();
             for (int i = 0; i < _config.Upgrades.Count; i++)
             {
                 SurvivorUpgrade up = _config.Upgrades[i];
@@ -657,14 +621,15 @@ namespace Neo.Samples.Survivor
                     continue;
                 }
 
-                pool.Add(up);
+                _offerPool.Add(up);
             }
 
-            for (int n = 0; n < 3 && pool.Count > 0; n++)
+            int cards = Mathf.Min(3, _hud.CardCount);
+            for (int n = 0; n < cards && _offerPool.Count > 0; n++)
             {
-                int idx = Random.Range(0, pool.Count);
-                result.Add(pool[idx]);
-                pool.RemoveAt(idx);
+                int idx = Random.Range(0, _offerPool.Count);
+                result.Add(_offerPool[idx]);
+                _offerPool.RemoveAt(idx);
             }
         }
 
@@ -698,7 +663,12 @@ namespace Neo.Samples.Survivor
 
             _hud.SetXp(_xp, _config.XpForLevel(_level));
 
-            unit?.System.GetSlots(unit.Id, _slotScratch);
+            if (unit == null)
+            {
+                return;
+            }
+
+            unit.System.GetSlots(unit.Id, _slotScratch);
             for (int i = 0; i < _slotScratch.Count; i++)
             {
                 _hud.SetPip(i, _slotScratch[i].NormalizedCooldown);
@@ -708,18 +678,18 @@ namespace Neo.Samples.Survivor
         private void RefreshAbilityPips()
         {
             AbilityUnit unit = _player != null ? _player.Unit : null;
-            var labels = new List<string>();
+            _pipLabels.Clear();
             if (unit != null)
             {
                 unit.System.GetSlots(unit.Id, _slotScratch);
                 for (int i = 0; i < _slotScratch.Count; i++)
                 {
                     string dn = _slotScratch[i].Blueprint.DisplayName;
-                    labels.Add(string.IsNullOrEmpty(dn) ? "?" : dn.Substring(0, 1).ToUpperInvariant());
+                    _pipLabels.Add(string.IsNullOrEmpty(dn) ? "?" : dn.Substring(0, 1).ToUpperInvariant());
                 }
             }
 
-            _hud.SetAbilities(labels);
+            _hud.SetAbilities(_pipLabels);
         }
 
         private void FollowCamera(float dt)
@@ -750,12 +720,14 @@ namespace Neo.Samples.Survivor
             }
 
             _gameOver = true;
+            _levelUpOpen = false;
             IsPaused = true;
             _hub.Paused = true;
+            _hud.HideUpgrades();
 
             int s = Mathf.FloorToInt(_time);
             string stats = $"Survived  {s / 60:00}:{s % 60:00}\n{_kills} kills   ·   reached level {_level}";
-            _hud.ShowGameOver(stats, StartRun);
+            _hud.ShowGameOver(stats);
         }
 
         private void ReleaseAllActors()
@@ -781,16 +753,15 @@ namespace Neo.Samples.Survivor
             _orbs.Clear();
         }
 
-        private static SpriteRenderer NewSprite(string name, Transform parent, Sprite sprite, Color color,
-            int order)
+        private void WarnOnce(string message)
         {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = sprite;
-            sr.color = color;
-            sr.sortingOrder = order;
-            return sr;
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(message, this);
         }
     }
 }

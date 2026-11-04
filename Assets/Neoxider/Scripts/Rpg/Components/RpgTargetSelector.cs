@@ -1,3 +1,4 @@
+using System;
 using Neo.Reactive;
 using Neo.Rpg.Components;
 using UnityEngine;
@@ -25,6 +26,18 @@ namespace Neo.Rpg
 
         [SerializeField] private UnityEvent _onTargetCleared = new();
 
+        // WHY: cached; passing the method group would allocate a new delegate on every selection.
+        private static readonly Func<GameObject, IRpgCombatReceiver> ResolveReceiver = ResolveReceiverFromGameObject;
+
+        /// <summary>
+        ///     Gets or sets the targeting query (range, layers, selection mode, filters) used by <see cref="SelectTarget" />.
+        /// </summary>
+        public RpgTargetQuery Query
+        {
+            get => _query;
+            set => _query = value ?? new RpgTargetQuery();
+        }
+
         /// <summary>
         ///     Gets the current selected target.
         /// </summary>
@@ -42,8 +55,7 @@ namespace Neo.Rpg
         public GameObject SelectTarget()
         {
             Transform source = _origin != null ? _origin : transform;
-            CurrentTarget = RpgTargetingUtility.SelectTarget(source, _query, ResolveReceiverFromGameObject,
-                _characterSource);
+            CurrentTarget = RpgTargetingUtility.SelectTarget(source, _query, ResolveReceiver, _characterSource);
             HasTargetState.Value = CurrentTarget != null;
             if (CurrentTarget != null)
             {
@@ -73,7 +85,7 @@ namespace Neo.Rpg
             _onTargetCleared?.Invoke();
         }
 
-        private IRpgCombatReceiver ResolveReceiverFromGameObject(GameObject target)
+        private static IRpgCombatReceiver ResolveReceiverFromGameObject(GameObject target)
         {
             if (target == null)
             {

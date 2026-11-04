@@ -7,8 +7,14 @@ namespace Neo.Extensions
     /// <summary>
     ///     Extension methods for collections of GameObjects and Components for batch operations.
     /// </summary>
+    /// <remarks>
+    ///     Null and destroyed entries are skipped. Eager helpers do not allocate for lists and arrays; queries that
+    ///     return <see cref="IEnumerable{T}" /> are lazy and evaluated when enumerated.
+    /// </remarks>
     public static class GameObjectArrayExtensions
     {
+        private static readonly List<Renderer> RendererBuffer = new();
+
         /// <summary>
         ///     Sets the active state of all GameObjects in the collection.
         /// </summary>
@@ -19,9 +25,26 @@ namespace Neo.Extensions
                 return null;
             }
 
-            foreach (GameObject gameObject in gameObjects.Where(go => go != null))
+            if (gameObjects is IList<GameObject> list)
             {
-                gameObject.SetActive(active);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    GameObject gameObject = list[i];
+                    if (gameObject != null)
+                    {
+                        gameObject.SetActive(active);
+                    }
+                }
+
+                return gameObjects;
+            }
+
+            foreach (GameObject gameObject in gameObjects)
+            {
+                if (gameObject != null)
+                {
+                    gameObject.SetActive(active);
+                }
             }
 
             return gameObjects;
@@ -38,9 +61,26 @@ namespace Neo.Extensions
                 return null;
             }
 
-            foreach (T component in components.Where(c => c != null))
+            if (components is IList<T> list)
             {
-                component.gameObject.SetActive(active);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    T component = list[i];
+                    if (component != null)
+                    {
+                        component.gameObject.SetActive(active);
+                    }
+                }
+
+                return components;
+            }
+
+            foreach (T component in components)
+            {
+                if (component != null)
+                {
+                    component.gameObject.SetActive(active);
+                }
             }
 
             return components;
@@ -56,7 +96,8 @@ namespace Neo.Extensions
                 return null;
             }
 
-            for (int i = 0; i < Mathf.Min(upToIndex, gameObjects.Count); i++)
+            int count = Mathf.Min(upToIndex, gameObjects.Count);
+            for (int i = 0; i < count; i++)
             {
                 if (gameObjects[i] != null)
                 {
@@ -112,21 +153,72 @@ namespace Neo.Extensions
         /// <summary>
         ///     Sets the active state of a GameObject with a component at the specified index in any enumerable collection.
         /// </summary>
-        /// <remarks>Note: This method may be inefficient on large collections as it calls .ToList().</remarks>
+        /// <remarks>Lists and arrays use direct indexing; other sequences are walked up to the index without copying.</remarks>
         public static GameObject SetActiveAtIndex<T>(this IEnumerable<T> components, int index, bool active)
             where T : Component
         {
-            return components.ToList().SetActiveAtIndex(index, active);
+            if (components is IList<T> list)
+            {
+                return list.SetActiveAtIndex(index, active);
+            }
+
+            if (components != null && index >= 0)
+            {
+                int position = 0;
+                foreach (T component in components)
+                {
+                    if (position++ != index)
+                    {
+                        continue;
+                    }
+
+                    if (component == null)
+                    {
+                        return null;
+                    }
+
+                    component.gameObject.SetActive(active);
+                    return component.gameObject;
+                }
+            }
+
+            NeoDiagnostics.LogWarning($"Invalid index {index} for component collection.");
+            return null;
         }
 
         /// <summary>
         ///     Sets the active state of a GameObject at the specified index in any enumerable collection.
         /// </summary>
-        /// <remarks>Note: This method may be inefficient on large collections as it calls .ToList().</remarks>
+        /// <remarks>Lists and arrays use direct indexing; other sequences are walked up to the index without copying.</remarks>
         public static GameObject SetActiveAtIndex(this IEnumerable<GameObject> gameObjects, int index,
             bool active = true)
         {
-            return gameObjects.ToList().SetActiveAtIndex(index, active);
+            if (gameObjects is IList<GameObject> list)
+            {
+                return list.SetActiveAtIndex(index, active);
+            }
+
+            if (gameObjects != null && index >= 0)
+            {
+                int position = 0;
+                foreach (GameObject gameObject in gameObjects)
+                {
+                    if (position++ != index)
+                    {
+                        continue;
+                    }
+
+                    if (gameObject != null)
+                    {
+                        gameObject.SetActive(active);
+                    }
+
+                    return gameObject;
+                }
+            }
+
+            NeoDiagnostics.LogWarning($"Invalid index {index} for GameObject collection.");
+            return null;
         }
 
         /// <summary>
@@ -140,9 +232,13 @@ namespace Neo.Extensions
             }
 
             // WHY: ToList() copies the collection so destroying elements doesn't invalidate iteration.
-            foreach (GameObject gameObject in gameObjects.ToList().Where(go => go != null))
+            List<GameObject> snapshot = gameObjects.ToList();
+            for (int i = 0; i < snapshot.Count; i++)
             {
-                Object.Destroy(gameObject);
+                if (snapshot[i] != null)
+                {
+                    Object.Destroy(snapshot[i]);
+                }
             }
         }
 
@@ -156,14 +252,18 @@ namespace Neo.Extensions
                 return;
             }
 
-            foreach (T component in components.ToList().Where(c => c != null))
+            List<T> snapshot = components.ToList();
+            for (int i = 0; i < snapshot.Count; i++)
             {
-                Object.Destroy(component.gameObject);
+                if (snapshot[i] != null)
+                {
+                    Object.Destroy(snapshot[i].gameObject);
+                }
             }
         }
 
         /// <summary>
-        ///     Gets all active GameObjects from the collection.
+        ///     Gets all active GameObjects from the collection (lazy).
         /// </summary>
         public static IEnumerable<GameObject> GetActiveObjects(this IEnumerable<GameObject> gameObjects)
         {
@@ -171,7 +271,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        ///     Gets components of type T from all GameObjects in the collection.
+        ///     Gets components of type T from all GameObjects in the collection (lazy).
         /// </summary>
         public static IEnumerable<T> GetComponentsFromAll<T>(this IEnumerable<GameObject> gameObjects)
             where T : Component
@@ -197,10 +297,15 @@ namespace Neo.Extensions
                 return null;
             }
 
-            return gameObjects
-                .Where(obj => obj != null)
-                .Select(obj => obj.GetComponent<T>())
-                .FirstOrDefault(component => component != null);
+            foreach (GameObject gameObject in gameObjects)
+            {
+                if (gameObject != null && gameObject.TryGetComponent(out T component))
+                {
+                    return component;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -213,9 +318,12 @@ namespace Neo.Extensions
                 return;
             }
 
-            foreach (GameObject gameObject in gameObjects.Where(go => go != null))
+            foreach (GameObject gameObject in gameObjects)
             {
-                gameObject.transform.position = position;
+                if (gameObject != null)
+                {
+                    gameObject.transform.position = position;
+                }
             }
         }
 
@@ -225,23 +333,36 @@ namespace Neo.Extensions
         /// <param name="gameObjects">The collection of GameObjects to search through.</param>
         /// <param name="position">The world position to measure distance from.</param>
         /// <returns>The closest GameObject, or null if the collection is empty.</returns>
+        /// <remarks>Compares squared distances; lists and arrays are scanned by index without allocating.</remarks>
         public static GameObject FindClosest(this IEnumerable<GameObject> gameObjects, Vector3 position)
         {
-            GameObject closest = null;
-            float minDistance = float.MaxValue;
-
             if (gameObjects == null)
             {
                 return null;
             }
 
-            foreach (GameObject go in gameObjects.Where(go => go != null))
+            GameObject closest = null;
+            float minDistanceSqr = float.PositiveInfinity;
+            if (gameObjects is IList<GameObject> list)
             {
-                float distance = Vector3.Distance(go.transform.position, position);
-                if (distance < minDistance)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    minDistance = distance;
-                    closest = go;
+                    GameObject candidate = list[i];
+                    if (candidate != null)
+                    {
+                        ConsiderClosest(candidate, candidate.transform.position, position, ref closest,
+                            ref minDistanceSqr);
+                    }
+                }
+
+                return closest;
+            }
+
+            foreach (GameObject candidate in gameObjects)
+            {
+                if (candidate != null)
+                {
+                    ConsiderClosest(candidate, candidate.transform.position, position, ref closest, ref minDistanceSqr);
                 }
             }
 
@@ -254,23 +375,36 @@ namespace Neo.Extensions
         /// <param name="components">The collection of Components to search through.</param>
         /// <param name="position">The world position to measure distance from.</param>
         /// <returns>The closest Component, or null if the collection is empty.</returns>
+        /// <remarks>Compares squared distances; lists and arrays are scanned by index without allocating.</remarks>
         public static T FindClosest<T>(this IEnumerable<T> components, Vector3 position) where T : Component
         {
-            T closest = null;
-            float minDistance = float.MaxValue;
-
             if (components == null)
             {
                 return null;
             }
 
-            foreach (T component in components.Where(c => c != null))
+            T closest = null;
+            float minDistanceSqr = float.PositiveInfinity;
+            if (components is IList<T> list)
             {
-                float distance = Vector3.Distance(component.transform.position, position);
-                if (distance < minDistance)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    minDistance = distance;
-                    closest = component;
+                    T candidate = list[i];
+                    if (candidate != null)
+                    {
+                        ConsiderClosest(candidate, candidate.transform.position, position, ref closest,
+                            ref minDistanceSqr);
+                    }
+                }
+
+                return closest;
+            }
+
+            foreach (T candidate in components)
+            {
+                if (candidate != null)
+                {
+                    ConsiderClosest(candidate, candidate.transform.position, position, ref closest, ref minDistanceSqr);
                 }
             }
 
@@ -278,7 +412,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        ///     Filters the collection to GameObjects that are within a specified distance from a point.
+        ///     Filters the collection to GameObjects that are within a specified distance from a point (lazy).
         /// </summary>
         /// <returns>A new collection of GameObjects within the specified distance.</returns>
         public static IEnumerable<GameObject> WithinDistance(this IEnumerable<GameObject> gameObjects, Vector3 position,
@@ -290,9 +424,9 @@ namespace Neo.Extensions
             }
 
             float sqrDistance = distance * distance;
-            foreach (GameObject go in gameObjects.Where(go => go != null))
+            foreach (GameObject go in gameObjects)
             {
-                if (Vector3.SqrMagnitude(go.transform.position - position) <= sqrDistance)
+                if (go != null && Vector3.SqrMagnitude(go.transform.position - position) <= sqrDistance)
                 {
                     yield return go;
                 }
@@ -300,7 +434,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        ///     Filters the collection to Components whose GameObjects are within a specified distance from a point.
+        ///     Filters the collection to Components whose GameObjects are within a specified distance from a point (lazy).
         /// </summary>
         /// <returns>A new collection of Components within the specified distance.</returns>
         public static IEnumerable<T> WithinDistance<T>(this IEnumerable<T> components, Vector3 position, float distance)
@@ -312,9 +446,10 @@ namespace Neo.Extensions
             }
 
             float sqrDistance = distance * distance;
-            foreach (T component in components.Where(c => c != null))
+            foreach (T component in components)
             {
-                if (Vector3.SqrMagnitude(component.transform.position - position) <= sqrDistance)
+                if (component != null &&
+                    Vector3.SqrMagnitude(component.transform.position - position) <= sqrDistance)
                 {
                     yield return component;
                 }
@@ -333,9 +468,12 @@ namespace Neo.Extensions
                 return;
             }
 
-            foreach (GameObject go in gameObjects.Where(go => go != null))
+            foreach (GameObject go in gameObjects)
             {
-                go.transform.SetParent(parent, worldPositionStays);
+                if (go != null)
+                {
+                    go.transform.SetParent(parent, worldPositionStays);
+                }
             }
         }
 
@@ -351,9 +489,12 @@ namespace Neo.Extensions
                 return;
             }
 
-            foreach (T component in components.Where(c => c != null))
+            foreach (T component in components)
             {
-                component.transform.SetParent(parent, worldPositionStays);
+                if (component != null)
+                {
+                    component.transform.SetParent(parent, worldPositionStays);
+                }
             }
         }
 
@@ -371,10 +512,28 @@ namespace Neo.Extensions
                 return sum;
             }
 
-            foreach (GameObject go in gameObjects.Where(go => go != null))
+            if (gameObjects is IList<GameObject> list)
             {
-                sum += go.transform.position;
-                count++;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    GameObject go = list[i];
+                    if (go != null)
+                    {
+                        sum += go.transform.position;
+                        count++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (GameObject go in gameObjects)
+                {
+                    if (go != null)
+                    {
+                        sum += go.transform.position;
+                        count++;
+                    }
+                }
             }
 
             return count == 0 ? Vector3.zero : sum / count;
@@ -394,64 +553,153 @@ namespace Neo.Extensions
                 return sum;
             }
 
-            foreach (T component in components.Where(c => c != null))
+            if (components is IList<T> list)
             {
-                sum += component.transform.position;
-                count++;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    T component = list[i];
+                    if (component != null)
+                    {
+                        sum += component.transform.position;
+                        count++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (T component in components)
+                {
+                    if (component != null)
+                    {
+                        sum += component.transform.position;
+                        count++;
+                    }
+                }
             }
 
             return count == 0 ? Vector3.zero : sum / count;
         }
 
         /// <summary>
-        ///     Calculates a single Bounding Box that encapsulates all Renderers in the collection of GameObjects (including
-        ///     children).
+        ///     Calculates a single Bounding Box that encapsulates all enabled Renderers of active objects in the
+        ///     collection of GameObjects (including children).
         /// </summary>
         /// <returns>A Bounds object that contains all renderers, or a zero-sized bounds at origin if no renderers are found.</returns>
+        /// <remarks>Lists and arrays are indexed and the renderer buffer is shared, so a warm call on them does not allocate.</remarks>
         public static Bounds GetCombinedBounds(this IEnumerable<GameObject> gameObjects)
         {
+            Bounds bounds = new(Vector3.zero, Vector3.zero);
             if (gameObjects == null)
             {
-                return new Bounds(Vector3.zero, Vector3.zero);
+                return bounds;
             }
 
-            IEnumerable<Renderer> renderers = gameObjects
-                .Where(go => go != null)
-                .SelectMany(go => go.GetComponentsInChildren<Renderer>())
-                .Where(r => r.enabled);
-
-            Bounds bounds = new(Vector3.zero, Vector3.zero);
             bool hasRenderer = false;
-            foreach (Renderer renderer in renderers)
+            if (gameObjects is IList<GameObject> list)
             {
-                if (!hasRenderer)
+                // WHY: foreach over the IEnumerable interface boxes a List enumerator on every call.
+                for (int i = 0; i < list.Count; i++)
                 {
-                    bounds = renderer.bounds;
-                    hasRenderer = true;
+                    EncapsulateRenderers(list[i], ref bounds, ref hasRenderer);
                 }
-                else
-                {
-                    bounds.Encapsulate(renderer.bounds);
-                }
+
+                return bounds;
+            }
+
+            foreach (GameObject go in gameObjects)
+            {
+                EncapsulateRenderers(go, ref bounds, ref hasRenderer);
             }
 
             return bounds;
         }
 
         /// <summary>
-        ///     Calculates a single Bounding Box that encapsulates all Renderers in the GameObjects of the components in the
-        ///     collection (including children).
+        ///     Calculates a single Bounding Box that encapsulates all enabled Renderers in the GameObjects of the
+        ///     components in the collection (including children).
         /// </summary>
         /// <returns>A Bounds object that contains all renderers, or a zero-sized bounds at origin if no renderers are found.</returns>
+        /// <remarks>Lists and arrays are indexed and the renderer buffer is shared, so a warm call on them does not allocate.</remarks>
         public static Bounds GetCombinedBounds<T>(this IEnumerable<T> components) where T : Component
         {
+            Bounds bounds = new(Vector3.zero, Vector3.zero);
             if (components == null)
             {
-                return new Bounds(Vector3.zero, Vector3.zero);
+                return bounds;
             }
 
-            IEnumerable<GameObject> gameObjects = components.Where(c => c != null).Select(c => c.gameObject);
-            return gameObjects.GetCombinedBounds();
+            bool hasRenderer = false;
+            if (components is IList<T> list)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    T component = list[i];
+                    if (component != null)
+                    {
+                        EncapsulateRenderers(component.gameObject, ref bounds, ref hasRenderer);
+                    }
+                }
+
+                return bounds;
+            }
+
+            foreach (T component in components)
+            {
+                if (component != null)
+                {
+                    EncapsulateRenderers(component.gameObject, ref bounds, ref hasRenderer);
+                }
+            }
+
+            return bounds;
+        }
+
+        private static void ConsiderClosest<T>(T candidate, Vector3 candidatePosition, Vector3 origin, ref T closest,
+            ref float minDistanceSqr) where T : class
+        {
+            float distanceSqr = (candidatePosition - origin).sqrMagnitude;
+            // WHY: the equality branch keeps a result when every candidate is so far away that the square overflows.
+            if (distanceSqr < minDistanceSqr || (closest == null && distanceSqr == minDistanceSqr))
+            {
+                minDistanceSqr = distanceSqr;
+                closest = candidate;
+            }
+        }
+
+        private static void EncapsulateRenderers(GameObject gameObject, ref Bounds bounds, ref bool hasRenderer)
+        {
+            if (gameObject == null)
+            {
+                return;
+            }
+
+            // WHY: a reused buffer instead of the array GetComponentsInChildren<T>() allocates per object.
+            gameObject.GetComponentsInChildren(false, RendererBuffer);
+            try
+            {
+                for (int i = 0; i < RendererBuffer.Count; i++)
+                {
+                    Renderer renderer = RendererBuffer[i];
+                    if (!renderer.enabled)
+                    {
+                        continue;
+                    }
+
+                    if (!hasRenderer)
+                    {
+                        bounds = renderer.bounds;
+                        hasRenderer = true;
+                    }
+                    else
+                    {
+                        bounds.Encapsulate(renderer.bounds);
+                    }
+                }
+            }
+            finally
+            {
+                RendererBuffer.Clear();
+            }
         }
     }
 }

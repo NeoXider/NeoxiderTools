@@ -1,49 +1,8 @@
-# BillboardUniversal
+# BillboardUniversal (redirect)
 
-**Purpose:** Component that adjusts its `Transform` rotation every `LateUpdate` (to avoid jitter) so that the object faces the camera or a fixed direction based on the selected mode.
+**What it is:** `BillboardUniversal` belongs to the **View** module. Script: `Scripts/Tools/View/BillboardUniversal.cs`,
+namespace `Neo.Tools`, assembly `Neo.Tools.View`.
 
-**Namespace:** `Neo.Tools`  
-**Script:** `Assets/Neoxider/Scripts/Tools/View/BillboardUniversal.cs`
-
----
-
-## Description
-
-`BillboardUniversal` makes an object always "look at" the camera or a given direction. This is useful for elements that must always be visible to the player regardless of the camera angle: health bars above enemies, character names, icons, particles, or sprites in a 3D world.
-
----
-
-## Key Fields
-
-### Billboard Mode
-
-- `billboardMode` — Defines how the object orients itself:
-  - `TowardsCamera`: The object always faces the camera directly. Ideal for 3D sprites that should look like 2D images.
-  - `AwayFromCamera`: The object always faces away from the camera. Useful for certain effects or "back side" scenarios.
-  - `TowardsDirection`: The object always faces a fixed direction defined by `customDirection`. Useful for objects that should be oriented along a world axis (e.g. the X axis).
-
-### Other Settings
-
-- `ignoreY` (`bool`) — If `true`, the object only rotates around its vertical (Y) axis and does not tilt up or down. Ideal for health bars or name labels that should always remain upright.
-- `targetCamera` (`Camera`) — The camera the object should face. If not assigned, `Camera.main` is used.
-- `customDirection` (`Vector3`) — The direction used in `TowardsDirection` mode.
-
-## Edit Mode
-
-The component rotates only in `LateUpdate`, i.e. in Play Mode. It has no `OnValidate`: Unity calls
-`OnValidate` on prefab assets as they load, and rotating there wrote a `Camera.main`-dependent rotation
-into the prefab asset. To preview the orientation in the editor, use the component's context menu
-**Face Camera Now** (recorded in Undo).
-
-## Public Methods
-
-| Method | Description |
-|---|---|
-| `SetCustomDirection(Vector3 direction)` | Programmatically changes `customDirection`. |
-| `SetBillboardMode(BillboardMode mode)` | Programmatically changes the orientation mode. |
-| `SetIgnoreY(bool ignore)` | Programmatically enables or disables Y-axis ignore. |
-| `SetTargetCamera(Camera camera)` | Programmatically changes the target camera. |
-
-## See Also
-
-- [View module README](./README.md)
+**How to use:** see [BillboardUniversal in Tools / View](../View/BillboardUniversal.md), the canonical page (the
+component's `[NeoDoc]` help button opens it). It lists the modes, the `Mode` / `IgnoreY` / `CustomDirection` /
+`TargetCamera` getters, the setters and the main-camera fallback switch.

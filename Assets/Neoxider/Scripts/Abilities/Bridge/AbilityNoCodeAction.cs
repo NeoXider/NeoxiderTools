@@ -47,8 +47,6 @@ namespace Neo.Abilities
         [SerializeField] private UnityEvent<string> _onFailed = new UnityEvent<string>();
         [SerializeField] private UnityEvent<string> _onResultMessage = new UnityEvent<string>();
 
-        private string _capturedCastFailure;
-        private UnityAction<string> _castFailureCapture;
         private AbilityCasterBehaviour _resolvedCaster;
         private bool _casterSearched;
 
@@ -160,30 +158,19 @@ namespace Neo.Abilities
 
         private void CastThroughCaster(AbilityCasterBehaviour caster, string abilityId, AbilityUnitBehaviour target)
         {
-            // WHY: the precise CastFailureReason surfaces only through the caster's OnCastFailed;
-            // a scoped listener captures it so _onFailed carries the same reason without a second cast.
-            _capturedCastFailure = null;
-            _castFailureCapture ??= reason => _capturedCastFailure = reason;
-            caster.OnCastFailed.AddListener(_castFailureCapture);
-            bool success;
-            try
-            {
-                success = target != null ? caster.TryCastAtUnit(abilityId, target) : caster.TryCast(abilityId);
-            }
-            finally
-            {
-                // WHY: a throwing user handler on the cast events must not leak the capture listener
-                // (it would stack duplicates across Execute calls).
-                caster.OnCastFailed.RemoveListener(_castFailureCapture);
-            }
+            // WHY: the caster returns the typed result of this exact cast, so the precise reason survives
+            // even when a user handler on the caster's events casts again before control returns here.
+            CastResult result = caster.Cast(target != null
+                ? CastRequest.AtUnit(UnitId.None, abilityId, target.UnitId)
+                : CastRequest.NoTarget(UnitId.None, abilityId));
 
-            if (success)
+            if (result.Success)
             {
                 EmitSuccess($"Cast: {abilityId}");
             }
             else
             {
-                EmitFailed($"Cast failed: {abilityId} ({_capturedCastFailure ?? "unknown"})");
+                EmitFailed($"Cast failed: {abilityId} ({CastFailureReasonNames.Of(result.Failure)})");
             }
         }
 

@@ -13,3 +13,5 @@ Common blocks that already exist:
 - `Cards` for deck/hand/card view workflows, including duplicate-safe operations and lifecycle;
 - `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` for common gameplay systems;
 - `Tools` for movement, spawners, timers, input, physics, and view helpers.
+
+Demo scenes are authored by editor scene builders, not runtime bootstraps: see [DemoSceneBuilders.md](DemoSceneBuilders.md). Open tasks: [TODO.md](TODO.md).

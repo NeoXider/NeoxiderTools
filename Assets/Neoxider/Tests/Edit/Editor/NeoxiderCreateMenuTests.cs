@@ -45,12 +45,12 @@ namespace Neo.Editor.Tests
                 BindingFlags.Static | BindingFlags.NonPublic);
             Assert.That(presetsField, Is.Not.Null);
 
-            var entries = ((Array)presetsField.GetValue(null)).Cast<object>().ToArray();
+            object[] entries = ((Array)presetsField.GetValue(null)).Cast<object>().ToArray();
             Assert.That(entries, Is.Not.Empty);
 
             foreach (object entry in entries)
             {
-                var path = (string)entry.GetType().GetField("Item3").GetValue(entry);
+                string path = (string)entry.GetType().GetField("Item3").GetValue(entry);
                 GameObject prefab = CreateMenuObject.GetResources<GameObject>(path);
                 Assert.That(prefab, Is.Not.Null, $"Preset prefab missing: '{path}'");
             }
@@ -77,7 +77,7 @@ namespace Neo.Editor.Tests
         public void CreatePreset_MissingPrefab_LogsErrorAndCreatesNothing()
         {
             int rootCount = SceneManager.GetActiveScene().rootCount;
-            var capture = new CapturingLogHandler();
+            CapturingLogHandler capture = new CapturingLogHandler();
             ILogHandler previous = Debug.unityLogger.logHandler;
             Debug.unityLogger.logHandler = capture;
             try
@@ -108,8 +108,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void CreatePreset_ParentsUnderMenuContext()
         {
-            var parent = new GameObject("PresetParent");
-            var command = new MenuCommand(parent);
+            GameObject parent = new GameObject("PresetParent");
+            MenuCommand command = new MenuCommand(parent);
 
             NeoxiderPresetCreateMenu.CreatePreset("Prefabs/Bullet.prefab", command);
 
@@ -130,7 +130,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void PlaceInScene_UIObject_GetsCanvasParent()
         {
-            var uiObject = new GameObject("UiElement", typeof(RectTransform));
+            GameObject uiObject = new GameObject("UiElement", typeof(RectTransform));
             try
             {
                 InvokePlaceInScene(uiObject, null, "Create UiElement");
@@ -148,9 +148,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void PlaceInScene_CanvasInstance_IsNotNestedUnderAnotherCanvas()
         {
-            var existingCanvas = new GameObject("ExistingOverlayCanvas", typeof(Canvas));
+            GameObject existingCanvas = new GameObject("ExistingOverlayCanvas", typeof(Canvas));
             existingCanvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-            var canvasInstance = new GameObject("NewCanvas", typeof(Canvas));
+            GameObject canvasInstance = new GameObject("NewCanvas", typeof(Canvas));
 
             InvokePlaceInScene(canvasInstance, null, "Create NewCanvas");
 
@@ -161,12 +161,12 @@ namespace Neo.Editor.Tests
         [Test]
         public void PlaceInScene_UIObject_PrefersScreenSpaceCanvasOverWorldSpace()
         {
-            var worldCanvas = new GameObject("WorldCanvas", typeof(Canvas));
+            GameObject worldCanvas = new GameObject("WorldCanvas", typeof(Canvas));
             worldCanvas.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
-            var overlayCanvas = new GameObject("OverlayCanvas", typeof(Canvas));
+            GameObject overlayCanvas = new GameObject("OverlayCanvas", typeof(Canvas));
             overlayCanvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 
-            var uiObject = new GameObject("UiElement", typeof(RectTransform));
+            GameObject uiObject = new GameObject("UiElement", typeof(RectTransform));
             try
             {
                 InvokePlaceInScene(uiObject, null, "Create UiElement");
@@ -186,13 +186,13 @@ namespace Neo.Editor.Tests
         [Test]
         public void PlaceInScene_FirstObject_KeepsPlainName()
         {
-            var first = new GameObject("NeoUniqueNameProbe");
+            GameObject first = new GameObject("NeoUniqueNameProbe");
             InvokePlaceInScene(first, null, "Create NeoUniqueNameProbe");
 
             Assert.That(first.name, Is.EqualTo("NeoUniqueNameProbe"),
                 "The first object must not receive a spurious ' (1)' suffix");
 
-            var second = new GameObject("NeoUniqueNameProbe");
+            GameObject second = new GameObject("NeoUniqueNameProbe");
             InvokePlaceInScene(second, null, "Create NeoUniqueNameProbe");
 
             Assert.That(second.name, Is.EqualTo("NeoUniqueNameProbe (1)"),
@@ -202,7 +202,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void CreateHierarchy_CreatesContainers_AndIsIdempotent()
         {
-            var creator = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
+            CreateSceneHierarchy creator = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
             try
             {
                 creator.CreateHierarchy();
@@ -226,12 +226,12 @@ namespace Neo.Editor.Tests
         [Test]
         public void CreateHierarchy_FindsNestedInactiveContainer_AndDoesNotDuplicate()
         {
-            var group = new GameObject("ContainerGroup");
-            var nested = new GameObject("--System--");
+            GameObject group = new GameObject("ContainerGroup");
+            GameObject nested = new GameObject("--System--");
             nested.transform.SetParent(group.transform);
             nested.SetActive(false);
 
-            var creator = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
+            CreateSceneHierarchy creator = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
             try
             {
                 creator.CreateHierarchy();

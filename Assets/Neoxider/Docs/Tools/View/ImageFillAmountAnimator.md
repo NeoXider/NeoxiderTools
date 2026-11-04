@@ -1,11 +1,10 @@
 # ImageFillAmountAnimator
 
-**Purpose:** Animated 0..1 progress on an `Image` with optional inversion and optional unscaled-time
+**What it is:** Animated 0..1 progress on an `Image` with optional inversion and optional unscaled-time
 tween. Two ways to show the value: cut a Filled image (`FillAmount`), or stretch a 9-sliced bar so
 its rounded caps survive (`SlicedWidth`).
 
-## Setup
-
+**How to use:**
 - Add the component via the Unity menu.
 - Reference resolves automatically from the same GameObject in `Awake` when left empty.
 - **FillAmount** (default): set the Image type to *Filled*.
@@ -17,6 +16,8 @@ its rounded caps survive (`SlicedWidth`).
   image), and the component logs one warning per instance when `NeoDiagnostics` warnings are enabled.
 - Until the first value arrives, `SlicedWidth` treats the authored rect as value 1, so the first
   `SetValue` animates from full instead of snapping empty first.
+
+---
 
 ## Lifecycle
 
@@ -50,6 +51,8 @@ its rounded caps survive (`SlicedWidth`).
 ## API
 
 - `SetValue(float)` — animated; null-safe, clamps non-finite input to 0, applies immediately when inactive.
+  Repeating the target of the running tween keeps that tween (no restart of the ease, no allocation), and a
+  value that is already shown with no tween running starts nothing, so a binding may call it every frame.
 - `SetValueImmediate(float)` — syncs view without tween (respects inversion).
 - `SetBool(bool)` / `SetBool01(float)` — bool mapping through `SetValue`.
 - `Mode` — read/write the fill mode from code (leaving `SlicedWidth` restores the authored rect).

@@ -1,0 +1,55 @@
+{
+  "verifiedUtc": "2026-11-02T01:31:09.770208+00:00",
+  "bytes": 5774306,
+  "sha256": "16a6631b4337b5136b4fb68f5702b22d5cf01ede79389b8df45b0b15769bb42d",
+  "payloadCount": 1604,
+  "crcVerified": true,
+  "memberHashesVerified": true,
+  "privatePrefsConfigAndDumpsExcluded": true,
+  "actualRuns": {
+    "edit-main-u63-baseline-r1": {
+      "nativeExitCode": 2,
+      "actualLeafCount": 4235,
+      "results": {
+        "Passed": 4201,
+        "Skipped": 23,
+        "Failed": 11
+      }
+    },
+    "play-main-u63-baseline-r1": {
+      "nativeExitCode": 2,
+      "actualLeafCount": 748,
+      "results": {
+        "Passed": 718,
+        "Skipped": 24,
+        "Failed": 6
+      }
+    },
+    "state-constructor-u63-red-r1": {
+      "nativeExitCode": 2,
+      "actualLeafCount": 12,
+      "results": {
+        "Failed": 12
+      }
+    },
+    "state-constructor-u63-green-r1": {
+      "nativeExitCode": 0,
+      "actualLeafCount": 78,
+      "results": {
+        "Passed": 78
+      }
+    },
+    "verification-inventory-u63-green-r1": {
+      "nativeExitCode": 0,
+      "actualLeafCount": 82,
+      "results": {
+        "Passed": 82
+      }
+    },
+    "cards-policy-physics-u63-red-r1": {
+      "nativeExitCode": 1073741845,
+      "executedCases": 0,
+      "disposition": "AbortedBeforeTestExecution"
+    }
+  }
+}

@@ -82,7 +82,7 @@ namespace Neo.Network
         [Command(requiresAuthority = true)]
         private void CmdSetName(string value)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || RateLimitCheck())
             {
                 return;
             }

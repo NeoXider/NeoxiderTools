@@ -1,8 +1,14 @@
 # NeoxiderTools Docs
 
-Documentation entry point for **NeoxiderTools** `v11.0.1`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
+<!-- docs-banner:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/docs.jpg" alt="Concept art: the NeoxiderTools documentation hub" width="100%" /></p>
+<!-- docs-banner:end -->
 
-> **11.0.0.** Windows verification recorded on 26–27 October 2026 covers Unity `6000.3.14f1` and `6000.6.0f1`, including focused CardGame sizing/gameplay acceptance and three manual OS-click rounds. See [Verification 11](../Verification11.md) for exact inputs, overlapping scopes and limitations. See the tagged release and its asset manifest. For an existing 10.x project, read [Migration to 11](./Migration11.md).
+**What it is:** the documentation entry point for **NeoxiderTools** `v12.0.0`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
+
+**Contents:** [starting points](#choose-your-starting-point), [existing building blocks](#do-not-rebuild-first), [module index](#modules), [samples](#samples-and-add-ons) and [guides](#guides).
+
+> **Upgrading?** From 11.x read [Upgrading to 12](./Migration12.md): the HTML → UI Toolkit converter moved to its own package, a few APIs became obsolete, and the demo scenes are now authored in the scene. From 10.x read [Migration to 11](./Migration11.md) first. The Windows verification recorded for 11.0.0 (Unity `6000.3.14f1` and `6000.6.0f1`) is in [Verification 11](../Verification11.md).
 
 ## Choose your starting point
 
@@ -12,7 +18,8 @@ Documentation entry point for **NeoxiderTools** `v11.0.1`, with English guides a
 | Первый компонент / First component | [Getting Started — first audio scene](./GettingStarted.md#your-first-scene-in-5-minutes-audio-manager-am), then [Audio](./Audio/README.md) |
 | Inspector / NoCode | [NoCode Getting Started](./NoCode/GettingStarted.md) and [Condition](./Condition/README.md) |
 | Взаимодействия / Interaction | [Interaction contracts and components](./Tools/InteractableObject/README.md) |
-| Примеры / Samples | [Sample scenes and source/imported paths](./Samples.md) |
+| Примеры / Samples | [Sample scenes, how they are authored and rebuilt](./Samples.md) |
+| Обновление с 11.x / Upgrade from 11.x | [Upgrading to 12](./Migration12.md) |
 | Обновление с 10.x / Upgrade from 10.x | [Migration to 11](./Migration11.md) |
 | Проверки / Verification | [Recorded results and limits](../Verification11.md), [EditMode and isolation](./Testing.md), [PlayMode](./PlayModeTesting.md), and [Package compatibility](./PackageCompatibility.md) |
 | Host requirements / Требования проекта | [Package compatibility](./PackageCompatibility.md) and [IL2CPP / code stripping](./IL2CPP.md) |
@@ -22,10 +29,9 @@ Use each module's README as its canonical entry. It links to the runtime API and
 
 **По-русски:** выберите строку под свою задачу. C#-ядро можно использовать отдельно; компоненты и NoCode подключаются по необходимости. Для обновления существующего проекта начните с migration guide, а для запуска тестов — с требований к изолированному host.
 
-For HtmlToUitk, start with the [primary guide](UI/HtmlToUitk.md) and
-[current370-per-SDK native/CLI/manual verification](UI/HtmlToUitkVerification11.md). Unity deliveries do
-not contain the external converter: `HtmlToUitk.Cli.v11.0.0.zip` is separate, using tested.NET 10/LatestMajor.
-Legacy delivery is choose-one Core or Complete; [Samples](Samples.md#legacy-release-archives-choose-one)
+The HTML/CSS → UI Toolkit converter (HtmlToUitk) is now the separate package `com.neoxider.htmltouitk`
+([HtmlToUitk](https://github.com/NeoXider/HtmlToUitk)); see [Upgrading to 12](./Migration12.md#htmltouitk-moved-to-its-own-package).
+Legacy delivery is choose-one Core or Complete; [Samples](./Samples.md#legacy-release-archives-choose-one)
 explains the layouts. Final archive import status is in [Verification 11](../Verification11.md).
 
 ## Namespace policy
@@ -35,7 +41,8 @@ Runtime gameplay types live in their module namespace (`Neo.Audio`, `Neo.Bonus`,
 authoring-attribute surface used across every module: `[Button]`, `[GUIColor]`, `[FindInScene]`,
 `[NeoDoc]`, `[RequireInterface]`, `[CreateFromMenu]`, `[LegacyComponent]`, and their editor drawers.
 Keeping these attributes at the root preserves the terse, stable `using Neo;` workflow; new runtime
-components must use a module namespace.
+components must use a module namespace. The Tools submodules share `Neo.Tools`; see
+[module structure](../MODULE_STRUCTURE.md) for folder, assembly and namespace rules.
 
 ## Start here
 
@@ -47,7 +54,9 @@ components must use a module namespace.
 - [Useful components](./UsefulComponents.md)
 - [Package compatibility](./PackageCompatibility.md)
 - [Sample scenes](./Samples.md)
+- [Upgrading from 11.x to 12](./Migration12.md)
 - [Migration from 10.x to 11](./Migration11.md)
+- [Deprecated components and removal candidates](./DEPRECATED_OR_REMOVAL_CANDIDATES.md)
 - [Testing — EditMode contracts and isolation](./Testing.md)
 - [PlayMode testing — lifecycle and integration scope](./PlayModeTesting.md)
 - [IL2CPP and code stripping](./IL2CPP.md)
@@ -58,55 +67,88 @@ Static-reset and Play Mode transition fixtures need an isolated host. The testin
 
 | Task | Existing blocks | Entry |
 |------|-----------------|-------|
-| Grid field, coordinates, shape masks, pathfinding | `FieldGenerator`, `GridShapeMask`, `FieldDebugDrawer` | [GridSystem](./GridSystem/README.md) |
+| Grid field, coordinates, shape masks | `FieldGenerator`, `GridShapeMask`, `FieldDebugDrawer` | [GridSystem](./GridSystem/README.md) |
+| Paths, movement ranges, flood fill on a grid | `GridPathfinder.TryFindPath`, `CollectReachableCells` | [GridPathfinder](./GridSystem/GridPathfinder.md) |
 | Multi-cell pieces/items and drag/drop placement | `GridPlacementEntry`, `GridPlacementResult`, `PlaceContentFootprint` | [FieldGenerator](./GridSystem/FieldGenerator.md) |
 | Connected equal-item merge | `Neo.Merge`, `MergeResolver`, `GridMergeRequest.Increment(...)` | [Merge](./Merge/README.md) |
-| Dice Merge, 2048-like, Match3, TicTacToe | `DiceBoardService`, `SlidingMergeBoardService`, `Match3BoardService`, `TicTacToeBoardService` | [GridSystem](./GridSystem/README.md) |
-| Money, shop, multi-currency | `Money`, `IMoneySpend`, `Shop`, `TextMoney` | [Shop](./Shop/README.md) |
-| Scene/global save | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [Save](./Save/README.md) |
+| Dice Merge, 2048-like, Match3, TicTacToe / Gomoku | `DiceBoardService`, `SlidingMergeBoardService`, `Match3BoardService`, `TicTacToeBoardService` | [GridSystem](./GridSystem/README.md) |
+| Money, shop, multi-currency, typed purchase result | `Money`, `IMoneySpend`, `Shop.TryBuy` → `ShopPurchaseStatus`, `TextMoney` | [Shop](./Shop/README.md) |
+| Scene/global save, 64-bit values | `SaveManager`, `SaveProvider` (`GetLong`/`SetLong`), `GlobalSave`, `SaveableBehaviour` | [Save](./Save/README.md) |
 | HP/Mana/resources, XP/levels | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [Core](./Core/README.md) |
-| Data-driven abilities/modifiers, buffs/debuffs/DoT/shields, cast pipeline (v10 successor to Rpg) | `AbilityDefinition`, `ModifierDefinition`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour` | [Abilities](./Abilities/README.md) |
-| RPG combat, projectiles, buffs/statuses (superseded by Abilities in v10) | `RpgCharacter`, `RpgAttackController`, `RpgProjectile` | [Rpg](./Rpg/README.md) |
+| Data-driven abilities/modifiers, buffs/debuffs/DoT/shields, cast pipeline (successor to Rpg) | `AbilityDefinition`, `ModifierDefinition`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour` | [Abilities](./Abilities/README.md) |
+| RPG combat, projectiles, buffs/statuses, damage modifiers (superseded by Abilities) | `RpgCharacter`, `IRpgDamageModifier`, `RpgAttackController`, `RpgProjectile` | [Rpg](./Rpg/README.md) |
 | Reward fly animation between world/canvas points | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing | [AnimationFly](./UI/AnimationFly.md) |
 | NoCode conditions, actions, state transitions | `NeoCondition`, `ConditionEntryPredicate`, module NoCode bridges | [Condition](./Condition/README.md) |
 | Custom interaction input, hover/click, physics events | `IInteractiveTarget`, `InteractiveObject`, `InteractionRayProvider` | [Interaction](./Tools/InteractableObject/README.md) |
 | Movement, free-fly camera, pooling, timers, input | `Tools/Move`, `Tools/Spawner`, `Tools/Time`, `Tools/Input` | [Tools](./Tools/README.md) |
+| Injectable time for tests and replays | `IFrameClock`, `ManualFrameClock`, `INeoClock`, `NeoTrustedTime.AsClock` | [Clocks](./Tools/Time/Clocks.md) |
+| Exact integer odds (1 in 1,000,000) | `IntegerChanceTable` | [IntegerChanceTable](./Tools/Random/IntegerChanceTable.md) |
+| Bark lines by tag without repeats | `DialogueLinePool`, `DialogueLinePlayer` | [DialogueLinePool](./Tools/Dialogue/DialogueLinePool.md) |
+| Collections, piggy banks, cooldown rewards without a scene | `CollectionSet`, `BoxProgress`, `CooldownSchedule` | [CollectionSet](./Bonus/Collection/CollectionSet.md), [BoxProgress](./Bonus/Collection/BoxProgress.md), [CooldownSchedule](./Bonus/TimeReward/CooldownSchedule.md) |
+
+<!-- demo-gallery:begin -->
+
+### See the modules running
+
+<table>
+<tr>
+<td width="33%" align="center"><a href="./Abilities/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SurvivorDemo.jpg" alt="Survivor arena: Abilities, waves and upgrades from one config" width="100%" /></a><br /><b>Survivor arena</b><br /><sub>Abilities, waves and upgrades from one config</sub></td>
+<td width="33%" align="center"><a href="./GridSystem/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemMatch3Demo.jpg" alt="Match3 board: Shaped boards, paths and match rules" width="100%" /></a><br /><b>Match3 board</b><br /><sub>Shaped boards, paths and match rules</sub></td>
+<td width="33%" align="center"><a href="./Bonus/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/BonusRewardsDemo.jpg" alt="Rewards and collection: Collection, chest and cooldown gifts, no script" width="100%" /></a><br /><b>Rewards and collection</b><br /><sub>Collection, chest and cooldown gifts, no script</sub></td>
+</tr>
+<tr>
+<td width="33%" align="center"><a href="./Tools/Physics/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Physics3DDemo.jpg" alt="Physics 3D: Magnet, impulse zone and explosive force" width="100%" /></a><br /><b>Physics 3D</b><br /><sub>Magnet, impulse zone and explosive force</sub></td>
+<td width="33%" align="center"><a href="./UI/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UIComponentsDemo.jpg" alt="UI components: Tabs, variants, loader, shake and pause" width="100%" /></a><br /><b>UI components</b><br /><sub>Tabs, variants, loader, shake and pause</sub></td>
+<td width="33%" align="center"><a href="./Cards/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/CardGame.jpg" alt="Card game: Deck, hand and board components" width="100%" /></a><br /><b>Card game</b><br /><sub>Deck, hand and board components</sub></td>
+</tr>
+<tr>
+<td width="33%" align="center"><a href="./Bonus/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SlotExample.jpg" alt="Slot machine: Bets, paylines and a paytable" width="100%" /></a><br /><b>Slot machine</b><br /><sub>Bets, paylines and a paytable</sub></td>
+<td width="33%" align="center"><a href="./Shop/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Shop.jpg" alt="Shop: Storefront, purchase states and a wallet" width="100%" /></a><br /><b>Shop</b><br /><sub>Storefront, purchase states and a wallet</sub></td>
+<td width="33%" align="center"><a href="./UI/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AnimationFlyDemo.jpg" alt="Reward fly: Coins flying from world, canvas and screen" width="100%" /></a><br /><b>Reward fly</b><br /><sub>Coins flying from world, canvas and screen</sub></td>
+</tr>
+<tr>
+<td width="33%" align="center"><a href="./NoCode/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeActionsDemo.jpg" alt="NoCode actions: Level, Progression, Quest and RPG without code" width="100%" /></a><br /><b>NoCode actions</b><br /><sub>Level, Progression, Quest and RPG without code</sub></td>
+<td width="33%" align="center"><a href="./Progression/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Progression_Demo.jpg" alt="Progression: XP, perk and unlock trees, premium track" width="100%" /></a><br /><b>Progression</b><br /><sub>XP, perk and unlock trees, premium track</sub></td>
+<td width="33%" align="center"><a href="./UI/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UIMeshRigDemo.jpg" alt="UI Mesh Rig: One rig in uGUI, UI Toolkit and world space" width="100%" /></a><br /><b>UI Mesh Rig</b><br /><sub>One rig in uGUI, UI Toolkit and world space</sub></td>
+</tr>
+</table>
+
+<!-- demo-gallery:end -->
 
 ## Modules
 
-| Module | What it covers | Entry |
-|--------|----------------|-------|
-| **Abilities** | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline, multiplayer-ready receipts; v10 successor to Rpg | [Abilities](./Abilities/README.md) |
-| **Animations** | Runtime value animation for float, color, and `Vector3` | [Animations](./Animations/README.md) |
-| **Audio** | Audio manager, mixer helpers, random music, audio UI | [Audio](./Audio/README.md) |
-| **Haptics** | Device vibration: named feels, settings switch, repeat throttle, MobileHapticFeedback backend | [Haptics](./Haptics/Haptics.md) |
-| **Bonus** | Slots, wheel rewards, collections, timed rewards | [Bonus](./Bonus/README.md) |
-| **Cards** | Deck/hand/board runtime, poker, Drunkard sample | [Cards](./Cards/README.md) |
-| **Condition** | No-code conditions, reflection checks, AND/OR logic, events | [Condition](./Condition/README.md) |
-| **Core** | Level/XP helpers and core resources | [Core](./Core/README.md) |
-| **Editor** | Editor windows, missing-script scan, settings, maintenance tools | [Editor](./Editor/README.md) |
-| **Extensions** | Extension methods for C# and Unity APIs | [Extensions](./Extensions/README.md) |
-| **GridSystem** | Grid-game constructor: field generation, placement, Dice, GridMerge, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
-| **HTML → UITK** | Supported HTML/CSS subset to native UI Toolkit controls, typed actions, lifecycle, and external CLI conversion | [HTML → UITK](./UI/HtmlToUitk.md) |
-| **Inventory** | Aggregated and slot-grid inventories, pickups, transfers, save integration | [Inventory](./Tools/Inventory/README.md) |
-| **Interaction** | Reusable C# contracts, scene hover/click, 2D/3D physics events, ray modes, range checks | [Interaction](./Tools/InteractableObject/README.md) |
-| **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
-| **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Merge/README.md) |
-| **Network** | Mirror wrappers, no-code sync, lobby, discovery, realtime .io toolkit (snapshots, prediction), bootstrap, telemetry | [Network](./Network/README.md) |
-| **NoCode** | Scene UI bindings and Inspector wrappers around C# contracts; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
-| **NPC** | Navigation, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |
-| **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
-| **Progression** | XP, levels, unlock tree, perk tree | [Progression](./Progression/README.md) |
-| **PropertyAttribute** | Inspector attributes: button, color, inject helpers | [PropertyAttribute](./PropertyAttribute/README.md) |
-| **Quest** | Quest configs, objectives, manager, runtime state | [Quest](./Quest/README.md) |
-| **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Reactive/README.md) |
-| **Rpg** | `RpgCharacter`, resources, stats, attacks, buffs/statuses, save/network/no-code bridges (superseded by Abilities in v10) | [Rpg](./Rpg/README.md) |
-| **Save** | Save providers, attributes, scene/global save flow | [Save](./Save/README.md) |
-| **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
-| **Shop** | Shop data, purchases, currency UI | [Shop](./Shop/README.md) |
-| **StateMachine** | Runtime state machine and no-code data workflow | [StateMachine](./StateMachine/README.md) |
-| **Tools** | Movement, free-fly camera, input, physics, spawning, timers, UI helpers | [Tools](./Tools/README.md) |
-| **UI** | UI panels, button animations, toggles, presentation helpers | [UI](./UI/README.md) |
+| | Module | What it covers | Entry |
+|:-:|--------|----------------|-------|
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/abilities.jpg" alt="Abilities module concept art" width="96" /> | **Abilities** | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline with typed `CastResult`, opt-in spatial grid for crowds, multiplayer-ready receipts; successor to Rpg | [Abilities](./Abilities/README.md) |
+|  | **Animations** | Runtime value animation for float, color, `Vector3` and transforms, with a manual `Tick` clock and unscaled time | [Animations](./Animations/README.md) |
+|  | **Audio** | Audio manager, mixer helpers, random music, audio UI; `AMSettings` saves volumes and mutes | [Audio](./Audio/README.md) |
+|  | **Haptics** | Device vibration: named feels, settings switch, repeat throttle, MobileHapticFeedback backend | [Haptics](./Haptics/Haptics.md) |
+|  | **Bonus** | Slots, wheel rewards, collections, timed rewards; every mechanic has a plain C# core (`CollectionSet`, `BoxProgress`, `CooldownSchedule`, `SlotSpinMath`) | [Bonus](./Bonus/README.md) |
+|  | **Cards** | Deck/hand/board runtime, seeded shuffling, stable custom sorting, poker evaluation, Drunkard sample | [Cards](./Cards/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/condition.jpg" alt="Condition module concept art" width="96" /> | **Condition** | No-code conditions, reflection checks, AND/OR logic, events, unscaled-time checks | [Condition](./Condition/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/core.jpg" alt="Core module concept art" width="96" /> | **Core** | Resource pools, health, level/XP helpers | [Core](./Core/README.md) |
+|  | **Editor** | Inspector, editor windows, missing-script scan, settings (`NeoxiderSettings`, saved in `ProjectSettings/NeoxiderSettings.json`), maintenance tools | [Editor](./Editor/README.md) |
+|  | **Extensions** | Extension methods for C# and Unity APIs, including seeded random helpers | [Extensions](./Extensions/README.md) |
+|  | **GridSystem** | Grid-game constructor: field generation, pathfinding, placement, Dice, GridMerge, Match3, TicTacToe / n-in-a-row, SlidingMerge (2048) | [GridSystem](./GridSystem/README.md) |
+|  | **Inventory** | Aggregated and slot-grid inventories, pickups, transfers, selection events, save integration | [Inventory](./Tools/Inventory/README.md) |
+|  | **Interaction** | Reusable C# contracts, scene hover/click, 2D/3D physics events, ray modes, range checks | [Interaction](./Tools/InteractableObject/README.md) |
+|  | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
+|  | **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Merge/README.md) |
+|  | **Network** | Mirror wrappers, no-code sync, lobby, discovery, realtime .io toolkit (snapshots, prediction), bootstrap, telemetry, transport-free authority policy | [Network](./Network/README.md) |
+|  | **NoCode** | Scene UI bindings and Inspector wrappers around C# contracts, each with a typed C# API; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
+|  | **NPC** | Navigation, target finder, patrol/chase, staggered re-pathing, RPG combat brain | [NPC](./NPC/README.md) |
+|  | **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
+|  | **Progression** | XP, levels, unlock tree, perk tree, premium track (`ActivatePremium` action, `HasPremium` condition) | [Progression](./Progression/README.md) |
+|  | **PropertyAttribute** | Inspector attributes: button, color, inject helpers | [PropertyAttribute](./PropertyAttribute/README.md) |
+|  | **Quest** | Quest configs, objectives, manager, runtime state; kill/collect/reach/talk notifications by target id from code or `QuestNoCodeAction` | [Quest](./Quest/README.md) |
+|  | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Reactive/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/rpg.jpg" alt="Rpg module concept art" width="96" /> | **Rpg** | `RpgCharacter`, resources, stats, attacks, damage modifiers, buffs/statuses, save/network/no-code bridges (superseded by Abilities) | [Rpg](./Rpg/README.md) |
+|  | **Save** | Save providers, attributes, scene/global save flow, 64-bit values | [Save](./Save/README.md) |
+|  | **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/shop.jpg" alt="Shop module concept art" width="96" /> | **Shop** | Shop data, typed purchases, currency UI | [Shop](./Shop/README.md) |
+|  | **StateMachine** | Runtime state machine and no-code data workflow | [StateMachine](./StateMachine/README.md) |
+|  | **Tools** | Movement, free-fly camera, input, physics, spawning, timers and clocks, random tables, dialogue, UI helpers | [Tools](./Tools/README.md) |
+|  | **UI** | UI panels, button animations, toggles, `CategoryBar` / `VariantView` with typed C# events, UI Mesh Rig, presentation helpers | [UI](./UI/README.md) |
 
 ## Gameplay ownership
 
@@ -116,7 +158,7 @@ Static-reset and Play Mode transition fixtures need an isolated host. The testin
 
 | Section | Entry |
 |---------|-------|
-| **Sample scenes** | [Samples](./Samples.md) |
+| **Sample scenes** (authored in the scene, rebuilt from **Neoxider > Demo**) | [Samples](./Samples.md) |
 | **Examples** | [Examples](./Examples/README.md) |
 | **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
 | **Character Movement Fundamentals** | [Character controller and optional demo scenes](./Tools/Move/CharacterController/README.md) |
@@ -128,4 +170,4 @@ Static-reset and Play Mode transition fixtures need an isolated host. The testin
 - [Realtime IO Guide](./Network/Realtime_IO_Guide.md) - server-authoritative realtime games: handshake, snapshots, interpolation, prediction, events, bootstrap
 - [NoCode Network Spec](./Network/NoCode_Network_Spec.md)
 - [Survivor demo — Vampire-Survivors kit on `Neo.Abilities`](./Abilities/SurvivorDemo.md)
-- [Vampire Survivors 3D guide](./VampireSurvivor_Guide.md)
+- [Building a Vampire Survivors game (Neo.Abilities)](./VampireSurvivor_Guide.md)

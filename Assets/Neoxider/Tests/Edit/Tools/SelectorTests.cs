@@ -392,6 +392,59 @@ namespace Neo.Tools.Tests
         }
 
         [Test]
+        public void SavedExclusions_KeepTheInspectorAuthoredListUntilASaveExists()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+            const string saveKey = "SelectorTests.AuthoredExclusions";
+            const string excludedKey = saveKey + "_Excluded";
+
+            GameObject firstRoot = new("SelectorAuthoredExclusions_First");
+            GameObject secondRoot = new("SelectorAuthoredExclusions_Second");
+            try
+            {
+                Selector first = CreateSavingSelectorWithAuthoredExclusions(firstRoot, saveKey);
+                Assert.That(provider.HasKey(excludedKey), Is.False, "positive control: nothing has been saved yet");
+
+                // WHY: OnEnable is skipped because EditMode does not defer saves before Start (Application.isPlaying
+                // is false), so its start command would write the key first; the player keeps that write deferred.
+                InvokePrivate(first, "Start");
+
+                Assert.That(first.ExcludedIndices, Is.EqualTo(new[] { 1, 3 }),
+                    "with no saved key the authored exclusions are the starting pool, not an empty set");
+                Assert.That(first.IsExcluded(1) && first.IsExcluded(3), Is.True);
+
+                first.IncludeAllIndices();
+
+                Assert.That(provider.HasKey(excludedKey), Is.True, "an emptied set is saved, not deleted");
+                Assert.That(provider.GetString(excludedKey, "missing"), Is.Empty);
+
+                Selector second = CreateSavingSelectorWithAuthoredExclusions(secondRoot, saveKey);
+                InvokePrivate(second, "Start");
+
+                Assert.That(second.ExcludedIndices, Is.Empty, "a saved empty set wins over the authored list");
+                Assert.That(second.IsExcluded(1), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(firstRoot);
+                Object.DestroyImmediate(secondRoot);
+            }
+        }
+
+        private static Selector CreateSavingSelectorWithAuthoredExclusions(GameObject root, string saveKey)
+        {
+            Selector selector = root.AddComponent<Selector>();
+            selector.isNetworked = false;
+            JsonUtility.FromJsonOverwrite("{\"_count\":5,\"_saveEnabled\":true,\"_saveKey\":\"" + saveKey + "\"," +
+                                          "\"_changeDebug\":false,\"_excludedIndicesInspector\":[3,1]}", selector);
+            // WHY: a player build never runs OnValidate, so Awake finds the runtime set unset.
+            SetPrivateField(selector, "_excludedIndices", null);
+            InvokePrivate(selector, "Awake");
+            return selector;
+        }
+
+        [Test]
         public void UniqueSelection_DoesNotRepeatUntilReset()
         {
             GameObject root = new("SelectorUniqueRoot");

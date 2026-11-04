@@ -40,7 +40,7 @@ namespace Neo.Editor.Tests.Edit
         public void Save_PreservesComponentsThatAreNotCurrentlyRegistered()
         {
             const string ghostKey = "Other.Scene.Component:unloaded-scene-object";
-            var provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
+            MemorySaveProvider provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
             provider.SetString("SaveData_All",
                 "{ \"AllSavedComponents\": [ { \"ComponentKey\": \"" + ghostKey + "\", \"Fields\": [ { \"Key\": \"ghost\", \"TypeName\": \"System.Int32\", \"Value\": \"7\" } ] } ] }");
 
@@ -72,7 +72,7 @@ namespace Neo.Editor.Tests.Edit
         {
             const string firstGhostKey = "SceneA.Component:first-unloaded";
             const string secondGhostKey = "SceneB.Component:second-unloaded";
-            var provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
+            MemorySaveProvider provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
             provider.SetString("SaveData_All",
                 "{ \"AllSavedComponents\": [" +
                 "{ \"ComponentKey\": \"" + firstGhostKey + "\", \"Fields\": [ { \"Key\": \"ghostA\", \"TypeName\": \"System.Int32\", \"Value\": \"1\" } ] }," +
@@ -118,7 +118,7 @@ namespace Neo.Editor.Tests.Edit
 
                 // WHY: a legacy/hand-edited file may hold two entries for the same key; the last one must win
                 // and the load must not throw (ToDictionary would).
-                var provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
+                MemorySaveProvider provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
                 provider.SetString("SaveData_All",
                     "{ \"AllSavedComponents\": [" +
                     "{ \"ComponentKey\": \"" + key + "\", \"Fields\": [ { \"Key\": \"value\", \"TypeName\": \"System.Int32\", \"Value\": \"11\" } ] }," +
@@ -170,7 +170,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void SaveAutoFields_WritesCurrentAutoValues_AndPreservesManualField()
         {
-            var provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
+            MemorySaveProvider provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
             GameObject go = new("MixedSaveableDisable");
             MixedSaveable saveable = go.AddComponent<MixedSaveable>();
 

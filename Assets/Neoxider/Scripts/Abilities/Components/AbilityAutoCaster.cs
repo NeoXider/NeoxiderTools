@@ -52,7 +52,7 @@ namespace Neo.Abilities
         private readonly List<UnitId> _unitScratch = new List<UnitId>(16);
 
         private readonly Dictionary<string, float> _nextAttemptAt =
-            new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+            new Dictionary<string, float>(AbilityIdComparer.Instance);
 
         private float _intervalTimer;
         private AbilityCasterBehaviour _resolvedCaster;
@@ -249,9 +249,7 @@ namespace Neo.Abilities
         private AbilityUnitBehaviour FindNearestTarget(AbilityUnit unit, AbilitySystemBehaviour hub,
             AbilityBlueprint blueprint, float range, Vector3 origin)
         {
-            float sqrRange = range * range;
-            AbilityUnitBehaviour best = null;
-            float bestSqr = float.MaxValue;
+            double bestSqr = double.PositiveInfinity;
             uint bestId = 0;
             for (int i = 0; i < _unitScratch.Count; i++)
             {
@@ -272,29 +270,31 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                AbilityUnitBehaviour behaviour = hub.GetBehaviour(id);
-                if (behaviour == null)
+                // WHY: the hub reads its cached transform; candidates without a scene presence are skipped.
+                if (!hub.TryGetPosition(id, out Vector3 position))
                 {
                     continue;
                 }
 
-                float sqr = (behaviour.transform.position - origin).sqrMagnitude;
-                // WHY: the shared query used the widest range of the pass; each ability re-applies its own.
-                if (sqr > sqrRange)
+                // WHY: the shared query used the widest range of the pass; each ability re-applies its own
+                // with the exact test the query and the cast range check also use, so a unit on the boundary
+                // is in or out for all three. Ranking stays in double so a far admitted unit is comparable.
+                if (!AbilitySpatialGrid.IsWithinRadius(position, origin, range))
                 {
                     continue;
                 }
+
+                double sqr = AbilitySpatialGrid.SqrDistance(position, origin);
 
                 // WHY: unit-id tie-break keeps equidistant target choice deterministic.
-                if (sqr < bestSqr || (sqr == bestSqr && best != null && id.Value < bestId))
+                if (sqr < bestSqr || (sqr == bestSqr && bestId != 0 && id.Value < bestId))
                 {
-                    best = behaviour;
                     bestSqr = sqr;
                     bestId = id.Value;
                 }
             }
 
-            return best;
+            return bestId != 0 ? hub.GetBehaviour(new UnitId(bestId)) : null;
         }
 
         private AbilityCasterBehaviour ResolveCaster()

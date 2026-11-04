@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,6 +11,11 @@ namespace Neo.Save
     /// </summary>
     public static class SaveIdentityUtility
     {
+        // WHY: keys are rebuilt on every register, save and load; reuse one builder and component buffer. Neither is
+        // held across a user callback (ISaveIdentityProvider.SaveIdentity runs before they are touched).
+        private static readonly StringBuilder s_keyBuilder = new(128);
+        private static readonly List<MonoBehaviour> s_componentBuffer = new();
+
         /// <summary>
         ///     Builds a full save key for the specified component, including the component type.
         /// </summary>
@@ -21,7 +28,18 @@ namespace Neo.Save
                 return string.Empty;
             }
 
-            return $"{monoBehaviour.GetType().FullName}:{GetStableIdentity(monoBehaviour)}";
+            string typeName = monoBehaviour.GetType().FullName;
+            if (TryGetCustomIdentity(monoBehaviour, out string customIdentity))
+            {
+                return string.Concat(typeName, ":", customIdentity);
+            }
+
+            s_keyBuilder.Clear();
+            s_keyBuilder.Append(typeName).Append(':');
+            AppendSceneIdentity(s_keyBuilder, monoBehaviour);
+            string key = s_keyBuilder.ToString();
+            s_keyBuilder.Clear();
+            return key;
         }
 
         /// <summary>
@@ -38,37 +56,53 @@ namespace Neo.Save
                 return string.Empty;
             }
 
-            if (monoBehaviour is ISaveIdentityProvider identityProvider &&
-                !string.IsNullOrWhiteSpace(identityProvider.SaveIdentity))
+            if (TryGetCustomIdentity(monoBehaviour, out string customIdentity))
             {
-                return identityProvider.SaveIdentity;
+                return customIdentity;
             }
 
-            return BuildSceneIdentity(monoBehaviour);
+            s_keyBuilder.Clear();
+            AppendSceneIdentity(s_keyBuilder, monoBehaviour);
+            string identity = s_keyBuilder.ToString();
+            s_keyBuilder.Clear();
+            return identity;
         }
 
-        private static string BuildSceneIdentity(MonoBehaviour monoBehaviour)
+        private static bool TryGetCustomIdentity(MonoBehaviour monoBehaviour, out string identity)
+        {
+            if (monoBehaviour is ISaveIdentityProvider identityProvider)
+            {
+                identity = identityProvider.SaveIdentity;
+                if (!string.IsNullOrWhiteSpace(identity))
+                {
+                    return true;
+                }
+            }
+
+            identity = null;
+            return false;
+        }
+
+        /// <summary>Appends <c>scene:hierarchy/path#sibling:componentIndex</c>.</summary>
+        private static void AppendSceneIdentity(StringBuilder builder, MonoBehaviour monoBehaviour)
         {
             Scene scene = monoBehaviour.gameObject.scene;
             string sceneKey = scene.IsValid()
                 ? string.IsNullOrEmpty(scene.path) ? scene.name : scene.path
                 : "NoScene";
 
-            string hierarchyPath = BuildHierarchyPath(monoBehaviour.transform);
-            int componentIndex = GetComponentIndex(monoBehaviour);
-            return $"{sceneKey}:{hierarchyPath}:{componentIndex}";
-        }
-
-        private static string BuildHierarchyPath(Transform transform)
-        {
+            builder.Append(sceneKey).Append(':');
+            Transform transform = monoBehaviour.transform;
             if (transform == null)
             {
-                return "NoTransform";
+                builder.Append("NoTransform");
+            }
+            else
+            {
+                AppendTransformPath(builder, transform);
             }
 
-            StringBuilder builder = new();
-            AppendTransformPath(builder, transform);
-            return builder.ToString();
+            builder.Append(':').Append(GetComponentIndex(monoBehaviour));
         }
 
         private static void AppendTransformPath(StringBuilder builder, Transform transform)
@@ -86,28 +120,37 @@ namespace Neo.Save
 
         private static int GetComponentIndex(MonoBehaviour monoBehaviour)
         {
-            MonoBehaviour[] components = monoBehaviour.GetComponents<MonoBehaviour>();
+            s_componentBuffer.Clear();
+            monoBehaviour.GetComponents(s_componentBuffer);
+            Type type = monoBehaviour.GetType();
             int componentIndex = 0;
-            for (int i = 0; i < components.Length; i++)
+            try
             {
-                MonoBehaviour component = components[i];
-                if (component == null)
+                for (int i = 0; i < s_componentBuffer.Count; i++)
                 {
-                    continue;
+                    MonoBehaviour component = s_componentBuffer[i];
+                    if (component == null)
+                    {
+                        continue;
+                    }
+
+                    if (component == monoBehaviour)
+                    {
+                        return componentIndex;
+                    }
+
+                    if (component.GetType() == type)
+                    {
+                        componentIndex++;
+                    }
                 }
 
-                if (component == monoBehaviour)
-                {
-                    return componentIndex;
-                }
-
-                if (component.GetType() == monoBehaviour.GetType())
-                {
-                    componentIndex++;
-                }
+                return componentIndex;
             }
-
-            return componentIndex;
+            finally
+            {
+                s_componentBuffer.Clear();
+            }
         }
     }
 }

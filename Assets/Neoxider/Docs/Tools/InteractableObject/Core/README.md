@@ -1,11 +1,19 @@
 # Interaction core
 
-Reusable interaction contracts, range checks, hit selection, and camera resolution. Namespace:
+**What it is:** Reusable interaction contracts, range checks, hit selection, and camera resolution. Namespace:
 `Neo.Tools`; assembly: `Neo.Tools.InteractableObject.Core`. Reference this assembly from custom
 asmdefs. It uses UnityEngine types and has no references to other package assemblies, input,
 Mirror, or scene components.
 
 The [InteractableObject module](../README.md) provides the optional scene and UnityEvent layer.
+
+**Contents:** [runtime contracts](#runtime-contracts), [query rules](#query-rules),
+[C# input adapter](#c-input-adapter), [camera policy and lifecycle](#camera-policy-and-lifecycle) and the
+[scene / NoCode workflow](#scene--nocode-workflow).
+
+**Navigation:** [← InteractableObject](../README.md)
+
+---
 
 ## Runtime contracts
 

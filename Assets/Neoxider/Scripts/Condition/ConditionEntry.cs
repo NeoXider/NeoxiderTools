@@ -378,48 +378,209 @@ namespace Neo.Condition
             }
         }
 
+        /// <summary>Constant threshold for <see cref="ValueType.Int"/> comparisons.</summary>
         public int ThresholdInt
         {
             get => _thresholdInt;
             set => _thresholdInt = value;
         }
 
+        /// <summary>Constant threshold for <see cref="ValueType.Float"/> comparisons (Equal uses Mathf.Approximately).</summary>
         public float ThresholdFloat
         {
             get => _thresholdFloat;
             set => _thresholdFloat = value;
         }
 
+        /// <summary>Constant threshold for <see cref="ValueType.Bool"/> comparisons (only Equal / NotEqual).</summary>
         public bool ThresholdBool
         {
             get => _thresholdBool;
             set => _thresholdBool = value;
         }
 
+        /// <summary>Constant threshold for <see cref="ValueType.String"/> comparisons (ordinal, Equal / NotEqual).</summary>
         public string ThresholdString
         {
             get => _thresholdString;
             set => _thresholdString = value;
         }
 
-        internal bool IsMethodWithArgument => _isMethodWithArgument;
-        internal ArgumentKind PropertyArgumentKind => _propertyArgumentKind;
-        internal int PropertyArgumentInt => _propertyArgumentInt;
-        internal float PropertyArgumentFloat => _propertyArgumentFloat;
-        internal string PropertyArgumentString => _propertyArgumentString;
-        internal SourceMode OtherSourceMode => _otherSourceMode;
-        internal bool OtherUseSceneSearch => _otherUseSceneSearch;
-        internal string OtherSearchObjectName => _otherSearchObjectName;
-        internal bool OtherWaitForObject => _otherWaitForObject;
-        internal GameObject OtherSourceObject => _otherSourceObject;
-        internal int OtherComponentIndex => _otherComponentIndex;
-        internal string OtherComponentTypeName => _otherComponentTypeName;
-        internal string OtherPropertyName => _otherPropertyName;
-        internal bool OtherIsMethodWithArgument => _otherIsMethodWithArgument;
-        internal ArgumentKind OtherPropertyArgumentKind => _otherPropertyArgumentKind;
-        internal int OtherPropertyArgumentInt => _otherPropertyArgumentInt;
-        internal float OtherPropertyArgumentFloat => _otherPropertyArgumentFloat;
-        internal string OtherPropertyArgumentString => _otherPropertyArgumentString;
+        /// <summary>
+        ///     When true, <see cref="PropertyName"/> names a single-argument method that is invoked with the
+        ///     argument of <see cref="PropertyArgumentKind"/>.
+        /// </summary>
+        public bool IsMethodWithArgument
+        {
+            get => _isMethodWithArgument;
+            set
+            {
+                _isMethodWithArgument = value;
+                InvalidateCache();
+            }
+        }
+
+        /// <summary>Argument kind used to pick the method overload (int / float / string).</summary>
+        public ArgumentKind PropertyArgumentKind
+        {
+            get => _propertyArgumentKind;
+            set
+            {
+                _propertyArgumentKind = value;
+                InvalidateCache();
+            }
+        }
+
+        /// <summary>Integer method argument; read on every evaluation.</summary>
+        public int PropertyArgumentInt
+        {
+            get => _propertyArgumentInt;
+            set => _propertyArgumentInt = value;
+        }
+
+        /// <summary>Float method argument; read on every evaluation.</summary>
+        public float PropertyArgumentFloat
+        {
+            get => _propertyArgumentFloat;
+            set => _propertyArgumentFloat = value;
+        }
+
+        /// <summary>String method argument; read on every evaluation.</summary>
+        public string PropertyArgumentString
+        {
+            get => _propertyArgumentString;
+            set => _propertyArgumentString = value;
+        }
+
+        /// <summary>Other-object branch: read from a component or from the GameObject itself.</summary>
+        public SourceMode OtherSourceMode
+        {
+            get => _otherSourceMode;
+            set
+            {
+                _otherSourceMode = value;
+                _rightSource?.InvalidateCache();
+            }
+        }
+
+        /// <summary>Other-object branch: find the source by name with <see cref="GameObject.Find(string)"/>.</summary>
+        public bool OtherUseSceneSearch
+        {
+            get => _otherUseSceneSearch;
+            set
+            {
+                _otherUseSceneSearch = value;
+                _rightSource?.InvalidateCacheFull();
+            }
+        }
+
+        /// <summary>Other-object branch: GameObject name for <see cref="OtherUseSceneSearch"/>.</summary>
+        public string OtherSearchObjectName
+        {
+            get => _otherSearchObjectName;
+            set
+            {
+                _otherSearchObjectName = value;
+                _rightSource?.InvalidateCacheFull();
+            }
+        }
+
+        /// <summary>Other-object branch: suppress the warning while the named object is still missing.</summary>
+        public bool OtherWaitForObject
+        {
+            get => _otherWaitForObject;
+            set => _otherWaitForObject = value;
+        }
+
+        /// <summary>
+        ///     Other-object branch: explicit source GameObject. When unset, NeoCondition binds it to the left-hand
+        ///     source in Start (<see cref="BindOtherToSourceIfNull"/>); direct callers fall back to the context.
+        /// </summary>
+        public GameObject OtherSourceObject
+        {
+            get => _otherSourceObject;
+            set
+            {
+                _otherSourceObject = value;
+                _rightSource?.InvalidateCache();
+            }
+        }
+
+        /// <summary>Other-object branch: legacy Inspector component-list index. Runtime uses <see cref="OtherComponentOccurrence"/>.</summary>
+        public int OtherComponentIndex
+        {
+            get => _otherComponentIndex;
+            set
+            {
+                _otherComponentIndex = value;
+                _rightSource?.InvalidateCache();
+            }
+        }
+
+        /// <summary>Other-object branch: full or short component type name.</summary>
+        public string OtherComponentTypeName
+        {
+            get => _otherComponentTypeName;
+            set
+            {
+                _otherComponentTypeName = value;
+                _rightSource?.InvalidateCache();
+            }
+        }
+
+        /// <summary>Other-object branch: field, property or single-argument method name.</summary>
+        public string OtherPropertyName
+        {
+            get => _otherPropertyName;
+            set
+            {
+                _otherPropertyName = value;
+                _rightSource?.InvalidateCache();
+            }
+        }
+
+        /// <summary>Other-object branch: <see cref="OtherPropertyName"/> names a single-argument method.</summary>
+        public bool OtherIsMethodWithArgument
+        {
+            get => _otherIsMethodWithArgument;
+            set
+            {
+                _otherIsMethodWithArgument = value;
+                _rightSource?.InvalidateCache();
+            }
+        }
+
+        /// <summary>Other-object branch: argument kind used to pick the method overload.</summary>
+        public ArgumentKind OtherPropertyArgumentKind
+        {
+            get => _otherPropertyArgumentKind;
+            set
+            {
+                _otherPropertyArgumentKind = value;
+                _rightSource?.InvalidateCache();
+            }
+        }
+
+        /// <summary>Other-object branch: integer method argument; read on every evaluation.</summary>
+        public int OtherPropertyArgumentInt
+        {
+            get => _otherPropertyArgumentInt;
+            set => _otherPropertyArgumentInt = value;
+        }
+
+        /// <summary>Other-object branch: float method argument; read on every evaluation.</summary>
+        public float OtherPropertyArgumentFloat
+        {
+            get => _otherPropertyArgumentFloat;
+            set => _otherPropertyArgumentFloat = value;
+        }
+
+        /// <summary>Other-object branch: string method argument; read on every evaluation.</summary>
+        public string OtherPropertyArgumentString
+        {
+            get => _otherPropertyArgumentString;
+            set => _otherPropertyArgumentString = value;
+        }
 
         /// <summary>
         ///     Evaluates the condition. Returns true if it passes.
@@ -427,8 +588,29 @@ namespace Neo.Condition
         /// <param name="fallbackObject">Owner GameObject (used when sourceObject is empty).</param>
         public bool Evaluate(GameObject fallbackObject)
         {
-            bool result = EvaluateInternal(fallbackObject);
+            bool result = TryCompare(fallbackObject, out bool comparison) && comparison;
             return _invert ? !result : result;
+        }
+
+        /// <summary>
+        ///     Evaluates the condition and reports whether a comparison actually took place.
+        ///     Unlike <see cref="Evaluate"/>, a missing source, missing member, null value, read exception or
+        ///     conversion failure is not folded into <c>false</c> (and therefore not flipped to <c>true</c> by
+        ///     <see cref="Invert"/>): the method returns false and <paramref name="result"/> is false.
+        /// </summary>
+        /// <param name="fallbackObject">Owner GameObject (used when the source object is empty).</param>
+        /// <param name="result">Comparison result with <see cref="Invert"/> applied; false when unavailable.</param>
+        /// <returns>True when the values were read and compared.</returns>
+        public bool TryEvaluate(GameObject fallbackObject, out bool result)
+        {
+            if (!TryCompare(fallbackObject, out bool comparison))
+            {
+                result = false;
+                return false;
+            }
+
+            result = _invert ? !comparison : comparison;
+            return true;
         }
 
         private ConditionValueSource GetLeftSource()
@@ -474,7 +656,9 @@ namespace Neo.Condition
                 return;
             }
 
-            if (!ReferenceEquals(_otherSourceObject, null))
+            // WHY: only an unassigned field binds; an Editor placeholder for an unassigned field counts as unassigned,
+            // while a live or destroyed explicit reference keeps the user's choice.
+            if (_otherSourceObject != null || BindingSourceGameObjectResolver.IsDestroyedReference(_otherSourceObject))
             {
                 return;
             }
@@ -483,8 +667,13 @@ namespace Neo.Condition
             _rightSource?.InvalidateCacheFull();
         }
 
-        private bool EvaluateInternal(GameObject fallbackObject)
+        /// <summary>
+        ///     Reads both sides and compares them. Returns false when any side is unavailable or the comparison throws;
+        ///     <paramref name="comparison"/> is the raw result before <see cref="Invert"/>.
+        /// </summary>
+        private bool TryCompare(GameObject fallbackObject, out bool comparison)
         {
+            comparison = false;
             ConditionValueSource left = GetLeftSource();
             if (!left.EnsureCache(fallbackObject))
             {
@@ -513,7 +702,9 @@ namespace Neo.Condition
                 return false;
             }
 
-            object thresholdValue;
+            // WHY: constant thresholds are compared straight from the typed fields; boxing them into an object on
+            // every evaluation was pure garbage for the common Constant case.
+            object thresholdValue = null;
             if (_thresholdSource == ThresholdSource.OtherObject)
             {
                 ConditionValueSource right = GetRightSource();
@@ -544,44 +735,52 @@ namespace Neo.Condition
                     return false;
                 }
             }
-            else
-            {
-                thresholdValue = _valueType switch
-                {
-                    ValueType.Int => _thresholdInt,
-                    ValueType.Float => _thresholdFloat,
-                    ValueType.Bool => _thresholdBool,
-                    ValueType.String => _thresholdString,
-                    _ => null
-                };
-            }
 
             try
             {
                 if (_thresholdSource == ThresholdSource.OtherObject)
                 {
-                    return _valueType switch
+                    switch (_valueType)
                     {
-                        ValueType.Int => CompareInt(Convert.ToInt32(rawValue), Convert.ToInt32(thresholdValue)),
-                        ValueType.Float => CompareFloat(Convert.ToSingle(rawValue), Convert.ToSingle(thresholdValue)),
-                        ValueType.Bool => CompareBool(Convert.ToBoolean(rawValue), Convert.ToBoolean(thresholdValue)),
-                        ValueType.String => CompareString(rawValue.ToString(), thresholdValue.ToString()),
-                        _ => false
-                    };
+                        case ValueType.Int:
+                            comparison = CompareInt(Convert.ToInt32(rawValue), Convert.ToInt32(thresholdValue));
+                            return true;
+                        case ValueType.Float:
+                            comparison = CompareFloat(Convert.ToSingle(rawValue), Convert.ToSingle(thresholdValue));
+                            return true;
+                        case ValueType.Bool:
+                            comparison = CompareBool(Convert.ToBoolean(rawValue), Convert.ToBoolean(thresholdValue));
+                            return true;
+                        case ValueType.String:
+                            comparison = CompareString(rawValue.ToString(), thresholdValue.ToString());
+                            return true;
+                        default:
+                            return false;
+                    }
                 }
 
-                return _valueType switch
+                switch (_valueType)
                 {
-                    ValueType.Int => CompareInt(Convert.ToInt32(rawValue)),
-                    ValueType.Float => CompareFloat(Convert.ToSingle(rawValue)),
-                    ValueType.Bool => CompareBool(Convert.ToBoolean(rawValue)),
-                    ValueType.String => CompareString(rawValue.ToString()),
-                    _ => false
-                };
+                    case ValueType.Int:
+                        comparison = CompareInt(Convert.ToInt32(rawValue));
+                        return true;
+                    case ValueType.Float:
+                        comparison = CompareFloat(Convert.ToSingle(rawValue));
+                        return true;
+                    case ValueType.Bool:
+                        comparison = CompareBool(Convert.ToBoolean(rawValue));
+                        return true;
+                    case ValueType.String:
+                        comparison = CompareString(rawValue.ToString());
+                        return true;
+                    default:
+                        return false;
+                }
             }
             catch (Exception ex)
             {
                 NeoDiagnostics.LogWarning($"[NeoCondition] Comparison error: {ex.Message}");
+                comparison = false;
                 return false;
             }
         }

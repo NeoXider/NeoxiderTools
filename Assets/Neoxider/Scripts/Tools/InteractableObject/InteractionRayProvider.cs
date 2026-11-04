@@ -101,7 +101,7 @@ namespace Neo.Tools
 
             if (useScreenCenter)
             {
-                // Viewport coordinates include the camera's pixelRect offset (split screen).
+                // WHY: Viewport coordinates include the camera's pixelRect offset (split screen).
                 ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
                 return true;
             }

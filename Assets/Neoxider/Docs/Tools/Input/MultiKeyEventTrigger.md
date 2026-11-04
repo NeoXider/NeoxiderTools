@@ -1,12 +1,13 @@
 ﻿# MultiKeyEventTrigger
 
-Invoke one UnityEvent for each configured key-down binding. Bindings are independent keys, not simultaneous-key combinations.
+**What it is:** a component that invokes one UnityEvent for each configured key-down binding. Bindings are independent keys, not simultaneous-key combinations. Script: `Scripts/Tools/Input/MultiKeyEventTrigger.cs`.
 
-## Setup
-
+**How to use:**
 1. Add `MultiKeyEventTrigger` from the Neoxider Tools component menu.
 2. Edit `keyEventPairs`; choose a `key` and connect its `onKeyPressed` event.
 3. Enable `_debug` only when needed; messages pass through the global `NeoDiagnostics` gate.
+
+---
 
 ## Key Fields (Inspector)
 

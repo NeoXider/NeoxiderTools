@@ -9,6 +9,13 @@ using UnityEngine.UI;
 
 namespace Neo.Demo.Quest
 {
+    /// <summary>
+    ///     Legacy quest demo panel that binds its UI by name and loads quests from Resources at runtime. No shipped
+    ///     scene uses it; the Quest demo scene is driven by <c>Neo.Samples.QuestDemoController</c> and authored by its
+    ///     editor scene builder.
+    /// </summary>
+    [System.Obsolete("Legacy sample view used by no scene. Use QuestDemoController in the builder-authored Quest demo " +
+                     "scene instead; this script will be removed in a later release.")]
     [AddComponentMenu("Neoxider/Demo/Quest/QuestDemoView")]
     public class QuestDemoView : MonoBehaviour
     {
@@ -789,19 +796,19 @@ namespace Neo.Demo.Quest
 
         private static Button FindButton(string name)
         {
-            var go = GameObject.Find(name);
+            GameObject go = GameObject.Find(name);
             return go != null ? go.GetComponent<Button>() : null;
         }
 
         private static TMP_Text FindText(string name)
         {
-            var go = GameObject.Find(name);
+            GameObject go = GameObject.Find(name);
             return go != null ? go.GetComponent<TMP_Text>() : null;
         }
 
         private static Image FindImage(string name)
         {
-            var go = GameObject.Find(name);
+            GameObject go = GameObject.Find(name);
             return go != null ? go.GetComponent<Image>() : null;
         }
 

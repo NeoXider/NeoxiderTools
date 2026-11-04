@@ -20,8 +20,9 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Clears and fills a caller-owned buffer. Missing mouse/EventSystem returns zero hits.
-        ///     UIUtils still constructs PointerEventData for each query.
+        ///     Clears and fills a caller-owned buffer. Missing mouse/EventSystem returns zero hits. The query reuses
+        ///     the shared PointerEventData of <see cref="UIUtils.GetUIElementsAtPosition(Vector2, List{RaycastResult})" />,
+        ///     so with a retained buffer it adds no allocation of its own to the EventSystem raycast.
         /// </summary>
         public static int GetUIElementsUnderCursor(List<RaycastResult> results)
         {
@@ -39,10 +40,14 @@ namespace Neo.Tools
             return UIUtils.GetUIElementsAtPosition(position, results);
         }
 
-        /// <summary>Checks whether the compatible mouse pointer hits any UI element.</summary>
+        /// <summary>
+        ///     Checks whether the compatible mouse pointer hits any UI element. Missing mouse or EventSystem returns
+        ///     false. Reuses the shared query buffer of <see cref="UIUtils.IsPointerOverUI(Vector2)" />, so per-frame
+        ///     calls do not allocate a result list.
+        /// </summary>
         public static bool IsPointerOverUI()
         {
-            return GetUIElementsUnderCursor().Count > 0;
+            return MouseInputCompat.TryGetPosition(out Vector3 position) && UIUtils.IsPointerOverUI(position);
         }
     }
 }

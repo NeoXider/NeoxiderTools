@@ -1,6 +1,14 @@
 # CooldownReward
 
-`CooldownReward` is a persistent real-time cooldown built on `TimerObject`. It supports manual claims, continuous auto-claim regeneration, offline accumulation, capped claims per take, and a reactive countdown for UI.
+**What it is:** a persistent real-time cooldown component built on `TimerObject` (`Scripts/Bonus/TimeReward/CooldownReward.cs`). It supports manual claims, continuous auto-claim regeneration, offline accumulation, capped claims per take, and a reactive countdown for UI. Time comes from the tamper-resistant `NeoTrustedTime`; claims are counted with the shared `CooldownSchedule.CountClaimable` rule.
+
+**How to use:**
+1. Add `CooldownReward`, set **Cooldown Seconds** and a unique **Add Key**.
+2. Bind a claim button to `Take()` (or enable **Auto Claim**) and wire `OnRewardClaimed` to the grant, such as `Money.Add(1)`.
+3. Show the countdown from `RemainingTime` or `GetFormattedTimeLeft()`.
+4. For a cooldown without a scene object (servers, tests with a fake clock), use [CooldownSchedule](CooldownSchedule.md).
+
+---
 
 ## Typical uses
 
@@ -33,7 +41,7 @@ Wire `OnRewardClaimed` to the effect that should happen once per granted reward,
 | `void Take()` | UnityEvent-friendly wrapper around `TakeReward`. |
 | `bool CanTakeReward()` | Returns whether at least one reward is currently claimable. |
 | `void RestartTime()` | Starts a fresh cooldown from now and persists its real-time end. |
-| `void SetRewardAvailableNow()` | Persists an expired deadline so one reward is immediately claimable. |
+| `void SetRewardAvailableNow()` | Persists an expired deadline so one reward is immediately claimable, and raises `OnRewardAvailable` when the reward was not available yet. |
 | `void StartTime()` | Starts/resumes updates while retaining a restored countdown; manual-restart mode can begin a fresh cooldown. |
 | `void RefreshTimeState()` | Recomputes availability and publishes the current remaining time. |
 | `float GetSecondsUntilReward()` | Current remaining seconds. |

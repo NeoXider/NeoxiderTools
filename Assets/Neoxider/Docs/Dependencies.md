@@ -1,8 +1,10 @@
 # Dependencies and editor tooling / Зависимости и инструменты
 
-NeoxiderTools targets Unity `6000.0+`. Runtime package requirements are declared in `package.json`;
+**What it is:** the dependency versions NeoxiderTools is validated with, the DOTween Core/Pro upgrade constraint and the optional MCP editor tooling. NeoxiderTools targets Unity `6000.0+`. Runtime package requirements are declared in `package.json`;
 the repository's development project has additional editor tools in `Packages/manifest.json`.
 MCP is an optional development tool and is not a dependency of the published runtime library.
+
+**How to use:** install the required host packages at the versions in the [baseline](#declared-dependency-baseline), keep DOTween Core and Pro [upgraded together](#dotween-core-and-pro-must-be-upgraded-together), and set up [MCP for Unity](#mcp-for-unity) only for editor automation.
 
 ## Declared dependency baseline
 
@@ -12,16 +14,14 @@ Manifest requests and native resolved versions are distinct: editor-bundled pack
 Future dependency changes require native resolution and affected regression/scene checks; editing a
 manifest alone does not establish compatibility.
 
-The separate `HtmlToUitk.Cli.v11.0.0.zip` targets net9.0 but requires the tested.NET 10 runtime through
-LatestMajor; no runtime9 is bundled. SDK 10.0.301 builds the source target. Source net9 verification used
-process-local Major on10.0.9; net8 used8.0.21. See [actual HtmlToUitk scope](UI/HtmlToUitkVerification11.md),
-including30 retained nonexecuted cases. Unity Core/Complete/UPM contain neither Tools nor the converter.
+The HTML/CSS → UI Toolkit converter and its .NET CLI are no longer part of this package; they moved to the
+separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package (`com.neoxider.htmltouitk`), which declares its own requirements.
 
 For Mirror components assembled from C#, configure the GameObject while inactive, add its identity and
 all NetworkBehaviours, then activate it. Mirror initializes behaviour identity caches through native
 `Awake`; adding behaviours after an active identity has already initialized is not equivalent. Test
 dispatchers must use Mirror's public `GetStableHashCode16()` for woven function signatures rather than
-manually truncating the32-bit hash.
+manually truncating the 32-bit hash.
 
 | Dependency | Version | Scope |
 |---|---|---|
@@ -36,6 +36,10 @@ manually truncating the32-bit hash.
 | Version Control integration | `2.13.6` | Development editor tooling |
 | Timeline | `1.8.13` | Development project; editor-bundled compatibility applies |
 | Visual Scripting | `1.9.12` | Optional development editor tooling |
+
+The optional [MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer) renders the `[NeoDoc]` pages inside
+the editor; its install URL and the fork's status are in
+[MarkdownRenderer fork](./MarkdownRendererFork.md#23-installation-in-a-project-neoxidertools-and-others).
 
 Use Unity Package Manager to resolve and write `packages-lock.json`. Keep URP, Shader Graph, VFX Graph,
 Test Framework and other editor-bundled packages compatible with the chosen Unity SDK. Registry

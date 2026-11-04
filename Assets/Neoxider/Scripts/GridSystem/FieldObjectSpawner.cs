@@ -115,7 +115,7 @@ namespace Neo.GridSystem
             Vector3 worldPos = Generator.GetCellWorldCenter(cell.Position);
             GameObject go = Instantiate(Prefabs[prefabIndex], worldPos, Quaternion.identity, transform);
             SpawnedObjectInfo info = new(go, cell, occupiesSpace);
-            // Preserve the legacy first-registration notification on an already occupied cell.
+            // WHY: preserve the legacy first-registration notification on an already occupied cell.
             bool notifyExistingOccupancy = wasOccupiedAtEntry && !HasBlockingObjects(cell);
             if (!cellObjects.ContainsKey(cell))
             {
@@ -125,7 +125,7 @@ namespace Neo.GridSystem
             cellObjects[cell].Add(info);
             objectLookup[go] = info;
             OnObjectSpawned.Invoke(info);
-            // Another blocker may still be inside its spawn callback and not have published occupancy yet.
+            // WHY: another blocker may still be inside its spawn callback and not have published occupancy yet.
             if (occupiesSpace && info.OccupiesSpace && IsCurrentRegistration(go, info, cell) &&
                 (!cell.IsOccupied || (notifyExistingOccupancy && !HasBlockingObjects(cell, info))))
             {
@@ -188,9 +188,59 @@ namespace Neo.GridSystem
         /// <param name="go">Tracked object instance.</param>
         public void RemoveObject(GameObject go)
         {
+            Detach(go, true);
+        }
+
+        /// <summary>
+        ///     Removes an object from tracking without destroying it, for callers that return it to a pool or despawn
+        ///     it themselves. Raises the same events and occupancy transition as <see cref="RemoveObject" />.
+        /// </summary>
+        /// <param name="go">Tracked object instance.</param>
+        /// <returns>True when the object was tracked.</returns>
+        public bool Unregister(GameObject go)
+        {
+            return Detach(go, false);
+        }
+
+        /// <summary>
+        ///     Unregisters tracked objects that were destroyed by other code, freeing their cells. Call it after
+        ///     external despawns; destroyed objects otherwise keep their cells occupied.
+        /// </summary>
+        /// <returns>Number of pruned registrations.</returns>
+        public int PruneDestroyedObjects()
+        {
+            List<GameObject> destroyed = null;
+            foreach (GameObject tracked in objectLookup.Keys)
+            {
+                if (tracked == null)
+                {
+                    destroyed ??= new List<GameObject>();
+                    destroyed.Add(tracked);
+                }
+            }
+
+            if (destroyed == null)
+            {
+                return 0;
+            }
+
+            int pruned = 0;
+            for (int i = 0; i < destroyed.Count; i++)
+            {
+                if (Detach(destroyed[i], false))
+                {
+                    pruned++;
+                }
+            }
+
+            return pruned;
+        }
+
+        private bool Detach(GameObject go, bool destroy)
+        {
             if (ReferenceEquals(go, null) || !objectLookup.TryGetValue(go, out SpawnedObjectInfo info))
             {
-                return;
+                return false;
             }
 
             FieldCell cell = info.Cell;
@@ -205,7 +255,11 @@ namespace Neo.GridSystem
             }
 
             objectLookup.Remove(go);
-            Destroy(go);
+            if (destroy)
+            {
+                Destroy(go);
+            }
+
             OnObjectRemoved.Invoke(info);
             if (occupiesSpace && IsCurrentCell(cell) && !HasBlockingObjects(cell))
             {
@@ -215,6 +269,8 @@ namespace Neo.GridSystem
                     OnCellFreed.Invoke(cell);
                 }
             }
+
+            return true;
         }
 
         private bool IsCurrentCell(FieldCell cell)
@@ -231,8 +287,21 @@ namespace Neo.GridSystem
 
         private bool HasBlockingObjects(FieldCell cell, SpawnedObjectInfo except = null)
         {
-            return cell != null && cellObjects.TryGetValue(cell, out List<SpawnedObjectInfo> objects) &&
-                   objects.Exists(info => !ReferenceEquals(info, except) && info.OccupiesSpace);
+            if (cell == null || !cellObjects.TryGetValue(cell, out List<SpawnedObjectInfo> objects))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < objects.Count; i++)
+            {
+                SpawnedObjectInfo info = objects[i];
+                if (!ReferenceEquals(info, except) && info.OccupiesSpace)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

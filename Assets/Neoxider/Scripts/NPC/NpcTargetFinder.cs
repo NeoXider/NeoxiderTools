@@ -106,7 +106,7 @@ namespace Neo.NPC
                 }
                 catch (UnityException)
                 {
-                    // An undefined project tag must not prevent the configured name fallback.
+                    // WHY: an undefined project tag must not prevent the configured name fallback.
                 }
             }
 

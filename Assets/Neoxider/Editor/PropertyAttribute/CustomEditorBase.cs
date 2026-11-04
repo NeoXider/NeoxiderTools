@@ -17,6 +17,7 @@ namespace Neo.Editor
     /// </summary>
     public abstract partial class CustomEditorBase : UnityEditor.Editor
     {
+        /// <summary>Instance fields of any visibility; the field set the attribute processors inspect.</summary>
         public const BindingFlags FIELD_FLAGS =
             BindingFlags.Public |
             BindingFlags.NonPublic |
@@ -55,10 +56,8 @@ namespace Neo.Editor
 
         protected Dictionary<string, object> _buttonParameterValues = new();
 
-        private Rect _componentOutlineRect;
         protected Dictionary<string, bool> _isFirstRun = new();
 
-        private Rect _rainbowLineStartRect;
         private bool _unityEventOnlyWithListeners;
 
         private string _unityEventSearch = string.Empty;
@@ -110,6 +109,7 @@ namespace Neo.Editor
 
         private static readonly List<CustomEditorBase> s_repaintClients = new();
         private static bool s_tickerHooked;
+        private static bool s_tickerWasFocused = true;
         private static double s_lastAnimationRepaintAt;
         private static double s_lastLiveRepaintAt;
         private static double s_lastStatusRepaintAt;
@@ -117,6 +117,17 @@ namespace Neo.Editor
         internal static int RepaintClientCount => s_repaintClients.Count;
 
         internal bool IsRepaintClient => _isRepaintClient;
+
+        private int _tickerRepaints;
+
+        /// <summary>How many repaints the shared ticker requested for this editor (test hook).</summary>
+        internal int TickerRepaintCount => _tickerRepaints;
+
+        private void RepaintFromTicker()
+        {
+            _tickerRepaints++;
+            Repaint();
+        }
 
         /// <summary>
         ///     Inspects this editor's leases without ticking other clients or changing shared repaint clocks.
@@ -147,6 +158,7 @@ namespace Neo.Editor
         /// <summary>
         ///     Requests repaints for content that must stay current whatever the animation setting says
         ///     (update-check progress, a live condition result), at <see cref="NeoInspectorAnimation.LiveFps" />.
+        ///     Keeps its rate while Unity is in the background, unlike <see cref="EnsureRepaint" />.
         /// </summary>
         protected void EnsureLiveRepaint()
         {
@@ -202,14 +214,40 @@ namespace Neo.Editor
 
         private static void TickRepaintClients()
         {
-            TickRepaintClients(EditorApplication.timeSinceStartup);
+            TickRepaintClients(EditorApplication.timeSinceStartup, EditorApplication.isFocused);
+        }
+
+        /// <summary>Ticks the shared repaint clock as if the editor were focused.</summary>
+        internal static void TickRepaintClients(double now)
+        {
+            TickRepaintClients(now, true);
         }
 
         // WHY: One shared ticker with one throttle per channel. Per-editor subscriptions each kept their own timer,
         // so N components on a GameObject repainted N times per interval and the fps cap did nothing.
-        internal static void TickRepaintClients(double now)
+        internal static void TickRepaintClients(double now, bool editorFocused)
         {
-            bool animationActive = NeoInspectorAnimation.IsActive();
+            // WHY: with Unity in the background the decorative animation only burnt CPU behind another application,
+            // so that channel idles. Live data (a NeoCondition result, update-check progress) and the 2 Hz status
+            // keep their rate: Unity on a second monitor still shows them. Clients are kept while idle (their
+            // animation lease is not judged) and each gets one repaint when the editor is focused again, which
+            // renews the animation leases of the inspectors still visible.
+            bool focused = NeoInspectorAnimation.ShouldTick(editorFocused);
+            if (focused && !s_tickerWasFocused)
+            {
+                for (int i = s_repaintClients.Count - 1; i >= 0; i--)
+                {
+                    CustomEditorBase client = s_repaintClients[i];
+                    if (client != null && client.target != null)
+                    {
+                        client._statusLeaseUntil = Math.Max(client._statusLeaseUntil, now + RepaintLeaseSeconds);
+                        client.RepaintFromTicker();
+                    }
+                }
+            }
+
+            s_tickerWasFocused = focused;
+            bool animationActive = focused && NeoInspectorAnimation.IsActive();
             bool animationDue = animationActive && NeoInspectorAnimation.IsRepaintDue(now,
                 s_lastAnimationRepaintAt, CustomEditorSettings.AnimationFps);
             bool liveDue = NeoInspectorAnimation.IsRepaintDue(now, s_lastLiveRepaintAt,
@@ -233,6 +271,16 @@ namespace Neo.Editor
                 bool wantsAnimation = animationActive && now < client._animationLeaseUntil;
                 bool wantsLive = now < client._liveLeaseUntil;
                 bool wantsStatus = now < client._statusLeaseUntil;
+                if (!focused)
+                {
+                    if ((wantsLive && liveDue) || (wantsStatus && statusDue))
+                    {
+                        client.RepaintFromTicker();
+                    }
+
+                    continue;
+                }
+
                 if (!client.HasRepaintLease(now))
                 {
                     s_repaintClients.RemoveAt(i);
@@ -242,7 +290,7 @@ namespace Neo.Editor
 
                 if ((wantsAnimation && animationDue) || (wantsLive && liveDue) || (wantsStatus && statusDue))
                 {
-                    client.Repaint();
+                    client.RepaintFromTicker();
                 }
             }
 
@@ -321,7 +369,7 @@ namespace Neo.Editor
 
             try
             {
-                var packageInfo =
+                PackageInfo packageInfo =
                     PackageInfo.FindForAssembly(typeof(CustomEditorBase).Assembly);
                 if (packageInfo != null)
                 {
@@ -468,8 +516,11 @@ namespace Neo.Editor
         private static Texture2D _cachedLaughIcon;
         private static bool _isLaughIconLoadAttempted;
 
-        // WHY: Timestamp (EditorApplication.timeSinceStartup) of the last logo "poke"; large-negative so no pop on first draw.
-        private static double _logoPopStart = -1000.0;
+        // WHY: Timestamp (EditorApplication.timeSinceStartup) of this editor's last logo "poke"; large-negative so
+        // there is no pop on the first draw. Per editor, so poking one mascot no longer bounces every other one.
+        private double _logoPopStart = -1000.0;
+
+        private string _pendingMascotDocPath;
 
         /// <summary>The "eyes-squeezed" blink frame shown occasionally over the logo in the banner.</summary>
         private static Texture2D GetBlinkIcon()
@@ -541,8 +592,18 @@ namespace Neo.Editor
 
                 if (!string.IsNullOrEmpty(root))
                 {
-                    string iconPath = $"{root}/NeoLogo.png".Replace('\\', '/');
-                    _cachedLibraryIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+                    // WHY: NeoLogo.png is also a runtime UI sprite (demo scenes), so it keeps its large, compressed,
+                    // mip-less import. Drawn at banner size between the mipmapped 256px face variants it visibly
+                    // changed quality on every blink, so an editor-only copy with the variants' import settings is
+                    // preferred when present.
+                    string neutralPath = $"{root}/Editor/Icons/NeoLogoNeutral.png".Replace('\\', '/');
+                    _cachedLibraryIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(neutralPath);
+
+                    if (_cachedLibraryIcon == null)
+                    {
+                        string iconPath = $"{root}/NeoLogo.png".Replace('\\', '/');
+                        _cachedLibraryIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+                    }
 
                     if (_cachedLibraryIcon == null)
                     {
@@ -581,7 +642,7 @@ namespace Neo.Editor
 
             try
             {
-                var odinInspectorType =
+                Type odinInspectorType =
                     Type.GetType("Sirenix.OdinInspector.Editor.OdinInspector, Sirenix.OdinInspector.Editor");
                 _odinInspectorAvailable = odinInspectorType != null;
             }
@@ -593,12 +654,40 @@ namespace Neo.Editor
             return _odinInspectorAvailable.Value;
         }
 
+        // WHY: every transition of one editor reads one clock per IMGUI frame. The clock is sampled on the Layout
+        // event that starts each frame, so Layout and the event after it agree on how far a section has opened;
+        // two different readings would give them different layouts and desync GUILayout.
+        private double _motionNow = -1.0;
+
+        /// <summary>Time used by this editor's transitions in the current IMGUI frame.</summary>
+        internal double MotionNow => _motionNow;
+
+        /// <summary>Test hook: pins the transition clock as if a Layout event had sampled <paramref name="now" />.</summary>
+        internal void SetMotionClockForTests(double now)
+        {
+            _motionNow = now;
+        }
+
+        private void SampleMotionClock()
+        {
+            Event current = Event.current;
+            if (_motionNow < 0.0 || (current != null && current.type == EventType.Layout))
+            {
+                _motionNow = EditorApplication.timeSinceStartup;
+            }
+        }
+
         public override void OnInspectorGUI()
         {
-            if (Event.current.commandName == "Reset")
+            Event current = Event.current;
+            // WHY: commandName is marshalled from native code on every read; only command events carry one.
+            if ((current.type == EventType.ExecuteCommand || current.type == EventType.ValidateCommand) &&
+                current.commandName == "Reset")
             {
                 _wasResetPressed = true;
             }
+
+            SampleMotionClock();
 
             bool isOdinActive = IsOdinInspectorAvailable();
 
@@ -622,7 +711,6 @@ namespace Neo.Editor
                     LogChromeErrorOnce(ex);
                 }
 
-                EditorGUILayout.Space(2f);
                 Rect neoPanelRect = EditorGUILayout.BeginVertical(GetNeoPropertyPanelStyle());
                 if (Event.current.type == EventType.Repaint && neoPanelRect.width > 0f)
                 {
@@ -702,16 +790,13 @@ namespace Neo.Editor
         {
         }
 
+        /// <summary>
+        ///     Draws the header (full banner or compact row, with the version/update pill and the health badge) and
+        ///     the health panel above the properties of a Neo component.
+        /// </summary>
         protected virtual void DrawNeoxiderSignature()
         {
-            EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
-
-            bool rainbow = CustomEditorSettings.EnableRainbowSignature &&
-                           CustomEditorSettings.EnableRainbowSignatureAnimation;
-            if (rainbow)
-            {
-                EnsureRepaint();
-            }
+            NeoInspectorStyles.Space(CustomEditorSettings.SignatureSpacing);
 
             Texture2D icon = GetLibraryIcon();
             EnsureNeoxiderPackageInfo();
@@ -719,82 +804,220 @@ namespace Neo.Editor
             // WHY: Tick() runs an update check when the interval elapsed, otherwise reads the cache.
             NeoUpdateChecker.State updateState = NeoUpdateChecker.Tick(version, _cachedNeoxiderRootPath);
 
-            bool updateAvailable = updateState.Status == NeoUpdateChecker.UpdateStatus.UpdateAvailable &&
-                                   !string.IsNullOrEmpty(updateState.LatestVersion) &&
-                                   !string.IsNullOrEmpty(updateState.UpdateUrl);
-
-            // WHY: One health report per frame; the banner badge and the panel below it read the same numbers.
+            // WHY: One health report per frame; the header badge and the panel below it read the same numbers.
             NeoComponentHealth.Report health = NeoComponentHealth.GetReport(target);
-            DrawNeoxiderBanner(icon, version, updateAvailable, rainbow, NeoxiderModuleName, health);
-            DrawNeoxiderUpdateStrip(version, updateState);
+            if (UseCompactHeader())
+            {
+                DrawCompactHeader(icon, version, updateState, NeoxiderModuleName, health);
+            }
+            else
+            {
+                DrawNeoxiderBanner(icon, version, updateState, NeoxiderModuleName, health);
+            }
+
             DrawHealthPanel(health);
 
-            EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
+            NeoInspectorStyles.Space(CustomEditorSettings.SignatureSpacing);
+        }
+
+        private static readonly List<Component> s_componentScratch = new();
+        private static int s_hierarchyEpoch;
+        private static bool s_hierarchyHooked;
+        private int _bannerEpoch = -1;
+        private double _bannerCheckedAt = -1000.0;
+        private bool _isFirstNeoComponent = true;
+
+        /// <summary>
+        ///     True when this inspector draws the compact header: the banner is switched off, or another Neo component
+        ///     above it on the same GameObject already shows the full banner.
+        /// </summary>
+        internal bool UseCompactHeader()
+        {
+            if (!CustomEditorSettings.EnableRainbowSignature)
+            {
+                return true;
+            }
+
+            return CustomEditorSettings.CompactRepeatedBanners && !IsFirstNeoComponentOnGameObject();
+        }
+
+        // WHY: the component order only changes with the hierarchy; GetComponents runs again after a hierarchy
+        // change and at most every two seconds as a backstop for edits that raise no hierarchy event.
+        private bool IsFirstNeoComponentOnGameObject()
+        {
+            if (!s_hierarchyHooked)
+            {
+                s_hierarchyHooked = true;
+                EditorApplication.hierarchyChanged += () => s_hierarchyEpoch++;
+            }
+
+            double now = EditorApplication.timeSinceStartup;
+            if (_bannerEpoch == s_hierarchyEpoch && now - _bannerCheckedAt < 2.0)
+            {
+                return _isFirstNeoComponent;
+            }
+
+            _bannerEpoch = s_hierarchyEpoch;
+            _bannerCheckedAt = now;
+            _isFirstNeoComponent = ComputeIsFirstNeoComponent(target as Component);
+            return _isFirstNeoComponent;
+        }
+
+        internal static bool ComputeIsFirstNeoComponent(Component component)
+        {
+            if (component == null)
+            {
+                return true;
+            }
+
+            try
+            {
+                component.GetComponents(s_componentScratch);
+                for (int i = 0; i < s_componentScratch.Count; i++)
+                {
+                    Component candidate = s_componentScratch[i];
+                    // WHY: a component hidden from the Inspector draws no header, so it cannot be the one that keeps
+                    // the banner for the others.
+                    if (candidate is MonoBehaviour && (candidate.hideFlags & HideFlags.HideInInspector) == 0 &&
+                        IsNeoNamespaceTarget(candidate))
+                    {
+                        return candidate == component;
+                    }
+                }
+
+                return true;
+            }
+            finally
+            {
+                s_componentScratch.Clear();
+            }
+        }
+
+        private const float BannerHeight = 44f;
+        private const float CompactHeaderHeight = 24f;
+        private const float VersionPillHeight = 18f;
+
+        /// <summary>
+        ///     The full header: brand gradient card with the mascot chip, title and tagline, and the version/update
+        ///     pill on the right. 44px: one third lighter than the v10 banner plus its separate update strip.
+        /// </summary>
+        private void DrawNeoxiderBanner(Texture2D icon, string version, NeoUpdateChecker.State updateState,
+            string moduleName, in NeoComponentHealth.Report health)
+        {
+            Rect full = GUILayoutUtility.GetRect(0f, BannerHeight, NeoInspectorStyles.ExpandWidth);
+            Rect rect = NeoInspectorTheme.Snap(new Rect(full.x + 1f, full.y, full.width - 2f, full.height));
+
+            NeoInspectorTheme.DrawRoundedTexture(rect, NeoInspectorTheme.BannerGradient,
+                new Color(1f, 1f, 1f, 0.12f), NeoInspectorTheme.RadiusCard, Color.white, 1f);
+            if (Event.current.type == EventType.Repaint)
+            {
+                // WHY: a faint top sheen and a darker foot give the flat gradient a little depth without noise.
+                NeoInspectorTheme.DrawRoundedRect(new Rect(rect.x + 1f, rect.y + 1f, rect.width - 2f,
+                    rect.height * 0.45f), new Color(1f, 1f, 1f, 0.05f), NeoInspectorTheme.RadiusCard - 1f);
+                EditorGUI.DrawRect(new Rect(rect.x + 8f, rect.yMax - 1f, rect.width - 16f, 1f),
+                    new Color(0f, 0f, 0f, 0.12f));
+            }
+
+            const float pad = 5f;
+            float chip = BannerHeight - pad * 2f;
+            Rect chipRect = new(rect.x + pad, rect.y + pad, chip, chip);
+            NeoInspectorTheme.DrawRoundedRect(chipRect, new Color(1f, 1f, 1f, 0.14f),
+                new Color(1f, 1f, 1f, 0.22f), NeoInspectorTheme.RadiusCard, 1f);
+
+            DrawMascot(chipRect, icon, health, 1.24f, true);
+
+            // WHY: Badge handles its own click and Uses the event, so it wins over the slime poke below.
+            DrawHealthBadge(chipRect, health);
+
+            Rect pillArea = DrawVersionCluster(rect, version, updateState, true);
+
+            float textX = chipRect.xMax + 9f;
+            float textW = pillArea.x - textX - 8f;
+            Rect titleRect = new(textX, rect.y + 6f, Mathf.Max(0f, textW), 18f);
+            Rect taglineRect = new(textX, titleRect.yMax, Mathf.Max(0f, textW), 14f);
+            // WHY: below ~48px of room the clipped title is noise; the mascot and the pill still identify the header.
+            if (textW >= 48f)
+            {
+                GUI.Label(titleRect, NeoInspectorStyles.CachedContent("Neoxider Tools"), NeoInspectorStyles.BannerTitle);
+                GUI.Label(taglineRect, GetBannerTagline(moduleName), NeoInspectorStyles.BannerTagline);
+            }
+
+            // WHY: Poke the slime: the chip + title/tagline are clickable (but never the version pill).
+            Rect logoHitRect = Rect.MinMaxRect(chipRect.xMin, rect.yMin, Mathf.Max(chipRect.xMax, pillArea.x - 4f),
+                rect.yMax);
+            HandleMascotPoke(logoHitRect, chipRect);
         }
 
         /// <summary>
-        ///     Draws the premium gradient hero banner (logo chip, title, tagline, version pill).
+        ///     One-row header used when the banner is off or repeats on the same GameObject: small mascot, title and
+        ///     module, version pill. Health badge and update state stay visible.
         /// </summary>
-        private void DrawNeoxiderBanner(Texture2D icon, string version, bool updateAvailable, bool rainbow,
+        private void DrawCompactHeader(Texture2D icon, string version, NeoUpdateChecker.State updateState,
             string moduleName, in NeoComponentHealth.Report health)
         {
-            const float height = 60f;
-            Rect full = GUILayoutUtility.GetRect(0f, height, GUILayout.ExpandWidth(true));
-            Rect rect = new(full.x + 1f, full.y, full.width - 2f, full.height);
+            Rect full = GUILayoutUtility.GetRect(0f, CompactHeaderHeight, NeoInspectorStyles.ExpandWidth);
+            Rect rect = NeoInspectorTheme.Snap(new Rect(full.x + 1f, full.y, full.width - 2f, full.height));
 
-            NeoInspectorTheme.DrawRoundedTexture(rect, NeoInspectorTheme.BannerGradient,
-                new Color(1f, 1f, 1f, 0.16f), NeoInspectorTheme.RadiusCard, Color.white, 1f);
-            // WHY: Soft depth: darken the lower band a touch.
-            if (Event.current.type == EventType.Repaint)
+            NeoInspectorTheme.DrawRoundedRect(rect, NeoInspectorTheme.PanelBackground, NeoInspectorTheme.Separator,
+                NeoInspectorTheme.RadiusRow, 1f);
+            NeoInspectorTheme.DrawAccentRail(rect, NeoInspectorTheme.BrandViolet, 3f, 5f);
+
+            Rect chipRect = new(rect.x + 8f, rect.y + 2f, rect.height - 4f, rect.height - 4f);
+            DrawMascot(chipRect, icon, health, 1.18f, false);
+            DrawHealthBadge(chipRect, health);
+
+            Rect pillArea = DrawVersionCluster(rect, version, updateState, false);
+
+            float textX = chipRect.xMax + 6f;
+            float textW = pillArea.x - textX - 6f;
+            if (textW >= 40f)
             {
-                EditorGUI.DrawRect(new Rect(rect.x + 6f, rect.yMax - 1f, rect.width - 12f, 1f),
-                    new Color(0f, 0f, 0f, 0.14f));
+                GUI.Label(new Rect(textX, rect.y, textW, rect.height),
+                    NeoInspectorStyles.CachedContent(GetCompactTitle(moduleName)),
+                    NeoInspectorStyles.CompactTitle(NeoInspectorTheme.TitleText));
             }
 
-            const float pad = 8f;
-            // WHY: The mascot reads better slightly larger than the old pad-derived 44px chip.
-            float chip = height - pad * 2f + 6f;
-            Rect chipRect = new(rect.x + pad, rect.y + (height - chip) * 0.5f, chip, chip);
-            NeoInspectorTheme.DrawRoundedRect(chipRect, new Color(1f, 1f, 1f, 0.15f),
-                new Color(1f, 1f, 1f, 0.24f), 9f, 1f);
+            HandleMascotPoke(Rect.MinMaxRect(chipRect.xMin, rect.yMin, Mathf.Max(chipRect.xMax, pillArea.x - 4f),
+                rect.yMax), chipRect);
+        }
 
-            // WHY: The header is meant to feel alive: keep repainting so breathing / blink / pop stay smooth.
-            // With animation off (setting, or Play Mode) it renders one still frame and only polls its status.
-            bool animating = NeoInspectorAnimation.IsActive();
+        /// <summary>
+        ///     Draws the mascot face into <paramref name="chipRect" /> (clipped), with breathing, blink and the
+        ///     click pop when the mascot may animate. One still frame otherwise.
+        /// </summary>
+        private void DrawMascot(Rect chipRect, Texture2D icon, in NeoComponentHealth.Report health, float zoom,
+            bool bob)
+        {
+            bool animating = NeoInspectorAnimation.IsActive() && CustomEditorSettings.EnableRainbowSignatureAnimation;
             if (animating)
             {
                 EnsureRepaint();
             }
             else
             {
+                // WHY: still mascot: the badge must still notice a new console error or missing reference.
                 EnsureStatusRepaint();
             }
 
             double realNow = EditorApplication.timeSinceStartup;
-            // WHY: A clock frozen at 0 collapses breathing, bob and pop to their rest values (sin 0 = 0).
+            // WHY: A clock frozen at 0 collapses breathing, bob and pop to their rest values.
             double now = animating ? realNow : 0.0;
 
-            // WHY: Idle "breathing": a slow ±4% scale pulse over a ~2.6s cycle, plus a ~1px vertical bob.
-            const double breathePeriod = 2.6;
-            const double bobPeriod = 3.2;
-            float breatheScale = 1f + 0.04f * Mathf.Sin((float)(now * (Math.PI * 2.0 / breathePeriod)));
-            float bobY = 1f * Mathf.Sin((float)(now * (Math.PI * 2.0 / bobPeriod)));
+            // WHY: Idle "breathing": a cosine wave (no corners at the turning points) over 2.8s: +3% scale and the
+            // face rises by a pixel while it inhales.
+            float breath = NeoInspectorAnimation.Breath(now, 2.8);
+            float breatheScale = 1f + 0.03f * breath;
+            float bobY = bob ? -1f * breath : 0f;
 
-            // WHY: Click-to-pop: for ~0.5s after a poke, a springy ease-out-back overshoot (~1.35x) that settles back.
-            const double popDuration = 0.5;
+            // WHY: Click-to-pop: a damped spring that overshoots to ~1.25x and settles exactly on the baseline.
+            const double popDuration = 0.55;
             double popElapsed = now - _logoPopStart;
-            bool inPop = popElapsed >= 0.0 && popElapsed < popDuration;
-            float popScale = 1f;
-            if (inPop)
-            {
-                float t = Mathf.Clamp01((float)(popElapsed / popDuration));
-                // WHY: One big overshoot hump (to ~1.35x) plus a small springy settle, decaying to the baseline at t = 1.
-                float envelope = 1f - t;
-                float wobble = Mathf.Sin(t * Mathf.PI * 2.2f);
-                popScale = 1f + 0.45f * envelope * wobble;
-            }
+            bool inPop = animating && popElapsed >= 0.0 && popElapsed < popDuration;
+            float popScale = inPop
+                ? 1f + NeoInspectorAnimation.SpringPop((float)(popElapsed / popDuration), 0.62f)
+                : 1f;
 
-            // WHY: Eye-blink: swap the confident face for the squeezed frame in short windows (unchanged timing).
+            // WHY: Eye-blink: swap the confident face for the squeezed frame in short windows (a double blink).
             Texture2D blinkIcon = GetBlinkIcon();
             bool blinking = false;
             if (animating && blinkIcon != null)
@@ -811,7 +1034,6 @@ namespace Neo.Editor
                 faceIcon = laughIcon;
             }
 
-            // WHY: Composite scale: breathing baseline multiplied by the pop so the pop settles seamlessly into breathing.
             float faceScale = breatheScale * popScale;
 
             // WHY: GUI.BeginGroup takes a control id. Inside a Repaint-only branch it shifted every control id after
@@ -824,7 +1046,6 @@ namespace Neo.Editor
                 {
                     // WHY: The mascot art carries ~25% transparent padding; overscan + clip turns it
                     // into a close-up that nearly fills the chip (clip keeps the pop inside the frame).
-                    const float zoom = 1.28f;
                     const float contentCenterShift = 0.018f;
                     float size = chipRect.width * zoom * faceScale;
                     float cx = chipRect.width * 0.5f;
@@ -834,179 +1055,389 @@ namespace Neo.Editor
                 }
                 else
                 {
-                    GUI.Label(new Rect(0f, 0f, chipRect.width, chipRect.height), "N", NeoInspectorStyles.Glyph);
+                    GUI.Label(new Rect(0f, 0f, chipRect.width, chipRect.height), NeoInspectorStyles.CachedContent("N"),
+                        NeoInspectorStyles.Glyph);
                 }
             }
 
             GUI.EndGroup();
+        }
 
-            // WHY: Badge handles its own click and Uses the event, so it wins over the slime poke below.
-            DrawHealthBadge(chipRect, health);
+        /// <summary>
+        ///     Header click handling: anywhere in <paramref name="hitRect" /> pokes the slime; a single click on the
+        ///     mascot chip itself (<paramref name="docRect" />) also opens the component's documentation page.
+        /// </summary>
+        private void HandleMascotPoke(Rect hitRect, Rect docRect)
+        {
+            HandleMascotPoke(Event.current, hitRect, docRect);
+        }
 
-            // WHY: Version pill (right aligned) — measure first so the title can flow up to it.
-            string versionText = NeoInspectorStyles.VersionLabel(version);
-            GUIStyle pillTextStyle = NeoInspectorStyles.VersionPill;
-            float pillW = NeoInspectorStyles.VersionPillWidth(versionText);
-            const float pillH = 22f;
-            Rect pillRect = new(rect.xMax - pad - pillW, rect.y + (height - pillH) * 0.5f, pillW, pillH);
-
-            // WHY: Solid dark pill so the version stays legible over the bright gradient in any state.
-            Color pillBg = new(0.05f, 0.05f, 0.09f, 0.58f);
-            Color pillEdge = new(1f, 1f, 1f, 0.34f);
-
-            if (updateAvailable)
+        /// <summary>
+        ///     Handles one header event: the link cursor on Repaint, a poke bounce for a left MouseDown inside
+        ///     <paramref name="hitRect" /> and a documentation open for a single click inside <paramref name="docRect" />.
+        /// </summary>
+        internal void HandleMascotPoke(Event current, Rect hitRect, Rect docRect)
+        {
+            if (current == null)
             {
-                EnsureRepaint();
-                float t = animating ? 0.5f + 0.5f * Mathf.Sin((float)realNow * 4f) : 0.5f;
-                pillBg = Color.Lerp(new Color(0.78f, 0.18f, 0.20f, 0.78f), new Color(0.98f, 0.40f, 0.40f, 0.92f), t);
-                pillEdge = new Color(1f, 0.72f, 0.72f, 0.6f);
+                return;
             }
 
-            NeoInspectorTheme.DrawRoundedRect(pillRect, pillBg, pillEdge, NeoInspectorTheme.RadiusPill, 1f);
-            GUI.Label(pillRect, versionText, pillTextStyle);
-
-            float textX = chipRect.xMax + 12f;
-            float textW = Mathf.Max(20f, pillRect.x - textX - 10f);
-
-            GUIStyle titleStyle = NeoInspectorStyles.BannerTitle;
-            GUIStyle taglineStyle = NeoInspectorStyles.BannerTagline;
-
-            Rect titleRect = new(textX, rect.y + 10f, textW, 22f);
-            Rect taglineRect = new(textX, titleRect.yMax - 1f, textW, 16f);
-            GUI.Label(titleRect, "Neoxider Tools", titleStyle);
-            string tagline = string.IsNullOrWhiteSpace(moduleName)
-                ? "Modular Unity Toolkit"
-                : "Module · " + moduleName;
-            GUI.Label(taglineRect, new GUIContent(tagline, "Neoxider Tools · Modular Unity Toolkit"), taglineStyle);
-
-            // WHY: Poke the slime: the chip + title/tagline are clickable (but never the version pill / update strip).
-            float hitRight = Mathf.Min(titleRect.xMax, pillRect.x - 2f);
-            Rect logoHitRect = Rect.MinMaxRect(chipRect.xMin, rect.yMin, hitRight, rect.yMax);
-            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 &&
-                logoHitRect.Contains(Event.current.mousePosition))
+            if (current.type == EventType.Repaint)
             {
-                // WHY: Poking the slime is pure fun for now — a pop bounce plus a startled face.
-                // With animation off there is nothing to play, so the click is only consumed.
-                // TODO: decide what a mascot click should DO (docs? field filter? changelog popup?).
-                if (animating)
+                // WHY: the link cursor tells the chip opens something; the rest of the header only bounces the slime.
+                if (!string.IsNullOrEmpty(GetMascotDocPath()))
                 {
-                    _logoPopStart = realNow;
-                    _surpriseStart = realNow;
+                    EditorGUIUtility.AddCursorRect(docRect, MouseCursor.Link);
                 }
 
-                Event.current.Use();
-                Repaint();
+                return;
+            }
+
+            if (current.type != EventType.MouseDown || current.button != 0 || !hitRect.Contains(current.mousePosition))
+            {
+                return;
+            }
+
+            // WHY: A poke plays a spring bounce plus a startled face (with animation off there is nothing to play).
+            if (NeoInspectorAnimation.IsActive() && CustomEditorSettings.EnableRainbowSignatureAnimation)
+            {
+                double realNow = EditorApplication.timeSinceStartup;
+                _logoPopStart = realNow;
+                _surpriseStart = realNow;
+            }
+
+            TryQueueMascotDocOpen(current.mousePosition, current.clickCount, docRect);
+            current.Use();
+            Repaint();
+        }
+
+        /// <summary>
+        ///     Queues the documentation page of a mascot click: only a single click inside <paramref name="docRect" />
+        ///     of a component that has a page (the one the Documentation section's button opens) queues it, and
+        ///     repeated clicks before the queue runs open the page once.
+        /// </summary>
+        /// <returns>True when the page is queued.</returns>
+        internal bool TryQueueMascotDocOpen(Vector2 mousePosition, int clickCount, Rect docRect)
+        {
+            if (clickCount > 1 || !docRect.Contains(mousePosition))
+            {
+                return false;
+            }
+
+            string docPath = GetMascotDocPath();
+            if (string.IsNullOrEmpty(docPath))
+            {
+                return false;
+            }
+
+            if (_pendingMascotDocPath == null)
+            {
+                // WHY: deferred to after this GUI pass. The viewer window, or the fallback that selects the .md
+                // file, can rebuild this inspector while its header is still being laid out.
+                EditorApplication.delayCall += OpenPendingMascotDoc;
+            }
+
+            _pendingMascotDocPath = docPath;
+            return true;
+        }
+
+        /// <summary>Page a mascot click queued and the next editor tick opens, or null.</summary>
+        internal string PendingMascotDocPath => _pendingMascotDocPath;
+
+        /// <summary>Drops a queued mascot page without opening it (test hook).</summary>
+        internal void CancelPendingMascotDoc()
+        {
+            if (_pendingMascotDocPath == null)
+            {
+                return;
+            }
+
+            _pendingMascotDocPath = null;
+            EditorApplication.delayCall -= OpenPendingMascotDoc;
+        }
+
+        private void OpenPendingMascotDoc()
+        {
+            string docPath = _pendingMascotDocPath;
+            _pendingMascotDocPath = null;
+            if (!string.IsNullOrEmpty(docPath))
+            {
+                NeoDocHelper.OpenDocInWindow(docPath);
             }
         }
 
         /// <summary>
-        ///     Slim themed row that surfaces the package update status and its action (preserves all states).
+        ///     Documentation page a mascot click opens: the page the Documentation section shows for the inspected
+        ///     type (its [NeoDoc] link, TypeName.md or a base type's page), or null when there is none.
         /// </summary>
-        private void DrawNeoxiderUpdateStrip(string version, NeoUpdateChecker.State updateState)
+        internal string GetMascotDocPath()
         {
-            EditorGUILayout.Space(4f);
-
-            const float h = 26f;
-            Rect full = GUILayoutUtility.GetRect(0f, h, GUILayout.ExpandWidth(true));
-            Rect rect = new(full.x + 1f, full.y, full.width - 2f, full.height);
-
-            NeoInspectorTheme.DrawRoundedRect(rect, NeoInspectorTheme.PanelBackground,
-                NeoInspectorTheme.Separator, NeoInspectorTheme.RadiusRow, 1f);
-
-            const float pad = 6f;
-            Rect refreshRect = new(rect.x + pad, rect.y + (h - 18f) * 0.5f, 24f, 18f);
-            if (DrawNeoMiniButton(refreshRect, NeoInspectorStyles.RefreshIcon, NeoPropAccent, false))
+            if (target == null)
             {
-                EnsureNeoxiderPackageInfo();
-                NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
-                EnsureLiveRepaint();
-                Repaint();
+                return null;
             }
 
-            string label;
-            Color color;
-            string actionLabel = null;
-            string actionUrl = null;
-
-            switch (updateState.Status)
+            EnsureNeoxiderPackageInfo();
+            if (string.IsNullOrEmpty(_cachedNeoxiderRootPath))
             {
-                case NeoUpdateChecker.UpdateStatus.UpdateAvailable:
-                    label = $"New version {updateState.LatestVersion}";
-                    color = new Color(1f, 0.42f, 0.42f, 1f);
-                    if (!string.IsNullOrEmpty(updateState.UpdateUrl))
-                    {
-                        actionLabel = "Update";
-                        actionUrl = updateState.UpdateUrl;
-                    }
-
-                    break;
-
-                case NeoUpdateChecker.UpdateStatus.UpToDate:
-                    label = "Up to date";
-                    color = new Color(0.35f, 0.85f, 0.48f, 1f);
-                    break;
-
-                case NeoUpdateChecker.UpdateStatus.Ahead:
-                    label = $"Not published (latest: {updateState.LatestVersion})";
-                    color = new Color(1f, 0.75f, 0.32f, 1f);
-                    break;
-
-                case NeoUpdateChecker.UpdateStatus.Checking:
-                    label = "Checking for updates…";
-                    color = new Color(0.40f, 0.72f, 1f, 1f);
-                    EnsureLiveRepaint();
-                    break;
-
-                default:
-                    label = string.IsNullOrEmpty(updateState.Error)
-                        ? "Click ⟳ to check for updates"
-                        : updateState.Error;
-                    color = string.IsNullOrEmpty(updateState.Error)
-                        ? NeoInspectorTheme.MutedText
-                        : new Color(1f, 0.6f, 0.24f, 1f);
-                    break;
+                return null;
             }
 
-            Rect dotRect = new(refreshRect.xMax + 8f, rect.y + h * 0.5f - 3f, 6f, 6f);
-            NeoInspectorTheme.DrawRoundedRect(dotRect, color, 3f);
-
-            float labelRight = rect.xMax - pad;
-            if (actionLabel != null)
-            {
-                const float actionW = 78f;
-                Rect actionRect = new(rect.xMax - pad - actionW, rect.y + (h - 18f) * 0.5f, actionW, 18f);
-                if (DrawNeoMiniButton(actionRect, new GUIContent(actionLabel), new Color(0.98f, 0.42f, 0.42f, 1f), true))
-                {
-                    Application.OpenURL(actionUrl);
-                }
-
-                labelRight = actionRect.x - 6f;
-            }
-
-            float labelX = dotRect.xMax + 7f;
-            Rect labelRect = new(labelX, rect.y, Mathf.Max(10f, labelRight - labelX), h);
-            GUI.Label(labelRect, label, NeoInspectorStyles.Status(color));
+            return NeoDocHelper.GetDocPathForType(_cachedNeoxiderRootPath, target.GetType());
         }
 
-        private void DrawTextWithColorOutline(string text, GUIStyle baseStyle, Color outlineColor, float outlineSize,
-            params GUILayoutOption[] options)
+        /// <summary>
+        ///     Draws the right-aligned version pill (status dot + version; click to check or to open the release) and,
+        ///     when a newer version is published, the "Update" pill before it. Returns the area both occupy.
+        /// </summary>
+        private Rect DrawVersionCluster(Rect header, string version, NeoUpdateChecker.State updateState,
+            bool onGradient)
         {
-            Rect rect = GUILayoutUtility.GetRect(new GUIContent(text), baseStyle, options);
+            string versionText = NeoInspectorStyles.VersionLabel(version);
+            float pillW = NeoInspectorStyles.VersionPillWidth(versionText);
+            float pad = onGradient ? 8f : 6f;
+            Rect pillRect = NeoInspectorTheme.Snap(new Rect(header.xMax - pad - pillW,
+                header.y + (header.height - VersionPillHeight) * 0.5f, pillW, VersionPillHeight));
 
-            GUIStyle outlineStyle = new(baseStyle);
-            outlineStyle.normal.textColor = new Color(outlineColor.r, outlineColor.g, outlineColor.b, 0.35f);
-
-            for (int angle = 0; angle < 360; angle += 45)
+            bool updateAvailable = updateState.Status == NeoUpdateChecker.UpdateStatus.UpdateAvailable &&
+                                   !string.IsNullOrEmpty(updateState.UpdateUrl);
+            if (updateState.Status == NeoUpdateChecker.UpdateStatus.Checking)
             {
-                float radian = angle * Mathf.Deg2Rad;
-                float offsetX = Mathf.Cos(radian) * outlineSize;
-                float offsetY = Mathf.Sin(radian) * outlineSize;
-
-                Rect offsetRect = new(rect.x + offsetX, rect.y + offsetY, rect.width, rect.height);
-                GUI.Label(offsetRect, text, outlineStyle);
+                EnsureLiveRepaint();
             }
 
-            GUI.Label(rect, text, baseStyle);
+            Color status = UpdateStatusColor(updateState);
+            bool hover = DrawPill(pillRect, versionText, GetVersionTooltip(updateState), status, onGradient, false,
+                out bool clicked);
+            if (clicked)
+            {
+                if (updateAvailable)
+                {
+                    Application.OpenURL(updateState.UpdateUrl);
+                }
+                else
+                {
+                    EnsureNeoxiderPackageInfo();
+                    NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
+                    EnsureLiveRepaint();
+                    Repaint();
+                }
+            }
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                Rect dot = NeoInspectorTheme.Snap(new Rect(pillRect.x + 8f, pillRect.center.y - 3f, 6f, 6f));
+                float dotAlpha = 1f;
+                if (updateState.Status == NeoUpdateChecker.UpdateStatus.Checking && NeoInspectorAnimation.IsActive())
+                {
+                    dotAlpha = 0.35f + 0.65f * NeoInspectorAnimation.Breath(EditorApplication.timeSinceStartup, 0.9);
+                }
+
+                status.a *= dotAlpha * (hover ? 1f : 0.92f);
+                NeoInspectorTheme.DrawRoundedRect(dot, status, 3f);
+            }
+
+            if (!updateAvailable)
+            {
+                return pillRect;
+            }
+
+            GUIContent updateContent = GetUpdateButtonContent(updateState.LatestVersion);
+            float updateW = 58f;
+            Rect updateRect = NeoInspectorTheme.Snap(new Rect(pillRect.x - 6f - updateW, pillRect.y, updateW,
+                VersionPillHeight));
+            if (updateRect.x < header.x + header.width * 0.45f)
+            {
+                return pillRect;
+            }
+
+            DrawPill(updateRect, updateContent.text, updateContent.tooltip, UpdateAvailableColor, onGradient, true,
+                out bool updateClicked);
+            if (updateClicked)
+            {
+                Application.OpenURL(updateState.UpdateUrl);
+            }
+
+            return Rect.MinMaxRect(updateRect.xMin, pillRect.yMin, pillRect.xMax, pillRect.yMax);
+        }
+
+        private static readonly Color UpdateAvailableColor = new(0.96f, 0.42f, 0.40f, 1f);
+
+        private static Color UpdateStatusColor(NeoUpdateChecker.State state)
+        {
+            switch (state.Status)
+            {
+                case NeoUpdateChecker.UpdateStatus.UpdateAvailable:
+                    return UpdateAvailableColor;
+                case NeoUpdateChecker.UpdateStatus.UpToDate:
+                    return new Color(0.36f, 0.84f, 0.52f, 1f);
+                case NeoUpdateChecker.UpdateStatus.Ahead:
+                    return new Color(1f, 0.74f, 0.32f, 1f);
+                case NeoUpdateChecker.UpdateStatus.Checking:
+                    return new Color(0.42f, 0.74f, 1f, 1f);
+                default:
+                    return string.IsNullOrEmpty(state.Error)
+                        ? new Color(0.62f, 0.66f, 0.74f, 1f)
+                        : new Color(1f, 0.60f, 0.26f, 1f);
+            }
+        }
+
+        /// <summary>
+        ///     A rounded pill with a centred label and a tooltip; returns whether the mouse is over it and reports a
+        ///     click. On the gradient it is dark glass with white text, on a panel an accent-tinted chip.
+        /// </summary>
+        private static bool DrawPill(Rect rect, string text, string tooltip, Color accent, bool onGradient,
+            bool filled, out bool clicked)
+        {
+            bool hover = rect.Contains(Event.current.mousePosition) && GUI.enabled;
+            if (Event.current.type == EventType.Repaint)
+            {
+                float hoverAmount = NeoInspectorAnimation.Hover(NeoInspectorAnimation.ControlKey(rect), hover);
+                Color bg;
+                Color edge;
+                Color textColor;
+                if (filled)
+                {
+                    bg = Color.Lerp(accent, Color.white, 0.12f * hoverAmount);
+                    bg.a = onGradient ? 0.92f : 1f;
+                    edge = new Color(1f, 1f, 1f, 0.28f + 0.2f * hoverAmount);
+                    textColor = Color.white;
+                }
+                else if (onGradient)
+                {
+                    bg = new Color(0.04f, 0.04f, 0.10f, 0.42f + 0.14f * hoverAmount);
+                    edge = new Color(1f, 1f, 1f, 0.22f + 0.18f * hoverAmount);
+                    textColor = Color.white;
+                }
+                else
+                {
+                    bg = NeoInspectorTheme.AccentFill(accent, 0.7f + 0.5f * hoverAmount);
+                    edge = new Color(accent.r, accent.g, accent.b, 0.25f + 0.25f * hoverAmount);
+                    textColor = NeoInspectorTheme.TitleText;
+                }
+
+                NeoInspectorTheme.DrawRoundedRect(rect, bg, edge, rect.height * 0.5f, 1f);
+                GUIStyle style = NeoInspectorStyles.VersionPill;
+                Color previous = style.normal.textColor;
+                style.normal.textColor = textColor;
+                Rect textRect = filled ? rect : new Rect(rect.x + 10f, rect.y, rect.width - 12f, rect.height);
+                GUI.Label(textRect, NeoInspectorStyles.CachedContent(text), style);
+                style.normal.textColor = previous;
+            }
+
+            clicked = ClickZone(rect, tooltip);
+            return hover;
+        }
+
+        /// <summary>
+        ///     Tooltip plus a left-click on <paramref name="rect" />, without a control id: header pills and badges
+        ///     appear and disappear with state that can change between a Layout and its Repaint, and an id that
+        ///     comes and goes would shift every control id after the header.
+        /// </summary>
+        private static bool ClickZone(Rect rect, string tooltip)
+        {
+            Event current = Event.current;
+            if (current.type == EventType.Repaint && !string.IsNullOrEmpty(tooltip))
+            {
+                GUI.Label(rect, NeoInspectorStyles.CachedTooltip(tooltip), GUIStyle.none);
+            }
+
+            if (current.type == EventType.MouseDown && current.button == 0 && GUI.enabled &&
+                rect.Contains(current.mousePosition))
+            {
+                current.Use();
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string s_taglineModule;
+        private static GUIContent s_taglineContent;
+        private static string s_compactModule;
+        private static string s_compactTitle;
+        private static NeoUpdateChecker.UpdateStatus s_tooltipStatus = (NeoUpdateChecker.UpdateStatus)(-1);
+        private static string s_tooltipLatest;
+        private static string s_tooltipError;
+        private static string s_tooltipText;
+        private static string s_updateLatest;
+        private static GUIContent s_updateContent;
+
+        // WHY: the banner redraws on every event of every Neo inspector; the tagline only changes with the module.
+        private static GUIContent GetBannerTagline(string moduleName)
+        {
+            string module = string.IsNullOrWhiteSpace(moduleName) ? null : moduleName;
+            if (s_taglineContent == null || !string.Equals(s_taglineModule, module, StringComparison.Ordinal))
+            {
+                s_taglineModule = module;
+                s_taglineContent = new GUIContent(module == null ? "Modular Unity Toolkit" : "Module · " + module,
+                    "Neoxider Tools · Modular Unity Toolkit");
+            }
+
+            return s_taglineContent;
+        }
+
+        private static string GetCompactTitle(string moduleName)
+        {
+            string module = string.IsNullOrWhiteSpace(moduleName) ? null : moduleName;
+            if (s_compactTitle == null || !string.Equals(s_compactModule, module, StringComparison.Ordinal))
+            {
+                s_compactModule = module;
+                s_compactTitle = module == null ? "Neoxider Tools" : "Neoxider · " + module;
+            }
+
+            return s_compactTitle;
+        }
+
+        /// <summary>Hover text of the version pill for <paramref name="state" />, rebuilt only when the state changes.</summary>
+        internal static string GetVersionTooltip(NeoUpdateChecker.State state)
+        {
+            if (s_tooltipText != null && state.Status == s_tooltipStatus &&
+                string.Equals(state.LatestVersion, s_tooltipLatest, StringComparison.Ordinal) &&
+                string.Equals(state.Error, s_tooltipError, StringComparison.Ordinal))
+            {
+                return s_tooltipText;
+            }
+
+            s_tooltipStatus = state.Status;
+            s_tooltipLatest = state.LatestVersion;
+            s_tooltipError = state.Error;
+            switch (state.Status)
+            {
+                case NeoUpdateChecker.UpdateStatus.UpdateAvailable:
+                    s_tooltipText = "Version " + state.LatestVersion + " is published. Click to open the release page.";
+                    break;
+                case NeoUpdateChecker.UpdateStatus.UpToDate:
+                    s_tooltipText = "Up to date. Click to check again.";
+                    break;
+                case NeoUpdateChecker.UpdateStatus.Ahead:
+                    s_tooltipText = "Newer than the latest published release (" + state.LatestVersion +
+                                    "). Click to check again.";
+                    break;
+                case NeoUpdateChecker.UpdateStatus.Checking:
+                    s_tooltipText = "Checking for updates…";
+                    break;
+                default:
+                    // WHY: the stored errors come from several sources, some with a closing period and some without.
+                    s_tooltipText = string.IsNullOrEmpty(state.Error)
+                        ? "Update status unknown. Click to check for updates."
+                        : state.Error.TrimEnd(' ', '.') + ". Click to try again.";
+                    break;
+            }
+
+            return s_tooltipText;
+        }
+
+        private static GUIContent GetUpdateButtonContent(string latestVersion)
+        {
+            if (s_updateContent == null || !string.Equals(s_updateLatest, latestVersion, StringComparison.Ordinal))
+            {
+                s_updateLatest = latestVersion;
+                s_updateContent = new GUIContent("Update", "Open the release page of version " + latestVersion + ".");
+            }
+
+            return s_updateContent;
         }
 
         // WHY: Method lists and their [Button] metadata cannot change without a domain reload, yet every IMGUI
@@ -1049,6 +1480,36 @@ namespace Neo.Editor
             return buttons;
         }
 
+        /// <summary>Per-type foldout persistence keys of the fixed sections (Events, Actions, Documentation).</summary>
+        private sealed class TypeFoldoutKeys
+        {
+            public string Events;
+            public string Actions;
+            public string DocFoldout;
+            public string DocScroll;
+        }
+
+        // WHY: the keys were rebuilt with string interpolation for every section on every IMGUI event.
+        private static readonly Dictionary<Type, TypeFoldoutKeys> s_typeFoldoutKeys = new();
+
+        private static TypeFoldoutKeys GetTypeFoldoutKeys(Type type)
+        {
+            if (!s_typeFoldoutKeys.TryGetValue(type, out TypeFoldoutKeys keys))
+            {
+                string fullName = type.FullName;
+                keys = new TypeFoldoutKeys
+                {
+                    Events = $"{fullName}.NeoFoldout.Events",
+                    Actions = $"{fullName}.NeoFoldout.Actions",
+                    DocFoldout = "NeoDoc_Foldout_" + fullName,
+                    DocScroll = "NeoDoc_Scroll_" + fullName
+                };
+                s_typeFoldoutKeys[type] = keys;
+            }
+
+            return keys;
+        }
+
         private static bool IsNeoNamespaceTarget(Object inspected)
         {
             if (inspected == null)
@@ -1072,6 +1533,10 @@ namespace Neo.Editor
                    && (typeNamespace == "Neo" || typeNamespace.StartsWith("Neo.", StringComparison.Ordinal));
         }
 
+        /// <summary>
+        ///     Runs after every inspector pass; implementations apply attribute-driven assignments such as
+        ///     <see cref="ComponentDrawer.ProcessComponentAttributes" />. Called on every IMGUI event, so keep it cheap.
+        /// </summary>
         protected abstract void ProcessAttributeAssignments();
 
         /// <summary>

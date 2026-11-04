@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -12,6 +13,9 @@ namespace Neo.Editor.Windows
     /// </summary>
     public class NeoxiderSettingsWindowGUI : EditorWindowGUI
     {
+        private static readonly GUIContent RemoveFolderContent = new("×", "Remove this folder from the list.");
+        private static readonly GUILayoutOption[] RemoveButtonOption = { GUILayout.Width(22) };
+
         private bool _isDirty;
         private Vector2 _scrollPosition;
         private SerializedObject _serializedHierarchy;
@@ -129,31 +133,42 @@ namespace Neo.Editor.Windows
                 EditorGUILayout.LabelField("Project Folders");
                 EditorGUI.indentLevel++;
 
+                int removeIndex = -1;
                 for (int i = 0; i < NeoxiderSettings.Current.folders.Length; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     NeoxiderSettings.Current.folders[i] =
                         EditorGUILayout.TextField(NeoxiderSettings.Current.folders[i]);
 
-                    if (GUILayout.Button("×", GUILayout.Width(20)))
+                    if (GUILayout.Button(RemoveFolderContent, RemoveButtonOption))
                     {
-                        NeoxiderSettings.Current.folders =
-                            NeoxiderSettings.Current.folders.Where((_, index) => index != i).ToArray();
-                        EditorGUILayout.EndHorizontal();
-                        break;
+                        removeIndex = i;
                     }
 
                     EditorGUILayout.EndHorizontal();
                 }
 
-                if (GUILayout.Button("Add Folder"))
-                {
-                    var list = NeoxiderSettings.Current.folders.ToList();
-                    list.Add("New Folder");
-                    NeoxiderSettings.Current.folders = list.ToArray();
-                }
+                bool addFolder = GUILayout.Button("Add Folder");
 
                 EditorGUI.indentLevel -= 2;
+
+                // WHY: the list changes only after every row of this event is drawn. Removing inside the loop and
+                // breaking out of it skipped the remaining rows, so the controls after them read the layout entries
+                // of the rows above.
+                if (removeIndex >= 0)
+                {
+                    NeoxiderSettings.Current.folders =
+                        NeoxiderSettings.Current.folders.Where((_, index) => index != removeIndex).ToArray();
+                    GUI.changed = true;
+                }
+
+                if (addFolder)
+                {
+                    List<string> list = NeoxiderSettings.Current.folders.ToList();
+                    list.Add("New Folder");
+                    NeoxiderSettings.Current.folders = list.ToArray();
+                    GUI.changed = true;
+                }
             }
         }
 

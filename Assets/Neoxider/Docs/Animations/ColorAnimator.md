@@ -1,11 +1,16 @@
 ﻿# ColorAnimator
 
-**Namespace:** `Neo.Animations`  
-**File:** `Assets/Neoxider/Scripts/Animations/ColorAnimator.cs`
+**What it is:** a MonoBehaviour that animates a color between `startColor` and `endColor` with an
+[AnimationType](AnimationType.md) and reports it through `CurrentColor` and `OnColorChanged`. It does not
+apply the color anywhere itself. Script: `Scripts/Animations/ColorAnimator.cs`, namespace `Neo.Animations`.
 
-## Purpose
+**How to use:**
+1. Add the component, set the two colors, `animationType` and `animationSpeed`.
+2. Connect **On Color Changed** to a dynamic `Color` receiver (sprite, image, light), or poll `CurrentColor`.
+3. Leave **playOnStart** on, or call `Play()`.
+4. For a custom clock set `ManualUpdate = true` and call `Tick(deltaTime)` yourself.
 
-Universal animator for colors. Animates between start and end colors using configurable animation types. Exposes current color via `CurrentColor` and `OnColorChanged`.
+---
 
 ## Fields (Inspector)
 
@@ -17,6 +22,8 @@ Universal animator for colors. Animates between start and end colors using confi
 | **noiseScale**, **use2DNoise**, **noiseOffset** | — | Noise settings. |
 | **customCurve** | AnimationCurve | Curve for CustomCurve type. |
 | **playOnStart** | bool | Auto-start on Start. |
+| **_randomizeStartTime** (`RandomizeStartTime`) | bool | Default on: randomize the clock and noise offset in `Start`. Off: deterministic start at time 0, or at the time set by `ResetTime()` before `Start`. |
+| **_useUnscaledTime** (`UseUnscaledTime`) | bool | Advance on `Time.unscaledDeltaTime`. |
 | **OnColorChanged** | UnityEvent&lt;Color&gt; | Invoked when RGBA distance from the last notified color exceeds 0.001. |
 | **OnAnimationStarted / Stopped / Paused** | UnityEvent | Lifecycle events. |
 
@@ -24,8 +31,11 @@ Universal animator for colors. Animates between start and end colors using confi
 
 - **CurrentColor** — current animated color (read-only)
 - **IsPlaying**, **IsPaused** — state
+- **AnimationTime** — current clock in seconds (read-only)
 - **StartColor**, **EndColor**, **AnimationSpeed**, **AnimationType** — writable
 - **Play()**, **Stop()**, **Pause()**, **Resume()**, **ResetTime()**, **RandomizeTime()**
+- **Tick(float deltaTime)** — advance and sample; ignored while stopped, paused or disabled; bad deltas do not move the clock.
+- **ManualUpdate** (`bool`, not serialized) — when true, `Update` does nothing and the owner calls `Tick`.
 
 `Play()`, `Stop()`, `Pause()`, and `Resume()` are also exposed as Play Mode-only Inspector buttons for
 runtime preview and lifecycle testing.
@@ -61,8 +71,9 @@ For Inspector/NoCode setup, configure the endpoints and animation type, then con
 startup does not force a notification. Enable **playOnStart**, or connect a UnityEvent to `Play()`;
 `Pause()`, `Resume()` and `Stop()` are callable through the same API.
 
-`animationSpeed <= 0` selects `startColor` without stopping playback. Startup randomizes the clock even
-when auto-play is disabled. Stop retains output/time; disabling suspends Update without resetting flags.
+`animationSpeed <= 0` selects `startColor` without stopping playback. With **Randomize Start Time** on,
+startup randomizes the clock even when auto-play is disabled. Stop retains output/time; disabling
+suspends Update without resetting flags.
 See the [shared lifecycle table](README.md#playback-and-pooling-contracts) for reset and pooling behavior.
 
 ## See also

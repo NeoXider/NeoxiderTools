@@ -8,6 +8,7 @@ namespace Neo.Editor
         private string _lastSavedPath;
         private GameObject _prefab;
         private Texture2D _previewTexture;
+        private bool _hasFullPreview;
         private Vector2 _scroll;
 
         private void OnGUI()
@@ -24,36 +25,56 @@ namespace Neo.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 _previewTexture = null;
+                _hasFullPreview = false;
             }
 
             if (_prefab != null)
             {
-                if (_previewTexture == null)
+                // WHY: AssetPreview renders asynchronously. The first call usually returns null, and the mini
+                // thumbnail used as a stand-in was then cached for good, so the real preview never appeared.
+                // The full preview is polled until it arrives, repainting only while previews are loading.
+                if (!_hasFullPreview)
                 {
-                    _previewTexture = AssetPreview.GetAssetPreview(_prefab);
-                    if (_previewTexture == null)
+                    Texture2D full = AssetPreview.GetAssetPreview(_prefab);
+                    if (full != null)
                     {
-                        _previewTexture = AssetPreview.GetMiniThumbnail(_prefab);
+                        _previewTexture = full;
+                        _hasFullPreview = true;
+                    }
+                    else
+                    {
+                        if (_previewTexture == null)
+                        {
+                            _previewTexture = AssetPreview.GetMiniThumbnail(_prefab);
+                        }
+
+                        if (AssetPreview.IsLoadingAssetPreviews())
+                        {
+                            Repaint();
+                        }
                     }
                 }
 
                 if (_previewTexture != null)
                 {
                     EditorGUILayout.Space(4);
-                    float size = Mathf.Min(128, _previewTexture.width, _previewTexture.height);
+                    float size = Mathf.Min(128, Mathf.Min(_previewTexture.width, _previewTexture.height));
                     Rect rect = GUILayoutUtility.GetRect(size, size);
                     EditorGUI.DrawPreviewTexture(rect, _previewTexture, null, ScaleMode.ScaleToFit);
                 }
             }
 
             EditorGUILayout.Space(8);
-            GUI.enabled = _prefab != null;
-            if (GUILayout.Button("Create Sprite...", GUILayout.Height(28)))
+            using (new EditorGUI.DisabledScope(_prefab == null))
             {
-                CreateAndSaveSprite(_prefab);
+                if (GUILayout.Button("Create Sprite...", GUILayout.Height(28)))
+                {
+                    CreateAndSaveSprite(_prefab);
+                    // WHY: the save panel is modal; the layout opened by this pass no longer matches after it
+                    // returns, so the rest of the pass is abandoned instead of logging layout errors.
+                    GUIUtility.ExitGUI();
+                }
             }
-
-            GUI.enabled = true;
 
             if (!string.IsNullOrEmpty(_lastSavedPath))
             {

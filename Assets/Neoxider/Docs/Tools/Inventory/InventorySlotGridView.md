@@ -1,6 +1,13 @@
 ﻿# InventorySlotGridView
 
-**Purpose:** A UI component for displaying a physical grid of slots (`SlotGrid` mode in `InventoryComponent`). It automatically spawns an `InventorySlotView` for each slot (including empty ones) and manages their updates.
+**What it is:** UI `MonoBehaviour` that shows the physical slots of a `SlotGrid` inventory, spawning one [InventorySlotView](InventorySlotView.md) per slot (including empty ones), with optional click-to-transfer between grids. `Scripts/Tools/Inventory/UI/InventorySlotGridView.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add it to a container with a `GridLayoutGroup` and assign **Inventory** (Storage Mode = Slot Grid).
+2. Assign a **Slot Prefab** with `InventorySlotView` (or fill **Manual Slots**).
+3. Keep **Enable Click Transfer** on to move items by clicking a source slot and then a target slot.
+
+---
 
 ## Fields (Inspector)
 
@@ -26,7 +33,8 @@ the newly bound inventory using the previous inventory's selection. Disabled gri
 to inventory mutations during `SetInventory`; enabling or calling `Refresh` updates their visuals.
 
 Successful moves, swaps, and payload replacements refresh the grid through `OnInventoryChanged`, even
-when total item counts are unchanged. The component destroys its prefab-spawned slots when destroyed,
+when total item counts are unchanged. A refresh binds each slot from the live slot state instead of a deep
+copy, so redraws do not clone instance payloads. The component destroys its prefab-spawned slots when destroyed,
 including slots under an external Slots Root. Manual Slots and unrelated root children are preserved.
 
 ## Examples

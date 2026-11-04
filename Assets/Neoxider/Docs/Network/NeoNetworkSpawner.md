@@ -1,23 +1,39 @@
 # NeoNetworkSpawner
 
-Network-aware spawn helper for multiplayer scenes that use Mirror.
+**What it is:** a static spawn helper (`Scripts/Network/Spawner/NeoNetworkSpawner.cs`, namespace `Neo.Network`) that
+instantiates a prefab and, while a Mirror server is active, spawns it on every client with
+`NetworkServer.Spawn`; despawning uses `NetworkServer.Destroy`. Without a session it falls back to plain
+`Instantiate` / `Destroy`, so the same call works in single player.
 
-## Purpose
+**How to use:**
+1. Register the networked prefab with the network manager (Registered Spawnable Prefabs).
+2. On the authority (server, host or single player) call `NeoNetworkSpawner.Spawn(prefab, position, rotation)`.
+3. Remove the object with `NeoNetworkSpawner.Despawn(instance)`; check `NeoNetworkSpawner.CanSpawn` before
+   exposing a spawn action to players.
 
-`NeoNetworkSpawner` wraps common spawn flows so gameplay or no-code triggers can request a networked object without duplicating Mirror spawn boilerplate in every scene.
+---
 
-## Typical setup
+## API
 
-1. Register the prefab with the active Mirror network manager.
-2. Add `NeoNetworkSpawner` to a scene object that owns the spawn point or trigger.
-3. Assign the prefab and spawn transform.
-4. Invoke the spawn action from UI, no-code logic, or gameplay code on the authoritative side.
+| Member | Description |
+|--------|-------------|
+| `GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)` | Instantiates and, with an active server, network-spawns. Returns `null` for a null prefab. A prefab with a `NetworkIdentity` spawned without an active server (a pure client) is destroyed again and `null` is returned, so no client-only ghost appears. |
+| `GameObject Spawn(GameObject prefab)` | Same at the origin with no rotation. |
+| `void Despawn(GameObject instance)` | `NetworkServer.Destroy` with an active server, otherwise `Object.Destroy`. Null is ignored. |
+| `bool CanSpawn` | `true` on a server/host and in single player (no Mirror). |
+
+```csharp
+if (NeoNetworkSpawner.CanSpawn)
+{
+    GameObject pickup = NeoNetworkSpawner.Spawn(pickupPrefab, spawnPoint.position, Quaternion.identity);
+}
+```
 
 ## Notes
 
-- Use it for simple replicated spawns.
+- Call it on the authoritative side only; a client request goes through a command, a
+  [NetworkActionRelay](./NetworkActionRelay.md) channel with **Server Only** scope, or a dedicated component.
 - Keep durable game state in dedicated networked components after the object is spawned.
-- Validate authority before exposing player-controlled spawn actions.
 
 ## Related docs
 

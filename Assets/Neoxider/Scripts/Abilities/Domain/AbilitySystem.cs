@@ -16,10 +16,10 @@ namespace Neo.Abilities
         private readonly Dictionary<UnitId, AbilityUnit> _units = new Dictionary<UnitId, AbilityUnit>();
 
         private readonly Dictionary<string, ModifierBlueprint> _modifierCatalog =
-            new Dictionary<string, ModifierBlueprint>(StringComparer.OrdinalIgnoreCase);
+            new Dictionary<string, ModifierBlueprint>(AbilityIdComparer.Instance);
 
         private readonly Dictionary<string, AbilityBlueprint> _abilityCatalog =
-            new Dictionary<string, AbilityBlueprint>(StringComparer.OrdinalIgnoreCase);
+            new Dictionary<string, AbilityBlueprint>(AbilityIdComparer.Instance);
 
         private readonly Dictionary<UnitId, Dictionary<string, AbilitySlot>> _slots =
             new Dictionary<UnitId, Dictionary<string, AbilitySlot>>();
@@ -36,6 +36,17 @@ namespace Neo.Abilities
         private readonly List<List<UnitId>> _targetScratchPool =
             new List<List<UnitId>>(EffectContext.MaxDepth + 1);
 
+        // WHY: payment callbacks may cast again before the outer payment loop finishes.
+        private readonly List<List<AbilityCost>> _costScratchPool = new List<List<AbilityCost>>(2);
+
+        // WHY: casts, projectile hits, modifier ticks and reactions each need a context; recycling them
+        // keeps survivor-scale combat (hundreds of ticks and hits per second) free of per-event garbage.
+        private readonly List<EffectContext> _contextPool = new List<EffectContext>(8);
+
+        // WHY: projectile weapons are the most common survivor attack; recycling their pending-cast
+        // records keeps projectile casts as garbage-free as instant ones.
+        private readonly List<PendingProjectileCast> _pendingPool = new List<PendingProjectileCast>(16);
+
         private readonly List<UnitId> _unitScratch = new List<UnitId>(16);
         private readonly List<UnitId> _tickUnitScratch = new List<UnitId>(16);
         private readonly List<AreaHit> _areaScratch = new List<AreaHit>(16);
@@ -43,11 +54,22 @@ namespace Neo.Abilities
 
         private static readonly Comparison<AreaHit> AreaHitComparison = CompareAreaHits;
 
+        private const string ReleasedContextWarningKey = "Neo.Abilities.ReleasedEffectContext";
+
+        /// <summary>
+        ///     Minimum reach in world units of a <see cref="TargetingMode.Direction" /> cast whose ability Range is
+        ///     0 (unlimited): its target point and its projectile's <see cref="SpawnRequest.Direction" /> end at the
+        ///     length of the aim vector, but never closer than this (so a unit-length aim such as
+        ///     <c>transform.forward</c> still flies this far).
+        /// </summary>
+        public const float DefaultDirectionReach = 10f;
+
         private IAbilityWorldAdapter _world = NullWorldAdapter.Instance;
         private uint _nextUnitId = 1;
         private uint _nextCastId = 1;
         private int _executionDepth;
         private int _reactionDepth;
+        private int _costDepth;
         private float _time;
 
         public AbilitySystem()
@@ -63,8 +85,13 @@ namespace Neo.Abilities
             DefaultEffectOps.RegisterAll(Ops);
         }
 
+        /// <summary>Live modifiers of every unit: apply, remove, dispel, tick and aggregation feeds.</summary>
         public ModifierEngine Modifiers { get; }
+
+        /// <summary>Receipt stream of this system (damage, heals, casts, modifiers, deaths).</summary>
         public AbilityEventBus Events { get; }
+
+        /// <summary>Open registry of effect operations; built-ins are installed by the constructor.</summary>
         public EffectOpRegistry Ops { get; }
 
         /// <summary>World seam (positions, spatial queries, spawns). Never null.</summary>
@@ -81,6 +108,7 @@ namespace Neo.Abilities
         /// </summary>
         public float PendingProjectileTimeout { get; set; } = 30f;
 
+        /// <summary>Adds or replaces a catalog modifier by id (case-insensitive). Null or id-less blueprints are ignored.</summary>
         public void RegisterModifier(ModifierBlueprint blueprint)
         {
             if (blueprint != null && !string.IsNullOrEmpty(blueprint.Id))
@@ -89,6 +117,7 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>Looks up a catalog modifier by id (case-insensitive).</summary>
         public bool TryGetModifier(string id, out ModifierBlueprint blueprint)
         {
             blueprint = null;
@@ -107,12 +136,14 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>Looks up a catalog ability by id (case-insensitive).</summary>
         public bool TryGetAbility(string id, out AbilityBlueprint blueprint)
         {
             blueprint = null;
             return !string.IsNullOrEmpty(id) && _abilityCatalog.TryGetValue(id, out blueprint);
         }
 
+        /// <summary>Creates a unit with the next free id. Add resource pools and base properties afterwards.</summary>
         public AbilityUnit CreateUnit(TeamId team, string displayName = null)
         {
             AbilityUnit unit = new AbilityUnit(new UnitId(_nextUnitId++), this)
@@ -142,6 +173,10 @@ namespace Neo.Abilities
             return unit;
         }
 
+        /// <summary>
+        ///     Removes a unit with its modifiers (firing their removal receipts), granted slots and modifier
+        ///     version bookkeeping. Unknown ids are ignored.
+        /// </summary>
         public void DestroyUnit(UnitId id)
         {
             if (!_units.Remove(id))
@@ -150,22 +185,28 @@ namespace Neo.Abilities
             }
 
             Modifiers.RemoveAllFrom(id);
+            // WHY: a destroyed owner's version entry would otherwise stay in the engine for the whole
+            // session (survivor waves churn thousands of units through fresh ids).
+            Modifiers.ForgetOwner(id);
             if (_slots.Remove(id))
             {
                 SlotsVersion++;
             }
         }
 
+        /// <summary>The unit with this id, or null.</summary>
         public AbilityUnit GetUnit(UnitId id)
         {
             return _units.TryGetValue(id, out AbilityUnit unit) ? unit : null;
         }
 
+        /// <summary>Looks up a unit by id.</summary>
         public bool TryGetUnit(UnitId id, out AbilityUnit unit)
         {
             return _units.TryGetValue(id, out unit);
         }
 
+        /// <summary>Clears <paramref name="results" /> and fills it with every live unit. Allocation-free.</summary>
         public void GetUnits(List<AbilityUnit> results)
         {
             results.Clear();
@@ -236,7 +277,7 @@ namespace Neo.Abilities
 
             if (!_slots.TryGetValue(unit, out Dictionary<string, AbilitySlot> unitSlots))
             {
-                unitSlots = new Dictionary<string, AbilitySlot>(StringComparer.OrdinalIgnoreCase);
+                unitSlots = new Dictionary<string, AbilitySlot>(AbilityIdComparer.Instance);
                 _slots[unit] = unitSlots;
             }
 
@@ -250,6 +291,7 @@ namespace Neo.Abilities
             return slot;
         }
 
+        /// <summary>Removes a granted ability slot (with its cooldown, charges and level). Returns false when not granted.</summary>
         public bool RevokeAbility(UnitId unit, string abilityId)
         {
             if (!string.IsNullOrEmpty(abilityId) &&
@@ -263,6 +305,7 @@ namespace Neo.Abilities
             return false;
         }
 
+        /// <summary>The granted slot of an ability on a unit (case-insensitive id).</summary>
         public bool TryGetSlot(UnitId unit, string abilityId, out AbilitySlot slot)
         {
             slot = null;
@@ -271,6 +314,7 @@ namespace Neo.Abilities
                    unitSlots.TryGetValue(abilityId, out slot);
         }
 
+        /// <summary>Clears <paramref name="results" /> and fills it with the unit's granted slots. Allocation-free.</summary>
         public void GetSlots(UnitId unit, List<AbilitySlot> results)
         {
             results.Clear();
@@ -283,6 +327,13 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>
+        ///     Validates and executes a cast: grant, liveness, stun/silence, cooldown/charges, target, team
+        ///     filter, range and costs, then pays, starts the cooldown, publishes <c>ability_cast</c>, runs cast
+        ///     effects and either the impact effects (instant) or a projectile spawn request. Allocation-free
+        ///     once warm for instant and projectile casts; what the world adapter does with the spawn request
+        ///     is up to the adapter.
+        /// </summary>
         public CastResult Cast(CastRequest request)
         {
             AbilityUnit caster = GetUnit(request.Caster);
@@ -367,72 +418,19 @@ namespace Neo.Abilities
                     targetPos = request.TargetPoint;
                 }
 
-                if (targetPos.HasValue && (targetPos.Value - casterPos).magnitude > effectiveRange)
+                // WHY: the exact test radius queries and AbilityAutoCaster use, so a unit they select on the
+                // range boundary (or far away, where float squares overflow) is never rejected here.
+                if (targetPos.HasValue && (effectiveRange < 0f ||
+                                           !AbilitySpatialGrid.IsWithinRadius(targetPos.Value, casterPos,
+                                               effectiveRange)))
                 {
                     return CastResult.Fail(CastFailureReason.OutOfRange);
                 }
             }
 
-            // WHY: payment notifications are synchronous and may change the blueprint or mana-cost
-            // multiplier. Capture ids and effective amounts once before any payment callback can run.
-            int costCount = ability.Costs.Count;
-            AbilityCost[] capturedCosts = costCount > 0 ? new AbilityCost[costCount] : Array.Empty<AbilityCost>();
-            for (int i = 0; i < costCount; i++)
+            if (!TryPayCosts(caster, ability))
             {
-                AbilityCost cost = ability.Costs[i];
-                float amount = EffectiveCost(caster, cost);
-                if (float.IsNaN(amount) || float.IsInfinity(amount))
-                {
-                    // WHY: a NaN entry poisons cumulative costs and makes affordability comparisons
-                    // false; reject every invalid amount before any resource is paid.
-                    return CastResult.Fail(CastFailureReason.NotEnoughResources);
-                }
-
-                capturedCosts[i] = new AbilityCost(cost.ResourceId, amount);
-            }
-
-            // WHY: a per-operation decrease cap applies to each authored cost, while affordability
-            // applies to their cumulative resource total. Validate both before paying any entry.
-            for (int i = 0; i < capturedCosts.Length; i++)
-            {
-                AbilityCost cost = capturedCosts[i];
-                if (cost.Amount <= 0f)
-                {
-                    continue;
-                }
-
-                if (string.IsNullOrEmpty(cost.ResourceId) ||
-                    !caster.Resources.CanSpend(cost.ResourceId, cost.Amount, out _))
-                {
-                    return CastResult.Fail(CastFailureReason.NotEnoughResources);
-                }
-
-                float total = cost.Amount;
-                for (int previous = 0; previous < i; previous++)
-                {
-                    AbilityCost previousCost = capturedCosts[previous];
-                    if (string.Equals(previousCost.ResourceId, cost.ResourceId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        total += MathF.Max(0f, previousCost.Amount);
-                    }
-                }
-
-                if (float.IsNaN(total) || float.IsInfinity(total) ||
-                    caster.Resources.GetCurrent(cost.ResourceId) < total)
-                {
-                    return CastResult.Fail(CastFailureReason.NotEnoughResources);
-                }
-            }
-
-            for (int i = 0; i < capturedCosts.Length; i++)
-            {
-                AbilityCost cost = capturedCosts[i];
-                if (cost.Amount > 0f && !caster.Resources.TrySpend(cost.ResourceId, cost.Amount, out _))
-                {
-                    // WHY: a preceding payment callback may invalidate a later entry after preflight.
-                    // Never accept a clipped payment; earlier successful payments are not rolled back.
-                    return CastResult.Fail(CastFailureReason.NotEnoughResources);
-                }
+                return CastResult.Fail(CastFailureReason.NotEnoughResources);
             }
 
             float cdr = Mathf.Clamp(caster.GetProperty(AbilityProperties.CooldownReductionPercent), 0f, 90f);
@@ -456,45 +454,171 @@ namespace Neo.Abilities
                 targetUnit?.Id ?? UnitId.None, 0f, ability.Id, castId: castId));
 
             uint seed = request.Seed != 0 ? request.Seed : castId * 2654435761u ^ caster.Id.Value;
-            EffectContext context = BuildCastContext(caster, ability, targetUnit, request, seed);
-            context.CastId = castId;
-            context.AbilityLevel = slot.Level;
-            context.Specials = ability.Specials;
-
-            // WHY: cast-phase effects run immediately, ahead of delivery, regardless of delivery type.
-            if (ability.CastEffects.Count > 0)
+            // WHY: evaluated once, before cast effects can change cast_range_bonus, so the cast's target point
+            // and its projectile's spawn aim always end at the same place.
+            Vector3 directionReach = ability.Targeting == TargetingMode.Direction
+                ? DirectionReach(caster, ability, request.Direction)
+                : default;
+            EffectContext context = RentContext(caster.Id, ability.Id, seed);
+            try
             {
-                ExecuteEffects(ability.CastEffects, context);
-            }
+                FillCastTargets(context, caster, ability, targetUnit, request, directionReach);
+                context.CastId = castId;
+                context.AbilityLevel = slot.Level;
+                context.Specials = ability.Specials;
 
-            if (ability.Delivery == AbilityDeliveryType.Projectile)
-            {
-                _pendingProjectiles[castId] = new PendingProjectileCast(ability, caster.Id, seed, slot.Level)
+                // WHY: cast-phase effects run immediately, ahead of delivery, regardless of delivery type.
+                if (ability.CastEffects.Count > 0)
                 {
-                    ExpireAt = _time + PendingProjectileTimeout
-                };
-                Vector3 origin = default;
-                _world.TryGetPosition(caster.Id, out origin);
-                Vector3 direction = request.Direction;
-                if (direction == default && targetUnit != null &&
-                    _world.TryGetPosition(targetUnit.Id, out Vector3 targetPosition))
-                {
-                    direction = targetPosition - origin;
-                }
-                else if (direction == default && ability.Targeting == TargetingMode.Point)
-                {
-                    direction = request.TargetPoint - origin;
+                    ExecuteEffects(ability.CastEffects, context);
                 }
 
-                _world.RequestSpawn(new SpawnRequest(ability.ProjectileArchetypeId, caster.Id, origin,
-                    direction, targetUnit?.Id ?? UnitId.None, ability.Id, ability.ProjectileSpeed, castId));
+                if (ability.Delivery == AbilityDeliveryType.Projectile)
+                {
+                    _pendingProjectiles[castId] = RentPending(ability, caster.Id, seed, slot.Level,
+                        _time + PendingProjectileTimeout);
+                    _world.TryGetPosition(caster.Id, out Vector3 origin);
+                    Vector3 direction = request.Direction;
+                    if (ability.Targeting == TargetingMode.Direction)
+                    {
+                        // WHY: hosts detonate a non-homing projectile at Position + Direction. A unit-length
+                        // aim vector (transform.forward) ended skillshots one world unit ahead; the spawn now
+                        // carries the same reach the cast's target point uses.
+                        direction = directionReach;
+                    }
+                    else if (direction == default && targetUnit != null &&
+                             _world.TryGetPosition(targetUnit.Id, out Vector3 targetPosition))
+                    {
+                        direction = targetPosition - origin;
+                    }
+                    else if (direction == default && ability.Targeting == TargetingMode.Point)
+                    {
+                        direction = request.TargetPoint - origin;
+                    }
+
+                    _world.RequestSpawn(new SpawnRequest(ability.ProjectileArchetypeId, caster.Id, origin,
+                        direction, targetUnit?.Id ?? UnitId.None, ability.Id, ability.ProjectileSpeed, castId));
+                }
+                else if (ability.ImpactEffects.Count > 0)
+                {
+                    ExecuteEffects(ability.ImpactEffects, context);
+                }
             }
-            else if (ability.ImpactEffects.Count > 0)
+            finally
             {
-                ExecuteEffects(ability.ImpactEffects, context);
+                ReturnContext(context);
             }
 
             return CastResult.Ok(castId);
+        }
+
+        /// <summary>
+        ///     Pays every positive authored cost or nothing that preflight can detect. Ids and effective
+        ///     amounts are captured once because payment callbacks run synchronously and may change the
+        ///     blueprint or the mana-cost multiplier.
+        /// </summary>
+        private bool TryPayCosts(AbilityUnit caster, AbilityBlueprint ability)
+        {
+            int costCount = ability.Costs.Count;
+            if (costCount == 0)
+            {
+                return true;
+            }
+
+            List<AbilityCost> capturedCosts = RentScratch(_costScratchPool, _costDepth);
+            _costDepth++;
+            try
+            {
+                capturedCosts.Clear();
+                for (int i = 0; i < costCount; i++)
+                {
+                    AbilityCost cost = ability.Costs[i];
+                    float amount = EffectiveCost(caster, cost);
+                    if (float.IsNaN(amount) || float.IsInfinity(amount))
+                    {
+                        // WHY: a NaN entry poisons cumulative costs and makes affordability comparisons
+                        // false; reject every invalid amount before any resource is paid.
+                        return false;
+                    }
+
+                    capturedCosts.Add(new AbilityCost(cost.ResourceId, amount));
+                }
+
+                // WHY: a per-operation decrease cap applies to each authored cost, while affordability
+                // applies to their cumulative resource total. Validate both before paying any entry.
+                for (int i = 0; i < capturedCosts.Count; i++)
+                {
+                    AbilityCost cost = capturedCosts[i];
+                    if (cost.Amount <= 0f)
+                    {
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(cost.ResourceId) ||
+                        !caster.Resources.CanSpend(cost.ResourceId, cost.Amount, out _))
+                    {
+                        return false;
+                    }
+
+                    float total = cost.Amount;
+                    for (int previous = 0; previous < i; previous++)
+                    {
+                        AbilityCost previousCost = capturedCosts[previous];
+                        if (AbilityIdComparer.Same(previousCost.ResourceId, cost.ResourceId))
+                        {
+                            total += MathF.Max(0f, previousCost.Amount);
+                        }
+                    }
+
+                    if (float.IsNaN(total) || float.IsInfinity(total) ||
+                        caster.Resources.GetCurrent(cost.ResourceId) < total)
+                    {
+                        return false;
+                    }
+                }
+
+                for (int i = 0; i < capturedCosts.Count; i++)
+                {
+                    AbilityCost cost = capturedCosts[i];
+                    if (cost.Amount > 0f && !caster.Resources.TrySpend(cost.ResourceId, cost.Amount, out _))
+                    {
+                        // WHY: a preceding payment callback may invalidate a later entry after preflight.
+                        // Never accept a clipped payment; earlier successful payments are not rolled back.
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            finally
+            {
+                capturedCosts.Clear();
+                _costDepth--;
+            }
+        }
+
+        private EffectContext RentContext(UnitId caster, string abilityId, uint seed)
+        {
+            int last = _contextPool.Count - 1;
+            EffectContext context;
+            if (last >= 0)
+            {
+                context = _contextPool[last];
+                _contextPool.RemoveAt(last);
+            }
+            else
+            {
+                context = EffectContext.CreatePooled();
+            }
+
+            context.ResetPooled(this, caster, abilityId, seed);
+            return context;
+        }
+
+        private void ReturnContext(EffectContext context)
+        {
+            context.ClearPooled();
+            _contextPool.Add(context);
         }
 
         /// <summary>
@@ -511,7 +635,7 @@ namespace Neo.Abilities
             AbilityUnit caster = GetUnit(pending.Caster);
             if (caster == null)
             {
-                _pendingProjectiles.Remove(castId);
+                RemovePending(castId);
                 return false;
             }
 
@@ -522,36 +646,86 @@ namespace Neo.Abilities
             // WHY: an actively hitting projectile is alive; keep the leak guard from expiring it.
             pending.ExpireAt = _time + PendingProjectileTimeout;
 
-            EffectContext context = new EffectContext(this, pending.Caster, pending.Ability.Id,
-                new XorShiftRandom(hitSeed))
+            // WHY: impact effects may release (and recycle) this record re-entrantly, e.g. a death
+            // listener despawning the projectile; read everything needed before they run.
+            AbilityBlueprint ability = pending.Ability;
+            EffectContext context = RentContext(pending.Caster, ability.Id, hitSeed);
+            try
             {
-                TargetPoint = hitPoint,
-                HasTargetPoint = true,
-                CastId = castId,
-                AbilityLevel = pending.Level,
-                Specials = pending.Ability.Specials
-            };
-            AbilityUnit hit = GetUnit(hitUnit);
-            if (hit != null && hit.IsAlive)
+                context.TargetPoint = hitPoint;
+                context.HasTargetPoint = true;
+                context.CastId = castId;
+                context.AbilityLevel = pending.Level;
+                context.Specials = ability.Specials;
+                AbilityUnit hit = GetUnit(hitUnit);
+                if (hit != null && hit.IsAlive)
+                {
+                    context.PrimaryTargets.Add(hitUnit);
+                }
+
+                ExecuteEffects(ability.ImpactEffects, context);
+            }
+            finally
             {
-                context.PrimaryTargets.Add(hitUnit);
+                ReturnContext(context);
             }
 
-            ExecuteEffects(pending.Ability.ImpactEffects, context);
             return true;
         }
 
         /// <summary>Host callback: the projectile of a cast is finished (expired or destroyed).</summary>
         public void ReleaseProjectileCast(uint castId)
         {
-            _pendingProjectiles.Remove(castId);
+            RemovePending(castId);
         }
 
-        /// <summary>Executes a node list in a context. Public so hosts can run data-driven effects directly.</summary>
+        private PendingProjectileCast RentPending(AbilityBlueprint ability, UnitId caster, uint seed, int level,
+            float expireAt)
+        {
+            int last = _pendingPool.Count - 1;
+            PendingProjectileCast pending;
+            if (last >= 0)
+            {
+                pending = _pendingPool[last];
+                _pendingPool.RemoveAt(last);
+            }
+            else
+            {
+                pending = new PendingProjectileCast();
+            }
+
+            pending.Reset(ability, caster, seed, level, expireAt);
+            return pending;
+        }
+
+        private void RemovePending(uint castId)
+        {
+            if (_pendingProjectiles.Remove(castId, out PendingProjectileCast pending))
+            {
+                pending.Clear();
+                _pendingPool.Add(pending);
+            }
+        }
+
+        /// <summary>
+        ///     Executes a node list in a context. Public so hosts can run data-driven effects directly.
+        ///     A released context (<see cref="EffectContext.IsReleased" />) is ignored.
+        /// </summary>
         public void ExecuteEffects(List<EffectNodeData> nodes, EffectContext context)
         {
             if (nodes == null || nodes.Count == 0 || context == null || context.Depth >= EffectContext.MaxDepth)
             {
+                return;
+            }
+
+            if (context.IsReleased)
+            {
+                // WHY: a custom op kept a recycled context; running it would use another cast's targets
+                // and RNG. Fail closed and say so (gated and throttled, constant message: no garbage).
+                NeoDiagnostics.LogWarningThrottled(ReleasedContextWarningKey,
+                    "[Neo.Abilities] ExecuteEffects ignored a released EffectContext. An IEffectOperation kept a " +
+                    "system-created context (or a CreateNested child of it) after Execute returned; copy the " +
+                    "values it needs and build a new EffectContext instead.");
                 return;
             }
 
@@ -674,6 +848,7 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>True when <paramref name="target" /> passes <paramref name="filter" /> relative to <paramref name="caster" /> (self counts as an ally).</summary>
         public static bool MatchesTeamFilter(AbilityUnit caster, AbilityUnit target, AbilityTeamFilter filter)
         {
             if (caster == null || target == null)
@@ -695,7 +870,7 @@ namespace Neo.Abilities
         private static float EffectiveCost(AbilityUnit caster, AbilityCost cost)
         {
             float amount = cost.Amount;
-            if (string.Equals(cost.ResourceId, AbilityResourceIds.Mana, StringComparison.OrdinalIgnoreCase))
+            if (AbilityIdComparer.Same(cost.ResourceId, AbilityResourceIds.Mana))
             {
                 float multiplier = caster.GetProperty(AbilityProperties.ManaCostMul, 1f);
                 if (float.IsNaN(multiplier) || float.IsInfinity(multiplier))
@@ -709,11 +884,9 @@ namespace Neo.Abilities
             return amount;
         }
 
-        private EffectContext BuildCastContext(AbilityUnit caster, AbilityBlueprint ability,
-            AbilityUnit targetUnit, CastRequest request, uint seed)
+        private void FillCastTargets(EffectContext context, AbilityUnit caster, AbilityBlueprint ability,
+            AbilityUnit targetUnit, CastRequest request, Vector3 directionReach)
         {
-            EffectContext context = new EffectContext(this, caster.Id, ability.Id, new XorShiftRandom(seed));
-
             switch (ability.Targeting)
             {
                 case TargetingMode.Unit:
@@ -730,11 +903,7 @@ namespace Neo.Abilities
                 case TargetingMode.Direction:
                     if (_world.TryGetPosition(caster.Id, out Vector3 origin))
                     {
-                        Vector3 dir = request.Direction.sqrMagnitude > 0f
-                            ? request.Direction.normalized
-                            : Vector3.forward;
-                        float distance = ability.Range > 0f ? ability.Range : 10f;
-                        context.TargetPoint = origin + dir * distance;
+                        context.TargetPoint = origin + directionReach;
                         context.HasTargetPoint = true;
                     }
 
@@ -743,8 +912,44 @@ namespace Neo.Abilities
                     context.PrimaryTargets.Add(caster.Id);
                     break;
             }
+        }
 
-            return context;
+        /// <summary>
+        ///     Aim of a <see cref="TargetingMode.Direction" /> cast scaled to its reach. The aim is the normalized
+        ///     request direction (world forward when it is zero or not finite). A positive Range reaches the
+        ///     effective cast range, Range + cast_range_bonus (at least 0): the distance the range check and
+        ///     AbilityAutoCaster use. Range 0 (unlimited) reaches the length of the request direction, at least
+        ///     <see cref="DefaultDirectionReach" />, so an aim vector towards a target or cursor arrives there.
+        /// </summary>
+        private static Vector3 DirectionReach(AbilityUnit caster, AbilityBlueprint ability, Vector3 direction)
+        {
+            // WHY: double precision keeps far aims (components beyond ~1.8e19, whose float square overflows)
+            // pointing the right way instead of collapsing to world forward.
+            double x = direction.x;
+            double y = direction.y;
+            double z = direction.z;
+            double length = Math.Sqrt(x * x + y * y + z * z);
+            Vector3 aim;
+            if (length > 0d && !double.IsInfinity(length))
+            {
+                aim = new Vector3((float)(x / length), (float)(y / length), (float)(z / length));
+            }
+            else
+            {
+                aim = Vector3.forward;
+                length = 0d;
+            }
+
+            float reach = ability.Range > 0f
+                ? ability.Range + caster.GetProperty(AbilityProperties.CastRangeBonus)
+                : (float)Math.Min(Math.Max(length, DefaultDirectionReach), float.MaxValue);
+            if (float.IsNaN(reach) || float.IsInfinity(reach))
+            {
+                // WHY: a non-finite authored range or bonus would turn the aim into NaN components.
+                reach = DefaultDirectionReach;
+            }
+
+            return aim * MathF.Max(0f, reach);
         }
 
         private void ResolveTargets(EffectNodeData node, EffectContext context, List<UnitId> results)
@@ -843,9 +1048,11 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                float distSq = _world.TryGetPosition(id, out Vector3 pos)
-                    ? (pos - center).sqrMagnitude
-                    : float.MaxValue;
+                // WHY: double ranking; a float square overflows to infinity for far units the exact radius
+                // query admitted, and they would then tie and fall back to unit-id order.
+                double distSq = _world.TryGetPosition(id, out Vector3 pos)
+                    ? AbilitySpatialGrid.SqrDistance(pos, center)
+                    : double.PositiveInfinity;
                 _areaScratch.Add(new AreaHit(id, distSq));
             }
 
@@ -889,18 +1096,33 @@ namespace Neo.Abilities
 
         private void OnModifierTick(ModifierInstance instance)
         {
-            EffectContext context = new EffectContext(this, instance.Caster, instance.SourceAbilityId,
-                new XorShiftRandom(instance.Owner.Value * 747796405u + (uint)instance.InstanceId))
+            List<EffectNodeData> tickEffects = instance.Blueprint.TickEffects;
+            if (tickEffects == null || tickEffects.Count == 0)
             {
-                AbilityLevel = instance.AbilityLevel
-            };
-            if (TryGetAbility(instance.SourceAbilityId, out AbilityBlueprint ability))
-            {
-                context.Specials = ability.Specials;
+                return;
             }
 
-            context.PrimaryTargets.Add(instance.Owner);
-            ExecuteEffects(instance.Blueprint.TickEffects, context);
+            // WHY: replaying one fixed seed made every tick roll the same chance/crit/evasion outcome
+            // (a 50% DoT node fired on all ticks or none). The per-instance index keeps rolls
+            // independent per tick and still deterministic for an identical tick sequence.
+            uint seed = RollSeed(instance.Owner.Value * 747796405u + (uint)instance.InstanceId,
+                instance.TickRollIndex++);
+            EffectContext context = RentContext(instance.Caster, instance.SourceAbilityId, seed);
+            try
+            {
+                context.AbilityLevel = instance.AbilityLevel;
+                if (TryGetAbility(instance.SourceAbilityId, out AbilityBlueprint ability))
+                {
+                    context.Specials = ability.Specials;
+                }
+
+                context.PrimaryTargets.Add(instance.Owner);
+                ExecuteEffects(tickEffects, context);
+            }
+            finally
+            {
+                ReturnContext(context);
+            }
         }
 
         private void HandleModifierReactions(AbilityEventArgs args)
@@ -941,26 +1163,32 @@ namespace Neo.Abilities
                     {
                         ModifierEventReaction reaction = reactions[r];
                         if (reaction == null || reaction.Effects == null || reaction.Effects.Count == 0 ||
-                            !string.Equals(reaction.EventId, args.EventId, StringComparison.OrdinalIgnoreCase))
+                            !AbilityIdComparer.Same(reaction.EventId, args.EventId))
                         {
                             continue;
                         }
 
-                        EffectContext context = new EffectContext(this, m.Caster, m.SourceAbilityId,
-                            new XorShiftRandom(args.Target.Value * 2891336453u + (uint)m.InstanceId))
+                        uint seed = RollSeed(args.Target.Value * 2891336453u + (uint)m.InstanceId,
+                            m.ReactionRollIndex++);
+                        EffectContext context = RentContext(m.Caster, m.SourceAbilityId, seed);
+                        try
                         {
-                            Depth = _executionDepth,
-                            CastId = args.CastId,
-                            AbilityLevel = m.AbilityLevel
-                        };
-                        if (TryGetAbility(m.SourceAbilityId, out AbilityBlueprint reactionAbility))
-                        {
-                            context.Specials = reactionAbility.Specials;
-                        }
+                            context.Depth = _executionDepth;
+                            context.CastId = args.CastId;
+                            context.AbilityLevel = m.AbilityLevel;
+                            if (TryGetAbility(m.SourceAbilityId, out AbilityBlueprint reactionAbility))
+                            {
+                                context.Specials = reactionAbility.Specials;
+                            }
 
-                        UnitId target = reaction.TargetEventSource && args.Source.IsValid ? args.Source : m.Owner;
-                        context.PrimaryTargets.Add(target);
-                        ExecuteEffects(reaction.Effects, context);
+                            UnitId target = reaction.TargetEventSource && args.Source.IsValid ? args.Source : m.Owner;
+                            context.PrimaryTargets.Add(target);
+                            ExecuteEffects(reaction.Effects, context);
+                        }
+                        finally
+                        {
+                            ReturnContext(context);
+                        }
                     }
                 }
             }
@@ -978,6 +1206,13 @@ namespace Neo.Abilities
             }
 
             return pool[depth];
+        }
+
+        // WHY: the first roll keeps the historical base seed so single-tick/single-reaction outcomes of
+        // existing content do not change; later rolls get an avalanche-mixed seed.
+        private static uint RollSeed(uint baseSeed, uint index)
+        {
+            return index == 0 ? baseSeed : MixSeed(baseSeed, index);
         }
 
         // WHY: murmur-style avalanche; xorshift32 is GF(2)-linear, so plain XOR salting would keep
@@ -1013,28 +1248,29 @@ namespace Neo.Abilities
 
             for (int i = 0; i < _pendingPruneScratch.Count; i++)
             {
-                _pendingProjectiles.Remove(_pendingPruneScratch[i]);
+                RemovePending(_pendingPruneScratch[i]);
             }
         }
 
         private readonly struct AreaHit
         {
             public readonly UnitId Unit;
-            public readonly float DistanceSq;
+            public readonly double DistanceSq;
 
-            public AreaHit(UnitId unit, float distanceSq)
+            public AreaHit(UnitId unit, double distanceSq)
             {
                 Unit = unit;
                 DistanceSq = distanceSq;
             }
         }
 
+        // WHY: recycled through _pendingPool, so fields are mutable; Reset/Clear bracket each use.
         private sealed class PendingProjectileCast
         {
-            public readonly AbilityBlueprint Ability;
-            public readonly UnitId Caster;
-            public readonly uint Seed;
-            public readonly int Level;
+            public AbilityBlueprint Ability;
+            public UnitId Caster;
+            public uint Seed;
+            public int Level;
 
             /// <summary>Hits already reported for this cast; salts the per-hit RNG seed.</summary>
             public uint HitIndex;
@@ -1042,12 +1278,20 @@ namespace Neo.Abilities
             /// <summary>Domain time after which the leak guard discards the entry.</summary>
             public float ExpireAt;
 
-            public PendingProjectileCast(AbilityBlueprint ability, UnitId caster, uint seed, int level)
+            public void Reset(AbilityBlueprint ability, UnitId caster, uint seed, int level, float expireAt)
             {
                 Ability = ability;
                 Caster = caster;
                 Seed = seed;
                 Level = level;
+                HitIndex = 0;
+                ExpireAt = expireAt;
+            }
+
+            public void Clear()
+            {
+                Ability = null;
+                Caster = UnitId.None;
             }
         }
     }

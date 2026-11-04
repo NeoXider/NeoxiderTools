@@ -45,7 +45,7 @@ namespace Neo.Tests.Edit.RPG
             binding.OnCurrent.AddListener((float value) => observed.Add(value));
             view.SetActive(true);
             Assert.That(binding.isActiveAndEnabled, Is.True);
-            binding.Character = first; // Public binding admission; Edit activation alone does not run OnEnable.
+            binding.Character = first; // WHY: Public binding admission; Edit activation alone does not run OnEnable.
             Assert.That(old.ListenerCount, Is.EqualTo(2));
             Assert.That(observed, Is.EqualTo(new[] { 50f }));
             first.Increase(RpgResourceId.Hp, 1f);

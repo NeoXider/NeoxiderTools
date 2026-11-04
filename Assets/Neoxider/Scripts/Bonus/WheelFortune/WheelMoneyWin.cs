@@ -12,7 +12,19 @@ namespace Neo.Bonus
             [Header("References")] public TMP_Text prize;
 
             [Header("Settings")] public int[] wins = new int[8];
+
+            [Tooltip("Wallet that receives the prize. Empty uses the global Money.I.")]
+            [SerializeField]
+            private Money _wallet;
+
             [SerializeField] private bool _debugLogWarnings;
+
+            /// <summary>Wallet that receives prizes: the assigned one, otherwise the global <c>Money.I</c>.</summary>
+            public Money Wallet
+            {
+                get => _wallet != null ? _wallet : Money.I;
+                set => _wallet = value;
+            }
 
             public void Win(int id)
             {
@@ -29,9 +41,10 @@ namespace Neo.Bonus
                     return;
                 }
 
-                if (Money.I != null)
+                Money wallet = Wallet;
+                if (wallet != null)
                 {
-                    Money.I.Add(wins[id]);
+                    wallet.Add(wins[id]);
                 }
                 else if (_debugLogWarnings)
                 {

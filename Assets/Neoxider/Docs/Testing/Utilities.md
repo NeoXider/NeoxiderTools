@@ -1,6 +1,9 @@
 # Utility Edit Mode tests
 
-This guide covers deterministic tests for `Neo.Extensions`, utility components, audio, UI, and their editor adapters. The tests belong to `Neo.Editor.Tests` under `Tests/Edit`; their assembly definition controls the available package references and Editor-only platform constraint.
+**What it is:** This guide covers deterministic tests for `Neo.Extensions`, utility components, audio, UI, and their editor adapters. The tests belong to `Neo.Editor.Tests` under `Tests/Edit`; their assembly definition controls the available package references and Editor-only platform constraint.
+
+**How to use:** test the public contract first ([Test the public contract](#test-the-public-contract)), restore
+everything the fixture owns, and report skipped capabilities explicitly.
 
 Start with [Testing NeoxiderTools](../Testing.md) for the canonical testing entry and shared fixture ownership. See [Play Mode testing](../PlayModeTesting.md) for runtime integration, and the [gameplay](Gameplay.md) and [network Play Mode](NetworkPlayMode.md) guides for their specific coverage.
 
@@ -70,7 +73,7 @@ Support the active layout instead of assuming a single source directory:
 
 - Development: `Assets/Neoxider/Samples/...`.
 - Release package: `Assets/Neoxider/Samples~/...`, or the corresponding hidden `Samples~` directory inside the installed UPM package.
-- Imported sample: `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`, such as `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes/...`.
+- Imported sample: `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`, such as `Assets/Samples/NeoxiderTools/12.0.0/Demo Scenes/...`.
 
 Use the resolved package root for package prefabs and source checks; an installed package can live under `Packages/com.neoxider.tools`. Resolve imported sample versions explicitly and avoid selecting an arbitrary stale version. A hidden `Samples~` directory is not an AssetDatabase folder: validate its files as packaging data, then run imported sample integration checks in a Unity project. Report zero discovered assets as absent coverage or an explicit unsupported capability, rather than silently passing an empty loop.
 

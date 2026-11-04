@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67c6302f629b414faa3475e18ebd065, type: 3}
+  m_Name: QuickDemoProgression
+  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.RpgProgressionDefinition
+  growthMode: 3
+  upgradePointsPerLevel: 1
+  autoApplyGrowthOnLevelUp: 1
+  upgradeRules:
+  - statId:
+      preset: 12
+      customId: 
+    increasePerPoint: 1
+    costPerUpgrade: 1
+    maxUpgradeCount: -1
+    derivedResourceModifiers:
+    - resourceId:
+        preset: 1
+        customId: 
+      kind: 0
+      value: 15

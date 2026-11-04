@@ -1,6 +1,8 @@
 ﻿# TimeParsingExtensions
 
-**Purpose:** Parse a numeric duration into finite, non-negative seconds through `TryParseDuration(string raw, out float seconds, string separator = ":")`. A char-separator overload is also available.
+**What it is:** a parser that turns a numeric duration into finite, non-negative seconds through `TryParseDuration(string raw, out float seconds, string separator = ":")`; a char-separator overload is also available. File: `Scripts/Extensions/TimeParsingExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** `if (TimeParsingExtensions.TryParseDuration(input, out float seconds)) { timer.Duration = seconds; }`.
 
 Accepted forms are seconds, `MM:SS`, `HH:MM:SS`, and `DD:HH:MM:SS`. Examples: `"45"` → 45, `"02:30"` → 150, `"1:02:03:04"` → 93784. The first part may exceed the usual clock range; following minutes/seconds must be below 60 and following hours below 24. Fractional numeric parts are accepted.
 

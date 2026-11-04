@@ -1,7 +1,13 @@
 ﻿# InterfaceAttack
 
-`Scripts/Tools/Components/Interface/InterfaceAttack.cs` declares four independent interfaces in the
-global namespace. The filename is historical; there is no `InterfaceAttack` type.
+**What it is:** `Scripts/Tools/Components/Interface/InterfaceAttack.cs` declares four independent interfaces in the
+global namespace (assembly `Neo.Tools.Components`). The filename is historical; there is no `InterfaceAttack` type.
+
+**How to use:**
+1. Implement only the capabilities a gameplay object provides (`IDamageable`, `IHealable`, `IAttackable`, `IRestorable`).
+2. Callers look the interface up on the hit object (`TryGetComponent(out IDamageable target)`) and call it.
+
+---
 
 | Interface | Public contract |
 |---|---|

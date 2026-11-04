@@ -48,6 +48,9 @@ namespace Neo.Cards
 
         private readonly List<CardComponent> _cards = new();
         private readonly Dictionary<CardComponent, UnityAction> _cardClickHandlers = new();
+        private readonly List<Vector3> _layoutPositions = new();
+        private readonly List<Quaternion> _layoutRotations = new();
+        private readonly List<CardComponent> _layoutMembers = new();
 
         private CancellationToken _ct;
         private CancellationTokenSource _layoutCancellation;
@@ -110,6 +113,16 @@ namespace Neo.Cards
         ///     Maximum visible cards this hand accepts before reporting full.
         /// </summary>
         public int MaxCards => _maxCards;
+
+        /// <summary>
+        ///     Whether this exact card component is a member of the hand.
+        /// </summary>
+        /// <param name="card">Card component.</param>
+        /// <returns>True if the hand holds the card.</returns>
+        public bool Contains(CardComponent card)
+        {
+            return card != null && _cards.Contains(card);
+        }
 
         /// <summary>
         ///     Active layout type.
@@ -201,8 +214,8 @@ namespace Neo.Cards
             SubscribeCardClickHandler(card);
             Action onAccepted = () =>
             {
-                // Reparenting can invoke native hierarchy observers synchronously.
-                // They must see committed membership and no remaining deck cleanup ownership.
+                // WHY: reparenting can invoke native hierarchy observers synchronously;
+                // they must see committed membership and no remaining deck cleanup ownership.
                 card.ReleaseDeckCleanupOwnership();
                 card.transform.SetParent(transform, true);
             };
@@ -286,6 +299,29 @@ namespace Neo.Cards
         }
 
         /// <summary>
+        ///     Draws a random card using the given random source (reproducible for seeded games and tests).
+        /// </summary>
+        /// <param name="random">Random source.</param>
+        /// <returns>Random card, or null.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random" /> is null.</exception>
+        public CardComponent DrawRandom(System.Random random)
+        {
+            if (random == null)
+            {
+                throw new ArgumentNullException(nameof(random));
+            }
+
+            if (_cards.Count == 0)
+            {
+                return null;
+            }
+
+            CardComponent card = _cards[random.Next(_cards.Count)];
+            RemoveCard(card);
+            return card;
+        }
+
+        /// <summary>
         ///     Removes a card from the hand.
         /// </summary>
         /// <param name="card">Card to remove.</param>
@@ -306,7 +342,7 @@ namespace Neo.Cards
 
             UnsubscribeCardClickHandler(card);
             card.ResetHover();
-            card.transform.SetParent(null, true);
+            card.DetachFromZone();
 
             _cards.RemoveAt(index);
             Model.RemoveAt(index);
@@ -369,23 +405,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Sorts by rank and re-layouts.
+        ///     Sorts by rank and re-layouts. The sort is stable: equal ranks keep their current order.
         /// </summary>
-        public async UniTask SortByRankAsync(bool ascending = true, bool animate = true)
+        public UniTask SortByRankAsync(bool ascending = true, bool animate = true)
         {
-            EnsureModelInitialized();
-            Model.SortByRank(ascending);
-
-            if (ascending)
-            {
-                _cards.Sort((a, b) => a.Data.Rank.CompareTo(b.Data.Rank));
-            }
-            else
-            {
-                _cards.Sort((a, b) => b.Data.Rank.CompareTo(a.Data.Rank));
-            }
-
-            await ArrangeCardsAsync(animate);
+            return SortAsync(ascending ? CardOrdering.RankAscending : CardOrdering.RankDescending, animate);
         }
 
         /// <summary>
@@ -399,31 +423,49 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Sorts by suit, then rank, with layout tween.
+        ///     Sorts by suit, then rank, with layout tween. The sort is stable.
         /// </summary>
-        public async UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
+        public UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
         {
+            return SortAsync(ascending ? CardOrdering.SuitThenRankAscending : CardOrdering.SuitThenRankDescending,
+                animate);
+        }
+
+        /// <summary>
+        ///     Sorts cards and model with any comparer (for example <see cref="CardComparer" /> or a comparer for
+        ///     custom card data) and re-layouts. The sort is stable, so view and model keep the same order.
+        /// </summary>
+        /// <param name="comparer">Card comparer.</param>
+        /// <param name="animate">Tween to the new slots.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="comparer" /> is null.</exception>
+        public UniTask SortAsync(IComparer<CardData> comparer, bool animate = true)
+        {
+            if (comparer == null)
+            {
+                throw new ArgumentNullException(nameof(comparer));
+            }
+
+            return SortAsync(comparer.Compare, animate);
+        }
+
+        /// <summary>
+        ///     Sorts cards and model with a comparison delegate and re-layouts. The sort is stable.
+        /// </summary>
+        /// <param name="comparison">Card comparison.</param>
+        /// <param name="animate">Tween to the new slots.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="comparison" /> is null.</exception>
+        public UniTask SortAsync(Comparison<CardData> comparison, bool animate = true)
+        {
+            if (comparison == null)
+            {
+                throw new ArgumentNullException(nameof(comparison));
+            }
+
             EnsureModelInitialized();
-            Model.SortBySuit(ascending);
-
-            if (ascending)
-            {
-                _cards.Sort((a, b) =>
-                {
-                    int suitCompare = a.Data.Suit.CompareTo(b.Data.Suit);
-                    return suitCompare != 0 ? suitCompare : a.Data.Rank.CompareTo(b.Data.Rank);
-                });
-            }
-            else
-            {
-                _cards.Sort((a, b) =>
-                {
-                    int suitCompare = b.Data.Suit.CompareTo(a.Data.Suit);
-                    return suitCompare != 0 ? suitCompare : b.Data.Rank.CompareTo(a.Data.Rank);
-                });
-            }
-
-            await ArrangeCardsAsync(animate);
+            // WHY: the view list is sorted before the model so model observers already see the final order.
+            CardOrdering.StableSort(_cards, (a, b) => comparison(a.Data, b.Data));
+            Model.Sort(comparison);
+            return ArrangeCardsAsync(animate);
         }
 
         /// <summary>
@@ -467,6 +509,8 @@ namespace Neo.Cards
             }
 
             _cards.Clear();
+            // WHY: destroyed (Unity-null) members skip the per-card unsubscribe above; drop their entries too.
+            _cardClickHandlers.Clear();
 
             EnsureModelInitialized();
             Model.Clear();
@@ -489,21 +533,38 @@ namespace Neo.Cards
             InvalidateLayout();
             if (_cards.Count == 0)
             {
+                // WHY: an emptied hand must not keep the previous pass's released cards alive in the reused buffer.
+                _layoutMembers.Clear();
                 return;
             }
 
             int revision = _layoutRevision;
-            CardComponent[] cards = _cards.ToArray();
-            List<Vector3> positions = CalculatePositions();
-            List<Quaternion> rotations = CalculateRotations();
-            using CancellationTokenSource layout = CancellationTokenSource.CreateLinkedTokenSource(_ct, cancellation);
+            // WHY: the reused buffers are refilled only after a pass bumps the revision, and every read below
+            // follows a revision check, so a re-entrant or newer layout never hands this pass overwritten entries.
+            List<CardComponent> cards = _layoutMembers;
+            cards.Clear();
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                cards.Add(_cards[i]);
+            }
+
+            int count = cards.Count;
+            CardLayoutSettings settings = BuildLayoutSettings();
+            CardLayoutCalculator.CalculatePositions(_layoutType, count, settings, _layoutPositions);
+            CardLayoutCalculator.CalculateRotations(_layoutType, count, settings, _layoutRotations);
+            List<Vector3> positions = _layoutPositions;
+            List<Quaternion> rotations = _layoutRotations;
+            // WHY: an immediate pass never awaits, so the revision and the caller/destroy tokens retire it; only an
+            // animated pass needs a linked source to stop its tweens.
+            using CancellationTokenSource layout =
+                animate ? CancellationTokenSource.CreateLinkedTokenSource(_ct, cancellation) : null;
             _layoutCancellation = layout;
             try
             {
-                List<UniTask> tasks = new(cards.Length);
-                for (int i = 0; i < cards.Length; i++)
+                List<UniTask> tasks = animate ? new List<UniTask>(count) : null;
+                for (int i = 0; i < count; i++)
                 {
-                    if (revision != _layoutRevision || layout.IsCancellationRequested)
+                    if (revision != _layoutRevision || IsLayoutCancelled(layout, cancellation))
                     {
                         break;
                     }
@@ -514,7 +575,7 @@ namespace Neo.Cards
                         continue;
                     }
 
-                    card.transform.SetSiblingIndex(_addToBottom ? cards.Length - 1 - i : i);
+                    card.transform.SetSiblingIndex(_addToBottom ? count - 1 - i : i);
                     if (revision != _layoutRevision || card == null || card.transform.parent != transform)
                     {
                         break;
@@ -532,18 +593,19 @@ namespace Neo.Cards
                     }
                 }
 
-                if (tasks.Count > 0)
+                if (tasks != null && tasks.Count > 0)
                 {
                     await UniTask.WhenAll(tasks);
                 }
 
-                if (revision != _layoutRevision || layout.IsCancellationRequested)
+                if (revision != _layoutRevision || IsLayoutCancelled(layout, cancellation))
                 {
                     return;
                 }
 
-                foreach (CardComponent card in cards)
+                for (int i = 0; i < count; i++)
                 {
+                    CardComponent card = cards[i];
                     if (card != null && card.transform.parent == transform)
                     {
                         card.UpdateOriginalTransform();
@@ -552,7 +614,7 @@ namespace Neo.Cards
             }
             catch (OperationCanceledException) when (!cancellation.IsCancellationRequested && !_ct.IsCancellationRequested)
             {
-                // A newer layout owns the current members. Its cancellation is not an admission failure.
+                // WHY: a newer layout owns the current members; its cancellation is not an admission failure.
             }
             finally
             {
@@ -561,6 +623,13 @@ namespace Neo.Cards
                     _layoutCancellation = null;
                 }
             }
+        }
+
+        private bool IsLayoutCancelled(CancellationTokenSource layout, CancellationToken cancellation)
+        {
+            return layout != null
+                ? layout.IsCancellationRequested
+                : cancellation.IsCancellationRequested || _ct.IsCancellationRequested;
         }
 
         private void InvalidateLayout()
@@ -614,16 +683,6 @@ namespace Neo.Cards
             }
 
             _cardClickHandlers.Clear();
-        }
-
-        private List<Vector3> CalculatePositions()
-        {
-            return CardLayoutCalculator.CalculatePositions(_layoutType, _cards.Count, BuildLayoutSettings());
-        }
-
-        private List<Quaternion> CalculateRotations()
-        {
-            return CardLayoutCalculator.CalculateRotations(_layoutType, _cards.Count, BuildLayoutSettings());
         }
 
         private CardLayoutSettings BuildLayoutSettings()

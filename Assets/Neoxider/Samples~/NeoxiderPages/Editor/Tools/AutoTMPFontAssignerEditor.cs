@@ -19,13 +19,13 @@ namespace Neo.Pages.Editor
 
             GUILayout.Space(10);
 
-            GUI.enabled = targetFont != null;
-            if (GUILayout.Button("Assign Font To All TMP_Text"))
+            using (new EditorGUI.DisabledScope(targetFont == null))
             {
-                AssignFontToAllTMPText();
+                if (GUILayout.Button("Assign Font To All TMP_Text"))
+                {
+                    AssignFontToAllTMPText();
+                }
             }
-
-            GUI.enabled = true;
 
             GUILayout.Space(5);
             EditorGUILayout.HelpBox(

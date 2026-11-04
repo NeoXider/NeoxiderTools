@@ -15,6 +15,8 @@ namespace Neo.Rpg.Components.Weapons
         private SphereCollider _auraCollider;
         private TimerObject _timer;
         private readonly HashSet<RpgCharacter> _affectedCharacters = new();
+        private readonly RpgPhysicsQueryBuffers _queryBuffers = new();
+        private bool _applying;
 
         private void Awake()
         {
@@ -42,27 +44,58 @@ namespace Neo.Rpg.Components.Weapons
         /// </summary>
         public void ApplyAuraDamage()
         {
-            Vector3 scale = transform.lossyScale;
-            Collider[] hits = Physics.OverlapSphere(transform.TransformPoint(_auraCollider.center),
-                _auraCollider.radius *
-                Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
-            _affectedCharacters.Clear();
-
-            foreach (Collider hit in hits)
+            // WHY: a damage callback (death, pooling) may pulse the aura again; the nested pulse is skipped so the
+            // shared query buffer and per-pulse character set stay valid for the running one.
+            if (_applying)
             {
-                if (hit == null || hit.gameObject == gameObject)
-                {
-                    continue;
-                }
+                return;
+            }
 
-                if (IsValidTarget(hit))
+            if (_auraCollider == null)
+            {
+                _auraCollider = GetComponent<SphereCollider>();
+                if (_auraCollider == null)
                 {
-                    RpgCharacter character = hit.GetComponentInParent<RpgCharacter>();
-                    if (character != null && _affectedCharacters.Add(character))
+                    return;
+                }
+            }
+
+            Vector3 scale = transform.lossyScale;
+            // WHY: three-argument Mathf.Max is the params overload and allocated an array on every pulse.
+            float radius = _auraCollider.radius *
+                           Mathf.Max(Mathf.Abs(scale.x), Mathf.Max(Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
+            _applying = true;
+            try
+            {
+                // WHY: hitLayers filters in the query itself; IsValidTarget keeps the identical check for safety.
+                int count = _queryBuffers.OverlapSphere(transform.TransformPoint(_auraCollider.center), radius,
+                    hitLayers);
+                Collider[] hits = _queryBuffers.Colliders3D;
+                _affectedCharacters.Clear();
+
+                for (int i = 0; i < count; i++)
+                {
+                    Collider hit = hits[i];
+                    if (hit == null || hit.gameObject == gameObject)
                     {
-                        DealDamage(hit);
+                        continue;
+                    }
+
+                    if (IsValidTarget(hit))
+                    {
+                        RpgCharacter character = hit.GetComponentInParent<RpgCharacter>();
+                        if (character != null && _affectedCharacters.Add(character))
+                        {
+                            DealDamage(hit);
+                        }
                     }
                 }
+            }
+            finally
+            {
+                _affectedCharacters.Clear();
+                _queryBuffers.Release();
+                _applying = false;
             }
         }
     }

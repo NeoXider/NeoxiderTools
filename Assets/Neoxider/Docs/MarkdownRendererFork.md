@@ -2,14 +2,11 @@
 
 **What it is:** Instructions for finishing the [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer) fork: fixing errors, renaming the package, and an improvement plan before integrating it into NeoxiderTools.
 
-**How to use:** see the sections below.
+**How to use:** this is a maintainer note for the optional MarkdownRenderer integration; a package user only needs the installation URL in [section 2.3](#23-installation-in-a-project-neoxidertools-and-others). The renderer is optional: without it, a `[NeoDoc]` link selects and pings the `.md` asset, and the Inspector shows a rich-text preview of the page.
 
 ---
 
-
-Instructions for finishing the [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer) fork: fixing errors, renaming the package, and an improvement plan before integrating it into NeoxiderTools.
-
-**Supported Unity version:** 2022.3 and above.
+**Supported Unity version of the fork:** 2022.3 and above. NeoxiderTools itself requires Unity `6000.0+`, so section 1 only matters if the fork must keep compiling on 2022.3.
 
 ---
 

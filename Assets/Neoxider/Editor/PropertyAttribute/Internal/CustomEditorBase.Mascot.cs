@@ -93,7 +93,7 @@ namespace Neo.Editor
                 {
                     try
                     {
-                        foreach (var candidate in Resources.FindObjectsOfTypeAll(_gameViewType))
+                        foreach (UnityEngine.Object candidate in Resources.FindObjectsOfTypeAll(_gameViewType))
                         {
                             // WHY: position is in desktop coordinates (can be negative on multi-display);
                             // comparisons against GUIToScreenPoint results stay valid either way.
@@ -210,24 +210,25 @@ namespace Neo.Editor
                 return false;
             }
 
-            string label = issues > 99 ? "99+" : issues.ToString();
-            float w = label.Length > 1 ? 20f : 15f;
-            Rect badge = new(chipRect.xMax - w + 4f, chipRect.yMax - 11f, w, 14f);
+            string label = issues > 99 ? "99+" : NeoInspectorStyles.CountText(issues);
+            float h = chipRect.height >= 28f ? 14f : 12f;
+            float w = label.Length > 1 ? h + 6f : h;
+            Rect badge = NeoInspectorTheme.Snap(new Rect(chipRect.xMax - w + 4f, chipRect.yMax - h + 3f, w, h));
 
             if (Event.current.type == EventType.Repaint)
             {
                 Color bg = health.Mood == NeoComponentHealth.Mood.Alarmed
                     ? new Color(0.86f, 0.24f, 0.26f, 1f)
-                    : new Color(0.95f, 0.62f, 0.14f, 1f);
-                NeoInspectorTheme.DrawRoundedRect(badge, bg, new Color(0f, 0f, 0f, 0.35f), 7f, 1f);
+                    : new Color(0.93f, 0.58f, 0.12f, 1f);
+                NeoInspectorTheme.DrawRoundedRect(badge, bg, new Color(0f, 0f, 0f, 0.30f), h * 0.5f, 1f);
                 GUI.Label(badge, label, NeoInspectorStyles.Badge);
             }
 
-            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 &&
-                badge.Contains(Event.current.mousePosition))
+            // WHY: no GUI.Button here - the badge exists only while issues do, and the validation scan can change
+            // that between a Layout and its Repaint; a control id that comes and goes would shift every id after it.
+            if (ClickZone(badge, GetHealthBadgeTooltip(health)))
             {
                 _showHealthPanel = !_showHealthPanel;
-                Event.current.Use();
                 Repaint();
                 return true;
             }
@@ -235,7 +236,49 @@ namespace Neo.Editor
             return false;
         }
 
-        /// <summary>Compact issue list under the banner (opened by the badge).</summary>
+        private int _healthTextErrors = -1;
+        private int _healthTextMissing = -1;
+        private int _healthTextInvalid = -1;
+        private string _healthTextMessage;
+        private string _healthConsoleLine;
+        private string _healthMissingLine;
+        private string _healthInvalidLine;
+        private string _healthBadgeTooltip;
+
+        // WHY: the panel and the badge tooltip used to interpolate their sentences on every IMGUI event; the numbers
+        // only change when the health report does.
+        private void RefreshHealthTexts(in NeoComponentHealth.Report health)
+        {
+            if (health.ConsoleErrors == _healthTextErrors && health.MissingReferences == _healthTextMissing &&
+                health.InvalidNumbers == _healthTextInvalid &&
+                string.Equals(health.LastConsoleMessage, _healthTextMessage, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _healthTextErrors = health.ConsoleErrors;
+            _healthTextMissing = health.MissingReferences;
+            _healthTextInvalid = health.InvalidNumbers;
+            _healthTextMessage = health.LastConsoleMessage;
+            _healthConsoleLine = health.ConsoleErrors > 0
+                ? $"{health.ConsoleErrors} console error(s) this session: {health.LastConsoleMessage}"
+                : null;
+            _healthMissingLine = health.MissingReferences > 0
+                ? $"{health.MissingReferences} missing reference(s): deleted objects are still assigned."
+                : null;
+            _healthInvalidLine = health.InvalidNumbers > 0
+                ? $"{health.InvalidNumbers} field(s) hold NaN or Infinity."
+                : null;
+            _healthBadgeTooltip = $"{health.TotalIssues} issue(s). Click to show or hide the list.";
+        }
+
+        private string GetHealthBadgeTooltip(in NeoComponentHealth.Report health)
+        {
+            RefreshHealthTexts(health);
+            return _healthBadgeTooltip;
+        }
+
+        /// <summary>Compact issue list under the header (opened by the badge).</summary>
         private void DrawHealthPanel(in NeoComponentHealth.Report health)
         {
             if (!_showHealthPanel || health.TotalIssues == 0)
@@ -243,62 +286,46 @@ namespace Neo.Editor
                 return;
             }
 
+            RefreshHealthTexts(health);
             Color accent = health.Mood == NeoComponentHealth.Mood.Alarmed
                 ? new Color(0.9f, 0.3f, 0.32f)
                 : new Color(0.95f, 0.66f, 0.2f);
 
-            Rect panel = EditorGUILayout.BeginVertical();
+            NeoInspectorStyles.Space(3f);
+            Rect panel = EditorGUILayout.BeginVertical(NeoInspectorStyles.ActionsPanel);
             if (Event.current.type == EventType.Repaint)
             {
                 NeoInspectorTheme.DrawRoundedRect(panel,
-                    Color.Lerp(NeoInspectorTheme.PanelBackground, accent, 0.08f),
+                    Color.Lerp(NeoInspectorTheme.PanelBackground, accent, 0.07f),
                     new Color(accent.r, accent.g, accent.b, 0.35f), NeoInspectorTheme.RadiusSection, 1f);
+                NeoInspectorTheme.DrawAccentRail(panel, accent, 3f, 5f);
             }
 
-            GUILayout.Space(6f);
-
-            if (health.ConsoleErrors > 0)
+            GUIStyle line = NeoInspectorStyles.HealthLine;
+            if (_healthConsoleLine != null)
             {
                 EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(8f);
-                EditorGUILayout.LabelField(
-                    $"Console: {health.ConsoleErrors} error(s) this session — {health.LastConsoleMessage}",
-                    EditorStyles.wordWrappedMiniLabel);
-                if (GUILayout.Button("Clear", EditorStyles.miniButton, GUILayout.Width(46f)))
+                EditorGUILayout.LabelField(_healthConsoleLine, line);
+                if (GUILayout.Button("Clear", EditorStyles.miniButton, NeoInspectorStyles.Width(48f)))
                 {
                     NeoComponentHealth.ClearConsoleErrors(target.GetType());
                     _lastSeenConsoleErrors = 0;
                 }
 
-                GUILayout.Space(6f);
                 EditorGUILayout.EndHorizontal();
             }
 
-            if (health.MissingReferences > 0)
+            if (_healthMissingLine != null)
             {
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(8f);
-                EditorGUILayout.LabelField(
-                    $"Missing references: {health.MissingReferences} (deleted objects still assigned)",
-                    EditorStyles.wordWrappedMiniLabel);
-                GUILayout.Space(6f);
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.LabelField(_healthMissingLine, line);
             }
 
-            if (health.InvalidNumbers > 0)
+            if (_healthInvalidLine != null)
             {
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(8f);
-                EditorGUILayout.LabelField(
-                    $"Invalid numbers: {health.InvalidNumbers} field(s) are NaN / Infinity",
-                    EditorStyles.wordWrappedMiniLabel);
-                GUILayout.Space(6f);
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.LabelField(_healthInvalidLine, line);
             }
 
-            GUILayout.Space(6f);
             EditorGUILayout.EndVertical();
-            EditorGUILayout.Space(2f);
         }
     }
 }

@@ -116,20 +116,28 @@ namespace Neo.StateMachine.NoCode
                 return;
             }
 
-            foreach (StateAction action in actions)
+            // WHY: index loop - an action may add/remove actions on this shared asset (editor tooling, runtime
+            // setup); a foreach enumerator would then throw outside the per-action try and abort the lifecycle.
+            // The count is taken once, so actions appended during the pass run on the next pass and an action that
+            // keeps appending cannot loop forever; a removal shifts later entries, so one of them may be skipped.
+            int count = actions.Count;
+            for (int i = 0; i < count && i < actions.Count; i++)
             {
-                if (action != null)
+                StateAction action = actions[i];
+                if (action == null)
                 {
-                    try
-                    {
-                        action.Execute(StateMachineEvaluationContext.CurrentContextObject);
-                    }
-                    catch (Exception ex)
-                    {
-                        StateMachineLog.Error(
-                            $"[StateData] Error executing action in state '{stateName}': {ex.Message}",
-                            this);
-                    }
+                    continue;
+                }
+
+                try
+                {
+                    action.Execute(StateMachineEvaluationContext.CurrentContextObject);
+                }
+                catch (Exception ex)
+                {
+                    StateMachineLog.Error(
+                        $"[StateData] Error executing action in state '{stateName}': {ex.Message}",
+                        this);
                 }
             }
         }

@@ -69,8 +69,11 @@ namespace Neo.UI
         private Sprite _clonedFrom;
         private float _clonedHeadroom = -1f;
         private int _writtenVertexCount;
+        private int _writtenColumns;
+        private int _writtenRows;
         private bool _pointCacheDirty = true;
         private bool _geometryDirty = true;
+        private UIMeshRigGeometry _spriteGeometry;
 
         public Sprite Sprite => _sprite;
         public int Columns => _columns;
@@ -185,6 +188,7 @@ namespace Neo.UI
             RebuildIfNeeded();
         }
 
+        /// <summary>Builds the current deformed grid into new arrays the caller owns.</summary>
         public UIMeshRigGeometry BuildGeometry()
         {
             if (_sprite == null)
@@ -192,6 +196,11 @@ namespace Neo.UI
                 return new UIMeshRigGeometry(new Vector3[0], new int[0], new Vector2[0]);
             }
 
+            return BuildSpriteGeometry(null);
+        }
+
+        private UIMeshRigGeometry BuildSpriteGeometry(UIMeshRigGeometry reuse)
+        {
             CollectPointStates();
             Vector4 outerUv = DataUtility.GetOuterUV(_sprite);
             Rect uvRect = Rect.MinMaxRect(outerUv.x, outerUv.y, outerUv.z, outerUv.w);
@@ -201,7 +210,8 @@ namespace Neo.UI
                 GetCoordinateSpace(),
                 uvRect,
                 IsDeformationActive(),
-                _pointStates);
+                _pointStates,
+                reuse);
         }
 
         public Vector2 WorldToNormalized(Vector3 worldPosition)
@@ -251,12 +261,18 @@ namespace Neo.UI
             CacheRenderer();
             _pointCacheDirty = true;
             MarkGeometryDirty();
+            UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
             RebuildIfNeeded();
         }
 
         private void OnDisable()
         {
             ReleaseClone();
+        }
+
+        private void OnDestroy()
+        {
+            UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
         }
 
         private void OnValidate()
@@ -333,7 +349,8 @@ namespace Neo.UI
                 return;
             }
 
-            UIMeshRigGeometry geometry = BuildGeometry();
+            _spriteGeometry = BuildSpriteGeometry(_spriteGeometry);
+            UIMeshRigGeometry geometry = _spriteGeometry;
             if (geometry.Vertices.Length == 0 || geometry.Vertices.Length > 65534)
             {
                 return;
@@ -345,42 +362,60 @@ namespace Neo.UI
 
         // WHY: SpriteDataAccessExtensions writes straight into the live Sprite and the renderer picks the
         // new geometry up without re-assigning SpriteRenderer.sprite (verified by rendering the same
-        // renderer before/after a geometry rewrite), so the per-frame path stays allocation-light.
+        // renderer before/after a geometry rewrite), so the per-frame path stays allocation-free.
         private void WriteGeometry(Sprite target, UIMeshRigGeometry geometry)
         {
             int vertexCount = geometry.Vertices.Length;
-            NativeArray<Vector3> positions = new NativeArray<Vector3>(vertexCount, Allocator.Temp);
-            NativeArray<Vector2> uv = new NativeArray<Vector2>(vertexCount, Allocator.Temp);
-            NativeArray<ushort> indices = new NativeArray<ushort>(geometry.Indices.Length, Allocator.Temp);
+            int columns = Mathf.Clamp(_columns, 2, 40);
+            int rows = Mathf.Clamp(_rows, 2, 40);
+            if (_writtenVertexCount != vertexCount)
+            {
+                target.SetVertexCount(vertexCount);
+            }
+
+            NativeArray<Vector3> positions =
+                new NativeArray<Vector3>(vertexCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             try
             {
-                for (int index = 0; index < vertexCount; index++)
-                {
-                    positions[index] = geometry.Vertices[index];
-                    uv[index] = geometry.UV[index];
-                }
+                positions.CopyFrom(geometry.Vertices);
+                target.SetVertexAttribute(VertexAttribute.Position, positions);
+            }
+            finally
+            {
+                positions.Dispose();
+            }
 
+            // WHY: a pose only moves positions. UVs depend on the cloned sprite and the grid, indices on the grid,
+            // so both are uploaded when the clone or the grid changes instead of on every animated frame.
+            if (_writtenVertexCount == vertexCount && _writtenColumns == columns && _writtenRows == rows)
+            {
+                return;
+            }
+
+            NativeArray<Vector2> uv =
+                new NativeArray<Vector2>(vertexCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            NativeArray<ushort> indices = new NativeArray<ushort>(
+                geometry.Indices.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            try
+            {
+                uv.CopyFrom(geometry.UV);
                 for (int index = 0; index < geometry.Indices.Length; index++)
                 {
                     indices[index] = (ushort)geometry.Indices[index];
                 }
 
-                if (_writtenVertexCount != vertexCount)
-                {
-                    target.SetVertexCount(vertexCount);
-                    _writtenVertexCount = vertexCount;
-                }
-
-                target.SetVertexAttribute(VertexAttribute.Position, positions);
                 target.SetVertexAttribute(VertexAttribute.TexCoord0, uv);
                 target.SetIndices(indices);
             }
             finally
             {
-                positions.Dispose();
                 uv.Dispose();
                 indices.Dispose();
             }
+
+            _writtenVertexCount = vertexCount;
+            _writtenColumns = columns;
+            _writtenRows = rows;
         }
 
         private void EnsureClone()
@@ -429,7 +464,7 @@ namespace Neo.UI
             _deformedSprite.hideFlags = HideFlags.HideAndDontSave;
             _clonedFrom = _sprite;
             _clonedHeadroom = _boundsHeadroom;
-            _writtenVertexCount = 0;
+            ResetWrittenTopology();
             if (_spriteRenderer != null)
             {
                 _spriteRenderer.sprite = _deformedSprite;
@@ -458,7 +493,14 @@ namespace Neo.UI
             _deformedSprite = null;
             _clonedFrom = null;
             _clonedHeadroom = -1f;
+            ResetWrittenTopology();
+        }
+
+        private void ResetWrittenTopology()
+        {
             _writtenVertexCount = 0;
+            _writtenColumns = 0;
+            _writtenRows = 0;
         }
 
         private void EnsurePointCache()
@@ -468,17 +510,7 @@ namespace Neo.UI
                 return;
             }
 
-            _points.Clear();
-            List<UIMeshRigPoint> candidates = new List<UIMeshRigPoint>();
-            GetComponentsInChildren(true, candidates);
-            for (int index = 0; index < candidates.Count; index++)
-            {
-                if (UIMeshRigOwnerResolver.OwnsPoint(this, candidates[index]))
-                {
-                    _points.Add(candidates[index]);
-                }
-            }
-
+            UIMeshRigOwnerResolver.CollectOwnedPoints(this, this, _points);
             _pointCacheDirty = false;
         }
 

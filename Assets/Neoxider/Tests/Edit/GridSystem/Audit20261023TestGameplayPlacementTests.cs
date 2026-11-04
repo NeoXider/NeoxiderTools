@@ -15,7 +15,7 @@ namespace Neo.Editor.Tests.GridSystem
         public void SetUp()
         {
             _root = new GameObject(nameof(Audit20261023TestGameplayPlacementTests));
-            // Public generation works without activating the component or replacing FieldGenerator.I.
+            // WHY: public generation works without activating the component or replacing FieldGenerator.I.
             _root.SetActive(false);
             _field = _root.AddComponent<FieldGenerator>();
             _field.GenerateField(new FieldGeneratorConfig

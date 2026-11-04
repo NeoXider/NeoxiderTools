@@ -5,8 +5,10 @@ using UnityEngine.UI;
 namespace Neo.Samples.Survivor
 {
     /// <summary>
-    ///     Small uGUI construction helpers so the survivor HUD is built in code with no imported
-    ///     prefabs — rounded panels, bars, labels and buttons in a consistent v10 dark style.
+    ///     Legacy uGUI construction helpers (rounded panels, bars, labels and buttons in the v10 dark style), kept for
+    ///     the obsolete runtime <c>NeoDemoShell</c>. <see cref="SetFill" /> is the runtime fill helper for authored
+    ///     anchor-driven bars. Demo HUDs are authored into the saved scenes by the editor scene builders, not built
+    ///     with these helpers at runtime.
     /// </summary>
     public static class SurvivorUI
     {
@@ -22,8 +24,8 @@ namespace Neo.Samples.Survivor
 
         public static RectTransform Rect(string name, Transform parent)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            var rt = (RectTransform)go.transform;
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            RectTransform rt = (RectTransform)go.transform;
             rt.SetParent(parent, false);
             return rt;
         }
@@ -31,7 +33,7 @@ namespace Neo.Samples.Survivor
         public static Image Image(string name, Transform parent, Color color, bool rounded = true)
         {
             RectTransform rt = Rect(name, parent);
-            var img = rt.gameObject.AddComponent<Image>();
+            Image img = rt.gameObject.AddComponent<Image>();
             img.color = color;
             if (rounded)
             {
@@ -46,7 +48,7 @@ namespace Neo.Samples.Survivor
             TextAlignmentOptions align = TextAlignmentOptions.Left, FontStyles style = FontStyles.Normal)
         {
             RectTransform rt = Rect(name, parent);
-            var tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
+            TextMeshProUGUI tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
             tmp.fontSize = size;
             tmp.color = color;
@@ -109,14 +111,14 @@ namespace Neo.Samples.Survivor
                 return;
             }
 
-            var rt = (RectTransform)fill.transform;
+            RectTransform rt = (RectTransform)fill.transform;
             rt.anchorMax = new Vector2(Mathf.Clamp01(amount), 1f);
         }
 
         public static Button Button(string name, Transform parent, Color color)
         {
             Image img = Image(name, parent, color);
-            var btn = img.gameObject.AddComponent<Button>();
+            Button btn = img.gameObject.AddComponent<Button>();
             btn.targetGraphic = img;
             ColorBlock cb = btn.colors;
             cb.highlightedColor = new Color(1f, 1f, 1f, 1f);

@@ -1,8 +1,17 @@
 ﻿# GetComponentsAttribute
 
-**Namespace:** Global. **Assembly:** `Neo.PropertyAttribute`.
+**What it is:** `[GetComponents]` (`Scripts/PropertyAttribute/InjectAttribute/GetComponentsAttribute.cs`, global
+namespace, assembly `Neo.PropertyAttribute`) marks a Component array/list for editor assignment from the owning
+GameObject.
 
-`[GetComponents]` marks a Component array/list for assignment from the owning GameObject. `[GetComponents(true)]` includes children. The editor processor also supports GameObject collections: the owner only, or its Transform hierarchy when child search is enabled.
+**How to use:**
+1. Put `[GetComponents]` (or `[GetComponents(true)]` to include children) on a serialized array or list.
+2. Select the component with attribute search enabled; an empty collection is filled.
+
+---
+
+The editor processor also supports GameObject collections: the owner only, or its Transform hierarchy when child
+search is enabled.
 
 ```csharp
 [GetComponents(true)]

@@ -47,27 +47,28 @@ namespace Neo.Editor.Windows
 
             if (_objectsWithMissing.Count > 0)
             {
-                GUILayout.Label($"Found {_objectsWithMissing.Count} objects with Missing Scripts:");
-                _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.Height(350));
+                GUILayout.Label(GetFoundLabel());
+                MissingScriptInfo pendingRemoval = null;
+                _scroll = GUILayout.BeginScrollView(_scroll, ListHeightOption);
                 try
                 {
                     for (int i = 0; i < _objectsWithMissing.Count; i++)
                     {
                         MissingScriptInfo info = _objectsWithMissing[i];
-                        GUIStyle style = new(EditorStyles.label);
-                        style.normal.textColor = i == _selectedIndex ? Color.green : Color.red;
+                        info.displayLabel ??= $"{info.assetPath}: {info.hierarchyPath}";
+                        GUIStyle style = i == _selectedIndex ? SelectedRowStyle : RowStyle;
                         EditorGUILayout.BeginHorizontal();
                         try
                         {
-                            if (GUILayout.Button($"{info.assetPath}: {info.hierarchyPath}", style))
+                            if (GUILayout.Button(info.displayLabel, style))
                             {
                                 _selectedIndex = i;
                                 SelectAndPing(info, true);
                             }
 
-                            if (GUILayout.Button("X", GUILayout.Width(70)))
+                            if (GUILayout.Button("Remove", RemoveButtonOption))
                             {
-                                RemoveMissingScriptFromObject(info);
+                                pendingRemoval = info;
                             }
                         }
                         finally
@@ -85,7 +86,74 @@ namespace Neo.Editor.Windows
                 {
                     RemoveAllMissingScripts();
                 }
+
+                // WHY: removing inside the loop shortened the list mid-event, so the rows after it read the layout
+                // entries of their neighbours; the removal now runs after the whole list has been drawn.
+                if (pendingRemoval != null)
+                {
+                    RemoveMissingScriptFromObject(pendingRemoval);
+                    _selectedIndex = -1;
+                    window.Repaint();
+                }
             }
+        }
+
+        private static readonly GUILayoutOption[] ListHeightOption = { GUILayout.Height(350) };
+        private static readonly GUILayoutOption[] RemoveButtonOption = { GUILayout.Width(70) };
+        private static GUIStyle s_rowStyle;
+        private static GUIStyle s_selectedRowStyle;
+        private static bool s_rowStylesDark;
+        private int _foundLabelCount = -1;
+        private string _foundLabel;
+
+        private string GetFoundLabel()
+        {
+            if (_foundLabelCount != _objectsWithMissing.Count)
+            {
+                _foundLabelCount = _objectsWithMissing.Count;
+                _foundLabel = $"Found {_foundLabelCount} objects with Missing Scripts:";
+            }
+
+            return _foundLabel;
+        }
+
+        // WHY: one style per row per event used to be allocated; pure green/red also read poorly on the light skin.
+        private static GUIStyle RowStyle
+        {
+            get
+            {
+                EnsureRowStyles();
+                return s_rowStyle;
+            }
+        }
+
+        private static GUIStyle SelectedRowStyle
+        {
+            get
+            {
+                EnsureRowStyles();
+                return s_selectedRowStyle;
+            }
+        }
+
+        private static void EnsureRowStyles()
+        {
+            bool dark = EditorGUIUtility.isProSkin;
+            if (s_rowStyle != null && s_rowStylesDark == dark)
+            {
+                return;
+            }
+
+            s_rowStylesDark = dark;
+            s_rowStyle = new GUIStyle(EditorStyles.label)
+            {
+                normal = { textColor = dark ? new Color(1f, 0.50f, 0.48f, 1f) : new Color(0.68f, 0.12f, 0.10f, 1f) }
+            };
+            s_selectedRowStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = dark ? new Color(0.45f, 0.90f, 0.55f, 1f) : new Color(0.08f, 0.45f, 0.18f, 1f) }
+            };
         }
 
         /// <summary>
@@ -430,6 +498,7 @@ namespace Neo.Editor.Windows
         private class MissingScriptInfo
         {
             public string assetPath;
+            public string displayLabel;
             public string hierarchyPath;
             public int[] hierarchyIndices;
             public bool isScene;

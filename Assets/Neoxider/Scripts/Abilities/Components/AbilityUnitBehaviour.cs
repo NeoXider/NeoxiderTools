@@ -33,6 +33,9 @@ namespace Neo.Abilities
 
         private LevelComponent _subscribedLevelSource;
 
+        // WHY: one cached delegate per component; pooled units subscribe/unsubscribe on every enable cycle.
+        private System.Action<AbilityEventArgs> _eventHandler;
+
         public AbilityUnit Unit { get; private set; }
 
         public UnitId UnitId => Unit?.Id ?? UnitId.None;
@@ -134,7 +137,8 @@ namespace Neo.Abilities
             }
 
             hub.RegisterBehaviour(this);
-            system.Events.SubscribeTarget(Unit.Id, HandleEvent);
+            _eventHandler ??= HandleEvent;
+            system.Events.SubscribeTarget(Unit.Id, _eventHandler);
         }
 
         private void OnDisable()
@@ -151,11 +155,13 @@ namespace Neo.Abilities
             _subscribedLevelSource = null;
 
             // WHY: never resurrect the hub during teardown — when it is already destroyed, its
-            // system (and our subscription on its bus) died with it.
+            // system (and our subscription on its bus) died with it. A unit that outlived its hub (for
+            // example a DontDestroyOnLoad player after a scene switch) must not touch the replacement hub:
+            // unit ids restart per system, so the same id there belongs to an unrelated unit.
             AbilitySystemBehaviour hub = AbilitySystemBehaviour.InstanceOrNull;
-            if (hub != null)
+            if (hub != null && hub.System == Unit.System)
             {
-                hub.System.Events.UnsubscribeTarget(Unit.Id, HandleEvent);
+                hub.System.Events.UnsubscribeTarget(Unit.Id, _eventHandler);
                 hub.UnregisterBehaviour(this);
                 hub.System.DestroyUnit(Unit.Id);
             }

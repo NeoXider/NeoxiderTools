@@ -1,7 +1,14 @@
 ﻿# Tools / FakeLeaderboard
 
-Configurable local leaderboard for prototypes, demos and simulated opponents. Scripts live in
+**What it is:** Configurable local leaderboard for prototypes, demos and simulated opponents. Scripts live in
 `Scripts/Tools/FakeLeaderboard/`, assembly `Neo.Tools.FakeLeaderboard`, namespace `Neo.Tools`.
+
+**Contents:** the component table below, [C# usage](#c-usage) and the
+[scene and Inspector workflow](#scene-and-inspector-workflow).
+
+**Navigation:** [← Tools](../README.md)
+
+---
 
 | API | Responsibility |
 |-----|----------------|

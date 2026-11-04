@@ -204,7 +204,9 @@ namespace Neo.UI
                 return;
             }
 
-            UIMeshRigMotionProfile presetProfile = UIMeshRigMotionPresets.Create(preset);
+            // WHY: CopyFrom deep-copies the curves, so the shared read-only preset is a safe source and the
+            // throwaway profile Create() built (five curves) is no longer needed.
+            UIMeshRigMotionProfile presetProfile = UIMeshRigMotionPresets.GetShared(preset);
             if (_profile == null)
             {
                 _profile = new UIMeshRigMotionProfile();

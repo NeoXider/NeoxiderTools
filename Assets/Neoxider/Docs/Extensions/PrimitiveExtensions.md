@@ -1,6 +1,8 @@
 ﻿# PrimitiveExtensions
 
-**Purpose:** Extension methods for `float`, `int`, and `bool` — rounding, time formatting, normalization, remapping, and type conversion.
+**What it is:** extension methods for `float`, `int`, and `bool` — rounding, time formatting, normalization, remapping, snapping, wrapping and type conversion. File: `Scripts/Extensions/PrimitiveExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** add `using Neo.Extensions;` and call the method on the value: `timer.FormatTime(TimeFormat.MinutesSeconds)`, `index.Wrap(0, count)`.
 
 ---
 

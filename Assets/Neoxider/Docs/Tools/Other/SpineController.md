@@ -1,8 +1,17 @@
 ﻿# SpineController
 
-**Purpose:** A universal controller for Spine animations (`SkeletonAnimation`). Manages animation playback by index or name, skin switching with `PlayerPrefs` persistence, and auto-return to a default (idle) animation.
+**What it is:** an optional `MonoBehaviour` adapter for Spine `SkeletonAnimation`: animation playback by index or
+name, skin switching with `PlayerPrefs` persistence and auto-return to a default (idle) animation. Script:
+`Scripts/Tools/Other/SpineController.cs` (global namespace), assembly `Neo.Tools.Other`.
+
+**How to use:**
+1. Install the Spine Unity Runtime so the `SPINE_UNITY` define is set.
+2. Add **SpineController** next to a `SkeletonAnimation`; animation and skin lists auto-populate.
+3. Set the default animation and skin, then call `Play(...)`, `SetSkin(...)`, `NextSkin()` from code or UnityEvents.
 
 > ⚠️ Requires the **Spine Unity Runtime** package (`SPINE_UNITY` define).
+
+---
 
 `SpineController` is in the global namespace, in `Neo.Tools.Other`. That assembly must be able to reference the installed Spine runtime assemblies when `SPINE_UNITY` is enabled. Without the define, only a placeholder component is compiled: it disables itself in `Awake` and has no animation/skin methods.
 

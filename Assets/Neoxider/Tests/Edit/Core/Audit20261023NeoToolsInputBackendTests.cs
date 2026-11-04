@@ -32,7 +32,7 @@ namespace Neo.Tests.Edit
         [Test]
         public void FailedLegacySelection_IsSharedAcrossAllKeyAndMouseReads()
         {
-            // Simulate the one caught native rejection; the following calls use real compat APIs.
+            // WHY: Simulate the one caught native rejection; the following calls use real compat APIs.
             InputBackendCompat.MarkLegacyUnavailable();
             Assert.That(InputBackendCompat.UsesLegacyInput, Is.False);
             Assert.That(InputBackendCompat.LegacyReadFailureCount, Is.EqualTo(1));

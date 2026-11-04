@@ -89,8 +89,8 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Key to use the equipped item.")]
         private KeyCode _useKey = KeyCode.E;
 
-        [Header("Events")]
         /// <summary>Raised when the equipped slot or item changes; argument is item id or -1 if empty.</summary>
+        [Header("Events")]
         public UnityEvent<int> OnEquippedChanged = new();
 
         /// <summary>Legacy type-id use event. Prefer OnUseSelectionRequested when instance identity matters.</summary>
@@ -103,6 +103,12 @@ namespace Neo.Tools
         private bool _savedDropperAllowInput = true;
 
         private GameObject _spawnedInstance;
+        private GameObject _spawnedPrefab;
+        private InventoryItemRecord _spawnedRecord;
+        private int _spawnedSlotIndex;
+        private int _visualRefreshVersion;
+        private Selector _writtenSelector;
+        private int _writtenSelectorCount;
         private bool _isUsing;
 
         /// <summary>Bound inventory reference.</summary>
@@ -112,10 +118,22 @@ namespace Neo.Tools
         public int SlotIndex { get; private set; }
 
         /// <summary>Item id in hand, or -1 if none (NeoCondition-friendly).</summary>
-        public int EquippedItemId => ResolveEquippedRecord()?.EffectiveItemId ?? -1;
+        /// <remarks>
+        ///     WHY: NeoCondition polls this getter; it reads the live slot instead of cloning the record (and its
+        ///     instance payload) on every read, with the same result.
+        /// </remarks>
+        public int EquippedItemId => ResolveItemIdForSlot(ResolveInventory(), SlotIndex);
 
         /// <summary>Database entry for <see cref="EquippedItemId" />, if any.</summary>
-        public InventoryItemData EquippedItemData => ResolveInventory()?.GetItemData(EquippedItemId);
+        public InventoryItemData EquippedItemData
+        {
+            get
+            {
+                // WHY: Unity null check; "?." would treat a destroyed inventory as alive.
+                InventoryComponent inventory = ResolveInventory();
+                return inventory != null ? inventory.GetItemData(EquippedItemId) : null;
+            }
+        }
 
         private void Update()
         {
@@ -145,6 +163,8 @@ namespace Neo.Tools
             {
                 _selector.OnSelectionChanged.AddListener(OnSelectorSelectionChanged);
             }
+
+            _writtenSelector = null;
 
             if (_dropper != null)
             {
@@ -262,6 +282,7 @@ namespace Neo.Tools
 
             GameObject originalVisual = _spawnedInstance;
             int originalSlot = SlotIndex;
+            int originalVisualVersion = _visualRefreshVersion;
             _isUsing = true;
             try
             {
@@ -271,11 +292,13 @@ namespace Neo.Tools
                     OnUseSelectionRequested?.Invoke(selection);
                 }
 
+                // WHY: The version (not only the object) detects a refresh: an unchanged visual survives a consume
+                // of one unit from its stack, which must still suppress activation like a replaced visual.
                 if (originalVisual != null && originalVisual == _spawnedInstance && originalSlot == SlotIndex &&
-                    inv == ResolveInventory() && inv.IsSelectionCurrent(selection))
+                    originalVisualVersion == _visualRefreshVersion && inv == ResolveInventory() &&
+                    inv.IsSelectionCurrent(selection) && originalVisual.TryGetComponent(out PickableItem pickable))
                 {
-                    PickableItem pickable = originalVisual.GetComponent<PickableItem>();
-                    pickable?.Activate();
+                    pickable.Activate();
                 }
             }
             finally
@@ -416,14 +439,27 @@ namespace Neo.Tools
 
                 if (_selector != null)
                 {
-                    _selector.Count = count > 0 ? count : _allowEmptySlot ? 1 : 0;
+                    // WHY: Selector.Count and Set re-apply the whole selection (and replicate it when networked)
+                    // even for unchanged values; the hand re-syncs on every inventory change, so only real
+                    // changes are written. The count is compared with what the hand last wrote to this selector,
+                    // not only with the Count getter (which reports Items.Length while no explicit count is set),
+                    // so the first sync after enable still switches the selector to an explicit count as before.
+                    int selectorCount = count > 0 ? count : _allowEmptySlot ? 1 : 0;
+                    if (!ReferenceEquals(_writtenSelector, _selector) || _writtenSelectorCount != selectorCount ||
+                        _selector.Count != selectorCount)
+                    {
+                        _selector.Count = selectorCount;
+                        _writtenSelector = _selector;
+                        _writtenSelectorCount = selectorCount;
+                    }
+
                     if (count > 0)
                     {
-                        _selector.Set(SlotIndex);
+                        SetSelectorIndex(SlotIndex);
                     }
                     else if (_allowEmptySlot && _selector.Count == 1)
                     {
-                        _selector.Set(0);
+                        SetSelectorIndex(0);
                     }
                 }
 
@@ -437,32 +473,39 @@ namespace Neo.Tools
 
         private void RefreshHandVisual()
         {
-            DestroySpawned();
-
+            _visualRefreshVersion++;
             Transform anchor = _handAnchor != null ? _handAnchor : transform;
             InventoryComponent inv = ResolveInventory();
-            if (inv == null)
+            InventoryItemRecord record = inv != null ? ResolveEquippedRecord(inv) : null;
+            if (record != null && record.EffectiveItemId < 0)
+            {
+                record = null;
+            }
+
+            GameObject prefab = null;
+            if (record != null)
+            {
+                InventoryItemData data = inv.GetItemData(record.EffectiveItemId);
+                prefab = data != null && data.WorldDropPrefab != null ? data.WorldDropPrefab : _fallbackHandPrefab;
+            }
+
+            // WHY: Every inventory change re-syncs the hand; rebuilding an unchanged visual cost an
+            // Instantiate/Destroy pair per pickup and reset any runtime state on the visual.
+            if (CanKeepSpawnedVisual(record, prefab, anchor))
             {
                 return;
             }
 
-            InventoryItemRecord record = ResolveEquippedRecord(inv);
-            if (record == null || record.EffectiveItemId < 0)
-            {
-                return;
-            }
-
-            int itemId = record.EffectiveItemId;
-            InventoryItemData data = inv.GetItemData(itemId);
-            GameObject prefab = data != null && data.WorldDropPrefab != null
-                ? data.WorldDropPrefab
-                : _fallbackHandPrefab;
+            DestroySpawned();
             if (prefab == null)
             {
                 return;
             }
 
             _spawnedInstance = Instantiate(prefab, anchor.position, anchor.rotation, anchor);
+            _spawnedPrefab = prefab;
+            _spawnedRecord = record;
+            _spawnedSlotIndex = SlotIndex;
 
             HandView handView = _spawnedInstance.GetComponentInChildren<HandView>(true);
             float baseScale = handView != null ? handView.ScaleInHand : 1f;
@@ -492,6 +535,28 @@ namespace Neo.Tools
             }
         }
 
+        private void SetSelectorIndex(int index)
+        {
+            if (_selector.Value != index)
+            {
+                _selector.Set(index);
+            }
+        }
+
+        private bool CanKeepSpawnedVisual(InventoryItemRecord record, GameObject prefab, Transform anchor)
+        {
+            if (_spawnedInstance == null || _spawnedRecord == null || record == null || prefab == null ||
+                prefab != _spawnedPrefab || _spawnedSlotIndex != SlotIndex ||
+                _spawnedInstance.transform.parent != anchor ||
+                record.EffectiveItemId != _spawnedRecord.EffectiveItemId ||
+                record.IsInstance != _spawnedRecord.IsInstance)
+            {
+                return false;
+            }
+
+            return !record.IsInstance || InventoryComponent.SameInstanceState(record.Instance, _spawnedRecord.Instance);
+        }
+
         private int GetSelectableSlotCount(InventoryComponent inv)
         {
             if (inv == null)
@@ -502,15 +567,21 @@ namespace Neo.Tools
             return _usePhysicalSlotIndices && inv.IsSlotInventory ? inv.SlotCapacity : inv.GetNonEmptySlotCount();
         }
 
+        /// <summary>Item id of <paramref name="slotIndex" />, read from the live slot without cloning its record.</summary>
         private int ResolveItemIdForSlot(InventoryComponent inv, int slotIndex)
         {
-            InventoryItemRecord record = ResolveEquippedRecord(inv, slotIndex);
-            return record != null ? record.EffectiveItemId : -1;
-        }
+            if (inv == null || slotIndex < 0)
+            {
+                return -1;
+            }
 
-        private InventoryItemRecord ResolveEquippedRecord()
-        {
-            return ResolveEquippedRecord(ResolveInventory(), SlotIndex);
+            if (_usePhysicalSlotIndices && inv.IsSlotInventory)
+            {
+                InventorySlotState slot = inv.PeekSlotForView(slotIndex);
+                return slot != null && !slot.IsEmpty ? slot.EffectiveItemId : -1;
+            }
+
+            return inv.GetItemIdAtSlotIndex(slotIndex);
         }
 
         private InventoryItemRecord ResolveEquippedRecord(InventoryComponent inv)
@@ -575,8 +646,11 @@ namespace Neo.Tools
             if (_spawnedInstance != null)
             {
                 _spawnedInstance.SafeDestroy();
-                _spawnedInstance = null;
             }
+
+            _spawnedInstance = null;
+            _spawnedPrefab = null;
+            _spawnedRecord = null;
         }
 
         private InventoryComponent ResolveInventory()

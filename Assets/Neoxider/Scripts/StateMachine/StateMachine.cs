@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Neo.StateMachine.NoCode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,6 +16,12 @@ namespace Neo.StateMachine
     /// <remarks>
     ///     The State Machine caches state instances and transitions by default for performance.
     ///     Caching can be disabled via the constructor.
+    ///     Each lookup returns a priority-sorted list that is rebuilt only after a registration change or a routing
+    ///     edit (<see cref="StateTransition.Priority"/>, <see cref="StateTransition.FromStateType"/>,
+    ///     <see cref="StateTransition.FromStateData"/>); the rebuild reads the current source selectors, so a source
+    ///     edited after registration routes from its new state. NoCode (<see cref="StateData"/>) states get their own
+    ///     list per asset, so a frame evaluates only the transitions that leave the active state.
+    ///     Diagnostics are per machine (<see cref="DebugLogEnabled"/>).
     /// </remarks>
     /// <example>
     ///     <code>
@@ -33,17 +40,31 @@ namespace Neo.StateMachine
     /// 
     /// // Tick
     /// stateMachine.Update();
-    /// stateMachine.EvaluateTransitions(); // Automatic transition evaluation
+    /// stateMachine.EvaluateTransitions();
     /// </code>
     /// </example>
     public class StateMachine<TState> where TState : class, IState
     {
         private readonly bool enableStateCaching;
         private readonly bool enableTransitionCaching;
-        private readonly List<StateTransition> globalTransitions = new();
+
+        // WHY: one registration-ordered list classified when a lookup is rebuilt. Buckets chosen at registration
+        // kept a transition under the source type it had then, so a FromStateType edited later never routed from
+        // its new state (and a cleared one never became source-less).
+        private readonly List<StateTransition> registeredTransitions = new();
         private readonly Dictionary<Type, TState> stateCache = new();
-        private readonly Dictionary<Type, List<StateTransition>> transitionCache = new();
-        private readonly Dictionary<Type, List<StateTransition>> _sortedTransitionsCache = new();
+        private readonly Dictionary<Type, TransitionLookup> _sortedTransitionsCache = new();
+
+        // WHY: every StateData shares one CLR type, so a type-keyed list held the transitions of all NoCode states and
+        // each frame evaluated (and reported) all of them; a per-asset list keeps the walk O(outgoing).
+        private readonly Dictionary<StateData, TransitionLookup> _sortedStateDataTransitions =
+            new(StateDataReferenceComparer.Instance);
+
+        private readonly List<StateTransition> _lookupScratch = new();
+
+        // WHY: type shape never changes at runtime; re-running GetConstructor on every automatic transition
+        // allocated reflection arrays even when the target instance was already cached.
+        private readonly Dictionary<Type, bool> stateTypeAdmissionCache = new();
         private const int MaxLifecycleRequestsPerDispatch = 128;
         private readonly Queue<TState> lifecycleRequests = new();
         private readonly Func<float> timeProvider;
@@ -51,6 +72,7 @@ namespace Neo.StateMachine
         private bool isDispatchingLifecycle;
         private ulong stateGeneration;
         private float currentStateEnterTime = float.NaN;
+        private bool? debugLogEnabled;
 
         /// <summary>
         ///     Creates a new State Machine instance.
@@ -96,6 +118,19 @@ namespace Neo.StateMachine
         public UnityEvent<StateTransition, bool> OnTransitionEvaluated { get; } = new();
 
         /// <summary>
+        ///     Per-machine diagnostics switch. Gates this machine's warnings and errors and, while it runs state
+        ///     callbacks (enter, exit, update) or lifecycle listeners, the logs of the NoCode actions those callbacks
+        ///     execute (<see cref="LogStateAction"/>, action errors). Until it is assigned it follows the shared
+        ///     switch that StateMachineBehaviour components write in OnEnable (the legacy behaviour); both wrappers
+        ///     assign their own Enable Debug Log, so one component's setting does not change another machine's logs.
+        /// </summary>
+        public bool DebugLogEnabled
+        {
+            get => debugLogEnabled ?? StateMachineLog.Enabled;
+            set => debugLogEnabled = value;
+        }
+
+        /// <summary>
         ///     Currently active state.
         /// </summary>
         public TState CurrentState { get; private set; }
@@ -108,6 +143,10 @@ namespace Neo.StateMachine
         /// <summary>
         ///     Gets or creates a state instance, using the cache when enabled.
         /// </summary>
+        /// <remarks>
+        ///     A new instance whose constructor changes or stops this machine is returned but not cached:
+        ///     the constructor's newer state choice supersedes the activation that requested the instance.
+        /// </remarks>
         /// <typeparam name="T">Concrete state type.</typeparam>
         /// <returns>State instance.</returns>
         public T GetOrCreateState<T>() where T : class, TState, new()
@@ -119,9 +158,10 @@ namespace Neo.StateMachine
                 return cachedState as T;
             }
 
+            ulong creationGeneration = stateGeneration;
             T newState = new();
 
-            if (enableStateCaching)
+            if (enableStateCaching && stateGeneration == creationGeneration)
             {
                 stateCache[stateType] = newState;
             }
@@ -132,11 +172,19 @@ namespace Neo.StateMachine
         /// <summary>
         ///     Changes state by type (creates instance via GetOrCreateState).
         /// </summary>
+        /// <remarks>
+        ///     If the target constructor changes or stops this machine, that newer choice wins and the
+        ///     constructed target is neither entered nor cached.
+        /// </remarks>
         /// <typeparam name="T">Target state type.</typeparam>
         public void ChangeState<T>() where T : class, TState, new()
         {
+            ulong activationGeneration = stateGeneration;
             T newState = GetOrCreateState<T>();
-            ChangeState(newState);
+            if (stateGeneration == activationGeneration)
+            {
+                ChangeState(newState);
+            }
         }
 
         /// <summary>
@@ -151,7 +199,7 @@ namespace Neo.StateMachine
         {
             if (newState == null)
             {
-                StateMachineLog.Warning("[StateMachine] Attempted to change to null state.");
+                StateMachineLog.Warning(DebugLogEnabled, "[StateMachine] Attempted to change to null state.");
                 return;
             }
 
@@ -191,7 +239,7 @@ namespace Neo.StateMachine
             }
 
             float enterTime = currentStateEnterTime;
-            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(state.GetType());
+            IReadOnlyList<StateTransition> transitions = GetAvailableTransitionsFrom(state);
             StateMachineEvaluationContext.PushDuration(enterTime, enterTime);
             try
             {
@@ -210,13 +258,22 @@ namespace Neo.StateMachine
         ///     Tries to change state by type if transition conditions allow.
         /// </summary>
         /// <typeparam name="T">Target state type.</typeparam>
-        /// <returns>True if conditions allow the change and the request is dispatched or queued.</returns>
+        /// <returns>
+        ///     True if conditions allow the change and the request is dispatched or queued; false when a
+        ///     predicate, listener or the target constructor made a newer state choice first.
+        /// </returns>
         public bool TryChangeState<T>() where T : class, TState, new()
         {
             ulong evaluatedGeneration = stateGeneration;
             if (CanTransitionTo<T>() && stateGeneration == evaluatedGeneration)
             {
-                ChangeState<T>();
+                T newState = GetOrCreateState<T>();
+                if (stateGeneration != evaluatedGeneration)
+                {
+                    return false;
+                }
+
+                ChangeState(newState);
                 return true;
             }
 
@@ -238,7 +295,7 @@ namespace Neo.StateMachine
             TState evaluatedState = CurrentState;
             ulong evaluatedGeneration = stateGeneration;
             Type targetType = typeof(T);
-            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(evaluatedState.GetType());
+            IReadOnlyList<StateTransition> transitions = GetAvailableTransitionsFrom(evaluatedState);
 
             for (int i = 0; i < transitions.Count; i++)
             {
@@ -271,36 +328,12 @@ namespace Neo.StateMachine
         {
             if (transition == null)
             {
-                StateMachineLog.Warning("[StateMachine] Attempted to register null transition.");
+                StateMachineLog.Warning(DebugLogEnabled, "[StateMachine] Attempted to register null transition.");
                 return;
             }
 
             _sortedTransitionsDirty = true;
-
-            if (transition.FromStateType != null && enableTransitionCaching)
-            {
-                Type fromType = transition.FromStateType;
-                if (!transitionCache.ContainsKey(fromType))
-                {
-                    transitionCache[fromType] = new List<StateTransition>();
-                }
-
-                transitionCache[fromType].Add(transition);
-            }
-            else if (transition.FromStateData != null && enableTransitionCaching)
-            {
-                Type stateDataType = transition.FromStateData.GetType();
-                if (!transitionCache.ContainsKey(stateDataType))
-                {
-                    transitionCache[stateDataType] = new List<StateTransition>();
-                }
-
-                transitionCache[stateDataType].Add(transition);
-            }
-            else
-            {
-                globalTransitions.Add(transition);
-            }
+            registeredTransitions.Add(transition);
         }
 
         /// <summary>
@@ -315,58 +348,215 @@ namespace Neo.StateMachine
             }
 
             _sortedTransitionsDirty = true;
-
-            // Source selectors are mutable. Remove from the original bucket even if the caller changed them.
-            foreach (List<StateTransition> transitions in transitionCache.Values)
-            {
-                transitions.RemoveAll(candidate => ReferenceEquals(candidate, transition));
-            }
-
-            globalTransitions.RemoveAll(candidate => ReferenceEquals(candidate, transition));
+            RemoveReference(registeredTransitions, transition);
         }
 
         /// <summary>
-        ///     Returns transitions available from the given state type.
+        ///     Returns the transitions registered for the given state type plus the global (source-less) ones, sorted
+        ///     by descending <see cref="StateTransition.Priority"/> (equal priorities keep registration order).
         /// </summary>
+        /// <remarks>
+        ///     For <c>typeof(StateData)</c> this is every NoCode transition of the machine; the evaluation itself uses
+        ///     <see cref="GetAvailableTransitionsFrom"/>, which narrows NoCode states to the transitions leaving that asset.
+        ///     The returned list is cached and must not be modified; it is replaced (not mutated) when registrations or
+        ///     routing change, so a caller may keep iterating it.
+        /// </remarks>
         /// <param name="fromStateType">Source state type.</param>
         /// <returns>List of applicable transitions.</returns>
         public IReadOnlyList<StateTransition> GetAvailableTransitions(Type fromStateType)
         {
-            if (_sortedTransitionsDirty)
+            DropListsAfterRegistrationChange();
+            int routingVersion = StateTransition.RoutingVersion;
+            if (_sortedTransitionsCache.TryGetValue(fromStateType, out TransitionLookup lookup))
             {
-                _sortedTransitionsCache.Clear();
-                _sortedTransitionsDirty = false;
-            }
-
-            if (_sortedTransitionsCache.TryGetValue(fromStateType, out List<StateTransition> cachedSorted))
-            {
-                // Priority can change through its public setter or the Inspector without registration changing.
-                for (int i = 1; i < cachedSorted.Count; i++)
+                if (lookup.RoutingVersion != routingVersion)
                 {
-                    if (cachedSorted[i - 1].Priority < cachedSorted[i].Priority)
-                    {
-                        cachedSorted.Sort((a, b) => b.Priority.CompareTo(a.Priority));
-                        break;
-                    }
+                    FillTypeTransitions(fromStateType, _lookupScratch);
+                    lookup.Revalidate(_lookupScratch, routingVersion);
                 }
 
-                return cachedSorted;
+                return lookup.Transitions;
             }
 
             List<StateTransition> availableTransitions = new();
+            FillTypeTransitions(fromStateType, availableTransitions);
+            _sortedTransitionsCache[fromStateType] = new TransitionLookup(availableTransitions, routingVersion);
+            return availableTransitions;
+        }
 
-            if (enableTransitionCaching && transitionCache.TryGetValue(fromStateType, out List<StateTransition> cached))
+        /// <summary>
+        ///     Returns the transitions that <see cref="EvaluateTransitions"/>, <see cref="CanTransitionTo{T}"/> and
+        ///     state-entry notifications consider for <paramref name="state"/>, sorted like
+        ///     <see cref="GetAvailableTransitions"/>. A <see cref="StateData"/> state gets only the transitions whose
+        ///     current <see cref="StateTransition.FromStateData"/> is that asset (or that have no source); a C# state
+        ///     gets <see cref="GetAvailableTransitions"/> for its type.
+        /// </summary>
+        /// <param name="state">Source state; null returns an empty list.</param>
+        /// <returns>Cached, read-only list; do not modify it.</returns>
+        public IReadOnlyList<StateTransition> GetAvailableTransitionsFrom(TState state)
+        {
+            if (state == null)
             {
-                availableTransitions.AddRange(cached);
+                return Array.Empty<StateTransition>();
             }
 
-            availableTransitions.AddRange(globalTransitions);
+            if (state is StateData stateData)
+            {
+                return GetStateDataTransitions(stateData);
+            }
 
-            // WHY: In-place sort prevents OrderByDescending+ToList allocations
-            availableTransitions.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+            return GetAvailableTransitions(state.GetType());
+        }
 
-            _sortedTransitionsCache[fromStateType] = availableTransitions;
-            return availableTransitions;
+        private IReadOnlyList<StateTransition> GetStateDataTransitions(StateData state)
+        {
+            DropListsAfterRegistrationChange();
+            int routingVersion = StateTransition.RoutingVersion;
+            if (_sortedStateDataTransitions.TryGetValue(state, out TransitionLookup lookup))
+            {
+                if (lookup.RoutingVersion != routingVersion)
+                {
+                    FillStateDataTransitions(state, _lookupScratch);
+                    lookup.Revalidate(_lookupScratch, routingVersion);
+                }
+
+                return lookup.Transitions;
+            }
+
+            List<StateTransition> leaving = new();
+            FillStateDataTransitions(state, leaving);
+            _sortedStateDataTransitions[state] = new TransitionLookup(leaving, routingVersion);
+            return leaving;
+        }
+
+        private void DropListsAfterRegistrationChange()
+        {
+            if (!_sortedTransitionsDirty)
+            {
+                return;
+            }
+
+            // WHY: dropped lists are replaced, never refilled, so an evaluation still iterating one keeps its snapshot.
+            _sortedTransitionsCache.Clear();
+            _sortedStateDataTransitions.Clear();
+            _sortedTransitionsDirty = false;
+        }
+
+        /// <summary>
+        ///     Source type a transition is listed under: its <see cref="StateTransition.FromStateType"/>, else the type
+        ///     of its <see cref="StateTransition.FromStateData"/>; null for a source-less (global) transition and for
+        ///     every transition when transition caching is off.
+        /// </summary>
+        private Type GetRoutingKey(StateTransition transition)
+        {
+            if (!enableTransitionCaching)
+            {
+                return null;
+            }
+
+            Type fromType = transition.FromStateType;
+            if (fromType != null)
+            {
+                return fromType;
+            }
+
+            // WHY: a destroyed source asset keeps the NoCode key it had when it was alive; an unassigned one (also the
+            // Editor's empty placeholder for an unassigned serialized field) leaves the transition source-less.
+            StateData fromData = transition.FromStateData;
+            return fromData != null || Neo.Condition.BindingSourceGameObjectResolver.IsDestroyedReference(fromData)
+                ? fromData.GetType()
+                : null;
+        }
+
+        private void FillTypeTransitions(Type fromStateType, List<StateTransition> destination)
+        {
+            // WHY: transitions of the type first, then source-less ones, each in registration order; the stable
+            // sort below keeps that order for equal priorities.
+            if (fromStateType != null)
+            {
+                for (int i = 0; i < registeredTransitions.Count; i++)
+                {
+                    StateTransition transition = registeredTransitions[i];
+                    if (GetRoutingKey(transition) == fromStateType)
+                    {
+                        destination.Add(transition);
+                    }
+                }
+            }
+
+            for (int i = 0; i < registeredTransitions.Count; i++)
+            {
+                StateTransition transition = registeredTransitions[i];
+                if (GetRoutingKey(transition) == null)
+                {
+                    destination.Add(transition);
+                }
+            }
+
+            SortByPriorityDescending(destination);
+        }
+
+        private void FillStateDataTransitions(StateData state, List<StateTransition> destination)
+        {
+            Type stateType = state.GetType();
+            for (int pass = 0; pass < 2; pass++)
+            {
+                for (int i = 0; i < registeredTransitions.Count; i++)
+                {
+                    StateTransition transition = registeredTransitions[i];
+                    Type key = GetRoutingKey(transition);
+                    bool inPass = pass == 0 ? key == stateType : key == null;
+                    if (inPass && LeavesState(transition, state, stateType))
+                    {
+                        destination.Add(transition);
+                    }
+                }
+            }
+
+            SortByPriorityDescending(destination);
+        }
+
+        private static bool LeavesState(StateTransition transition, StateData state, Type stateType)
+        {
+            Type fromType = transition.FromStateType;
+            if (fromType != null && fromType != stateType)
+            {
+                return false;
+            }
+
+            // WHY: mirrors StateTransition.CanTransition - a missing (or destroyed) source asset does not restrict
+            // the source, and any other asset never matches this one.
+            StateData fromData = transition.FromStateData;
+            return ReferenceEquals(fromData, state) || fromData == null;
+        }
+
+        /// <summary>Stable insertion sort by descending priority; transition lists per state are short.</summary>
+        private static void SortByPriorityDescending(List<StateTransition> transitions)
+        {
+            for (int i = 1; i < transitions.Count; i++)
+            {
+                StateTransition item = transitions[i];
+                int priority = item.Priority;
+                int j = i - 1;
+                while (j >= 0 && transitions[j].Priority < priority)
+                {
+                    transitions[j + 1] = transitions[j];
+                    j--;
+                }
+
+                transitions[j + 1] = item;
+            }
+        }
+
+        private static void RemoveReference(List<StateTransition> transitions, StateTransition transition)
+        {
+            for (int i = transitions.Count - 1; i >= 0; i--)
+            {
+                if (ReferenceEquals(transitions[i], transition))
+                {
+                    transitions.RemoveAt(i);
+                }
+            }
         }
 
         /// <summary>
@@ -381,8 +571,7 @@ namespace Neo.StateMachine
 
             TState evaluatedState = CurrentState;
             ulong evaluatedGeneration = stateGeneration;
-            Type currentType = evaluatedState.GetType();
-            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(currentType);
+            IReadOnlyList<StateTransition> transitions = GetAvailableTransitionsFrom(evaluatedState);
 
             for (int i = 0; i < transitions.Count; i++)
             {
@@ -395,7 +584,7 @@ namespace Neo.StateMachine
                 bool canTransition = EvaluateTransition(transition, evaluatedState);
                 OnTransitionEvaluated?.Invoke(transition, canTransition);
 
-                // Predicates and evaluation listeners may stop the machine or choose another state.
+                // WHY: predicates and evaluation listeners may stop the machine or choose another state.
                 if (stateGeneration != evaluatedGeneration)
                 {
                     return;
@@ -406,14 +595,16 @@ namespace Neo.StateMachine
                     continue;
                 }
 
+                // WHY: only the first matching transition runs.
                 if (TryApplyTransitionTarget(transition))
                 {
-                    break; // WHY: Only the first matching transition runs
+                    break;
                 }
 
+                // WHY: a target constructor or lifecycle callback may have made an explicit choice before failing.
                 if (stateGeneration != evaluatedGeneration)
                 {
-                    return; // A target constructor or lifecycle callback may have made an explicit choice before failing.
+                    return;
                 }
             }
         }
@@ -423,7 +614,21 @@ namespace Neo.StateMachine
         /// </summary>
         public void Update()
         {
-            CurrentState?.OnUpdate();
+            TState state = CurrentState;
+            if (state == null)
+            {
+                return;
+            }
+
+            byte logScope = StateMachineLog.EnterScope(DebugLogEnabled);
+            try
+            {
+                state.OnUpdate();
+            }
+            finally
+            {
+                StateMachineLog.ExitScope(logScope);
+            }
         }
 
         /// <summary>
@@ -431,7 +636,21 @@ namespace Neo.StateMachine
         /// </summary>
         public void FixedUpdate()
         {
-            CurrentState?.OnFixedUpdate();
+            TState state = CurrentState;
+            if (state == null)
+            {
+                return;
+            }
+
+            byte logScope = StateMachineLog.EnterScope(DebugLogEnabled);
+            try
+            {
+                state.OnFixedUpdate();
+            }
+            finally
+            {
+                StateMachineLog.ExitScope(logScope);
+            }
         }
 
         /// <summary>
@@ -439,7 +658,21 @@ namespace Neo.StateMachine
         /// </summary>
         public void LateUpdate()
         {
-            CurrentState?.OnLateUpdate();
+            TState state = CurrentState;
+            if (state == null)
+            {
+                return;
+            }
+
+            byte logScope = StateMachineLog.EnterScope(DebugLogEnabled);
+            try
+            {
+                state.OnLateUpdate();
+            }
+            finally
+            {
+                StateMachineLog.ExitScope(logScope);
+            }
         }
 
         /// <summary>
@@ -458,8 +691,9 @@ namespace Neo.StateMachine
 
         private void DispatchLifecycleRequest(TState requestedState)
         {
-            lifecycleRequests.Enqueue(requestedState); // null represents Stop; ChangeState(null) is rejected above.
-            // Invalidate an in-flight condition as soon as an explicit request is accepted, even if queued.
+            // WHY: null represents Stop (ChangeState(null) is rejected earlier); the generation invalidates an
+            // in-flight condition as soon as an explicit request is accepted, even if it is only queued.
+            lifecycleRequests.Enqueue(requestedState);
             stateGeneration++;
             if (isDispatchingLifecycle)
             {
@@ -467,6 +701,10 @@ namespace Neo.StateMachine
             }
 
             isDispatchingLifecycle = true;
+
+            // WHY: exits, entries and their listeners run inside this machine's log scope, so NoCode actions log by
+            // this machine's DebugLogEnabled instead of whichever behaviour enabled last.
+            byte logScope = StateMachineLog.EnterScope(DebugLogEnabled);
             try
             {
                 int processedRequests = 0;
@@ -479,13 +717,15 @@ namespace Neo.StateMachine
 
                 if (lifecycleRequests.Count > 0)
                 {
-                    StateMachineLog.Warning("[StateMachine] Lifecycle request limit (128) reached; pending requests discarded.");
+                    StateMachineLog.Warning(DebugLogEnabled,
+                        "[StateMachine] Lifecycle request limit (128) reached; pending requests discarded.");
                 }
             }
             finally
             {
                 lifecycleRequests.Clear();
                 isDispatchingLifecycle = false;
+                StateMachineLog.ExitScope(logScope);
             }
         }
 
@@ -500,7 +740,7 @@ namespace Neo.StateMachine
             PreviousState = previous;
             if (newState == null)
             {
-                // Preserve Stop's existing contract: OnExit sees a stopped machine.
+                // WHY: Stop's existing contract - OnExit sees a stopped machine.
                 CurrentState = null;
                 currentStateEnterTime = float.NaN;
                 previous.OnExit();
@@ -509,7 +749,7 @@ namespace Neo.StateMachine
                 return;
             }
 
-            // ChangeState's OnExit still sees the old current state. Nested requests cannot re-enter this exit.
+            // WHY: ChangeState's OnExit still sees the old current state; nested requests cannot re-enter this exit.
             previous?.OnExit();
             OnStateExited?.Invoke(previous);
             CurrentState = newState;
@@ -546,9 +786,9 @@ namespace Neo.StateMachine
         /// </summary>
         public void ClearTransitionCache()
         {
-            transitionCache.Clear();
-            globalTransitions.Clear();
+            registeredTransitions.Clear();
             _sortedTransitionsCache.Clear();
+            _sortedStateDataTransitions.Clear();
             _sortedTransitionsDirty = true;
         }
 
@@ -568,12 +808,29 @@ namespace Neo.StateMachine
             return false;
         }
 
+        private bool IsActivatableStateType(Type stateType)
+        {
+            if (stateType == null)
+            {
+                return false;
+            }
+
+            if (stateTypeAdmissionCache.TryGetValue(stateType, out bool admitted))
+            {
+                return admitted;
+            }
+
+            admitted = stateType.IsClass && typeof(TState).IsAssignableFrom(stateType) &&
+                       !stateType.IsAbstract && !stateType.ContainsGenericParameters &&
+                       !typeof(UnityEngine.Object).IsAssignableFrom(stateType) &&
+                       stateType.GetConstructor(Type.EmptyTypes) != null;
+            stateTypeAdmissionCache[stateType] = admitted;
+            return admitted;
+        }
+
         private bool ChangeStateByType(Type stateType)
         {
-            if (stateType == null || !stateType.IsClass || !typeof(TState).IsAssignableFrom(stateType) ||
-                stateType.IsAbstract || stateType.ContainsGenericParameters ||
-                typeof(UnityEngine.Object).IsAssignableFrom(stateType) ||
-                stateType.GetConstructor(Type.EmptyTypes) == null)
+            if (!IsActivatableStateType(stateType))
             {
                 return false;
             }
@@ -584,9 +841,15 @@ namespace Neo.StateMachine
                 return true;
             }
 
+            ulong activationGeneration = stateGeneration;
             try
             {
                 TState newState = Activator.CreateInstance(stateType) as TState;
+                if (stateGeneration != activationGeneration)
+                {
+                    return false;
+                }
+
                 if (newState != null)
                 {
                     if (enableStateCaching)
@@ -600,20 +863,126 @@ namespace Neo.StateMachine
             }
             catch (Exception ex)
             {
-                StateMachineLog.Error($"[StateMachine] Failed to create state of type {stateType.Name}: {ex.Message}");
+                if (DebugLogEnabled)
+                {
+                    // WHY: Activator wraps constructor faults; the inner exception names the actual cause.
+                    Exception cause = ex is TargetInvocationException { InnerException: not null } invocation
+                        ? invocation.InnerException
+                        : ex;
+                    StateMachineLog.Error(true,
+                        $"[StateMachine] Failed to create state of type {stateType.Name}: {cause.Message}");
+                }
             }
 
             return false;
         }
     }
 
+    /// <summary>
+    ///     One cached, priority-sorted transition list plus the <see cref="StateTransition.RoutingVersion"/> it was
+    ///     last checked against.
+    /// </summary>
+    internal sealed class TransitionLookup
+    {
+        public TransitionLookup(List<StateTransition> transitions, int routingVersion)
+        {
+            Transitions = transitions;
+            RoutingVersion = routingVersion;
+        }
+
+        public List<StateTransition> Transitions { get; private set; }
+
+        public int RoutingVersion { get; private set; }
+
+        /// <summary>
+        ///     Keeps the current list when <paramref name="rebuilt"/> has the same order, otherwise replaces it with a
+        ///     copy. Clears <paramref name="rebuilt"/>.
+        /// </summary>
+        /// <remarks>
+        ///     WHY: a routing edit anywhere bumps the shared version; comparing instead of replacing keeps unrelated
+        ///     machines allocation-free, and replacing instead of refilling keeps a list that is being iterated intact.
+        /// </remarks>
+        public void Revalidate(List<StateTransition> rebuilt, int routingVersion)
+        {
+            List<StateTransition> current = Transitions;
+            bool same = current.Count == rebuilt.Count;
+            for (int i = 0; same && i < rebuilt.Count; i++)
+            {
+                same = ReferenceEquals(current[i], rebuilt[i]);
+            }
+
+            if (!same)
+            {
+                Transitions = new List<StateTransition>(rebuilt);
+            }
+
+            rebuilt.Clear();
+            RoutingVersion = routingVersion;
+        }
+    }
+
+    /// <summary>Identity comparer: a destroyed StateData must not collide with another destroyed asset as a key.</summary>
+    internal sealed class StateDataReferenceComparer : IEqualityComparer<StateData>
+    {
+        public static readonly StateDataReferenceComparer Instance = new();
+
+        public bool Equals(StateData x, StateData y)
+        {
+            return ReferenceEquals(x, y);
+        }
+
+        public int GetHashCode(StateData obj)
+        {
+            return RuntimeHelpers.GetHashCode(obj);
+        }
+    }
+
+    /// <summary>
+    ///     Debug-only log gateway of the State Machine module. Machine and wrapper logs pass their own switch; logs
+    ///     from code that has no machine reference (NoCode actions, StateData) follow the innermost machine scope and,
+    ///     outside any scope, the shared <see cref="Enabled"/> switch.
+    /// </summary>
     internal static class StateMachineLog
     {
+        private const byte NoScope = 0;
+        private const byte ScopeOff = 1;
+        private const byte ScopeOn = 2;
+
+        // WHY: thread-static like StateMachineEvaluationContext; callers save and restore the previous value instead
+        // of pushing onto a stack, so a scope per tick costs no allocation.
+        [ThreadStatic] private static byte s_scope;
+
+        /// <summary>
+        ///     Shared switch for logs that run outside any machine scope; StateMachineBehaviour components write it in
+        ///     OnEnable, and machines whose <see cref="StateMachine{TState}.DebugLogEnabled"/> is unassigned follow it.
+        /// </summary>
         public static bool Enabled { get; set; }
+
+        /// <summary>True when the innermost machine scope enables logs; outside any scope, <see cref="Enabled"/>.</summary>
+        public static bool ScopeEnabled => s_scope == NoScope ? Enabled : s_scope == ScopeOn;
+
+        /// <summary>Opens a machine log scope; pass the returned value to <see cref="ExitScope"/>.</summary>
+        public static byte EnterScope(bool enabled)
+        {
+            byte previous = s_scope;
+            s_scope = enabled ? ScopeOn : ScopeOff;
+            return previous;
+        }
+
+        /// <summary>Restores the scope that was active before the matching <see cref="EnterScope"/>.</summary>
+        public static void ExitScope(byte previous)
+        {
+            s_scope = previous;
+        }
 
         public static void Info(string message, UnityEngine.Object context = null)
         {
-            if (Enabled)
+            Info(ScopeEnabled, message, context);
+        }
+
+        public static void Info(bool enabled, string message, UnityEngine.Object context = null)
+        {
+            if (enabled)
             {
                 Debug.Log(message, context);
             }
@@ -621,7 +990,12 @@ namespace Neo.StateMachine
 
         public static void Warning(string message, UnityEngine.Object context = null)
         {
-            if (Enabled)
+            Warning(ScopeEnabled, message, context);
+        }
+
+        public static void Warning(bool enabled, string message, UnityEngine.Object context = null)
+        {
+            if (enabled)
             {
                 Debug.LogWarning(message, context);
             }
@@ -629,7 +1003,12 @@ namespace Neo.StateMachine
 
         public static void Error(string message, UnityEngine.Object context = null)
         {
-            if (Enabled)
+            Error(ScopeEnabled, message, context);
+        }
+
+        public static void Error(bool enabled, string message, UnityEngine.Object context = null)
+        {
+            if (enabled)
             {
                 Debug.LogError(message, context);
             }

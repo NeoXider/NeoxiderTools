@@ -1,8 +1,15 @@
 ﻿# RpgProgressionDefinition
 
-**What it is:** a ScriptableObject with `RpgCharacter` growth rules.
+**What it is:** a ScriptableObject with `RpgCharacter` growth rules (`Scripts/Rpg/Data/RpgProgressionDefinition.cs`, namespace `Neo.Rpg`): the growth mode, upgrade points and per-stat upgrade rules.
 
-**Create:** `Create -> Neoxider -> RPG -> Progression Definition`.
+**How to use:**
+1. Create an asset via **Create > Neoxider > RPG > Progression Definition** and pick a growth mode below.
+2. Assign it to the `progression` field of an [RpgCharacterTemplate](RpgCharacterTemplate.md), or to the
+   character's **Progression (optional)** field.
+3. Drive levels with `AddLevel` / `AddXp`, and spend manual points with `UpgradeStat` from code or
+   [RpgNoCodeAction](RpgNoCodeAction.md).
+
+---
 
 ## Growth Modes
 

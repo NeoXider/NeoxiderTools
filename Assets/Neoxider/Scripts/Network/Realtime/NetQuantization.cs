@@ -37,8 +37,6 @@ namespace Neo.Network.Realtime
 
         private const float TwoPi = (float)(Math.PI * 2d);
 
-        // ---- generic, explicit density -----------------------------------------------------------
-
         /// <summary>Largest magnitude <see cref="PackShort"/> can carry at the given density.</summary>
         public static float MaxShort(float stepsPerUnit)
         {
@@ -75,8 +73,6 @@ namespace Neo.Network.Realtime
         {
             return stepsPerUnit <= 0f ? 0f : packed / stepsPerUnit;
         }
-
-        // ---- presets -------------------------------------------------------------------------------
 
         /// <summary>True when the coordinate survives <see cref="PackPosition"/> without saturating.</summary>
         public static bool FitsPosition(float value)
@@ -147,8 +143,6 @@ namespace Neo.Network.Realtime
             return (packed - 128) / 127f;
         }
 
-        // ---- angles ----------------------------------------------------------------------------------
-
         /// <summary>An angle in radians (any range, wrapped to 0..2pi) into 16 bits: 0.0055 degree resolution.</summary>
         public static ushort PackAngle(float radians)
         {
@@ -174,8 +168,6 @@ namespace Neo.Network.Realtime
         {
             return packed / 256f * TwoPi;
         }
-
-        // ---- hit points ------------------------------------------------------------------------------
 
         /// <summary>
         ///     Hit points as a whole number rounded <i>up</i>: an entity with 0.3 HP left must still read as alive on

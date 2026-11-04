@@ -137,7 +137,7 @@ namespace Neo.Tests.Play
             GameObject root = Track(new GameObject("SlotControllerRoot"));
             SpinController controller = root.AddComponent<SpinController>();
             SpritesData sprites = CreateSpritesData(0, 1, 2, 3);
-            var rows = new Row[3];
+            Row[] rows = new Row[3];
 
             for (int x = 0; x < rows.Length; x++)
             {
@@ -404,7 +404,7 @@ namespace Neo.Tests.Play
             arrowGo.AddComponent<RectTransform>();
 
             const int n = 4;
-            var items = new GameObject[n];
+            GameObject[] items = new GameObject[n];
             for (int i = 0; i < n; i++)
             {
                 items[i] = Track(new GameObject($"P{i}"));
@@ -461,7 +461,7 @@ namespace Neo.Tests.Play
         private SpritesData CreateSpritesData(params int[] ids)
         {
             SpritesData so = Track(ScriptableObject.CreateInstance<SpritesData>());
-            var visuals = new SlotVisualData[ids.Length];
+            SlotVisualData[] visuals = new SlotVisualData[ids.Length];
             for (int i = 0; i < ids.Length; i++)
             {
                 visuals[i] = new SlotVisualData { id = ids[i] };

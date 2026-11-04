@@ -319,16 +319,11 @@ namespace Neo.Tools
             SetBaseSpeed(_baseSpeed + scroll * _mouseWheelSpeedStep);
         }
 
-        private float ReadMouseScroll()
+        private static float ReadMouseScroll()
         {
-            try
-            {
-                return Input.mouseScrollDelta.y;
-            }
-            catch (InvalidOperationException)
-            {
-                return 0f;
-            }
+            // WHY: MouseInputCompat reads the legacy wheel or the Input System Mouse.scroll, whichever backend works,
+            // without throwing; a legacy-only read always returned 0 in Input System-only projects.
+            return MouseInputCompat.TryGetScrollDelta(out Vector2 scroll) ? scroll.y : 0f;
         }
 
         private bool ShouldUseNewInput()
@@ -363,15 +358,7 @@ namespace Neo.Tools
 
         private static bool IsLegacyInputAvailable()
         {
-            try
-            {
-                Vector3 _ = Input.mousePosition;
-                return true;
-            }
-            catch (InvalidOperationException)
-            {
-                return false;
-            }
+            return NeoInputAvailability.IsLegacyInputAvailable();
         }
 
         private void WarnLegacyInputUnavailable()
@@ -400,8 +387,8 @@ namespace Neo.Tools
                 CaptureCursorSnapshot();
                 if (_lockCursorWhileLooking)
                 {
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
+                    MoveCursor.LockState = CursorLockMode.Locked;
+                    MoveCursor.Visible = false;
                 }
 
                 _onLookStart?.Invoke();
@@ -438,8 +425,8 @@ namespace Neo.Tools
                 return;
             }
 
-            _previousLockState = Cursor.lockState;
-            _previousCursorVisible = Cursor.visible;
+            _previousLockState = MoveCursor.LockState;
+            _previousCursorVisible = MoveCursor.Visible;
             _hasCursorSnapshot = true;
         }
 
@@ -450,8 +437,8 @@ namespace Neo.Tools
                 return;
             }
 
-            Cursor.lockState = _previousLockState;
-            Cursor.visible = _previousCursorVisible;
+            MoveCursor.LockState = _previousLockState;
+            MoveCursor.Visible = _previousCursorVisible;
             _hasCursorSnapshot = false;
         }
 

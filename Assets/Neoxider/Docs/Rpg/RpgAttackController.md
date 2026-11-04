@@ -1,6 +1,15 @@
 ﻿# RpgAttackController
 
-**What it is:** a unified runtime attack caster for melee, ranged, and area attacks driven by `RpgAttackDefinition`.
+**What it is:** a `MonoBehaviour` (`Scripts/Rpg/Components/RpgAttackController.cs`, namespace `Neo.Rpg`) that
+casts melee, ranged and area attacks described by `RpgAttackDefinition`, with costs, cooldowns, cast delay,
+presets and optional built-in input.
+
+**How to use:**
+1. Add it to the actor, fill `Attacks` (and optionally `Presets`), assign `Character Source` when the
+   `RpgCharacter` is not on this object or a parent.
+2. Call `UsePrimaryAttack()`, `TryUseAttack(id, out reason)` or `TryUsePreset(...)` from code, UnityEvents,
+   `RpgAutoAttackController` or `RpgNoCodeAction`.
+3. Disable `Enable Built-in Input` on NPCs; keep it for a player who attacks with the mouse/key binding.
 
 **Navigation:** [← RPG](./README.md)
 
@@ -10,9 +19,13 @@
 
 | Mode | Runtime behavior |
 |------|------------------|
-| `Direct` | Raycast / SphereCast / CircleCast forward |
+| `Direct` | Raycast (radius 0) or SphereCast / CircleCast forward; hits are applied nearest first |
 | `Area` | OverlapSphere / OverlapCircle at the impact point |
 | `Projectile` | Spawns `RpgProjectile` with the same definition |
+
+`MaxTargets` caps receivers per cast; with casts the nearest receivers win (3D results are sorted by
+distance, 2D results are sorted the same way). Queries reuse per-controller buffers that grow instead of
+truncating, so warm casts allocate nothing.
 
 ## API
 
@@ -20,11 +33,26 @@
 - `UsePrimaryPreset()`
 - `TryUseAttack(...)`
 - `TryUsePreset(...)`
+- `CanUseAttack(...)` / `CanUsePreset(...)`
 - `GetRemainingCooldown(...)`
+- `GetEffectiveCooldown(RpgAttackDefinition)` - cooldown the next use would start
+- `ScaleCooldownByAttackSpeed` - see below
+- `IsCasting`, `EnableBuiltInInput`
+
+## Attack speed
+
+Enable **Scale Cooldown By Attack Speed** (`ScaleCooldownByAttackSpeed`) to divide each new cooldown by the
+source `RpgCharacter.GetAttackSpeedMultiplier()` (`AttackSpeedPercent` buffs; +100% halves the cooldown,
+the multiplier is floored at 0.01). Cooldowns already running are not rescaled. The option is off by default.
+
+```csharp
+attackController.ScaleCooldownByAttackSpeed = true;
+hero.ApplyBuffById("Frenzy"); // AttackSpeedPercent = 50 -> next cooldown is 1/1.5 of the authored value
+```
 
 ## Built-in input
 
-- Enabled by default.
+- Enabled by default. The press is checked first; network authority is only resolved on a press.
 - Primary attack uses left mouse button by default.
 - Binding can use either `MouseButton` or `KeyCode`.
 - Disable `Enable Built-in Input` for NPC and AI actors.

@@ -1,13 +1,14 @@
 ﻿# LevelConditionAdapter
 
-Evaluates a level or XP threshold through `IConditionEvaluator` in `Neo.Core.Level.Bridge` (namespace `Neo.Core.Level`). A C# consumer supplies the GameObject context and chooses when to evaluate.
+**What it is:** a scene adapter that evaluates a level or XP threshold through `IConditionEvaluator` in `Neo.Core.Level.Bridge` (namespace `Neo.Core.Level`). A C# consumer supplies the GameObject context and chooses when to evaluate. Script: `Scripts/Core/Level/Bridge/LevelConditionAdapter.cs`.
 
-## Setup
-
+**How to use:**
 1. Add **Neoxider → Core → Level Condition Adapter** to a GameObject.
 2. Assign **Level Provider** to a `LevelComponent`, or leave it empty to resolve one on the evaluation context.
 3. Select **Mode**, set the nonnegative **Threshold**, and optionally enable **Invert**.
 4. Call `Evaluate(context)` from a consumer of `IConditionEvaluator`, or `EvaluateCurrent()` to check the adapter's own GameObject.
+
+---
 
 ## Key Fields (Inspector)
 

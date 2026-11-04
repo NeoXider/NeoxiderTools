@@ -94,7 +94,7 @@ namespace Neo.Tools
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
-            // Retain the narrow legacy callback for direct JsonUtility consumers. It cannot resolve
+            // WHY: Retain the narrow legacy callback for direct JsonUtility consumers. It cannot resolve
             // Count=1 domain defaults; use ToJson/FromJson for the nullable snapshot contract.
             if (Slots != null)
             {
@@ -142,7 +142,7 @@ namespace Neo.Tools
 
         private static InventoryItemInstance DecodeInstance(WireInstance instance)
         {
-            // Do not clone here: Clone generates missing ids and normalizes counts before admission.
+            // WHY: Do not clone here: Clone generates missing ids and normalizes counts before admission.
             return instance == null ? null : new InventoryItemInstance
             {
                 InstanceId = instance.InstanceId,
@@ -162,11 +162,11 @@ namespace Neo.Tools
                 return null;
             }
 
-            // In particular, id0/keyless Count1 is real data, and invalid data retains instance precedence.
+            // WHY: In particular, id0/keyless Count1 is real data, and invalid data retains instance precedence.
             return DecodeInstance(instance);
         }
 
-        // Keep the existing row id defaults separate: records use 0, slots use the empty sentinel -1.
+        // WHY: Keep the existing row id defaults separate: records use 0, slots use the empty sentinel -1.
         // Unity may materialize inline nulls; only the optional instance's wire defaults are all-zero.
         [Serializable]
         private sealed class WireSaveData

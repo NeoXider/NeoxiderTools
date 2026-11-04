@@ -80,7 +80,7 @@ namespace Neo.Rpg
 
             result = _invert ? !result : result;
             LastResult = result;
-            // Listeners may evaluate again; this call's events and return value keep its own result.
+            // WHY: listeners may evaluate again; this call's events and return value keep its own result.
             _onEvaluated?.Invoke(result);
             if (result)
             {
@@ -94,10 +94,21 @@ namespace Neo.Rpg
             return result;
         }
 
+        /// <summary>Evaluates against this GameObject's hierarchy and returns the result (see <see cref="Evaluate" />).</summary>
         [Button]
         public bool EvaluateCurrent()
         {
             return Evaluate(gameObject);
+        }
+
+        /// <summary>
+        ///     UnityEvent entry point: evaluates like <see cref="EvaluateCurrent" /> and reports through the
+        ///     result events and <see cref="LastResult" />. Persistent UnityEvent listeners need a void method,
+        ///     so wire this one from buttons, timers or <c>RpgCharacter</c> events.
+        /// </summary>
+        public void Refresh()
+        {
+            Evaluate(gameObject);
         }
 
         private RpgCharacter ResolveCharacter(GameObject context)

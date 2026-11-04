@@ -6,9 +6,11 @@ A single standard for every `.md` under `Assets/Neoxider/Docs` and the root READ
 
 ## 1. Language and tone
 
-- **Language:** English.
+- **Language:** English. Entry pages may add a short `По-русски` paragraph; write it in real UTF-8 Cyrillic, never in an escaped or mojibake form.
 - **Tone:** dry and to the point. No marketing phrases and no obvious filler.
 - **Terms:** script/class/component by context; file paths relative to `Assets/Neoxider/Scripts` or absolute.
+- **Code samples:** they must compile against the current API and follow the package code style: explicit types instead of `var`, English comments.
+- **Scope:** `Docs/` holds user documentation only. Plans, TODO lists, audits and maintainer guides live in the repository's `dev-docs/` folder.
 
 ---
 
@@ -50,7 +52,11 @@ After the `---` add sections as needed: **Fields**, **Methods**, **Events**, **E
 ---
 ```
 
-Further subsections (Data flow, Code structure, Demo scenes, etc.) as needed.
+Further subsections (Data flow, Code structure, etc.) as needed. A module with a demo scene adds a **Demo scene** section: the scene path relative to the Demo Scenes sample, the objects to inspect, and the equivalent C# calls. The scenes are authored by builders; see [Samples](Docs/Samples.md#how-demo-scenes-are-made).
+
+### 2.3. Upgrade pages
+
+Behaviour changes, obsolete APIs and removals that an existing project can notice go into `CHANGELOG.md` **and** the current upgrade page (`Docs/Migration12.md` for 11.x → 12). Historical upgrade pages (`Docs/Migration11.md`) are kept as records; add a pointer instead of rewriting them.
 
 ---
 
@@ -94,6 +100,8 @@ Section headings are `## Fields`, `## Methods`, etc. Use `### …` subheadings w
 - The script path is stated in **What it is**.
 - The style matches the rest of the documentation (English, dry, no filler).
 - A module README contains a **Contents** list with links.
+- Relative links resolve (the `Neoxider > Health Check` menu reports dead links inside `Docs/`).
+- New or changed public API, behaviour or obsolete members are reflected in the module page, `CHANGELOG.md` and, when users must act, the current upgrade page.
 
 ---
 

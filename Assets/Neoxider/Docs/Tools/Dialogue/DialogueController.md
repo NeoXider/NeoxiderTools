@@ -1,14 +1,16 @@
 ﻿# DialogueController
 
-`Neo.Tools.DialogueController` plays a linear `Dialogue[]` graph using UniTask and `TypewriterEffect`. It works without `DialogueUI`; assigned views receive names, portraits and text.
+**What it is:** `Neo.Tools.DialogueController` plays a linear `Dialogue[]` graph using UniTask and `TypewriterEffect`. It works without `DialogueUI`; assigned views receive names, portraits and text. Script: `Scripts/Tools/Dialogue/DialogueController.cs`.
 
-## Setup
-
+**How to use:**
 - Add **Neoxider → Tools → Dialogue → DialogueController**.
 - Populate `dialogues`, monologues and sentences inline, or open **Open Dialogue Editor** in the Inspector. Authoring the graph does not require Play Mode.
 - Assign `_dialogueUI`, or place `DialogueUI` on the same GameObject for the `Awake` fallback.
 - Configure the typewriter speed, punctuation and time mode. Enable `autoStart` or call `StartDialogue()` after initialization.
+- Pick the typewriter `Reveal Mode`. `RebuildText` (default, the historical behaviour) hands `DialogueUI` a growing string for every character, so the text reflows while it is typed. `MaxVisibleCharacters` assigns the whole sentence once and raises TMP `maxVisibleCharacters` instead: no string per character and no words jumping between lines. The typewriter skips every `<...>` as a tag, while TMP counts `<br>`, sprites and `<` text that is not a TMP tag as characters, so around those the reveal can lag behind the typed characters. When the sentence finishes, on its own or through `CompleteTypewriter()`, the limit is lifted and the whole sentence shows.
 - Bind a UI button's `onClick` to `SkipOrNext()`. Bind scene reactions to the controller/data UnityEvents. The same methods and events are available from C#; no UnityEvent chain is required to control playback.
+
+---
 
 ## Public API
 
@@ -24,6 +26,7 @@
 | `GetCurrentDialogue/Monolog/Sentence()` | Return the current data object, or null for an invalid selection. |
 | `CurrentDialogueId`, `CurrentMonologId`, `CurrentSentenceId` | Read-only cursor properties. |
 | `DialogueStarted`, `IsTyping`, `Typewriter` | Playback state and configurable effect. Use controller navigation/completion methods while the controller owns playback. |
+| `RevealMode` | `TypewriterRevealMode.RebuildText` (default) or `MaxVisibleCharacters`, as described in Setup. Applies to the next sentence. A sentence that finishes typing on its own, `CompleteTypewriter()` and untyped sentences always show the full text. |
 
 Inspector playback actions are restricted to Play Mode. The editor window action remains available for authoring.
 

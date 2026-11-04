@@ -1,145 +1,291 @@
+using System;
+using System.Globalization;
+using Neo.Save;
 using Neo.Settings;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Bright, self-contained demo for the <b>Neo.Settings</b> module. Bootstraps the real
-    ///     <see cref="GameSettingsComponent" /> singleton (creating one if the scene has none) so the static
-    ///     <see cref="GameSettings" /> facade is attached, then exposes the most demonstrable settings —
-    ///     mouse sensitivity, graphics preset, framerate cap and VSync — through their real Set* calls.
-    ///     Framerate cap and VSync have an immediate engine effect. Save / Reset use the real persistence
-    ///     path and every change is logged. Robust in an empty scene.
+    ///     Controller of the authored <b>Neo.Settings</b> demo scene. The whole UI (frame, rows, log feed, info
+    ///     card) is saved in SettingsDemo.unity by its DemoSceneKit builder; buttons, the preset dropdown and the
+    ///     VSync toggle call the public methods below through persistent UnityEvents, and the sensitivity slider
+    ///     calls <see cref="GameSettingsComponent.SetMouseSensitivityForMenu" /> on the service directly (the
+    ///     NoCode path). This component only forwards to the real <see cref="GameSettings" /> API, mirrors the
+    ///     live values into the authored labels and logs every call. While the slider is dragged it shows the
+    ///     Deferred debounce (<see cref="GameSettingsComponent.HasPendingDeferredSave" />) and the value stored in
+    ///     <see cref="SaveProvider" />, so one write per burst of changes is visible. It builds no UI at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Demos/Settings Demo")]
     public sealed class SettingsDemoController : MonoBehaviour
     {
-        private static readonly int[] FpsPresets = { 30, 60, 120, -1 };
+        [Header("Service")]
+        [Tooltip("Scene settings service. Created as a singleton on play when left empty.")]
+        [SerializeField] private GameSettingsComponent _settings;
 
-        private NeoDemoShell.Context _shell;
-        private TMP_Text _sensValue;
-        private TMP_Text _presetValue;
-        private TMP_Text _fpsValue;
-        private TMP_Text _vsyncValue;
+        [Tooltip("Must match the service's save key prefix; used to read the stored sensitivity back.")]
+        [SerializeField] private string _saveKeyPrefix = "Neo.Settings.";
+
+        [Header("Live values")]
+        [SerializeField] private TMP_Text _sensitivityValue;
+        [SerializeField] private TMP_Text _presetValue;
+        [SerializeField] private TMP_Text _framerateValue;
+        [SerializeField] private TMP_Text _vSyncValue;
+
+        [Header("Deferred save")]
+        [SerializeField] private TMP_Text _deferredValue;
+        [SerializeField] private TMP_Text _storedValue;
+
+        [Header("Controls synced on start")]
+        [SerializeField] private Slider _sensitivitySlider;
+        [SerializeField] private TMP_Dropdown _presetDropdown;
+        [SerializeField] private Toggle _vSyncToggle;
+
+        [Header("Feed")]
+        [SerializeField] private DemoLogFeed _log;
+
         private bool _subscribed;
+        private bool _warnedUnbuilt;
+        private bool _watchingDeferredSave;
+        private int _burstChanges;
 
-        private void OnEnable() => _shell?.SetVisible(true);
-        private void OnDisable() => _shell?.SetVisible(false);
+        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _log != null && _presetValue != null && _framerateValue != null &&
+                                    _vSyncValue != null && _sensitivityValue != null && _deferredValue != null &&
+                                    _storedValue != null;
 
-        private void Start()
+        public GameSettingsComponent Settings => _settings;
+
+        /// <summary>Slider changes collected by the running Deferred debounce (0 when idle).</summary>
+        public int PendingSliderChanges => _watchingDeferredSave ? _burstChanges : 0;
+
+        private void OnEnable()
         {
-            _shell = NeoDemoShell.Build("Neo.Settings", new Color(0.98f, 0.72f, 0.30f), transform);
-
-            NeoDemoShell.ShowInfoCardOnce(
-                "Neo.Settings · GameSettings",
-                "Static GameSettings facade backed by a GameSettingsComponent service. Set* calls apply and persist.",
-                "Framerate cap + VSync change the engine immediately",
-                "Preset buttons call GameSettings.SetGraphicsPreset(...)",
-                "Save settings → FlushPendingSettingsSave; Reset → ResetGroup per group");
-
-            EnsureService();
-
-            _sensValue = _shell.AddValueLabel("Mouse sensitivity");
-            _presetValue = _shell.AddValueLabel("Graphics preset");
-            _fpsValue = _shell.AddValueLabel("Framerate cap");
-            _vsyncValue = _shell.AddValueLabel("VSync");
-
-            _shell.AddSlider("Mouse sensitivity", 0.1f, 10f, GameSettings.MouseSensitivity, v =>
+            if (!_subscribed)
             {
-                GameSettings.SetMouseSensitivity(v);
-                _shell.Log($"GameSettings.SetMouseSensitivity({v:0.0})");
-            });
-
-            _shell.AddButtonRow(
-                ("Low", () => SetPreset(GraphicsPreset.Low)),
-                ("Medium", () => SetPreset(GraphicsPreset.Medium)),
-                ("High", () => SetPreset(GraphicsPreset.High)),
-                ("Max", () => SetPreset(GraphicsPreset.Maximum)));
-
-            _shell.AddButtonRow(
-                ("30 fps", () => SetFps(0)),
-                ("60 fps", () => SetFps(1)),
-                ("120 fps", () => SetFps(2)),
-                ("Unlimited", () => SetFps(3)));
-
-            _shell.AddToggle("VSync", GameSettings.VSync, on =>
-            {
-                GameSettings.SetVSync(on);
-                _shell.Log($"GameSettings.SetVSync({on}) → QualitySettings.vSyncCount");
-            });
-
-            _shell.AddButtonRow(("Save settings", SaveSettings), ("Reset defaults", ResetDefaults));
-
-            GameSettings.OnSettingsChanged += RefreshLabels;
-            _subscribed = true;
-            RefreshLabels();
-            _shell.Log("GameSettingsComponent attached — GameSettings live");
+                GameSettings.OnSettingsChanged += RefreshLabels;
+                _subscribed = true;
+            }
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             if (_subscribed)
             {
                 GameSettings.OnSettingsChanged -= RefreshLabels;
+                _subscribed = false;
             }
-
-            _shell?.Dispose();
         }
 
-        private void EnsureService()
+        private void Start()
         {
-            if (GameSettingsComponent.HasInstance)
+            if (!IsSceneBuilt)
             {
-                _shell.Log("Reused existing GameSettingsComponent.I");
+                WarnUnbuilt();
+            }
+
+            EnsureService();
+            SyncControls();
+            RefreshLabels();
+            RefreshStored();
+            SetDeferredText("idle · drag the slider");
+            Log("GameSettings live - every control calls the real Set* API");
+        }
+
+        private void Update()
+        {
+            // WHY: the service exposes the debounce as a property only; poll it while a burst is running.
+            if (!_watchingDeferredSave || (_settings != null && _settings.HasPendingDeferredSave))
+            {
                 return;
             }
 
-            // Lazily create the settings service; its Init() calls GameSettings.Attach + LoadState.
-            GameSettingsComponent.CreateInstance = true;
-            _ = GameSettingsComponent.I;
-            _shell.Log("Created GameSettingsComponent singleton");
+            _watchingDeferredSave = false;
+            SetDeferredText("saved · " + _burstChanges + (_burstChanges == 1 ? " change -> 1 write" : " changes -> 1 write"));
+            RefreshStored();
+            Log("Deferred save wrote MouseSensitivity once for " + _burstChanges + " slider changes");
+            _burstChanges = 0;
         }
 
-        private void SetPreset(GraphicsPreset preset)
+        /// <summary>Dropdown target: applies a <see cref="GraphicsPreset" /> by its enum value.</summary>
+        public void SetGraphicsPreset(int preset)
         {
-            GameSettings.SetGraphicsPreset(preset);
-            _shell.Log($"GameSettings.SetGraphicsPreset({preset})");
+            if (!Enum.IsDefined(typeof(GraphicsPreset), preset))
+            {
+                Log("Ignored unknown graphics preset " + preset);
+                return;
+            }
+
+            GraphicsPreset value = (GraphicsPreset)preset;
+            GameSettings.SetGraphicsPreset(value);
+            Log("GameSettings.SetGraphicsPreset(" + value + ")");
         }
 
-        private void SetFps(int index)
+        /// <summary>Button target: caps the framerate (-1 = unlimited).</summary>
+        public void SetFramerateCap(int framesPerSecond)
         {
-            int fps = FpsPresets[index];
-            GameSettings.SetFramerateCap(fps);
-            _shell.Log($"GameSettings.SetFramerateCap({fps}) → Application.targetFrameRate");
+            GameSettings.SetFramerateCap(framesPerSecond);
+            Log("GameSettings.SetFramerateCap(" + framesPerSecond + ") -> Application.targetFrameRate");
         }
 
-        private void SaveSettings()
+        /// <summary>Toggle target.</summary>
+        public void SetVSync(bool enabled)
         {
-            GameSettings.FlushPendingSettingsSave(); // writes current values to SaveProvider
-            Neo.Save.SaveProvider.Save(); // flush provider to disk
-            _shell.Log("GameSettings.FlushPendingSettingsSave() → persisted");
+            GameSettings.SetVSync(enabled);
+            Log("GameSettings.SetVSync(" + enabled + ") -> QualitySettings.vSyncCount");
         }
 
-        private void ResetDefaults()
+        /// <summary>
+        ///     Slider listener next to the NoCode service call: counts the changes the Deferred debounce collects and
+        ///     logs the first one of each burst (logging every drag frame would flood the feed).
+        /// </summary>
+        public void LogSensitivity(float value)
+        {
+            if (!_watchingDeferredSave)
+            {
+                _watchingDeferredSave = true;
+                _burstChanges = 0;
+                Log("GameSettingsComponent.SetMouseSensitivityForMenu(" + value.ToString("0.0", CultureInfo.InvariantCulture) +
+                    ") · Deferred save scheduled");
+            }
+
+            _burstChanges++;
+            SetDeferredText("saving… " + _burstChanges + (_burstChanges == 1 ? " change queued" : " changes queued"));
+        }
+
+        /// <summary>Button target: writes pending values through SaveProvider.</summary>
+        public void SaveSettings()
+        {
+            GameSettings.FlushPendingSettingsSave();
+            SaveProvider.Save();
+            if (_watchingDeferredSave)
+            {
+                _watchingDeferredSave = false;
+                _burstChanges = 0;
+                SetDeferredText("flushed now · debounce cancelled");
+            }
+
+            RefreshStored();
+            Log("GameSettings.FlushPendingSettingsSave() -> persisted");
+        }
+
+        /// <summary>Button target: restores the Input, Graphics and Performance defaults.</summary>
+        public void ResetDefaults()
         {
             GameSettings.ResetGroup(SettingsGroup.Input);
             GameSettings.ResetGroup(SettingsGroup.Graphics);
             GameSettings.ResetGroup(SettingsGroup.Performance);
-            _shell.Log("GameSettings.ResetGroup(Input/Graphics/Performance)");
+            SyncControls();
+            RefreshStored();
+            Log("GameSettings.ResetGroup(Input / Graphics / Performance)");
         }
 
-        private void RefreshLabels()
+        private void EnsureService()
         {
-            if (_sensValue == null)
+            if (_settings != null)
             {
                 return;
             }
 
-            _sensValue.text = GameSettings.MouseSensitivity.ToString("0.0");
-            _presetValue.text = GameSettings.GraphicsPreset.ToString();
-            _fpsValue.text = GameSettings.FramerateCap < 0 ? "Unlimited" : GameSettings.FramerateCap + " fps";
-            _vsyncValue.text = GameSettings.VSync ? "ON" : "OFF";
+            if (GameSettingsComponent.HasInstance)
+            {
+                _settings = GameSettingsComponent.I;
+                return;
+            }
+
+            // WHY: the service is gameplay state, not UI; creating it keeps the controller usable in an empty scene.
+            GameSettingsComponent.CreateInstance = true;
+            _settings = GameSettingsComponent.I;
+            Log("Created GameSettingsComponent singleton");
+        }
+
+        private void SyncControls()
+        {
+            if (_sensitivitySlider != null)
+            {
+                _sensitivitySlider.SetValueWithoutNotify(GameSettings.MouseSensitivity);
+            }
+
+            if (_presetDropdown != null)
+            {
+                int preset = (int)GameSettings.GraphicsPreset;
+                if (preset >= 0 && preset < _presetDropdown.options.Count)
+                {
+                    _presetDropdown.SetValueWithoutNotify(preset);
+                }
+            }
+
+            if (_vSyncToggle != null)
+            {
+                _vSyncToggle.SetIsOnWithoutNotify(GameSettings.VSync);
+            }
+        }
+
+        private void RefreshLabels()
+        {
+            if (_sensitivityValue != null)
+            {
+                _sensitivityValue.text = GameSettings.MouseSensitivity.ToString("0.0", CultureInfo.InvariantCulture);
+            }
+
+            if (_presetValue != null)
+            {
+                _presetValue.text = GameSettings.GraphicsPreset.ToString();
+            }
+
+            if (_framerateValue != null)
+            {
+                _framerateValue.text = GameSettings.FramerateCap < 0 ? "Unlimited" : GameSettings.FramerateCap + " fps";
+            }
+
+            if (_vSyncValue != null)
+            {
+                _vSyncValue.text = GameSettings.VSync ? "ON" : "OFF";
+            }
+        }
+
+        private void RefreshStored()
+        {
+            if (_storedValue == null)
+            {
+                return;
+            }
+
+            string key = _saveKeyPrefix + GameSettingsSaveKeys.MouseSensitivity;
+            _storedValue.text = SaveProvider.HasKey(key)
+                ? SaveProvider.GetFloat(key).ToString("0.0", CultureInfo.InvariantCulture)
+                : "not saved yet";
+        }
+
+        private void SetDeferredText(string text)
+        {
+            if (_deferredValue != null)
+            {
+                _deferredValue.text = text;
+            }
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[SettingsDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                this);
         }
     }
 }

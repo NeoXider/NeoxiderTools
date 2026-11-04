@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Runtime info card for demo scenes. Builds a compact uGUI + TextMeshPro overlay
-    ///     (module title, description and hint lines with a collapse toggle) entirely from
-    ///     code — no prefabs, no IMGUI. The overlay is created when the component is enabled
-    ///     and destroyed when it is disabled.
+    ///     Tutorial info card of a demo scene: module title, purpose, runtime API, scene workflow, verification
+    ///     and hint lines with a collapse button. The card itself is an authored uGUI + TextMeshPro object saved
+    ///     in the scene (the Neo.Demo.Editor DemoSceneKit builds it and wires the collapse button as a persistent
+    ///     listener to <see cref="ToggleCollapsed" />). This component only pushes its texts into the authored
+    ///     labels and toggles the collapsible parts; it never constructs UI at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Demo/Module Demo Scene Info")]
     public sealed class ModuleDemoSceneInfo : MonoBehaviour
@@ -23,11 +23,6 @@ namespace Neo.Samples
             BottomLeft = 2,
             BottomRight = 3
         }
-
-        private const int OverlaySortingOrder = 30000;
-        private const float ScreenMargin = 24f;
-
-        private static Sprite _roundedSprite;
 
         [SerializeField] private string _moduleName = "Module";
         [SerializeField] private string _purpose = "Smoke demo scene.";
@@ -46,11 +41,22 @@ namespace Neo.Samples
         [Tooltip("Extra hint lines (what to press / what happens) shown under the description.")]
         [SerializeField] private string[] _hints = Array.Empty<string>();
 
-        private TMP_Text _collapseLabel;
+        [Header("Authored Overlay")]
+        [Tooltip("Root of the info card saved in the scene. Activated on play when Show Runtime Overlay is on.")]
+        [SerializeField] private GameObject _overlayRoot;
+
+        [SerializeField] private TMP_Text _titleLabel;
+        [SerializeField] private TMP_Text _descriptionLabel;
+        [SerializeField] private TMP_Text _hintsLabel;
+
+        [Tooltip("Label of the collapse button (shows - or +).")]
+        [SerializeField] private TMP_Text _collapseLabel;
+
+        [Tooltip("Objects hidden while the card is collapsed (divider and body).")]
+        [SerializeField] private GameObject[] _collapsibleParts = Array.Empty<GameObject>();
+
         private bool _collapsed;
-        private GameObject _divider;
-        private GameObject _hintsBody;
-        private GameObject _overlayRoot;
+        private bool _warnedMissingOverlay;
 
         public string ModuleName => _moduleName;
         public string Purpose => _purpose;
@@ -58,21 +64,43 @@ namespace Neo.Samples
         public string SceneWorkflow => _sceneWorkflow;
         public string Verification => _verification;
         public IReadOnlyList<string> Hints => _hints;
+        public bool ShowRuntimeOverlay => _showRuntimeOverlay;
+        public Corner OverlayCorner => _corner;
+        public Color AccentColor => _accentColor;
+        public Color BackgroundColor => _backgroundColor;
+        public float PanelWidth => _panelWidth;
+        public bool StartCollapsed => _startCollapsed;
+        public bool IsCollapsed => _collapsed;
+        public GameObject OverlayRoot => _overlayRoot;
+
+        /// <summary>True when the card is authored in the scene and this component points at it.</summary>
+        public bool HasAuthoredOverlay => _overlayRoot != null && _titleLabel != null;
 
         private void OnEnable()
         {
-            BuildOverlay();
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            _collapsed = _startCollapsed;
+            if (!HasAuthoredOverlay)
+            {
+                WarnMissingOverlay();
+                return;
+            }
+
+            ApplyContent();
+            SetOverlayVisible(_showRuntimeOverlay);
         }
 
-        private void OnDisable()
-        {
-            DestroyOverlay();
-        }
-
-        /// <summary>Creates a standalone info card at runtime — for demos assembled from code.</summary>
+        /// <summary>Creates a standalone info card at runtime for demos assembled from code.</summary>
+        [Obsolete("Runtime-built info cards are deprecated. Author the card in the scene with the Neo.Demo.Editor " +
+                  "DemoSceneKit (dev-docs/DemoSceneBuilders.md).")]
         public static ModuleDemoSceneInfo Show(string title, string description, params string[] hints)
         {
-            var host = new GameObject("ModuleDemoSceneInfo");
+            GameObject host = new("ModuleDemoSceneInfo");
+            host.SetActive(false);
             ModuleDemoSceneInfo info = host.AddComponent<ModuleDemoSceneInfo>();
             info._moduleName = title;
             info._purpose = description;
@@ -81,10 +109,12 @@ namespace Neo.Samples
             info._verification = string.Empty;
             info._hints = hints ?? Array.Empty<string>();
             info._showRuntimeOverlay = true;
-            info.Rebuild();
+            NeoDemoShell.BuildRuntimeInfoOverlay(info);
+            host.SetActive(true);
             return info;
         }
 
+        /// <summary>Sets the texts and pushes them into the authored card.</summary>
         public void Configure(
             string moduleName,
             string purpose,
@@ -102,14 +132,65 @@ namespace Neo.Samples
             Rebuild();
         }
 
-        /// <summary>Destroys and rebuilds the overlay from the current field values.</summary>
+        /// <summary>Replaces the hint lines and pushes them into the authored card.</summary>
+        public void SetHints(params string[] hints)
+        {
+            _hints = hints ?? Array.Empty<string>();
+            ApplyContent();
+        }
+
+        /// <summary>Re-applies the current texts to the authored card (no objects are created).</summary>
         public void Rebuild()
         {
-            DestroyOverlay();
-            if (isActiveAndEnabled)
+            ApplyContent();
+            if (Application.isPlaying && isActiveAndEnabled && _overlayRoot != null)
             {
-                BuildOverlay();
+                SetOverlayVisible(_showRuntimeOverlay);
             }
+        }
+
+        /// <summary>
+        ///     Points this component at an authored card. Called by the editor kit at authoring time (and by the
+        ///     deprecated runtime fallback); the references are serialized with the scene.
+        /// </summary>
+        public void AssignOverlay(
+            GameObject overlayRoot,
+            TMP_Text titleLabel,
+            TMP_Text descriptionLabel,
+            TMP_Text hintsLabel,
+            TMP_Text collapseLabel,
+            params GameObject[] collapsibleParts)
+        {
+            _overlayRoot = overlayRoot;
+            _titleLabel = titleLabel;
+            _descriptionLabel = descriptionLabel;
+            _hintsLabel = hintsLabel;
+            _collapseLabel = collapseLabel;
+            _collapsibleParts = collapsibleParts ?? Array.Empty<GameObject>();
+        }
+
+        /// <summary>Writes title, description and hint texts plus the collapsed state into the authored labels.</summary>
+        public void ApplyContent()
+        {
+            if (_titleLabel != null)
+            {
+                _titleLabel.text = _moduleName;
+            }
+
+            if (_descriptionLabel != null)
+            {
+                _descriptionLabel.text = _purpose ?? string.Empty;
+                _descriptionLabel.gameObject.SetActive(!string.IsNullOrWhiteSpace(_purpose));
+            }
+
+            if (_hintsLabel != null)
+            {
+                string hints = ComposeHintsText();
+                _hintsLabel.text = hints;
+                _hintsLabel.gameObject.SetActive(hints.Length > 0);
+            }
+
+            ApplyCollapsedState();
         }
 
         public void SetCollapsed(bool collapsed)
@@ -118,192 +199,65 @@ namespace Neo.Samples
             ApplyCollapsedState();
         }
 
-        private void ToggleCollapsed()
+        /// <summary>Collapse button target (wired as a persistent listener by the editor kit).</summary>
+        public void ToggleCollapsed()
         {
             SetCollapsed(!_collapsed);
         }
 
-        #region Overlay construction
-
-        private void BuildOverlay()
+        /// <summary>Shows or hides the authored card.</summary>
+        public void SetOverlayVisible(bool visible)
         {
-            if (_overlayRoot != null || !_showRuntimeOverlay || !Application.isPlaying)
+            if (_overlayRoot == null || _overlayRoot.activeSelf == visible)
             {
                 return;
             }
 
-            _collapsed = _startCollapsed;
-
-            _overlayRoot = new GameObject("[ModuleDemoInfo] " + _moduleName);
-            Canvas canvas = _overlayRoot.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = OverlaySortingOrder;
-
-            CanvasScaler scaler = _overlayRoot.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            _overlayRoot.AddComponent<GraphicRaycaster>();
-            EnsureEventSystem();
-
-            RectTransform panel = CreatePanel(_overlayRoot.transform);
-            CreateHeader(panel);
-            _divider = CreateDivider(panel);
-            _hintsBody = CreateBody(panel);
-
-            ApplyCollapsedState();
-        }
-
-        private void DestroyOverlay()
-        {
-            if (_overlayRoot == null)
+            // WHY: toggling an ancestor of this component while it is being enabled throws in Unity.
+            if (_overlayRoot == gameObject || transform.IsChildOf(_overlayRoot.transform))
             {
                 return;
             }
 
-            Destroy(_overlayRoot);
-            _overlayRoot = null;
-            _hintsBody = null;
-            _divider = null;
-            _collapseLabel = null;
+            _overlayRoot.SetActive(visible);
         }
 
-        private RectTransform CreatePanel(Transform parent)
+        /// <summary>Rich-text hint block: labeled Runtime API / Scene workflow / Verification lines, then hints.</summary>
+        public string ComposeHintsText()
         {
-            RectTransform rect = CreateRect("Panel", parent);
-            Vector2 anchor = GetCornerAnchor(out Vector2 offset);
-            rect.anchorMin = anchor;
-            rect.anchorMax = anchor;
-            rect.pivot = anchor;
-            rect.anchoredPosition = offset;
-            rect.sizeDelta = new Vector2(_panelWidth, 0f);
-
-            Image background = rect.gameObject.AddComponent<Image>();
-            background.sprite = GetRoundedSprite();
-            background.type = Image.Type.Sliced;
-            background.color = _backgroundColor;
-
-            Shadow shadow = rect.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.35f);
-            shadow.effectDistance = new Vector2(0f, -3f);
-
-            VerticalLayoutGroup layout = rect.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(18, 18, 14, 16);
-            layout.spacing = 10f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            ContentSizeFitter fitter = rect.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            return rect;
-        }
-
-        private void CreateHeader(RectTransform panel)
-        {
-            RectTransform header = CreateRect("Header", panel);
-            HorizontalLayoutGroup row = header.gameObject.AddComponent<HorizontalLayoutGroup>();
-            row.spacing = 10f;
-            row.childControlWidth = true;
-            row.childControlHeight = true;
-            row.childForceExpandWidth = false;
-            row.childForceExpandHeight = false;
-            row.childAlignment = TextAnchor.MiddleLeft;
-
-            RectTransform titles = CreateRect("Titles", header);
-            VerticalLayoutGroup titleColumn = titles.gameObject.AddComponent<VerticalLayoutGroup>();
-            titleColumn.spacing = 1f;
-            titleColumn.childControlWidth = true;
-            titleColumn.childControlHeight = true;
-            titleColumn.childForceExpandWidth = true;
-            titleColumn.childForceExpandHeight = false;
-            titles.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
-
-            TextMeshProUGUI overline = CreateText(
-                titles, "Overline", "NEOXIDER · DEMO SCENE", 10.5f, _accentColor, FontStyles.Bold);
-            overline.characterSpacing = 8f;
-
-            CreateText(titles, "Title", _moduleName, 21f, new Color32(242, 242, 247, 255), FontStyles.Bold);
-
-            CreateCollapseButton(header);
-        }
-
-        private void CreateCollapseButton(RectTransform parent)
-        {
-            RectTransform rect = CreateRect("Collapse", parent);
-            LayoutElement element = rect.gameObject.AddComponent<LayoutElement>();
-            element.preferredWidth = 30f;
-            element.preferredHeight = 26f;
-            element.flexibleWidth = 0f;
-
-            Image image = rect.gameObject.AddComponent<Image>();
-            image.sprite = GetRoundedSprite();
-            image.type = Image.Type.Sliced;
-            image.color = new Color(1f, 1f, 1f, 0.07f);
-
-            Button button = rect.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            button.onClick.AddListener(ToggleCollapsed);
-
-            _collapseLabel = CreateText(rect, "Label", "-", 17f, new Color32(201, 203, 216, 255), FontStyles.Bold);
-            _collapseLabel.alignment = TextAlignmentOptions.Center;
-            RectTransform labelRect = _collapseLabel.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-        }
-
-        private GameObject CreateDivider(RectTransform panel)
-        {
-            RectTransform rect = CreateRect("Divider", panel);
-            Image line = rect.gameObject.AddComponent<Image>();
-            line.color = new Color(_accentColor.r, _accentColor.g, _accentColor.b, 0.9f);
-            line.raycastTarget = false;
-
-            LayoutElement element = rect.gameObject.AddComponent<LayoutElement>();
-            element.minHeight = 2f;
-            element.preferredHeight = 2f;
-            element.flexibleWidth = 1f;
-            return rect.gameObject;
-        }
-
-        private GameObject CreateBody(RectTransform panel)
-        {
-            RectTransform body = CreateRect("Body", panel);
-            VerticalLayoutGroup layout = body.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 7f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            if (!string.IsNullOrWhiteSpace(_purpose))
+            StringBuilder builder = new();
+            string accent = ColorUtility.ToHtmlStringRGB(_accentColor);
+            AppendLabeledHint(builder, accent, "Runtime API", _runtimeApi);
+            AppendLabeledHint(builder, accent, "Scene workflow", _sceneWorkflow);
+            AppendLabeledHint(builder, accent, "Verification", _verification);
+            if (_hints != null)
             {
-                CreateText(body, "Description", _purpose, 15f, new Color32(230, 231, 240, 255));
+                foreach (string hint in _hints)
+                {
+                    if (string.IsNullOrWhiteSpace(hint))
+                    {
+                        continue;
+                    }
+
+                    AppendSeparator(builder);
+                    builder.Append("<color=#").Append(accent).Append(">»</color>  ").Append(hint);
+                }
             }
 
-            foreach (string line in ComposeHintLines())
-            {
-                CreateText(body, "Hint", line, 13f, new Color32(186, 189, 204, 255));
-            }
-
-            return body.gameObject;
+            return builder.ToString();
         }
 
         private void ApplyCollapsedState()
         {
-            if (_hintsBody != null)
+            if (_collapsibleParts != null)
             {
-                _hintsBody.SetActive(!_collapsed);
-            }
-
-            if (_divider != null)
-            {
-                _divider.SetActive(!_collapsed);
+                foreach (GameObject part in _collapsibleParts)
+                {
+                    if (part != null && part.activeSelf == _collapsed)
+                    {
+                        part.SetActive(!_collapsed);
+                    }
+                }
             }
 
             if (_collapseLabel != null)
@@ -312,161 +266,37 @@ namespace Neo.Samples
             }
         }
 
-        private List<string> ComposeHintLines()
+        private void WarnMissingOverlay()
         {
-            var lines = new List<string>();
-            string accent = ColorUtility.ToHtmlStringRGB(_accentColor);
-            AppendLabeledHint(lines, accent, "Runtime API", _runtimeApi);
-            AppendLabeledHint(lines, accent, "Scene workflow", _sceneWorkflow);
-            AppendLabeledHint(lines, accent, "Verification", _verification);
-
-            if (_hints == null)
+            if (_warnedMissingOverlay || !_showRuntimeOverlay)
             {
-                return lines;
+                return;
             }
 
-            foreach (string hint in _hints)
-            {
-                if (!string.IsNullOrWhiteSpace(hint))
-                {
-                    lines.Add("<color=#" + accent + ">»</color>  " + hint);
-                }
-            }
-
-            return lines;
+            _warnedMissingOverlay = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[ModuleDemoSceneInfo] '" + _moduleName + "' has no authored info card. Rebuild the scene with " +
+                "Neoxider/Demo/Rebuild Active Demo Scene (or Author Info Card In Active Scene).", this);
         }
 
-        private static void AppendLabeledHint(List<string> lines, string accent, string label, string text)
+        private static void AppendLabeledHint(StringBuilder builder, string accent, string label, string text)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
                 return;
             }
 
-            lines.Add("<color=#" + accent + ">»</color>  <b>" + label + ":</b> " + text);
+            AppendSeparator(builder);
+            builder.Append("<color=#").Append(accent).Append(">»</color>  <b>").Append(label).Append(":</b> ")
+                .Append(text);
         }
 
-        private Vector2 GetCornerAnchor(out Vector2 offset)
+        private static void AppendSeparator(StringBuilder builder)
         {
-            switch (_corner)
+            if (builder.Length > 0)
             {
-                case Corner.TopRight:
-                    offset = new Vector2(-ScreenMargin, -ScreenMargin);
-                    return new Vector2(1f, 1f);
-                case Corner.BottomLeft:
-                    offset = new Vector2(ScreenMargin, ScreenMargin);
-                    return new Vector2(0f, 0f);
-                case Corner.BottomRight:
-                    offset = new Vector2(-ScreenMargin, ScreenMargin);
-                    return new Vector2(1f, 0f);
-                default:
-                    offset = new Vector2(ScreenMargin, -ScreenMargin);
-                    return new Vector2(0f, 1f);
+                builder.Append('\n');
             }
         }
-
-        private static RectTransform CreateRect(string name, Transform parent)
-        {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            return (RectTransform)go.transform;
-        }
-
-        private static TextMeshProUGUI CreateText(
-            Transform parent,
-            string name,
-            string text,
-            float fontSize,
-            Color color,
-            FontStyles style = FontStyles.Normal)
-        {
-            RectTransform rect = CreateRect(name, parent);
-            TextMeshProUGUI tmp = rect.gameObject.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = fontSize;
-            tmp.color = color;
-            tmp.fontStyle = style;
-            tmp.textWrappingMode = TextWrappingModes.Normal;
-            tmp.richText = true;
-            tmp.raycastTarget = false;
-            return tmp;
-        }
-
-        private static void EnsureEventSystem()
-        {
-            if (FindFirstObjectByType<EventSystem>() != null)
-            {
-                return;
-            }
-
-            var eventSystem = new GameObject("EventSystem");
-            eventSystem.AddComponent<EventSystem>();
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            Type moduleType = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
-            if (moduleType != null)
-            {
-                eventSystem.AddComponent(moduleType);
-            }
-#else
-            eventSystem.AddComponent<StandaloneInputModule>();
-#endif
-        }
-
-        private static Sprite GetRoundedSprite()
-        {
-            if (_roundedSprite != null)
-            {
-                return _roundedSprite;
-            }
-
-            const int size = 64;
-            const float radius = 14f;
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
-            {
-                name = "ModuleDemoInfoRounded",
-                hideFlags = HideFlags.HideAndDontSave,
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp
-            };
-
-            var pixels = new Color32[size * size];
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float alpha = RoundedRectAlpha(x, y, size, radius);
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply(false, false);
-
-            const float border = radius + 4f;
-            _roundedSprite = Sprite.Create(
-                texture,
-                new Rect(0f, 0f, size, size),
-                new Vector2(0.5f, 0.5f),
-                100f,
-                0,
-                SpriteMeshType.FullRect,
-                new Vector4(border, border, border, border));
-            _roundedSprite.name = "ModuleDemoInfoRounded";
-            _roundedSprite.hideFlags = HideFlags.HideAndDontSave;
-            return _roundedSprite;
-        }
-
-        private static float RoundedRectAlpha(int x, int y, int size, float radius)
-        {
-            float half = size * 0.5f;
-            float px = Mathf.Abs(x + 0.5f - half) - (half - radius);
-            float py = Mathf.Abs(y + 0.5f - half) - (half - radius);
-            float dx = Mathf.Max(px, 0f);
-            float dy = Mathf.Max(py, 0f);
-            float distance = Mathf.Sqrt(dx * dx + dy * dy) - radius;
-            return Mathf.Clamp01(0.5f - distance);
-        }
-
-        #endregion
     }
 }

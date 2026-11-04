@@ -225,7 +225,7 @@ namespace Neo.Editor.Tests
         private void ApplyAutoFill(List<Sprite> sprites, out int assigned,
             out List<string> unrecognized, out List<string> conflicts)
         {
-            // Exercise the same operation as the folder button without opening a modal native dialog.
+            // WHY: exercise the same operation as the folder button without opening a modal native dialog.
             MethodInfo method = _editor.GetType().GetMethod("ApplyAutoFill",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);

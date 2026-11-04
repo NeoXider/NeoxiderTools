@@ -1,8 +1,10 @@
 ﻿# ShopCategoryButton
 
-**Purpose:** NoCode helper for shop category tabs.
+**What it is:** NoCode helper for shop category tabs (`MonoBehaviour`, `Scripts/Shop/ShopCategoryButton.cs`).
 
-Put it on a UI `Button`, assign a `ShopListView`, and enter the category string from `ShopItemData.Category`. When clicked, it switches the target view to that category.
+**How to use:** put it on a UI `Button`, assign a `ShopListView`, and enter the category string from `ShopItemData.Category`. When clicked, it switches the target view to that category (`Apply()` does the same from code).
+
+---
 
 ## Key Fields (Inspector)
 

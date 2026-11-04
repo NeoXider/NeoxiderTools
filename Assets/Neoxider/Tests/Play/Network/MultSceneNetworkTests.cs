@@ -70,7 +70,7 @@ namespace Neo.Tests.Play
         {
             if (_session == null)
             {
-                yield break; // Failed acquisition must not release a borrowed session/provider.
+                yield break; // WHY: Failed acquisition must not release a borrowed session/provider.
             }
 
             AsyncOperation unloading = null;
@@ -79,10 +79,10 @@ namespace Neo.Tests.Play
             {
                 try
                 {
-                    // A body can fail immediately after BeginOwnedSceneLoad, before Awake/sceneLoaded.
+                    // WHY: A body can fail immediately after BeginOwnedSceneLoad, before Awake/sceneLoaded.
                     if (_loadRequested && !_loadCompleted)
                     {
-                        // Readiness assertions belong to the body. Cleanup must continue even if
+                        // WHY: Readiness assertions belong to the body. Cleanup must continue even if
                         // scene loading finishes without publishing a valid manager.
                         double deadline = Time.realtimeSinceStartupAsDouble + 10d;
                         while (!_loadCompleted && Time.realtimeSinceStartupAsDouble < deadline)
@@ -127,7 +127,7 @@ namespace Neo.Tests.Play
                     SceneManager.SetActiveScene(_previousActiveScene);
                 }
 
-                // The getter captured a registered system. Native OnDisable unregisters it;
+                // WHY: The getter captured a registered system. Native OnDisable unregisters it;
                 // the setter rejects null, destroyed and no-longer-enabled originals.
                 if (_previousEventSystem != null && _previousEventSystem.isActiveAndEnabled &&
                     EventSystem.current != _previousEventSystem)
@@ -181,9 +181,9 @@ namespace Neo.Tests.Play
             }
 
             _ownedScene = scene;
-            // Ledger before any readiness assertions; Awake may already have moved roots into DDOL.
+            // WHY: Ledger before any readiness assertions; Awake may already have moved roots into DDOL.
             LedgerLoadedScene();
-            // A root appearing during this load can belong to an earlier sceneLoaded observer.
+            // WHY: A root appearing during this load can belong to an earlier sceneLoaded observer.
             // Only the exact scene and explicitly anchored manager hierarchy confer ownership.
             _loadCompleted = true;
         }
@@ -193,7 +193,7 @@ namespace Neo.Tests.Play
             foreach (Transform transform in root.GetComponentsInChildren<Transform>(true))
             {
                 _ownedSceneObjects.Add(transform.gameObject);
-                _session.Own(transform.gameObject); // Child roots remain owned if Start moves/detaches them.
+                _session.Own(transform.gameObject); // WHY: Child roots remain owned if Start moves/detaches them.
             }
         }
 
@@ -214,7 +214,7 @@ namespace Neo.Tests.Play
                 (ReferenceEquals(_ownedManager, null) || ReferenceEquals(_ownedManager, candidate)))
             {
                 _ownedManager = candidate;
-                // Descend from the exact manager; a parent outside this hierarchy is not owned.
+                // WHY: Descend from the exact manager; a parent outside this hierarchy is not owned.
                 OwnHierarchy(candidate.gameObject);
                 _session.OwnManager(candidate);
             }

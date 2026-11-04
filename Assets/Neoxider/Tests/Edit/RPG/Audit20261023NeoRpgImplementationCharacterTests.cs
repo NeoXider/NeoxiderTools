@@ -143,7 +143,7 @@ namespace Neo.Tests.Edit.RPG
                 Assert.That(order, Is.Empty, "all observers must precede initialization");
                 Assert.That(probe.Snapshots, Is.Empty);
 
-                // Public initialization contract: discover the adapter and initialize before zero-damage admission.
+                // WHY: Public initialization contract: discover the adapter and initialize before zero-damage admission.
                 // Keeping the graph inactive avoids treating Edit Mode activation as native Awake evidence.
                 Assert.That(character.Damage(0f), Is.Zero);
 

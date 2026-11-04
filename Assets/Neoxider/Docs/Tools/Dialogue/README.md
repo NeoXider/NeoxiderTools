@@ -1,6 +1,18 @@
 ﻿# Tools / Dialogue
 
-Linear dialogue playback with an optional UI and the reusable `TypewriterEffect`. Namespace: `Neo.Tools`; assembly: `Neo.Tools.Dialogue`. Scripts live in `Scripts/Tools/Dialogue/`.
+**What it is:** Linear dialogue playback (`DialogueController`) with an optional UI and the reusable `TypewriterEffect`, plus pooled bark lines (`DialogueLinePool` / `DialogueLinePlayer`) picked by tag. Namespace: `Neo.Tools`; assembly: `Neo.Tools.Dialogue`. Scripts live in `Scripts/Tools/Dialogue/`.
+
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Dialogue.jpg" alt="Dialogue: DialogueController box and DialogueLinePlayer barks" width="100%" /></p>
+
+*Demo scene: `Scenes/Tools/Dialogue.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:** see [Component guides](#component-guides) below.
+
+**Navigation:** [← Tools](../README.md)
+
+---
 
 ## Start here
 
@@ -44,6 +56,16 @@ No UI is required for cursor navigation and events. Custom asmdefs must referenc
 - Completion sets `DialogueStarted` to `false` before `OnAllDialoguesEnd`. Event listeners may start a replacement dialogue; the interrupted controller call then stops.
 - `OnSentenceEnd` retains its historical timing: it fires when a sentence is presented/typing is launched. Use `Typewriter.OnComplete` for typing completion, including `CompleteTypewriter()`.
 
+## Demo scene
+
+Import the **Demo Scenes** sample and open `<Demo sample>/Scenes/Tools/Dialogue.unity` (package source `Assets/Neoxider/Samples~/Demo/...`, `Assets/Neoxider/Samples/Demo/...` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...` after import). Everything is saved in the scene:
+
+- **Dialogue box** - a `DialogueUI` (portrait, name plate, body) driven by the `DialogueComponent` object (`DialogueController`, typewriter, `autoStart`). Clicking the box or `Btn_Skip or next` calls `SkipOrNext`; `Btn_Restart` calls `RestartAll`.
+- **Live column** - `OnCharacterChange`, `OnSentenceEnd`, `OnTypewriterProgress` and `OnAllDialoguesEnd` update the labels and the typing bar through `DialogueDemoController`; the toggles and the speed slider change `useTypewriterEffect`, `autoNextSentence` and `Typewriter.CharactersPerSecond`.
+- **Barks panel** - the `Blacksmith Barks` object (`DialogueLinePlayer`) holds idle, greet and hit lines. `Btn_Idle line` calls `RequestIdle`, `Btn_Hit!` calls `RequestContext("hit")` and interrupts an idle line, `Btn_Greet` shows the `FirstOnly` line once and `AfterFirst` lines later, `Btn_New session` calls `ResetSession`.
+
+The scene is authored by the editor builder `DialogueBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
+
 ## Component guides
 
 | Page | Description |
@@ -51,6 +73,17 @@ No UI is required for cursor navigation and events. Custom asmdefs must referenc
 | [DialogueController](./DialogueController.md) | Main controller |
 | [DialogueUI](./DialogueUI.md) | UI binding |
 | [DialogueData](./DialogueData.md) | Inline serializable data and events |
+| [DialogueLinePool](./DialogueLinePool.md) | Pooled lines by tag: no back-to-back repeats, time windows, first-pick slots, contextual lines interrupting idle; plain C# core plus `DialogueLinePlayer` |
+
+## Pooled lines
+
+For barks, announcer calls and idle chatter use `DialogueLinePool` (plain C#) or the `DialogueLinePlayer` component instead of a `Dialogue[]` tree:
+
+```csharp
+DialogueLinePool pool = new DialogueLinePool(lines);
+pool.LineStarted += line => subtitle.text = line.Text;
+pool.TryPlay("hit", elapsedSeconds, DialogueLinePool.ContextPriority, out _);
+```
 
 ## See also
 

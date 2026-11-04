@@ -19,6 +19,40 @@ namespace Neo.Editor.Rpg
         private SerializedProperty _defensePercent;
         private SerializedProperty _xpReward;
 
+        // WHY: EditorPrefs is registry-backed on Windows and was read on every inspector event; the count is
+        // read once per domain and written only when the slider moves.
+        private static int? s_previewCount;
+
+        // WHY: five curves were evaluated and formatted per row on every repaint; rows are kept until the asset
+        // changes or the row count changes. Each row holds Hp, Regen, Dmg, Def and XP text.
+        private string[] _previewCells = System.Array.Empty<string>();
+        private int _previewRows = -1;
+        private int _previewDirtyCount = -1;
+        private RpgStatGrowthDefinition _previewSource;
+
+        private const int PreviewColumns = 5;
+
+        private static int PreviewCount
+        {
+            get
+            {
+                s_previewCount ??= Mathf.Clamp(EditorPrefs.GetInt(PreviewCountKey, PreviewCountDefault),
+                    PreviewCountMin, PreviewCountMax);
+                return s_previewCount.Value;
+            }
+            set
+            {
+                int clamped = Mathf.Clamp(value, PreviewCountMin, PreviewCountMax);
+                if (s_previewCount == clamped)
+                {
+                    return;
+                }
+
+                s_previewCount = clamped;
+                EditorPrefs.SetInt(PreviewCountKey, clamped);
+            }
+        }
+
         private void OnEnable()
         {
             _maxHp = serializedObject.FindProperty("MaxHp");
@@ -57,9 +91,8 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            var definition = (RpgStatGrowthDefinition)target;
-            int previewCount = EditorPrefs.GetInt(PreviewCountKey, PreviewCountDefault);
-            previewCount = Mathf.Clamp(previewCount, PreviewCountMin, PreviewCountMax);
+            RpgStatGrowthDefinition definition = (RpgStatGrowthDefinition)target;
+            int previewCount = PreviewCount;
 
             EditorGUILayout.Space(12f);
             EditorGUILayout.LabelField("Level Preview", EditorStyles.boldLabel);
@@ -69,10 +102,11 @@ namespace Neo.Editor.Rpg
             int newCount = EditorGUILayout.IntSlider(previewCount, PreviewCountMin, PreviewCountMax);
             if (newCount != previewCount)
             {
-                EditorPrefs.SetInt(PreviewCountKey, newCount);
+                PreviewCount = newCount;
             }
 
             EditorGUILayout.EndHorizontal();
+            RefreshPreview(definition, previewCount);
 
             EditorGUILayout.Space(4f);
 
@@ -100,31 +134,73 @@ namespace Neo.Editor.Rpg
             for (int level = 1; level <= previewCount; level++)
             {
                 Rect lineRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-
-                float hp = definition.MaxHp.Evaluate(level);
-                float regen = definition.HpRegen.Evaluate(level);
-                float dmg = definition.DamagePercent.Evaluate(level);
-                float def = definition.DefensePercent.Evaluate(level);
-                float xp = definition.XpReward.Evaluate(level);
+                int cell = (level - 1) * PreviewColumns;
 
                 EditorGUI.LabelField(new Rect(lineRect.x, lineRect.y, colWidth * 0.5f, lineRect.height),
-                    level.ToString());
+                    LevelLabel(level));
                 EditorGUI.LabelField(
                     new Rect(lineRect.x + colWidth * 0.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
-                    hp.ToString("F0"));
+                    _previewCells[cell]);
                 EditorGUI.LabelField(
                     new Rect(lineRect.x + colWidth * 1.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
-                    regen.ToString("F1"));
+                    _previewCells[cell + 1]);
                 EditorGUI.LabelField(
                     new Rect(lineRect.x + colWidth * 2.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
-                    dmg.ToString("F0") + "%");
+                    _previewCells[cell + 2]);
                 EditorGUI.LabelField(
                     new Rect(lineRect.x + colWidth * 3.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
-                    def.ToString("F0") + "%");
+                    _previewCells[cell + 3]);
                 EditorGUI.LabelField(
                     new Rect(lineRect.x + colWidth * 4.5f, lineRect.y, colWidth * 1.5f, lineRect.height),
-                    xp.ToString("F0"));
+                    _previewCells[cell + 4]);
             }
+        }
+
+        private void RefreshPreview(RpgStatGrowthDefinition definition, int previewCount)
+        {
+            int dirtyCount = EditorUtility.GetDirtyCount(definition);
+            if (ReferenceEquals(definition, _previewSource) && dirtyCount == _previewDirtyCount &&
+                _previewRows == previewCount)
+            {
+                return;
+            }
+
+            if (_previewCells.Length != previewCount * PreviewColumns)
+            {
+                _previewCells = new string[previewCount * PreviewColumns];
+            }
+
+            for (int level = 1; level <= previewCount; level++)
+            {
+                int cell = (level - 1) * PreviewColumns;
+                _previewCells[cell] = definition.MaxHp.Evaluate(level).ToString("F0");
+                _previewCells[cell + 1] = definition.HpRegen.Evaluate(level).ToString("F1");
+                _previewCells[cell + 2] = definition.DamagePercent.Evaluate(level).ToString("F0") + "%";
+                _previewCells[cell + 3] = definition.DefensePercent.Evaluate(level).ToString("F0") + "%";
+                _previewCells[cell + 4] = definition.XpReward.Evaluate(level).ToString("F0");
+            }
+
+            _previewSource = definition;
+            _previewDirtyCount = dirtyCount;
+            _previewRows = previewCount;
+        }
+
+        private static readonly string[] LevelLabels = BuildLevelLabels();
+
+        private static string[] BuildLevelLabels()
+        {
+            string[] labels = new string[PreviewCountMax];
+            for (int i = 0; i < labels.Length; i++)
+            {
+                labels[i] = (i + 1).ToString();
+            }
+
+            return labels;
+        }
+
+        private static string LevelLabel(int level)
+        {
+            return level >= 1 && level <= LevelLabels.Length ? LevelLabels[level - 1] : level.ToString();
         }
     }
 }

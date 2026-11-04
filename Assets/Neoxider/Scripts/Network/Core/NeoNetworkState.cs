@@ -156,28 +156,28 @@ namespace Neo.Network
 
         /// <summary>
         /// Checks a manual NoCode authority policy for commands declared with requiresAuthority = false.
+        /// Gathers the Mirror facts about <paramref name="sender"/> and lets <see cref="NetworkAuthorityPolicy"/>
+        /// decide, so the decision table lives in one transport-free place.
         /// </summary>
+        /// <param name="obj">Target object; its <see cref="NetworkIdentity"/> owner is compared for OwnerOnly.</param>
+        /// <param name="sender">Command sender; <see langword="null"/> means direct server code.</param>
+        /// <param name="mode">Configured policy; an unnamed value is rejected for every caller.</param>
         public static bool IsAuthorized(GameObject obj, NetworkConnectionToClient sender, NetworkAuthorityMode mode)
         {
-            switch (mode)
-            {
-                case NetworkAuthorityMode.None:
-                    return true;
-                case NetworkAuthorityMode.ServerOnly:
-                    return sender == null || sender == NetworkServer.localConnection;
-                case NetworkAuthorityMode.OwnerOnly:
-                    if (sender == null || sender == NetworkServer.localConnection)
-                    {
-                        return true;
-                    }
+            bool isDirectServerCall = sender == null;
+            bool isLocalHostSender = !isDirectServerCall && sender == NetworkServer.localConnection;
+            // WHY: the ownership lookup is the only fact that costs a component query, and only OwnerOnly reads it.
+            bool senderOwnsObject = mode == NetworkAuthorityMode.OwnerOnly && !isDirectServerCall &&
+                                    !isLocalHostSender && SenderOwns(obj, sender);
+            return NetworkAuthorityPolicy.IsAuthorized(mode, isDirectServerCall, isLocalHostSender, senderOwnsObject);
+        }
 
-                    return obj != null
-                           && obj.TryGetComponent(out NetworkIdentity identity)
-                           && identity.connectionToClient != null
-                           && sender == identity.connectionToClient;
-                default:
-                    return false;
-            }
+        private static bool SenderOwns(GameObject obj, NetworkConnectionToClient sender)
+        {
+            return obj != null
+                   && obj.TryGetComponent(out NetworkIdentity identity)
+                   && identity.connectionToClient != null
+                   && sender == identity.connectionToClient;
         }
 
 #endif
@@ -189,7 +189,9 @@ namespace Neo.Network
     /// </summary>
     public static class NetworkDiagnostics
     {
+        /// <summary>Enables gated info logs of package network code (off by default, reset on play start).</summary>
         public static bool RuntimeLogsEnabled { get; set; }
+        /// <summary>Enables gated warnings of package network code (off by default, reset on play start).</summary>
         public static bool RuntimeWarningsEnabled { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -199,6 +201,7 @@ namespace Neo.Network
             RuntimeWarningsEnabled = false;
         }
 
+        /// <summary>Logs when <see cref="RuntimeLogsEnabled"/> is on or <paramref name="force"/> is set.</summary>
         public static void Log(string message, Object context = null, bool force = false)
         {
             if (force || RuntimeLogsEnabled)
@@ -207,6 +210,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Logs a warning when <see cref="RuntimeWarningsEnabled"/> is on or <paramref name="force"/> is set.</summary>
         public static void LogWarning(string message, Object context = null, bool force = false)
         {
             if (force || RuntimeWarningsEnabled)
@@ -215,6 +219,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Always logs an error.</summary>
         public static void LogError(string message, Object context = null)
         {
             Debug.LogError(message, context);

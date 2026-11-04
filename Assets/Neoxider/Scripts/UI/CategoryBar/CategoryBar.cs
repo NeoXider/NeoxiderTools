@@ -72,6 +72,12 @@ namespace Neo.UI
         [Space] public UnityEvent<int> OnCategorySelected = new();
         public UnityEvent<string> OnCategoryIdSelected = new();
 
+        /// <summary>
+        ///     Typed counterpart of <see cref="OnCategorySelected" /> / <see cref="OnCategoryIdSelected" />:
+        ///     raised once per actual selection change with the new index and id, before the UnityEvents.
+        /// </summary>
+        public event Action<int, string> SelectionChanged;
+
         private readonly List<CategoryBarItem> _spawnedItems = new();
         private readonly Dictionary<CategoryBarItem, UnityAction> _clickHandlers = new();
         private int _index = -1;
@@ -89,6 +95,9 @@ namespace Neo.UI
         /// <summary>Current category list (Inspector-authored or the last SetCategories call).</summary>
         public IReadOnlyList<Entry> Categories => _categories;
 
+        /// <summary>True once item views were built and the initial selection applied (Start or Initialize).</summary>
+        public bool IsInitialized => _started;
+
         private void Start()
         {
             Initialize();
@@ -97,7 +106,10 @@ namespace Neo.UI
         private void OnDestroy()
         {
             UnbindClicks();
-            ClearSpawnedItems();
+            // WHY: destroying the whole hierarchy (Destroy(gameObject), scene unload) deactivates it before
+            // OnDestroy. The marker then dies with it, and re-parenting it onto a GameObject that is being
+            // destroyed only logs an error; removing just this component keeps the hierarchy active.
+            ClearSpawnedItems(gameObject.activeInHierarchy);
         }
 
         /// <summary>
@@ -113,6 +125,13 @@ namespace Neo.UI
 
             _started = true;
             RebuildItems();
+            if (HasSelectedEntry())
+            {
+                // WHY: a selection made before Start (another component's Awake/OnEnable) already raised its
+                // events; applying the start index here used to replace it and announce the wrong entry.
+                return;
+            }
+
             SelectFirstEnabledFrom(_startIndex);
         }
 
@@ -181,7 +200,23 @@ namespace Neo.UI
             }
         }
 
-        /// <summary>Selects by index. Returns false for out-of-range or disabled entries.</summary>
+        /// <summary>Disables one entry; a one-argument <see cref="SetEntryDisabled" /> for UnityEvents.</summary>
+        public void DisableEntry(int index)
+        {
+            SetEntryDisabled(index, true);
+        }
+
+        /// <summary>Enables one entry; a one-argument <see cref="SetEntryDisabled" /> for UnityEvents.</summary>
+        public void EnableEntry(int index)
+        {
+            SetEntryDisabled(index, false);
+        }
+
+        /// <summary>
+        ///     Selects by index. Returns false for out-of-range or disabled entries. Called before Start, the
+        ///     entry is selected right away and Start keeps it instead of applying the start index; item views
+        ///     are still built only by Start/<see cref="Initialize" />.
+        /// </summary>
         public bool Select(int index)
         {
             if (index < 0 || index >= _categories.Count)
@@ -201,6 +236,7 @@ namespace Neo.UI
 
             if (changed)
             {
+                SelectionChanged?.Invoke(_index, entry.Id);
                 OnCategorySelected?.Invoke(_index);
                 OnCategoryIdSelected?.Invoke(entry.Id);
             }
@@ -245,7 +281,20 @@ namespace Neo.UI
                 return;
             }
 
-            int start = _index < 0 ? (direction > 0 ? -1 : count) : _index;
+            int start = _index;
+            if (start < 0 && !_started)
+            {
+                // WHY: before Start, step from the entry Start would select, so one event announces the final
+                // entry. Building item views here instead would let the Edit Mode Next/Prev inspector buttons
+                // spawn prefab clones into the edited scene.
+                start = FindFirstEnabledFrom(_startIndex);
+            }
+
+            if (start < 0)
+            {
+                start = direction > 0 ? -1 : count;
+            }
+
             int steps = _wrapNavigation ? count : direction > 0 ? count - 1 - start : start;
 
             int candidate = start;
@@ -272,24 +321,40 @@ namespace Neo.UI
 
         private void SelectFirstEnabledFrom(int index)
         {
+            int candidate = FindFirstEnabledFrom(index);
+            if (candidate >= 0 && Select(candidate))
+            {
+                return;
+            }
+
+            ApplySelectionVisuals(); // WHY: empty or everything disabled: keep no selection, hide the marker
+        }
+
+        private int FindFirstEnabledFrom(int index)
+        {
             int count = _categories.Count;
             if (count == 0)
             {
-                ApplySelectionVisuals();
-                return;
+                return -1;
             }
 
             index = Mathf.Clamp(index, 0, count - 1);
             for (int i = 0; i < count; i++)
             {
                 int candidate = (index + i) % count;
-                if (Select(candidate))
+                Entry entry = _categories[candidate];
+                if (entry != null && !entry.Disabled)
                 {
-                    return;
+                    return candidate;
                 }
             }
 
-            ApplySelectionVisuals(); // WHY: everything disabled: keep no selection, hide the marker
+            return -1;
+        }
+
+        private bool HasSelectedEntry()
+        {
+            return _index >= 0 && _index < _categories.Count && _categories[_index] != null;
         }
 
         private void RebuildItems()
@@ -331,7 +396,7 @@ namespace Neo.UI
 
         private void RebuildSpawnedItems()
         {
-            ClearSpawnedItems();
+            ClearSpawnedItems(true);
             Transform root = _itemsRoot != null ? _itemsRoot : transform;
             for (int i = 0; i < _categories.Count; i++)
             {
@@ -341,7 +406,7 @@ namespace Neo.UI
             }
         }
 
-        private void ClearSpawnedItems()
+        private void ClearSpawnedItems(bool detachMarker)
         {
             if (_spawnedItems.Count == 0)
             {
@@ -350,7 +415,7 @@ namespace Neo.UI
 
             // WHY: the shared marker is re-parented under the selected item; without detaching it
             // first, destroying the spawned items would destroy the marker with them.
-            if (_selectionMarker != null && _selectionMarker.transform.parent != transform)
+            if (detachMarker && _selectionMarker != null && _selectionMarker.transform.parent != transform)
             {
                 _selectionMarker.SetParent(transform, false);
                 _selectionMarker.gameObject.SetActive(false);
@@ -434,7 +499,11 @@ namespace Neo.UI
             }
 
             _selectionMarker.gameObject.SetActive(true);
-            _selectionMarker.SetParent(selected.transform, false);
+            if (_selectionMarker.parent != selected.transform)
+            {
+                _selectionMarker.SetParent(selected.transform, false);
+            }
+
             _selectionMarker.anchoredPosition = _selectionMarkerOffset;
         }
     }

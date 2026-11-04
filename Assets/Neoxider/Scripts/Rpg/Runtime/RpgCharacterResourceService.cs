@@ -55,7 +55,7 @@ namespace Neo.Rpg.Runtime
             _generation++;
         }
 
-        private bool IsCurrent(int generation, string id, RpgResourceRuntime resource)
+        internal bool IsCurrent(int generation, string id, RpgResourceRuntime resource)
         {
             return generation == _generation && _resources.TryGetValue(id, out RpgResourceRuntime current) &&
                    ReferenceEquals(current, resource);
@@ -140,12 +140,11 @@ namespace Neo.Rpg.Runtime
             {
                 return false;
             }
-            int generation = _generation;
-            Func<bool> isCurrent = () => IsCurrent(generation, resourceId, resource);
-            if (resource.SetCurrentGuarded(candidate, isCurrent, out _))
+            RpgResourceGuard guard = new(this, _generation, resourceId, resource);
+            if (resource.SetCurrentGuarded(candidate, guard, out _))
             {
                 NotifyChanged(resourceId, resource);
-                if (isCurrent())
+                if (guard.IsCurrent())
                 {
                     PauseAfterSpend(resource);
                 }
@@ -160,9 +159,8 @@ namespace Neo.Rpg.Runtime
                 return 0f;
             }
 
-            int generation = _generation;
-            bool current = resource.SetCurrentGuarded(resource.Current + amount,
-                () => IsCurrent(generation, resourceId, resource), out float applied);
+            RpgResourceGuard guard = new(this, _generation, resourceId, resource);
+            bool current = resource.SetCurrentGuarded(resource.Current + amount, guard, out float applied);
             if (current && applied > 0f)
             {
                 NotifyChanged(resourceId, resource);
@@ -178,9 +176,8 @@ namespace Neo.Rpg.Runtime
                 return 0f;
             }
 
-            int generation = _generation;
-            bool current = resource.SetCurrentGuarded(resource.Current - amount,
-                () => IsCurrent(generation, resourceId, resource), out float change);
+            RpgResourceGuard guard = new(this, _generation, resourceId, resource);
+            bool current = resource.SetCurrentGuarded(resource.Current - amount, guard, out float change);
             float applied = -change;
             if (current && applied > 0f)
             {
@@ -197,8 +194,8 @@ namespace Neo.Rpg.Runtime
                 return false;
             }
 
-            int generation = _generation;
-            if (resource.SetCurrentGuarded(resource.Max, () => IsCurrent(generation, resourceId, resource), out _))
+            RpgResourceGuard guard = new(this, _generation, resourceId, resource);
+            if (resource.SetCurrentGuarded(resource.Max, guard, out _))
             {
                 NotifyChanged(resourceId, resource);
             }
@@ -210,8 +207,8 @@ namespace Neo.Rpg.Runtime
             int generation = _generation;
             foreach (KeyValuePair<string, RpgResourceRuntime> pair in _resources)
             {
-                if (!pair.Value.SetCurrentGuarded(pair.Value.Max,
-                        () => IsCurrent(generation, pair.Key, pair.Value), out _))
+                RpgResourceGuard guard = new(this, generation, pair.Key, pair.Value);
+                if (!pair.Value.SetCurrentGuarded(pair.Value.Max, guard, out _))
                 {
                     return;
                 }
@@ -230,15 +227,14 @@ namespace Neo.Rpg.Runtime
                 return false;
             }
 
-            int generation = _generation;
-            Func<bool> isCurrent = () => IsCurrent(generation, resourceId, resource);
-            if (!resource.SetMaxGuarded(newMax, true, isCurrent))
+            RpgResourceGuard guard = new(this, _generation, resourceId, resource);
+            if (!resource.SetMaxGuarded(newMax, true, guard))
             {
                 return true;
             }
             float regen = _regenResolver != null
                 ? _regenResolver(resource) : RpgStatResolver.ResolveRegen(resource, null, null);
-            if (!isCurrent())
+            if (!guard.IsCurrent())
             {
                 return true;
             }
@@ -373,21 +369,20 @@ namespace Neo.Rpg.Runtime
             foreach (KeyValuePair<string, RpgResourceRuntime> pair in _resources)
             {
                 RpgResourceRuntime resource = pair.Value;
-                Func<bool> isCurrent = () => IsCurrent(generation, pair.Key, resource) &&
-                    (ownerIsCurrent == null || ownerIsCurrent());
+                RpgResourceGuard guard = new(this, generation, pair.Key, resource, ownerIsCurrent);
                 float max = maxResolver(resource);
-                if (!isCurrent())
+                if (!guard.IsCurrent())
                 {
                     return;
                 }
                 RpgResourceSaveEntry saved = null;
                 bool restoring = restoreRows != null && restoreRows.TryGetValue(pair.Key, out saved);
-                if (!resource.SetMaxGuarded(max, !restoring && !resource.Definition.canOverfill, isCurrent))
+                if (!resource.SetMaxGuarded(max, !restoring && !resource.Definition.canOverfill, guard))
                 {
                     return;
                 }
                 float regen = regenResolver(resource);
-                if (!isCurrent())
+                if (!guard.IsCurrent())
                 {
                     return;
                 }
@@ -395,14 +390,14 @@ namespace Neo.Rpg.Runtime
 
                 if (restoring || initial && resource.Definition.restoreOnAwake && resource.Definition.restoreToFull)
                 {
-                    if (!resource.SetCurrentGuarded(restoring ? saved.Current : resource.Max, isCurrent, out _))
+                    if (!resource.SetCurrentGuarded(restoring ? saved.Current : resource.Max, guard, out _))
                     {
                         return;
                     }
                 }
 
                 NotifyChanged(pair.Key, resource);
-                if (!isCurrent())
+                if (!guard.IsCurrent())
                 {
                     return;
                 }

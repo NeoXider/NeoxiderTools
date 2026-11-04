@@ -81,6 +81,7 @@ namespace Neo.Tools
         {
             if (currentObject == null || targetObject == null)
             {
+                ReleaseLostTarget();
                 return;
             }
 
@@ -235,6 +236,25 @@ namespace Neo.Tools
             {
                 CheckDistance();
             }
+            else
+            {
+                ReleaseLostTarget();
+            }
+        }
+
+        /// <summary>
+        ///     A destroyed or cleared target (or source) can no longer be within range: leave the inside state once
+        ///     so <see cref="IsWithinDistance" /> stays truthful and approach/depart listeners stay balanced.
+        /// </summary>
+        private void ReleaseLostTarget()
+        {
+            if (!_isWithinDistance)
+            {
+                return;
+            }
+
+            _isWithinDistance = false;
+            onDepart?.Invoke();
         }
     }
 }

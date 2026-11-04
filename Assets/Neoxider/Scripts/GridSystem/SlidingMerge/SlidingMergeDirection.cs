@@ -2,6 +2,10 @@ using UnityEngine;
 
 namespace Neo.GridSystem.SlidingMerge
 {
+    /// <summary>
+    ///     Slide direction in logical grid space. <see cref="Backward" /> / <see cref="Forward" /> move along the depth
+    ///     axis of 3D boards.
+    /// </summary>
     public enum SlidingMergeDirection
     {
         Left,
@@ -12,8 +16,14 @@ namespace Neo.GridSystem.SlidingMerge
         Forward
     }
 
+    /// <summary>
+    ///     Conversion helpers for <see cref="SlidingMergeDirection" />.
+    /// </summary>
     public static class SlidingMergeDirectionExtensions
     {
+        /// <summary>
+        ///     Returns the unit grid offset of the direction (for example <c>Left</c> = <c>(-1, 0, 0)</c>).
+        /// </summary>
         public static Vector3Int ToVector(this SlidingMergeDirection direction)
         {
             switch (direction)

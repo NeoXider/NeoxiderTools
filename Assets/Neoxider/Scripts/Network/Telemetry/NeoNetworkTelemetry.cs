@@ -97,6 +97,9 @@ namespace Neo.Network
         private string _overlayText = string.Empty;
         private bool _subscribed;
         private GUIStyle _style;
+        private readonly GUIContent _overlayContent = new();
+        private Vector2 _overlaySize;
+        private bool _overlaySizeDirty = true;
 
         /// <summary>Incoming traffic (what this peer received).</summary>
         public NetTrafficMeter Incoming => _in ??= new NetTrafficMeter(_windowSeconds);
@@ -162,6 +165,8 @@ namespace Neo.Network
 
         private void OnEnable()
         {
+            // WHY: the overlay draws with plain GUI calls only; skipping the IMGUI layout pass halves its per-frame cost.
+            useGUILayout = false;
             RefreshSubscription();
         }
 
@@ -209,10 +214,18 @@ namespace Neo.Network
                     padding = new RectOffset(6, 6, 4, 4)
                 };
                 _style.normal.textColor = Color.white;
+                _overlaySizeDirty = true;
             }
 
-            Vector2 size = _style.CalcSize(new GUIContent(_overlayText));
-            GUI.Box(new Rect(_overlayPosition.x, _overlayPosition.y, size.x + 4f, size.y + 4f), _overlayText, _style);
+            if (_overlaySizeDirty)
+            {
+                _overlayContent.text = _overlayText;
+                _overlaySize = _style.CalcSize(_overlayContent);
+                _overlaySizeDirty = false;
+            }
+
+            GUI.Box(new Rect(_overlayPosition.x, _overlayPosition.y, _overlaySize.x + 4f, _overlaySize.y + 4f),
+                _overlayContent, _style);
         }
 
         private void RefreshSubscription()
@@ -276,7 +289,14 @@ namespace Neo.Network
                 AppendTop(_text, "out", Outgoing, _topOut);
             }
 
-            _overlayText = _text.ToString();
+            string text = _text.ToString();
+            if (string.Equals(text, _overlayText, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _overlayText = text;
+            _overlaySizeDirty = true;
         }
 
         private void AppendSummary(StringBuilder text)

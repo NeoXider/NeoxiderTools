@@ -15,13 +15,17 @@ namespace Neo.Extensions
         /// <returns>True if the point is on screen.</returns>
         public static bool IsOnScreen(this Vector3 position, Camera camera = null)
         {
-            camera = camera ?? Camera.main;
+            camera = ResolveCamera(camera);
             if (camera == null)
             {
                 return false;
             }
 
-            Vector3 viewportPoint = camera.WorldToViewportPoint(position);
+            return IsViewportPointOnScreen(camera.WorldToViewportPoint(position));
+        }
+
+        private static bool IsViewportPointOnScreen(Vector3 viewportPoint)
+        {
             return viewportPoint.x >= 0 && viewportPoint.x <= 1 &&
                    viewportPoint.y >= 0 && viewportPoint.y <= 1 &&
                    viewportPoint.z >= 0;
@@ -47,7 +51,7 @@ namespace Neo.Extensions
         /// <returns>True if the point is out of bounds on the specified side.</returns>
         public static bool IsOutOfScreenSide(this Vector3 position, ScreenEdge side, Camera camera = null)
         {
-            camera = camera ?? Camera.main;
+            camera = ResolveCamera(camera);
             if (camera == null)
             {
                 return false;
@@ -75,7 +79,7 @@ namespace Neo.Extensions
         /// <returns>Closest point on screen edge.</returns>
         public static Vector3 GetClosestScreenEdgePoint(this Vector3 position, Camera camera = null)
         {
-            camera = camera ?? Camera.main;
+            camera = ResolveCamera(camera);
             if (camera == null)
             {
                 return position;
@@ -83,7 +87,7 @@ namespace Neo.Extensions
 
             Vector3 viewportPoint = camera.WorldToViewportPoint(position);
 
-            if (position.IsOnScreen(camera))
+            if (IsViewportPointOnScreen(viewportPoint))
             {
                 return position;
             }
@@ -153,6 +157,12 @@ namespace Neo.Extensions
             bounds.Encapsulate(camera.ViewportToWorldPoint(new Vector3(0, 1, distance)));
             bounds.Encapsulate(camera.ViewportToWorldPoint(new Vector3(1, 0, distance)));
             return bounds;
+        }
+
+        // WHY: '??' bypasses Unity's overloaded null check, so a destroyed camera reference would never fall back.
+        private static Camera ResolveCamera(Camera camera)
+        {
+            return camera != null ? camera : Camera.main;
         }
 
         private static Vector2 GetEdgePosition(ScreenEdge edge)

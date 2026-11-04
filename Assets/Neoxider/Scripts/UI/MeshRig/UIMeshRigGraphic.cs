@@ -64,6 +64,7 @@ namespace Neo.UI
         private readonly List<UIMeshRigPoint> _points = new List<UIMeshRigPoint>();
         private readonly List<UIMeshRigPointState> _pointStates = new List<UIMeshRigPointState>();
         private bool _pointCacheDirty = true;
+        private UIMeshRigGeometry _meshGeometry;
         private Vector2[] _raycastVertexPositions;
         private int _raycastColumns;
         private int _raycastRows;
@@ -226,6 +227,7 @@ namespace Neo.UI
                 _pointStates);
         }
 
+        /// <summary>Builds the current deformed grid into new arrays the caller owns.</summary>
         public UIMeshRigGeometry BuildGeometry()
         {
             if (_sprite == null)
@@ -233,6 +235,11 @@ namespace Neo.UI
                 return new UIMeshRigGeometry(new Vector3[0], new int[0], new Vector2[0]);
             }
 
+            return BuildSpriteGeometry(null);
+        }
+
+        private UIMeshRigGeometry BuildSpriteGeometry(UIMeshRigGeometry reuse)
+        {
             CollectPointStates();
             Vector4 outerUv = DataUtility.GetOuterUV(_sprite);
             Rect uvRect = Rect.MinMaxRect(outerUv.x, outerUv.y, outerUv.z, outerUv.w);
@@ -242,7 +249,8 @@ namespace Neo.UI
                 GetCoordinateSpace(),
                 uvRect,
                 IsDeformationActive(),
-                _pointStates);
+                _pointStates,
+                reuse);
         }
 
         public Vector2 WorldToNormalized(Vector3 worldPosition)
@@ -342,7 +350,7 @@ namespace Neo.UI
             }
             catch (UnityException)
             {
-                // Match uGUI Image behavior: a non-readable texture remains clickable instead of silently breaking input.
+                // WHY: Match uGUI Image behavior: a non-readable texture remains clickable instead of silently breaking input.
                 _spriteTextureReadable = false;
                 return true;
             }
@@ -356,12 +364,19 @@ namespace Neo.UI
             Canvas.willRenderCanvases += HandleWillRenderCanvases;
             SetAllDirty();
             EnsureRaycastPaddingInitialized();
+            UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
         }
 
         protected override void OnDisable()
         {
             Canvas.willRenderCanvases -= HandleWillRenderCanvases;
             base.OnDisable();
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
         }
 
         private void OnTransformChildrenChanged()
@@ -371,9 +386,8 @@ namespace Neo.UI
         }
 
 #if UNITY_EDITOR
-        // Graphic.OnValidate объявлен под UNITY_EDITOR, поэтому вне редактора переопределять нечего:
-        // без этой обёртки player-сборка падает с CS0115 «no suitable method found to override»,
-        // хотя в редакторе всё компилируется и тесты зелёные. Ловится только реальным билдом.
+        // WHY: Graphic.OnValidate is declared only under UNITY_EDITOR. Without this guard a player build
+        // fails with CS0115 (no suitable method to override) although the editor compiles and tests pass.
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -463,7 +477,10 @@ namespace Neo.UI
 
             int columns = Mathf.Clamp(_columns, 2, 40);
             int rows = Mathf.Clamp(_rows, 2, 40);
-            UIMeshRigGeometry geometry = BuildGeometry();
+            // WHY: an animated rig repopulates every frame; reusing one geometry keeps that path free of
+            // the three per-rebuild array allocations.
+            _meshGeometry = BuildSpriteGeometry(_meshGeometry);
+            UIMeshRigGeometry geometry = _meshGeometry;
             int vertexCount = geometry.Vertices.Length;
             if (_raycastVertexPositions == null || _raycastVertexPositions.Length != vertexCount)
             {
@@ -502,17 +519,7 @@ namespace Neo.UI
                 return;
             }
 
-            _points.Clear();
-            List<UIMeshRigPoint> candidates = new List<UIMeshRigPoint>();
-            GetComponentsInChildren(true, candidates);
-            for (int index = 0; index < candidates.Count; index++)
-            {
-                if (UIMeshRigOwnerResolver.OwnsPoint(this, candidates[index]))
-                {
-                    _points.Add(candidates[index]);
-                }
-            }
-
+            UIMeshRigOwnerResolver.CollectOwnedPoints(this, this, _points);
             _pointCacheDirty = false;
         }
 

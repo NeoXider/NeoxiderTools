@@ -1,7 +1,15 @@
 # ScoreManager
 
-`Neo.Tools.ScoreManager` is a scene score source built on `Singleton<ScoreManager>`. It exposes current
-score, persistent best score, target, progress, and stars as reactive properties.
+**What it is:** a scene score source built on `Singleton<ScoreManager>`: current score, persisted best score,
+target, normalized progress and stars, all exposed as reactive properties, plus optional TMP / `SetText` outputs.
+Script: `Scripts/Tools/Components/ScoreManager.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Components`.
+
+**How to use:**
+1. Add **Neoxider / Tools / ScoreManager**, set a unique best-score save key and the target score.
+2. Change the score with `Add(int)` / `Set(int)` (C#, UnityEvents or Inspector buttons).
+3. Show it with [TextScore](TextScore.md), the label arrays, or subscribe to `Score` / `BestScore` / `Progress`.
+
+---
 
 ## C# API
 
@@ -40,5 +48,9 @@ Progress is clamped to 0–1, and progress-based stars require a positive target
 
 `GetCountStars(float[], bool, int?)` and `IsStar(float, bool, int?)` evaluate thresholds without changing
 the score. `CountStars` can also be assigned explicitly; later score/target changes recompute it.
+Initialization derives the starting stars from score zero exactly like `ResetScore()`, so a zero threshold
+(absolute mode) is already met at startup. `SaveKey` exposes the configured best-score key.
+
+The plain TMP label text is cached per value, so repeated `Set` calls with the same score reuse the same string.
 
 See [Components](README.md) and [TextScore](TextScore.md).

@@ -440,7 +440,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void PollDue(MonoBehaviour view)
         {
-            // Exercise the actual scheduling gate; reflection only supplies the editor lifecycle/deadline seam.
+            // WHY: exercise the actual scheduling gate; reflection only supplies the editor lifecycle/deadline seam.
             Type owner = view is NoCodeFormattedText ? typeof(NoCodeFormattedText) : typeof(NoCodeFloatBindingBehaviour);
             owner.GetField("_nextPollTime", PrivateInstance).SetValue(view, -1f);
             owner.GetMethod("LateUpdate", PrivateInstance).Invoke(view, null);

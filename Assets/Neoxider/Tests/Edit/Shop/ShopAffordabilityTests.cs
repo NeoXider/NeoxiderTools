@@ -71,7 +71,7 @@ namespace Neo.Editor.Tests
 
         private static ShopItemData CreateItem(string id, int price, string currencyKey)
         {
-            var data = ScriptableObject.CreateInstance<ShopItemData>();
+            ShopItemData data = ScriptableObject.CreateInstance<ShopItemData>();
             SetPrivate(data, "_id", id);
             SetPrivate(data, "_price", price);
             SetPrivate(data, "_currencyOverrideSaveKey", currencyKey);
@@ -146,7 +146,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void CanAfford_MultiCurrency_UsesPerItemOverrideWallet()
         {
-            var gemsGo = new GameObject("Gems");
+            GameObject gemsGo = new GameObject("Gems");
             Money gems = gemsGo.AddComponent<Money>();
             ShopItemData gemItem = CreateItem("ring", 10, "Gems");
             try
@@ -155,8 +155,9 @@ namespace Neo.Editor.Tests
                 SetPrivate(gems, "_moneySave", "Gems");
                 _shop.SetItems(new[] { _item, gemItem });
 
-                _money.SetMoney(1000f); // WHY: default wallet is rich...
-                gems.SetMoney(0f); // ...but the item is priced in gems
+                // WHY: the default wallet is rich but the item is priced in gems, so only the gem balance counts.
+                _money.SetMoney(1000f);
+                gems.SetMoney(0f);
 
                 Assert.IsFalse(_shop.CanAfford("ring"));
 
@@ -190,7 +191,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ButtonPrice_UnaffordableState_IsKeptForPricedItems()
         {
-            var go = new GameObject("ButtonPrice");
+            GameObject go = new GameObject("ButtonPrice");
             try
             {
                 ButtonPrice button = go.AddComponent<ButtonPrice>();
@@ -211,7 +212,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void ButtonPrice_UnaffordableFreeItem_DegradesToSelect()
         {
-            var go = new GameObject("ButtonPrice");
+            GameObject go = new GameObject("ButtonPrice");
             try
             {
                 ButtonPrice button = go.AddComponent<ButtonPrice>();
@@ -236,7 +237,7 @@ namespace Neo.Editor.Tests
 
         private ShopPurchaseButtonView CreateView(out ShopItem itemView, out Button button)
         {
-            var itemGo = new GameObject("ShopItemSlot");
+            GameObject itemGo = new GameObject("ShopItemSlot");
             itemView = itemGo.AddComponent<ShopItem>();
             button = itemGo.AddComponent<Button>();
             itemView.buttonBuy = button;
@@ -302,7 +303,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void View_Rebinding_ResubscribesToItemCurrency()
         {
-            var gemsGo = new GameObject("Gems");
+            GameObject gemsGo = new GameObject("Gems");
             Money gems = gemsGo.AddComponent<Money>();
             ShopItemData gemItem = CreateItem("ring", 10, "Gems");
             ShopPurchaseButtonView view = CreateView(out ShopItem itemView, out Button button);

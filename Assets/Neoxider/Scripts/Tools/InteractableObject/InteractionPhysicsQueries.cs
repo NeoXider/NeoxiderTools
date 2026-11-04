@@ -44,6 +44,17 @@ namespace Neo.Tools
             public bool IsComplete => IsValid && _entry.Complete;
             public int Count => IsValid ? _entry.Count : 0;
 
+            /// <summary>Backing entry for synchronous library reads; no callback or yield may run while it is used.</summary>
+            internal Entry GetCompleteEntry()
+            {
+                if (!IsComplete)
+                {
+                    throw new InvalidOperationException("The borrowed interaction hits have expired or are incomplete.");
+                }
+
+                return _entry;
+            }
+
             public RaycastHit this[int index]
             {
                 get
@@ -77,6 +88,17 @@ namespace Neo.Tools
             public bool IsValid => _entry != null && _epoch == Epoch && _entry.Generation == _epoch;
             public bool IsComplete => IsValid && _entry.Complete;
             public int Count => IsValid ? _entry.Count : 0;
+
+            /// <summary>Backing entry for synchronous library reads; no callback or yield may run while it is used.</summary>
+            internal Entry GetCompleteEntry()
+            {
+                if (!IsComplete)
+                {
+                    throw new InvalidOperationException("The borrowed interaction hits have expired or are incomplete.");
+                }
+
+                return _entry;
+            }
 
             public RaycastHit2D this[int index]
             {
@@ -140,7 +162,10 @@ namespace Neo.Tools
             public long RangeNativeCalls { get; }
             /// <summary>Target-local projection passes, independent of the number of native queries.</summary>
             public long ClassificationPasses { get; }
-            /// <summary>Raw hit entries inspected by target-local projection, including excluded entries.</summary>
+            /// <summary>
+            ///     Raw entries actually inspected: collider-index and distance-order builds, indexed target reads,
+            ///     clear-path walks and complete projections. CPU-work diagnostics, not native calls.
+            /// </summary>
             public long ClassifiedHits { get; }
             public long ExternalNativeCalls => NativeCalls - CameraNativeCalls - LookNativeCalls - RangeNativeCalls;
         }
@@ -153,12 +178,136 @@ namespace Neo.Tools
             internal int Count;
             internal bool Complete;
             internal ulong Generation;
+            /// <summary>Next raw index of the same collider, or -1; valid after an EnsureColliderIndex call.</summary>
+            internal int[] NextHitIndices = Array.Empty<int>();
+            /// <summary>Raw indices of finite, non-negative distances in ascending distance order.</summary>
+            internal int[] DistanceOrder = Array.Empty<int>();
+            internal int DistanceOrderCount;
+            private float[] _distanceKeys = Array.Empty<float>();
+            private Dictionary<Collider, int> _colliderIndices3D;
+            private Dictionary<Collider2D, int> _colliderIndices2D;
+            private bool _indexed3D;
+            private bool _indexed2D;
+            private bool _ordered;
+
+            /// <summary>
+            ///     Sorts the valid raw distances once per epoch, so a clear-path check walks only the hits in front of
+            ///     a target instead of every hit. Invalid distances are left out, exactly as target selection ignores them.
+            /// </summary>
+            internal void EnsureDistanceOrder(bool twoDimensions)
+            {
+                if (_ordered)
+                {
+                    return;
+                }
+
+                Grow(ref DistanceOrder, Count);
+                Grow(ref _distanceKeys, Count);
+                int valid = 0;
+                for (int i = 0; i < Count; i++)
+                {
+                    float distance = twoDimensions ? Hits2D[i].distance : Hits3D[i].distance;
+                    if (float.IsFinite(distance) && distance >= 0f)
+                    {
+                        _distanceKeys[valid] = distance;
+                        DistanceOrder[valid] = i;
+                        valid++;
+                    }
+                }
+
+                CountInspectedHits(Count);
+                if (valid > 1)
+                {
+                    Array.Sort(_distanceKeys, DistanceOrder, 0, valid);
+                }
+
+                DistanceOrderCount = valid;
+                _ordered = true;
+            }
+
+            /// <summary>
+            ///     Builds, once per epoch, a collider-to-first-raw-index map so every consumer of this entry finds
+            ///     its own hits without scanning all of them. Chains preserve raw order for equal-distance ties.
+            /// </summary>
+            internal void EnsureColliderIndex3D()
+            {
+                if (_indexed3D)
+                {
+                    return;
+                }
+
+                _colliderIndices3D ??= new Dictionary<Collider, int>();
+                _colliderIndices3D.Clear();
+                Grow(ref NextHitIndices, Count);
+                for (int i = Count - 1; i >= 0; i--)
+                {
+                    CountInspectedHits(1);
+                    Collider collider = Hits3D[i].collider;
+                    NextHitIndices[i] = -1;
+                    if (collider != null)
+                    {
+                        if (_colliderIndices3D.TryGetValue(collider, out int next))
+                        {
+                            NextHitIndices[i] = next;
+                        }
+
+                        _colliderIndices3D[collider] = i;
+                    }
+                }
+
+                _indexed3D = true;
+            }
+
+            internal void EnsureColliderIndex2D()
+            {
+                if (_indexed2D)
+                {
+                    return;
+                }
+
+                _colliderIndices2D ??= new Dictionary<Collider2D, int>();
+                _colliderIndices2D.Clear();
+                Grow(ref NextHitIndices, Count);
+                for (int i = Count - 1; i >= 0; i--)
+                {
+                    CountInspectedHits(1);
+                    Collider2D collider = Hits2D[i].collider;
+                    NextHitIndices[i] = -1;
+                    if (collider != null)
+                    {
+                        if (_colliderIndices2D.TryGetValue(collider, out int next))
+                        {
+                            NextHitIndices[i] = next;
+                        }
+
+                        _colliderIndices2D[collider] = i;
+                    }
+                }
+
+                _indexed2D = true;
+            }
+
+            internal int FirstHitIndex(Collider collider)
+            {
+                return _colliderIndices3D.TryGetValue(collider, out int index) ? index : -1;
+            }
+
+            internal int FirstHitIndex(Collider2D collider)
+            {
+                return _colliderIndices2D.TryGetValue(collider, out int index) ? index : -1;
+            }
 
             internal void Release()
             {
                 Array.Clear(Hits3D, 0, Math.Min(Count, Hits3D.Length));
                 Array.Clear(Hits2D, 0, Math.Min(Count, Hits2D.Length));
                 Overflow2D?.Clear();
+                _colliderIndices3D?.Clear();
+                _colliderIndices2D?.Clear();
+                _indexed3D = false;
+                _indexed2D = false;
+                _ordered = false;
+                DistanceOrderCount = 0;
                 Count = 0;
                 Complete = false;
                 Generation = 0;
@@ -213,7 +362,7 @@ namespace Neo.Tools
                 World3D = Physics.defaultPhysicsScene;
                 World2D = Physics2D.defaultPhysicsScene;
                 Backfaces = kind == Kind.Ray3D && Physics.queriesHitBackfaces;
-                GlobalTriggers2D = (kind == Kind.Intersection2D || kind == Kind.Ray2D) &&
+                GlobalTriggers2D = (kind == Kind.Intersection2D || kind == Kind.Ray2D || kind == Kind.FilteredRay2D) &&
                                    Physics2D.queriesHitTriggers;
                 StartInside2D = kind != Kind.Ray3D && Physics2D.queriesStartInColliders;
             }
@@ -239,7 +388,7 @@ namespace Neo.Tools
 
             public bool Equals(Key other)
             {
-                // Vector3.operator == is approximate and must not identify physical queries.
+                // WHY: Vector3.operator == is approximate and must not identify physical queries.
                 return ReferenceEquals(Camera, other.Camera) && PixelRect.Equals(other.PixelRect) &&
                        ReferenceEquals(TargetTexture, other.TargetTexture) && Display == other.Display &&
                        QueryKind == other.QueryKind &&
@@ -429,11 +578,15 @@ namespace Neo.Tools
             return new CallbackScope();
         }
 
-        internal static ProfilerMarker.AutoScope ProfileClassification(int hitCount, bool twoDimensions)
+        internal static ProfilerMarker.AutoScope ProfileClassification(bool twoDimensions)
         {
             _classificationPasses++;
-            _classifiedHits += hitCount;
             return twoDimensions ? Classify2DMarker.Auto() : Classify3DMarker.Auto();
+        }
+
+        internal static void CountInspectedHits(int hitCount)
+        {
+            _classifiedHits += hitCount;
         }
 
         private static Entry Get(Key key, QueryMode mode, QueryPurpose purpose)
@@ -502,7 +655,7 @@ namespace Neo.Tools
                 entry.Hits2D = new RaycastHit2D[16];
             }
 
-            // Preserve the caller's original planar arguments, including non-unit/tiny/zero directions.
+            // WHY: Preserve the caller's original planar arguments, including non-unit/tiny/zero directions.
             Vector2 origin = key.PlanarOrigin;
             Vector2 direction = key.PlanarDirection;
             int count2D;
@@ -566,7 +719,7 @@ namespace Neo.Tools
 
         private static void Grow<T>(ref T[] buffer, int count)
         {
-            // Leave spare capacity so an unchanged full result does not overflow again after warming.
+            // WHY: Leave spare capacity so an unchanged full result does not overflow again after warming.
             int capacity = count < int.MaxValue ? count + 1 : count;
             if (buffer.Length < capacity)
             {
@@ -648,7 +801,7 @@ namespace Neo.Tools
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
-            // Old borrowed structs can survive with domain reload disabled. Invalidate their entries too.
+            // WHY: Old borrowed structs can survive with domain reload disabled. Invalidate their entries too.
             for (int i = 0; i < Buffers.Count; i++)
             {
                 Buffers[i].Release();

@@ -4,10 +4,11 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Central visual language for the Neoxider inspector (v10).
+    ///     Central visual language for the Neoxider inspector (v12).
     ///     Provides a theme-aware palette (Unity dark/light editor skins), a restrained brand accent
-    ///     (indigo -> cyan) and cheap rounded-rect / gradient drawing primitives that all shared
-    ///     inspector helpers build on so the whole package shares one signature look.
+    ///     (indigo -> azure) and cheap rounded-rect / gradient / vector drawing primitives that all shared
+    ///     inspector helpers build on so the whole package shares one signature look. Sizes follow the
+    ///     18px IMGUI row grid; edges are snapped to device pixels so 1px strokes stay crisp on HiDPI screens.
     /// </summary>
     /// <remarks>
     ///     Rounded corners are drawn with <see cref="GUI.DrawTexture(Rect,Texture,ScaleMode,bool,float,Color,float,float)" />,
@@ -67,10 +68,10 @@ namespace Neo.Editor
             ? new Color(1f, 1f, 1f, 0.05f)
             : new Color(1f, 1f, 1f, 0.55f);
 
-        /// <summary>Overlay applied on hover.</summary>
+        /// <summary>Overlay applied on hover (scaled by the eased hover amount).</summary>
         public static Color HoverOverlay => IsDark
-            ? new Color(1f, 1f, 1f, 0.05f)
-            : new Color(0f, 0f, 0f, 0.045f);
+            ? new Color(1f, 1f, 1f, 0.06f)
+            : new Color(0f, 0f, 0f, 0.05f);
 
         /// <summary>Faint zebra tint for value rows.</summary>
         public static Color RowTint => IsDark
@@ -93,10 +94,12 @@ namespace Neo.Editor
             {
                 if (_bannerGradient == null)
                 {
+                    // WHY: the azure end is a shade deeper than BrandCyan so white text stays readable across the
+                    // whole banner (white on pure cyan was below 2:1).
                     _bannerGradient = BuildHorizontalGradient(256,
-                        (0.00f, BrandIndigo),
-                        (0.55f, new Color(0.322f, 0.451f, 0.949f, 1f)),
-                        (1.00f, BrandCyan));
+                        (0.00f, new Color(0.384f, 0.267f, 0.886f, 1f)),
+                        (0.55f, new Color(0.282f, 0.392f, 0.902f, 1f)),
+                        (1.00f, new Color(0.176f, 0.553f, 0.851f, 1f)));
                 }
 
                 return _bannerGradient;
@@ -111,8 +114,8 @@ namespace Neo.Editor
                 if (_buttonGradient == null)
                 {
                     _buttonGradient = BuildVerticalGradient(64,
-                        (0f, new Color(0.470f, 0.372f, 0.960f, 1f)),
-                        (1f, new Color(0.286f, 0.478f, 0.905f, 1f)));
+                        (0f, new Color(0.447f, 0.361f, 0.937f, 1f)),
+                        (1f, new Color(0.329f, 0.420f, 0.902f, 1f)));
                 }
 
                 return _buttonGradient;
@@ -127,8 +130,8 @@ namespace Neo.Editor
                 if (_buttonGradientHover == null)
                 {
                     _buttonGradientHover = BuildVerticalGradient(64,
-                        (0f, new Color(0.560f, 0.470f, 1f, 1f)),
-                        (1f, new Color(0.360f, 0.588f, 0.980f, 1f)));
+                        (0f, new Color(0.537f, 0.455f, 0.988f, 1f)),
+                        (1f, new Color(0.384f, 0.514f, 0.957f, 1f)));
                 }
 
                 return _buttonGradientHover;
@@ -227,6 +230,76 @@ namespace Neo.Editor
             }
 
             EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Separator);
+        }
+
+        /// <summary>Accent-coloured text that stays readable on the editor surface of the current skin.</summary>
+        public static Color AccentText(Color accent)
+        {
+            return IsDark ? Color.Lerp(accent, Color.white, 0.38f) : Color.Lerp(accent, Color.black, 0.62f);
+        }
+
+        /// <summary>Faint accent fill for chips and pills, tuned per skin so the accent text on it stays readable.</summary>
+        public static Color AccentFill(Color accent, float strength = 1f)
+        {
+            Color fill = accent;
+            fill.a = (IsDark ? 0.20f : 0.16f) * Mathf.Clamp01(strength);
+            return fill;
+        }
+
+        /// <summary>Rounds <paramref name="value" /> to the nearest device pixel.</summary>
+        public static float Snap(float value)
+        {
+            float ppp = Mathf.Max(1f, EditorGUIUtility.pixelsPerPoint);
+            return Mathf.Round(value * ppp) / ppp;
+        }
+
+        /// <summary>
+        ///     Rounds the edges of <paramref name="rect" /> to device pixels, so centred chips and 1px strokes do not
+        ///     straddle two pixel rows and blur.
+        /// </summary>
+        public static Rect Snap(Rect rect)
+        {
+            float xMin = Snap(rect.xMin);
+            float yMin = Snap(rect.yMin);
+            return Rect.MinMaxRect(xMin, yMin, Mathf.Max(xMin, Snap(rect.xMax)), Mathf.Max(yMin, Snap(rect.yMax)));
+        }
+
+        // WHY: Handles takes Vector3 arrays; one scratch buffer keeps the chevron allocation-free per repaint.
+        private static readonly Vector3[] s_chevronPoints = new Vector3[3];
+
+        /// <summary>
+        ///     Draws a vector disclosure chevron centred in <paramref name="area" />: pointing right at
+        ///     <paramref name="openness" /> 0 and rotating to point down at 1, so a foldout arrow can turn smoothly.
+        ///     Vector strokes stay crisp at any display scale, unlike the old "▶"/"▼" text glyphs.
+        /// </summary>
+        public static void DrawChevron(Rect area, float openness, Color color, float size = 7f, float width = 1.8f)
+        {
+            if (Event.current == null || Event.current.type != EventType.Repaint || color.a <= 0f)
+            {
+                return;
+            }
+
+            float angle = Mathf.Clamp01(openness) * Mathf.PI * 0.5f;
+            float cos = Mathf.Cos(angle);
+            float sin = Mathf.Sin(angle);
+            Vector2 center = area.center;
+            float half = size * 0.5f;
+            float depth = size * 0.28f;
+            SetChevronPoint(0, center, -depth, -half, cos, sin);
+            SetChevronPoint(1, center, depth, 0f, cos, sin);
+            SetChevronPoint(2, center, -depth, half, cos, sin);
+
+            Color previous = Handles.color;
+            Handles.BeginGUI();
+            Handles.color = GUI.enabled ? color : new Color(color.r, color.g, color.b, color.a * 0.5f);
+            Handles.DrawAAPolyLine(width, 3, s_chevronPoints);
+            Handles.EndGUI();
+            Handles.color = previous;
+        }
+
+        private static void SetChevronPoint(int index, Vector2 center, float x, float y, float cos, float sin)
+        {
+            s_chevronPoints[index] = new Vector3(center.x + x * cos - y * sin, center.y + x * sin + y * cos, 0f);
         }
 
         private static Texture2D BuildHorizontalGradient(int width, params (float pos, Color color)[] stops)

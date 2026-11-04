@@ -135,7 +135,7 @@ namespace Neo.Tests.Edit
             Assert.That(fingerId, Is.EqualTo(7));
         }
 
-        // Deliberately different enum values: the two input backends do not share a TouchPhase enum.
+        // WHY: Deliberately different enum values: the two input backends do not share a TouchPhase enum.
         public enum AdapterTouchPhase
         {
             None = 0,

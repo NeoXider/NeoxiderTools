@@ -1,17 +1,18 @@
 ﻿# PhysicsEvents3D
 
-`PhysicsEvents3D` forwards Unity 3D physics messages (`OnTriggerEnter`, `OnCollisionEnter`, etc.) into
+**What it is:** `PhysicsEvents3D` forwards Unity 3D physics messages (`OnTriggerEnter`, `OnCollisionEnter`, etc.) into
 UnityEvents and typed C# events. Supports layer/tag filters and optional Mirror replication. File:
 `Assets/Neoxider/Scripts/Tools/InteractableObject/PhysicsEvents3D.cs`, namespace: `Neo.Tools`.
 
-## Typical use
-
+**How to use:**
 1. Add `PhysicsEvents3D` to a GameObject with a `Collider` (e.g. `BoxCollider`, `SphereCollider`).
 2. For trigger events: enable `Is Trigger` on the collider.
 3. For triggers, at least one participant needs a `Rigidbody`. For solid collisions, at least one
    participant must use a non-kinematic `Rigidbody`; the physics layer matrix must permit contact.
 4. Enable `filterByLayer` / `filterByTag` and configure the corresponding filter values as needed.
 5. Subscribe to the desired events in the Inspector.
+
+---
 
 ## Main fields
 

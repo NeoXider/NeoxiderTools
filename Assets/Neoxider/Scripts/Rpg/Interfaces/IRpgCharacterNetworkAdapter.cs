@@ -9,8 +9,19 @@ namespace Neo.Rpg
     /// </summary>
     public interface IRpgCharacterNetworkAdapter
     {
+        /// <summary>True when the character must not run regeneration and effect ticks locally (a pure client).</summary>
         bool SuppressLocalSimulation { get; }
+
+        /// <summary>
+        ///     Sends <paramref name="command"/> to the authority; <see langword="false"/> when the character must
+        ///     execute it locally (server, host or offline).
+        /// </summary>
         bool TryRoute(RpgCharacterNetworkCommand command);
+
+        /// <summary>
+        ///     Publishes the committed character state. Called once per completed step (a simulation frame, a hit,
+        ///     a level-up, a <see cref="RpgCharacter.DeferSnapshotPublication"/> scope), never mid-step.
+        /// </summary>
         void NotifyStateChanged();
     }
 }

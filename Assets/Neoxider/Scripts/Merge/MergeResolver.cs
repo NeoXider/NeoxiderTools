@@ -21,11 +21,22 @@ namespace Neo.Merge
             MergeResult<TItem, TValue> result = new MergeResult<TItem, TValue>();
             Dictionary<TItem, TValue> valueOverrides = new Dictionary<TItem, TValue>();
             HashSet<TItem> changedSet = new HashSet<TItem>();
+            SearchScratch<TItem> scratch = new SearchScratch<TItem>();
             IEnumerable<TItem> seeds = request.Seeds ?? request.Items;
 
-            foreach (TItem seed in seeds)
+            if (seeds is IReadOnlyList<TItem> seedList)
             {
-                ResolveSeed(request, seed, result, valueOverrides, changedSet);
+                for (int i = 0; i < seedList.Count; i++)
+                {
+                    ResolveSeed(request, seedList[i], result, valueOverrides, changedSet, scratch);
+                }
+            }
+            else
+            {
+                foreach (TItem seed in seeds)
+                {
+                    ResolveSeed(request, seed, result, valueOverrides, changedSet, scratch);
+                }
             }
 
             if (request.Mutate)
@@ -44,19 +55,22 @@ namespace Neo.Merge
             TItem seed,
             MergeResult<TItem, TValue> result,
             Dictionary<TItem, TValue> valueOverrides,
-            HashSet<TItem> changedSet)
+            HashSet<TItem> changedSet,
+            SearchScratch<TItem> scratch)
         {
             TItem currentSeed = seed;
             int maxIterations = request.MaxCascadeIterations > 0 ? request.MaxCascadeIterations : 1;
 
             for (int guard = 0; guard < maxIterations; guard++)
             {
-                List<TItem> group = FindGroup(request, currentSeed, valueOverrides);
-                if (group.Count < request.MinGroupSize)
+                int groupCount = FindGroup(request, currentSeed, valueOverrides, scratch);
+                if (groupCount < request.MinGroupSize)
                 {
                     return;
                 }
 
+                // WHY: the scratch group is reused by the next search; callbacks and the result get a stable copy.
+                List<TItem> group = new List<TItem>(scratch.Group);
                 TValue sourceValue = GetCurrentValue(request, currentSeed, valueOverrides);
                 TItem resultItem = request.SelectResultItem != null
                     ? request.SelectResultItem(group, currentSeed)
@@ -72,7 +86,7 @@ namespace Neo.Merge
 
                 MergeGroupResult<TItem, TValue> groupResult = new MergeGroupResult<TItem, TValue>
                 {
-                    Items = new List<TItem>(group),
+                    Items = group,
                     SeedItem = currentSeed,
                     ResultItem = resultItem,
                     SourceValue = sourceValue,
@@ -115,26 +129,46 @@ namespace Neo.Merge
 
             // WHY: the guard limit was exhausted; flag only when yet another merge was actually possible so a
             // cascade that finishes exactly on the limit is not reported as a configuration bug.
-            if (FindGroup(request, currentSeed, valueOverrides).Count >= request.MinGroupSize)
+            if (FindGroup(request, currentSeed, valueOverrides, scratch) >= request.MinGroupSize)
             {
                 result.CascadeLimitReached = true;
             }
         }
 
-        private static List<TItem> FindGroup<TItem, TValue>(
+        /// <summary>
+        ///     Breadth-first search of the connected equal-value group around <paramref name="seed" />. The group is
+        ///     written to <see cref="SearchScratch{TItem}.Group" />, which is overwritten by the next search.
+        /// </summary>
+        private static int FindGroup<TItem, TValue>(
             MergeRequest<TItem, TValue> request,
             TItem seed,
-            Dictionary<TItem, TValue> valueOverrides)
+            Dictionary<TItem, TValue> valueOverrides,
+            SearchScratch<TItem> scratch)
         {
-            List<TItem> group = new List<TItem>();
+            List<TItem> group = scratch.Group;
+            Queue<TItem> queue = scratch.Queue;
+            HashSet<TItem> visited = scratch.Visited;
+
+            // WHY: HashSet.Clear costs O(capacity); after one large group every later tiny search would pay for it.
+            // The previous search visited exactly its group, so removing those items keeps each search O(group).
+            for (int i = 0; i < group.Count; i++)
+            {
+                visited.Remove(group[i]);
+            }
+
+            if (visited.Count != 0)
+            {
+                visited.Clear();
+            }
+
+            group.Clear();
+            queue.Clear();
             if (!CanUse(request, seed, valueOverrides))
             {
-                return group;
+                return 0;
             }
 
             TValue seedValue = GetCurrentValue(request, seed, valueOverrides);
-            Queue<TItem> queue = new Queue<TItem>();
-            HashSet<TItem> visited = new HashSet<TItem>();
             queue.Enqueue(seed);
             visited.Add(seed);
 
@@ -149,25 +183,47 @@ namespace Neo.Merge
                     continue;
                 }
 
+                // WHY: indexing a list avoids boxing its enumerator through the interface once per visited item.
+                if (neighbors is IReadOnlyList<TItem> neighborList)
+                {
+                    for (int i = 0; i < neighborList.Count; i++)
+                    {
+                        VisitNeighbor(request, neighborList[i], seedValue, valueOverrides, queue, visited);
+                    }
+
+                    continue;
+                }
+
                 foreach (TItem neighbor in neighbors)
                 {
-                    if (visited.Contains(neighbor) || !CanUse(request, neighbor, valueOverrides))
-                    {
-                        continue;
-                    }
-
-                    TValue neighborValue = GetCurrentValue(request, neighbor, valueOverrides);
-                    if (!request.AreValuesEqual(seedValue, neighborValue))
-                    {
-                        continue;
-                    }
-
-                    visited.Add(neighbor);
-                    queue.Enqueue(neighbor);
+                    VisitNeighbor(request, neighbor, seedValue, valueOverrides, queue, visited);
                 }
             }
 
-            return group;
+            return group.Count;
+        }
+
+        private static void VisitNeighbor<TItem, TValue>(
+            MergeRequest<TItem, TValue> request,
+            TItem neighbor,
+            TValue seedValue,
+            Dictionary<TItem, TValue> valueOverrides,
+            Queue<TItem> queue,
+            HashSet<TItem> visited)
+        {
+            if (visited.Contains(neighbor) || !CanUse(request, neighbor, valueOverrides))
+            {
+                return;
+            }
+
+            TValue neighborValue = GetCurrentValue(request, neighbor, valueOverrides);
+            if (!request.AreValuesEqual(seedValue, neighborValue))
+            {
+                return;
+            }
+
+            visited.Add(neighbor);
+            queue.Enqueue(neighbor);
         }
 
         private static bool CanUse<TItem, TValue>(
@@ -236,6 +292,16 @@ namespace Neo.Merge
             {
                 list.Add(item);
             }
+        }
+
+        /// <summary>
+        ///     Per-resolve search collections, reused by every seed and cascade step instead of allocated per search.
+        /// </summary>
+        private sealed class SearchScratch<TItem>
+        {
+            public readonly List<TItem> Group = new List<TItem>();
+            public readonly Queue<TItem> Queue = new Queue<TItem>();
+            public readonly HashSet<TItem> Visited = new HashSet<TItem>();
         }
     }
 }

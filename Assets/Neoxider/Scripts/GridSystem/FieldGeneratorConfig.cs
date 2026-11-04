@@ -59,6 +59,18 @@ namespace Neo.GridSystem
 #endif
         public MovementRule MovementRule = MovementRule.FourDirections2D;
 
+        /// <summary>
+        ///     Inspector-authorable neighbor rule. <see cref="GridMovementPreset.UseMovementRule" /> keeps the
+        ///     <see cref="MovementRule" /> assigned from code; any other value replaces it on the next
+        ///     <see cref="FieldGenerator.GenerateField" /> call.
+        /// </summary>
+#if ODIN_INSPECTOR
+        [BoxGroup("Movement rules")]
+#endif
+        [Tooltip("Neighbor directions used by pathfinding, merges and neighbor queries. 'Use Movement Rule' keeps the " +
+                 "rule assigned from code (4-way 2D by default); other presets are applied when the field is generated.")]
+        public GridMovementPreset MovementPreset = GridMovementPreset.UseMovementRule;
+
         [Header("Shape")] public GridShapeMask ShapeMask;
 
         public List<Vector3Int> DisabledCells = new();
@@ -95,6 +107,36 @@ namespace Neo.GridSystem
             GridType = gridType;
             MovementRule = movementRule ?? MovementRule.FourDirections2D;
         }
+
+        /// <summary>
+        ///     Replaces <see cref="MovementRule" /> with the rule of <see cref="MovementPreset" /> unless the preset is
+        ///     <see cref="GridMovementPreset.UseMovementRule" />. Called by <see cref="FieldGenerator.GenerateField" />.
+        /// </summary>
+        public void ApplyMovementPreset()
+        {
+            MovementRule presetRule = MovementRule.FromPreset(MovementPreset);
+            if (presetRule != null)
+            {
+                MovementRule = presetRule;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Built-in neighbor rules selectable in the Inspector through <see cref="FieldGeneratorConfig.MovementPreset" />.
+    /// </summary>
+    public enum GridMovementPreset
+    {
+        /// <summary>Keep the <see cref="FieldGeneratorConfig.MovementRule" /> assigned from code.</summary>
+        UseMovementRule = 0,
+        FourDirections2D = 1,
+        EightDirections2D = 2,
+        DiagonalDirections2D = 3,
+        HexDirectionsX = 4,
+        HexDirectionsY = 5,
+        SixDirections3D = 6,
+        EighteenDirections3D = 7,
+        TwentySixDirections3D = 8
     }
 
     /// <summary>

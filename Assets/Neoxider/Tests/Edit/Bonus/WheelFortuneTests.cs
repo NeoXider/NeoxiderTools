@@ -50,12 +50,12 @@ namespace Neo.Editor.Tests
         [Test]
         public void GetPrize_OutOfRangeOrEmpty_ReturnsNullInsteadOfThrowing()
         {
-            var go = new GameObject("Wheel");
+            GameObject go = new GameObject("Wheel");
             try
             {
                 WheelFortune wheel = go.AddComponent<WheelFortune>();
 
-                // items default to null/empty -> must not throw.
+                // WHY: items default to null/empty -> must not throw.
                 Assert.IsNull(wheel.GetPrize(0));
                 Assert.IsNull(wheel.GetPrize(-1));
                 Assert.IsNull(wheel.GetPrize(999));

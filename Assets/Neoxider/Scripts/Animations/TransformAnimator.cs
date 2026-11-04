@@ -59,8 +59,10 @@ namespace Neo.Animations
         private Vector3 _basePosition;
         private Vector3 _baseScale;
         private Transform _capturedTarget;
+        private Transform _selfTransform;
         private bool _hasBase;
         private bool _hasStarted;
+        private bool _disabled;
         private float _impulseStrength;
         private float _impulseTime = -1f;
         private float _seed;
@@ -119,8 +121,15 @@ namespace Neo.Animations
         /// <summary>Current animation time in seconds.</summary>
         public float Time => _time;
 
+        /// <summary>
+        ///     When true, <c>Update</c> does nothing and the owner advances the animation through <see cref="Tick" />
+        ///     (custom update loops, deterministic tests, frame-stepped replays). Not serialized.
+        /// </summary>
+        public bool ManualUpdate { get; set; }
+
         private void OnEnable()
         {
+            _disabled = false;
             CaptureBase();
 
             if (_randomizeStartTime)
@@ -145,17 +154,34 @@ namespace Neo.Animations
 
         private void Update()
         {
-            if (!IsPlaying || IsPaused)
+            if (ManualUpdate)
             {
                 return;
             }
 
-            float deltaTime = _useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime;
-            Advance(deltaTime);
+            Tick(_useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime);
+        }
+
+        /// <summary>
+        ///     Advances the main and impulse clocks by <paramref name="deltaTime" /> seconds and applies the pose. Does
+        ///     nothing while stopped, paused or disabled; a negative or non-finite delta applies the pose without
+        ///     advancing.
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            // WHY the disable flag: OnDisable restores the captured base pose, and a manual clock that called Play
+            // and Tick on the disabled animator would move the target off it again.
+            if (_disabled || !IsPlaying || IsPaused)
+            {
+                return;
+            }
+
+            Advance(AnimationUtils.SanitizeDeltaTime(deltaTime));
         }
 
         private void OnDisable()
         {
+            _disabled = true;
             RestoreCapturedBase();
             IsPlaying = false;
             IsPaused = false;
@@ -322,14 +348,25 @@ namespace Neo.Animations
                 _settings, _basePosition, _baseEulerAngles, _baseScale, _time, _seed,
                 _impulseTime, _impulseStrength);
 
-            _capturedTarget.localPosition = state.LocalPosition;
-            _capturedTarget.localEulerAngles = state.LocalEulerAngles;
+            // WHY one combined write: position and rotation in a single native call halve the transform-changed
+            // notifications per frame; the Euler-to-quaternion conversion is the one localEulerAngles does.
+            _capturedTarget.SetLocalPositionAndRotation(state.LocalPosition, Quaternion.Euler(state.LocalEulerAngles));
             _capturedTarget.localScale = state.LocalScale;
         }
 
         private Transform ResolveTarget()
         {
-            return _target != null ? _target : transform;
+            if (_target != null)
+            {
+                return _target;
+            }
+
+            if (ReferenceEquals(_selfTransform, null))
+            {
+                _selfTransform = transform;
+            }
+
+            return _selfTransform;
         }
 
         private void RestoreCapturedBase()

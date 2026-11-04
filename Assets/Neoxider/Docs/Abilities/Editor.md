@@ -1,17 +1,20 @@
 # Ability editor API and authoring contracts
 
-`Neo.Abilities.Editor` provides the **Neoxider > Windows > Ability Designer** window and the custom inspectors for [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md). It edits the same blueprints used by the [runtime API](./README.md); it does not own a combat simulation or scene state.
+**What it is:** `Neo.Abilities.Editor` provides the **Neoxider > Windows > Ability Designer** window and the custom inspectors for [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md). It edits the same blueprints used by the [runtime API](./README.md); it does not own a combat simulation or scene state.
 
 See [Ability Designer](./AbilityDesignerWindow.md) for the pane layout. This topic covers editor integration, edit behavior and validation boundaries.
 
-## Scene and asset workflow
-
+**How to use:**
 1. Open the menu above, or select an ability/modifier asset and press **Open in Ability Designer** in its Inspector.
 2. Search the left library by asset name or id. **+ Ability** and **+ Modifier** open a save dialog for a new asset. Canceling creates no asset.
 3. Select an ability. Its **Cast** and **Impact** columns display the corresponding effect lists. **+ Add effect** inserts a fresh node using `EffectNodeData` defaults and the chosen operation id. It does not duplicate the previous node's target, amount, references or level scaling. Set the amount and any required ids/radius before using the effect.
 4. Expand **Edit** on a card, or use the full Inspector on the right. The arrow and remove buttons change list order and remove entries. Serialized edits and list commands support Unity Undo/Redo. Inline edits retain the active card; Inspector edits refresh the board, library badges and validation.
 5. For modifiers, the center board summarizes property contributions, states, tick effects and event reactions. Edit their lists in the right Inspector. Missing blueprints show an error, and null tick entries do not hide valid tick summaries.
 6. Save edited assets through Unity's normal save workflow. The window refreshes its asset library on focus; Undo/Redo also updates the board and diagnostics.
+
+---
+
+## Scene and asset workflow
 
 The add menu lists built-in operations. To author a custom operation, edit the node's `OpId` in the Inspector and register the matching runtime `IEffectOperation`, as described in [Abilities](./README.md). The board is a summary of authored values, not a level/property-dependent damage preview. For `chain`, the displayed limit is the total number of **hits**, including the first target (`MaxTargets <= 0` uses four).
 

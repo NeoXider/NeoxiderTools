@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Pages
@@ -20,6 +21,16 @@ namespace Neo.Pages
         /// <summary>
         ///     Display name (without <c>Page</c> prefix when present).
         /// </summary>
-        public string DisplayName => name.StartsWith("Page") && name.Length > 4 ? name.Substring(4) : name;
+        public string DisplayName
+        {
+            get
+            {
+                string assetName = name;
+                // WHY: ordinal: the culture-sensitive overload depends on the player's locale.
+                return assetName.Length > 4 && assetName.StartsWith("Page", StringComparison.Ordinal)
+                    ? assetName.Substring(4)
+                    : assetName;
+            }
+        }
     }
 }

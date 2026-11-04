@@ -32,7 +32,7 @@ namespace Neo.Editor.Tests.Abilities
 
         private AbilityBlueprint Projectile()
         {
-            var ability = new AbilityBlueprint
+            AbilityBlueprint ability = new AbilityBlueprint
             {
                 Id = "bolt",
                 Targeting = TargetingMode.Unit,
@@ -103,7 +103,7 @@ namespace Neo.Editor.Tests.Abilities
 
             // WHY: with the raw cast seed replayed per hit, every pierced target would crit (or
             // none would) — 8 hits must produce a mix of 40 and 80 damage outcomes.
-            var outcomes = new HashSet<float>();
+            HashSet<float> outcomes = new HashSet<float>();
             for (int i = 0; i < 8; i++)
             {
                 AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
@@ -118,11 +118,11 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void PiercingProjectile_DoesNotRehitSameUnit_AcrossFrames()
         {
-            var hubGo = new GameObject("AbilityHubUnderTest");
-            var ownerGo = new GameObject("owner");
-            var enemyAGo = new GameObject("enemyA");
-            var enemyBGo = new GameObject("enemyB");
-            var projectileGo = new GameObject("projectile");
+            GameObject hubGo = new GameObject("AbilityHubUnderTest");
+            GameObject ownerGo = new GameObject("owner");
+            GameObject enemyAGo = new GameObject("enemyA");
+            GameObject enemyBGo = new GameObject("enemyB");
+            GameObject projectileGo = new GameObject("projectile");
             try
             {
                 AbilitySystemBehaviour hub = hubGo.AddComponent<AbilitySystemBehaviour>();
@@ -134,7 +134,7 @@ namespace Neo.Editor.Tests.Abilities
                 AbilityTestSupport.AddPool(enemyA.Unit, AbilityResourceIds.Health, 100f);
                 AbilityTestSupport.AddPool(enemyB.Unit, AbilityResourceIds.Health, 100f);
 
-                var ability = new AbilityBlueprint
+                AbilityBlueprint ability = new AbilityBlueprint
                 {
                     Id = "pierce_bolt",
                     Targeting = TargetingMode.Point,
@@ -149,8 +149,8 @@ namespace Neo.Editor.Tests.Abilities
                     CastRequest.AtPoint(owner.UnitId, "pierce_bolt", new Vector3(-10f, 0f, 0f)));
                 Assert.That(cast.Success, Is.True);
 
-                var projectile = projectileGo.AddComponent<AbilityProjectileBehaviour>();
-                var serialized = new SerializedObject(projectile);
+                AbilityProjectileBehaviour projectile = projectileGo.AddComponent<AbilityProjectileBehaviour>();
+                SerializedObject serialized = new SerializedObject(projectile);
                 serialized.FindProperty("_maxHits").intValue = 3;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 projectileGo.transform.position = Vector3.zero;
@@ -169,7 +169,7 @@ namespace Neo.Editor.Tests.Abilities
             {
                 foreach (GameObject go in new[] { projectileGo, enemyBGo, enemyAGo, ownerGo, hubGo })
                 {
-                    var unitBehaviour = go.GetComponent<AbilityUnitBehaviour>();
+                    AbilityUnitBehaviour unitBehaviour = go.GetComponent<AbilityUnitBehaviour>();
                     if (unitBehaviour != null && unitBehaviour.Unit != null)
                     {
                         CallPrivate(unitBehaviour, "OnDisable");
@@ -183,7 +183,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void SpawnOp_TargetWithoutPosition_FallsBackToCastPoint()
         {
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Spawn,
                 Target = EffectTargetSelector.Target,
@@ -205,7 +205,7 @@ namespace Neo.Editor.Tests.Abilities
         private static AbilityUnitBehaviour AddUnit(GameObject go, int team, Vector3 position)
         {
             go.transform.position = position;
-            var behaviour = go.AddComponent<AbilityUnitBehaviour>();
+            AbilityUnitBehaviour behaviour = go.AddComponent<AbilityUnitBehaviour>();
             behaviour.SetTeamOverride(team);
             CallPrivate(behaviour, "OnEnable");
             Assert.That(behaviour.Unit, Is.Not.Null, "manual OnEnable must register the unit");
@@ -223,7 +223,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void SpawnOp_RequestsSpawnAtTargetPosition()
         {
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Spawn,
                 Target = EffectTargetSelector.Target,

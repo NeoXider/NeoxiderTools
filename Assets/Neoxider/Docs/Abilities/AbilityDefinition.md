@@ -19,7 +19,7 @@ All fields live under the nested **Blueprint** foldout. If **Id** is left blank,
 | — | **Description** | string | Free text for UI / the Ability Designer. |
 | Targeting | **Targeting** | `TargetingMode` | How the target is acquired: `NoTarget`, `Self`, `Unit`, `Point`, `Direction`. |
 | Targeting | **Team Filter** | `AbilityTeamFilter` | Valid unit targets relative to the caster: `Any` / `Enemies` / `Allies`. |
-| Targeting | **Range** | float | Max cast range in world units. `0` = unlimited. Only enforced when the world knows both positions. |
+| Targeting | **Range** | float | Max cast range in world units, plus the caster's `cast_range_bonus` (inclusive). `0` = unlimited. Only enforced when the world knows both positions. A `Direction` cast reaches exactly `Range + cast_range_bonus`; with `0` it reaches the aim vector's length, at least 10. |
 | Costs & cooldown | **Costs** | `List<AbilityCost>` | Resource costs paid on cast (id + amount). Repeated ids are summed for affordability; mana costs honor `mana_cost_mul`. |
 | Costs & cooldown | **Cooldown** | float | Seconds after cast. Reduced by `cooldown_reduction_percent` (capped at 90%). |
 | Costs & cooldown | **Max Charges** | int | `0`/`1` = single cooldown; `>1` = charge system. |

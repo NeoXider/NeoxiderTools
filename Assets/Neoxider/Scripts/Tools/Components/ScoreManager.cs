@@ -5,12 +5,17 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    /// <summary>
+    ///     Scene score source: current score, persisted best score, target, normalized progress and stars, all
+    ///     exposed as reactive properties, plus optional TMP / <see cref="SetText" /> outputs.
+    /// </summary>
     [CreateFromMenu("Neoxider/Tools/Components/ScoreManager")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(ScoreManager))]
     [NeoDoc("Tools/Components/ScoreManager.md")]
     public class ScoreManager : Singleton<ScoreManager>
     {
-        [SerializeField] private string _keySave = "BestScore";
+        [SerializeField] [Tooltip("SaveProvider key of the best score. Use a unique key per score source.")]
+        private string _keySave = "BestScore";
 
         [Space(20)] [SerializeField] [GUIColor(1, 0, 1)]
         private int score;
@@ -51,6 +56,7 @@ namespace Neo.Tools
         private int _countStars;
         private int _lastCountStars;
 
+        /// <summary>Persisted best score. Raised through <see cref="SetBestScore" />, cleared by <see cref="ResetBestScore" />.</summary>
         public int BestScoreValue
         {
             get => _bestScore;
@@ -61,6 +67,7 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>Current score. Change it through <see cref="Set(int, bool)" /> / <see cref="Add(int, bool)" />.</summary>
         public int ScoreValue
         {
             get => score;
@@ -73,6 +80,7 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>Target score; setting it refreshes progress and stars immediately.</summary>
         public int TargetScoreValue
         {
             get => _targetScore;
@@ -85,12 +93,19 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>SaveProvider key used for the best score.</summary>
+        public string SaveKey => _keySave;
+
+        /// <summary><see langword="true" /> when the current score reached the target score.</summary>
         public bool IsTarget => score >= _targetScore;
+
+        /// <summary>Current score divided by the target, clamped to 0..1 (0 without a positive target).</summary>
         public float ProgressValue => Progress.CurrentValue;
 
         /// <summary>Star count (for NeoCondition and reflection).</summary>
         public int CountStarsValue => CountStarsReactive.CurrentValue;
 
+        /// <summary>Current star count; recomputed on every score/target change, can be overridden explicitly.</summary>
         public int CountStars
         {
             get => _countStars;
@@ -107,8 +122,9 @@ namespace Neo.Tools
             base.Init();
             BestScoreValue = SaveProvider.GetInt(_keySave);
             TargetScore.Value = _targetScore;
+            // WHY: the ScoreValue setter already derives progress and stars for score 0; forcing CountStars to 0
+            // afterwards disagreed with ResetScore() whenever a threshold is met at zero.
             ScoreValue = 0;
-            CountStars = 0;
             SetBestScoreText();
             SetScoreText();
         }

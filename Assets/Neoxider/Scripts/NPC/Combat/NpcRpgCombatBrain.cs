@@ -48,6 +48,11 @@ namespace Neo.NPC.Combat
 
         private float _nextDecisionTime;
         private NpcCombatDecisionCore.Decision? _previousDecision;
+        private GameObject _chaseTarget;
+        private Vector3 _chasePathTargetPosition;
+        private IRpgCombatReceiver _actor;
+
+        private const float ChaseRepathDistanceSqr = 0.001f;
 
         /// <summary>
         ///     Gets the current combat target.
@@ -58,6 +63,44 @@ namespace Neo.NPC.Combat
         ///     Gets whether the brain currently has a target.
         /// </summary>
         public bool HasTarget => CurrentTarget != null;
+
+        /// <summary>Master switch for the decision loop. Disabling it does not clear the target.</summary>
+        public bool IsActive
+        {
+            get => _isActive;
+            set => _isActive = value;
+        }
+
+        /// <summary>Preset driving distances and the attack; can be swapped at runtime.</summary>
+        public NpcCombatPreset Preset
+        {
+            get => _preset;
+            set => _preset = value;
+        }
+
+        /// <summary>Last decision taken by the loop; null before the first evaluation.</summary>
+        public NpcCombatDecisionCore.Decision? CurrentDecision => _previousDecision;
+
+        /// <summary>Raised when a new target is selected.</summary>
+        public RpgGameObjectEvent OnTargetAcquired => _onTargetAcquired;
+
+        /// <summary>Raised with the previous target when it is cleared.</summary>
+        public RpgGameObjectEvent OnTargetLost => _onTargetLost;
+
+        /// <summary>Raised once when a chase starts (or the chased target changes), not on every decision tick.</summary>
+        public UnityEvent OnChaseStarted => _onChaseStarted;
+
+        /// <summary>Raised on each decision tick that holds position.</summary>
+        public UnityEvent OnHoldingPosition => _onHoldingPosition;
+
+        /// <summary>Raised after the attack controller accepted the preset attack.</summary>
+        public UnityEvent OnAttackTriggered => _onAttackTriggered;
+
+        /// <summary>Raised with the failure reason when an attack attempt is rejected.</summary>
+        public RpgStringEvent OnAttackFailed => _onAttackFailed;
+
+        /// <summary>Raised with a readable summary whenever the decision changes.</summary>
+        public RpgStringEvent OnDecisionChanged => _onDecisionChanged;
 
         private void Awake()
         {
@@ -87,6 +130,7 @@ namespace Neo.NPC.Combat
 
         private void OnDisable()
         {
+            _chaseTarget = null;
             if (_clearTargetOnDisable)
             {
                 ClearCombatTarget();
@@ -128,6 +172,8 @@ namespace Neo.NPC.Combat
                 _character = GetComponent<RpgCharacter>();
             }
 
+            _actor = _character != null ? _character : GetComponent<IRpgCombatReceiver>();
+
             if (_lookOrigin == null)
             {
                 _lookOrigin = transform;
@@ -167,6 +213,7 @@ namespace Neo.NPC.Combat
         public void ClearCombatTarget()
         {
             GameObject previousTarget = CurrentTarget;
+            _chaseTarget = null;
             _targetSelector?.ClearTarget();
             RestoreNavigationModeIfNeeded();
 
@@ -213,6 +260,10 @@ namespace Neo.NPC.Combat
                 ResolveLoseTargetDistance());
 
             EmitDecision(decision, target, distanceToTarget);
+            if (decision != NpcCombatDecisionCore.Decision.ChaseTarget)
+            {
+                _chaseTarget = null;
+            }
 
             switch (decision)
             {
@@ -284,11 +335,55 @@ namespace Neo.NPC.Combat
             }
 
             CaptureNavigationModeIfNeeded();
-            _navigation.SetMode(NpcNavigation.NavigationMode.FollowTarget);
-            _navigation.SetFollowTarget(target.transform);
-            _navigation.SetRunning(_preset.RunWhileChasing);
-            _navigation.Resume();
-            _onChaseStarted?.Invoke();
+
+            // WHY: this runs every decision tick while chasing. Re-applying an unchanged target resets the
+            // follow core and raises onTargetChanged each tick, so only the parts that drifted are applied.
+            Transform targetTransform = target.transform;
+            bool chaseStarted = _chaseTarget != target;
+            bool pathRequested = false;
+            if (_navigation.Mode != NpcNavigation.NavigationMode.FollowTarget)
+            {
+                // WHY: assigning the target first lets mode entry path straight to it instead of the stale target.
+                _navigation.SetFollowTarget(targetTransform);
+                _navigation.SetMode(NpcNavigation.NavigationMode.FollowTarget);
+                pathRequested = true;
+            }
+            else if (_navigation.FollowTarget != targetTransform)
+            {
+                _navigation.SetFollowTarget(targetTransform);
+                pathRequested = true;
+            }
+
+            if (chaseStarted)
+            {
+                _navigation.SetRunning(_preset.RunWhileChasing);
+            }
+
+            if (!_navigation.IsActive)
+            {
+                _navigation.Resume();
+            }
+
+            // WHY: Resume() keeps the path from before a hold, and with Auto Update Path off NpcNavigation never
+            // re-paths on its own, so the brain refreshes it on a restarted chase and whenever the target moved.
+            Vector3 targetPosition = targetTransform.position;
+            if (!pathRequested && (chaseStarted || (!_navigation.AutoUpdatePath &&
+                    (targetPosition - _chasePathTargetPosition).sqrMagnitude > ChaseRepathDistanceSqr)))
+            {
+                _navigation.RefreshPath();
+                pathRequested = true;
+            }
+
+            if (pathRequested)
+            {
+                _chasePathTargetPosition = targetPosition;
+            }
+
+            if (chaseStarted)
+            {
+                _chaseTarget = target;
+                _onChaseStarted?.Invoke();
+            }
         }
 
         private void HoldPosition()
@@ -358,7 +453,15 @@ namespace Neo.NPC.Combat
                 return _character;
             }
 
-            return GetComponent<IRpgCombatReceiver>();
+            // WHY: GetComponent on every decision tick adds up across crowds, so a found receiver is cached.
+            // A miss is not cached: a receiver added after Awake (code-built NPCs) or a replaced one is still
+            // found, otherwise a dead or stunned NPC would keep acting.
+            if (_actor == null || (_actor is Object actorObject && actorObject == null))
+            {
+                _actor = GetComponent<IRpgCombatReceiver>();
+            }
+
+            return _actor;
         }
 
         private void CaptureNavigationModeIfNeeded()

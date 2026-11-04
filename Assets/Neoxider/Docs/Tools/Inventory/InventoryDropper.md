@@ -1,6 +1,13 @@
 ﻿# InventoryDropper
 
-**Purpose:** A component for dropping items from the inventory into the game world. Spawns the item's WorldDropPrefab with physics, colliders, and auto-configured `PickableItem` for re-pickup. Supports keyboard input, throw impulse, and random spawn offset.
+**What it is:** `MonoBehaviour` that drops inventory items into the world: spawns the item's World Drop Prefab with physics, colliders and an auto-configured `PickableItem` for re-pickup, with key input, throw impulse and random offset. `Scripts/Tools/Inventory/Runtime/InventoryDropper.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `InventoryDropper` near the player, assign **Inventory** and an optional **Drop Point**.
+2. Give item data a **World Drop Prefab** (or set **Fallback Drop Prefab**).
+3. Drop with the drop key or call `DropById`, `DropSelected`, `DropSlot` from code/UnityEvents; check `PendingReturnCount` after failures.
+
+---
 
 ## Fields (Inspector)
 

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using Neo.StateMachine.NoCode;
 using UnityEngine;
 
@@ -13,6 +13,9 @@ namespace Neo.StateMachine
     /// <remarks>
     ///     Works with code states (CLR types) or NoCode StateMachineData (StateData assets).
     ///     Multiple predicates are combined with AND semantics.
+    ///     Changing <see cref="Priority"/>, <see cref="FromStateType"/> or <see cref="FromStateData"/> (through the
+    ///     setters, the Inspector or any Unity deserialization) invalidates the sorted transition caches of every
+    ///     <see cref="StateMachine{TState}"/>; the next evaluation rebuilds them once.
     /// </remarks>
     /// <example>
     ///     <code>
@@ -34,8 +37,12 @@ namespace Neo.StateMachine
     /// </code>
     /// </example>
     [Serializable]
-    public class StateTransition
+    public class StateTransition : ISerializationCallbackReceiver
     {
+        // WHY: one process-wide counter instead of one per transition: a machine compares a single int per lookup,
+        // so a warm evaluation never re-checks priority order or source selectors, and rare routing edits rebuild.
+        private static int s_routingVersion;
+
         [SerializeField] private StateData fromStateData;
 
         [SerializeField] private StateData toStateData;
@@ -58,7 +65,16 @@ namespace Neo.StateMachine
         public Type FromStateType
         {
             get => fromStateType;
-            set => fromStateType = value;
+            set
+            {
+                if (fromStateType == value)
+                {
+                    return;
+                }
+
+                fromStateType = value;
+                MarkRoutingChanged();
+            }
         }
 
         /// <summary>
@@ -76,7 +92,16 @@ namespace Neo.StateMachine
         public StateData FromStateData
         {
             get => fromStateData;
-            set => fromStateData = value;
+            set
+            {
+                if (ReferenceEquals(fromStateData, value))
+                {
+                    return;
+                }
+
+                fromStateData = value;
+                MarkRoutingChanged();
+            }
         }
 
         /// <summary>
@@ -104,12 +129,21 @@ namespace Neo.StateMachine
         public List<StatePredicate> Predicates => predicates;
 
         /// <summary>
-        ///     Higher priority transitions are evaluated first.
+        ///     Higher priority transitions are evaluated first; equal priorities keep registration order.
         /// </summary>
         public int Priority
         {
             get => priority;
-            set => priority = value;
+            set
+            {
+                if (priority == value)
+                {
+                    return;
+                }
+
+                priority = value;
+                MarkRoutingChanged();
+            }
         }
 
         /// <summary>
@@ -286,6 +320,34 @@ namespace Neo.StateMachine
             }
 
             return false;
+        }
+
+        /// <summary>
+        ///     Process-wide routing version: changes whenever any transition's priority or source selector changes.
+        ///     State machines compare it once per lookup instead of re-checking every transition; custom tooling that
+        ///     caches transition order can do the same.
+        /// </summary>
+        public static int RoutingVersion => Volatile.Read(ref s_routingVersion);
+
+        /// <summary>
+        ///     Invalidates the sorted transition caches of every state machine. The setters and Unity deserialization
+        ///     call it already; call it after writing the serialized priority or source fields through another path (for
+        ///     example reflection or a custom serializer that bypasses Unity's serialization callbacks).
+        /// </summary>
+        public static void MarkRoutingChanged()
+        {
+            Interlocked.Increment(ref s_routingVersion);
+        }
+
+        void ISerializationCallbackReceiver.OnBeforeSerialize()
+        {
+        }
+
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            // WHY: Inspector edits, Undo and JsonUtility write the serialized priority/source fields directly; Unity
+            // may run this on a loading thread, hence the interlocked counter.
+            MarkRoutingChanged();
         }
 
         /// <summary>

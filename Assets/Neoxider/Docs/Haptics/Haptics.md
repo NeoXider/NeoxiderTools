@@ -1,10 +1,16 @@
 # Haptics
 
-**Purpose:** one static entry point for device vibration with named feels (`Selection`, `Light`,
+**What it is:** one static entry point for device vibration with named feels (`Selection`, `Light`,
 `Medium`, `Heavy`, `Soft`, `Rigid`, `Success`, `Warning`, `Error`), a master switch you bind to your
-settings, and a repeat throttle so fast input does not turn into one long buzz.
+settings, and a repeat throttle so fast input does not turn into one long buzz. File:
+`Scripts/Haptics/Haptics.cs`, namespace `Neo.Haptics`, assembly `Neo.Haptics`.
 
-Namespace: `Neo.Haptics`. Assembly: `Neo.Haptics`.
+**How to use:**
+1. Bind the setting once: `Haptics.EnabledProvider = () => settings.VibrationOn;`.
+2. Call `Haptics.Play(HapticType.Light)` (or another feel) from gameplay or a scene-owned UnityEvent method.
+3. Optionally install the `com.tsyk5.mobilehapticfeedback` backend for richer native feedback.
+
+---
 
 [Documentation index](../README.md) · [C# API](#api) · [Scene workflow](#scene--unityevent-workflow)
 
@@ -64,7 +70,7 @@ Haptics.Prepare();                  // warm the engine before a burst (iOS)
 | `EnabledProvider` | Optional live source of truth, e.g. the Vibration setting. |
 | `MinRepeatInterval` | Each type has its own repeat interval in unscaled seconds (default `0.035`); interleaving other types does not reset it. Set `0` to allow immediate repeats. |
 | `IsSupported` | Always false in the editor. With the optional backend, reports its capability check; without it, reports iOS/Android player platform availability without probing the motor. |
-| `Played` | Raised for every pulse that passed the gates, on every platform - tests and debug overlays watch it. |
+| `Played` | Raised for every pulse that passed the gates, on every platform - tests and debug overlays watch it. Each observer is isolated: its exception is logged, not propagated, and later observers still run. |
 | `ResetThrottle()` | Clears every type's repeat history (between test cases, after a scene reset). |
 | `Play(HapticType)` / `Play(intensity, sharpness, seconds)` / `PlayPattern(...)` / `Stop()` / `Prepare()` | See above. |
 
@@ -88,9 +94,14 @@ well if a pattern already playing should end immediately.
 - Accepted custom pulses share `Medium` history; accepted patterns share `Heavy` history. For example,
   `Selection`, `Light`, `Selection` inside one repeat interval raises only `Selection`, `Light`.
 - `Played` observes accepted requests, including on silent platforms; it does not confirm physical
-  playback. It runs synchronously before native dispatch. Observer exceptions propagate after the
-  repeat timestamp has been recorded and can prevent dispatch; handlers should return promptly and
-  avoid throwing exceptions.
+  playback. It runs synchronously before native dispatch. Every observer is invoked on its own: an
+  exception is logged through the `NeoDiagnostics` error gate and neither cancels the native pulse, nor
+  skips the observers subscribed after the faulty one, nor reaches the caller. Handlers should return
+  promptly. A subscriber added or removed inside a handler takes effect from the next pulse.
+- The gates and the observer dispatch do not allocate: the repeat history is a fixed table indexed by
+  `HapticType`, and the observer list is copied once per subscription change, not per pulse. Every
+  subscribe or unsubscribe drops that cached copy at once, so an unsubscribed observer is not kept alive
+  until the next pulse.
 - Pattern arrays remain caller-owned. Keep their contents unchanged until `PlayPattern` returns,
   including inside `Played` handlers: native segment construction reads the paired elements after
   notification. The current API does not snapshot those arrays before notifying observers.

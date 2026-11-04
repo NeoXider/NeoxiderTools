@@ -33,8 +33,8 @@ namespace Neo.Shop
 
         public Button buttonBuy;
 
-        [Space] public UnityEvent OnSelectItem;
-        public UnityEvent OnDeselectItem;
+        [Space] public UnityEvent OnSelectItem = new();
+        public UnityEvent OnDeselectItem = new();
 
         /// <summary>Raised after binding, clearing, or applying selection visuals so dependent views can refresh.</summary>
         public UnityEvent OnViewChanged = new();

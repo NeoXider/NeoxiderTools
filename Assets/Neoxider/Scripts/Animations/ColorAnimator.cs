@@ -36,21 +36,29 @@ namespace Neo.Animations
         [Header("Control")] [Tooltip("Auto-start animation on Start")]
         public bool playOnStart = true;
 
+        [Tooltip("Randomize the clock and noise offset in Start so several animators do not move in sync. " +
+                 "Off = deterministic start at time 0, or at the time set by ResetTime before Start.")]
+        [SerializeField] private bool _randomizeStartTime = true;
+
+        [Tooltip("Advance on unscaled time (ignores Time.timeScale), e.g. for UI shown during pause.")]
+        [SerializeField] private bool _useUnscaledTime;
+
         [Tooltip("Invoked when color changes")]
-        public UnityEvent<Color> OnColorChanged;
+        public UnityEvent<Color> OnColorChanged = new();
 
         [Tooltip("Invoked when animation starts")]
-        public UnityEvent OnAnimationStarted;
+        public UnityEvent OnAnimationStarted = new();
 
         [Tooltip("Invoked when animation stops")]
-        public UnityEvent OnAnimationStopped;
+        public UnityEvent OnAnimationStopped = new();
 
         [Tooltip("Invoked when animation is paused")]
-        public UnityEvent OnAnimationPaused;
+        public UnityEvent OnAnimationPaused = new();
 
         private float animationTime;
         private Color lastColor;
         private Vector2 randomOffset;
+        private bool _disabled;
 
         /// <summary>Current animated color (read-only).</summary>
         public Color CurrentColor { get; private set; }
@@ -60,6 +68,29 @@ namespace Neo.Animations
 
         /// <summary>Whether the animation is paused.</summary>
         public bool IsPaused { get; private set; }
+
+        /// <summary>
+        ///     When true, <c>Update</c> does nothing and the owner advances the animation through <see cref="Tick" />
+        ///     (custom update loops, deterministic tests, frame-stepped replays). Not serialized.
+        /// </summary>
+        public bool ManualUpdate { get; set; }
+
+        /// <summary>Whether <c>Start</c> randomizes the clock and noise offset (the legacy default).</summary>
+        public bool RandomizeStartTime
+        {
+            get => _randomizeStartTime;
+            set => _randomizeStartTime = value;
+        }
+
+        /// <summary>Whether <c>Update</c> advances on <see cref="Time.unscaledDeltaTime" />.</summary>
+        public bool UseUnscaledTime
+        {
+            get => _useUnscaledTime;
+            set => _useUnscaledTime = value;
+        }
+
+        /// <summary>Current animation clock in seconds.</summary>
+        public float AnimationTime => animationTime;
 
         /// <summary>Start color (writable from outside).</summary>
         public Color StartColor
@@ -91,9 +122,12 @@ namespace Neo.Animations
 
         private void Start()
         {
-            animationTime = Random.Range(0f, 1000f);
-            randomOffset = new Vector2(Random.Range(-1000f, 1000f),
-                Random.Range(-1000f, 1000f));
+            if (_randomizeStartTime)
+            {
+                animationTime = Random.Range(0f, 1000f);
+                randomOffset = new Vector2(Random.Range(-1000f, 1000f),
+                    Random.Range(-1000f, 1000f));
+            }
 
             CurrentColor = startColor;
             lastColor = startColor;
@@ -104,14 +138,39 @@ namespace Neo.Animations
             }
         }
 
+        private void OnEnable()
+        {
+            _disabled = false;
+        }
+
+        private void OnDisable()
+        {
+            _disabled = true;
+        }
+
         private void Update()
         {
-            if (!IsPlaying || IsPaused)
+            if (ManualUpdate)
             {
                 return;
             }
 
-            animationTime += Time.deltaTime;
+            Tick(_useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+        }
+
+        /// <summary>
+        ///     Advances the clock by <paramref name="deltaTime" /> seconds, samples the color and raises
+        ///     <see cref="OnColorChanged" /> when it moved by more than 0.001. Does nothing while stopped, paused or
+        ///     disabled (like <c>Update</c>); a negative or non-finite delta samples without advancing.
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            if (_disabled || !IsPlaying || IsPaused)
+            {
+                return;
+            }
+
+            animationTime += AnimationUtils.SanitizeDeltaTime(deltaTime);
 
             Color newColor = AnimationUtils.GetAnimatedColor(
                 animationType,
@@ -122,7 +181,7 @@ namespace Neo.Animations
 
             CurrentColor = newColor;
 
-            if (ColorDistance(newColor, lastColor) > 0.001f)
+            if (AnimationUtils.ColorDistanceSquared(newColor, lastColor) > AnimationUtils.ChangeThresholdSquared)
             {
                 OnColorChanged?.Invoke(newColor);
                 lastColor = newColor;
@@ -179,17 +238,6 @@ namespace Neo.Animations
         public void RandomizeTime()
         {
             animationTime = Random.Range(0f, 1000f);
-        }
-
-        /// <summary>Computes distance between two colors.</summary>
-        private float ColorDistance(Color a, Color b)
-        {
-            return Mathf.Sqrt(
-                Mathf.Pow(a.r - b.r, 2) +
-                Mathf.Pow(a.g - b.g, 2) +
-                Mathf.Pow(a.b - b.b, 2) +
-                Mathf.Pow(a.a - b.a, 2)
-            );
         }
     }
 }

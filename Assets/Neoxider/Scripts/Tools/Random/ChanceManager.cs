@@ -8,6 +8,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Probability helper that works both in-editor and at runtime. Stores a list of weighted entries,
     ///     provides normalization with support for locked items, and can generate random indices using any random source.
+    ///     Weights are floats; use <see cref="IntegerChanceTable" /> when odds must stay exact (for example 1 per million).
     /// </summary>
     [Serializable]
     public class ChanceManager
@@ -18,9 +19,11 @@ namespace Neo.Tools
         [SerializeField] private bool distributeEvenlyWhenZero = true;
         private double _cachedTotalWeight;
         private bool _totalWeightDirty = true;
+        [NonSerialized] private HashSet<int> _idScratch;
 
         private Func<float> randomProvider;
 
+        /// <summary>Creates a table with one unlocked entry per weight.</summary>
         public ChanceManager(params float[] weights)
         {
             if (weights != null)
@@ -34,9 +37,13 @@ namespace Neo.Tools
             Sanitize();
         }
 
+        /// <summary>Entries in roll order.</summary>
         public IReadOnlyList<Entry> Entries => entries;
+
+        /// <summary>Number of entries.</summary>
         public int Count => entries.Count;
 
+        /// <summary>When true, every structural or weight change rescales unlocked weights to <see cref="NormalizeTarget" />.</summary>
         public bool AutoNormalize
         {
             get => autoNormalize;
@@ -50,6 +57,7 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>Sum that <see cref="Normalize()" /> scales all weights to (minimum 0.001).</summary>
         public float NormalizeTarget
         {
             get => normalizeTarget;
@@ -63,18 +71,21 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>When every unlocked weight is zero, normalization splits the remaining budget evenly.</summary>
         public bool DistributeEvenlyWhenZero
         {
             get => distributeEvenlyWhenZero;
             set => distributeEvenlyWhenZero = value;
         }
 
+        /// <summary>Source of uniform values in [0..1] used by rolls; <c>null</c> uses <see cref="UnityEngine.Random.value" />.</summary>
         public Func<float> RandomProvider
         {
             get => randomProvider;
             set => randomProvider = value;
         }
 
+        /// <summary>Sum of sanitized weights (cached until the table changes).</summary>
         public float TotalWeight => (float)GetTotalWeight();
 
         private double GetTotalWeight()
@@ -101,6 +112,7 @@ namespace Neo.Tools
             _totalWeightDirty = true;
         }
 
+        /// <summary>Probability of <paramref name="index" /> in [0..1]; 0 for an invalid index or an empty table.</summary>
         public float GetNormalizedWeight(int index)
         {
             if (!IsValidIndex(index))
@@ -112,6 +124,7 @@ namespace Neo.Tools
             return total <= 0d ? 0f : (float)(SanitizeWeight(entries[index].Weight) / total);
         }
 
+        /// <summary>Appends an entry; a negative <paramref name="customId" /> gets the lowest free id.</summary>
         public Entry AddEntry(float weight = 1f, string label = null, bool locked = false, int customId = -1)
         {
             if (entries == null)
@@ -123,7 +136,7 @@ namespace Neo.Tools
 
             if (entry.CustomId < 0)
             {
-                HashSet<int> used = new();
+                HashSet<int> used = RentIdScratch();
                 for (int i = 0; i < entries.Count; i++)
                 {
                     used.Add(entries[i].CustomId);
@@ -137,11 +150,14 @@ namespace Neo.Tools
             return entry;
         }
 
+        /// <summary>Appends an entry and returns its index.</summary>
         public int AddChance(float chance)
         {
-            return entries.IndexOf(AddEntry(chance));
+            AddEntry(chance);
+            return entries.Count - 1;
         }
 
+        /// <summary>Appends one unlocked entry per weight.</summary>
         public void AddChances(IEnumerable<float> weights)
         {
             if (weights == null)
@@ -157,6 +173,7 @@ namespace Neo.Tools
             OnCollectionChanged();
         }
 
+        /// <summary>Removes the entry at <paramref name="index" />.</summary>
         public void RemoveChance(int index)
         {
             if (!IsValidIndex(index))
@@ -168,22 +185,26 @@ namespace Neo.Tools
             OnCollectionChanged();
         }
 
+        /// <summary>Removes every entry.</summary>
         public void Clear()
         {
             entries.Clear();
             _totalWeightDirty = true;
         }
 
+        /// <summary>Entry at <paramref name="index" />, or null.</summary>
         public Entry GetEntry(int index)
         {
             return IsValidIndex(index) ? entries[index] : null;
         }
 
+        /// <summary>Raw weight at <paramref name="index" />, or 0.</summary>
         public float GetChanceValue(int index)
         {
             return IsValidIndex(index) ? entries[index].Weight : 0f;
         }
 
+        /// <summary>Sets the raw weight at <paramref name="index" /> (then normalizes when <see cref="AutoNormalize" /> is on).</summary>
         public void SetChanceValue(int index, float weight)
         {
             if (!IsValidIndex(index))
@@ -195,6 +216,7 @@ namespace Neo.Tools
             OnCollectionChanged();
         }
 
+        /// <summary>Locks or unlocks the weight at <paramref name="index" /> against normalization.</summary>
         public void SetLocked(int index, bool locked)
         {
             if (!IsValidIndex(index))
@@ -206,6 +228,7 @@ namespace Neo.Tools
             OnCollectionChanged();
         }
 
+        /// <summary>Rolls once with <see cref="RandomProvider" />; returns -1 when nothing can be selected.</summary>
         public int GetChanceId()
         {
             if (entries.Count == 0 || GetTotalWeight() <= 0d)
@@ -217,6 +240,7 @@ namespace Neo.Tools
             return GetId(value);
         }
 
+        /// <summary>Deterministic selection for a uniform value in [0..1]; zero-weight entries are skipped.</summary>
         public int GetId(float randomValue)
         {
             if (entries.Count == 0 || float.IsNaN(randomValue))
@@ -253,12 +277,14 @@ namespace Neo.Tools
             return lastPositiveIndex;
         }
 
+        /// <summary>Rolls once and returns the selected entry, or null.</summary>
         public Entry Evaluate()
         {
             int index = GetChanceId();
             return index >= 0 ? entries[index] : null;
         }
 
+        /// <summary>Deterministic variant of <see cref="Evaluate()" /> for a value in [0..1].</summary>
         public Entry Evaluate(float randomValue)
         {
             int index = GetId(randomValue);
@@ -297,11 +323,16 @@ namespace Neo.Tools
             return false;
         }
 
+        /// <summary>Scales unlocked weights so the table sums to <see cref="NormalizeTarget" />.</summary>
         public void Normalize()
         {
             Normalize(normalizeTarget);
         }
 
+        /// <summary>
+        ///     Scales unlocked weights so all weights sum to <paramref name="targetSum" />. Locked weights are kept;
+        ///     when they already exceed the target, unlocked weights become zero.
+        /// </summary>
         public void Normalize(float targetSum)
         {
             _totalWeightDirty = true;
@@ -311,9 +342,9 @@ namespace Neo.Tools
                 return;
             }
 
-            List<Entry> unlockedEntries = new();
             double lockedSum = 0d;
             double unlockedSum = 0d;
+            int unlockedCount = 0;
             for (int i = 0; i < entries.Count; i++)
             {
                 Entry entry = entries[i];
@@ -324,25 +355,21 @@ namespace Neo.Tools
                 }
                 else
                 {
-                    unlockedEntries.Add(entry);
+                    unlockedCount++;
                     unlockedSum += entry.Weight;
                 }
             }
 
             double remaining = targetSum - lockedSum;
 
-            if (unlockedEntries.Count == 0)
+            if (unlockedCount == 0)
             {
                 return;
             }
 
             if (remaining <= 0d)
             {
-                foreach (Entry entry in unlockedEntries)
-                {
-                    entry.Weight = 0f;
-                }
-
+                SetUnlockedWeights(0f, 0d);
                 return;
             }
 
@@ -353,22 +380,29 @@ namespace Neo.Tools
                     return;
                 }
 
-                float even = (float)(remaining / unlockedEntries.Count);
-                foreach (Entry entry in unlockedEntries)
-                {
-                    entry.Weight = even;
-                }
-
+                SetUnlockedWeights((float)(remaining / unlockedCount), 0d);
                 return;
             }
 
-            double scale = remaining / unlockedSum;
-            foreach (Entry entry in unlockedEntries)
+            SetUnlockedWeights(0f, remaining / unlockedSum);
+        }
+
+        /// <summary>Writes a constant (when <paramref name="scale" /> is 0) or a scaled weight into every unlocked entry.</summary>
+        private void SetUnlockedWeights(float constant, double scale)
+        {
+            for (int i = 0; i < entries.Count; i++)
             {
-                entry.Weight = (float)(entry.Weight * scale);
+                Entry entry = entries[i];
+                if (entry.Locked)
+                {
+                    continue;
+                }
+
+                entry.Weight = scale > 0d ? (float)(entry.Weight * scale) : constant;
             }
         }
 
+        /// <summary>Replaces entries and normalization settings with copies from <paramref name="source" />.</summary>
         public void CopyFrom(ChanceManager source)
         {
             if (source == null || ReferenceEquals(source, this))
@@ -389,6 +423,7 @@ namespace Neo.Tools
             Sanitize();
         }
 
+        /// <summary>Repairs non-finite/negative weights, empty labels and the normalization target.</summary>
         public void Sanitize()
         {
             normalizeTarget = Mathf.Max(0.001f, SanitizeWeight(normalizeTarget));
@@ -460,9 +495,10 @@ namespace Neo.Tools
             return issues;
         }
 
+        /// <summary>Assigns the lowest free id to entries with a negative or duplicate custom id.</summary>
         public void EnsureUniqueIds()
         {
-            HashSet<int> usedIds = new();
+            HashSet<int> usedIds = RentIdScratch();
             foreach (Entry entry in entries)
             {
                 if (entry.CustomId < 0 || usedIds.Contains(entry.CustomId))
@@ -484,6 +520,13 @@ namespace Neo.Tools
             }
 
             EnsureUniqueIds();
+        }
+
+        private HashSet<int> RentIdScratch()
+        {
+            _idScratch ??= new HashSet<int>();
+            _idScratch.Clear();
+            return _idScratch;
         }
 
         private static int GenerateFreeId(HashSet<int> used)
@@ -510,7 +553,9 @@ namespace Neo.Tools
         [Serializable]
         public class Entry
         {
-            [SerializeField] [Range(0f, 1f)] private float weight = 1f;
+            // WHY: Min instead of Range(0,1): with AutoNormalize off or a NormalizeTarget above 1, valid weights
+            // exceed 1 and a 0..1 slider would clamp them on the first Inspector edit.
+            [SerializeField] [Min(0f)] private float weight = 1f;
             [SerializeField] private bool locked;
             [SerializeField] private int id = -1;
             [SerializeField] private string label = "Chance";

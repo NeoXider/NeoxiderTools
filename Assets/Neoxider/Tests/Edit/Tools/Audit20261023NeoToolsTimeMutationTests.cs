@@ -7,9 +7,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
-#if UNITY_TEXTMESHPRO
 using TMPro;
-#endif
 
 namespace Neo.Editor.Tests
 {
@@ -247,7 +245,6 @@ namespace Neo.Editor.Tests
             Assert.That(_timer.IsRunning, Is.False);
         }
 
-#if UNITY_TEXTMESHPRO
         [Test]
         public void InfiniteSetterFromReactiveEvent_DoesNotRenderTheOldSeconds()
         {
@@ -305,7 +302,6 @@ namespace Neo.Editor.Tests
             _timer.timeFormat = "{0:F0}";
             return text;
         }
-#endif
 
         private void ConfigureDay()
         {

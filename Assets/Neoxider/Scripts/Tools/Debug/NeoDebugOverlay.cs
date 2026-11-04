@@ -82,6 +82,20 @@ namespace Neo.Tools
         private MethodInfo _amGetClipMethod;
         private PropertyInfo _saveHasInstanceProp;
         private PropertyInfo _saveIsLoadProp;
+        private Func<bool> _amHasInstance;
+        private Func<bool> _saveHasInstance;
+        private Func<bool> _saveIsLoad;
+        private UnityEngine.Object _amIsRandomTarget;
+        private Func<bool> _amIsRandomReader;
+        private Func<UnityEngine.Object> _amInstance;
+        private UnityEngine.Object _amReadersTarget;
+        private Func<AudioSource> _amMusicReader;
+        private Func<AudioClip> _amClipReader;
+        private AudioClip _cachedClip;
+        private string _cachedClipName;
+
+        private Scene _cachedScene;
+        private string _cachedSceneName;
 
         private void Awake()
         {
@@ -309,7 +323,14 @@ namespace Neo.Tools
             if (_showScene)
             {
                 Scene scene = SceneManager.GetActiveScene();
-                sb.Append("Scene  ").Append(scene.name).Append("  [#");
+                // WHY: Scene.name marshals a new string on every call; refresh it only when the active scene changes.
+                if (_cachedSceneName == null || scene != _cachedScene)
+                {
+                    _cachedScene = scene;
+                    _cachedSceneName = scene.name;
+                }
+
+                sb.Append("Scene  ").Append(_cachedSceneName).Append("  [#");
                 AppendInt(sb, scene.buildIndex);
                 sb.Append("]\n");
                 sb.Append("TimeScale  ");
@@ -338,19 +359,16 @@ namespace Neo.Tools
             sb.Append("— Managers —\n");
 
             // WHY: Reading diagnostics must not resolve inactive managers or trigger lazy singleton creation.
-            bool hasAm = _amHasInstanceProp != null && (bool)_amHasInstanceProp.GetValue(null);
-            UnityEngine.Object amObj = hasAm && _amInstanceProp != null
-                ? _amInstanceProp.GetValue(null) as UnityEngine.Object
-                : null;
+            bool hasAm = _amHasInstance != null && _amHasInstance();
+            UnityEngine.Object amObj = hasAm ? ReadAmInstance() : null;
 
             if (amObj != null)
             {
-                object am = amObj;
-                AudioSource music = _amMusicProp != null ? _amMusicProp.GetValue(am) as AudioSource : null;
+                BindAmReaders(amObj);
+                AudioSource music = ReadAmMusic(amObj);
                 bool musicPlaying = music != null && music.isPlaying;
-                bool randomMusic  = _amIsRandomMethod != null && (bool)_amIsRandomMethod.Invoke(am, null);
-                AudioClip currentClip = _amGetClipMethod != null ? _amGetClipMethod.Invoke(am, null) as AudioClip : null;
-                string clipName = currentClip != null ? currentClip.name : "—";
+                bool randomMusic  = ReadAmIsRandomMusic(amObj);
+                string clipName = GetClipName(ReadAmClip(amObj));
 
                 sb.Append("AM  music=").Append(musicPlaying ? "playing" : "stopped")
                   .Append("  random=").Append(randomMusic ? "on" : "off")
@@ -362,10 +380,10 @@ namespace Neo.Tools
             }
 
             // WHY: SaveManager state read via reflection to avoid an assembly dependency.
-            bool hasSave = _saveHasInstanceProp != null && (bool)_saveHasInstanceProp.GetValue(null);
+            bool hasSave = _saveHasInstance != null && _saveHasInstance();
             if (hasSave)
             {
-                bool loaded = _saveIsLoadProp != null && (bool)_saveIsLoadProp.GetValue(null);
+                bool loaded = _saveIsLoad != null && _saveIsLoad();
                 sb.Append("SaveManager  loaded=").Append(loaded ? "yes" : "no").Append('\n');
             }
             else
@@ -463,6 +481,132 @@ namespace Neo.Tools
                 _saveIsLoadProp = saveType.GetProperty("IsLoad",
                     BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
             }
+
+            // WHY: typed delegates read the flags without boxing a bool on every throttled refresh.
+            _amHasInstance = CreateStaticBoolReader(_amHasInstanceProp);
+            _saveHasInstance = CreateStaticBoolReader(_saveHasInstanceProp);
+            _saveIsLoad = CreateStaticBoolReader(_saveIsLoadProp);
+            _amInstance = CreateStaticObjectReader(_amInstanceProp);
+        }
+
+        private static Func<UnityEngine.Object> CreateStaticObjectReader(PropertyInfo property)
+        {
+            MethodInfo getter = property != null && typeof(UnityEngine.Object).IsAssignableFrom(property.PropertyType)
+                ? property.GetGetMethod()
+                : null;
+            if (getter == null || !getter.IsStatic)
+            {
+                return null;
+            }
+
+            // WHY: return-type covariance binds AM.I (an AM) to Func<Object> without the reflection invoke path.
+            return (Func<UnityEngine.Object>)Delegate.CreateDelegate(typeof(Func<UnityEngine.Object>), getter, false);
+        }
+
+        private UnityEngine.Object ReadAmInstance()
+        {
+            if (_amInstance != null)
+            {
+                return _amInstance();
+            }
+
+            return _amInstanceProp != null ? _amInstanceProp.GetValue(null) as UnityEngine.Object : null;
+        }
+
+        /// <summary>Binds the music and clip readers to <paramref name="am" /> once per manager instance.</summary>
+        private void BindAmReaders(UnityEngine.Object am)
+        {
+            if (ReferenceEquals(am, _amReadersTarget))
+            {
+                return;
+            }
+
+            _amReadersTarget = am;
+            MethodInfo musicGetter = _amMusicProp != null && _amMusicProp.PropertyType == typeof(AudioSource)
+                ? _amMusicProp.GetGetMethod()
+                : null;
+            _amMusicReader = musicGetter != null
+                ? (Func<AudioSource>)Delegate.CreateDelegate(typeof(Func<AudioSource>), am, musicGetter, false)
+                : null;
+            _amClipReader = _amGetClipMethod != null && _amGetClipMethod.ReturnType == typeof(AudioClip)
+                ? (Func<AudioClip>)Delegate.CreateDelegate(typeof(Func<AudioClip>), am, _amGetClipMethod, false)
+                : null;
+        }
+
+        private AudioSource ReadAmMusic(UnityEngine.Object am)
+        {
+            if (_amMusicReader != null)
+            {
+                return _amMusicReader();
+            }
+
+            return _amMusicProp != null ? _amMusicProp.GetValue(am) as AudioSource : null;
+        }
+
+        private AudioClip ReadAmClip(UnityEngine.Object am)
+        {
+            if (_amClipReader != null)
+            {
+                return _amClipReader();
+            }
+
+            return _amGetClipMethod != null ? _amGetClipMethod.Invoke(am, null) as AudioClip : null;
+        }
+
+        /// <summary>
+        ///     Returns the clip name, reading <c>Object.name</c> (a new native string per call) only when the
+        ///     playing clip changes.
+        /// </summary>
+        private string GetClipName(AudioClip clip)
+        {
+            if (clip == null)
+            {
+                _cachedClip = null;
+                _cachedClipName = null;
+                return "—";
+            }
+
+            if (!ReferenceEquals(clip, _cachedClip) || _cachedClipName == null)
+            {
+                _cachedClip = clip;
+                _cachedClipName = clip.name;
+            }
+
+            return _cachedClipName;
+        }
+
+        private static Func<bool> CreateStaticBoolReader(PropertyInfo property)
+        {
+            MethodInfo getter = property != null && property.PropertyType == typeof(bool)
+                ? property.GetGetMethod()
+                : null;
+            if (getter == null || !getter.IsStatic)
+            {
+                return null;
+            }
+
+            Func<bool> reader =
+                (Func<bool>)Delegate.CreateDelegate(typeof(Func<bool>), getter, false);
+            return reader ?? (() => (bool)property.GetValue(null));
+        }
+
+        private bool ReadAmIsRandomMusic(UnityEngine.Object am)
+        {
+            if (_amIsRandomMethod == null || _amIsRandomMethod.ReturnType != typeof(bool))
+            {
+                return false;
+            }
+
+            if (!ReferenceEquals(am, _amIsRandomTarget))
+            {
+                _amIsRandomTarget = am;
+                _amIsRandomReader =
+                    (Func<bool>)Delegate.CreateDelegate(typeof(Func<bool>), am, _amIsRandomMethod, false);
+            }
+
+            return _amIsRandomReader != null
+                ? _amIsRandomReader()
+                : (bool)_amIsRandomMethod.Invoke(am, null);
         }
 
         private static Type ResolveType(string fullName)

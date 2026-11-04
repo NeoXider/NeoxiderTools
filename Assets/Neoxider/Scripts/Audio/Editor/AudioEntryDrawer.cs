@@ -23,6 +23,49 @@ namespace Neo.Audio.Editor
     {
         private const float Pad = 2f;
 
+        // WHY: the drawer runs once per entry per IMGUI event; labels and tooltips are built once instead of
+        // allocating a dozen GUIContent objects for every visible row on every repaint.
+        private static readonly GUIContent VolumeContent = new GUIContent("Volume",
+            "Multiplier of the channel volume, 0..2. Final = channel x this, so above 1 lifts a "
+            + "clip that was mastered too quietly.");
+
+        private static readonly GUIContent RandomizePitchContent = new GUIContent("Randomize Pitch",
+            "Detune each play so repeats stop sounding identical.");
+
+        private static readonly GUIContent PitchMinContent = new GUIContent("Pitch Min");
+        private static readonly GUIContent PitchMaxContent = new GUIContent("Pitch Max");
+
+        private static readonly GUIContent ModeContent = new GUIContent("Mode",
+            "Loop: hold this track until the game switches. Shuffle: roll on to another track of " +
+            "the pool when this one ends.");
+
+        private static readonly GUIContent FadeContent = new GUIContent("Fade Override",
+            "Negative = use AM's Music Fade Duration.");
+
+        private static readonly GUIContent ChannelContent = new GUIContent("Channel",
+            "Sfx: the Efx AudioSource volume / mute / group. Ui: the UI channel with its own volume " +
+            "and mixer group (AM > Channels).");
+
+        private static readonly GUIContent SpatialBlendContent = new GUIContent("Spatial Blend (PlayAt)",
+            "Used only when the entry is played at a world position: 0 = 2D, 1 = fully 3D.");
+
+        private static readonly GUIContent PlaceholderContent = new GUIContent("Placeholder",
+            "Intentionally empty for now: while it has no clip, playing it does nothing and logs " +
+            "nothing. Add clips later and it plays normally.");
+
+        private static readonly GUIContent ClipsHeaderContent = new GUIContent("Clips",
+            "Two or more -> a random one plays each time, never the same twice in a row.");
+
+        private static readonly GUIContent AddClipContent = new GUIContent("+", "Add an empty clip slot.");
+        private static readonly GUIContent RemoveClipContent = new GUIContent("-", "Remove this clip.");
+
+        private static readonly GUIContent TrimHeaderContent = new GUIContent("trim",
+            "Per-clip volume multiplier. Takes are rarely matched in level; this pulls the loud "
+            + "one down - or lifts the quiet one - without re-exporting the file.");
+
+        private static readonly GUIContent ClipCountContent = new GUIContent(string.Empty,
+            "Drag audio clips onto this row to add them all at once.");
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             float line = EditorGUIUtility.singleLineHeight + Pad;
@@ -124,10 +167,8 @@ namespace Neo.Audio.Editor
 
             if (!singleSlot)
             {
-                EditorGUI.LabelField(countRect,
-                    new GUIContent(clipCountForRow + " clips",
-                        "Drag audio clips onto this row to add them all at once."),
-                    EditorStyles.miniLabel);
+                ClipCountContent.text = clipCountForRow + " clips";
+                EditorGUI.LabelField(countRect, ClipCountContent, EditorStyles.miniLabel);
             }
 
             if (clips != null)
@@ -196,10 +237,7 @@ namespace Neo.Audio.Editor
 
             if (volume != null)
             {
-                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), volume,
-                    new GUIContent("Volume",
-                        "Multiplier of the channel volume, 0..2. Final = channel x this, so above 1 lifts a "
-                        + "clip that was mastered too quietly."));
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), volume, VolumeContent);
                 y += lineHeight + Pad;
             }
 
@@ -207,47 +245,36 @@ namespace Neo.Audio.Editor
             {
                 // The package draws every bool as an ON/OFF pill; a raw checkbox here read as a foreign island.
                 Neo.Editor.NeoxiderEditorGUI.DrawPillToggleField(
-                    new Rect(position.x, y, width, lineHeight), randomize,
-                    new GUIContent("Randomize Pitch", "Detune each play so repeats stop sounding identical."));
+                    new Rect(position.x, y, width, lineHeight), randomize, RandomizePitchContent);
                 y += lineHeight + Pad;
 
                 if (randomize.boolValue)
                 {
-                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), pitchMin,
-                        new GUIContent("Pitch Min"));
+                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), pitchMin, PitchMinContent);
                     y += lineHeight + Pad;
-                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), pitchMax,
-                        new GUIContent("Pitch Max"));
+                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), pitchMax, PitchMaxContent);
                     y += lineHeight + Pad;
                 }
             }
 
             if (mode != null)
             {
-                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), mode,
-                    new GUIContent("Mode",
-                        "Loop: hold this track until the game switches. Shuffle: roll on to another track of " +
-                        "the pool when this one ends."));
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), mode, ModeContent);
                 y += lineHeight + Pad;
 
-                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), fade,
-                    new GUIContent("Fade Override", "Negative = use AM's Music Fade Duration."));
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), fade, FadeContent);
                 y += lineHeight + Pad;
             }
 
             if (channel != null)
             {
-                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), channel,
-                    new GUIContent("Channel",
-                        "Sfx: the Efx AudioSource volume / mute / group. Ui: the UI channel with its own volume " +
-                        "and mixer group (AM > Channels)."));
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), channel, ChannelContent);
                 y += lineHeight + Pad;
 
                 if (spatialBlend != null)
                 {
                     EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), spatialBlend,
-                        new GUIContent("Spatial Blend (PlayAt)",
-                            "Used only when the entry is played at a world position: 0 = 2D, 1 = fully 3D."));
+                        SpatialBlendContent);
                 }
 
                 y += lineHeight + Pad;
@@ -256,10 +283,7 @@ namespace Neo.Audio.Editor
             if (placeholder != null)
             {
                 Neo.Editor.NeoxiderEditorGUI.DrawPillToggleField(
-                    new Rect(position.x, y, width, lineHeight), placeholder,
-                    new GUIContent("Placeholder",
-                        "Intentionally empty for now: while it has no clip, playing it does nothing and logs " +
-                        "nothing. Add clips later and it plays normally."));
+                    new Rect(position.x, y, width, lineHeight), placeholder, PlaceholderContent);
                 y += lineHeight + Pad;
             }
 
@@ -298,12 +322,10 @@ namespace Neo.Audio.Editor
             float line = lineHeight + Pad;
             Rect header = new Rect(area.x, area.y, area.width, lineHeight);
 
-            EditorGUI.LabelField(header,
-                new GUIContent("Clips",
-                    "Two or more -> a random one plays each time, never the same twice in a row."));
+            EditorGUI.LabelField(header, ClipsHeaderContent);
 
             Rect addRect = new Rect(header.xMax - 22f, header.y, 22f, lineHeight);
-            if (GUI.Button(addRect, new GUIContent("+", "Add an empty clip slot."), EditorStyles.miniButton))
+            if (GUI.Button(addRect, AddClipContent, EditorStyles.miniButton))
             {
                 AppendClip(clips, clipVolumes, null);
             }
@@ -311,11 +333,7 @@ namespace Neo.Audio.Editor
             Rect trimHeader = new Rect(addRect.x - 84f, header.y, 80f, lineHeight);
             if (clips.arraySize > 0)
             {
-                EditorGUI.LabelField(trimHeader,
-                    new GUIContent("trim",
-                        "Per-clip volume multiplier. Takes are rarely matched in level; this pulls the loud "
-                        + "one down - or lifts the quiet one - without re-exporting the file."),
-                    EditorStyles.centeredGreyMiniLabel);
+                EditorGUI.LabelField(trimHeader, TrimHeaderContent, EditorStyles.centeredGreyMiniLabel);
             }
 
             float y = header.yMax + Pad;
@@ -346,7 +364,7 @@ namespace Neo.Audio.Editor
                     WriteTrim(clipVolumes, index, edited);
                 }
 
-                if (GUI.Button(removeRect, new GUIContent("-", "Remove this clip."), EditorStyles.miniButton))
+                if (GUI.Button(removeRect, RemoveClipContent, EditorStyles.miniButton))
                 {
                     removeAt = index;
                 }

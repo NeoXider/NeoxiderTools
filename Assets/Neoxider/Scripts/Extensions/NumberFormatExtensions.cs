@@ -165,6 +165,10 @@ namespace Neo.Extensions
             "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"
         };
 
+        // WHY: decimals are clamped to [0..12], so every numeric format string can be built once instead of per call.
+        private static readonly string[] FixedFormats = CreateFormats("F");
+        private static readonly string[] GroupedFormats = CreateFormats("N");
+
         /// <summary>
         ///     Formats an int using provided format options.
         /// </summary>
@@ -369,7 +373,7 @@ namespace Neo.Extensions
                 return ApplyAffixes(value.ToString(Invariant), options);
             }
 
-            // A decimal has at most 28 fractional places. Keep enough significant digits for
+            // WHY: A decimal has at most 28 fractional places. Keep enough significant digits for
             // scientific notation (12 fractional digits plus a rounding digit) on the double path.
             if (value == 0d || Math.Abs(value) >= 1e-15d)
             {
@@ -379,17 +383,17 @@ namespace Neo.Extensions
                 }
                 catch (OverflowException)
                 {
-                    // Finite doubles beyond the decimal range are formatted below.
+                    // WHY: Finite doubles beyond the decimal range are formatted below.
                 }
             }
 
             string raw = options.Notation switch
             {
                 NumberNotation.Plain => NormalizeAndApplySeparators(
-                    Round(value, options.Decimals, options.RoundingMode).ToString("F" + options.Decimals, Invariant),
+                    Round(value, options.Decimals, options.RoundingMode).ToString(FixedFormat(options.Decimals), Invariant),
                     options),
                 NumberNotation.Grouped => NormalizeAndApplySeparators(
-                    Round(value, options.Decimals, options.RoundingMode).ToString("N" + options.Decimals, Invariant),
+                    Round(value, options.Decimals, options.RoundingMode).ToString(GroupedFormat(options.Decimals), Invariant),
                     options),
                 NumberNotation.IdleShort => FormatIdle(value, options),
                 NumberNotation.Scientific => FormatScientific(value, options),
@@ -508,7 +512,7 @@ namespace Neo.Extensions
         private static string FormatGrouped(decimal value, NumberFormatOptions options)
         {
             decimal rounded = Round(value, options.Decimals, options.RoundingMode);
-            string pattern = "N" + options.Decimals;
+            string pattern = GroupedFormat(options.Decimals);
             string raw = rounded.ToString(pattern, Invariant);
             return NormalizeAndApplySeparators(raw, options);
         }
@@ -591,7 +595,7 @@ namespace Neo.Extensions
             if (roundedInit < 1000d)
             {
                 return (value < 0d ? "-" : string.Empty) + NormalizeAndApplySeparators(
-                    roundedInit.ToString("F" + options.Decimals, Invariant), options);
+                    roundedInit.ToString(FixedFormat(options.Decimals), Invariant), options);
             }
 
             double compact = Math.Abs(value);
@@ -613,7 +617,7 @@ namespace Neo.Extensions
             }
 
             string numberText = NormalizeAndApplySeparators(
-                compact.ToString("F" + options.Decimals, Invariant), options);
+                compact.ToString(FixedFormat(options.Decimals), Invariant), options);
 
             return (isNegative ? "-" : string.Empty) + numberText + GetSuffix(tier);
         }
@@ -625,7 +629,7 @@ namespace Neo.Extensions
                 return "0";
             }
 
-            // The runtime's exponent conversion also handles subnormal doubles without a
+            // WHY: The runtime's exponent conversion also handles subnormal doubles without a
             // power-of-ten divisor underflowing to zero. Retain 17 significant digits to round.
             string scientific = value.ToString("E16", Invariant);
             int exponentIndex = scientific.IndexOf('E');
@@ -661,7 +665,7 @@ namespace Neo.Extensions
         {
             int neededDigits = Math.Min(digits.Length, leadingDigits + decimals + 1);
             decimal prefix = decimal.Parse(digits.Substring(0, neededDigits), Invariant);
-            // A non-zero discarded tail distinguishes an exact midpoint/integer from a value
+            // WHY: A non-zero discarded tail distinguishes an exact midpoint/integer from a value
             // just above it. One sticky digit is sufficient for every supported rounding mode.
             for (int i = neededDigits; i < digits.Length; i++)
             {
@@ -730,6 +734,27 @@ namespace Neo.Extensions
             };
         }
 
+        private static string[] CreateFormats(string prefix)
+        {
+            string[] formats = new string[13];
+            for (int i = 0; i < formats.Length; i++)
+            {
+                formats[i] = prefix + i.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return formats;
+        }
+
+        private static string FixedFormat(int decimals)
+        {
+            return FixedFormats[NumberFormatOptions.ClampDecimals(decimals)];
+        }
+
+        private static string GroupedFormat(int decimals)
+        {
+            return GroupedFormats[NumberFormatOptions.ClampDecimals(decimals)];
+        }
+
         private static decimal Pow10Decimal(int power)
         {
             decimal result = 1m;
@@ -743,14 +768,14 @@ namespace Neo.Extensions
 
         private static string FormatDecimalValue(decimal value, int decimals, NumberFormatOptions options)
         {
-            string pattern = "F" + decimals;
+            string pattern = FixedFormat(decimals);
             string raw = value.ToString(pattern, Invariant);
             return NormalizeAndApplySeparators(raw, options);
         }
 
         private static string NormalizeAndApplySeparators(string raw, NumberFormatOptions options)
         {
-            // Trim the invariant fraction before inserting user separators. A group separator
+            // WHY: Trim the invariant fraction before inserting user separators. A group separator
             // can contain the decimal separator too, without changing the integer digits.
             NumberFormatOptions invariantOptions = options;
             invariantOptions.DecimalSeparator = ".";
@@ -821,6 +846,11 @@ namespace Neo.Extensions
             if (end == fractionalStart)
             {
                 end = separatorIndex;
+            }
+
+            if (fractionalEnd == text.Length)
+            {
+                return end == text.Length ? text : text.Substring(0, end);
             }
 
             return text.Substring(0, end) + text.Substring(fractionalEnd);

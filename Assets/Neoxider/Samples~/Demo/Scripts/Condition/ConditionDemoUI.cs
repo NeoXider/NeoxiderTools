@@ -1,3 +1,7 @@
+using System;
+using System.Text;
+using Neo.Condition;
+using Neo.Samples;
 using Neo.Tools;
 using TMPro;
 using UnityEngine;
@@ -9,7 +13,9 @@ namespace Neo.Demo.Condition
     /// <summary>
     ///     UI controller for the NeoCondition demo scene.
     ///     Drives GameOver, Win, Warning panels and status text.
-    ///     HP/Score text updates use Health.OnChange and ScoreManager.textScores.
+    ///     In the authored scene (NeoConditionDemoBuilder) the NeoCondition events toggle the panels directly through
+    ///     persistent listeners; this component adds the C# path (<see cref="EvaluateInCode" />) and the pause switch
+    ///     that shows conditions which keep checking while <see cref="Time.timeScale" /> is 0.
     /// </summary>
     [AddComponentMenu("Neoxider/Demo/Condition/ConditionDemoUI")]
     public class ConditionDemoUI : MonoBehaviour
@@ -30,11 +36,36 @@ namespace Neo.Demo.Condition
 
         [Header("Status")] [SerializeField] private TMP_Text _statusText;
 
+        [Header("Code path")]
+        [Tooltip("NeoCondition components that Evaluate In Code reads with NeoCondition.Evaluate().")]
+        [SerializeField]
+        private NeoCondition[] _conditions = Array.Empty<NeoCondition>();
+
+        [Tooltip("Label that shows the last EvaluateInCode result.")] [SerializeField]
+        private TMP_Text _codeResultText;
+
+        [Tooltip("Optional demo log feed.")] [SerializeField]
+        private DemoLogFeed _log;
+
+        private readonly StringBuilder _codeLine = new();
+        private bool _pausedByDemo;
+
+        /// <summary>NeoCondition components read by <see cref="EvaluateInCode" />.</summary>
+        public NeoCondition[] Conditions => _conditions ?? Array.Empty<NeoCondition>();
+
+        /// <summary>True while <see cref="SetPaused" /> holds <see cref="Time.timeScale" /> at 0.</summary>
+        public bool IsPausedByDemo => _pausedByDemo;
+
         private void Start()
         {
             HideGameOver();
             HideWin();
             HideWarning();
+        }
+
+        private void OnDisable()
+        {
+            ReleasePause();
         }
 
         public void ShowGameOver()
@@ -162,6 +193,78 @@ namespace Neo.Demo.Condition
             HideWin();
             HideWarning();
             SetStatus("Playing...");
+        }
+
+        /// <summary>
+        ///     C# path of the scene rules: calls <see cref="NeoCondition.Evaluate" /> (no events) on every assigned
+        ///     condition and writes the results to the result label and the log.
+        /// </summary>
+        public void EvaluateInCode()
+        {
+            _codeLine.Clear();
+            NeoCondition[] conditions = _conditions ?? Array.Empty<NeoCondition>();
+            for (int i = 0; i < conditions.Length; i++)
+            {
+                NeoCondition condition = conditions[i];
+                if (condition == null)
+                {
+                    continue;
+                }
+
+                bool passed = condition.Evaluate();
+                if (_codeLine.Length > 0)
+                {
+                    _codeLine.Append("   ");
+                }
+
+                _codeLine.Append(condition.name).Append(' ')
+                    .Append(passed ? "<color=#43D9A3>true</color>" : "<color=#FF5C7A>false</color>");
+            }
+
+            string line = _codeLine.Length > 0 ? _codeLine.ToString() : "no NeoCondition assigned";
+            if (_codeResultText != null)
+            {
+                _codeResultText.text = line;
+            }
+
+            Log("NeoCondition.Evaluate(): " + line);
+        }
+
+        /// <summary>
+        ///     Toggle target: sets <see cref="Time.timeScale" /> to 0 (paused) or 1. Conditions with Use Unscaled Time
+        ///     (and EveryFrame mode) keep checking while paused; the previous scale is restored when the demo is disabled.
+        /// </summary>
+        public void SetPaused(bool paused)
+        {
+            if (paused)
+            {
+                Time.timeScale = 0f;
+                _pausedByDemo = true;
+                Log("Time.timeScale = 0: the conditions still check (Use Unscaled Time)");
+                return;
+            }
+
+            ReleasePause();
+            Log("Time.timeScale = 1");
+        }
+
+        private void ReleasePause()
+        {
+            if (!_pausedByDemo)
+            {
+                return;
+            }
+
+            Time.timeScale = 1f;
+            _pausedByDemo = false;
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
         }
     }
 }

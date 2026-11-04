@@ -70,8 +70,19 @@ namespace Neo.StateMachine.NoCode
             set => logType = value;
         }
 
+        /// <summary>
+        ///     Logs through the State Machine debug log, so output appears only while the machine running this action
+        ///     has <c>StateMachine&lt;TState&gt;.DebugLogEnabled</c> on (a behaviour's Enable Debug Log). Outside a
+        ///     machine callback the shared switch written by the behaviours applies.
+        /// </summary>
         public override void Execute()
         {
+            // WHY: On Update lists run this every frame; skip building the message when logging is off.
+            if (!StateMachineLog.ScopeEnabled)
+            {
+                return;
+            }
+
             switch (logType)
             {
                 case LogType.Log:
@@ -93,7 +104,10 @@ namespace Neo.StateMachine.NoCode
     [Serializable]
     public class SetGameObjectActiveAction : StateAction
     {
-        [SerializeField] private GameObject target;
+        [Tooltip(
+            "Prefab/asset reference only: StateData is a ScriptableObject and cannot keep scene objects. For scene objects use Set Context GameObject Active with a context slot.")]
+        [SerializeField]
+        private GameObject target;
 
         [SerializeField] private bool setActive = true;
 
@@ -131,22 +145,27 @@ namespace Neo.StateMachine.NoCode
     [Serializable]
     public class SetContextGameObjectActiveAction : StateAction
     {
-        [SerializeField] private ConditionContextSlot contextSlot = ConditionContextSlot.Owner;
+        [Tooltip("Owner = the StateMachineBehaviour's GameObject; Override1..5 = its Context Overrides entries.")]
+        [SerializeField]
+        private ConditionContextSlot contextSlot = ConditionContextSlot.Owner;
 
         [SerializeField] private bool setActive = true;
 
+        /// <summary>Which scene object to toggle: the owner or a Context Overrides slot.</summary>
         public ConditionContextSlot ContextSlot
         {
             get => contextSlot;
             set => contextSlot = value;
         }
 
+        /// <summary>Desired active state (true = active, false = inactive).</summary>
         public bool SetActive
         {
             get => setActive;
             set => setActive = value;
         }
 
+        /// <summary>Resolves the slot from the current evaluation context and toggles it.</summary>
         public override void Execute()
         {
             Execute(StateMachineEvaluationContext.GetContextBySlot((int)contextSlot));

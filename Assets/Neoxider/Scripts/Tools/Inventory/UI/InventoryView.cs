@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Neo.Extensions;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Neo.Tools
 {
@@ -106,31 +107,42 @@ namespace Neo.Tools
                 return;
             }
 
-            List<int> itemIds = BuildDisplayItemIds();
-            HashSet<int> displayedIds = new(itemIds);
-            foreach (KeyValuePair<int, InventoryItemView> pair in _spawnedByItemId)
+            // WHY: Pooled scratch collections: this runs on every inventory change. They are rented per call, so a
+            // nested Refresh from a view callback gets its own and cannot corrupt the outer iteration.
+            List<int> itemIds = ListPool<int>.Get();
+            HashSet<int> displayedIds = HashSetPool<int>.Get();
+            try
             {
-                if (!displayedIds.Contains(pair.Key) && pair.Value != null)
+                BuildDisplayItemIds(itemIds, displayedIds);
+                foreach (KeyValuePair<int, InventoryItemView> pair in _spawnedByItemId)
                 {
-                    pair.Value.gameObject.SetActive(false);
+                    if (!displayedIds.Contains(pair.Key) && pair.Value != null)
+                    {
+                        pair.Value.gameObject.SetActive(false);
+                    }
+                }
+
+                for (int i = 0; i < itemIds.Count; i++)
+                {
+                    int itemId = itemIds[i];
+                    InventoryItemData data = _inventory.GetItemData(itemId);
+                    int count = _inventory.GetCount(itemId);
+                    bool shouldShow = !_showOnlyNonZero || count > 0;
+
+                    if (!shouldShow)
+                    {
+                        HideOrDestroySpawned(itemId);
+                        continue;
+                    }
+
+                    InventoryItemView view = GetOrCreateSpawnedView(itemId);
+                    view.Bind(data, itemId, count);
                 }
             }
-
-            for (int i = 0; i < itemIds.Count; i++)
+            finally
             {
-                int itemId = itemIds[i];
-                InventoryItemData data = _inventory.GetItemData(itemId);
-                int count = _inventory.GetCount(itemId);
-                bool shouldShow = !_showOnlyNonZero || count > 0;
-
-                if (!shouldShow)
-                {
-                    HideOrDestroySpawned(itemId);
-                    continue;
-                }
-
-                InventoryItemView view = GetOrCreateSpawnedView(itemId);
-                view.Bind(data, itemId, count);
+                ListPool<int>.Release(itemIds);
+                HashSetPool<int>.Release(displayedIds);
             }
         }
 
@@ -246,11 +258,8 @@ namespace Neo.Tools
             }
         }
 
-        private List<int> BuildDisplayItemIds()
+        private void BuildDisplayItemIds(List<int> ordered, HashSet<int> seen)
         {
-            List<int> ordered = new();
-            HashSet<int> seen = new();
-
             if ((_sourceMode == InventoryViewSourceMode.DatabaseItems ||
                  _sourceMode == InventoryViewSourceMode.Hybrid) &&
                 _inventory.Database != null && _inventory.Database.Items != null)
@@ -277,8 +286,6 @@ namespace Neo.Tools
                     }
                 }
             }
-
-            return ordered;
         }
 
         private IEnumerator RefreshNextFrame()

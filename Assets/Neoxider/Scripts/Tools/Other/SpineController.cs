@@ -93,8 +93,16 @@ public sealed class SpineController : MonoBehaviour
 
     private void OnValidate()
     {
-        skeletonAnimation ??= GetComponent<SkeletonAnimation>();
-        skeletonDataAsset ??= skeletonAnimation != null ? skeletonAnimation.SkeletonDataAsset : skeletonDataAsset;
+        // WHY: explicit Unity null checks; ??= ignores destroyed/missing references ("fake null").
+        if (skeletonAnimation == null)
+        {
+            skeletonAnimation = GetComponent<SkeletonAnimation>();
+        }
+
+        if (skeletonDataAsset == null && skeletonAnimation != null)
+        {
+            skeletonDataAsset = skeletonAnimation.SkeletonDataAsset;
+        }
 
         if (!Application.isPlaying)
         {
@@ -438,7 +446,10 @@ public sealed class SpineController : MonoBehaviour
             return;
         }
 
-        skeletonDataAsset ??= skeletonAnimation.SkeletonDataAsset;
+        if (skeletonDataAsset == null)
+        {
+            skeletonDataAsset = skeletonAnimation.SkeletonDataAsset;
+        }
 
         if (skeletonAnimation.Skeleton == null)
         {

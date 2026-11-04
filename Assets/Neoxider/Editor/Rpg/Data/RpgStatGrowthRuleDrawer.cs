@@ -47,7 +47,7 @@ namespace Neo.Editor.Rpg
         {
             EditorGUI.BeginProperty(position, label, property);
 
-            var rect = new Rect(position.x, position.y + 2f, position.width, EditorGUIUtility.singleLineHeight);
+            Rect rect = new Rect(position.x, position.y + 2f, position.width, EditorGUIUtility.singleLineHeight);
 
             EditorGUI.LabelField(rect, label, EditorStyles.boldLabel);
             rect.y += EditorGUIUtility.singleLineHeight + 2f;

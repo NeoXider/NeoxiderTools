@@ -1,6 +1,12 @@
 ﻿# GameTimeController
 
-**Purpose:** A simple utility to control the game's time speed (`Time.timeScale`). Perfect for pausing the game or creating slow-motion effects via `UnityEvent`.
+**What it is:** A MonoBehaviour (`Scripts/Tools/Time/GameTimeController.cs`, namespace `Neo.Tools`) that controls the global game speed (`Time.timeScale`) for pause buttons and slow-motion via `UnityEvent`.
+
+**How to use:**
+1. Add **Neoxider > Tools > GameTimeController** to a persistent object.
+2. Wire buttons to `PauseGame()`, `ResumeGame()`, `TogglePause()` or `SetTimeScale(float)`.
+
+---
 
 ## Fields (Inspector)
 
@@ -12,9 +18,12 @@
 
 | Method / Property | Description |
 |-------------------|-------------|
-| `void PauseGame()` | Hard-sets `Time.timeScale = 0`. |
-| `void ResumeGame()` | Returns time to normal speed (`Time.timeScale = 1`). |
-| `void SetTimeScale(float scale)` | Sets a custom finite time scale (e.g., `0.5` for slow-motion). Negative values clamp to zero; NaN and infinities leave the current speed unchanged. |
+| `void PauseGame()` | Hard-sets `Time.timeScale = 0`, remembering the running speed for `TogglePause()`. |
+| `void ResumeGame()` | Returns time to normal speed (`Time.timeScale = 1`); `ResumeScale` becomes 1. |
+| `void TogglePause()` | Pauses, or resumes to `ResumeScale` (for example a slow-motion scale). One-button pause toggle. |
+| `bool IsPaused { get; }` | True while `Time.timeScale` is zero. |
+| `float ResumeScale { get; }` | Speed `TogglePause()` resumes to: the last non-zero scale set through this controller (or observed when it paused); 1 after `ResumeGame()`. A pause made elsewhere (another controller or a direct `Time.timeScale = 0`) resumes to this value too. |
+| `void SetTimeScale(float scale)` | Sets a custom finite time scale (e.g., `0.5` for slow-motion). A non-zero value becomes `ResumeScale`; `0` pauses like `PauseGame()`. Negative values clamp to zero; NaN and infinities leave the current speed unchanged. |
 
 ## Examples
 

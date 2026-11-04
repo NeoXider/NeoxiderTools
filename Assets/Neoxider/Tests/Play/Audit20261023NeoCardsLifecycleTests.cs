@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Neo.Cards;
+using Neo.Tests.Performance;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Events;
@@ -172,6 +173,831 @@ namespace Neo.Tests.Play
                     Assert.That(released[i].transform.position, Is.EqualTo(new Vector3(1000f + i, 800f, 0f)));
                     Assert.That(Quaternion.Angle(released[i].transform.rotation, Quaternion.Euler(0f, 0f, 47f)),
                         Is.LessThan(0.001f));
+                }
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardParentChanged_Clear_DoesNotResurrectAdmission()
+        {
+            return NativeBoardClear(true, false).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardChildrenChanged_Clear_DoesNotResurrectAdmission()
+        {
+            return NativeBoardClear(false, false).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardParentChanged_ClearAndReparent_PreservesReleasedCard()
+        {
+            return NativeBoardClear(true, true).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardChildrenChanged_ClearAndReparent_PreservesReleasedCard()
+        {
+            return NativeBoardClear(false, true).ToCoroutine();
+        }
+
+        private static async UniTask NativeBoardClear(bool parentObserver, bool returnCard)
+        {
+            using Scene scene = new();
+            BoardComponent board = scene.Board;
+            board.SetCapacity(1, false);
+            board.SetFaceUp(false);
+            CardComponent card = scene.Card("SupersededBoardAdmission");
+            card.IsFaceUp = true;
+            Transform foreignParent = Child(scene.Root, "ReleasedBoardCardOwner").transform;
+            Vector3 foreignPosition = new(701f, 809f, 23f);
+            Quaternion foreignRotation = Quaternion.Euler(11f, 19f, 37f);
+            Vector3 foreignScale = new(0.7f, 0.8f, 1.1f);
+            int hierarchyCallbacks = 0;
+            int membersAtCallback = -1;
+            int clears = 0;
+            int placements = 0;
+            int fullEvents = 0;
+            int moves = 0;
+            List<CardComponent> released = null;
+            board.OnBoardCleared = new UnityEvent();
+            board.OnBoardCleared.AddListener(() => clears++);
+            board.OnCardPlaced = new UnityEvent<CardComponent>();
+            board.OnCardPlaced.AddListener(placed => placements++);
+            board.OnBoardFull = new UnityEvent();
+            board.OnBoardFull.AddListener(() => fullEvents++);
+            card.OnMoveComplete = new UnityEvent();
+            card.OnMoveComplete.AddListener(() => moves++);
+            Audit20261023NeoCardsHierarchyObserver observer = (parentObserver ? card.gameObject : board.gameObject)
+                .AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+            Action clear = () =>
+            {
+                hierarchyCallbacks++;
+                membersAtCallback = board.Count;
+                if (returnCard)
+                {
+                    released = board.ClearAndReturn();
+                    card.transform.SetParent(foreignParent, true);
+                    card.transform.SetPositionAndRotation(foreignPosition, foreignRotation);
+                    card.transform.localScale = foreignScale;
+                }
+                else
+                {
+                    board.Clear();
+                }
+            };
+            if (parentObserver)
+            {
+                observer.ArmParentChanged(clear);
+            }
+            else
+            {
+                observer.ArmChildrenChanged(clear);
+            }
+
+            try
+            {
+                // WHY: Clear is immediate; the release case also exercises a requested animated admission.
+                await Within(board.PlaceCardAsync(card, returnCard));
+
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1), "A real one-shot hierarchy callback must run.");
+                Assert.That(clears, Is.EqualTo(1));
+                Assert.That(board.Count, Is.Zero, "The old admission cannot repopulate a board cleared by its native callback.");
+                Assert.That(board.Cards, Is.Empty);
+                Assert.That(membersAtCallback, Is.EqualTo(1), "Clear/release must see the committed incoming member.");
+                Assert.That(placements, Is.Zero);
+                Assert.That(fullEvents, Is.Zero);
+                Assert.That(moves, Is.Zero);
+                if (returnCard)
+                {
+                    CollectionAssert.AreEqual(new[] { card }, released);
+                    Assert.That(card.transform.parent, Is.SameAs(foreignParent));
+                    Assert.That(card.IsFaceUp, Is.True, "A released card must not receive the old board's face override.");
+                }
+
+                await Quiesce(160);
+                await UniTask.Yield();
+                Assert.That(board.Cards, Is.Empty);
+                Assert.That(placements, Is.Zero);
+                Assert.That(fullEvents, Is.Zero);
+                Assert.That(moves, Is.Zero);
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+                if (returnCard)
+                {
+                    Assert.That(card != null, Is.True);
+                    Assert.That(card.transform.parent, Is.SameAs(foreignParent));
+                    Assert.That(card.transform.position, Is.EqualTo(foreignPosition));
+                    Assert.That(Quaternion.Angle(card.transform.rotation, foreignRotation), Is.LessThan(0.001f));
+                    Assert.That(card.transform.localScale, Is.EqualTo(foreignScale));
+                    Assert.That(card.IsFaceUp, Is.True);
+                }
+                else
+                {
+                    Assert.That(card == null, Is.True, "Clear must release the exact committed member through native destruction.");
+                }
+
+                CardComponent ordinary = scene.Card("OrdinaryBoardAdmissionAfterClear");
+                await Within(board.PlaceCardAsync(ordinary, false));
+                CollectionAssert.AreEqual(new[] { ordinary }, board.Cards);
+                Assert.That(ordinary.transform.parent, Is.SameAs(board.transform));
+                Assert.That(ordinary.IsFaceUp, Is.False);
+                Assert.That(placements, Is.EqualTo(1));
+                Assert.That(fullEvents, Is.EqualTo(1));
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+
+                CardComponent rejected = scene.Card("RejectedFullBoardAdmission");
+                Vector3 rejectedPosition = rejected.transform.position;
+                await Within(board.PlaceCardAsync(rejected, false));
+                CollectionAssert.AreEqual(new[] { ordinary }, board.Cards);
+                Assert.That(rejected.transform.parent, Is.SameAs(scene.Root.transform));
+                Assert.That(rejected.transform.position, Is.EqualTo(rejectedPosition));
+                Assert.That(rejected.IsFaceUp, Is.True);
+                Assert.That(placements, Is.EqualTo(1));
+                Assert.That(fullEvents, Is.EqualTo(1));
+                Assert.That(clears, Is.EqualTo(1));
+            }
+            finally
+            {
+                if (observer != null)
+                {
+                    observer.Disarm();
+                }
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardParentChanged_ForeignReparent_DropsEscapedAdmission()
+        {
+            return NativeBoardEscape(true).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardChildrenChanged_ForeignReparent_DropsEscapedAdmission()
+        {
+            return NativeBoardEscape(false).ToCoroutine();
+        }
+
+        private static async UniTask NativeBoardEscape(bool parentObserver)
+        {
+            using Scene scene = new();
+            BoardComponent board = scene.Board;
+            Set(board, "_placeDuration", 2f);
+            board.SetCapacity(3, false);
+            board.SetFaceUp(false);
+            CardComponent first = scene.Card("ResidentBoardCard0");
+            CardComponent second = scene.Card("ResidentBoardCard1");
+            await Within(board.PlaceCardAsync(first, false));
+            UniTask residentArrange = board.PlaceCardAsync(second, true);
+            await UniTask.Yield();
+            Assert.That(residentArrange.Status, Is.EqualTo(UniTaskStatus.Pending),
+                "Precondition: the residents' animated arrange is still moving.");
+            Assert.That(first.transform.localPosition.x, Is.GreaterThan(-39.9f),
+                "Precondition: the first resident has not reached its two-card slot yet.");
+
+            CardComponent card = scene.Card("EscapedBoardAdmission");
+            card.IsFaceUp = true;
+            Transform foreignParent = Child(scene.Root, "EscapedBoardCardOwner").transform;
+            Vector3 foreignPosition = new(-311f, 127f, 5f);
+            int hierarchyCallbacks = 0;
+            int membersAtCallback = -1;
+            int placements = 0;
+            int fullEvents = 0;
+            int clears = 0;
+            int moves = 0;
+            board.OnCardPlaced = new UnityEvent<CardComponent>();
+            board.OnCardPlaced.AddListener(placed =>
+            {
+                if (placed != first && placed != second)
+                {
+                    placements++;
+                }
+            });
+            board.OnBoardFull = new UnityEvent();
+            board.OnBoardFull.AddListener(() => fullEvents++);
+            board.OnBoardCleared = new UnityEvent();
+            board.OnBoardCleared.AddListener(() => clears++);
+            card.OnMoveComplete = new UnityEvent();
+            card.OnMoveComplete.AddListener(() => moves++);
+            Audit20261023NeoCardsHierarchyObserver observer = (parentObserver ? card.gameObject : board.gameObject)
+                .AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+            Action escape = () =>
+            {
+                hierarchyCallbacks++;
+                membersAtCallback = board.Count;
+                // WHY: models a foreign owner that takes the card without using the board API.
+                card.transform.SetParent(foreignParent, true);
+                card.transform.position = foreignPosition;
+            };
+            if (parentObserver)
+            {
+                observer.ArmParentChanged(escape);
+            }
+            else
+            {
+                observer.ArmChildrenChanged(escape);
+            }
+
+            try
+            {
+                UniTask admission = board.PlaceCardAsync(card, true);
+
+                Assert.That(admission.Status, Is.EqualTo(UniTaskStatus.Succeeded),
+                    "An admission dropped during parenting completes without awaiting a layout.");
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1), "A real one-shot hierarchy callback must run.");
+                Assert.That(membersAtCallback, Is.EqualTo(3), "The callback must see the committed incoming member.");
+                CollectionAssert.AreEqual(new[] { first, second }, board.Cards,
+                    "A card taken by another owner during admission must not remain a phantom member.");
+                AssertBoardLine(board);
+                Assert.That(board.IsFull, Is.False);
+                Assert.That(board.CanPlaceCard(card), Is.True);
+                Assert.That(placements, Is.Zero);
+                Assert.That(fullEvents, Is.Zero);
+                Assert.That(clears, Is.Zero);
+                Assert.That(card.transform.parent, Is.SameAs(foreignParent));
+                Assert.That(card.IsFaceUp, Is.True, "An escaped card must not receive the board's face override.");
+
+                await Within(residentArrange);
+                await Quiesce(160);
+                await UniTask.Yield();
+                CollectionAssert.AreEqual(new[] { first, second }, board.Cards);
+                AssertBoardLine(board);
+                Assert.That(card.transform.parent, Is.SameAs(foreignParent));
+                Assert.That(Vector3.Distance(card.transform.position, foreignPosition), Is.LessThan(0.001f));
+                Assert.That(moves, Is.Zero);
+                Assert.That(placements, Is.Zero);
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+
+                CardComponent ordinary = scene.Card("OrdinaryBoardAdmissionAfterEscape");
+                await Within(board.PlaceCardAsync(ordinary, false));
+                CollectionAssert.AreEqual(new[] { first, second, ordinary }, board.Cards);
+                AssertBoardLine(board);
+                Assert.That(ordinary.IsFaceUp, Is.False);
+                Assert.That(placements, Is.EqualTo(1));
+                Assert.That(fullEvents, Is.EqualTo(1));
+                Assert.That(card.transform.parent, Is.SameAs(foreignParent));
+            }
+            finally
+            {
+                if (observer != null)
+                {
+                    observer.Disarm();
+                }
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardRemoveCards_ClearFromAParentCallback_StopsTheBatch()
+        {
+            return UniTask.ToCoroutine(async () =>
+            {
+                using Scene scene = new();
+                BoardComponent board = scene.Board;
+                CardComponent[] cards =
+                {
+                    scene.Card("BatchRemoved0"), scene.Card("BatchRemoved1"), scene.Card("BatchRemoved2")
+                };
+                Assert.That(board.PlaceCardsImmediate(cards, false), Is.EqualTo(3));
+                int callbacks = 0;
+                int clears = 0;
+                List<CardComponent> released = null;
+                board.OnBoardCleared = new UnityEvent();
+                board.OnBoardCleared.AddListener(() => clears++);
+                Audit20261023NeoCardsHierarchyObserver observer =
+                    cards[0].gameObject.AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+                observer.ArmParentChanged(() =>
+                {
+                    callbacks++;
+                    released = board.ClearAndReturn();
+                });
+
+                try
+                {
+                    int removed = board.RemoveCards(cards);
+
+                    Assert.That(callbacks, Is.EqualTo(1), "A real one-shot hierarchy callback must run.");
+                    Assert.That(removed, Is.EqualTo(1), "A clear from the callback stops the batch.");
+                    Assert.That(clears, Is.EqualTo(1), "The batch itself raises no clear event.");
+                    Assert.That(board.Cards, Is.Empty);
+                    CollectionAssert.AreEqual(new[] { cards[1], cards[2] }, released);
+                    Assert.That(cards.All(card => card.transform.parent == null), Is.True);
+
+                    CardComponent ordinary = scene.Card("OrdinaryAdmissionAfterBatchRemoval");
+                    await Within(board.PlaceCardAsync(ordinary, false));
+                    CollectionAssert.AreEqual(new[] { ordinary }, board.Cards);
+                    AssertBoardLine(board);
+                }
+                finally
+                {
+                    observer.Disarm();
+                    DestroyReleased(cards);
+                }
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardRemoveCards_PlacementFromAChildrenCallback_KeepsTheNewcomerArranged()
+        {
+            return UniTask.ToCoroutine(async () =>
+            {
+                using Scene scene = new();
+                BoardComponent board = scene.Board;
+                CardComponent[] cards =
+                {
+                    scene.Card("BatchLeaving0"), scene.Card("BatchLeaving1"), scene.Card("BatchLeaving2")
+                };
+                Assert.That(board.PlaceCardsImmediate(cards, false), Is.EqualTo(3));
+                CardComponent newcomer = scene.Card("BatchNewcomer");
+                int callbacks = 0;
+                int placements = 0;
+                board.OnCardPlaced = new UnityEvent<CardComponent>();
+                board.OnCardPlaced.AddListener(card => placements++);
+                Audit20261023NeoCardsHierarchyObserver observer =
+                    board.gameObject.AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+                observer.ArmChildrenChanged(() =>
+                {
+                    callbacks++;
+                    board.PlaceCardAsync(newcomer, false).Forget();
+                });
+
+                try
+                {
+                    int removed = board.RemoveCards(board.Cards);
+
+                    Assert.That(callbacks, Is.EqualTo(1), "A real one-shot hierarchy callback must run.");
+                    Assert.That(removed, Is.EqualTo(3), "Passing Cards itself releases every original member.");
+                    CollectionAssert.AreEqual(new[] { newcomer }, board.Cards,
+                        "A card placed by the callback is not part of the copied batch.");
+                    Assert.That(placements, Is.EqualTo(1));
+                    AssertBoardLine(board);
+                    Assert.That(cards.All(card => card.transform.parent == null), Is.True);
+                    await Quiesce(60);
+                    CollectionAssert.AreEqual(new[] { newcomer }, board.Cards);
+                    AssertBoardLine(board);
+                }
+                finally
+                {
+                    observer.Disarm();
+                    DestroyReleased(cards);
+                }
+            });
+        }
+
+        /// <summary>Destroys cards a test released to the scene root, outside the fixture root.</summary>
+        private static void DestroyReleased(CardComponent[] cards)
+        {
+            foreach (CardComponent card in cards)
+            {
+                if (card != null && card.transform.parent == null)
+                {
+                    Object.Destroy(card.gameObject);
+                }
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardBatchParentChanged_Clear_StopsTheBatchWithoutLayoutOrEvents()
+        {
+            return NativeBoardBatchClear(true, false).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardBatchChildrenChanged_Clear_StopsTheBatchWithoutLayoutOrEvents()
+        {
+            return NativeBoardBatchClear(false, false).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardBatchParentChanged_ClearAndReparent_PreservesReleasedCards()
+        {
+            return NativeBoardBatchClear(true, true).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardBatchChildrenChanged_ClearAndReparent_PreservesReleasedCards()
+        {
+            return NativeBoardBatchClear(false, true).ToCoroutine();
+        }
+
+        /// <summary>
+        ///     <see cref="BoardComponent.PlaceCardsImmediate" /> on three cards whose second admission fires a real
+        ///     hierarchy message that clears the board: the batch stops, runs no layout and publishes nothing.
+        /// </summary>
+        private static async UniTask NativeBoardBatchClear(bool parentObserver, bool returnCards)
+        {
+            using Scene scene = new();
+            BoardComponent board = scene.Board;
+            board.SetCapacity(3, false);
+            board.SetFaceUp(false);
+            CardComponent[] cards =
+            {
+                scene.Card("SupersededBatch0"), scene.Card("SupersededBatch1"), scene.Card("SupersededBatch2")
+            };
+            foreach (CardComponent card in cards)
+            {
+                card.IsFaceUp = true;
+            }
+
+            Vector3 untouchedPosition = new(-417f, 233f, 9f);
+            cards[2].transform.position = untouchedPosition;
+            Transform foreignParent = Child(scene.Root, "ReleasedBatchCardOwner").transform;
+            Vector3 foreignPosition = new(613f, -281f, 17f);
+            int hierarchyCallbacks = 0;
+            int membersAtCallback = -1;
+            int clears = 0;
+            int placements = 0;
+            int fullEvents = 0;
+            List<CardComponent> released = null;
+            board.OnBoardCleared = new UnityEvent();
+            board.OnBoardCleared.AddListener(() => clears++);
+            board.OnCardPlaced = new UnityEvent<CardComponent>();
+            board.OnCardPlaced.AddListener(placed => placements++);
+            board.OnBoardFull = new UnityEvent();
+            board.OnBoardFull.AddListener(() => fullEvents++);
+            Audit20261023NeoCardsHierarchyObserver observer = ArmOnSecondBatchAdmission(board, cards[1],
+                parentObserver, () =>
+                {
+                    hierarchyCallbacks++;
+                    membersAtCallback = board.Count;
+                    if (returnCards)
+                    {
+                        released = board.ClearAndReturn();
+                        cards[1].transform.SetParent(foreignParent, true);
+                        cards[1].transform.position = foreignPosition;
+                    }
+                    else
+                    {
+                        board.Clear();
+                    }
+                });
+
+            try
+            {
+                int placed = board.PlaceCardsImmediate(cards);
+
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1), "A real one-shot hierarchy callback must run.");
+                Assert.That(membersAtCallback, Is.EqualTo(2), "The callback must see the first two committed members.");
+                Assert.That(placed, Is.Zero, "A batch cleared by its own native callback publishes nothing.");
+                Assert.That(clears, Is.EqualTo(1));
+                Assert.That(board.Count, Is.Zero, "The stopped batch cannot repopulate the cleared board.");
+                Assert.That(board.Cards, Is.Empty);
+                Assert.That(placements, Is.Zero);
+                Assert.That(fullEvents, Is.Zero);
+                Assert.That(cards[1].IsFaceUp, Is.True, "The interrupted card must not receive the face override.");
+                Assert.That(cards[2].transform.parent, Is.SameAs(scene.Root.transform),
+                    "The stopped batch must not admit the rest of the list.");
+                Assert.That(Vector3.Distance(cards[2].transform.position, untouchedPosition), Is.LessThan(0.001f));
+                Assert.That(cards[2].IsFaceUp, Is.True);
+                if (returnCards)
+                {
+                    CollectionAssert.AreEqual(new[] { cards[0], cards[1] }, released);
+                    Assert.That(cards[0].transform.parent == null, Is.True);
+                    Assert.That(cards[1].transform.parent, Is.SameAs(foreignParent));
+                    Assert.That(Vector3.Distance(cards[1].transform.position, foreignPosition), Is.LessThan(0.001f));
+                }
+
+                await Quiesce(120);
+                await UniTask.Yield();
+                Assert.That(board.Cards, Is.Empty);
+                Assert.That(placements, Is.Zero);
+                Assert.That(fullEvents, Is.Zero);
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+                Assert.That(cards[2] != null, Is.True);
+                Assert.That(Vector3.Distance(cards[2].transform.position, untouchedPosition), Is.LessThan(0.001f));
+                if (returnCards)
+                {
+                    Assert.That(cards[1].transform.parent, Is.SameAs(foreignParent));
+                    Assert.That(Vector3.Distance(cards[1].transform.position, foreignPosition), Is.LessThan(0.001f),
+                        "No layout of the stopped batch may move a released card.");
+                }
+                else
+                {
+                    Assert.That(cards[0] == null && cards[1] == null, Is.True,
+                        "Clear must release exactly the committed members through native destruction.");
+                }
+
+                CardComponent ordinary = scene.Card("OrdinaryBatchAfterNativeClear");
+                Assert.That(board.PlaceCardsImmediate(new[] { cards[2], ordinary }), Is.EqualTo(2));
+                CollectionAssert.AreEqual(new[] { cards[2], ordinary }, board.Cards);
+                AssertBoardLine(board);
+                Assert.That(cards[2].IsFaceUp, Is.False);
+                Assert.That(placements, Is.EqualTo(2));
+                Assert.That(fullEvents, Is.Zero);
+                Assert.That(clears, Is.EqualTo(1));
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+            }
+            finally
+            {
+                if (observer != null)
+                {
+                    observer.Disarm();
+                }
+
+                DestroyReleased(cards);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardBatchParentChanged_ForeignReparent_DropsTheEscapedCardAndFreesItsSlot()
+        {
+            return NativeBoardBatchEscape(true).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeBoardBatchChildrenChanged_ForeignReparent_DropsTheEscapedCardAndFreesItsSlot()
+        {
+            return NativeBoardBatchEscape(false).ToCoroutine();
+        }
+
+        /// <summary>
+        ///     <see cref="BoardComponent.PlaceCardsImmediate" /> on three cards for two slots whose second card is taken by
+        ///     a foreign owner from a real hierarchy message: it is not listed, keeps its new parent and pose, and the
+        ///     third card takes its slot.
+        /// </summary>
+        private static async UniTask NativeBoardBatchEscape(bool parentObserver)
+        {
+            using Scene scene = new();
+            BoardComponent board = scene.Board;
+            board.SetCapacity(2, false);
+            board.SetFaceUp(false);
+            CardComponent[] cards =
+            {
+                scene.Card("BatchResident0"), scene.Card("BatchEscaped1"), scene.Card("BatchResident2")
+            };
+            foreach (CardComponent card in cards)
+            {
+                card.IsFaceUp = true;
+            }
+
+            Transform foreignParent = Child(scene.Root, "EscapedBatchCardOwner").transform;
+            Vector3 foreignPosition = new(-509f, 347f, 13f);
+            int hierarchyCallbacks = 0;
+            int membersAtCallback = -1;
+            int fullEvents = 0;
+            int clears = 0;
+            List<CardComponent> published = new();
+            List<int> countsAtPublish = new();
+            board.OnCardPlaced = new UnityEvent<CardComponent>();
+            board.OnCardPlaced.AddListener(placed =>
+            {
+                published.Add(placed);
+                countsAtPublish.Add(board.Count);
+            });
+            board.OnBoardFull = new UnityEvent();
+            board.OnBoardFull.AddListener(() => fullEvents++);
+            board.OnBoardCleared = new UnityEvent();
+            board.OnBoardCleared.AddListener(() => clears++);
+            Audit20261023NeoCardsHierarchyObserver observer = ArmOnSecondBatchAdmission(board, cards[1],
+                parentObserver, () =>
+                {
+                    hierarchyCallbacks++;
+                    membersAtCallback = board.Count;
+                    // WHY: models a foreign owner that takes the card without using the board API.
+                    cards[1].transform.SetParent(foreignParent, true);
+                    cards[1].transform.position = foreignPosition;
+                });
+
+            try
+            {
+                int placed = board.PlaceCardsImmediate(cards);
+
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1), "A real one-shot hierarchy callback must run.");
+                Assert.That(membersAtCallback, Is.EqualTo(2), "The callback must see the committed incoming member.");
+                Assert.That(placed, Is.EqualTo(2));
+                CollectionAssert.AreEqual(new[] { cards[0], cards[2] }, board.Cards,
+                    "The escaped card is no phantom member, and its slot goes to the next listed card.");
+                CollectionAssert.AreEqual(new[] { cards[0], cards[2] }, published);
+                Assert.That(countsAtPublish.All(count => count == 2), Is.True,
+                    "Events follow the single layout pass of the whole batch.");
+                Assert.That(fullEvents, Is.EqualTo(1));
+                Assert.That(clears, Is.Zero);
+                AssertBoardLine(board);
+                Assert.That(cards[0].IsFaceUp, Is.False);
+                Assert.That(cards[2].IsFaceUp, Is.False);
+                Assert.That(cards[1].IsFaceUp, Is.True, "An escaped card must not receive the board's face override.");
+                Assert.That(cards[1].transform.parent, Is.SameAs(foreignParent));
+                Assert.That(Vector3.Distance(cards[1].transform.position, foreignPosition), Is.LessThan(0.001f));
+
+                await Quiesce(120);
+                await UniTask.Yield();
+                CollectionAssert.AreEqual(new[] { cards[0], cards[2] }, board.Cards);
+                AssertBoardLine(board);
+                Assert.That(cards[1].transform.parent, Is.SameAs(foreignParent));
+                Assert.That(Vector3.Distance(cards[1].transform.position, foreignPosition), Is.LessThan(0.001f));
+                Assert.That(published, Has.Count.EqualTo(2));
+                Assert.That(fullEvents, Is.EqualTo(1));
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+
+                Assert.That(board.RemoveCard(cards[0]), Is.True);
+                Assert.That(board.PlaceCardsImmediate(new[] { cards[1] }), Is.EqualTo(1),
+                    "The escaped card can be placed again through the board API.");
+                CollectionAssert.AreEqual(new[] { cards[2], cards[1] }, board.Cards);
+                AssertBoardLine(board);
+                Assert.That(cards[1].IsFaceUp, Is.False);
+                Assert.That(fullEvents, Is.EqualTo(2));
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+            }
+            finally
+            {
+                if (observer != null)
+                {
+                    observer.Disarm();
+                }
+
+                DestroyReleased(cards);
+            }
+        }
+
+        /// <summary>
+        ///     Arms <paramref name="callback" /> for the native message of the second card a batch parents to the board:
+        ///     that card's own parent change, or the board's second children change.
+        /// </summary>
+        private static Audit20261023NeoCardsHierarchyObserver ArmOnSecondBatchAdmission(BoardComponent board,
+            CardComponent second, bool parentObserver, Action callback)
+        {
+            if (parentObserver)
+            {
+                Audit20261023NeoCardsHierarchyObserver cardObserver =
+                    second.gameObject.AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+                cardObserver.ArmParentChanged(callback);
+                return cardObserver;
+            }
+
+            Audit20261023NeoCardsHierarchyObserver boardObserver =
+                board.gameObject.AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+            // WHY: the first children change belongs to the first card; the one-shot observer re-arms for the second.
+            boardObserver.ArmChildrenChanged(() => boardObserver.ArmChildrenChanged(callback));
+            return boardObserver;
+        }
+
+        [UnityTest]
+        public IEnumerator BoardAnimatedAdmission_ForeignReparentDuringArrange_DropsEscapedMember()
+        {
+            return BoardEscapeDuringArrange(false).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator BoardAnimatedAdmission_DestroyedDuringArrange_DropsDestroyedMember()
+        {
+            return BoardEscapeDuringArrange(true).ToCoroutine();
+        }
+
+        private static async UniTask BoardEscapeDuringArrange(bool destroy)
+        {
+            using Scene scene = new();
+            BoardComponent board = scene.Board;
+            Set(board, "_placeDuration", 0.8f);
+            board.SetCapacity(2, false);
+            board.SetFaceUp(false);
+            CardComponent resident = scene.Card("ResidentDuringArrange");
+            await Within(board.PlaceCardAsync(resident, false));
+            CardComponent card = scene.Card("LeavesDuringArrange");
+            Transform foreignParent = Child(scene.Root, "ArrangeEscapeOwner").transform;
+            Vector3 foreignPosition = new(-411f, 233f, 7f);
+            int placements = 0;
+            int fullEvents = 0;
+            int moves = 0;
+            board.OnCardPlaced = new UnityEvent<CardComponent>();
+            board.OnCardPlaced.AddListener(placed => placements++);
+            board.OnBoardFull = new UnityEvent();
+            board.OnBoardFull.AddListener(() => fullEvents++);
+            card.OnMoveComplete = new UnityEvent();
+            card.OnMoveComplete.AddListener(() => moves++);
+
+            UniTask admission = board.PlaceCardAsync(card, true);
+            CollectionAssert.AreEqual(new[] { resident, card }, board.Cards);
+            Assert.That(board.IsFull, Is.True);
+            await UniTask.Yield();
+            Assert.That(admission.Status, Is.EqualTo(UniTaskStatus.Pending),
+                "Precondition: the animated arrange is still running.");
+            Assert.That(resident.transform.localPosition.x, Is.GreaterThan(-39.9f),
+                "Precondition: the arrange is still moving the resident, before the leaving card's own tween.");
+            if (destroy)
+            {
+                Object.Destroy(card.gameObject);
+            }
+            else
+            {
+                // WHY: models a foreign owner that takes the card mid-arrange without using the board API.
+                card.transform.SetParent(foreignParent, true);
+                card.transform.position = foreignPosition;
+            }
+
+            await Within(admission);
+
+            CollectionAssert.AreEqual(new[] { resident }, board.Cards,
+                "A card that left during the animated arrange must not remain a phantom member.");
+            Assert.That(board.IsFull, Is.False);
+            AssertBoardLine(board);
+            Assert.That(placements, Is.Zero);
+            Assert.That(fullEvents, Is.Zero);
+            if (destroy)
+            {
+                Assert.That(card == null, Is.True);
+            }
+            else
+            {
+                Assert.That(board.CanPlaceCard(card), Is.True);
+                Assert.That(card.transform.parent, Is.SameAs(foreignParent));
+                Assert.That(Vector3.Distance(card.transform.position, foreignPosition), Is.LessThan(0.001f),
+                    "The board must not move a card it no longer owns.");
+                Assert.That(moves, Is.Zero);
+            }
+
+            await Quiesce(120);
+            CollectionAssert.AreEqual(new[] { resident }, board.Cards);
+            AssertBoardLine(board);
+
+            CardComponent ordinary = scene.Card("OrdinaryAfterArrangeEscape");
+            await Within(board.PlaceCardAsync(ordinary, false));
+            CollectionAssert.AreEqual(new[] { resident, ordinary }, board.Cards);
+            AssertBoardLine(board);
+            Assert.That(placements, Is.EqualTo(1));
+            Assert.That(fullEvents, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator BoardQueries_SkipMissingAndDestroyedEntries()
+        {
+            return UniTask.ToCoroutine(async () =>
+            {
+                using Scene scene = new();
+                BoardComponent board = scene.Board;
+                CardComponent kept = scene.Card("KeptQueryCard");
+                kept.SetData(new CardData(Suit.Hearts, Rank.Seven));
+                CardComponent removed = scene.Card("DestroyedQueryCard");
+                removed.SetData(new CardData(Suit.Spades, Rank.King));
+                await Within(board.PlaceCardAsync(kept, false));
+                await Within(board.PlaceCardAsync(removed, false));
+                FieldInfo field = typeof(BoardComponent).GetField("_cards", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(field, Is.Not.Null);
+                List<CardComponent> serialized = (List<CardComponent>)field.GetValue(board);
+                // WHY: models an empty element authored in the serialized Inspector list.
+                serialized.Add(null);
+                Object.Destroy(removed.gameObject);
+                await UniTask.Yield();
+                await UniTask.Yield();
+                Assert.That(removed == null, Is.True);
+
+                HashSet<Rank> ranks = null;
+                List<CardData> data = null;
+                Assert.DoesNotThrow(() =>
+                {
+                    ranks = board.GetAllRanks();
+                    data = board.GetAllCardData();
+                });
+
+                CollectionAssert.AreEquivalent(new[] { Rank.Seven }, ranks);
+                CollectionAssert.AreEqual(new[] { kept.Data }, data);
+            });
+        }
+
+        [UnityTest]
+        [Category(NeoPerf.Category)]
+        [Explicit(NeoPerf.ExplicitReason)]
+        public IEnumerator Performance_BoardImmediateLayoutAndAdmission()
+        {
+            return UniTask.ToCoroutine(async () =>
+            {
+                const int operationsPerSample = 20;
+                const int warmupSamples = 8;
+                const int samples = 60;
+                int[] cardCounts = { 8, 32, 128 };
+                for (int countIndex = 0; countIndex < cardCounts.Length; countIndex++)
+                {
+                    int count = cardCounts[countIndex];
+                    using Scene scene = new();
+                    BoardComponent board = scene.Board;
+                    board.SetCapacity(count, false);
+                    for (int i = 0; i < count; i++)
+                    {
+                        board.PlaceCard(scene.Card("PerfCard" + i));
+                    }
+
+                    Assert.That(board.Count, Is.EqualTo(count));
+                    CardComponent last = board.Cards[count - 1];
+                    NeoPerf.MeasureSynchronous("cards.board.immediate_arrange.n" + count, count, operationsPerSample,
+                        warmupSamples, samples, () => board.SetCapacity(count, false)).Emit();
+                    NeoPerf.MeasureSynchronous("cards.board.remove_place_immediate.n" + count, count,
+                        operationsPerSample, warmupSamples, samples, () =>
+                        {
+                            board.RemoveCard(last);
+                            board.PlaceCard(last);
+                        }).Emit();
+                    Assert.That(board.Count, Is.EqualTo(count));
+                    AssertBoardLine(board);
+
+                    // WHY: before 2026-11-02 every immediate arrange also created and disposed this linked source.
+                    // This micro-benchmark times only that removed part, not the old arrange path as a whole.
+                    CancellationToken destroyToken = board.GetCancellationTokenOnDestroy();
+                    NeoPerf.MeasureSynchronous("cards.board.legacy_linked_cts.n" + count, count, operationsPerSample,
+                            warmupSamples, samples, () =>
+                            {
+                                using CancellationTokenSource linked =
+                                    CancellationTokenSource.CreateLinkedTokenSource(destroyToken);
+                            })
+                        .Add("kind", "removed_part_only")
+                        .Emit();
+                    await UniTask.Yield();
                 }
             });
         }
@@ -343,6 +1169,227 @@ namespace Neo.Tests.Play
                 Assert.That(scene.Winners, Is.Zero);
                 Assert.That(scene.RoundEnds, Is.Zero);
             });
+        }
+
+        [UnityTest]
+        public IEnumerator RestartWithInitialBoard_FillsAndEmptiesTheBoardInOneBatchEach()
+        {
+            return UniTask.ToCoroutine(async () =>
+            {
+                using Scene scene = new();
+                Set(scene.Game, "_initialBoard", scene.Board);
+                int clears = 0;
+                List<int> countsAtPublish = new();
+                scene.Board.OnBoardCleared = new UnityEvent();
+                scene.Board.OnBoardCleared.AddListener(() => clears++);
+                scene.Board.OnCardPlaced = new UnityEvent<CardComponent>();
+                scene.Board.OnCardPlaced.AddListener(card => countsAtPublish.Add(scene.Board.Count));
+
+                scene.Game.RestartGame();
+                await WaitFor(() => scene.Restarts == 1);
+
+                Assert.That(countsAtPublish, Has.Count.EqualTo(54));
+                Assert.That(countsAtPublish.All(count => count == 54), Is.True,
+                    "The whole deck is on the board before the first placement event.");
+                Assert.That(clears, Is.EqualTo(1),
+                    "Only the restart's own Clear publishes; the batch release before dealing raises no event.");
+                Assert.That(scene.Board.Cards, Is.Empty);
+                Assert.That(scene.Game.PlayerCardCount, Is.EqualTo(27));
+                Assert.That(scene.Game.OpponentCardCount, Is.EqualTo(27));
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator NativeInitialBuildParentChanged_RestartPreservesReplacementSetup()
+        {
+            return NativeInitialBuildRestart(InitialBuildObserver.DrawnCardParent).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeInitialBuildChildrenChanged_RestartPreservesReplacementSetup()
+        {
+            return NativeInitialBuildRestart(InitialBuildObserver.TableChildren).ToCoroutine();
+        }
+
+        [UnityTest]
+        public IEnumerator NativeInitialBoardChildrenChanged_RestartDuringTheBatchPreservesReplacementSetup()
+        {
+            return NativeInitialBuildRestart(InitialBuildObserver.BoardChildren).ToCoroutine();
+        }
+
+        /// <summary>Where the one-shot restart of <see cref="NativeInitialBuildRestart" /> is armed.</summary>
+        private enum InitialBuildObserver
+        {
+            /// <summary>The first drawn card's parent change (reparenting under the cards parent).</summary>
+            DrawnCardParent,
+
+            /// <summary>The cards parent's first children change.</summary>
+            TableChildren,
+
+            /// <summary>The initial board's first children change, inside its batch placement of the whole deck.</summary>
+            BoardChildren
+        }
+
+        private static async UniTask NativeInitialBuildRestart(InitialBuildObserver armedAt)
+        {
+            using Scene scene = new();
+            List<DeckConfig.CustomCardEntry> entries = new();
+            for (int i = 0; i < 4; i++)
+            {
+                DeckConfig.CustomCardEntry entry = new();
+                Set(entry, "_id", "initial-build-" + i);
+                Set(entry, "_sortValue", i + 1);
+                entries.Add(entry);
+            }
+            Set(scene.Config, "_useCustomDeck", true);
+            Set(scene.Config, "_customCards", entries);
+            Set(scene.Player, "_addToBottom", false);
+            Set(scene.Opponent, "_addToBottom", false);
+            Set(scene.Player, "_maxCards", 8);
+            Set(scene.Opponent, "_maxCards", 8);
+            Set(scene.Game, "_initialBoard", scene.Board);
+            CardData[] expectedDeck = scene.Config.GenerateDeck().ToArray();
+            CardData[] expectedDrawOrder = expectedDeck.Reverse().ToArray();
+            Assert.That(expectedDeck, Has.Length.EqualTo(4));
+            Assert.That(expectedDrawOrder[0].CompareTo(expectedDrawOrder[1]), Is.GreaterThan(0),
+                "The later ordinary round must compare distinct playable card values.");
+            Assert.That(scene.Table.transform, Is.Not.SameAs(scene.Board.transform));
+            Assert.That(scene.Table.transform, Is.Not.SameAs(scene.Player.transform));
+            Assert.That(scene.Table.transform, Is.Not.SameAs(scene.Opponent.transform));
+
+            List<CardComponent> obsolete = new();
+            DeckModel replacementModel = null;
+            CardComponent[] completedPlayer = null;
+            CardComponent[] completedOpponent = null;
+            List<CardComponent> replacementDraws = new();
+            List<CardComponent> placements = new();
+            int draws = 0;
+            int admissions = 0;
+            int hierarchyCallbacks = 0;
+            int completionsInsideCallback = -1;
+            bool replacementStarted = false;
+            Audit20261023NeoCardsHierarchyObserver observer = null;
+            scene.Board.OnCardPlaced = new UnityEvent<CardComponent>();
+            scene.Board.OnCardPlaced.AddListener(card => placements.Add(card));
+            scene.Player.OnCardAdded.AddListener(card => admissions++);
+            scene.Opponent.OnCardAdded.AddListener(card => admissions++);
+            Action restart = () =>
+            {
+                hierarchyCallbacks++;
+                replacementStarted = true;
+                scene.Game.RestartGame();
+                completionsInsideCallback = scene.Restarts;
+                replacementModel = scene.Deck.Model;
+                completedPlayer = scene.Player.Cards.ToArray();
+                completedOpponent = scene.Opponent.Cards.ToArray();
+            };
+            scene.Deck.OnCardDrawn = new UnityEvent<CardComponent>();
+            scene.Deck.OnCardDrawn.AddListener(card =>
+            {
+                draws++;
+                if (replacementStarted)
+                {
+                    replacementDraws.Add(card);
+                }
+                else
+                {
+                    obsolete.Add(card);
+                    if (armedAt == InitialBuildObserver.DrawnCardParent && obsolete.Count == 1)
+                    {
+                        observer = card.gameObject.AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+                        observer.ArmParentChanged(restart);
+                    }
+                }
+            });
+            if (armedAt == InitialBuildObserver.TableChildren)
+            {
+                observer = scene.Table.AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+                observer.ArmChildrenChanged(restart);
+            }
+            else if (armedAt == InitialBuildObserver.BoardChildren)
+            {
+                // WHY: the whole outer deck is drawn first; the restart fires inside PlaceCardsImmediate.
+                observer = scene.Board.gameObject.AddComponent<Audit20261023NeoCardsHierarchyObserver>();
+                observer.ArmChildrenChanged(restart);
+            }
+
+            int expectedObsolete = armedAt == InitialBuildObserver.BoardChildren ? expectedDeck.Length : 1;
+
+            try
+            {
+                scene.Game.RestartGame();
+                await WaitFor(() => scene.Restarts == 1);
+
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1), "The restart must originate in one native hierarchy message.");
+                Assert.That(completionsInsideCallback, Is.EqualTo(1), "The replacement setup must complete before the old parent call returns.");
+                Assert.That(obsolete, Has.Count.EqualTo(expectedObsolete));
+                Assert.That(draws, Is.EqualTo(expectedObsolete + 4));
+                Assert.That(replacementDraws, Has.Count.EqualTo(4));
+                Assert.That(scene.Board.Count, Is.Zero, "The old build must not admit its pending-destroy card to the completed replacement board.");
+                Assert.That(scene.Board.Cards, Is.Empty);
+                CollectionAssert.AreEqual(replacementDraws, placements);
+                CollectionAssert.AreEqual(expectedDrawOrder, replacementDraws.Select(card => card.Data));
+                CardComponent[] expectedPlayer = { replacementDraws[0], replacementDraws[2] };
+                CardComponent[] expectedOpponent = { replacementDraws[1], replacementDraws[3] };
+                CollectionAssert.AreEqual(expectedPlayer, completedPlayer);
+                CollectionAssert.AreEqual(expectedOpponent, completedOpponent);
+                CollectionAssert.AreEqual(expectedPlayer, scene.Player.Cards);
+                CollectionAssert.AreEqual(expectedOpponent, scene.Opponent.Cards);
+                CollectionAssert.AreEqual(expectedPlayer.Select(card => card.Data), scene.Player.Model.Cards);
+                CollectionAssert.AreEqual(expectedOpponent.Select(card => card.Data), scene.Opponent.Model.Cards);
+                Assert.That(scene.Deck.Model, Is.SameAs(replacementModel));
+                Assert.That(scene.Deck.Model.Cards, Is.Empty);
+                Assert.That(admissions, Is.EqualTo(4));
+                Assert.That(scene.Game.PlayerCardCount, Is.EqualTo(2));
+                Assert.That(scene.Game.OpponentCardCount, Is.EqualTo(2));
+                Assert.That(scene.Game.IsPlaying, Is.False);
+                Assert.That(scene.Game.GameStarted, Is.False);
+                Assert.That(scene.RoundEnds, Is.Zero);
+                Assert.That(scene.Winners, Is.Zero);
+
+                await Quiesce(160);
+                await UniTask.Yield();
+                Assert.That(obsolete.All(card => card == null), Is.True,
+                    "The rejected outer-build cards really reach deferred native destruction.");
+                Assert.That(replacementDraws.All(card => card != null), Is.True);
+                CollectionAssert.AreEqual(expectedPlayer, scene.Player.Cards);
+                CollectionAssert.AreEqual(expectedOpponent, scene.Opponent.Cards);
+                CollectionAssert.AreEqual(expectedPlayer.Select(card => card.Data), scene.Player.Model.Cards);
+                CollectionAssert.AreEqual(expectedOpponent.Select(card => card.Data), scene.Opponent.Model.Cards);
+                Assert.That(expectedPlayer.All(card => card.transform.parent == scene.Player.transform), Is.True);
+                Assert.That(expectedOpponent.All(card => card.transform.parent == scene.Opponent.transform), Is.True);
+                Assert.That(scene.Board.Cards, Is.Empty);
+                Assert.That(scene.Table.GetComponentsInChildren<CardComponent>(true), Is.Empty);
+                CollectionAssert.AreEquivalent(replacementDraws,
+                    scene.Root.GetComponentsInChildren<CardComponent>(true).Where(card => card != scene.Prefab));
+                CollectionAssert.AreEqual(replacementDraws, placements);
+                Assert.That(scene.Restarts, Is.EqualTo(1));
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+                Assert.That(admissions, Is.EqualTo(4));
+
+                await Within(scene.Game.PlayRound());
+                Assert.That(scene.RoundEnds, Is.EqualTo(1));
+                Assert.That(scene.Winners, Is.EqualTo(1));
+                Assert.That(scene.Wars, Is.Zero);
+                Assert.That(scene.Game.PlayerCardCount, Is.EqualTo(3));
+                Assert.That(scene.Game.OpponentCardCount, Is.EqualTo(1));
+                Assert.That(scene.Game.IsPlaying, Is.False);
+                CollectionAssert.AreEquivalent(expectedDeck, scene.Player.Model.Cards.Concat(scene.Opponent.Model.Cards));
+                Assert.That(scene.Player.Cards.Concat(scene.Opponent.Cards).All(card => card != null), Is.True);
+                Assert.That(scene.Board.Cards, Is.Empty);
+                Assert.That(scene.Deck.Model, Is.SameAs(replacementModel));
+                Assert.That(scene.Deck.Model.Cards, Is.Empty);
+                CollectionAssert.AreEqual(replacementDraws, placements);
+                Assert.That(scene.Restarts, Is.EqualTo(1));
+                Assert.That(hierarchyCallbacks, Is.EqualTo(1));
+            }
+            finally
+            {
+                if (observer != null)
+                {
+                    observer.Disarm();
+                }
+            }
         }
 
         [UnityTest]

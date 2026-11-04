@@ -33,8 +33,42 @@ namespace Neo.Cards.Editor
         private SerializedProperty _spades;
         private SerializedProperty _useCustomDeck;
 
+        private static readonly GUIContent CustomCardsContent = new GUIContent("Custom Cards");
+        private static readonly GUIContent UseCustomDeckContent = new GUIContent("Use Custom Deck");
+
+        private static readonly GUIContent SpriteDeckTypeContent =
+            new GUIContent("Sprite deck type", "How many sprites are stored in this asset");
+
+        private static readonly GUIContent PlayDeckTypeContent =
+            new GUIContent("Play deck type", "How many cards gameplay uses");
+
+        private static readonly GUIContent ValidateButtonContent = new GUIContent("Validate configuration",
+            "Re-runs the check now, e.g. after sprites were deleted or re-imported.");
+
+        private static GUIStyle s_headerStyle;
+        private static GUIStyle s_suitFoldoutStyle;
+        private static GUIStyle s_missingSpriteStyle;
+        private static bool s_stylesProSkin;
+
+        // WHY: DeckConfig.Validate builds a fresh message list on every call, and an inspector over a 52-card
+        // deck with empty slots used to rebuild dozens of strings on every repaint. The result is kept until
+        // the asset's dirty count moves, an undo/redo happens or the project changes (a deleted sprite turns
+        // a reference into "missing" without touching this asset). It is only refreshed on the Layout pass so
+        // Layout and Repaint always see the same number of help boxes.
+        private readonly List<string> _validationErrors = new List<string>();
+        private readonly List<string> _validationWarnings = new List<string>();
+        private bool _validationValid;
+        private bool _validationStale = true;
+        private int _validationDirtyCount = -1;
+
         private void OnEnable()
         {
+            EditorApplication.projectChanged -= InvalidateValidation;
+            EditorApplication.projectChanged += InvalidateValidation;
+            Undo.undoRedoPerformed -= InvalidateValidation;
+            Undo.undoRedoPerformed += InvalidateValidation;
+            _validationStale = true;
+
             _deckType = serializedObject.FindProperty("_deckType");
             _gameDeckType = serializedObject.FindProperty("_gameDeckType");
             _backSprite = serializedObject.FindProperty("_backSprite");
@@ -48,8 +82,28 @@ namespace Neo.Cards.Editor
             _customCards = serializedObject.FindProperty("_customCards");
         }
 
+        private void OnDisable()
+        {
+            EditorApplication.projectChanged -= InvalidateValidation;
+            Undo.undoRedoPerformed -= InvalidateValidation;
+        }
+
+        private void InvalidateValidation()
+        {
+            _validationStale = true;
+        }
+
         public override void OnInspectorGUI()
         {
+            if (s_stylesProSkin != EditorGUIUtility.isProSkin)
+            {
+                // WHY: the cached style copies bake the skin's textures and colours; rebuild them after a switch.
+                s_stylesProSkin = EditorGUIUtility.isProSkin;
+                s_headerStyle = null;
+                s_suitFoldoutStyle = null;
+                s_missingSpriteStyle = null;
+            }
+
             serializedObject.Update();
 
             DrawHeader();
@@ -69,14 +123,14 @@ namespace Neo.Cards.Editor
 
             if (_useCustomDeck.boolValue)
             {
-                EditorGUILayout.PropertyField(_customCards, new GUIContent("Custom Cards"), true);
+                EditorGUILayout.PropertyField(_customCards, CustomCardsContent, true);
             }
             else
             {
-                DrawSuitSection("♥ Hearts", _hearts, Color.red, ref _showHearts);
-                DrawSuitSection("♦ Diamonds", _diamonds, Color.red, ref _showDiamonds);
-                DrawSuitSection("♣ Clubs", _clubs, Color.black, ref _showClubs);
-                DrawSuitSection("♠ Spades", _spades, Color.black, ref _showSpades);
+                DrawSuitSection("♥ Hearts", _hearts, true, ref _showHearts);
+                DrawSuitSection("♦ Diamonds", _diamonds, true, ref _showDiamonds);
+                DrawSuitSection("♣ Clubs", _clubs, false, ref _showClubs);
+                DrawSuitSection("♠ Spades", _spades, false, ref _showSpades);
 
                 EditorGUILayout.Space(10);
                 DrawJokers();
@@ -95,13 +149,44 @@ namespace Neo.Cards.Editor
         private new void DrawHeader()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            GUIStyle headerStyle = new(EditorStyles.boldLabel)
+            s_headerStyle ??= new GUIStyle(EditorStyles.boldLabel)
             {
                 fontSize = 14,
                 alignment = TextAnchor.MiddleCenter
             };
-            EditorGUILayout.LabelField("Deck Configuration", headerStyle);
+            EditorGUILayout.LabelField("Deck Configuration", s_headerStyle);
             EditorGUILayout.EndVertical();
+        }
+
+        /// <summary>
+        ///     Suit title colour that stays readable on both editor skins. The old black tint for clubs and
+        ///     spades turned the title black-on-charcoal in the dark skin.
+        /// </summary>
+        private static Color SuitTitleColor(bool redSuit)
+        {
+            bool dark = EditorGUIUtility.isProSkin;
+            if (redSuit)
+            {
+                return dark ? new Color(1f, 0.47f, 0.47f, 1f) : new Color(0.70f, 0.08f, 0.10f, 1f);
+            }
+
+            return dark ? new Color(0.86f, 0.88f, 0.92f, 1f) : new Color(0.10f, 0.10f, 0.12f, 1f);
+        }
+
+        private static GUIStyle SuitFoldoutStyle(Color color)
+        {
+            s_suitFoldoutStyle ??= new GUIStyle(EditorStyles.foldoutHeader);
+            // WHY: GUI.contentColor multiplies the skin's own text colour, so a tint can never brighten dark
+            // text or darken light text. Setting the style's text colour gives the exact colour in every state.
+            s_suitFoldoutStyle.normal.textColor = color;
+            s_suitFoldoutStyle.onNormal.textColor = color;
+            s_suitFoldoutStyle.hover.textColor = color;
+            s_suitFoldoutStyle.onHover.textColor = color;
+            s_suitFoldoutStyle.focused.textColor = color;
+            s_suitFoldoutStyle.onFocused.textColor = color;
+            s_suitFoldoutStyle.active.textColor = color;
+            s_suitFoldoutStyle.onActive.textColor = color;
+            return s_suitFoldoutStyle;
         }
 
         private void DrawDeckSettings()
@@ -109,7 +194,7 @@ namespace Neo.Cards.Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Deck settings", EditorStyles.boldLabel);
 
-            EditorGUILayout.PropertyField(_useCustomDeck, new GUIContent("Use Custom Deck"));
+            EditorGUILayout.PropertyField(_useCustomDeck, UseCustomDeckContent);
             if (_useCustomDeck.boolValue)
             {
                 EditorGUILayout.HelpBox("GenerateDeck() uses Custom Cards. Standard suit settings are preserved.",
@@ -118,15 +203,13 @@ namespace Neo.Cards.Editor
                 return;
             }
 
-            EditorGUILayout.PropertyField(_deckType,
-                new GUIContent("Sprite deck type", "How many sprites are stored in this asset"));
+            EditorGUILayout.PropertyField(_deckType, SpriteDeckTypeContent);
 
             int expectedCount = GetExpectedCardCount();
             EditorGUILayout.HelpBox($"Expected {expectedCount} sprites per suit", MessageType.Info);
 
             EditorGUILayout.Space(5);
-            EditorGUILayout.PropertyField(_gameDeckType,
-                new GUIContent("Play deck type", "How many cards gameplay uses"));
+            EditorGUILayout.PropertyField(_gameDeckType, PlayDeckTypeContent);
 
             DeckType spriteType = (DeckType)_deckType.intValue;
             DeckType gameType = (DeckType)_gameDeckType.intValue;
@@ -180,6 +263,10 @@ namespace Neo.Cards.Editor
             if (GUILayout.Button("Auto-Fill From Folder..."))
             {
                 AutoFillFromFolder();
+                // WHY: the folder panel and the report dialog are modal; once they return, the layout groups
+                // opened by this pass no longer match and IMGUI logs "EndLayoutGroup" errors. The auto-fill
+                // has already applied its own changes, so abandon the rest of this pass cleanly.
+                GUIUtility.ExitGUI();
             }
 
             EditorGUILayout.EndVertical();
@@ -334,6 +421,7 @@ namespace Neo.Cards.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
+            _validationStale = true;
         }
 
         private SerializedProperty GetSuitProperty(Suit suit)
@@ -368,14 +456,11 @@ namespace Neo.Cards.Editor
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawSuitSection(string title, SerializedProperty property, Color titleColor, ref bool foldout)
+        private void DrawSuitSection(string title, SerializedProperty property, bool redSuit, ref bool foldout)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            Color oldColor = GUI.contentColor;
-            GUI.contentColor = titleColor;
-            foldout = EditorGUILayout.Foldout(foldout, title, true, EditorStyles.foldoutHeader);
-            GUI.contentColor = oldColor;
+            foldout = EditorGUILayout.Foldout(foldout, title, true, SuitFoldoutStyle(SuitTitleColor(redSuit)));
 
             if (foldout)
             {
@@ -455,31 +540,67 @@ namespace Neo.Cards.Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             DeckConfig config = (DeckConfig)target;
-            bool isValid = config.Validate(out List<string> errors, out List<string> warnings);
+            RefreshValidationIfNeeded(config);
 
-            if (isValid && warnings.Count == 0)
+            if (_validationValid && _validationWarnings.Count == 0)
             {
                 EditorGUILayout.HelpBox("✓ Configuration is valid", MessageType.Info);
             }
             else
             {
-                foreach (string error in errors)
+                for (int i = 0; i < _validationErrors.Count; i++)
                 {
-                    EditorGUILayout.HelpBox(error, MessageType.Error);
+                    EditorGUILayout.HelpBox(_validationErrors[i], MessageType.Error);
                 }
 
-                foreach (string warning in warnings)
+                for (int i = 0; i < _validationWarnings.Count; i++)
                 {
-                    EditorGUILayout.HelpBox(warning, MessageType.Warning);
+                    EditorGUILayout.HelpBox(_validationWarnings[i], MessageType.Warning);
                 }
             }
 
-            if (GUILayout.Button("Validate configuration"))
+            if (GUILayout.Button(ValidateButtonContent))
             {
-                config.Validate(out _, out _);
+                _validationStale = true;
+                Repaint();
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void RefreshValidationIfNeeded(DeckConfig config)
+        {
+            RefreshValidationIfNeeded(config, Event.current == null || Event.current.type == EventType.Layout);
+        }
+
+        /// <summary>Re-validates the deck only after it changed or a refresh was requested.</summary>
+        /// <param name="config">Inspected deck.</param>
+        /// <param name="layoutPass">
+        ///     True during a Layout event (or outside IMGUI). A cached result is only replaced then, so Layout and
+        ///     Repaint of one frame always draw the same number of messages.
+        /// </param>
+        private void RefreshValidationIfNeeded(DeckConfig config, bool layoutPass)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            int dirtyCount = EditorUtility.GetDirtyCount(config);
+            bool hasResult = _validationDirtyCount >= 0;
+            bool changed = _validationStale || dirtyCount != _validationDirtyCount;
+            if (hasResult && (!changed || !layoutPass))
+            {
+                return;
+            }
+
+            _validationValid = config.Validate(out List<string> errors, out List<string> warnings);
+            _validationErrors.Clear();
+            _validationErrors.AddRange(errors);
+            _validationWarnings.Clear();
+            _validationWarnings.AddRange(warnings);
+            _validationDirtyCount = dirtyCount;
+            _validationStale = false;
         }
 
         private void DrawValidationBadge(bool isValid, int actual, int expected)
@@ -526,7 +647,8 @@ namespace Neo.Cards.Editor
                     Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize,
                         GUILayout.Width(PreviewSize), GUILayout.Height(PreviewSize));
                     EditorGUI.DrawRect(rect, new Color(1f, 0.3f, 0.3f, 0.3f));
-                    GUI.Label(rect, "?", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
+                    s_missingSpriteStyle ??= new GUIStyle(EditorStyles.label) { alignment = TextAnchor.MiddleCenter };
+                    GUI.Label(rect, "?", s_missingSpriteStyle);
                 }
 
                 count++;

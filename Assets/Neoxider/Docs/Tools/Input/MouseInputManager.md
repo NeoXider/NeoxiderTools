@@ -1,20 +1,19 @@
 # MouseInputManager
 
-**Purpose:** a singleton mouse input component. It emits `Press`, `Hold`, `Release`, and `Click`, performs 2D/3D raycasts by layer mask, and stores the latest event in `MouseEventData`. Event data is a struct; legacy polling avoids per-frame allocations, while the optional reflection fallback can allocate.
+**What it is:** a singleton mouse input component. It emits `Press`, `Hold`, `Release`, and `Click`, performs 2D/3D raycasts by layer mask, and stores the latest event in `MouseEventData`. Event data is a struct; per-frame polling does not allocate through either the legacy Input Manager or the optional Input System adapter (see [Polling model and cost](README.md#polling-model-and-cost)). Script: `Scripts/Tools/Input/MouseInputManager.cs`.
 
-File: `Assets/Neoxider/Scripts/Tools/Input/MouseInputManager.cs`
+**How to use:**
+1. Add `MouseInputManager` once to the scene or access `MouseInputManager.I` to create it lazily at runtime.
+2. Assign `targetCamera` explicitly. Keep `useMainCameraFallback` only for simple scenes.
+3. Configure `interactableLayers` and `fallbackDepth`.
+4. Enable the event modes you need: `enablePress`, `enableHold`, `enableRelease`, `enableClick`. `enableHold` is off by default, also on an auto-created manager, so turn it on when anything listens to `OnHold` (for example `MouseEffect` hold spawning).
+5. Subscribe to events or poll `LastEventData` / `HasEventData`.
+
+---
 
 ## Module Principle
 
 `MouseInputManager` can be used as a scene component or as an auto-created runtime singleton. Production scenes should assign `targetCamera` in the Inspector or inject it through `SetTargetCamera(Camera)`. `Camera.main` is only an optional fallback and is retried on an interval instead of being queried every frame.
-
-## Setup
-
-1. Add `MouseInputManager` once to the scene or access `MouseInputManager.I` to create it lazily at runtime.
-2. Assign `targetCamera` explicitly. Keep `useMainCameraFallback` only for simple scenes.
-3. Configure `interactableLayers` and `fallbackDepth`.
-4. Enable the event modes you need: `enablePress`, `enableHold`, `enableRelease`, `enableClick`.
-5. Subscribe to events or poll `LastEventData` / `HasEventData`.
 
 ## Camera Binding
 
@@ -43,7 +42,7 @@ In 11.0, the manager checks the current input dispatch between subscribers and b
 
 If an OnRelease or OnReleaseIn subscriber throws, that same exception propagates synchronously and the remaining Release/Click notifications are skipped. The interrupted gesture keeps its unfinished Release ownership for a later `OnCanceled` on manager disable, camera/input loss or another lifecycle interruption; this lets a still-enabled MouseEffect stop even when its Release callback was skipped. Successfully completed Release phases consume that ownership before Click, so a later lifecycle interruption does not cancel an already released gesture. An older call's exception/finally cannot consume a replacement gesture's ownership.
 
-Subscriber snapshots are cached per event until an effective subscription change, so a stable Hold subscription does not rebuild an invocation array each frame. Explicit add/remove accessors immediately discard the old cached reference. An active dispatch keeps its own immutable array until it returns; accessors never clear that active array. Unsubscribed targets do not remain in an idle cache awaiting the next event. Physics queries, user callbacks and optional backend allocations remain separate costs.
+Subscriber snapshots are cached per event until an effective subscription change, so a stable Hold subscription does not rebuild an invocation array each frame. Explicit add/remove accessors immediately discard the old cached reference. An active dispatch keeps its own immutable array until it returns; accessors never clear that active array. Unsubscribed targets do not remain in an idle cache awaiting the next event. A warmed Press/Hold/Release/Click cycle, including the non-allocating physics pick, allocates nothing (asserted on Mono with eight `Action` and eight `in` subscribers per event); the physics query and your callbacks remain separate CPU costs, and whatever your callbacks allocate is theirs.
 
 3D picking uses the nearest 3D collider. If there is no 3D hit, it tries the nearest 2D intersection; it does not sort mixed 2D/3D hits together. When nothing is hit, `fallbackDepth` is the distance from the camera for screen-to-world conversion. Camera and layer configuration apply to both ordinary and `in` events.
 
@@ -59,7 +58,7 @@ manager.OnClick += HandleClick;
 
 `HandleClick` takes a `MouseInputManager.MouseEventData` argument. Unsubscribe with `manager.OnClick -= HandleClick` when the subscriber is disabled or disposed. `OnClickIn` instead accepts an `in MouseEventData` handler. Subscribe a parameterless cleanup handler to `OnCanceled` when the subscriber owns visuals or another drag resource. The pending press is already cleared when that handler runs; repeated cancellation does not notify again until another press starts. Normal release does not emit cancellation. `LastEventDataRef` exposes a readonly reference to the same latest cached struct; copy it if a later input event must not change the value being observed.
 
-Polling data describes the last emitted/sampled event, not continuous cursor motion. `HasEventData` remains true until subsystem reset. Read mouse position directly through `MouseInputCompat` when continuous motion is needed. Mouse reads support both legacy input and the optional Input System; this component does not synthesize touch events or block UI overlap.
+Polling data describes the last emitted/sampled event, not continuous cursor motion. `HasEventData` remains true until subsystem reset. Read mouse position directly through `MouseInputCompat` when continuous motion is needed. Mouse reads support both legacy input and the optional Input System. On touch-only devices both backends report the first finger as the left button and pointer (the legacy `Input.simulateMouseWithTouches` and `OptionalInputSystemAdapter.SimulateMouseWithTouches`, both on by default), so Press/Hold/Release/Click follow it; this component does not block UI overlap. In Input System-only projects this is new in 12.0; see [Upgrading from 11.x](README.md#upgrading-from-11x-behaviour-change-in-120) to keep touch out.
 
 ## Lifecycle
 

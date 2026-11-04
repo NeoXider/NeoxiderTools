@@ -30,9 +30,11 @@ namespace Neo.Reactive
     ///     a listener that throws is logged and skipped without affecting the remaining listeners;
     ///     a subscription whose target is gone (destroyed <see cref="Object" />, or collected under
     ///     <see cref="ReactiveListenerMode.Weak" />) is dropped instead of throwing;
-    ///     collected weak targets and cleanup triggered by <see cref="ListenerCount" /> are silent;
-    ///     destroyed targets encountered during notification use gated, throttled warnings through
-    ///     <see cref="NeoDiagnostics" />, so cleanup does not guarantee a warning for each registration.
+    ///     collected weak targets, destroyed targets of weak subscriptions and cleanup triggered by
+    ///     <see cref="ListenerCount" /> are silent;
+    ///     destroyed targets of strong subscriptions encountered during notification use gated, throttled warnings
+    ///     through <see cref="NeoDiagnostics" />, so cleanup does not guarantee a warning for each registration.
+    ///     After warm-up, notifications do not allocate, including nested notifications started from a listener.
     /// </summary>
     [Serializable]
     public abstract class ReactivePropertyBase<T, TEvent> : IReactiveProperty<T> where TEvent : UnityEvent<T>, new()
@@ -46,10 +48,13 @@ namespace Neo.Reactive
         /// </summary>
         [NonSerialized] private List<Subscription> _listeners;
 
-        /// <summary>Reusable snapshot buffer for <see cref="NotifySubscribers" /> (no per-notify allocation).</summary>
-        [NonSerialized] private Subscription[] _notifyBuffer;
+        /// <summary>
+        ///     Reusable snapshot buffers for <see cref="NotifySubscribers" />, one per re-entrancy depth, so neither the
+        ///     outermost nor a nested notification allocates once the buffers are warm.
+        /// </summary>
+        [NonSerialized] private Subscription[][] _notifyBuffers;
 
-        /// <summary>Re-entrancy depth. The shared buffer belongs to the outermost notification only.</summary>
+        /// <summary>Re-entrancy depth. Each depth owns the buffer at the same index of <see cref="_notifyBuffers" />.</summary>
         [NonSerialized] private int _notifyDepth;
 
         /// <summary>Set while a notification found a dead subscription that must be compacted away afterwards.</summary>
@@ -256,7 +261,7 @@ namespace Neo.Reactive
                 return Subscription.CreateStrong(call);
             }
 
-            // A delegate's Method/Target describe only its final invocation. The open invoker cannot represent
+            // WHY: A delegate's Method/Target describe only its final invocation. The open invoker cannot represent
             // a multicast delegate, so retain the complete delegate through the existing strong fallback.
             Action<object, T> invoker = invocationList.Length == 1
                 ? ReactiveWeakInvokerCache<T>.Get(call.Method)
@@ -265,10 +270,15 @@ namespace Neo.Reactive
             {
                 // WHY: multicast delegates and some AOT platforms cannot use an open invoker. Keep a strong subscription
                 // (still pruned when the target is a destroyed Object) instead of dropping the listener.
-                NeoDiagnostics.LogWarningThrottled(
-                    "Neo.Reactive.WeakUnavailable." + DescribeMethod(call.Method),
-                    $"[ReactiveProperty] Weak subscription for '{DescribeMethod(call.Method)}' is not supported for this " +
-                    "delegate or platform; falling back to a strong subscription. Remove the listener explicitly.");
+                if (NeoDiagnostics.RuntimeWarningsEnabled)
+                {
+                    string method = DescribeMethod(call.Method);
+                    NeoDiagnostics.LogWarningThrottled(
+                        "Neo.Reactive.WeakUnavailable." + method,
+                        $"[ReactiveProperty] Weak subscription for '{method}' is not supported for this " +
+                        "delegate or platform; falling back to a strong subscription. Remove the listener explicitly.");
+                }
+
                 return Subscription.CreateStrong(call);
             }
 
@@ -298,24 +308,9 @@ namespace Neo.Reactive
             if (count > 0)
             {
                 // WHY: real snapshot - listeners added/removed during notification do not shift indices, so every
-                // listener registered at notify time is invoked exactly once. The shared buffer belongs to the
-                // outermost notification; nested ones allocate, which keeps re-entrancy correct without a pool.
-                bool useSharedBuffer = _notifyDepth == 0;
-                Subscription[] buffer;
-                if (useSharedBuffer)
-                {
-                    if (_notifyBuffer == null || _notifyBuffer.Length < count)
-                    {
-                        _notifyBuffer = new Subscription[Mathf.NextPowerOfTwo(count)];
-                    }
-
-                    buffer = _notifyBuffer;
-                }
-                else
-                {
-                    buffer = new Subscription[count];
-                }
-
+                // listener registered at notify time is invoked exactly once. Each re-entrancy depth owns its own
+                // buffer: an active notification is never overwritten by a nested one, and nothing allocates once warm.
+                Subscription[] buffer = RentNotifyBuffer(_notifyDepth, count);
                 _listeners.CopyTo(buffer, 0);
                 _notifyDepth++;
                 try
@@ -348,6 +343,29 @@ namespace Neo.Reactive
             }
         }
 
+        private Subscription[] RentNotifyBuffer(int depth, int count)
+        {
+            if (_notifyBuffers == null || _notifyBuffers.Length <= depth)
+            {
+                Subscription[][] grown = new Subscription[Mathf.Max(2, depth + 1)][];
+                if (_notifyBuffers != null)
+                {
+                    Array.Copy(_notifyBuffers, grown, _notifyBuffers.Length);
+                }
+
+                _notifyBuffers = grown;
+            }
+
+            Subscription[] buffer = _notifyBuffers[depth];
+            if (buffer == null || buffer.Length < count)
+            {
+                buffer = new Subscription[Mathf.NextPowerOfTwo(count)];
+                _notifyBuffers[depth] = buffer;
+            }
+
+            return buffer;
+        }
+
         private void InvokeSafe(Subscription subscription, T value)
         {
             if (subscription == null)
@@ -367,11 +385,18 @@ namespace Neo.Reactive
 
                 default:
                     _hasDeadListeners = true;
-                    NeoDiagnostics.LogWarningThrottled(
-                        "Neo.Reactive.DestroyedListener." + subscription.Describe(),
-                        $"[ReactiveProperty] Listener '{subscription.Describe()}' belongs to a destroyed object and was " +
-                        "unsubscribed automatically. Call RemoveListener in OnDestroy/OnDisable, or subscribe with " +
-                        "ReactiveListenerMode.Weak.");
+                    // WHY: a weak subscriber opted into automatic cleanup, so its destroyed target is the expected end
+                    // of its life; only strong subscribers that forgot to unsubscribe are worth a warning.
+                    if (!subscription.IsWeak && NeoDiagnostics.RuntimeWarningsEnabled)
+                    {
+                        string listener = subscription.Describe();
+                        NeoDiagnostics.LogWarningThrottled(
+                            "Neo.Reactive.DestroyedListener." + listener,
+                            $"[ReactiveProperty] Listener '{listener}' belongs to a destroyed object and was " +
+                            "unsubscribed automatically. Call RemoveListener in OnDestroy/OnDisable, or subscribe with " +
+                            "ReactiveListenerMode.Weak.");
+                    }
+
                     return;
             }
 
@@ -431,6 +456,9 @@ namespace Neo.Reactive
             {
                 return new Subscription { _weakTarget = target, _method = method, _weakInvoker = invoker };
             }
+
+            /// <summary>True when the subscription holds its target through a weak reference.</summary>
+            public bool IsWeak => _weakTarget != null;
 
             public ReactiveSubscriptionState GetState()
             {

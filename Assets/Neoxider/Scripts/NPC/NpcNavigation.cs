@@ -1,4 +1,5 @@
-﻿using Neo.NPC.Navigation;
+﻿using System;
+using Neo.NPC.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -15,16 +16,26 @@ namespace Neo.NPC
     [AddComponentMenu("Neoxider/NPC/" + nameof(NpcNavigation))]
     public sealed partial class NpcNavigation : MonoBehaviour
     {
+        /// <summary>Behaviour selected by <see cref="SetMode"/>.</summary>
         public enum NavigationMode
         {
+            /// <summary>Paths toward <see cref="FollowTarget"/> (or an explicit <see cref="SetDestination"/> point).</summary>
             FollowTarget,
+
+            /// <summary>Walks the patrol points in order, or random points inside the patrol zone.</summary>
             Patrol,
+
+            /// <summary>Patrols until <see cref="CombinedTarget"/> enters aggro range, then chases it.</summary>
             Combined
         }
 
+        /// <summary>Who rotates the NPC while it moves.</summary>
         public enum RotationPolicy
         {
+            /// <summary>NavMeshAgent rotation (optionally disabled with Update Rotation).</summary>
             Agent,
+
+            /// <summary>The component turns toward the agent velocity at Turn Speed.</summary>
             ManualVelocity
         }
 
@@ -47,9 +58,21 @@ namespace Neo.NPC
         [Min(0.01f)] [SerializeField] private float agentRadius = 0.5f;
         [SerializeField] private int areaMask = NavMesh.AllAreas;
 
-        [Header("Path")] [SerializeField] private bool autoUpdatePath = true;
-        [Min(0.05f)] [SerializeField] private float pathUpdateInterval = 0.5f;
+        [Header("Path")]
+        [Tooltip("Re-path toward a moving target every Path Update Interval. When off, a path is requested only on target/mode changes and by RefreshPath().")]
+        [SerializeField]
+        private bool autoUpdatePath = true;
+
+        [Tooltip("Seconds between automatic re-paths. A failed Combined chase is also retried only after one interval.")]
+        [Min(0.05f)]
+        [SerializeField]
+        private float pathUpdateInterval = 0.5f;
+
         [Min(0.1f)] [SerializeField] private float maxSampleDistance = 100f;
+
+        [Tooltip("Spread the periodic re-path of many NPCs over Path Update Interval instead of running them in the same frame.")]
+        [SerializeField]
+        private bool staggerPathUpdates = true;
 
         [Header("Follow")] [SerializeField] private Transform followTarget;
         [Min(0f)] [SerializeField] private float triggerDistance;
@@ -66,24 +89,24 @@ namespace Neo.NPC
         [Min(0f)] [SerializeField] private float aggroDistance = 10f;
         [Min(0f)] [SerializeField] private float maxFollowDistance = 20f;
 
-        public UnityEvent onMovementStarted;
-        public UnityEvent onMovementStopped;
-        public UnityEvent<NavigationMode> onModeChanged;
-        public UnityEvent<Transform> onTargetChanged;
+        public UnityEvent onMovementStarted = new();
+        public UnityEvent onMovementStopped = new();
+        public UnityEvent<NavigationMode> onModeChanged = new();
+        public UnityEvent<Transform> onTargetChanged = new();
 
-        public UnityEvent<Vector3> onDestinationReached;
-        public UnityEvent<Vector3> onPathBlocked;
-        public UnityEvent<Vector3> onPathUpdated;
-        public UnityEvent<NavMeshPathStatus> onPathStatusChanged;
+        public UnityEvent<Vector3> onDestinationReached = new();
+        public UnityEvent<Vector3> onPathBlocked = new();
+        public UnityEvent<Vector3> onPathUpdated = new();
+        public UnityEvent<NavMeshPathStatus> onPathStatusChanged = new();
 
-        public UnityEvent onPatrolStarted;
-        public UnityEvent onPatrolCompleted;
-        public UnityEvent<int> onPatrolPointReached;
+        public UnityEvent onPatrolStarted = new();
+        public UnityEvent onPatrolCompleted = new();
+        public UnityEvent<int> onPatrolPointReached = new();
 
-        public UnityEvent onStartFollowing;
-        public UnityEvent onStopFollowing;
+        public UnityEvent onStartFollowing = new();
+        public UnityEvent onStopFollowing = new();
 
-        public UnityEvent<float> onSpeedChanged;
+        public UnityEvent<float> onSpeedChanged = new();
 
         [Header("Debug")] [SerializeField] private bool debugMode;
         [SerializeField] private bool drawGizmos = true;
@@ -106,6 +129,23 @@ namespace Neo.NPC
         private bool wasMoving;
         private bool initialized;
 
+        private static int staggerSequence;
+        private float staggerPhase;
+        private float combinedRetryTime = float.NegativeInfinity;
+        private Func<Vector3, Vector3> constrainPosition;
+
+        private Func<Vector3, Vector3> ConstrainPositionFunc => constrainPosition ??= ConstrainPosition;
+
+        private bool RecordsDecisions => debugMode || Application.isEditor;
+
+        // WHY: the stagger sequence only spreads phases; restart it per play session when domain reload is off.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            staggerSequence = 0;
+        }
+
+        /// <summary>Movement switch: false stops the agent and skips behaviour ticks; same as <see cref="Stop"/> / <see cref="Resume"/>.</summary>
         public bool IsActive
         {
             get => isActive;
@@ -122,7 +162,25 @@ namespace Neo.NPC
             }
         }
 
+        /// <summary>Currently selected behaviour.</summary>
         public NavigationMode Mode => mode;
+
+        /// <summary>True after <see cref="SetRunning"/>(true): the agent uses the run speed.</summary>
+        public bool IsRunning => agentCore != null && agentCore.IsRunning;
+
+        /// <summary>
+        ///     Re-paths toward a moving target every Path Update Interval. When false, a path is requested only when
+        ///     the target or mode changes and by <see cref="RefreshPath"/>; a running follow picks the change up at once.
+        /// </summary>
+        public bool AutoUpdatePath
+        {
+            get => autoUpdatePath;
+            set
+            {
+                autoUpdatePath = value;
+                followCore?.Configure(triggerDistance, autoUpdatePath, pathUpdateInterval, maxSampleDistance);
+            }
+        }
 
         /// <summary>Target used in FollowTarget mode.</summary>
         public Transform FollowTarget => followTarget;
@@ -142,6 +200,8 @@ namespace Neo.NPC
 
             followCore = new NpcFollowTargetCore(transform, agent);
             followCore.Configure(triggerDistance, autoUpdatePath, pathUpdateInterval, maxSampleDistance);
+            staggerPhase = NextStaggerPhase();
+            followCore.PathUpdatePhase = staggerPathUpdates ? staggerPhase : 0f;
             followCore.DestinationReached += p => onDestinationReached?.Invoke(p);
             followCore.PathBlocked += p => onPathBlocked?.Invoke(p);
             followCore.PathUpdated += p => onPathUpdated?.Invoke(p);
@@ -163,7 +223,7 @@ namespace Neo.NPC
             // so events (onPatrolStarted, onTargetChanged, ...) fire exactly once on spawn.
             NavigationMode initialMode = mode;
             SetModeInternal(initialMode, true, false);
-            // Startup listeners can defer another mode while initialized is still false.
+            // WHY: startup listeners can defer another mode while initialized is still false.
             // Reconcile that selection without entering it or notifying listeners again.
             if (mode != initialMode)
             {
@@ -302,9 +362,15 @@ namespace Neo.NPC
             ApplyAgentSettings();
 
             followCore?.Configure(triggerDistance, autoUpdatePath, pathUpdateInterval, maxSampleDistance);
+            if (followCore != null)
+            {
+                followCore.PathUpdatePhase = staggerPathUpdates ? staggerPhase : 0f;
+            }
+
             patrolCore?.Configure(patrolPoints, patrolZone, patrolWaitTime, loopPatrol, maxSampleDistance);
         }
 
+        /// <summary>Switches the behaviour; safe before Awake (applied on enable) and a no-op for the current mode.</summary>
         public void SetMode(NavigationMode newMode)
         {
             if (!initialized)
@@ -321,6 +387,10 @@ namespace Neo.NPC
             SetModeInternal(newMode, true, isActiveAndEnabled);
         }
 
+        /// <summary>
+        ///     Sets the FollowTarget-mode target. In FollowTarget mode it raises <see cref="onTargetChanged"/> and
+        ///     requests a path immediately, even for the same target; skip the call when nothing changed.
+        /// </summary>
         public void SetFollowTarget(Transform target)
         {
             followTarget = target;
@@ -328,13 +398,15 @@ namespace Neo.NPC
             {
                 followCore.SetTarget(target);
                 onTargetChanged?.Invoke(target);
-                followCore.TryForceUpdatePath(ConstrainPosition);
+                followCore.TryForceUpdatePath(ConstrainPositionFunc);
             }
         }
 
+        /// <summary>Sets the Combined-mode target; a chase in progress follows the new target.</summary>
         public void SetCombinedTarget(Transform target)
         {
             combinedTarget = target;
+            combinedRetryTime = float.NegativeInfinity;
             if (mode == NavigationMode.Combined)
             {
                 if (isCombinedFollowing)
@@ -346,6 +418,7 @@ namespace Neo.NPC
             }
         }
 
+        /// <summary>Switches between walk and run speed and raises <see cref="onSpeedChanged"/>.</summary>
         public void SetRunning(bool enable)
         {
             if (agentCore == null)
@@ -357,6 +430,7 @@ namespace Neo.NPC
             onSpeedChanged?.Invoke(agent != null ? agent.speed : 0f);
         }
 
+        /// <summary>Applies a custom agent speed (minimum 0.1) until the next <see cref="SetRunning"/> call.</summary>
         public void SetSpeed(float speed)
         {
             if (agentCore == null)
@@ -368,6 +442,10 @@ namespace Neo.NPC
             onSpeedChanged?.Invoke(agent != null ? agent.speed : 0f);
         }
 
+        /// <summary>
+        ///     Paths to an explicit point through the follow core (clears the follow target). Returns false before
+        ///     initialization, off the NavMesh, or when the sampled destination is rejected.
+        /// </summary>
         public bool SetDestination(Vector3 destination)
         {
             if (followCore == null)
@@ -376,9 +454,26 @@ namespace Neo.NPC
             }
 
             followCore.SetDestination(destination);
-            return followCore.TryForceUpdatePath(ConstrainPosition);
+            return followCore.TryForceUpdatePath(ConstrainPositionFunc);
         }
 
+        /// <summary>
+        ///     Requests a new path to the current follow target (or explicit destination) without raising
+        ///     <see cref="onTargetChanged"/>. Use it to track a moving target while <see cref="AutoUpdatePath"/> is off.
+        ///     Returns false while nothing is followed (Patrol, Combined before a chase), before initialization, off
+        ///     the NavMesh, or when the destination cannot be resolved; an unresolved Combined chase returns to patrol.
+        /// </summary>
+        public bool RefreshPath()
+        {
+            if (followCore == null || !followCore.FollowEnabled)
+            {
+                return false;
+            }
+
+            return followCore.TryForceUpdatePath(ConstrainPositionFunc);
+        }
+
+        /// <summary>Stops the agent and pauses behaviour ticks until <see cref="Resume"/>.</summary>
         [Button(PlayModeOnly = true)]
         public void Stop()
         {
@@ -392,6 +487,7 @@ namespace Neo.NPC
             UpdateMovementEvents();
         }
 
+        /// <summary>Resumes movement and behaviour ticks after <see cref="Stop"/>.</summary>
         [Button(PlayModeOnly = true)]
         public void Resume()
         {
@@ -431,7 +527,10 @@ namespace Neo.NPC
                 onModeChanged?.Invoke(mode);
             }
 
-            LogDecision($"Mode -> {mode}");
+            if (RecordsDecisions)
+            {
+                LogDecision($"Mode -> {mode}");
+            }
         }
 
         private void ApplyAgentSettings()
@@ -537,23 +636,49 @@ namespace Neo.NPC
             if (mode == NavigationMode.Combined && isCombinedFollowing)
             {
                 isCombinedFollowing = false;
+                // WHY: without a cooldown an unreachable target inside aggro range restarts the chase every
+                // frame, repeating the bounded NavMesh ring search and the start/stop events per frame.
+                combinedRetryTime = Time.time + pathUpdateInterval;
                 followCore.SetFollowEnabled(false);
                 patrolCore.StartPatrol(false);
                 onStopFollowing?.Invoke();
-                LogDecision($"Follow unreachable -> return to patrol ({desired})");
+                if (RecordsDecisions)
+                {
+                    LogDecision($"Follow unreachable -> return to patrol ({desired})");
+                }
+
                 return;
             }
 
-            LogDecision($"Destination unreachable ({desired})");
+            if (RecordsDecisions)
+            {
+                LogDecision($"Destination unreachable ({desired})");
+            }
         }
 
         private void OnPatrolDestinationUnreachable(Vector3 desired)
         {
-            LogDecision($"Patrol unreachable -> advance ({desired})");
+            if (RecordsDecisions)
+            {
+                LogDecision($"Patrol unreachable -> advance ({desired})");
+            }
+        }
+
+        private static float NextStaggerPhase()
+        {
+            // WHY: a golden-ratio sequence spreads consecutive spawns evenly without touching UnityEngine.Random.
+            staggerSequence++;
+            double phase = staggerSequence * 0.6180339887498949d;
+            return (float)(phase - Math.Floor(phase));
         }
 
         private void LogDecision(string message)
         {
+            if (!RecordsDecisions)
+            {
+                return;
+            }
+
             string line = $"[{Time.time:0.00}] {message}";
             lastDecision = line;
 

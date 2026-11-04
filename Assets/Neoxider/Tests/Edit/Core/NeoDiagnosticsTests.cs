@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Neo;
+using Neo.Tests.Performance;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -111,7 +112,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void StableId_HandlesNullWithoutThrowing()
         {
-            // Диагностика не имеет права падать на пустой ссылке: её зовут именно там, где что-то не найдено.
+            // WHY: diagnostics must not throw on a null reference; they are called exactly where something was not found.
             Assert.That(NeoDiagnostics.StableId(null), Is.Not.Null.And.Not.Empty);
         }
 
@@ -151,6 +152,126 @@ namespace Neo.Editor.Tests
 
             Assert.That(_capture.Entries.Select(e => e.Message),
                 Is.EqualTo(new[] { "forced info", "forced warning", "forced error" }));
+        }
+
+        [Test]
+        public void ThrottleTable_WhenFullOfRunningWindows_KeepsEveryWindowAndThrottlesNewKeysTogether()
+        {
+            NeoDiagnostics.Configure(warnings: true);
+            NeoDiagnostics.LogWarningThrottled("bounded-0", "first", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("bounded-0", "throttled", seconds: 60f);
+            Assert.That(_capture.Entries, Has.Count.EqualTo(1));
+
+            for (int i = 1; i < NeoDiagnostics.MaxThrottleKeys; i++)
+            {
+                NeoDiagnostics.LogWarningThrottled("bounded-" + i, "unique", seconds: 60f);
+            }
+
+            NeoDiagnostics.LogWarningThrottled("overflow-a", "first overflow", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("overflow-b", "second overflow", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("bounded-512", "middle key again", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("bounded-0", "oldest key again", seconds: 60f);
+
+            Assert.That(_capture.Entries, Has.Count.EqualTo(NeoDiagnostics.MaxThrottleKeys + 1),
+                "No running window is forgotten; the keys beyond the bound share one overflow window.");
+            Assert.That(_capture.Entries[_capture.Entries.Count - 1].Message, Is.EqualTo("first overflow"));
+        }
+
+        [TestCase(1)]
+        [TestCase(2 * NeoDiagnostics.MaxThrottleKeys)]
+        public void RepeatingBurstWiderThanTheBound_StaysThrottledOnEveryPass(int keysBeyondTheBound)
+        {
+            NeoDiagnostics.Configure(warnings: true);
+            int keyCount = NeoDiagnostics.MaxThrottleKeys + keysBeyondTheBound;
+            string[] keys = new string[keyCount];
+            for (int i = 0; i < keyCount; i++)
+            {
+                keys[i] = "burst-" + i;
+            }
+
+            for (int pass = 0; pass < 5; pass++)
+            {
+                for (int i = 0; i < keyCount; i++)
+                {
+                    NeoDiagnostics.LogWarningThrottled(keys[i], "burst", seconds: 60f);
+                }
+            }
+
+            Assert.That(_capture.Entries, Has.Count.EqualTo(NeoDiagnostics.MaxThrottleKeys + 1),
+                "Every tracked key logs once and the whole overflow logs once per window, however often it cycles.");
+        }
+
+        [Test]
+        public void OverflowSuppressedCount_IsAppendedToTheNextWarningThatLogs()
+        {
+            NeoDiagnostics.Configure(warnings: true);
+            for (int i = 0; i < NeoDiagnostics.MaxThrottleKeys; i++)
+            {
+                NeoDiagnostics.LogWarningThrottled("running-" + i, "running", seconds: 60f);
+            }
+
+            NeoDiagnostics.LogWarningThrottled("overflow-a", "first overflow", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("overflow-a", "repeat", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("overflow-b", "other key", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("unthrottled-a", "no window", seconds: 0f);
+            NeoDiagnostics.LogWarningThrottled("unthrottled-b", "no window again", seconds: 0f);
+
+            Assert.That(_capture.Entries, Has.Count.EqualTo(NeoDiagnostics.MaxThrottleKeys + 3));
+            Assert.That(_capture.Entries[NeoDiagnostics.MaxThrottleKeys].Message, Is.EqualTo("first overflow"));
+            Assert.That(_capture.Entries[NeoDiagnostics.MaxThrottleKeys + 1].Message,
+                Does.StartWith("no window").And.Contain("2 more throttled warning(s) were suppressed"));
+            Assert.That(_capture.Entries[NeoDiagnostics.MaxThrottleKeys + 2].Message, Is.EqualTo("no window again"),
+                "The count is reported once.");
+        }
+
+        [Test]
+        public void ThrottleTable_WhenFull_ReusesElapsedWindowSlotsAndKeepsRunningOnes()
+        {
+            NeoDiagnostics.Configure(warnings: true);
+            NeoDiagnostics.LogWarningThrottled("running", "running first", seconds: 60f);
+            for (int i = 1; i < NeoDiagnostics.MaxThrottleKeys; i++)
+            {
+                NeoDiagnostics.LogWarningThrottled("elapsed-" + i, "unthrottled", seconds: 0f);
+            }
+
+            NeoDiagnostics.LogWarningThrottled("fresh", "fresh key", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("fresh", "fresh again", seconds: 60f);
+            NeoDiagnostics.LogWarningThrottled("running", "running again", seconds: 60f);
+
+            Assert.That(_capture.Entries, Has.Count.EqualTo(NeoDiagnostics.MaxThrottleKeys + 1),
+                "The fresh key got an elapsed slot and its own window.");
+            Assert.That(_capture.Entries[_capture.Entries.Count - 1].Message, Is.EqualTo("fresh key"));
+            Assert.That(_capture.Entries.Select(e => e.Message), Has.No.Member("running again"),
+                "The oldest key keeps its running window while elapsed ones are forgotten.");
+        }
+
+        [Test]
+        public void SuppressedOverflowAndThrottledCalls_DoNotAllocate()
+        {
+            NeoDiagnostics.Configure(warnings: true);
+            for (int i = 0; i < NeoDiagnostics.MaxThrottleKeys; i++)
+            {
+                NeoDiagnostics.LogWarningThrottled("running-" + i, "running", seconds: 60f);
+            }
+
+            NeoDiagnostics.LogWarningThrottled("overflow-a", "first overflow", seconds: 60f);
+            Action suppressed = () =>
+            {
+                for (int i = 0; i < 1000; i++)
+                {
+                    NeoDiagnostics.LogWarningThrottled("overflow-b", "suppressed", seconds: 60f);
+                    NeoDiagnostics.LogWarningThrottled("running-7", "throttled", seconds: 60f);
+                }
+            };
+
+            // WHY: the first pass JIT-compiles the delegate and the overflow branch; the claim is about warm calls.
+            suppressed();
+            long allocations = GcAlloc.TryCount(suppressed, out string notAdmitted);
+
+            Assert.That(_capture.Entries, Has.Count.EqualTo(NeoDiagnostics.MaxThrottleKeys + 1));
+            GcAlloc.IgnoreIfNotAdmitted(notAdmitted);
+            Assert.That(allocations, Is.Zero,
+                "A throttled or suppressed warning only does a lookup and a time comparison.");
         }
     }
 }

@@ -19,9 +19,9 @@ SetLocalPosition / AddLocalPosition
 SetRotation / AddRotation            // Quaternion or euler
 SetLocalRotation / AddLocalRotation
 SetScale / AddScale                  // localScale, partial component override
-LookAt2D(transform, Vector3 target, float offset=0f)        // rotate Z to face target in XY
+LookAt2D(transform, Vector3 target, float offset=0f)        // rotate Z to face target in XY; null-safe, no-op on the same XY point
 SmoothLookAtRoutine(transform, Vector3 target, float speed) : IEnumerator
-GetClosest(transform, IEnumerable<Transform> others) : Transform
+GetClosest(transform, IEnumerable<Transform> others) : Transform   // null for a null transform; no allocation for lists/arrays
 GetChildTransforms(transform) : Transform[]
 ResetTransform / ResetLocalTransform
 CopyFrom(transform, Transform source)
@@ -43,7 +43,7 @@ ForEach<T>(IEnumerable<T>, Action<T>)            // null-safe
 GetSafe<T>(IList<T>, int index, T defaultValue)  // bounds-checked
 GetWrapped<T>(IList<T>, int index)               // modulo wrap
 IsValidIndex<T>(ICollection<T>, int index) : bool
-IsNullOrEmpty<T>(IEnumerable<T>) : bool
+IsNullOrEmpty<T>(IEnumerable<T>) : bool          // no allocation for lists/arrays
 ToIndexedString<T> / ToStringJoined<T>(sep=", ") / ToDebugString<T>
 FindDuplicates<T>(IEnumerable<T>) : IEnumerable<T>
 CountEmptyElements<T>(T[] array) : int           // counts nulls
@@ -52,14 +52,17 @@ CountEmptyElements<T>(T[] array) : int           // counts nulls
 ## RandomExtensions
 ```
 GetRandomElement<T>(IList<T>) : T                // throws on empty
+GetRandomElement<T>(IList<T>, System.Random) : T // seeded: tests, replays, daily seeds
 GetRandomElements<T>(IList<T>, int count) : IEnumerable<T>
-GetRandomIndex<T>(ICollection<T>) : int
+GetRandomIndex<T>(ICollection<T>) : int ; GetRandomIndex<T>(ICollection<T>, System.Random) : int
 Shuffle<T>(IList<T>, bool inplace=true) : IList<T>
+Shuffle<T>(IList<T>, System.Random random, bool inplace=true) : IList<T>
+Shuffle<T>(IList<T>, Func<int,int> nextIndex, bool inplace=true) : IList<T>   // nextIndex(n) must return [0, n)
 Chance(this float probability) : bool            // 0..1
 Random(this bool) : bool ; RandomBool() : bool   // 50/50
 RandomColor(float alpha=1f) : Color
-GetRandomEnumValue<T>() where T : Enum
-GetRandomWeightedIndex(IList<float> weights) : int
+GetRandomEnumValue<T>() where T : Enum            // InvalidOperationException for an empty enum
+GetRandomWeightedIndex(IList<float> weights) : int ; GetRandomWeightedIndex(IList<float>, System.Random) : int
 GetRandomWeighted<T>(IList<T> items, IList<float> weights) : T       // weighted ELEMENT, not index; parallel lists
 GetRandomWeighted<T>(IList<T> items, Func<T,float> weightSelector) : T
 RandomizeBetween(this float/int)                 // [-v, v]
@@ -74,7 +77,7 @@ IsNullOrEmptyAfterTrim(string) : bool ; IsNumeric(string) : bool
 ToColor(hex) : Color ; ToColorSafe(hex, out Color) : bool
 Truncate(string, int maxLength) : string         // adds "..."
 RandomString(int length, string chars=…) ; Reverse(string)
-ToBool / ToInt(default=0) / ToFloat(default=0)
+ToBool / ToInt(default=0) / ToFloat(default=0)   // invariant culture first, then the OS culture ("1.5" parses on ru/de systems)
 // rich text:
 Bold / Italic / Size(int) / SetColor(Color) / Rainbow / Gradient(start,end) / RandomColors
 ```
@@ -138,12 +141,12 @@ GetName / SetName(this Object)                   // null-safe
 
 ## GameObjectArrayExtensions  (operate on many objects at once)
 ```
-SetActiveAll(IEnumerable<GameObject>, bool) ; SetActiveAll<T>(…) where T : Component
+SetActiveAll(IEnumerable<GameObject>, bool) ; SetActiveAll<T>(…) where T : Component   // no allocation for lists/arrays
 SetActiveRange(IList<GameObject>, int upTo, bool) ; SetActiveAtIndex(IList, int, bool=true)
 DestroyAll(IEnumerable<GameObject>) ; DestroyAll<T>(…)
 GetActiveObjects(…) ; GetComponentsFromAll<T>(…) ; GetFirstComponentFromAll<T>(…)
 SetPositionAll(…, Vector3) ; SetParentAll(…, parent, worldPositionStays=true)
-FindClosest(…, Vector3) ; FindClosest<T>(…, Vector3) ; WithinDistance(…, Vector3, float)
+FindClosest(…, Vector3) ; FindClosest<T>(…, Vector3) ; WithinDistance(…, Vector3, float)   // FindClosest compares squared distances
 GetAveragePosition(…) : Vector3 ; GetCombinedBounds(…) : Bounds
 ```
 
@@ -158,7 +161,7 @@ ArrangeInGrid3D / ArrangeInCircle3D / ArrangeOnSphereSurface / ArrangeInSpiral /
 
 ## ScreenExtensions
 ```
-IsOnScreen(this Vector3, Camera=null) ; IsOutOfScreen(this Vector3, Camera=null)
+IsOnScreen(this Vector3, Camera=null) ; IsOutOfScreen(this Vector3, Camera=null)   // a destroyed Camera falls back to Camera.main
 IsOutOfScreenSide(this Vector3, ScreenEdge side, Camera=null)
 GetClosestScreenEdgePoint(this Vector3, Camera=null) : Vector3
 GetWorldPositionAtScreenEdge(this Camera, ScreenEdge, Vector2 offset=default, float depth=0)
@@ -178,7 +181,11 @@ ToClockString(this TimeSpan, bool includeDays=false, string sep=":")        // "
 PlayerPrefsUtils.SetIntArray(key, int[]) / GetIntArray(key, default=null) ; also float[]/string[]/DateTime
 DateTimeExtensions.ToRoundTripUtcString(this DateTime) ; TryParseUtcRoundTrip(this string, out DateTime)
 NeoDiagnostics.Configure(logs:true, warnings:true, errors:true)   // logging is gated/silent by default
+NeoDiagnostics.LogWarningThrottled(...)   // per-key throttle; the key table is capped at NeoDiagnostics.MaxThrottleKeys (1024)
 NeoDiagnostics.StableId(Object)  // per-instance key for LogWarningThrottled; use INSTEAD of GetInstanceID (obsolete on Unity 6.5+)
+UIUtils.IsPointerOverUI() / IsPointerOverUI(Vector2 screenPosition)   // allocation-free per-frame "is the finger over UI?"
+UIUtils.WorldToCanvasPoint(canvas, worldPoint, camera=null)
+UnityEventDelegateCache: SubscribeAt(index, button.onClick, action) ; UnsubscribeAll() : int   // detach every indexed subscription in OnDestroy
 DebugGizmos.*        // runtime gizmo drawing
 Shapes.* / RandomShapeExtensions.*   // shape geometry / random point sampling
 // Enums.cs holds TimeFormat, ScreenEdge used across these extensions

@@ -1,149 +1,74 @@
 # Bonus System Documentation
 
-**What it is:** an overview of the Bonus module (wheel of fortune, slot machine, collections, time-based rewards). For detailed class navigation, see [Bonus/README](Bonus/README.md).
+**What it is:** an overview of the Bonus module (`Scripts/Bonus/`, namespace `Neo.Bonus`): wheel of fortune, slot machine, collections with progress boxes, and time-based rewards. Every mechanic has a plain C# core for code-first games and tests, and scene components that wrap it with Inspector fields and UnityEvents. For class-by-class navigation see [Bonus/README](Bonus/README.md).
 
-**How to use:** see the sections below or [Bonus/README](Bonus/README.md).
+**How to use:**
+1. Pick the mechanic below and open its page.
+2. In scenes, add the component and wire its UnityEvents; from code, use the same component API or the plain C# core directly.
+3. Assign wallets and collections explicitly where a component offers a field; the global singletons (`Money.I`, `Collection.I`) are only the fallback.
 
 ---
 
+## Wheel of Fortune (`WheelFortune`)
 
-The **Bonus** module provides a set of ready-to-use bonus game mechanics that can be easily integrated into your project. It includes a Wheel of Fortune, a slot machine, an item collection system, and time-based rewards. These tools help boost player engagement and retention.
+`Scripts/Bonus/WheelFortune/WheelFortune.cs`. Spins a UI wheel and reports the sector under the arrow through
+`OnWinIdVariant(int)`. `Spin()` / `Stop()` drive it; `State` is `Idle`, `Spinning`, `Decelerating` or
+`Aligning`; `canUse` gates a **Single Use** wheel. `WheelFortune.ResolveSectorIndex(wheelZ, arrowZ, offsetZ, count)`
+is the component-free sector math. [WheelMoneyWin](Bonus/WheelFortune/WheelMoneyWin.md) turns a sector id into
+a money prize. See [WheelFortune](Bonus/WheelFortune/WheelFortune.md).
 
-## Core Bonus Mechanics
+## Slot machine (`SpinController`)
 
-### Wheel of Fortune (`WheelFortune`)
-**Namespace:** `Neo.Bonus`
-**Path:** `Scripts/Bonus/WheelFortune/WheelFortune.cs`
+`Scripts/Bonus/Slot/SpinController.cs`. Charges the bet, spins `Row` reels, evaluates paylines with `CheckSpin`,
+pays the wallet (**Auto Payout**) and raises `OnStartSpin`, `OnEndSpin`, `OnEnd(bool)`, `OnWin(int)`,
+`OnWinLines(int[])`, `OnLose`, `OnChangeBet(string)` and `OnChangeMoneyWin(string)`. Main calls: `StartSpin()`,
+`AddLine()` / `RemoveLine()`, `AddBet()` / `RemoveBet()` / `SetMaxBet()`, `ForceNextOutcome(int[,])`,
+`StartEconomySpin()`, `GetLastResult()`. `ChanceWin` (0..1) shapes random plans. Plain C# pieces:
+`CheckSpin` (payline rules) and `SlotSpinMath` (price and payout). See [Slot](Bonus/Slot/README.md).
 
-Implements a "Wheel of Fortune" mechanic. Lets the player spin a wheel to receive a random prize from a predefined set.
+## Collections (`CollectionSet`, `Collection`, `BoxProgress`, `Box`)
 
-**Key features:**
-- Configurable spin and deceleration speed.
-- Automatic or manual placement of prizes around the wheel.
-- Optional wheel alignment for precise stopping on a sector.
+`Scripts/Bonus/Collection/`. [CollectionSet](Bonus/Collection/CollectionSet.md) is the plain C# unlock set:
+independent instances are claimed, saved (`<prefix>Item_<index>`) and reset separately, with C# events and an
+injectable random source. [Collection](Bonus/Collection/Collection.md) is the scene component (`Collection.I`)
+over one set, exposed read-only as `Set` (`IReadOnlyCollectionSet`); change it through the component: `GetPrize()`, `TryAddItem(int)`, `RemoveItem(int)`, `ClearCollection()`, completion queries and
+UnityEvents (`OnGetItem`, `OnItemAdded`, `OnItemRemoved`, `OnLoadItems`, `OnCompletionChanged`).
+[BoxProgress](Bonus/Collection/BoxProgress.md) is an integer piggy bank with idempotent claim receipts;
+[Box](Bonus/Collection/Box.md) is the float progress UI box that buys a locked item from a collection. Progress
+and unlocks persist through `SaveProvider`.
 
-**Public Properties and Fields:**
-- `SpinState State { get; }`: Returns the current wheel state (`Idle`, `Spinning`, `Decelerating`, `Aligning`).
-- `GameObject[] Items { get; }`: Returns the array of game objects that serve as prizes.
-- `bool canUse { get; set; }`: Determines whether the wheel can be used. When set to `false` in single-use mode (`singleUse`), spinning again becomes impossible.
+## Time rewards (`CooldownSchedule`, `CooldownReward`, `ResourceRegen`)
 
-**Public methods:**
-- `Spin()`: Starts spinning the wheel.
-- `Stop()`: Initiates the wheel stop.
-- `GetPrize(int id)`: Returns the prize game object by its ID.
+`Scripts/Bonus/TimeReward/`. [CooldownSchedule](Bonus/TimeReward/CooldownSchedule.md) is the plain C# cooldown
+rule on an injected `INeoClock` (tamper-resistant `NeoTrustedTime` by default) with save/restore.
+[CooldownReward](Bonus/TimeReward/CooldownReward.md) is the scene component built on `TimerObject`: `TakeReward()`,
+`CanTakeReward()`, `GetSecondsUntilReward()`, **Auto Claim**, `RemainingTime` and `OnRewardClaimed`.
+[ResourceRegen](Bonus/TimeReward/ResourceRegen.md) regenerates a `Money` wallet. The legacy
+[TimeReward](Bonus/TimeReward/TimeReward.md) is `[Obsolete]` and kept for existing scenes.
 
-**Unity Events:**
-- `OnWinIdVariant (int)`: Invoked after the wheel stops. Passes the ID of the winning item.
+## Line Roulette (`LineRoulett`)
 
-### Slot Machine (`SpinController`)
-**Namespace:** `Neo.Bonus`
-**Path:** `Scripts/Bonus/Slot/SpinController.cs`
+`Scripts/Bonus/LineRoulett.cs`. A horizontal strip of prize images; `StartRolling()` scrolls it and `OnWin(int)`
+reports the index (in `sprites`) of the image closest to the arrow; **Use Unscaled Time** lets it finish during a
+pause. See [LineRoulett](Bonus/LineRoulett.md).
 
-A full-featured slot machine. Manages bets, lines, reel spinning, and win combination detection.
+## Example
 
-**Key features:**
-- Flexible configuration via `ScriptableObject` (bets, lines, symbols, multipliers).
-- Bet management and control over the number of active lines.
-- Win probability control (`ChanceWin`).
-- Optional runtime highlighting of winning lines via **LineRenderer** (`WinLineRendererPlayback` in the `SpinController` inspector); see [SpinController](./Bonus/Slot/SpinController.md) for details.
+```csharp
+// Daily chest: a cooldown gates a box claim that grants a collectible.
+CooldownSchedule daily = new(24f * 60f * 60f, availableInitially: true);
+daily.TryLoadFrom("DailyChest");
 
-**Public Properties and Fields:**
-- `float ChanceWin`: Win probability from 0 to 1 (the serialized field was previously named `chanseWin`).
-- `IMoneySpend moneySpend`: Interface implementation for deducting funds per spin.
-- `int[,] FinalElementIDs`: Matrix of symbol IDs in the visible window after stopping (y=0 at the bottom).
+CollectionSet stickers = new(24, "Stickers_");
+stickers.Load();
 
-**Public methods:**
-- `StartSpin()`: Starts spinning the reels.
-- `IsStop()`: Returns `true` if all reels have stopped.
-- `AddLine()` / `RemoveLine()`: Changes the number of active lines.
-- `AddBet()` / `RemoveBet()`: Changes the current bet.
-- `SetMaxBet()`: Sets the maximum bet.
-
-**Unity Events:**
-- `OnStartSpin`: Invoked when spinning starts.
-- `OnEndSpin`: Invoked after all reels fully stop and results are calculated.
-- `OnEnd (bool)`: Invoked at the end of a spin. Passes `true` if there was a win, otherwise `false`.
-- `OnWin (int)`: Invoked on a win. Passes the total win amount.
-- `OnWinLines (int[])`: Invoked on a win. Passes an array of winning line IDs.
-- `OnLose`: Invoked on a loss.
-- `OnChangeBet (string)`: Invoked when the total bet changes. Passes the bet amount as a string.
-- `OnChangeMoneyWin (string)`: Invoked on a win. Passes the win amount as a string.
-
-### Time Reward (`TimeReward`)
-**Namespace:** `Neo.Bonus`
-**Path:** `Scripts/Bonus/TimeReward/TimeReward.cs`
-
-Implements a system where the player can claim a reward after a certain amount of time has passed.
-
-**Key features:**
-- Configurable reward wait period.
-- Saves the time of the last claimed reward in `PlayerPrefs`.
-- Public timer control: start/stop/pause/resume/restart.
-- Two cooldown start modes: immediately on `TakeReward()` or manually via `StartTime()`.
-
-**Public Properties and Fields:**
-- `float timeLeft`: Time remaining until the reward, in seconds.
-- `bool IsTimerRunning`: The timer is running.
-- `bool IsTimerPaused`: The timer is paused.
-- `bool IsRewardAvailable`: The reward is available right now.
-
-**Public methods:**
-- `TakeReward()`: Attempts to claim the reward. Returns `true` on success.
-- `Take()`: Alternative method for calling `TakeReward()` (e.g., from Unity buttons).
-- `CanTakeReward()`: Checks whether the reward is currently available. Returns `true` if the reward can be claimed.
-- `GetSecondsUntilReward()`: Returns the time remaining until the next reward, in seconds.
-- `static string FormatTime(int seconds)`: Formats time from seconds into an `hh:mm:ss` string.
-- `StartTime() / StopTime() / PauseTime() / ResumeTime()`: Timer lifecycle control.
-- `RestartTime()`: Restarts the cooldown from the current UTC time.
-- `SetRewardAvailableNow()`: Makes the reward available immediately.
-- `RefreshTimeState()`: Forces a recalculation of the timer state.
-- `SetAdditionalKey(string addKey, bool refreshAfterChange = true)`: Changes the save key suffix.
-
-**Unity Events:**
-- `OnTimeUpdated (float)`: Invoked every second. Passes the time remaining until the reward.
-- `OnRewardClaimed`: Invoked when the reward is successfully claimed.
-- `OnRewardAvailable`: Invoked once when the timer reaches zero and the reward becomes available.
-- `OnTimerStarted / OnTimerStopped / OnTimerPaused / OnTimerResumed`: Timer control events.
-
-### Collection System (`Collection`)
-**Namespace:** `Neo.Bonus`
-**Path:** `Scripts/Bonus/Collection/Collection.cs`
-
-Manages an item collection system. Tracks which items are already unlocked and grants new ones as prizes.
-
-**Key features:**
-- Item data stored in a `ScriptableObject` (`ItemCollectionData`).
-- Unlock progress saved in `PlayerPrefs`.
-
-**Public Properties and Fields:**
-- `static Collection Instance`: Static class instance for global access.
-- `ItemCollectionData[] itemCollectionDatas`: Array of data for all collection items.
-- `bool[] enabledItems`: Array indicating which items are unlocked (`true`).
-
-**Public methods:**
-- `GetPrize()`: Returns the `ItemCollectionData` of a new unique item and saves progress.
-
-**Unity Events:**
-- `OnGetItem (int)`: Invoked when a new item is received. Passes the item ID.
-- `OnLoadItems`: Invoked after collection data is loaded from saves.
-
-### Line Roulette (`LineRoulett`)
-**Namespace:** `Neo.Bonus`
-**Path:** `Scripts/Bonus/LineRoulett.cs`
-
-Creates a visual roulette as a horizontally moving strip of prizes. The player starts the spin, and after stopping, the prize under the arrow is determined.
-
-**Key features:**
-- Configurable speed, spin duration, and deceleration.
-- Easy prize setup via a sprite array.
-
-**Public Properties and Fields:**
-- `Sprite[] sprites`: Array of sprites used to display prizes in the roulette.
-- `bool updateSetting`: Flag to force a visual layout refresh of the elements in the Unity Editor when set to `true`.
-
-**Public methods:**
-- `StartRolling()`: Starts spinning the roulette (also an Inspector button via `[Button]`, together with an
-  `Update Visual` button that rebuilds the reel layout).
-
-**Unity Events:**
-- `OnWin (int)`: Invoked after the roulette stops. Passes the ID of the winning sprite from the `sprites` array.
+// Check first that a sticker is left, so a complete set never burns the daily cooldown.
+if (!stickers.IsComplete && daily.TryClaim(out int chests))
+{
+    daily.SaveTo("DailyChest"); // Persist the consumed cooldown before granting.
+    for (int i = 0; i < chests && stickers.TryClaimNext(out int sticker); i++)
+    {
+        ShowSticker(sticker);
+    }
+}
+```

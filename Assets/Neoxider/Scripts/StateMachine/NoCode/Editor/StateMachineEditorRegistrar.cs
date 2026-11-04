@@ -11,6 +11,7 @@ namespace Neo.StateMachine.NoCode.Editor
     {
         static StateMachineEditorRegistrar()
         {
+            EditorApplication.delayCall -= OnEditorReady;
             EditorApplication.delayCall += OnEditorReady;
         }
 
@@ -26,6 +27,9 @@ namespace Neo.StateMachine.NoCode.Editor
                 return;
             }
 
+            // WHY: the check runs after every domain reload on purpose. A recompile is exactly what can break
+            // the registration (another [CustomEditor(typeof(StateMachineData))], a partially failed editor
+            // assembly), and the check itself is one temporary asset plus one inspector.
             Initialize();
             IsInitialized = true;
         }

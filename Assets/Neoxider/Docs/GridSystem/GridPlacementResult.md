@@ -1,6 +1,10 @@
 # GridPlacementResult
 
-**Purpose:** result of writing a multi-cell footprint into `FieldGenerator`.
+**What it is:** `GridPlacementResult` (`Scripts/GridSystem/GridPlacementResult.cs`, namespace `Neo.GridSystem`) is the result of writing a multi-cell footprint into `FieldGenerator`.
+
+**How to use:** check `Placed`, then update views from `Cells` / `Positions`; log `FailureReason` when placement was rejected.
+
+---
 
 `GridPlacementResult` is returned by `FieldGenerator.PlaceContentFootprint(...)`. It is useful for gameplay services and view layers because it reports the changed cells, their logical positions, and the reason when placement fails.
 

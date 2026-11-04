@@ -32,9 +32,17 @@ namespace Neo.Rpg.Runtime
             SetCurrent(definition.baseValue);
         }
 
-        /// <summary>Writes the resolved value and pushes the reactive property.</summary>
+        /// <summary>
+        ///     Writes the resolved value and pushes the reactive property. A NaN value keeps the previous value, so a
+        ///     corrupted modifier or base cannot spread NaN into derived resources and UI.
+        /// </summary>
         public void SetCurrent(float value, bool forceNotify = false)
         {
+            if (float.IsNaN(value))
+            {
+                value = CurrentValue;
+            }
+
             float min = Definition.minValue >= 0f ? Definition.minValue : float.MinValue;
             float max = Definition.maxValue >= 0f ? Definition.maxValue : float.MaxValue;
             if (value < min)

@@ -2,7 +2,7 @@
 
 **What it is:** If you mark a field with the `[LoadFromResources]` attribute, `ResourceDrawer` will try to find an asset in the `Resources` folder and assign it to that field, saving you from having to drag it in manually.
 
-**How to use:** see the sections below.
+**How to use:** mark a field with `[LoadFromResources("Path/Asset")]` or a collection with `[LoadAllFromResources("Folder")]`, keep **Enable Attribute Search** on in **Neoxider > Settings**, then select the component. From a custom Editor call `ResourceDrawer.ProcessResourceAttributes(component)`.
 
 ---
 
@@ -30,7 +30,12 @@ A static class implementing the logic for attributes that automatically load ass
 - **Collection support**: Can populate arrays or lists (`List<>`) with all found assets.
 
 **Public methods**
-- `ProcessResourceAttributes(MonoBehaviour targetObject)`: A static method that scans all fields of `targetObject` for resource-loading attributes. Returns `void`.
+- `ProcessResourceAttributes(MonoBehaviour targetObject)`: Loads every missing `[LoadFromResources]` reference and every empty `[LoadAllFromResources]` collection of `targetObject`. Returns `void`; a null target or disabled attribute search is a no-op.
+
+**Behaviour details**
+- **Cost**: attributed fields are resolved once per type, so components without these attributes cost one dictionary lookup per Inspector event and allocate nothing.
+- **Undo**: single assignments and collections are recorded with Undo (prefab instances keep them as overrides).
+- **Missing resources**: when nothing matches, the warning `... not found at Resources path` is logged once per object and field until a resource is found, instead of on every repaint. The Inspector retries the lookup after the next project change (an asset added afterwards is still picked up) and at most every 0.5 s otherwise, instead of running `Resources.FindObjectsOfTypeAll` on every IMGUI event. A direct call of `ProcessResourceAttributes` is never throttled.
 
 ## Typed collections
 

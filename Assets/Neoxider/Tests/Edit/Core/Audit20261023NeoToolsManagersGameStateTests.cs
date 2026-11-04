@@ -277,7 +277,7 @@ namespace Neo.Tools.Tests
             _events.OnStateChange.AddListener(state =>
             {
                 attempts++;
-                // Keep the regression bounded even if nested no-op dispatch is reintroduced.
+                // WHY: Keep the regression bounded even if nested no-op dispatch is reintroduced.
                 if (attempts < 4)
                 {
                     _manager.State = state;

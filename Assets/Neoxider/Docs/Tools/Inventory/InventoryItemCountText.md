@@ -1,6 +1,13 @@
 ﻿# InventoryItemCountText
 
-**Purpose:** A UI component that automatically displays the quantity of *one specific item* in the inventory (e.g., a coin counter). It subscribes to inventory events and updates the text whenever changes occur.
+**What it is:** UI `MonoBehaviour` that writes the count of one item id to a `TMP_Text` (e.g., a coin counter) and refreshes on inventory changes. `Scripts/Tools/Inventory/UI/InventoryItemCountText.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add it to a TextMeshPro label (or assign **Target Text**) and assign **Inventory** (or rely on the default inventory).
+2. Set **Item Id** and a **Format** such as `$ {0}`.
+3. Change the tracked item at runtime with `SetItemId`.
+
+---
 
 ## Fields (Inspector)
 
@@ -16,7 +23,8 @@
 | Method / Property | Description |
 |-------------------|-------------|
 | `void SetItemId(int itemId)` | Change the tracked item at runtime and immediately refresh the text. |
-| `void Refresh()` | Force recalculate and update the text. |
+| `void SetInventory(InventoryComponent inventory)` | Rebind to another inventory (null shows 0) and refresh. |
+| `void Refresh()` | Recalculate and write the text; skipped when the label already shows the same value and format. |
 
 ## Examples
 
@@ -26,4 +34,4 @@ Place a text object on the Canvas for coins. Add `InventoryItemCountText`. In th
 ## See Also
 - [InventoryTotalCountText](InventoryTotalCountText.md)
 - [InventoryComponent](InventoryComponent.md)
-- ← [Tools/Inventory](../README.md)
+- ← [Tools/Inventory](README.md)

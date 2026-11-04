@@ -45,7 +45,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void State_AnyTrueWins_AcrossModifiersAndPermanent()
         {
-            // Two modifiers grant stunned; permanent also grants it.
+            // WHY: Two modifiers grant stunned; permanent also grants it.
             _system.Modifiers.Apply(
                 AbilityTestSupport.Modifier("stunA", 5f, ModifierStackPolicy.Independent).WithState(AbilityStates.Stunned),
                 UnitId.None, _unit.Id);
@@ -56,15 +56,15 @@ namespace Neo.Editor.Tests.Abilities
 
             Assert.That(_unit.HasState(AbilityStates.Stunned), Is.True);
 
-            // Removing one modifier still leaves it true (other modifier + permanent).
+            // WHY: Removing one modifier still leaves it true (other modifier + permanent).
             _system.Modifiers.Remove(b);
             Assert.That(_unit.HasState(AbilityStates.Stunned), Is.True);
 
-            // Remove all modifiers; permanent still holds it true.
+            // WHY: Remove all modifiers; permanent still holds it true.
             _system.Modifiers.RemoveAllFrom(_unit.Id);
             Assert.That(_unit.HasState(AbilityStates.Stunned), Is.True);
 
-            // Clear permanent too => finally false.
+            // WHY: Clear permanent too => finally false.
             _unit.SetPermanentState(AbilityStates.Stunned, false);
             Assert.That(_unit.HasState(AbilityStates.Stunned), Is.False);
         }
@@ -107,7 +107,7 @@ namespace Neo.Editor.Tests.Abilities
 
         private void GrantSimpleAbility(string id)
         {
-            var ability = new AbilityBlueprint { Id = id, Targeting = TargetingMode.NoTarget };
+            AbilityBlueprint ability = new AbilityBlueprint { Id = id, Targeting = TargetingMode.NoTarget };
             _system.RegisterAbility(ability);
             _system.GrantAbility(_unit.Id, id);
         }

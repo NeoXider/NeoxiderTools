@@ -1,5 +1,10 @@
 # Upgrading to NeoxiderTools 11
 
+**What it is:** the upgrade guide from 10.x to 11.0.0. Upgrading from 11.x to 12.0.0 is covered by [Upgrading to 12](Migration12.md); apply this page first when you skip a major version.
+
+**How to use:** go through the sections for the modules your project uses and apply each listed change; then
+continue with [Upgrading to 12](Migration12.md).
+
 Version 11.0.0 is the major release described here. The changes below are the accepted contracts for this update. Windows verification recorded on 26–27 October 2026, including focused CardGame sizing/gameplay acceptance and three manual OS-click rounds, is listed in [Verification 11](../Verification11.md) and [package compatibility](PackageCompatibility.md). Results belong to their tested inputs and qualified unchanged graphs. No published release or Git tag is implied by this checkout.
 
 Кратко: обновите настройки сетевого кошелька, проверьте обработчики покупок и применения RPG buff, а также собственное управление временем StateMachine. Существующие serialized поля и sample layout сохраняются. Остальные изменения и точные C# API описаны в канонических руководствах модулей.
@@ -54,7 +59,7 @@ RPG v2 profiles restore their saved effective Max at the load boundary, before C
 
 `RpgCharacter.ApplyLevelGrowth()` explicitly applies the current level in manual or deferred workflows. Ordinary buff/stat refresh retains the last applied growth level. The v2 profile does not persist this anchor: automatic modes restore it from the loaded level; other modes start at one and apply growth explicitly according to the game's policy. No v3 profile conversion is performed. The additive network command uses value 23 and requires the updated adapter on both peers.
 
-`HpRegenPerSecond` is consumed as the legacy HP alias. `AddResourceCurrentFlat` grants on a new effect entry or positive effective stack increase, after derived limits settle and before `OnBuffApplied`. Refresh at cap, nonstack refresh, removal and profile/network restore do not grant again. A postcommit listener exception does not undo the grant. This activates previously inert authored content and changes what the application callback observes. `AttackSpeedPercent` remains an unsupported enum-only option; it does not silently change cooldown, wind-up or AI timing.
+`HpRegenPerSecond` is consumed as the legacy HP alias. `AddResourceCurrentFlat` grants on a new effect entry or positive effective stack increase, after derived limits settle and before `OnBuffApplied`. Refresh at cap, nonstack refresh, removal and profile/network restore do not grant again. A postcommit listener exception does not undo the grant. This activates previously inert authored content and changes what the application callback observes. In 11.x `AttackSpeedPercent` was an enum-only option that did not change cooldown, wind-up or AI timing. Since 12.0 it is read by `RpgCharacter.GetAttackSpeedMultiplier()`, and `RpgAttackController` divides new cooldowns by it only when `ScaleCooldownByAttackSpeed` is enabled (off by default); cast delay (wind-up) and AI timing are unchanged. See [Upgrading to 12](Migration12.md#rpg).
 
 RPG projectile query capacity is a buffer hint rather than a hidden target limit. Complete hit collection sorts by distance and stable identity within each dimension; 3D delivery still precedes 2D, and the configured gameplay hit limit remains. This can change which target receives a limited hit when an old buffer saturated. See [projectiles](Rpg/RpgProjectile.md).
 
@@ -72,11 +77,11 @@ Leaderboard users gain a persistent key while retaining the legacy readonly `id`
 
 Generated preview sprites, drawing pools, demo UI and native assets are released by their actual owners. Preserve authored/shared assets and do not retain cache-owned preview objects as persistent configuration. Tracked coroutines use their handle cancellation API; raw native StopCoroutine has the observation boundary documented in [lifecycle and ownership](Extensions/LifecycleAndOwnership.md).
 
-HtmlToUitk reserves actual filenames/CSS references and canonical asset aliases; conflicting payloads
+HtmlToUitk 11.0.0 reserved actual filenames/CSS references and canonical asset aliases; conflicting payloads
 reject before commit instead of losing distinct outputs. Newest projections survive same-root reentry
 and obsolete failure cleanup. Default mixed-case localization keys and explicit custom markers retain
-their source keys. See the [primary guide](UI/HtmlToUitk.md) and
-[current CLI/native/manual verification](UI/HtmlToUitkVerification11.md); this is not browser/JS parity.
+their source keys. The converter has since left this package; see
+[HtmlToUitk moved to its own package](#htmltouitk-moved-to-its-own-package).
 
 The Lobby demo generator requires a fresh `.unity` destination inside Assets and refuses existing files/assets. Lobby and gameplay start from persistent Editor templates, so additive creation does not require saving unrelated untitled work. The menu retains its Single replacement after the save/continue decision; cancellation leaves current work intact. See [Editor windows](Editor/EditorWindows.md#lobby-demo-authoring-mirror).
 
@@ -88,8 +93,8 @@ Release samples stay in `Samples~`; developer `Samples` and imported `Assets/Sam
 
 Legacy delivery is choose-one Core (`NeoxiderTools.Core.v11.0.0.unitypackage`, `samples: []`) or Complete
 (`NeoxiderTools.v11.0.0.unitypackage`, all three visible `Samples/...` paths). Main UPM source is unchanged.
-The separate `HtmlToUitk.Cli.v11.0.0.zip` requires tested.NET 10/LatestMajor while retaining net9 target;
-no runtime9 is bundled. Final archive export/import and publication are separate in [Verification 11](../Verification11.md).
+The 11.0.0 release also shipped `HtmlToUitk.Cli.v11.0.0.zip` (net9 target, tested .NET 10/LatestMajor).
+Final archive export/import and publication are separate in [Verification 11](../Verification11.md).
 
 Thirteen existing package metadata files had duplicate records or a malformed header. This update retains the first complete existing GUID/importer record and removes only the appended record; the sample-header repair retains its GUID. No current serialized reference used a removed duplicate GUID. If an external project explicitly referenced one of those malformed assets by its second GUID, inspect that reference when upgrading rather than regenerating asset identities. New test metadata uses valid unique GUIDs.
 
@@ -98,3 +103,13 @@ Thirteen existing package metadata files had duplicate records or a malformed he
 The repository's six bundled Demigiant DLL importer records were reserialized by Unity 6.3 to schema 3 for current Unity compatibility. Native settings and full native importer state compared equal before/after; the DLLs and GUIDs are unchanged. This is a repository dependency-metadata update; integrated 6.3/6.6 verification is recorded separately.
 
 Use an isolated validation host for the broad package suites. Read [EditMode testing](Testing.md), [PlayMode testing](PlayModeTesting.md) and [package compatibility](PackageCompatibility.md) for dependencies and actual pass/fail/skip evidence. Historical reports do not certify the current 11.0.0 source.
+
+## HtmlToUitk moved to its own package
+
+After 11.0.1 the HTML/CSS → UI Toolkit converter is no longer part of `com.neoxider.tools`; it is the standalone
+package `com.neoxider.htmltouitk` ([HtmlToUitk](https://github.com/NeoXider/HtmlToUitk)). Assembly names,
+namespaces, script GUIDs, menu paths and `EditorPrefs` keys are unchanged. Installation and the diagnostics switch
+are described in [Upgrading to 12](Migration12.md#htmltouitk-moved-to-its-own-package).
+
+Конвертер HTML/CSS → UI Toolkit вынесен в отдельный пакет `com.neoxider.htmltouitk`: имена сборок, namespaces и
+GUID сохранены, поэтому после установки пакета ссылки в сценах и префабах восстанавливаются.

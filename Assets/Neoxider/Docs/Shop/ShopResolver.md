@@ -1,6 +1,10 @@
 # ShopResolver
 
-`Neo.Shop.ShopResolver` centralizes the scene-reference fallback used by shop views. It first searches the context component's parent hierarchy and only then uses `Object.FindFirstObjectByType<T>()`.
+**What it is:** a static helper (`Scripts/Shop/ShopResolver.cs`, `Neo.Shop.ShopResolver`) that centralizes the scene-reference fallback used by shop views. It first searches the context component's parent hierarchy and only then uses `Object.FindFirstObjectByType<T>()`.
+
+**How to use:** call it once when a serialized reference is empty (Awake/OnEnable), never per frame; prefer explicit references for stable scenes.
+
+---
 
 ```csharp
 Shop shop = ShopResolver.Resolve<Shop>(this);

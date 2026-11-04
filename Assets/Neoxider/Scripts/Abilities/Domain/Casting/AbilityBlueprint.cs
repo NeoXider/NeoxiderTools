@@ -30,7 +30,8 @@ namespace Neo.Abilities
         [Tooltip("Valid unit targets relative to the caster (Unit targeting and area filters).")]
         public AbilityTeamFilter TeamFilter = AbilityTeamFilter.Enemies;
 
-        [Tooltip("Maximum cast range in world units. 0 = unlimited.")]
+        [Tooltip("Maximum cast range in world units, plus the caster's cast_range_bonus. 0 = unlimited. " +
+                 "Direction casts reach exactly this far; with 0 they reach the aim vector's length, at least 10.")]
         public float Range;
 
         [Header("Costs & cooldown")]

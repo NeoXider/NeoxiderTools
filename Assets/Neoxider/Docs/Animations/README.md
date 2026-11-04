@@ -1,6 +1,19 @@
 # Animation system
 
-The animation system provides universal tools for smooth animation of various Unity components. The main idea is to offer easy-to-use components that can animate any values: numbers, colors, vectors, light intensity, and material emission.
+**What it is:** the `Neo.Animations` module under `Scripts/Animations/`: scene-free evaluators
+(`AnimationUtils`, `TransformAnimationEvaluator`) and small animator components that animate numbers,
+colors, vectors and transform poses, with light and emission wrappers in [Tools/View](../Tools/View/README.md).
+
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AnimatorsDemo.jpg" alt="AnimatorsDemo: Vector3, Color, Transform and Float animators with shared playback controls" width="100%" /></p>
+
+*Demo scene: `Scenes/Animations/AnimatorsDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:** the component list below; start with [FloatAnimator](FloatAnimator.md),
+[TransformAnimator](TransformAnimator.md) and [AnimationUtils](AnimationUtils.md).
+
+---
 
 ## Features
 
@@ -35,7 +48,27 @@ Import the optional **Demo Scenes** sample through Unity Package Manager first. 
 `Assets/Neoxider/Samples~/Demo` in the release layout, or `Assets/Neoxider/Samples/Demo` during sample
 development. Unity imports it into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...`.
 
-Add `AnimatorsDemoController` (component menu **Neoxider/Demos/Animators Demo**) to an empty scene. At runtime it builds a `NeoDemoShell` UI plus a single disc driven at once by `Vector3Animator` (scale), `ColorAnimator` (colour) and `FloatAnimator` (spin), with buttons to cycle the shared `AnimationType` and Play/Pause/Stop, and a speed slider.
+Open `Scenes/Animations/AnimatorsDemo.unity` (in the editor also **Neoxider > Demo > Open Animators Demo**). The
+whole demo is saved in the scene and visible without Play Mode; nothing is built at runtime:
+
+| Target | Animator | Binding (persistent UnityEvent, no code) |
+|--------|----------|------------------------------------------|
+| Left disc under `[Demo] World/Scale Target` | `Vector3Animator` | `OnVectorChanged` > `Transform.localScale` |
+| Middle disc under `[Demo] World/Colour Target` | `ColorAnimator` | `OnColorChanged` > `SpriteRenderer.color` and the card swatch `Image.color` |
+| Square under `[Demo] World/Transform Target` | `TransformAnimator` | rotate, float (bob) and scale pulse channels; the **Shake() impulse** button calls `Shake()` directly |
+| Bar row of the card | `FloatAnimator` (0..1) | `Value.OnChanged` > `Image.fillAmount` and a value readout; its started/paused/stopped events update the events label |
+
+The card's Play / Pause / Resume / Stop buttons, the shared `AnimationType` dropdown, the `AnimationSpeed` slider
+and the channel toggles call `AnimatorsDemoController`, which only forwards to the animators' public API
+(`Play`, `Pause`, `Resume`, `Stop`, `AnimationType`, `AnimationSpeed`, `TransformAnimator.Settings`) and logs
+each call. Type and speed apply to the three value animators; `TransformAnimator` has its own channel settings.
+The scene is authored by the editor builder `Samples~/Demo/Editor/Builders/Animations/AnimatorsDemoBuilder.cs`
+(rebuild it with **Neoxider > Demo > Rebuild Active Demo Scene**).
+
+По-русски: откройте сцену `Scenes/Animations/AnimatorsDemo.unity`. Все четыре аниматора работают на настоящих
+целях: `Vector3Animator` масштабирует диск, `ColorAnimator` перекрашивает второй диск, `TransformAnimator`
+вращает и покачивает квадрат, `FloatAnimator` заполняет полосу на карточке. Привязки значений сделаны через
+UnityEvent в инспекторе, кнопки карточки вызывают публичный API аниматоров.
 
 ## Animation types
 
@@ -62,8 +95,34 @@ Use `AnimationUtils.GetAnimatedFloat`, `GetAnimatedColor`, or `GetAnimatedVector
 caller owns the clock. Transform channels also have a scene-free API:
 `TransformAnimationEvaluator.Evaluate` returns a `TransformAnimationState` from settings, a base pose,
 time and a seed. See [TransformAnimator](TransformAnimator.md) for the settings and wrapper API.
-Each component owns its clock; there is no shared clock or public manual-tick mode. To synchronize
-samples explicitly, pass the same time to the static utilities, as in [AnimationUtils](AnimationUtils.md).
+Each component owns its clock; there is no shared clock. Every animator (Float, Color, Vector3,
+Transform and the Tools/View `LightAnimator`) has a public `Tick(float deltaTime)` and a non-serialized
+`ManualUpdate` switch: set `ManualUpdate = true` and call `Tick` from your own loop to drive several
+animators with one clock, step frames in a replay or test deterministically. Like `Update`, `Tick` does
+nothing while the component is disabled. To synchronize samples
+without components, pass the same time to the static utilities, as in [AnimationUtils](AnimationUtils.md).
+
+```csharp
+// One clock for a group of animators.
+[SerializeField] private FloatAnimator[] _group;
+
+private void Awake()
+{
+    for (int i = 0; i < _group.Length; i++)
+    {
+        _group[i].ManualUpdate = true;
+    }
+}
+
+private void Update()
+{
+    float delta = Time.unscaledDeltaTime;
+    for (int i = 0; i < _group.Length; i++)
+    {
+        _group[i].Tick(delta);
+    }
+}
+```
 
 For scene authoring, configure the animator in the Inspector and connect `Value.OnChanged` (float),
 `OnColorChanged`, or `OnVectorChanged` to the receiving component. Code can subscribe to
@@ -81,22 +140,24 @@ and listener cleanup.
 
 | Operation | Float / Color / Vector3 | Transform |
 |-----------|-------------------------|-----------|
-| Startup | `Start` randomizes the clock and noise offset even when `playOnStart` is false | Captures the base on enable; optional `RandomizeStartTime`; `PlayOnEnable` starts at first startup and later re-enables |
-| Time | Scaled `Time.deltaTime` while playing and unpaused | Scaled or unscaled time while playing and unpaused |
+| Startup | With `RandomizeStartTime` on (default), `Start` randomizes the clock and noise offset even when `playOnStart` is false; off keeps the caller's clock | Captures the base on enable; optional `RandomizeStartTime`; `PlayOnEnable` starts at first startup and later re-enables |
+| Time | Scaled or unscaled (`UseUnscaledTime`) time while playing and unpaused, or `Tick` under `ManualUpdate` | Scaled or unscaled time while playing and unpaused, or `Tick` under `ManualUpdate` |
 | `Play()` | Retains time and emits started on every call | Retains time; an already playing, unpaused call emits no duplicate started event |
 | `Pause()` / `Resume()` | Pause emits while playing, including repeated calls; resume emits started only if paused | Repeated pause/resume calls are guarded; resume emits started |
 | `Stop()` | Freezes the current output, retains time and emits stopped | Restores the captured local pose, clears impulse, retains main time and emits stopped |
 | Disable / re-enable | Unity stops/continues Update; flags and output persist; `playOnStart` does not run again | Disable restores the base and clears playback/impulse without a stopped event; re-enable captures again and optionally plays |
 
 `ResetTime()` and `RandomizeTime()` change the clock without immediately sampling. For the value
-animators, a reset before `Start` is overwritten by startup randomization; the next active Update
-advances time before evaluating. Non-positive speed selects the initial/minimum value without stopping
-playback. Use the evaluators when an exact supplied phase is required.
+animators, a reset before `Start` is overwritten by startup randomization unless `RandomizeStartTime`
+is off; the next active Update (or `Tick`) advances time before evaluating. Non-positive speed selects
+the initial/minimum value without stopping playback. Use the evaluators when an exact supplied phase is
+required.
 
 По-русски: `AnimationUtils` и `TransformAnimationEvaluator` позволяют считать значения без сценового
 компонента. Float передаёт и малые изменения через reactive property; Color/Vector3 сохраняют порог
 событий. Для сценовой настройки подключите получателя через UnityEvent; жизненный цикл и подписки
-описаны выше и на страницах компонентов.
+описаны выше и на страницах компонентов. Для собственного цикла обновления включите `ManualUpdate`
+и вызывайте `Tick(deltaTime)`; у выключенного компонента `Tick`, как и `Update`, ничего не делает.
 
 ## See also
 

@@ -10,12 +10,14 @@ no-code surface and the code-first replacement for each.
 - `UnityEvent` graphs live in scene/prefab YAML — invisible to code review and hard to diff.
 - A `*NoCodeAction` is just a thin wrapper that calls a real method from a UnityEvent; calling the method
   directly is shorter and clearer.
+- Cost: NoCode bindings read their source through reflection on a poll (`UpdateMode` Reactive / Poll /
+  Once) and box a value-type read; a typed call or a `ReactiveProperty` subscription does neither.
 
 ## Avoid by default → use instead
 
 | No-code component / system | What it is | Code-first replacement |
 |---|---|---|
-| `NeoCondition` (`Neo.Condition`) | inspector-configured value comparison firing `OnTrue`/`OnFalse` UnityEvents | write the actual `if (...)`; subscribe to the source's own event/`ReactiveProperty` |
+| `NeoCondition` (`Neo.Condition`) | inspector-configured value comparison firing `OnTrue`/`OnFalse` UnityEvents (EveryFrame checks keep running while `Time.timeScale` is 0; `UseUnscaledTime` for Interval) | write the actual `if (...)`; subscribe to the source's own event/`ReactiveProperty` |
 | `NoCodeBindText` | reflection-binds a float → text | set the text in code, or subscribe to a `ReactiveProperty.OnChanged` |
 | `NoCodeFormattedText` | multi-source `String.Format` into a label | build the string in code |
 | `SetProgress` | binds a float → `Slider.value`/`Image.fillAmount` | `slider.value = Mathf.InverseLerp(min, max, v)` in code |
@@ -23,10 +25,10 @@ no-code surface and the code-first replacement for each.
 | `AbilityNoCodeAction` (`Neo.Abilities`) | enum-driven `Execute()` bridge: cast/grant/revoke/level/modifier/damage/heal from UnityEvents | `caster.TryCast*(...)`, `AbilitySystemBehaviour.I.System.GrantAbility(...)` / `.SetAbilityLevel(...)`, `unit.ApplyDamage(...)` / `.ApplyHeal(...)` |
 | `AbilityCooldownSource` (`Neo.Abilities`) | bindable `CooldownNormalized`/`SecondsRemaining` for `SetProgress`/`NoCodeBindText` polling | poll `caster.GetCooldownNormalized(id)` from your own view code |
 | `RpgNoCodeAction` | UnityEvent bridge to `RpgCharacter` methods | `character.Damage(...)`, `.Heal(...)`, `.ApplyBuffById(...)` |
-| `ProgressionNoCodeAction` | bridge to `ProgressionManager` | `ProgressionManager.I.AddXp(...)`, `.TryBuyPerk(...)` |
-| `QuestNoCodeAction` | bridge to `QuestManager` | `QuestManager.I.AcceptQuest(...)`, `.CompleteObjective(...)` |
+| `ProgressionNoCodeAction` | bridge to `ProgressionManager` (incl. `ActivatePremium`) | `ProgressionManager.I.AddXp(...)`, `.TryBuyPerk(...)`, `.ActivatePremium()` |
+| `QuestNoCodeAction` | bridge to `QuestManager` (also `NotifyKill`/`NotifyCollect`/`NotifyTalk`/`NotifyReachPoint` by **Target Id** on enemy/pickup prefabs) | `QuestManager.I.TryAcceptQuest(...)`, `.NotifyKill(id)`, `.AddObjectiveProgress(...)` |
 | `LevelNoCodeAction` | bridge to level component | `levelComponent.AddXp(...)`, `.SetLevel(...)` |
-| `StateMachineData` / `StateData` (SO workflow) | inspector-defined states/transitions/actions | subclass `StateMachineBehaviourBase`, or use `StateMachine<T>` in code |
+| `StateMachineData` / `StateData` (SO workflow, hosted by `StateMachineBehaviourBase`) | inspector-defined states/transitions/actions | `IState` classes driven by `StateMachine<T>`, or a `StateMachineBehaviour<TState>` subclass |
 | `UnityLifecycleEvents` | forwards Awake/Start/Update/etc. to UnityEvents | write the corresponding `MonoBehaviour` method |
 
 These mostly live under each module's `Bridge/` or `NoCode/` subfolder, or the `Neo.Condition` /
@@ -68,3 +70,17 @@ that trio rather than refusing.
 
 In that case, configure those components correctly (read the relevant `Docs/<Module>/...NoCode...md`). This
 is uncommon — when in doubt, write code and mention that a no-code option exists if they'd prefer it.
+
+### Driving NoCode components from code (typed surface)
+When code has to touch a NoCode component the user already has, use its typed members instead of
+reflection or `SendMessage`:
+
+- `NoCodeFloatBindingBehaviour` (`NoCodeBindText`, `SetProgress`, …): `RefreshBinding()`, `UpdateMode`,
+  `PollIntervalSeconds`; `NoCodeBindText.ForceRewrite()` (it writes only when the value changes);
+  `NoCodeFormattedText.SetValues(bindings, format)`, `Format`, `CurrentText`; `SetProgress.SetRange(min, max)`.
+- `ConditionEntry.TryEvaluate(fallbackObject, out bool result)` — false when the source is unavailable (an
+  inverted entry no longer passes on a missing object); every Inspector setting, including the Other Object
+  branch and method arguments, has a public property. `NeoCondition.UseUnscaledTime`.
+- `StateMachineBehaviourBase` / `StateMachineBehaviour<TState>`: `ChangeState(StateData)`,
+  `EvaluateTransitionsNow()`, `AutoEvaluateTransitions`, `StateMachineData`, and C# accessors for the
+  wrapper's UnityEvents. A literal `ChangeState(null)` is ambiguous — cast it (`ChangeState((string)null)`).

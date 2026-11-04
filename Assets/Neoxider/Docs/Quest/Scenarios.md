@@ -1,6 +1,6 @@
 # Inspector Scenarios
 
-**Purpose:** Step-by-step scenarios for setting up quests in the Inspector: `QuestManager`, `QuestNoCodeAction`, `NeoCondition`. Which objects to create, where to attach components, and what to wire in `UnityEvent`.
+**What it is:** step-by-step scenarios for setting up quests in the Inspector: `QuestManager`, `QuestNoCodeAction`, `NeoCondition`. Which objects to create, where to attach components, and what to wire in `UnityEvent`.
 
 **How to use:** Make sure the scene contains a `QuestManager` with the needed `QuestConfig`s in **Known Quests**; assign a **Condition Context** if quests have Start Conditions. Choose a scenario below and follow the steps; verify with the Inspector buttons or in Play mode.
 
@@ -30,7 +30,7 @@ If the quest is not accepted: check that the quest is assigned, the ID is not em
 4. Set **Action Type** = `CompleteObjective`, **Quest** = your `QuestConfig`, **Objective Index** = the target index (0, 1, 2, …).
 5. In `NeoCondition` under **Events → On True**, add a call: Object = this object, Function = **QuestNoCodeAction → Execute()**.
 
-When `NeoCondition.On True` fires, the manager completes a binary objective or adds one to a counter objective. The quest must be active and the objective unfinished. To evaluate a `CustomCondition` stored directly in `QuestObjectiveData`, call `QuestManager.EvaluateObjectiveConditions()` instead.
+When `NeoCondition.On True` fires, the manager completes a binary objective or adds **Amount** (default 1) to a counter objective, clamped to `RequiredCount`. The quest must be active and the objective unfinished. To evaluate a `CustomCondition` stored directly in `QuestObjectiveData`, call `QuestManager.EvaluateObjectiveConditions()` instead.
 **Verify:** use the **[Execute Action]** button on `QuestNoCodeAction` in Play Mode.
 
 ---
@@ -102,17 +102,36 @@ If start conditions now fail, the previous state remains removed. Disable restar
 1. Add a `QuestNoCodeAction` component to a UI button.
 2. Choose an **Action Type**:
    - `Accept` — accept a quest
-   - `CompleteObjective` — complete an objective
+   - `CompleteObjective` — complete an objective (counters add **Amount**)
    - `Fail` — fail a quest
    - `Restart` — restart a quest
    - `Reset` — reset one quest
    - `ResetAll` — reset all quests
-3. Assign **Quest** (and **Objective Index** if needed).
+   - `NotifyKill` / `NotifyCollect` / `NotifyReachPoint` / `NotifyTalk` — credit objectives by **Target Id** (see Scenario 11)
+   - `EvaluateObjectiveConditions` — re-check `CustomCondition` objectives
+3. Assign **Quest** (and **Objective Index** if needed), or **Target Id** for the Notify actions.
 4. Optionally assign a **Flow Config** to check sequence order on `Accept`.
 5. In **Button.OnClick**, call `QuestNoCodeAction.Execute()`.
 6. Wire **On Success / On Failed / On Result Message** to your UI (logs, popups, indicators).
 
 An invalid index, an already completed objective, or an inactive quest reports failure. Counter credit reports success even when more credit is still needed. Result messages are available for both paths.
+
+---
+
+## Scenario 11: Count Kills, Pickups and Visits Without Scene References
+
+**Goal:** enemy prefabs, pickups and trigger volumes credit quests by id, without knowing which quests are active.
+
+1. In the `QuestConfig`, set the objective **Type** (`KillCount`, `CollectCount`, `ReachPoint` or `Talk`) and **Target Id** (for example `boar`, `herb`, `old_mill`, `elder`).
+2. On the enemy prefab (or pickup / trigger / NPC), add `QuestNoCodeAction`.
+3. Set **Action Type** to `NotifyKill` (or `NotifyCollect`, `NotifyReachPoint`, `NotifyTalk`), **Target Id** to the same id, and **Amount** for counters (usually 1).
+4. Call `QuestNoCodeAction → Execute()` from the death/pickup/enter event.
+
+Every active quest with a matching objective is credited; quests that do not track the id are unaffected. `On Failed` reports when nothing matched, which is normal for untracked kills. An empty **Target Id** credits nothing. To pass the id from the event itself, wire `SetTargetId(string)` before `Execute()`. Alternatively bind the one-argument `QuestManager.NotifyKill(string)` / `NotifyCollect(string)` / `NotifyReachPoint(string)` / `NotifyTalk(string)` directly when the event source can reference the manager.
+
+The bridge reuses its last result message while the type, Target Id and credited count repeat, so a pooled enemy that notifies the same id does not allocate once warm. A new Target Id (for example one set through `SetTargetId` per kill) formats a new message. For the strictly allocation-free path, call `QuestManager.NotifyKill(string)` from code or bind it directly.
+
+**Verify:** in Play Mode press **[Execute Action]** and watch the objective progress in **On Objective Progress** or the quest journal.
 
 ---
 

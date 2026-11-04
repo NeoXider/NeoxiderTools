@@ -122,7 +122,7 @@ namespace Neo.Tests.Play
             GameObject prefab = CreateUiPrefab("PooledFlyVisualPrefab");
             Transform worldStart = CreateWorldPoint("WorldStart", Vector3.zero);
             RectTransform canvasEnd = CreateUiPoint("CanvasEnd", rig.Canvas.transform, new Vector2(20f, 20f));
-            var startedScales = new List<Vector3>();
+            List<Vector3> startedScales = new List<Vector3>();
 
             rig.Fly.scaleMult = 2f;
             rig.Fly.defaultCompletionMode = AnimationFlyCompletionMode.DisableAndPool;
@@ -196,8 +196,8 @@ namespace Neo.Tests.Play
             GameObject prefab = CreateUiPrefab("ScaleTweenPooledPrefab");
             RectTransform start = CreateUiPoint("CanvasStart", rig.Canvas.transform, Vector2.zero);
             RectTransform end = CreateUiPoint("CanvasEnd", rig.Canvas.transform, new Vector2(30f, 30f));
-            var startedScales = new List<float>();
-            var arrivedScales = new List<float>();
+            List<float> startedScales = new List<float>();
+            List<float> arrivedScales = new List<float>();
 
             AnimationFly.AnimationFlyRequest BuildRequest()
             {

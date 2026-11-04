@@ -30,16 +30,22 @@ namespace Neo.NoCode
         private TimeToText _resolvedTimeToText;
         private TMP_Text _resolvedTmp;
         private bool _resolved;
+        private bool _hasAppliedValue;
+        private float _lastAppliedValue;
+        private Object _lastAppliedTarget;
 
         protected override void OnValidate()
         {
             base.OnValidate();
             _resolved = false;
+            _hasAppliedValue = false;
         }
 
         protected override void OnEnable()
         {
             ResolveReferences();
+            // WHY: targets may have been changed externally while disabled - the first refresh always writes.
+            _hasAppliedValue = false;
             base.OnEnable();
         }
 
@@ -59,22 +65,41 @@ namespace Neo.NoCode
                 ResolveReferences();
             }
 
+            Object target = _resolvedSetText != null ? _resolvedSetText :
+                _resolvedTimeToText != null ? (Object)_resolvedTimeToText : _resolvedTmp;
+            // WHY: Poll mode refreshes every interval; re-sending an unchanged value restarted SetText's tween and
+            // re-formatted the label each tick (closures + strings) for no visible change.
+            if (_hasAppliedValue && target != null && target == _lastAppliedTarget && value.Equals(_lastAppliedValue))
+            {
+                return;
+            }
+
             if (_resolvedSetText != null)
             {
                 _resolvedSetText.Set(value);
-                return;
             }
-
-            if (_resolvedTimeToText != null)
+            else if (_resolvedTimeToText != null)
             {
                 _resolvedTimeToText.Set(value);
-                return;
             }
-
-            if (_resolvedTmp != null)
+            else if (_resolvedTmp != null)
             {
                 _resolvedTmp.text = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
+
+            _hasAppliedValue = target != null;
+            _lastAppliedValue = value;
+            _lastAppliedTarget = target;
+        }
+
+        /// <summary>
+        ///     Forgets the last written value so the next refresh writes the output again, even when the value is
+        ///     unchanged (for example after another script overwrote the label).
+        /// </summary>
+        public void ForceRewrite()
+        {
+            _hasAppliedValue = false;
+            RefreshBinding();
         }
     }
 }

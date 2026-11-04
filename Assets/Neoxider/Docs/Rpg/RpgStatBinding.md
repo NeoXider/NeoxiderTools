@@ -1,6 +1,13 @@
 ﻿# RpgStatBinding
 
-**What it is:** binds one `RpgCharacter` stat to a UnityEvent.
+**What it is:** a component (`Scripts/Rpg/Components/RpgStatBinding.cs`, namespace `Neo.Rpg`) that binds one `RpgCharacter` stat to a UnityEvent.
+
+**How to use:**
+1. Add the component (menu `Neoxider/RPG/RpgStatBinding`) to a UI object.
+2. Assign `_character` (or leave it empty to search parents) and choose `_statId`.
+3. Wire `_onValue` to a text or another reaction.
+
+---
 
 Callbacks belong to one exact character/stat subscription. Disable, rebind and runtime replacement
 invalidate callbacks already captured in the former reactive notification; old states are detached by

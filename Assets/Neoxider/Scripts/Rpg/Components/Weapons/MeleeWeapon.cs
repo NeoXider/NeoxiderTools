@@ -13,6 +13,18 @@ namespace Neo.Rpg.Components.Weapons
 
         [Header("Damage Settings")] public int damage = 10;
 
+        [Tooltip("Damage type of every hit (Fire, Cold, ...), matched by the target's DamageTypeResistPercent " +
+                 "buffs. Empty = untyped damage.")]
+        [SerializeField]
+        private string _damageType = string.Empty;
+
+        /// <summary>Damage type of every hit; empty (the default) deals untyped damage. Null is stored as empty.</summary>
+        public string DamageType
+        {
+            get => _damageType ?? string.Empty;
+            set => _damageType = value ?? string.Empty;
+        }
+
         /// <summary>
         /// Checks if a collider is a valid target based on layer, tag, and excludes the weapon's own hierarchy.
         /// </summary>
@@ -37,7 +49,9 @@ namespace Neo.Rpg.Components.Weapons
         }
 
         /// <summary>
-        /// Apply damage to a target combatant.
+        /// Apply damage to a target combatant. The wielder's <see cref="IRpgCombatReceiver"/> scales the damage
+        /// and is passed as <see cref="RpgDamageInfo.Source"/>, so damage modifiers and
+        /// <see cref="RpgCharacter.DamageApplied"/> see who hit; <see cref="DamageType"/> selects the resistance.
         /// </summary>
         protected virtual void DealDamage(Collider target)
         {
@@ -52,7 +66,7 @@ namespace Neo.Rpg.Components.Weapons
                     amount *= source.GetOutgoingDamageMultiplier();
                 }
 
-                character.Damage(amount);
+                character.ApplyDamage(new RpgDamageInfo(amount, DamageType, source));
             }
         }
     }

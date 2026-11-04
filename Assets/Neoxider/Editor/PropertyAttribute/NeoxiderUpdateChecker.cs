@@ -33,8 +33,7 @@ namespace Neo.Editor
             ActiveRequest active = GetOrCreateActive(stateKeyPrefix);
             if (active.IsChecking)
             {
-                State s = ReadState(stateKeyPrefix);
-                return new State(UpdateStatus.Checking, s.LatestVersion, s.UpdateUrl, s.Error);
+                return ReadCheckingState(stateKeyPrefix);
             }
 
             long lastTicks = GetLastCheckTicks(stateKeyPrefix);
@@ -47,10 +46,7 @@ namespace Neo.Editor
             }
 
             TryStartCheck(stateKeyPrefix, currentVersion, packageRootPath);
-            State state = ReadState(stateKeyPrefix);
-            return active.IsChecking
-                ? new State(UpdateStatus.Checking, state.LatestVersion, state.UpdateUrl, state.Error)
-                : state;
+            return active.IsChecking ? ReadCheckingState(stateKeyPrefix) : ReadState(stateKeyPrefix);
         }
 
         public static State Peek(string stateKeyPrefix)
@@ -61,13 +57,7 @@ namespace Neo.Editor
             }
 
             ActiveRequest active = GetOrCreateActive(stateKeyPrefix);
-            if (active.IsChecking)
-            {
-                State s = ReadState(stateKeyPrefix);
-                return new State(UpdateStatus.Checking, s.LatestVersion, s.UpdateUrl, s.Error);
-            }
-
-            return ReadState(stateKeyPrefix);
+            return active.IsChecking ? ReadCheckingState(stateKeyPrefix) : ReadState(stateKeyPrefix);
         }
 
         public static void RequestImmediateCheck(string stateKeyPrefix, string currentVersion, string packageRootPath)
@@ -83,8 +73,8 @@ namespace Neo.Editor
                 return;
             }
 
-            SessionState.SetString(Key(stateKeyPrefix, "LastCheckTicks"), "0");
-            SessionState.SetInt(Key(stateKeyPrefix, "Status"), (int)UpdateStatus.Checking);
+            WriteString(stateKeyPrefix, "LastCheckTicks", "0");
+            WriteInt(stateKeyPrefix, "Status", (int)UpdateStatus.Checking);
             TryStartCheck(stateKeyPrefix, currentVersion, packageRootPath);
         }
 
@@ -104,28 +94,96 @@ namespace Neo.Editor
             return $"{prefix}.{suffix}";
         }
 
+        /// <summary>In-memory copy of one prefix's SessionState values; dropped by every write to that prefix.</summary>
+        private sealed class CachedPrefix
+        {
+            public bool HasState;
+            public State State;
+            public bool HasCheckingState;
+            public State CheckingState;
+            public bool HasTicks;
+            public long Ticks;
+        }
+
+        // WHY: module headers read their state on every IMGUI event; five SessionState reads, key formatting and
+        // Enum.IsDefined boxing per event were pure garbage. SessionState is only written through this class.
+        private static readonly Dictionary<string, CachedPrefix> s_cache = new();
+
+        private static CachedPrefix GetCache(string prefix)
+        {
+            if (!s_cache.TryGetValue(prefix, out CachedPrefix cached))
+            {
+                cached = new CachedPrefix();
+                s_cache[prefix] = cached;
+            }
+
+            return cached;
+        }
+
+        private static void WriteString(string prefix, string suffix, string value)
+        {
+            SessionState.SetString(Key(prefix, suffix), value);
+            s_cache.Remove(prefix);
+        }
+
+        private static void WriteInt(string prefix, string suffix, int value)
+        {
+            SessionState.SetInt(Key(prefix, suffix), value);
+            s_cache.Remove(prefix);
+        }
+
         private static State ReadState(string prefix)
         {
+            CachedPrefix cached = GetCache(prefix);
+            if (cached.HasState)
+            {
+                return cached.State;
+            }
+
             int statusInt = SessionState.GetInt(Key(prefix, "Status"), (int)UpdateStatus.Unknown);
-            UpdateStatus status = Enum.IsDefined(typeof(UpdateStatus), statusInt)
+            UpdateStatus status = statusInt >= (int)UpdateStatus.Unknown && statusInt <= (int)UpdateStatus.Ahead
                 ? (UpdateStatus)statusInt
                 : UpdateStatus.Unknown;
 
             string latest = SessionState.GetString(Key(prefix, "LatestVersion"), string.Empty);
             string url = SessionState.GetString(Key(prefix, "UpdateUrl"), string.Empty);
             string error = SessionState.GetString(Key(prefix, "Error"), string.Empty);
-            return new State(status, latest, url, error);
+            cached.State = new State(status, latest, url, error);
+            cached.HasState = true;
+            return cached.State;
+        }
+
+        // WHY: Tick and Peek answer every IMGUI event of a module header while a check is in flight; the
+        // "Checking" copy of the cached state reuses its labels instead of building two strings per event.
+        private static State ReadCheckingState(string prefix)
+        {
+            State state = ReadState(prefix);
+            CachedPrefix cached = GetCache(prefix);
+            if (!cached.HasCheckingState)
+            {
+                cached.CheckingState = state.WithStatus(UpdateStatus.Checking);
+                cached.HasCheckingState = true;
+            }
+
+            return cached.CheckingState;
         }
 
         private static long GetLastCheckTicks(string prefix)
         {
-            string ticksStr = SessionState.GetString(Key(prefix, "LastCheckTicks"), string.Empty);
-            return long.TryParse(ticksStr, out long ticks) ? ticks : 0;
+            CachedPrefix cached = GetCache(prefix);
+            if (!cached.HasTicks)
+            {
+                string ticksStr = SessionState.GetString(Key(prefix, "LastCheckTicks"), string.Empty);
+                cached.Ticks = long.TryParse(ticksStr, out long ticks) ? ticks : 0;
+                cached.HasTicks = true;
+            }
+
+            return cached.Ticks;
         }
 
         private static void SetLastCheckTicks(string prefix, long ticks)
         {
-            SessionState.SetString(Key(prefix, "LastCheckTicks"), ticks.ToString());
+            WriteString(prefix, "LastCheckTicks", ticks.ToString());
         }
 
         private static void TryStartCheck(string prefix, string currentVersion, string packageRootPath)
@@ -145,7 +203,7 @@ namespace Neo.Editor
                 string updateUrl = repoWebUrl;
 
                 SetLastCheckTicks(prefix, DateTime.UtcNow.Ticks);
-                SessionState.SetInt(Key(prefix, "Status"), (int)UpdateStatus.Checking);
+                WriteInt(prefix, "Status", (int)UpdateStatus.Checking);
 
                 // WHY: If tagPrefix is provided, we only consider tags that start with this prefix (module-specific versioning).
                 // This avoids false "updates" when multiple modules share the same Git repo.
@@ -157,7 +215,7 @@ namespace Neo.Editor
 
                 string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
 
-                var request = UnityWebRequest.Get(apiUrl);
+                UnityWebRequest request = UnityWebRequest.Get(apiUrl);
                 request.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 request.SetRequestHeader("Accept", "application/vnd.github+json");
 
@@ -217,7 +275,7 @@ namespace Neo.Editor
                 string tagsApiUrl = $"https://api.github.com/repos/{owner}/{repo}/tags?per_page=30";
                 string updateUrl = repoWebUrl;
 
-                var tagsRequest = UnityWebRequest.Get(tagsApiUrl);
+                UnityWebRequest tagsRequest = UnityWebRequest.Get(tagsApiUrl);
                 tagsRequest.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 tagsRequest.SetRequestHeader("Accept", "application/vnd.github+json");
 
@@ -251,21 +309,21 @@ namespace Neo.Editor
         private static void ApplyResult(string prefix, string currentVersion, string latestVersion, string updateUrl,
             string error)
         {
-            SessionState.SetString(Key(prefix, "Error"), error ?? string.Empty);
+            WriteString(prefix, "Error", error ?? string.Empty);
 
             if (string.IsNullOrEmpty(latestVersion))
             {
-                SessionState.SetString(Key(prefix, "LatestVersion"), string.Empty);
-                SessionState.SetString(Key(prefix, "UpdateUrl"), updateUrl ?? string.Empty);
-                SessionState.SetInt(Key(prefix, "Status"), (int)UpdateStatus.Unknown);
+                WriteString(prefix, "LatestVersion", string.Empty);
+                WriteString(prefix, "UpdateUrl", updateUrl ?? string.Empty);
+                WriteInt(prefix, "Status", (int)UpdateStatus.Unknown);
                 return;
             }
 
-            SessionState.SetString(Key(prefix, "LatestVersion"), latestVersion);
-            SessionState.SetString(Key(prefix, "UpdateUrl"), updateUrl ?? string.Empty);
+            WriteString(prefix, "LatestVersion", latestVersion);
+            WriteString(prefix, "UpdateUrl", updateUrl ?? string.Empty);
 
             UpdateStatus status = CompareToPublished(currentVersion, latestVersion);
-            SessionState.SetInt(Key(prefix, "Status"), (int)status);
+            WriteInt(prefix, "Status", (int)status);
         }
 
         private static UpdateStatus CompareToPublished(string current, string latest)
@@ -427,7 +485,7 @@ namespace Neo.Editor
                 string tagsApiUrl = $"https://api.github.com/repos/{owner}/{repo}/tags?per_page=100";
                 string updateUrl = repoWebUrl;
 
-                var tagsRequest = UnityWebRequest.Get(tagsApiUrl);
+                UnityWebRequest tagsRequest = UnityWebRequest.Get(tagsApiUrl);
                 tagsRequest.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 tagsRequest.SetRequestHeader("Accept", "application/vnd.github+json");
 
@@ -577,12 +635,38 @@ namespace Neo.Editor
             public readonly string UpdateUrl;
             public readonly string Error;
 
+            /// <summary>"Update available: x.y.z", built once per state.</summary>
+            public readonly string UpdateLabel;
+
+            /// <summary>"Ahead of published (latest: x.y.z)", built once per state.</summary>
+            public readonly string AheadLabel;
+
             public State(UpdateStatus status, string latestVersion, string updateUrl, string error)
             {
                 Status = status;
                 LatestVersion = latestVersion;
                 UpdateUrl = updateUrl;
                 Error = error;
+                UpdateLabel = string.IsNullOrEmpty(latestVersion) ? null : "Update available: " + latestVersion;
+                AheadLabel = string.IsNullOrEmpty(latestVersion)
+                    ? null
+                    : "Ahead of published (latest: " + latestVersion + ")";
+            }
+
+            private State(UpdateStatus status, in State source)
+            {
+                Status = status;
+                LatestVersion = source.LatestVersion;
+                UpdateUrl = source.UpdateUrl;
+                Error = source.Error;
+                UpdateLabel = source.UpdateLabel;
+                AheadLabel = source.AheadLabel;
+            }
+
+            /// <summary>This state with another status; the labels are shared, not rebuilt.</summary>
+            public State WithStatus(UpdateStatus status)
+            {
+                return new State(status, in this);
             }
 
             public bool IsChecking => Status == UpdateStatus.Checking;

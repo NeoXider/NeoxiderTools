@@ -33,7 +33,7 @@ namespace Neo.Editor.Tests.GridSystem
 
         private FieldGenerator CreateField(int width, int height)
         {
-            var owner = new GameObject("DiceBoardCoreTests");
+            GameObject owner = new GameObject("DiceBoardCoreTests");
             _createdObjects.Add(owner);
             owner.AddComponent<Grid>();
             FieldGenerator generator = owner.AddComponent<FieldGenerator>();
@@ -61,7 +61,7 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void Place_Single_WritesContentAndRaisesBoardChanged()
         {
-            var board = new DiceBoard(CreateField(3, 3));
+            DiceBoard board = new DiceBoard(CreateField(3, 3));
             int boardChanged = 0;
             board.BoardChanged += () => boardChanged++;
 
@@ -75,7 +75,7 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void Place_OccupiedCell_Fails()
         {
-            var board = new DiceBoard(CreateField(2, 2));
+            DiceBoard board = new DiceBoard(CreateField(2, 2));
             Assert.IsTrue(board.Place(DicePiece.Single(1), Vector3Int.zero).Placed);
 
             Assert.IsFalse(board.CanPlace(DicePiece.Single(2), Vector3Int.zero));
@@ -85,7 +85,7 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void Place_TriggersMerge_WithCapAndEvents()
         {
-            var board = new DiceBoard(CreateField(3, 1))
+            DiceBoard board = new DiceBoard(CreateField(3, 1))
             {
                 MinMergeGroupSize = 3,
                 MergeStep = 1,
@@ -121,7 +121,7 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void ClearBoard_EmptiesEverything()
         {
-            var board = new DiceBoard(CreateField(2, 2));
+            DiceBoard board = new DiceBoard(CreateField(2, 2));
             board.Place(DicePiece.Pair(1, 2), Vector3Int.zero);
 
             board.ClearBoard();

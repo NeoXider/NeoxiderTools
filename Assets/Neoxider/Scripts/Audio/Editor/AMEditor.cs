@@ -228,9 +228,19 @@ namespace Neo.Audio.Editor
             }
         }
 
+        // WHY: the id check runs on every inspector event; one reused set replaces a fresh HashSet per draw.
+        // IMGUI is single-threaded and the check never re-enters itself.
+        private static readonly HashSet<string> s_seenIds = new HashSet<string>();
+
         private static string FindIdProblem<T>(IReadOnlyList<T> entries, string kind) where T : AudioEntry
         {
-            HashSet<string> seen = new HashSet<string>();
+            if (entries == null)
+            {
+                return null;
+            }
+
+            HashSet<string> seen = s_seenIds;
+            seen.Clear();
             for (int index = 0; index < entries.Count; index++)
             {
                 T entry = entries[index];
@@ -287,7 +297,10 @@ namespace Neo.Audio.Editor
                 }
             }
 
-            Repaint();
+            // WHY: Repaint() from inside the draw re-queued the inspector on every frame for the whole Play
+            // session. The shared live lease refreshes the readout at a capped rate and lapses on its own
+            // once the inspector is hidden or collapsed.
+            EnsureLiveRepaint();
         }
     }
 }

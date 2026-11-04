@@ -1,21 +1,19 @@
 ﻿# SaveManager
 
-## Overview
-`SaveManager` is the runtime core of the `Save` module. It discovers components that implement `ISaveableComponent`, collects fields marked with `[SaveField]`, serializes them into a shared JSON container, and restores them on load.
+**What it is:** the runtime core of the `Save` module (`Scripts/Save/SaveManager.cs`, namespace `Neo.Save`), a scene singleton. It discovers components that implement `ISaveableComponent`, collects fields marked with `[SaveField]`, serializes them into a shared JSON container through `SaveProvider`, and restores them on load.
 
-- **Namespace**: `Neo.Save`
-- **Path**: `Assets/Neoxider/Scripts/Save/SaveManager.cs`
-
-## How to use
+**How to use:**
 1. Add a single `SaveManager` component to your scene.
 2. Inherit saveable scene components from [`SaveableBehaviour`](./SaveableBehaviour.md) or implement `ISaveableComponent` manually.
 3. Mark fields with `[SaveField]`.
 4. Implement [`ISaveIdentityProvider`](./ISaveIdentityProvider.md) when the default scene-based identity is not enough.
 5. Call `SaveManager.Save()` or `SaveManager.Load()` manually when you need explicit checkpoints.
 
+---
+
 ## What it does
 - Registers all active and inactive `MonoBehaviour` instances that implement `ISaveableComponent`.
-- Caches only fields marked with `[SaveField]`, including private fields declared by base component classes. Field keys must be unique across the inheritance chain.
+- Caches only fields marked with `[SaveField]`, including private fields declared by base component classes. Field keys must be unique across the inheritance chain. The reflection metadata is resolved once per component type and shared by all its instances.
 - Writes a single JSON container through `SaveProvider`.
 - `Save()` uses read-modify-write: it replaces entries for currently registered components while preserving entries for components that are not loaded right now.
 - Calls `OnDataLoaded()` after successful restore.
@@ -43,13 +41,13 @@ This makes save keys stable across application restarts as long as the object ke
 - `void Save(MonoBehaviour monoObj, bool isSave = false)`
 - `void Load(MonoBehaviour monoObj)`
 - `void FlushNow()` — instance method: stage registered components and flush the provider
-- `void ClearSubsystemCaches()` — reset registrations and initial-load status at subsystem initialization
+- `void ClearSubsystemCaches()` — reset registrations, the per-type `[SaveField]` and collection-wrapper caches and initial-load status at subsystem initialization
 
 ## Typical workflow
 1. A `SaveableBehaviour` registers itself in `OnEnable()`.
 2. `SaveManager` scans `[SaveField]` fields.
 3. `Init()` loads all registered components.
-4. Pause, focus loss, and quit stage automatic fields and flush the provider; disabling a `SaveableBehaviour` stages its automatic fields before unregistering.
+4. Pause, focus loss, and quit stage automatic fields and flush the provider; disabling a `SaveableBehaviour` stages its automatic fields before unregistering. Focus loss and pause each flush, even in the same frame, because other components can stage data between the two messages; with `FileSaveProvider` an unchanged second flush does not touch the disk.
 5. When a new scene loads, its saveable components are restored even if `OnEnable()` already registered them. Registered objects in other loaded scenes retain their current session state.
 
 The global `SaveManager.Save()` is safe for additive and multi-scene flows: data for unloaded scene objects remains in the shared container until those objects are saved again or explicitly removed by a higher-level migration.
@@ -59,10 +57,11 @@ The global `SaveManager.Save()` is safe for additive and multi-scene flows: data
 - Use explicit save calls for important gameplay events, not just on quit.
 - `Save()` and `Save(component)` stage data; call `SaveProvider.Save()` for persistence, or use `FlushNow()` for both steps.
 - Automatic `Save()` / `SaveAutoFields()` honor `AutoSaveOnQuit`; bulk and scene loading honor `AutoLoadOnAwake`. Explicit `Save(component)` / `Load(component)` process all marked fields regardless of those flags.
+- An exception thrown by a component's `OnDataLoaded()` is logged through `NeoDiagnostics.LogException` (errors are on by default) and the load continues with the next component; earlier, one throwing callback silently stopped the rest of a bulk or scene load.
 - `Register()` caches fields without loading. For runtime-spawned objects, assign identity before registration and explicitly call `Load(component)` after setup.
 - Prefer `ISaveIdentityProvider` for runtime-spawned objects or objects that may move inside the hierarchy.
 - Keep identities unchanged while registered. Duplicate identities are configuration errors; the first registered instance owns the key.
-- Primitive values, enums, strings, arrays, and lists have dedicated serialization paths. Other types follow `JsonUtility` restrictions; use serializable wrappers for unsupported collection shapes such as dictionaries.
+- Primitive values, enums, strings, arrays, and lists have dedicated serialization paths. An array or `List<T>` is stored as `{"Items":[...]}`; the JSON wrapper type is resolved once per collection type and the list is serialized in place, without a copy. Other types follow `JsonUtility` restrictions; use serializable wrappers for unsupported collection shapes such as dictionaries.
 - If you restructure scene hierarchies after release, verify compatibility with older save files.
 
 ## Example

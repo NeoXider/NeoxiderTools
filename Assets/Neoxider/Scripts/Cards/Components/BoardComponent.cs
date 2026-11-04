@@ -71,6 +71,14 @@ namespace Neo.Cards
         private int _nextMembershipVersion;
         private readonly Dictionary<CardComponent, int> _membershipVersions = new();
 
+        // WHY: every layout pass bumps _layoutRevision before refilling these, and a pass re-checks the revision
+        // before each read, so an older animated pass never reads entries a newer pass overwrote.
+        private readonly List<CardComponent> _layoutMembers = new();
+        private readonly List<Vector3> _layoutPositions = new();
+        private readonly List<Quaternion> _layoutRotations = new();
+        private List<PendingPlacement> _sparePlacements;
+        private List<CardComponent> _spareRemovals;
+
         /// <summary>
         ///     Cards on this board.
         /// </summary>
@@ -135,16 +143,29 @@ namespace Neo.Cards
             }
 
             InvalidateLayout();
+            _cards.Add(card);
+            int membershipVersion = ++_nextMembershipVersion;
+            _membershipVersions[card] = membershipVersion;
+
+            // WHY: membership is committed before parenting so native hierarchy observers (OnTransformParentChanged,
+            // OnTransformChildrenChanged) can clear, release or move this exact admission.
             card.transform.SetParent(transform, true);
+            if (!IsCurrentMember(card, membershipVersion))
+            {
+                AbandonEscapedAdmission(card, membershipVersion);
+                return;
+            }
 
             if (overrideFaceUp)
             {
                 card.IsFaceUp = _faceUp;
+                if (!IsCurrentMember(card, membershipVersion))
+                {
+                    AbandonEscapedAdmission(card, membershipVersion);
+                    return;
+                }
             }
 
-            _cards.Add(card);
-            int membershipVersion = ++_nextMembershipVersion;
-            _membershipVersions[card] = membershipVersion;
             await ArrangeCardsInternalAsync(animate);
 
             if (IsCurrentMember(card, membershipVersion))
@@ -155,6 +176,12 @@ namespace Neo.Cards
                     OnBoardFull?.Invoke();
                 }
             }
+            else
+            {
+                // WHY: an animated arrange spans frames; a card reparented or destroyed meanwhile without the
+                // board API must not stay listed and count toward capacity.
+                AbandonEscapedAdmission(card, membershipVersion);
+            }
         }
 
         /// <summary>
@@ -164,6 +191,121 @@ namespace Neo.Cards
         public void PlaceCard(CardComponent card)
         {
             PlaceCardAsync(card, false).SuppressCancellationThrow().Forget();
+        }
+
+        /// <summary>
+        ///     Places several cards with one immediate (untweened) layout pass instead of one pass per card.
+        /// </summary>
+        /// <remarks>
+        ///     Cards are admitted in list order until the board is full; null entries, duplicates and cards already on
+        ///     the board are skipped. After the single layout pass <see cref="OnCardPlaced" /> is raised for every
+        ///     admitted card that still belongs to the board, in admission order, followed by one
+        ///     <see cref="OnBoardFull" /> when the board is full. A clear issued from a hierarchy or face callback stops
+        ///     the batch without a layout pass; a clear from an <see cref="OnCardPlaced" /> listener stops the remaining
+        ///     events, including <see cref="OnBoardFull" />. A card that leaves the board without the board API is
+        ///     dropped as in <see cref="PlaceCardAsync" /> and frees its slot for the next listed card. Placing n cards
+        ///     costs one layout pass (O(n) transform writes) instead of n passes (O(n^2)); a warm call does not
+        ///     allocate.
+        /// </remarks>
+        /// <param name="cards">Cards to place.</param>
+        /// <param name="overrideFaceUp">If true, apply <see cref="FaceUp" /> to each placed card.</param>
+        /// <returns>Number of cards placed and published through <see cref="OnCardPlaced" />.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cards" /> is null.</exception>
+        public int PlaceCardsImmediate(IReadOnlyList<CardComponent> cards, bool overrideFaceUp = true)
+        {
+            if (cards == null)
+            {
+                throw new ArgumentNullException(nameof(cards));
+            }
+
+            List<PendingPlacement> pending = RentPlacements();
+            try
+            {
+                int clearGeneration = _clearGeneration;
+                bool attempted = false;
+                for (int i = 0; i < cards.Count; i++)
+                {
+                    if (clearGeneration != _clearGeneration || IsFull)
+                    {
+                        break;
+                    }
+
+                    CardComponent card = cards[i];
+                    if (card == null || _cards.Contains(card))
+                    {
+                        continue;
+                    }
+
+                    attempted = true;
+                    InvalidateLayout();
+                    _cards.Add(card);
+                    int membershipVersion = ++_nextMembershipVersion;
+                    _membershipVersions[card] = membershipVersion;
+
+                    // WHY: same admission order as PlaceCardAsync, so native hierarchy observers can release this
+                    // exact admission during SetParent.
+                    card.transform.SetParent(transform, true);
+                    if (!IsCurrentMember(card, membershipVersion))
+                    {
+                        ReleaseEscapedAdmission(card, membershipVersion);
+                        continue;
+                    }
+
+                    if (overrideFaceUp)
+                    {
+                        card.IsFaceUp = _faceUp;
+                        if (!IsCurrentMember(card, membershipVersion))
+                        {
+                            ReleaseEscapedAdmission(card, membershipVersion);
+                            continue;
+                        }
+                    }
+
+                    pending.Add(new PendingPlacement(card, membershipVersion));
+                }
+
+                if (!attempted || clearGeneration != _clearGeneration)
+                {
+                    // WHY: a clear from a callback hands the board to its new owner; arranging here would cancel the
+                    // owner's own layout.
+                    return 0;
+                }
+
+                ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
+
+                int published = 0;
+                for (int i = 0; i < pending.Count; i++)
+                {
+                    if (clearGeneration != _clearGeneration)
+                    {
+                        break;
+                    }
+
+                    PendingPlacement placement = pending[i];
+                    if (IsCurrentMember(placement.Card, placement.Version))
+                    {
+                        published++;
+                        OnCardPlaced?.Invoke(placement.Card);
+                    }
+                    else
+                    {
+                        AbandonEscapedAdmission(placement.Card, placement.Version);
+                    }
+                }
+
+                // WHY: a placement listener that cleared (and maybe refilled) the board superseded this batch; the
+                // refill publishes its own full event.
+                if (published > 0 && clearGeneration == _clearGeneration && IsFull)
+                {
+                    OnBoardFull?.Invoke();
+                }
+
+                return published;
+            }
+            finally
+            {
+                ReturnPlacements(pending);
+            }
         }
 
         /// <summary>
@@ -226,28 +368,36 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Places even when full by bumping capacity (restart helpers).
+        ///     Grows capacity once so every incoming card fits (restart helpers), regenerating auto slots one time
+        ///     instead of once per card.
         /// </summary>
-        /// <param name="card">Card.</param>
-        /// <param name="animate">Tween.</param>
-        /// <param name="overrideFaceUp">Apply FaceUp flag.</param>
-        private async UniTask ForcePlaceCardAsync(CardComponent card, bool animate = false, bool overrideFaceUp = true)
+        /// <param name="incoming">Cards about to be placed.</param>
+        private void ExpandCapacityFor(List<CardComponent> incoming)
         {
-            if (card == null || _cards.Contains(card))
+            if (!_autoExpandCapacity)
             {
                 return;
             }
 
-            if (_autoExpandCapacity && IsFull)
+            int required = _cards.Count;
+            for (int i = 0; i < incoming.Count; i++)
             {
-                _maxCards = Mathf.Max(_maxCards + 1, _cards.Count + 1);
-                if (_autoGenerateSlots)
+                if (!_cards.Contains(incoming[i]))
                 {
-                    GenerateSlots();
+                    required++;
                 }
             }
 
-            await PlaceCardAsync(card, animate, overrideFaceUp);
+            if (required <= _maxCards)
+            {
+                return;
+            }
+
+            _maxCards = required;
+            if (_autoGenerateSlots)
+            {
+                GenerateSlots();
+            }
         }
 
         /// <summary>
@@ -261,7 +411,24 @@ namespace Neo.Cards
                 return;
             }
 
-            if (!_initialSpawnedCards.Contains(card))
+            // WHY: the debug list outlives restarts; dropping destroyed entries keeps it (and this scan) bounded
+            // instead of growing by a whole deck on every restart.
+            bool registered = false;
+            int write = 0;
+            for (int read = 0; read < _initialSpawnedCards.Count; read++)
+            {
+                CardComponent entry = _initialSpawnedCards[read];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                registered |= ReferenceEquals(entry, card);
+                _initialSpawnedCards[write++] = entry;
+            }
+
+            _initialSpawnedCards.RemoveRange(write, _initialSpawnedCards.Count - write);
+            if (!registered)
             {
                 _initialSpawnedCards.Add(card);
             }
@@ -320,7 +487,7 @@ namespace Neo.Cards
                 InvalidateLayout();
                 _membershipVersions.Remove(card);
                 card.CancelAnimation();
-                card.transform.SetParent(null, true);
+                card.DetachFromZone();
                 ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
             }
 
@@ -342,6 +509,72 @@ namespace Neo.Cards
             CardComponent card = _cards[index];
             RemoveCard(card);
             return card;
+        }
+
+        /// <summary>
+        ///     Removes several cards with one immediate layout pass for the remaining members instead of one pass per
+        ///     card.
+        /// </summary>
+        /// <remarks>
+        ///     Every listed card that is on the board is released exactly as <see cref="RemoveCard" /> releases it
+        ///     (motion cancelled, detached by the zone rule, no event); null entries and non-members are skipped. The list
+        ///     is copied first, so it may be <see cref="Cards" /> itself. A clear issued from a hierarchy callback stops
+        ///     the batch and skips the final layout, because the board then belongs to the clearing caller. Removing n
+        ///     cards costs one layout pass instead of n; a warm call does not allocate.
+        /// </remarks>
+        /// <param name="cards">Cards to remove.</param>
+        /// <returns>Number of cards removed.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cards" /> is null.</exception>
+        public int RemoveCards(IReadOnlyList<CardComponent> cards)
+        {
+            if (cards == null)
+            {
+                throw new ArgumentNullException(nameof(cards));
+            }
+
+            List<CardComponent> requested = RentRemovals();
+            try
+            {
+                // WHY: hierarchy callbacks during detaching may edit the input (it can be Cards itself); a private
+                // copy keeps the iteration stable. List.AddRange would copy through a temporary array.
+                for (int i = 0; i < cards.Count; i++)
+                {
+                    requested.Add(cards[i]);
+                }
+
+                int clearGeneration = _clearGeneration;
+                int removed = 0;
+                for (int i = 0; i < requested.Count; i++)
+                {
+                    if (clearGeneration != _clearGeneration)
+                    {
+                        return removed;
+                    }
+
+                    CardComponent card = requested[i];
+                    if (card == null || !_cards.Remove(card))
+                    {
+                        continue;
+                    }
+
+                    InvalidateLayout();
+                    _membershipVersions.Remove(card);
+                    card.CancelAnimation();
+                    card.DetachFromZone();
+                    removed++;
+                }
+
+                if (removed > 0 && clearGeneration == _clearGeneration)
+                {
+                    ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
+                }
+
+                return removed;
+            }
+            finally
+            {
+                ReturnRemovals(requested);
+            }
         }
 
         /// <summary>
@@ -382,7 +615,7 @@ namespace Neo.Cards
                 if (card != null)
                 {
                     card.CancelAnimation();
-                    card.transform.SetParent(null, true);
+                    card.DetachFromZone();
                 }
             }
 
@@ -413,7 +646,25 @@ namespace Neo.Cards
         /// <summary>
         ///     Async variant of <see cref="RestoreAllSourcesToBoard" />.
         /// </summary>
-        public async UniTask RestoreAllSourcesToBoardAsync()
+        /// <remarks>
+        ///     Collected cards are placed immediately with one layout pass (see <see cref="PlaceCardsImmediate" />);
+        ///     when Auto Expand Capacity is on, capacity grows once to fit them all, so <see cref="OnBoardFull" /> is
+        ///     raised at most once. The returned task is already complete.
+        /// </remarks>
+        public UniTask RestoreAllSourcesToBoardAsync()
+        {
+            try
+            {
+                RestoreAllSources();
+                return UniTask.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return UniTask.FromException(exception);
+            }
+        }
+
+        private void RestoreAllSources()
         {
             List<CardComponent> collected = new();
             HashSet<CardComponent> seen = new();
@@ -478,10 +729,8 @@ namespace Neo.Cards
                 }
             }
 
-            foreach (CardComponent card in collected)
-            {
-                await ForcePlaceCardAsync(card);
-            }
+            ExpandCapacityFor(collected);
+            PlaceCardsImmediate(collected);
 
             _lastCollectedCards.Clear();
             _lastCollectedCards.AddRange(collected);
@@ -520,6 +769,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Distinct non-joker ranks currently on the board.
         /// </summary>
+        /// <remarks>Missing or destroyed entries are skipped.</remarks>
         /// <returns>Rank set.</returns>
         public HashSet<Rank> GetAllRanks()
         {
@@ -527,7 +777,7 @@ namespace Neo.Cards
 
             foreach (CardComponent card in _cards)
             {
-                if (!card.Data.IsJoker)
+                if (card != null && !card.Data.IsJoker)
                 {
                     ranks.Add(card.Data.Rank);
                 }
@@ -539,14 +789,18 @@ namespace Neo.Cards
         /// <summary>
         ///     Copies <see cref="CardData" /> for each board card.
         /// </summary>
+        /// <remarks>Missing or destroyed entries are skipped.</remarks>
         /// <returns>Data list.</returns>
         public List<CardData> GetAllCardData()
         {
-            List<CardData> data = new();
+            List<CardData> data = new(_cards.Count);
 
             foreach (CardComponent card in _cards)
             {
-                data.Add(card.Data);
+                if (card != null)
+                {
+                    data.Add(card.Data);
+                }
             }
 
             return data;
@@ -587,6 +841,8 @@ namespace Neo.Cards
             InvalidateLayout();
             if (_cards.Count == 0)
             {
+                // WHY: an emptied board must not keep the previous pass's released cards alive in the reused buffer.
+                _layoutMembers.Clear();
                 return;
             }
 
@@ -606,18 +862,30 @@ namespace Neo.Cards
             }
 
             int revision = _layoutRevision;
-            CardComponent[] cards = _cards.ToArray();
+            List<CardComponent> cards = _layoutMembers;
+            cards.Clear();
+            // WHY: List.AddRange copies through a temporary array in Unity's class library.
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                cards.Add(_cards[i]);
+            }
+
+            int count = cards.Count;
             bool slots = ShouldUseSlotPlacement();
             CardLayoutType layoutType = ResolveLayoutType();
-            List<Vector3> positions = CardLayoutCalculator.CalculatePositions(layoutType, cards.Length, settings);
-            List<Quaternion> rotations = CardLayoutCalculator.CalculateRotations(layoutType, cards.Length, settings);
-            using CancellationTokenSource layout = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+            List<Vector3> positions = _layoutPositions;
+            List<Quaternion> rotations = _layoutRotations;
+            CardLayoutCalculator.CalculatePositions(layoutType, count, settings, positions);
+            CardLayoutCalculator.CalculateRotations(layoutType, count, settings, rotations);
+            // WHY: an immediate pass never awaits, so the layout revision alone retires it; only an animated pass
+            // needs a linked source (and its registration on the destroy token) to cancel in-flight motion.
+            using CancellationTokenSource layout = animate ? CancellationTokenSource.CreateLinkedTokenSource(_ct) : null;
             _layoutCancellation = layout;
             try
             {
-                for (int i = 0; i < cards.Length; i++)
+                for (int i = 0; i < count; i++)
                 {
-                    if (revision != _layoutRevision || layout.IsCancellationRequested)
+                    if (revision != _layoutRevision || (layout != null && layout.IsCancellationRequested))
                     {
                         return;
                     }
@@ -628,7 +896,7 @@ namespace Neo.Cards
                         continue;
                     }
 
-                    int sibling = _stackZSorting == StackZSortingStrategy.TopCardFirst ? i : cards.Length - 1 - i;
+                    int sibling = _stackZSorting == StackZSortingStrategy.TopCardFirst ? i : count - 1 - i;
                     card.transform.SetSiblingIndex(sibling);
                     if (revision != _layoutRevision || card == null || card.transform.parent != transform)
                     {
@@ -666,7 +934,7 @@ namespace Neo.Cards
             }
             catch (OperationCanceledException) when (!_ct.IsCancellationRequested)
             {
-                // Membership/layout changed; the replacement pass owns the current cards.
+                // WHY: membership/layout changed; the replacement pass owns the current cards.
             }
             finally
             {
@@ -681,6 +949,73 @@ namespace Neo.Cards
         {
             return card != null && card.transform.parent == transform &&
                    _membershipVersions.TryGetValue(card, out int current) && current == version;
+        }
+
+        /// <summary>
+        ///     Drops an admission whose card left the board without the board API before its placement completed:
+        ///     a hierarchy or face callback reparented it or destroyed it with DestroyImmediate, or other code
+        ///     reparented or destroyed it while an animated arrange was still running.
+        /// </summary>
+        /// <remarks>
+        ///     Releases through Clear, ClearAndReturn or RemoveCard already removed the version and are left alone,
+        ///     as is a newer admission of the same card. The card keeps whatever parent and pose it was given.
+        ///     A deferred Object.Destroy issued during an immediate placement lands after the placement completed;
+        ///     that card stays a member until RemoveCard or Clear.
+        /// </remarks>
+        private void AbandonEscapedAdmission(CardComponent card, int version)
+        {
+            if (ReleaseEscapedAdmission(card, version))
+            {
+                // WHY: the escaped card leaves a gap, and this admission cancelled the previous layout pass;
+                // re-arrange the remaining members so they do not stay wherever the cancelled motion left them.
+                ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
+            }
+        }
+
+        /// <summary>
+        ///     Removes the membership of an escaped admission without re-arranging (see
+        ///     <see cref="AbandonEscapedAdmission" />).
+        /// </summary>
+        /// <returns>True when this exact admission was still recorded and has been removed.</returns>
+        private bool ReleaseEscapedAdmission(CardComponent card, int version)
+        {
+            if (!_membershipVersions.TryGetValue(card, out int current) || current != version)
+            {
+                return false;
+            }
+
+            _membershipVersions.Remove(card);
+            _cards.Remove(card);
+            return true;
+        }
+
+        private List<PendingPlacement> RentPlacements()
+        {
+            // WHY: a hierarchy or event callback may start another batch on this board; it gets its own list.
+            List<PendingPlacement> placements = _sparePlacements ?? new List<PendingPlacement>();
+            _sparePlacements = null;
+            return placements;
+        }
+
+        private void ReturnPlacements(List<PendingPlacement> placements)
+        {
+            placements.Clear();
+            _sparePlacements = placements;
+        }
+
+        private List<CardComponent> RentRemovals()
+        {
+            // WHY: a hierarchy callback may start another batch removal on this board; it gets its own list.
+            List<CardComponent> removals = _spareRemovals ?? new List<CardComponent>();
+            _spareRemovals = null;
+            return removals;
+        }
+
+        private void ReturnRemovals(List<CardComponent> removals)
+        {
+            // WHY: cleared so the spare list never keeps released cards alive.
+            removals.Clear();
+            _spareRemovals = removals;
         }
 
         private void InvalidateLayout()
@@ -708,7 +1043,7 @@ namespace Neo.Cards
 
         private void GenerateSlots()
         {
-            // WHY: SetCapacity/ForcePlace regenerate slots at runtime; old auto-generated
+            // WHY: SetCapacity and the restore helper regenerate slots at runtime; old auto-generated
             // slot objects must be destroyed or they accumulate under the board.
             if (_cardSlots != null)
             {
@@ -733,6 +1068,18 @@ namespace Neo.Cards
                 slot.transform.localPosition = new Vector3(startX + i * _slotSpacing, 0, 0);
                 slot.transform.localRotation = Quaternion.identity;
                 _cardSlots[i] = slot.transform;
+            }
+        }
+
+        private readonly struct PendingPlacement
+        {
+            public readonly CardComponent Card;
+            public readonly int Version;
+
+            public PendingPlacement(CardComponent card, int version)
+            {
+                Card = card;
+                Version = version;
             }
         }
     }

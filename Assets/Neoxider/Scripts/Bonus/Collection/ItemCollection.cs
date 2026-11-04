@@ -16,15 +16,32 @@ namespace Neo.Bonus
         [SerializeField] private Collection _collection;
         [SerializeField] private ItemCollectionInfo _itemInfo;
 
-        public UnityEvent<bool> OnChangeEnabled;
-        public UnityEvent OnActive;
-        public UnityEvent OnDeactivated;
+        public UnityEvent<bool> OnChangeEnabled = new();
+        public UnityEvent OnActive = new();
+        public UnityEvent OnDeactivated = new();
         private ItemCollectionData _currentData;
+        private Collection _displayedCollection;
         private bool _isInitialized;
 
         public Button Button => _button;
 
-        private Collection CollectionInstance => _collection != null ? _collection : Collection.I;
+        /// <summary>
+        ///     Collection <see cref="Unlock" /> writes to: the assigned Collection field, otherwise the collection the
+        ///     owning <see cref="CollectionVisualManager" /> displays this view for, otherwise the global
+        ///     <c>Collection.I</c>.
+        /// </summary>
+        private Collection CollectionInstance
+        {
+            get
+            {
+                if (_collection != null)
+                {
+                    return _collection;
+                }
+
+                return _displayedCollection != null ? _displayedCollection : Collection.I;
+            }
+        }
         public int ItemId { get; private set; } = -1;
 
         public Image ItemImage => _itemImage;
@@ -90,7 +107,16 @@ namespace Neo.Bonus
             ItemId = id;
         }
 
-        /// <summary>Adds the current item to the collection by ItemId. Handy from UnityEvent (e.g. button).</summary>
+        /// <summary>Set by the owning manager so a view on a non-global panel unlocks into that panel's collection.</summary>
+        internal void SetDisplayedCollection(Collection collection)
+        {
+            _displayedCollection = collection;
+        }
+
+        /// <summary>
+        ///     Adds the current item by ItemId to the assigned Collection, otherwise to the collection the owning
+        ///     manager displays, otherwise to <c>Collection.I</c>. Handy from UnityEvent (e.g. button).
+        /// </summary>
         public void Unlock()
         {
             if (ItemId < 0)

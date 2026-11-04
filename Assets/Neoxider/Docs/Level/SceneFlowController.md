@@ -1,6 +1,10 @@
 ﻿# SceneFlowController
 
-**Purpose:** A convenient wrapper around Unity's standard `SceneManager`. It supports synchronous, asynchronous, and additive scene loading. It allows you to easily set up a UI loading screen (Progress Bar, Text) directly in the Inspector without writing loading coroutines.
+**What it is:** a MonoBehaviour wrapper around Unity's `SceneManager` (`Scripts/Level/SceneFlowController.cs`, namespace `Neo.Level`). It supports synchronous, asynchronous, and additive scene loading, and drives a loading screen (progress bar, text, panel) configured in the Inspector without writing loading coroutines.
+
+**How to use:** follow the setup below, then call `LoadScene()` from code or from a UI Button event.
+
+---
 
 ## Setup
 
@@ -21,7 +25,7 @@
 | `_progressPanel` | A `GameObject` (loading screen) that is auto-enabled at the start and disabled at the end of the load. |
 | `_sliderProgress`, `_imageProgress` | UI elements to display the loading bar. |
 | `_textProgress`, `_textMeshProgress` | Text components for percentage display (`_progressTextFormat` = Percent). |
-| `_progressTextFormat` | `Percent` displays the prefix and raw Unity percentage. `Plain` displays the prefix alone. |
+| `_progressTextFormat` | `Percent` displays the prefix and the rounded Unity percentage; the label is rebuilt only when that whole percentage changes, so a loading screen does not allocate a string every frame. `Plain` displays the prefix alone. |
 | `_readyToProceedText` | Text shown while a manual load waits for activation; retained across waiting frames. |
 
 ## Usage
@@ -47,7 +51,7 @@ bool hasPendingLoad = sceneFlowController.IsLoading;
 
 Only one asynchronous load can be owned by a controller at a time. Further requests, including sync/additive requests, are ignored while `IsLoading` is true. A null loader result or an exception releases the request state so another call can retry. Async calls on an inactive GameObject are ignored because Unity cannot start its coroutine. `SceneLoader` is an injectable `ISceneFlowSceneLoader`; assigning null restores Unity's loader. Restore it after using a custom test/application loader because it is shared by all controllers.
 
-Async events are `OnLoadStarted`, `OnProgress(float)`, `OnReadyToProceed` (once for a manual request), and `OnLoadCompleted`. Progress follows raw Unity values from 0 to 1; manual loading normally waits at 0.9 until `ProceedScene()`. Completion publishes 1 before clearing the panel and firing `OnLoadCompleted`. Sync and additive loads call the loader directly and do not emit these async events.
+Async events are `OnLoadStarted`, `OnProgress(float)`, `OnReadyToProceed` (once for a load without automatic activation: `AsyncManual`, or `Async` with `_activateOnReady` off), and `OnLoadCompleted`. Progress follows raw Unity values from 0 to 1; such a load waits at 0.9 until `ProceedScene()`. Completion publishes 1 before clearing the panel and firing `OnLoadCompleted`. Sync and additive loads call the loader directly and do not emit these async events.
 
 Keep the controller on an active object outside a loading panel that will be hidden. Deactivating its GameObject or destroying the component releases a pending manual activation, clears `IsLoading`, and hides the panel. Unity scene loading cannot be canceled through this component: the native operation may still finish and activate its scene, without a completion notification from the stopped controller. Disabling only the component leaves its running coroutine active, following Unity coroutine behavior.
 

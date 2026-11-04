@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -13,7 +12,37 @@ namespace Neo.StateMachine.NoCode.Editor
     [CanEditMultipleObjects]
     public class StateMachineDataEditor : CustomEditorBase
     {
+        private const int CachedRowTexts = 64;
+
+        private static readonly GUIContent InitialStateContent = new("Initial State (StateData)");
+        private static readonly GUIContent NameContent = new("Name");
+        private static readonly GUIContent FromStateContent = new("From State");
+        private static readonly GUIContent ToStateContent = new("To State");
+        private static readonly GUIContent PriorityContent = new("Priority");
+        private static readonly GUIContent IsEnabledContent = new("Is Enabled");
+
+        // WHY: GUILayout.Width/Height and EditorGUILayout.Space build a GUILayoutOption plus its params array on
+        // every call; the transition rows ask for the same few options on every IMGUI event.
+        private static readonly GUILayoutOption[] ButtonHeightOption = { GUILayout.Height(24f) };
+        private static readonly GUILayoutOption[] PredicateLabelWidthOption = { GUILayout.Width(90f) };
+        private static readonly GUILayoutOption[] RemoveButtonWidthOption = { GUILayout.Width(24f) };
+        private static readonly GUILayoutOption[] MoveButtonWidthOption = { GUILayout.Width(48f) };
+        private static readonly GUILayoutOption[] SpaceSmallOption = { GUILayout.Height(4f) };
+        private static readonly GUILayoutOption[] SpaceLargeOption = { GUILayout.Height(6f) };
+
+        private static readonly string[] TransitionTitles = new string[CachedRowTexts];
+        private static readonly string[] PredicateCountTexts = new string[CachedRowTexts];
+
         private StateMachineData data;
+
+        private NeoxiderEditorGUI.Badge[] _summaryBadges;
+        private int _badgeStateCount = -1;
+        private int _badgeTransitionCount = -1;
+        private bool _badgeInitialSet;
+        private bool _badgeLegacyName;
+
+        private string _legacyNameWarningSource;
+        private string _legacyNameWarning;
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
@@ -35,18 +64,18 @@ namespace Neo.StateMachine.NoCode.Editor
 
             DrawStatesSection();
 
-            EditorGUILayout.Space(6f);
+            Space(SpaceLargeOption);
 
             DrawInitialStateSection();
 
-            EditorGUILayout.Space(6f);
+            Space(SpaceLargeOption);
 
             DrawTransitionsSection();
 
-            EditorGUILayout.Space(6f);
+            Space(SpaceLargeOption);
 
             NeoxiderEditorGUI.BeginSection("Validation", "Run a manual validation pass and show the result.");
-            if (GUILayout.Button("Validate Configuration", GUILayout.Height(24f)))
+            if (GUILayout.Button("Validate Configuration", ButtonHeightOption))
             {
                 serializedObject.ApplyModifiedProperties();
                 bool validationResult = ValidateSelectedConfigurations(false);
@@ -92,25 +121,10 @@ namespace Neo.StateMachine.NoCode.Editor
                 ? "Configuration looks valid. Edit states, initial state, and transitions below."
                 : "There are issues in this configuration. The inspector surfaces them before play mode.";
 
-            List<NeoxiderEditorGUI.Badge> badges = new()
-            {
-                new NeoxiderEditorGUI.Badge($"States {statesProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
-                new NeoxiderEditorGUI.Badge($"Transitions {transitionsProp.arraySize}",
-                    new Color(0.42f, 0.34f, 0.82f, 1f)),
-                new NeoxiderEditorGUI.Badge(
-                    initialStateProp.objectReferenceValue != null ? "Initial Set" : "Initial Missing",
-                    initialStateProp.objectReferenceValue != null
-                        ? new Color(0.18f, 0.62f, 0.32f, 1f)
-                        : new Color(0.78f, 0.46f, 0.18f, 1f))
-            };
-
-            if (!string.IsNullOrEmpty(legacyInitialStateNameProp.stringValue) &&
-                initialStateProp.objectReferenceValue == null)
-            {
-                badges.Add(new NeoxiderEditorGUI.Badge("Legacy Initial Name", new Color(0.65f, 0.56f, 0.18f, 1f)));
-            }
-
-            NeoxiderEditorGUI.DrawSummaryCard(title, subtitle, badges.ToArray());
+            bool initialSet = initialStateProp.objectReferenceValue != null;
+            bool legacyName = !initialSet && !string.IsNullOrEmpty(legacyInitialStateNameProp.stringValue);
+            NeoxiderEditorGUI.DrawSummaryCard(title, subtitle,
+                GetSummaryBadges(statesProp.arraySize, transitionsProp.arraySize, initialSet, legacyName));
 
             if (!isValid)
             {
@@ -125,7 +139,66 @@ namespace Neo.StateMachine.NoCode.Editor
                     MessageType.Info);
             }
 
-            EditorGUILayout.Space(4f);
+            Space(SpaceSmallOption);
+        }
+
+        /// <summary>
+        ///     Summary badges for the given counts and flags. The array and its texts are rebuilt only when one of
+        ///     them changes, so an unchanged inspector repaints without allocating.
+        /// </summary>
+        internal NeoxiderEditorGUI.Badge[] GetSummaryBadges(int stateCount, int transitionCount, bool initialSet,
+            bool legacyName)
+        {
+            if (_summaryBadges != null && stateCount == _badgeStateCount &&
+                transitionCount == _badgeTransitionCount && initialSet == _badgeInitialSet &&
+                legacyName == _badgeLegacyName)
+            {
+                return _summaryBadges;
+            }
+
+            _badgeStateCount = stateCount;
+            _badgeTransitionCount = transitionCount;
+            _badgeInitialSet = initialSet;
+            _badgeLegacyName = legacyName;
+            _summaryBadges = new NeoxiderEditorGUI.Badge[legacyName ? 4 : 3];
+            _summaryBadges[0] = new NeoxiderEditorGUI.Badge("States " + stateCount,
+                new Color(0.20f, 0.50f, 0.78f, 1f));
+            _summaryBadges[1] = new NeoxiderEditorGUI.Badge("Transitions " + transitionCount,
+                new Color(0.42f, 0.34f, 0.82f, 1f));
+            _summaryBadges[2] = new NeoxiderEditorGUI.Badge(initialSet ? "Initial Set" : "Initial Missing",
+                initialSet ? new Color(0.18f, 0.62f, 0.32f, 1f) : new Color(0.78f, 0.46f, 0.18f, 1f));
+            if (legacyName)
+            {
+                _summaryBadges[3] =
+                    new NeoxiderEditorGUI.Badge("Legacy Initial Name", new Color(0.65f, 0.56f, 0.18f, 1f));
+            }
+
+            return _summaryBadges;
+        }
+
+        internal static string GetTransitionTitle(int index)
+        {
+            if (index < 0 || index >= CachedRowTexts)
+            {
+                return "Transition " + (index + 1);
+            }
+
+            return TransitionTitles[index] ??= "Transition " + (index + 1);
+        }
+
+        internal static string GetPredicateCountText(int count)
+        {
+            if (count < 0 || count >= CachedRowTexts)
+            {
+                return "Predicates: " + count;
+            }
+
+            return PredicateCountTexts[count] ??= "Predicates: " + count;
+        }
+
+        private static void Space(GUILayoutOption[] heightOption)
+        {
+            GUILayoutUtility.GetRect(0f, 0f, heightOption);
         }
 
         private void DrawStatesSection()
@@ -143,17 +216,27 @@ namespace Neo.StateMachine.NoCode.Editor
 
             NeoxiderEditorGUI.BeginSection("Initial State",
                 "Prefer assigning a StateData reference; keep the legacy name field only for backward compatibility.");
-            EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
+            EditorGUILayout.PropertyField(initialStateProp, InitialStateContent);
 
             if (initialStateProp.objectReferenceValue == null &&
                 !string.IsNullOrEmpty(initialStateNameProp.stringValue))
             {
-                EditorGUILayout.HelpBox(
-                    $"Using legacy initial state name: {initialStateNameProp.stringValue}. Please assign a StateData object instead.",
-                    MessageType.Warning);
+                EditorGUILayout.HelpBox(GetLegacyNameWarning(initialStateNameProp.stringValue), MessageType.Warning);
             }
 
             NeoxiderEditorGUI.EndSection();
+        }
+
+        private string GetLegacyNameWarning(string legacyName)
+        {
+            if (_legacyNameWarning == null || !string.Equals(_legacyNameWarningSource, legacyName))
+            {
+                _legacyNameWarningSource = legacyName;
+                _legacyNameWarning = "Using legacy initial state name: " + legacyName +
+                                     ". Please assign a StateData object instead.";
+            }
+
+            return _legacyNameWarning;
         }
 
         private void DrawTransitionsSection()
@@ -189,14 +272,15 @@ namespace Neo.StateMachine.NoCode.Editor
 
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.BeginHorizontal();
-                string transitionTitle = nameProp != null && !string.IsNullOrWhiteSpace(nameProp.stringValue)
-                    ? nameProp.stringValue
-                    : $"Transition {i + 1}";
+                string transitionName = nameProp?.stringValue;
+                string transitionTitle = !string.IsNullOrWhiteSpace(transitionName)
+                    ? transitionName
+                    : GetTransitionTitle(i);
                 EditorGUILayout.LabelField(transitionTitle, EditorStyles.boldLabel);
                 GUILayout.FlexibleSpace();
-                EditorGUILayout.LabelField($"Predicates: {predicatesProp?.arraySize ?? 0}", EditorStyles.miniBoldLabel,
-                    GUILayout.Width(90f));
-                if (GUILayout.Button("X", GUILayout.Width(24)))
+                EditorGUILayout.LabelField(GetPredicateCountText(predicatesProp?.arraySize ?? 0),
+                    EditorStyles.miniBoldLabel, PredicateLabelWidthOption);
+                if (GUILayout.Button("X", RemoveButtonWidthOption))
                 {
                     removeIndex = i;
                 }
@@ -205,27 +289,27 @@ namespace Neo.StateMachine.NoCode.Editor
 
                 if (nameProp != null)
                 {
-                    EditorGUILayout.PropertyField(nameProp, new GUIContent("Name"));
+                    EditorGUILayout.PropertyField(nameProp, NameContent);
                 }
 
                 if (fromProp != null)
                 {
-                    EditorGUILayout.PropertyField(fromProp, new GUIContent("From State"));
+                    EditorGUILayout.PropertyField(fromProp, FromStateContent);
                 }
 
                 if (toProp != null)
                 {
-                    EditorGUILayout.PropertyField(toProp, new GUIContent("To State"));
+                    EditorGUILayout.PropertyField(toProp, ToStateContent);
                 }
 
                 if (priorityProp != null)
                 {
-                    EditorGUILayout.PropertyField(priorityProp, new GUIContent("Priority"));
+                    EditorGUILayout.PropertyField(priorityProp, PriorityContent);
                 }
 
                 if (enabledProp != null)
                 {
-                    EditorGUILayout.PropertyField(enabledProp, new GUIContent("Is Enabled"));
+                    EditorGUILayout.PropertyField(enabledProp, IsEnabledContent);
                 }
 
                 EditorGUILayout.BeginHorizontal();
@@ -243,19 +327,19 @@ namespace Neo.StateMachine.NoCode.Editor
                     }
                 }
 
-                if (GUILayout.Button("Up", GUILayout.Width(48)))
+                if (GUILayout.Button("Up", MoveButtonWidthOption))
                 {
                     moveUpIndex = i;
                 }
 
-                if (GUILayout.Button("Down", GUILayout.Width(48)))
+                if (GUILayout.Button("Down", MoveButtonWidthOption))
                 {
                     moveDownIndex = i;
                 }
 
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
-                EditorGUILayout.Space(4);
+                Space(SpaceSmallOption);
             }
 
             if (removeIndex >= 0)
@@ -271,7 +355,7 @@ namespace Neo.StateMachine.NoCode.Editor
                 transitionsProp.MoveArrayElement(moveDownIndex, moveDownIndex + 1);
             }
 
-            if (GUILayout.Button("Add Transition", GUILayout.Height(24)))
+            if (GUILayout.Button("Add Transition", ButtonHeightOption))
             {
                 int index = transitionsProp.arraySize;
                 transitionsProp.InsertArrayElementAtIndex(index);

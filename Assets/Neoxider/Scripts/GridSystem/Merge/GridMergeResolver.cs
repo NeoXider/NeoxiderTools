@@ -9,6 +9,13 @@ namespace Neo.GridSystem.Merge
     /// </summary>
     public static class GridMergeResolver
     {
+        /// <summary>
+        ///     Resolves connected equal-content groups on the field and, when <see cref="GridMergeRequest.Mutate" /> is
+        ///     set, writes the merged content and raises cell notifications after every write has been applied.
+        /// </summary>
+        /// <param name="generator">Field whose <see cref="FieldCell.ContentId" /> values are merged.</param>
+        /// <param name="request">Merge rules; a default request is used when null.</param>
+        /// <returns>Resolved groups and changed cells; empty when the field has no cells.</returns>
         public static GridMergeResult Resolve(FieldGenerator generator, GridMergeRequest request)
         {
             GridMergeResult result = new GridMergeResult();
@@ -19,9 +26,14 @@ namespace Neo.GridSystem.Merge
 
             request ??= new GridMergeRequest();
             List<FieldCell> seeds = ResolveSeedCells(generator, request);
-            IEnumerable<Vector3Int> directions = request.Directions ??
-                                                 generator.Config?.MovementRule?.Directions ??
-                                                 MovementRule.FourDirections2D.Directions;
+            IEnumerable<Vector3Int> directionSource = request.Directions ??
+                                                      generator.Config?.MovementRule?.Directions ??
+                                                      MovementRule.FourDirections2D.Directions;
+            Vector3Int[] directions = CopyDirections(directionSource);
+
+            // WHY: the generic core consumes each neighbor list before it asks for the next one, so one buffer per
+            // resolve replaces an iterator allocation per visited cell.
+            List<FieldCell> neighborBuffer = new List<FieldCell>(directions.Length);
 
             MergeRequest<FieldCell, int> mergeRequest = new MergeRequest<FieldCell, int>
             {
@@ -31,7 +43,7 @@ namespace Neo.GridSystem.Merge
                 Seeds = seeds,
                 GetValue = cell => cell.ContentId,
                 SetValue = (cell, value) => cell.ContentId = value,
-                GetNeighbors = cell => GetNeighbors(generator, cell, directions),
+                GetNeighbors = cell => FillNeighbors(generator, cell, directions, neighborBuffer),
                 CanUseItem = cell => CanUseCell(cell, request),
                 IsEmptyValue = value => request.IsEmptyContent != null
                     ? request.IsEmptyContent(value)
@@ -106,19 +118,39 @@ namespace Neo.GridSystem.Merge
             return seeds;
         }
 
-        private static IEnumerable<FieldCell> GetNeighbors(
+        private static Vector3Int[] CopyDirections(IEnumerable<Vector3Int> source)
+        {
+            if (source is IReadOnlyList<Vector3Int> list)
+            {
+                Vector3Int[] copy = new Vector3Int[list.Count];
+                for (int i = 0; i < copy.Length; i++)
+                {
+                    copy[i] = list[i];
+                }
+
+                return copy;
+            }
+
+            return new List<Vector3Int>(source).ToArray();
+        }
+
+        private static List<FieldCell> FillNeighbors(
             FieldGenerator generator,
             FieldCell cell,
-            IEnumerable<Vector3Int> directions)
+            Vector3Int[] directions,
+            List<FieldCell> buffer)
         {
-            foreach (Vector3Int direction in directions)
+            buffer.Clear();
+            for (int i = 0; i < directions.Length; i++)
             {
-                FieldCell neighbor = generator.GetCell(cell.Position + direction);
+                FieldCell neighbor = generator.GetCell(cell.Position + directions[i]);
                 if (neighbor != null)
                 {
-                    yield return neighbor;
+                    buffer.Add(neighbor);
                 }
             }
+
+            return buffer;
         }
 
         private static bool CanUseCell(FieldCell cell, GridMergeRequest request)

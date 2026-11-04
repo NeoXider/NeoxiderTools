@@ -1,9 +1,14 @@
-using Neo.Extensions;
+using Neo.Reactive;
 using Neo.Tools;
 using UnityEngine;
 
 namespace Neo.Shop
 {
+    /// <summary>
+    ///     <see cref="SetText"/> that mirrors one <see cref="Money"/> balance (current, level or all-time).
+    ///     Resolves the wallet by save key, explicit source, then <see cref="Money.I"/>, and binds as soon as a
+    ///     wallet registers when none exists yet, without polling the scene every frame.
+    /// </summary>
     [NeoDoc("Shop/TextMoney.md")]
     public class TextMoney : SetText
     {
@@ -19,18 +24,22 @@ namespace Neo.Shop
 
         public float amount;
         private Money _money;
-        private bool _subscribed;
+        private ReactivePropertyFloat _subscribedProperty;
+        private bool _waitingForWallet;
 
         public TextMoney()
         {
             @decimal = 0;
         }
 
+        /// <summary>Wallet currently displayed; null while waiting for one to register.</summary>
+        public Money BoundMoney => _subscribedProperty != null ? _money : null;
+
         private void Start()
         {
             if (GetMoney() == null)
             {
-                this.WaitWhile(() => GetMoney() == null, Init);
+                WaitForWallet();
                 return;
             }
 
@@ -44,12 +53,17 @@ namespace Neo.Shop
             {
                 Init();
             }
+            else
+            {
+                WaitForWallet();
+            }
         }
 
         protected override void OnDisable()
         {
             try
             {
+                StopWaitingForWallet();
                 Unsubscribe();
             }
             finally
@@ -85,25 +99,15 @@ namespace Neo.Shop
 
         private void Unsubscribe()
         {
-            if (_money == null || !_subscribed)
+            // WHY: remove from the property actually subscribed; the display mode or wallet may have changed
+            // (or the wallet been destroyed) since Init.
+            if (_subscribedProperty == null)
             {
                 return;
             }
 
-            switch (_displayMode)
-            {
-                case MoneyDisplayMode.LevelMoney:
-                    _money.LevelMoney.OnChanged.RemoveListener(SetAmount);
-                    break;
-                case MoneyDisplayMode.AllMoney:
-                    _money.AllMoney.OnChanged.RemoveListener(SetAmount);
-                    break;
-                default:
-                    _money.CurrentMoney.OnChanged.RemoveListener(SetAmount);
-                    break;
-            }
-
-            _subscribed = false;
+            _subscribedProperty.OnChanged.RemoveListener(SetAmount);
+            _subscribedProperty = null;
         }
 
         private Money GetMoney()
@@ -126,27 +130,63 @@ namespace Neo.Shop
             _money = GetMoney();
             if (_money == null || !isActiveAndEnabled)
             {
+                if (isActiveAndEnabled)
+                {
+                    WaitForWallet();
+                }
+
                 return;
             }
 
-            switch (_displayMode)
+            StopWaitingForWallet();
+            ReactivePropertyFloat property = _displayMode switch
             {
-                case MoneyDisplayMode.LevelMoney:
-                    SetAmount(_money.levelMoney);
-                    _money.LevelMoney.OnChanged.AddListener(SetAmount);
-                    _subscribed = true;
-                    break;
-                case MoneyDisplayMode.AllMoney:
-                    SetAmount(_money.allMoney);
-                    _money.AllMoney.OnChanged.AddListener(SetAmount);
-                    _subscribed = true;
-                    break;
-                default:
-                    SetAmount(_money.money);
-                    _money.CurrentMoney.OnChanged.AddListener(SetAmount);
-                    _subscribed = true;
-                    break;
+                MoneyDisplayMode.LevelMoney => _money.LevelMoney,
+                MoneyDisplayMode.AllMoney => _money.AllMoney,
+                _ => _money.CurrentMoney
+            };
+
+            SetAmount(property.CurrentValue);
+            property.OnChanged.AddListener(SetAmount);
+            _subscribedProperty = property;
+        }
+
+        private void WaitForWallet()
+        {
+            if (_waitingForWallet || !isActiveAndEnabled)
+            {
+                return;
             }
+
+            _waitingForWallet = true;
+            Money.WalletRegistered += HandleWalletRegistered;
+        }
+
+        private void StopWaitingForWallet()
+        {
+            if (!_waitingForWallet)
+            {
+                return;
+            }
+
+            _waitingForWallet = false;
+            Money.WalletRegistered -= HandleWalletRegistered;
+        }
+
+        private void HandleWalletRegistered(Money wallet)
+        {
+            if (this == null)
+            {
+                Money.WalletRegistered -= HandleWalletRegistered;
+                return;
+            }
+
+            if (!isActiveAndEnabled || GetMoney() == null)
+            {
+                return;
+            }
+
+            Init();
         }
 
         private void SetAmount(float count)

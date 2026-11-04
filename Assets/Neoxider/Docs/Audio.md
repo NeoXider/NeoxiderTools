@@ -2,7 +2,8 @@
 
 **What it is:** the sound module: AM (playing effects and music), AMSettings (volume, mute), AudioControl (sliders/toggles), PlayAudio, PlayAudioBtn, RandomMusicController, SettingMixer. Scripts are in `Scripts/Audio/`.
 
-**Table of contents:** see [Audio/README.md](Audio/README.md) and the class links below.
+**How to use:** this is the legacy single-page overview; start from the canonical [Audio module](Audio/README.md)
+and its class pages, and use this page as a compact reference.
 
 ---
 
@@ -58,8 +59,10 @@ A singleton for managing global sound settings. It provides an interface for con
 - `MuteEfx`, `MuteMusic`, `MuteMaster` (`ReactivePropertyBool`): Reactive mute states; subscribe via `MuteEfx.OnChanged` or read `MuteEfx.Value`.
 - `startEfxVolume` (`float`): The initial volume for effects.
 - `startMusicVolume` (`float`): The initial volume for music.
+- `persistVolume` / `persistMute` (Inspector): persist volumes and the mute state (bit mask under `saveKeyMute`) through `SaveProvider`; a player's "sound off" survives a restart. Binding never forces channels back on: a `SetMusic`/`SetEfx` call made before binding wins, then the saved mute, then the sources' own state. Because the mute is saved as the player's preference, use `AudioListener.pause` / `volume` or a mixer snapshot for temporary silence (pause menu, ad, cutscene). Details: [AMSettings](Audio/AMSettings.md).
 
 **Public properties:**
+- `PersistVolume`, `PersistMute` (`bool`): Typed access to the persistence switches.
 - `efx` (`AudioSource`): The effects `AudioSource` from `AM`.
 - `music` (`AudioSource`): The music `AudioSource` from `AM`.
 - `IsActiveEfx` (`bool`): Returns `true` if effect sounds are not muted.
@@ -72,9 +75,10 @@ A singleton for managing global sound settings. It provides an interface for con
 - `SetMusicAndEfx(bool active)`: Sets the mute state for both music and effects.
 - `SetMusicVolume(float percent)`: Sets the music volume (from 0 to 1).
 - `SetEfxVolume(float percent)`: Sets the effects volume (from 0 to 1).
-- `SetMasterVolume(float percent)`: Sets the master volume in the `AudioMixer`.
+- `SetMasterVolume(float percent)`: Sets the master volume in the `AudioMixer`; while Master is muted it only sets the level that unmuting restores.
 - `SetMusicAndEfxVolume(float percent)`: Sets the volume for both music and effects.
-- `SetMasterVolume(float percent)`, `SetMusicMixerVolume(float)`, `SetEfxMixerVolume(float)`: Set mixer-only volumes.
+- `SetMusicMixerVolume(float)`, `SetEfxMixerVolume(float)`: Set mixer-only volumes.
+- `Initialize(AM manager)`: Binds a manager explicitly (late or replacement AM); idempotent for the same binding.
 - `GetMasterVolumeNormalized()`, `GetMusicVolumeNormalized()`, `GetEfxVolumeNormalized()`: Read normalized (0-1) volumes.
 - `SetMixerParameter(string, float)` / `SetMixerParameterDB(string, float)`: Set any exposed mixer parameter.
 - `ToggleMusic()`, `ToggleEfx()`, `ToggleMusicAndEfx()`, `ToggleMaster()`, `ToggleAllAudio()`: Toggle mute states.

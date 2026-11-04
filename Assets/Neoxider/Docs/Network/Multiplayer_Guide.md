@@ -1,5 +1,16 @@
 # Multiplayer Integration (Neo.Network)
 
+**What it is:** the setup guide for Mirror multiplayer with NeoxiderTools: managers, scene-player templates and
+the NoCode sync components (`Scripts/Network/`).
+
+**How to use:**
+1. Install Mirror, then add a `NeoNetworkManager` with a transport to the scene.
+2. Make the player a prefab or a scene player template with `NetworkIdentity` and `NeoNetworkPlayer`.
+3. Replicate state and actions with the components in the table below; keep **Is Networked** off where a
+   component must stay local.
+
+---
+
 The **Neo.Network** module is a seamless network wrapper built on top of **Mirror Networking**.
 The library supplies optional network adapters around reusable gameplay systems. Keep game rules
 callable from C# and choose explicit authority and synchronization for the state that needs networking.

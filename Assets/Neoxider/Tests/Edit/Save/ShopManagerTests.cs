@@ -133,8 +133,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void Shop_Buy_WhenSpendNeedsServerAuthority_DoesNotGrantOrFailLocally()
         {
-            var shopObject = new GameObject("Shop");
-            var walletObject = new GameObject("PendingWallet");
+            GameObject shopObject = new GameObject("Shop");
+            GameObject walletObject = new GameObject("PendingWallet");
             ShopItemData item = ScriptableObject.CreateInstance<ShopItemData>();
 
             try
@@ -173,8 +173,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void Shop_BuyBundle_WhenSpendNeedsServerAuthority_DoesNotGrantBundleOrItemsLocally()
         {
-            var shopObject = new GameObject("Shop");
-            var walletObject = new GameObject("PendingWallet");
+            GameObject shopObject = new GameObject("Shop");
+            GameObject walletObject = new GameObject("PendingWallet");
             ShopItemData item = ScriptableObject.CreateInstance<ShopItemData>();
             ShopBundleData bundle = ScriptableObject.CreateInstance<ShopBundleData>();
 
@@ -220,7 +220,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void SetSerialized(Object target, string propertyName, object value)
         {
-            var so = new SerializedObject(target);
+            SerializedObject so = new SerializedObject(target);
             SerializedProperty property = so.FindProperty(propertyName);
             switch (value)
             {

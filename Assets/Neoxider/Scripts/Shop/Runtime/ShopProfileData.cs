@@ -18,6 +18,8 @@ namespace Neo.Shop
         [SerializeField] private List<ShopRuntimePriceEntry> _priceOverrides = new();
         [SerializeField] private string _equippedId = "";
 
+        [ThreadStatic] private static HashSet<string> _seenIds;
+
         /// <summary>Profile schema version. Bumped when the structure changes incompatibly.</summary>
         public int Version
         {
@@ -178,14 +180,21 @@ namespace Neo.Shop
                 return;
             }
 
-            HashSet<string> seen = new();
-            for (int i = ids.Count - 1; i >= 0; i--)
+            HashSet<string> seen = RentSeenSet();
+            try
             {
-                string id = ids[i];
-                if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
+                for (int i = ids.Count - 1; i >= 0; i--)
                 {
-                    ids.RemoveAt(i);
+                    string id = ids[i];
+                    if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
+                    {
+                        ids.RemoveAt(i);
+                    }
                 }
+            }
+            finally
+            {
+                seen.Clear();
             }
         }
 
@@ -196,16 +205,30 @@ namespace Neo.Shop
                 return;
             }
 
-            HashSet<string> seen = new();
-            for (int i = overrides.Count - 1; i >= 0; i--)
+            HashSet<string> seen = RentSeenSet();
+            try
             {
-                string id = overrides[i].Id;
-                float price = overrides[i].Price;
-                if (string.IsNullOrWhiteSpace(id) || float.IsNaN(price) || float.IsInfinity(price) || !seen.Add(id))
+                for (int i = overrides.Count - 1; i >= 0; i--)
                 {
-                    overrides.RemoveAt(i);
+                    string id = overrides[i].Id;
+                    float price = overrides[i].Price;
+                    if (string.IsNullOrWhiteSpace(id) || float.IsNaN(price) || float.IsInfinity(price) || !seen.Add(id))
+                    {
+                        overrides.RemoveAt(i);
+                    }
                 }
             }
+            finally
+            {
+                seen.Clear();
+            }
+        }
+
+        private static HashSet<string> RentSeenSet()
+        {
+            // WHY: Shop sanitizes the profile on every save (each purchase or selection); one reused set per thread
+            // replaces two fresh HashSets per save. Cleared after each use so no ids stay referenced.
+            return _seenIds ??= new HashSet<string>(StringComparer.Ordinal);
         }
     }
 }

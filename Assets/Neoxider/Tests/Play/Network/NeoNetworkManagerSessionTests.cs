@@ -78,8 +78,6 @@ namespace Neo.Tests.Play
             return go;
         }
 
-        // ---- handshake and events ---------------------------------------------------------------------------
-
         [UnityTest]
         public IEnumerator Host_RaisesServerEventsInOrder_AndTheLocalPlayerEvent()
         {
@@ -259,8 +257,6 @@ namespace Neo.Tests.Play
             Assert.That(_manager.IsConnectionSpawned(NetworkServer.localConnection), Is.True);
         }
 
-        // ---- scene objects ---------------------------------------------------------------------------------------
-
         [UnityTest]
         public IEnumerator StartHost_LeavesEverySceneObjectActive()
         {
@@ -291,8 +287,6 @@ namespace Neo.Tests.Play
             Assert.That(other.activeSelf, Is.True);
             Assert.That(NetworkClient.localPlayer.gameObject, Is.Not.SameAs(template));
         }
-
-        // ---- message handlers across a restart ----------------------------------------------------------------------
 
         [UnityTest]
         public IEnumerator ServerAndClientHandlers_SurviveAHostRestart()
@@ -380,7 +374,7 @@ namespace Neo.Tests.Play
             {
                 int sent = channel.Publish(new SessionEventMessage { Id = 1 });
                 bool targeted = channel.PublishTo(NetworkServer.localConnection, new SessionEventMessage());
-                // Exercise the actual installed channel handler through serialized host ingress.
+                // WHY: Exercise the actual installed channel handler through serialized host ingress.
                 // It must defensively drop this message too; diagnostics only observe admission.
                 NetworkServer.localConnection.Send(new SessionEventMessage { Id = 99 }, Channels.Reliable);
                 yield return NetworkTestHelper.WaitUntil(() => admittedPayloads.Count > 0,

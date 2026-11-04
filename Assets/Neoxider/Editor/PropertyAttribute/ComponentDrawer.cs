@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -14,9 +12,15 @@ namespace Neo.Editor
     ///     Handles component-related functionality in the custom editor.
     ///     Provides methods for finding and assigning components based on attributes.
     /// </summary>
+    /// <remarks>
+    ///     Only fields carrying <see cref="FindInSceneAttribute" />, <see cref="FindAllInSceneAttribute" />,
+    ///     <see cref="GetComponentAttribute" /> or <see cref="GetComponentsAttribute" /> are read; the list is resolved once
+    ///     per type. Assignments are recorded with Undo (prefab instances keep them as overrides) and every diagnostic
+    ///     is reported once per object and field until the problem is resolved.
+    /// </remarks>
     public static class ComponentDrawer
     {
-        private static readonly ConditionalWeakTable<MonoBehaviour, HashSet<FieldInfo>> UnmatchedSceneFields = new();
+        private static readonly InjectionDiagnostics Diagnostics = new();
 
         /// <summary>
         ///     Processes all component-related attributes on the target object's fields.
@@ -24,58 +28,106 @@ namespace Neo.Editor
         /// <param name="targetObject">The MonoBehaviour to process attributes for.</param>
         public static void ProcessComponentAttributes(MonoBehaviour targetObject)
         {
-            if (!NeoxiderSettings.EnableAttributeSearch)
+            ProcessComponentAttributes(targetObject, null);
+        }
+
+        /// <summary>
+        ///     Inspector entry point: like <see cref="ProcessComponentAttributes(MonoBehaviour)" />, but a lookup that
+        ///     found nothing is not repeated until the hierarchy changes or <paramref name="throttle" /> allows it.
+        /// </summary>
+        internal static void ProcessComponentAttributes(MonoBehaviour targetObject, InjectionLookupThrottle throttle)
+        {
+            ProcessComponentAttributes(targetObject, throttle,
+                throttle != null ? EditorApplication.timeSinceStartup : 0.0);
+        }
+
+        /// <summary>
+        ///     Throttled pass at the editor time <paramref name="now" />; unresolved lookups are deferred from that time.
+        /// </summary>
+        internal static void ProcessComponentAttributes(MonoBehaviour targetObject, InjectionLookupThrottle throttle,
+            double now)
+        {
+            if (targetObject == null || !NeoxiderSettings.EnableAttributeSearch)
             {
                 return;
             }
 
-            FieldInfo[] fields = targetObject.GetType().GetFields(CustomEditorBase.FIELD_FLAGS);
-
-            foreach (FieldInfo field in fields)
+            InjectedField[] fields = InjectedFieldCache.GetComponentFields(targetObject.GetType());
+            if (fields.Length == 0)
             {
-                object fieldValue = field.GetValue(targetObject);
-                bool isNull = fieldValue == null || (fieldValue is Object obj && obj == null);
+                return;
+            }
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                InjectedField injected = fields[i];
+                object fieldValue = injected.Field.GetValue(targetObject);
+                bool isNull = IsMissing(fieldValue);
+                if (!isNull && !IsEmptyCollection(fieldValue))
+                {
+                    continue;
+                }
+
+                if (throttle != null && !throttle.ShouldTry(targetObject, injected.Field, now))
+                {
+                    continue;
+                }
 
                 if (isNull)
                 {
-                    ProcessNullField(field, targetObject);
+                    ProcessNullField(injected, targetObject);
                 }
-                else if (IsEmptyCollection(fieldValue))
+                else
                 {
-                    ProcessEmptyCollection(field, targetObject);
+                    ProcessEmptyCollection(injected, targetObject);
+                }
+
+                if (throttle != null)
+                {
+                    object after = injected.Field.GetValue(targetObject);
+                    if (IsMissing(after) || IsEmptyCollection(after))
+                    {
+                        throttle.Defer(targetObject, injected.Field, now);
+                    }
                 }
             }
         }
 
-        private static void ProcessNullField(FieldInfo field, MonoBehaviour targetObject)
+        /// <summary>True for a null reference and for a destroyed Unity object ("fake null").</summary>
+        internal static bool IsMissing(object value)
         {
-            if (HasAttribute<FindInSceneAttribute>(field))
+            return value == null || (value is Object obj && obj == null);
+        }
+
+        private static void ProcessNullField(InjectedField injected, MonoBehaviour targetObject)
+        {
+            if (injected.FindInScene != null)
             {
-                AssignComponentFromScene(field, targetObject);
+                AssignComponentFromScene(injected.Field, targetObject);
             }
-            else if (HasAttribute<FindAllInSceneAttribute>(field))
+            else if (injected.FindAllInScene != null)
             {
-                AssignAllComponentsFromScene(field, targetObject);
+                AssignAllComponentsFromScene(injected.Field, injected.FindAllInScene, targetObject);
             }
-            else if (HasAttribute<GetComponentAttribute>(field))
+            else if (injected.GetComponent != null)
             {
-                AssignComponentFromGameObject(field, targetObject);
+                AssignComponentFromGameObject(injected.Field, injected.GetComponent, targetObject);
             }
-            else if (HasAttribute<GetComponentsAttribute>(field))
+            else if (injected.GetComponents != null)
             {
-                AssignComponentsFromGameObject(field, targetObject);
+                AssignComponentsFromGameObject(injected.Field, injected.GetComponents, targetObject);
             }
         }
 
-        private static void ProcessEmptyCollection(FieldInfo field, MonoBehaviour targetObject)
+        private static void ProcessEmptyCollection(InjectedField injected, MonoBehaviour targetObject)
         {
-            if (HasAttribute<GetComponentsAttribute>(field))
+            if (injected.GetComponents != null)
             {
-                AssignComponentsFromGameObject(field, targetObject);
+                AssignComponentsFromGameObject(injected.Field, injected.GetComponents, targetObject);
             }
-            else if (HasAttribute<FindAllInSceneAttribute>(field))
+            else if (injected.FindAllInScene != null)
             {
-                AssignAllComponentsFromScene(field, targetObject);
+                AssignAllComponentsFromScene(injected.Field, injected.FindAllInScene, targetObject);
             }
         }
 
@@ -98,24 +150,21 @@ namespace Neo.Editor
             }
 
             Type componentType = field.FieldType;
-            if (!typeof(Component).IsAssignableFrom(componentType) && componentType != typeof(GameObject))
+            if (!IsComponentOrGameObject(componentType))
             {
-                Debug.LogWarning($"Field '{field.Name}': type {componentType} is not a Component or GameObject.");
+                WarnNotComponent(field, componentType, targetObject);
                 return;
             }
 
             try
             {
                 Object candidate = FindCompatibleSceneCandidate(field, GetComponentsFromScene(componentType));
-                HashSet<FieldInfo> unmatchedFields = UnmatchedSceneFields.GetOrCreateValue(targetObject);
                 if (candidate != null)
                 {
-                    Undo.RecordObject(targetObject, "Find attributed component");
-                    field.SetValue(targetObject, candidate);
-                    EditorUtility.SetDirty(targetObject);
-                    unmatchedFields.Remove(field);
+                    AssignField(field, targetObject, candidate, "Find attributed component");
+                    Diagnostics.Resolve(targetObject, field);
                 }
-                else if (unmatchedFields.Add(field))
+                else if (Diagnostics.ShouldReport(targetObject, field))
                 {
                     Debug.LogWarning(
                         $"No compatible {componentType.Name} found in scene for field '{field.Name}'. " +
@@ -124,13 +173,16 @@ namespace Neo.Editor
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error finding {componentType.Name} in scene: {e.Message}");
+                if (Diagnostics.ShouldReport(targetObject, field))
+                {
+                    Debug.LogError($"Error finding {componentType.Name} in scene: {e.Message}", targetObject);
+                }
             }
         }
 
         internal static Object FindCompatibleSceneCandidate(FieldInfo field, Object[] candidates)
         {
-            RequireInterface[] requirements = field.GetCustomAttributes<RequireInterface>(true).ToArray();
+            RequireInterface[] requirements = InjectedFieldCache.GetRequirements(field);
             foreach (Object candidate in candidates)
             {
                 if (candidate == null)
@@ -157,24 +209,13 @@ namespace Neo.Editor
             return null;
         }
 
-        private static void AssignAllComponentsFromScene(FieldInfo field, MonoBehaviour targetObject)
+        private static void AssignAllComponentsFromScene(FieldInfo field, FindAllInSceneAttribute attribute,
+            MonoBehaviour targetObject)
         {
-            var attribute = field.GetCustomAttributes(typeof(FindAllInSceneAttribute), false)
-                .FirstOrDefault() as FindAllInSceneAttribute;
-            if (attribute == null)
+            Type elementType = GetElementType(field) ?? field.FieldType;
+            if (!IsComponentOrGameObject(elementType))
             {
-                return;
-            }
-
-            Type elementType = GetElementType(field);
-            if (elementType == null)
-            {
-                elementType = field.FieldType;
-            }
-
-            if (!typeof(Component).IsAssignableFrom(elementType) && elementType != typeof(GameObject))
-            {
-                Debug.LogWarning($"Field '{field.Name}': type {elementType} is not a Component or GameObject.");
+                WarnNotComponent(field, elementType, targetObject);
                 return;
             }
 
@@ -182,52 +223,46 @@ namespace Neo.Editor
             SetFieldValueForCollection(field, targetObject, components);
         }
 
-        private static void AssignComponentFromGameObject(FieldInfo field, MonoBehaviour targetObject)
+        private static void AssignComponentFromGameObject(FieldInfo field, GetComponentAttribute attribute,
+            MonoBehaviour targetObject)
         {
-            var attribute = field.GetCustomAttributes(typeof(GetComponentAttribute), false)
-                .FirstOrDefault() as GetComponentAttribute;
-            if (attribute == null)
-            {
-                return;
-            }
-
             Component component = attribute.SearchInChildren
                 ? targetObject.GetComponentInChildren(field.FieldType)
                 : targetObject.GetComponent(field.FieldType);
 
             if (component != null)
             {
-                field.SetValue(targetObject, component);
-                EditorUtility.SetDirty(targetObject);
+                AssignField(field, targetObject, component, "Get attributed component");
             }
         }
 
-        private static void AssignComponentsFromGameObject(FieldInfo field, MonoBehaviour targetObject)
+        private static void AssignComponentsFromGameObject(FieldInfo field, GetComponentsAttribute attribute,
+            MonoBehaviour targetObject)
         {
-            var attribute = field.GetCustomAttributes(typeof(GetComponentsAttribute), false)
-                .FirstOrDefault() as GetComponentsAttribute;
-            if (attribute == null)
+            Type elementType = GetElementType(field) ?? field.FieldType;
+            if (!IsComponentOrGameObject(elementType))
             {
-                return;
-            }
-
-            Type elementType = GetElementType(field);
-            if (elementType == null)
-            {
-                elementType = field.FieldType;
-            }
-
-            if (!typeof(Component).IsAssignableFrom(elementType) && elementType != typeof(GameObject))
-            {
-                Debug.LogWarning($"Field '{field.Name}': type {elementType} is not a Component or GameObject.");
+                WarnNotComponent(field, elementType, targetObject);
                 return;
             }
 
             if (elementType == typeof(GameObject))
             {
-                GameObject[] gameObjects = attribute.SearchInChildren
-                    ? targetObject.GetComponentsInChildren<Transform>().Select(t => t.gameObject).ToArray()
-                    : new[] { targetObject.gameObject };
+                GameObject[] gameObjects;
+                if (attribute.SearchInChildren)
+                {
+                    Transform[] transforms = targetObject.GetComponentsInChildren<Transform>();
+                    gameObjects = new GameObject[transforms.Length];
+                    for (int i = 0; i < transforms.Length; i++)
+                    {
+                        gameObjects[i] = transforms[i].gameObject;
+                    }
+                }
+                else
+                {
+                    gameObjects = new[] { targetObject.gameObject };
+                }
+
                 SetFieldValueForCollection(field, targetObject, gameObjects);
                 return;
             }
@@ -240,6 +275,13 @@ namespace Neo.Editor
 
         internal static void SetFieldValueForCollection(FieldInfo field, MonoBehaviour targetObject, Array value)
         {
+            // WHY: an empty search result for a field that already holds an empty collection changes nothing.
+            // Assigning it anyway ran Undo.RecordObject + SetDirty on every IMGUI event and kept the scene dirty.
+            if (value.Length == 0 && IsEmptyCollection(field.GetValue(targetObject)))
+            {
+                return;
+            }
+
             Type elementType = GetElementType(field);
             object assignment;
             if (elementType != null && field.FieldType.IsArray)
@@ -270,28 +312,48 @@ namespace Neo.Editor
             }
             else
             {
-                Debug.LogWarning(
-                    $"Field '{field.Name}' is neither an array nor an IList, and no components were found.");
+                if (Diagnostics.ShouldReport(targetObject, field))
+                {
+                    Debug.LogWarning(
+                        $"Field '{field.Name}' is neither an array nor an IList, and no components were found.",
+                        targetObject);
+                }
+
                 return;
             }
 
-            Undo.RecordObject(targetObject, "Assign attributed collection");
-            field.SetValue(targetObject, assignment);
+            AssignField(field, targetObject, assignment, "Assign attributed collection");
+        }
+
+        // WHY: Undo.RecordObject also registers the change as a prefab override; a bare SetValue + SetDirty on a
+        // prefab instance was silently reverted to the prefab value on the next reload.
+        internal static void AssignField(FieldInfo field, Object targetObject, object value, string undoName)
+        {
+            Undo.RecordObject(targetObject, undoName);
+            field.SetValue(targetObject, value);
             EditorUtility.SetDirty(targetObject);
         }
 
-        private static bool HasAttribute<T>(FieldInfo field) where T : Attribute
+        private static bool IsComponentOrGameObject(Type type)
         {
-            return field.GetCustomAttributes(typeof(T), false).Length > 0;
+            return typeof(Component).IsAssignableFrom(type) || type == typeof(GameObject);
         }
 
-        private static bool IsEmptyCollection(object value)
+        private static void WarnNotComponent(FieldInfo field, Type type, Object targetObject)
+        {
+            if (Diagnostics.ShouldReport(targetObject, field))
+            {
+                Debug.LogWarning($"Field '{field.Name}': type {type} is not a Component or GameObject.", targetObject);
+            }
+        }
+
+        internal static bool IsEmptyCollection(object value)
         {
             return (value is Array arr && arr.Length == 0) ||
                    (value is IList list && list.Count == 0);
         }
 
-        private static Type GetElementType(FieldInfo field)
+        internal static Type GetElementType(FieldInfo field)
         {
             if (field.FieldType.IsArray)
             {

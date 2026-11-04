@@ -1,16 +1,39 @@
 # Drawer
 
-`Neo.Tools.Drawer` draws world-space polylines from C# calls or legacy mouse input, with optional Chaikin smoothing and `EdgeCollider2D` collision. Reference assembly `Neo.Tools.Draw` and namespace `Neo.Tools`.
+**What it is:** a `MonoBehaviour` (`Scripts/Tools/Draw/Drawer.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Draw`) that draws world-space polylines from pointer input or C# calls, with optional Chaikin smoothing, `EdgeCollider2D` collision, timed deletion and pooled `LineRenderer` reuse.
+
+**How to use:**
+1. Add **Neoxider > Tools > Drawer** to a GameObject.
+2. Assign the input camera, or set `InputCamera` from C#. If unset during `Awake`, Drawer tries `Camera.main`, then the first scene camera. If neither exists, it reports an error and disables automatic input; the drawing methods remain callable.
+3. Set `fixedZ` to the drawing plane the camera faces, then configure the material, width, point spacing, smoothing and creation thresholds.
+4. Press, drag and release the primary mouse button to draw, or drive strokes from code with `BeginLine` / `AppendPoint` / `EndLine` and set `isActive = false`.
+5. Subscribe to `OnLineCreated`, `Distance` or `PointCount` (Inspector or C#) to react to finished strokes.
+
+## Demo scene
+
+`Scenes/Tools/DrawExample.unity` in the Demo sample (`Assets/Neoxider/Samples~/Demo` in the package,
+`Assets/Neoxider/Samples/Demo` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`
+after importing the sample): draw lines with the mouse and catch the balls that `SimpleSpawner` drops. Everything is
+saved in the scene:
+
+| Object | What to look at |
+|--------|-----------------|
+| `Draw` | The `Drawer`: live `EdgeCollider2D` (**Add Collider**), Chaikin smoothing, `deleteAfterRelease` 5 s. `PointCount` / `Distance` → **On Changed** write the *Points* and *Length* labels through `DemoValueReadout` (no code); `OnLineCreated` and `OnLineStarted` feed the log. |
+| `Spawner And Object Pool` | `Spawner` + `PoolManager` that drop the balls. |
+| `[Demo] Frame/Content` | **Undo last** / **Clear all** call `Drawer.DeleteLast` / `DeleteAll` and **Pause balls** / **Resume balls** call `Spawner.StopSpawn` / `StartSpawn` directly. The smoothing, width, auto-delete and collider controls set the public Drawer fields through `DrawerDemoController` and apply to the next stroke. |
+| `[Demo] Services/Pointer Gate` | `DemoPointerGate` disables the Drawer while the pointer is over the demo UI (button up), so clicking a control never starts a stroke, while a stroke started in the scene still finishes over the UI. In your own UI, toggle `isActive` the same way. |
+
+The scene is authored by the editor builder `DrawExampleBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
+
+---
 
 ## Scene and Inspector setup
 
-1. Add **Neoxider > Tools > Drawer** to a GameObject.
-2. Assign the input camera in the Inspector, or set `InputCamera` from C#. If unset during `Awake`, Drawer tries `Camera.main`, then the first scene camera. If neither exists, it reports an error and disables automatic input; the drawing methods remain callable.
-3. Set `fixedZ` to the drawing plane. The camera must face that plane. Orthographic and perspective projection both use a screen ray/plane intersection.
-4. Configure `lineMaterial`, optional `lineSprite` / `lineTexture`, `color`, and `lineWidth`. A sprite's full texture is used; sprite atlas UV rectangles are not extracted.
-5. Configure point spacing, smoothing, creation thresholds, and optional collision or pooling below. Press/drag/release the primary mouse button to draw.
+- Orthographic and perspective cameras both project the pointer with a screen ray/plane intersection on `fixedZ`.
+- Configure `lineMaterial`, optional `lineSprite` / `lineTexture`, `color`, and `lineWidth`. A sprite's full texture is used; sprite atlas UV rectangles are not extracted.
+- Configure point spacing, smoothing, creation thresholds, and optional collision or pooling below.
 
-Automatic input uses Unity's legacy `Input` API; touch input depends on the project's touch-to-mouse simulation. `isActive = false` pauses automatic input and its drawing timer, while public C# methods still work. Disabling the component also pauses automatic input; it does not finalize a stroke.
+Automatic input reads the primary mouse button and pointer through `MouseInputCompat`, so it works with the legacy Input Manager and with an Input System-only project (where every legacy `Input` call would throw). On a touch-only device both backends draw with the primary touch: the legacy one through `Input.simulateMouseWithTouches`, the Input System one through `OptionalInputSystemAdapter.SimulateMouseWithTouches` (both on by default; a connected mouse always wins). For multi-touch or custom gestures, set `isActive = false` and drive strokes from your own input code with `BeginLine`, `AppendPoint` and `EndLine`, converting screen positions with `TryScreenToWorld`. `isActive = false` pauses automatic input and its drawing timer, while public C# methods still work. Disabling the component also pauses automatic input; it does not finalize a stroke.
 
 ## C# drawing API
 
@@ -44,7 +67,7 @@ drawer.EndLine();
 | `minPointDistance` | Minimum spacing of accepted raw points when `fixedLength` is zero. |
 | `fixedLength` | Positive values append one segment of this length once the pointer is at least that far from the last raw point. |
 | `smoothing` | Number of Chaikin passes; Inspector range 0-10. More passes increase intermediate point count before limiting. |
-| `maxPoints` | Limits processed renderer/collider points, preserving endpoints. Values 0 or 1 mean no limit. It does not limit `rawPoints` or smoothing's intermediate allocation. |
+| `maxPoints` | Limits processed renderer/collider points, preserving endpoints. Values 0 or 1 mean no limit. It does not limit `rawPoints` or the size of smoothing's intermediate buffer. |
 | `useFolow` | Moves the rendered endpoint with the pointer between accepted raw points. Live collision follows that endpoint too. The serialized spelling is retained for compatibility. |
 | `minCountCreate`, `minDistanceCreate` | Required raw point count and raw polyline length for keeping a stroke; defaults are 2 and 0.2 world units. |
 | `maxDistanceCreate` | Positive values finish the stroke when its raw distance reaches or exceeds the threshold; the last segment can overshoot it. Zero disables this check. |
@@ -52,6 +75,22 @@ drawer.EndLine();
 | `deleteAfterRelease` | Positive values schedule deletion after completion; zero keeps completed lines until explicit deletion or owner destruction. The delay uses the Drawer coroutine owner and scaled game time. |
 
 Static helpers require non-null inputs. Use finite coordinates and sensible nonnegative settings; Inspector attributes do not validate assignments from C#. `Smooth(points, passes, fixedZ)` returns a new list; a non-null `fixedZ` applies to every output point even with zero passes or fewer than three inputs. Pass `null` to preserve 3D coordinates. `LimitPoints(points, max)` returns the input list when no reduction is needed, so do not assume a copy. `GetDistance` accepts either `Vector3[]` or `List<Vector3>` and measures consecutive segments.
+
+For per-frame use, prefer the non-allocating overloads. They write into a caller-owned list (cleared first, or the source list itself for in-place work) and produce exactly the same points:
+
+```csharp
+private readonly List<Vector3> _processed = new();
+
+private void Rebuild(List<Vector3> raw)
+{
+    Drawer.Smooth(raw, 2, 0f, _processed);          // two Chaikin passes, flattened to z = 0
+    Drawer.LimitPoints(_processed, 256, _processed); // in place
+}
+```
+
+## Performance
+
+Each accepted point re-smooths the whole stroke (every `smoothing` pass doubles the point count) and then limits it to `maxPoints`, so keep `smoothing` low for long strokes. The rebuild reuses grow-only buffers for smoothing, renderer positions and collider points: once a stroke has reached its length, further points and later strokes of a similar size allocate no managed memory. Buffers above 16384 elements are released when a stroke ends or is discarded: `EndLine`, `ResetPoints`, `BeginLine`, deleting the current line (`Delete`, `DeleteAll`), the line returning to its pool, and `OnDestroy`. The shared list behind the static `UpdateColliderPoints` is trimmed after any call that grew it above the same limit. A live collider is rewritten only when the rendered points change or the line's transform moves, not on every held frame.
 
 ## Visuals and templates
 
@@ -61,7 +100,7 @@ Static helpers require non-null inputs. Use finite coordinates and sensible nonn
 
 ## Collision and pooling
 
-Enable `addCollider`; use `colliderAfterCreation` for completion-only collision, or leave it off for live updates. Drawer reuses one `EdgeCollider2D` on each renderer, converts world vertices into collider-local coordinates, and disables collision until at least two rendered points exist. `UpdateColliderPoints(collider, worldPoints)` exposes the same conversion for C# callers. The edge radius uses the configured endpoint width, including the width multiplier; variable width and nonuniform scaling are approximations with a single-radius edge collider. `loop` closes the rendered line; it does not add a closing edge to the edge collider.
+Enable `addCollider`; use `colliderAfterCreation` for completion-only collision, or leave it off for live updates. Drawer reuses one `EdgeCollider2D` on each renderer, converts world vertices into collider-local coordinates, and disables collision until at least two rendered points exist. `UpdateColliderPoints(collider, worldPoints)` exposes the same conversion for C# callers and reuses a shared point buffer instead of allocating an array per call. The edge radius uses the configured endpoint width, including the width multiplier; variable width and nonuniform scaling are approximations with a single-radius edge collider. `loop` closes the rendered line; it does not add a closing edge to the edge collider.
 
 Enable `usePooling` and provide a scene `PoolManager`. Assign a `LineRenderer` as `poolPrefab` for reusable pools; if absent, Drawer creates an inactive source automatically. Without a manager, renderer creation falls back to normal instantiation. On destruction, Drawer returns its own rentals and calls `SpawnUtility.RetirePool` for only its unique automatic source before destroying the source. Retirement removes that exact registration, clears its inactive objects and prevents new creation. Outstanding external rentals remain alive until a valid return destroys them. Assigned/shared prefab pools and shared storage containers are preserved, including containers shared by sources with the same name.
 

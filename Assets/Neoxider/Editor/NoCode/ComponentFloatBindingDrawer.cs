@@ -25,6 +25,21 @@ namespace Neo.Editor.NoCode
         private static readonly GUIContent PrefabPreviewContent = new("Prefab Preview",
             "Drag a prefab from Project to configure components/properties before the instance exists.");
 
+        private static readonly GUIContent FindRetryIntervalContent = new("Find Retry Interval (sec)",
+            "How often GameObject.Find runs again while the object is missing. Non-blocking. 0 = every check. Default 1 s.");
+
+        private static readonly GUIContent SourceRootContent = new("Source Root",
+            "GameObject on which to pick the component. If empty — the GameObject with this NoCode component.");
+
+        private static readonly GUIContent HelpBoxMeasureContent = new();
+
+        // WHY: the drawer runs for height and draw on every IMGUI event. The pick lists are reused buffers
+        // (IMGUI is single-threaded and the drawer never nests) and the popups get cached option arrays.
+        private static readonly List<string> ComponentNamesBuffer = new();
+        private static readonly List<string> ComponentTypeNamesBuffer = new();
+        private static readonly List<string> MemberKeysBuffer = new();
+        private static readonly List<string> MemberLabelsBuffer = new();
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             float line = EditorGUIUtility.singleLineHeight;
@@ -44,7 +59,7 @@ namespace Neo.Editor.NoCode
                     h += (line + sp) * 3;
                     if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
                     {
-                        var found = GameObject.Find(searchNameProp.stringValue);
+                        GameObject found = ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue);
                         if (found != null)
                         {
                             h += line + sp;
@@ -80,7 +95,7 @@ namespace Neo.Editor.NoCode
 
             bool skipGenericHelp = useSearchProp != null && useSearchProp.boolValue && searchNameProp != null &&
                                    !string.IsNullOrEmpty(searchNameProp.stringValue) && !Application.isPlaying &&
-                                   GameObject.Find(searchNameProp.stringValue) == null;
+                                   ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue) == null;
             if (!skipGenericHelp)
             {
                 h += line * 2.25f;
@@ -102,7 +117,7 @@ namespace Neo.Editor.NoCode
             float sp = EditorGUIUtility.standardVerticalSpacing;
             float y = position.y;
 
-            var row = new Rect(position.x, y, position.width, line);
+            Rect row = new Rect(position.x, y, position.width, line);
             EditorGUI.LabelField(row, label, EditorStyles.boldLabel);
             y += line + sp;
 
@@ -134,14 +149,13 @@ namespace Neo.Editor.NoCode
                     if (findRetryProp != null)
                     {
                         row = new Rect(position.x, y, position.width, line);
-                        EditorGUI.PropertyField(row, findRetryProp, new GUIContent("Find Retry Interval (sec)",
-                            "How often GameObject.Find runs again while the object is missing. Non-blocking. 0 = every check. Default 1 s."));
+                        EditorGUI.PropertyField(row, findRetryProp, FindRetryIntervalContent);
                         y += line + sp;
                     }
 
                     if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
                     {
-                        var found = GameObject.Find(searchNameProp.stringValue);
+                        GameObject found = ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue);
                         if (found != null)
                         {
                             row = new Rect(position.x, y, position.width, line);
@@ -173,9 +187,7 @@ namespace Neo.Editor.NoCode
             if (useSearchProp == null || !useSearchProp.boolValue)
             {
                 row = new Rect(position.x, y, position.width, line);
-                EditorGUI.PropertyField(row, sourceProp,
-                    new GUIContent("Source Root",
-                        "GameObject on which to pick the component. If empty — the GameObject with this NoCode component."));
+                EditorGUI.PropertyField(row, sourceProp, SourceRootContent);
                 y += line + sp;
             }
 
@@ -185,7 +197,7 @@ namespace Neo.Editor.NoCode
             {
                 bool skipGenericHelp = useSearchProp != null && useSearchProp.boolValue && searchNameProp != null &&
                                        !string.IsNullOrEmpty(searchNameProp.stringValue) && !Application.isPlaying &&
-                                       GameObject.Find(searchNameProp.stringValue) == null;
+                                       ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue) == null;
                 if (!skipGenericHelp)
                 {
                     string fallback =
@@ -198,8 +210,8 @@ namespace Neo.Editor.NoCode
                 return;
             }
 
-            List<string> displayNames = new();
-            List<string> fullTypeNames = new();
+            List<string> displayNames = ComponentNamesBuffer;
+            List<string> fullTypeNames = ComponentTypeNamesBuffer;
             ComponentBindingInspectorShared.BuildComponentPickLists(root, displayNames, fullTypeNames);
 
             if (displayNames.Count == 0)
@@ -223,7 +235,8 @@ namespace Neo.Editor.NoCode
 
             row = new Rect(position.x, y, position.width, line);
             EditorGUI.BeginChangeCheck();
-            int newComp = EditorGUI.Popup(row, "Component", compIndex, displayNames.ToArray());
+            int newComp = EditorGUI.Popup(row, "Component", compIndex,
+                ComponentBindingInspectorShared.GetPopupOptions(root, displayNames));
             if (EditorGUI.EndChangeCheck() && newComp >= 0 && newComp < fullTypeNames.Count)
             {
                 typeProp.stringValue = fullTypeNames[newComp];
@@ -246,8 +259,8 @@ namespace Neo.Editor.NoCode
                 return;
             }
 
-            List<string> keys = new();
-            List<string> labels = new();
+            List<string> keys = MemberKeysBuffer;
+            List<string> labels = MemberLabelsBuffer;
             ComponentBindingInspectorShared.BuildFloatBindingMemberLists(selected, keys, labels);
             if (labels.Count == 0)
             {
@@ -271,7 +284,8 @@ namespace Neo.Editor.NoCode
 
             row = new Rect(position.x, y, position.width, line);
             EditorGUI.BeginChangeCheck();
-            int newMem = EditorGUI.Popup(row, "Member", memIdx, labels.ToArray());
+            int newMem = EditorGUI.Popup(row, "Member", memIdx,
+                ComponentBindingInspectorShared.GetFloatBindingMemberLabels(selected.GetType()));
             if (EditorGUI.EndChangeCheck() && newMem >= 0 && newMem < keys.Count)
             {
                 memberProp.stringValue = keys[newMem];
@@ -378,7 +392,10 @@ namespace Neo.Editor.NoCode
                 width = 280f;
             }
 
-            return EditorStyles.helpBox.CalcHeight(new GUIContent(text), width);
+            HelpBoxMeasureContent.text = text;
+            float height = EditorStyles.helpBox.CalcHeight(HelpBoxMeasureContent, width);
+            HelpBoxMeasureContent.text = null;
+            return height;
         }
 
         private static void Apply(SerializedProperty bindingProperty)

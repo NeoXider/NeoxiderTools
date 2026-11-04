@@ -1,6 +1,12 @@
 # ButtonPrice
 
-**Purpose:** A smart shop button that automatically switches its visual state and text based on its logical state: "Buy", "Select", "Selected", or "Unaffordable" (a priced item the player cannot pay for right now).
+**What it is:** a shop button view (`MonoBehaviour`, `Scripts/Shop/ButtonPrice.cs`, namespace `Neo.UI`) that switches its visual state and text based on its logical state: "Buy", "Select", "Selected", or "Unaffordable" (a priced item the player cannot pay for right now).
+
+**How to use:**
+1. Add it to a button inside a `ShopItem` row and assign the per-state visuals and texts.
+2. Let `ShopItem` / `ShopPurchaseButtonView` drive it, or call `SetVisual(price, ButtonPrice.ButtonType.Buy)` from code.
+
+---
 
 ## Setup
 

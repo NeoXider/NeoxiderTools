@@ -1,6 +1,15 @@
 ﻿# RevertAmount
 
-**Purpose:** A micro-utility that inverts an incoming value (`1 - amount`) and forwards it via a `UnityEvent<float>`. Useful for inverting progress (e.g., making an HP bar deplete when a timer counts up).
+**What it is:** a NoCode micro-utility `MonoBehaviour` that inverts an incoming value (`1 - amount`) and forwards it
+via a `UnityEvent<float>`, e.g. to make a bar deplete while a timer counts up. Script:
+`Scripts/Tools/Other/RevertAmount.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Other`.
+
+**How to use:**
+1. Add **Neoxider / Tools / RevertAmount** between a 0..1 producer and its consumer.
+2. Wire the producer's float event to `Amount(float)`.
+3. Wire **On Change** to the consumer (for example `Image.fillAmount`).
+
+---
 
 ## Fields (Inspector)
 

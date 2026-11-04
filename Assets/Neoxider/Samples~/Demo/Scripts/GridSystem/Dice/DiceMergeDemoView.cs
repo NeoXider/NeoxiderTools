@@ -1,11 +1,17 @@
 using System.Collections.Generic;
 using Neo.GridSystem;
 using Neo.GridSystem.Dice;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace Neo.Demo.GridSystem
 {
+    /// <summary>
+    ///     Runtime view of the dice merge demo: board cells (raycast targets with <see cref="GridCellMarker" />),
+    ///     placed dice and the tray piece are created from the live <see cref="FieldGenerator" /> and
+    ///     <see cref="DiceMergeDemoController" /> state. Drag the tray piece onto the board; a quick tap rotates it.
+    /// </summary>
     [AddComponentMenu("Neoxider/Demo/GridSystem/DiceMergeDemoView")]
     public sealed class DiceMergeDemoView : MonoBehaviour
     {
@@ -22,6 +28,13 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private DiceDieView _diePrefab;
         [SerializeField] private Sprite[] _diceSprites = new Sprite[9];
         [SerializeField] private Vector2 _cellSize = new(0.68f, 0.68f);
+
+        [Tooltip("Optional board backdrop art (a 9-sliced sprite is drawn sliced). Empty = a plain square owned by this view.")]
+        [SerializeField] private Sprite _backdropSprite;
+
+        [SerializeField] private Color _backdropColor = new(0.04f, 0.04f, 0.04f, 1f);
+
+        [Tooltip("Tray center relative to this object; the drag starts within 1.25 units of it.")]
         [SerializeField] private Vector3 _trayPosition = new(0f, -3.15f, 0f);
         [SerializeField] private Vector3 _dragWorldOffset = new(0f, 0.5f, 0f);
         [SerializeField] private bool _snapDragPreviewToGrid = true;
@@ -183,12 +196,24 @@ namespace Neo.Demo.GridSystem
             Vector3 last = _generator.GetCellWorldCenter(new Vector3Int(size.x - 1, size.y - 1, 0));
             Vector3 center = (first + last) * 0.5f;
             backdrop.transform.localPosition = _boardRoot.InverseTransformPoint(center) + new Vector3(0f, 0f, 0.08f);
-            backdrop.transform.localScale = new Vector3(size.x * 0.82f + 0.28f, size.y * 0.82f + 0.28f, 1f);
+            Vector3 cell = _generator.UnityGrid != null ? _generator.UnityGrid.cellSize : new Vector3(0.82f, 0.82f, 1f);
+            Vector2 backdropSize = new(size.x * cell.x + 0.28f, size.y * cell.y + 0.28f);
 
             SpriteRenderer renderer = backdrop.AddComponent<SpriteRenderer>();
-            renderer.sprite = CreateSolidSprite();
-            renderer.color = new Color(0.04f, 0.04f, 0.04f, 1f);
+            renderer.color = _backdropColor;
             renderer.sortingOrder = -1;
+            if (_backdropSprite != null && _backdropSprite.border != Vector4.zero)
+            {
+                renderer.sprite = _backdropSprite;
+                renderer.drawMode = SpriteDrawMode.Sliced;
+                renderer.size = backdropSize;
+                return;
+            }
+
+            renderer.sprite = _backdropSprite != null ? _backdropSprite : CreateSolidSprite();
+            Vector2 bounds = renderer.sprite.bounds.size;
+            backdrop.transform.localScale = new Vector3(backdropSize.x / Mathf.Max(bounds.x, 0.0001f),
+                backdropSize.y / Mathf.Max(bounds.y, 0.0001f), 1f);
         }
 
         public void RefreshAll()
@@ -381,30 +406,39 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (!MouseInputCompat.TryGetPosition(out Vector3 pointer))
+            {
+                return;
+            }
+
+            if (MouseInputCompat.TryGetButtonDown(0, out bool pressed) && pressed)
             {
                 if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 {
                     return;
                 }
 
-                Vector3 world = ScreenToWorld(Input.mousePosition);
-                if (Vector2.Distance(world, _trayPosition) <= 1.25f)
+                Vector3 world = ScreenToWorld(pointer);
+                // WHY: the tray is drawn relative to this object, so the hit test must use its world position.
+                if (Vector2.Distance(world, TrayWorldPosition) <= 1.25f)
                 {
                     StartDrag(world);
                 }
             }
 
-            if (_dragging && Input.GetMouseButton(0) && _dragRoot != null)
+            if (_dragging && _dragRoot != null && MouseInputCompat.TryGetButton(0, out bool held) && held)
             {
                 _dragRoot.position = ResolveDragPreviewPosition();
             }
 
-            if (_dragging && Input.GetMouseButtonUp(0))
+            if (_dragging && MouseInputCompat.TryGetButtonUp(0, out bool released) && released)
             {
                 FinishDrag();
             }
         }
+
+        /// <summary>World position of the tray piece (the drag start area).</summary>
+        public Vector3 TrayWorldPosition => transform.TransformPoint(_trayPosition);
 
         private void StartDrag(Vector3 world)
         {
@@ -422,7 +456,7 @@ namespace Neo.Demo.GridSystem
         private void FinishDrag()
         {
             _dragging = false;
-            float dragDistance = Vector2.Distance(_dragStartWorld, ScreenToWorld(Input.mousePosition));
+            float dragDistance = Vector2.Distance(_dragStartWorld, ScreenToWorld(PointerScreenPosition()));
             bool tap = dragDistance < 0.18f && Time.time - _dragStartTime < 0.35f;
 
             if (tap)
@@ -592,7 +626,7 @@ namespace Neo.Demo.GridSystem
 
         private Vector3 ResolveDragPreviewPosition()
         {
-            Vector3 targetWorld = ScreenToWorld(Input.mousePosition) + _dragWorldOffset;
+            Vector3 targetWorld = ScreenToWorld(PointerScreenPosition()) + _dragWorldOffset;
             if (_snapDragPreviewToGrid && _generator != null)
             {
                 return _generator.SnapWorldToCellCenter(targetWorld);
@@ -696,6 +730,11 @@ namespace Neo.Demo.GridSystem
             }
 
             return CreateSolidSprite();
+        }
+
+        private Vector3 PointerScreenPosition()
+        {
+            return MouseInputCompat.TryGetPosition(out Vector3 pointer) ? pointer : Vector3.zero;
         }
 
         private Vector3 ScreenToWorld(Vector3 screenPosition)

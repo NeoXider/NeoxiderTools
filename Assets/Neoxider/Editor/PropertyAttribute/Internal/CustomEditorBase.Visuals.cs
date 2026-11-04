@@ -5,67 +5,6 @@ namespace Neo.Editor
 {
     public abstract partial class CustomEditorBase
     {
-        private Color GetRainbowColor(float speed)
-        {
-            float time = (float)EditorApplication.timeSinceStartup * speed;
-            float hue = Mathf.Repeat(time, 1f);
-            return Color.HSVToRGB(hue, CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
-        }
-
-        private void DrawTextWithRainbowOutline(string text, GUIStyle baseStyle, params GUILayoutOption[] options)
-        {
-            Rect rect = GUILayoutUtility.GetRect(new GUIContent(text), baseStyle, options);
-
-            float outlineSize = CustomEditorSettings.RainbowOutlineSize;
-            float time = (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed;
-
-            GUIStyle outlineStyle = new(baseStyle);
-
-            for (int angle = 0; angle < 360; angle += 45)
-            {
-                float radian = angle * Mathf.Deg2Rad;
-                float offsetX = Mathf.Cos(radian) * outlineSize;
-                float offsetY = Mathf.Sin(radian) * outlineSize;
-
-                float hue = Mathf.Repeat(time + angle / 360f * 0.2f, 1f);
-                var outlineColor = Color.HSVToRGB(hue,
-                    CustomEditorSettings.RainbowSaturation,
-                    CustomEditorSettings.RainbowBrightness * 0.8f);
-                outlineColor.a = CustomEditorSettings.RainbowOutlineAlpha;
-
-                outlineStyle.normal.textColor = outlineColor;
-
-                Rect offsetRect = new(rect.x + offsetX, rect.y + offsetY, rect.width, rect.height);
-                GUI.Label(offsetRect, text, outlineStyle);
-            }
-
-            GUI.Label(rect, text, baseStyle);
-        }
-
-        private void DrawRainbowComponentOutlineBegin()
-        {
-            _componentOutlineRect = EditorGUILayout.BeginVertical();
-        }
-
-        private void DrawRainbowComponentOutlineEnd()
-        {
-            EditorGUILayout.EndVertical();
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                float time = (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed;
-                float borderWidth = CustomEditorSettings.RainbowComponentOutlineWidth;
-
-                Rect rect = _componentOutlineRect;
-                rect.x -= borderWidth;
-                rect.y -= borderWidth;
-                rect.width += borderWidth * 2;
-                rect.height += borderWidth * 2;
-
-                DrawRainbowBorder(rect, borderWidth, time);
-            }
-        }
-
         private void BeginRainbowLineTracking()
         {
             if (CustomEditorSettings.EnableRainbowLineAnimation)
@@ -84,23 +23,28 @@ namespace Neo.Editor
             DrawRainbowHalfFrame(_neoPanelRect, _frameMood, _framePlayMode);
         }
 
-        // WHY: 4 segments per chunk keeps the hue step invisible while joints inside a chunk get real
-        // miter joins from a single DrawAAPolyLine call (separate 2-point calls leave wedge gaps).
-        private const int ArcChunkSegments = 4;
+        // WHY: the frame is one polyline with a fixed vertex budget. Unity interpolates the per-vertex colours, so a
+        // smooth spectrum needs no more vertices than the corners need for their curve; the old version drew ~110
+        // separately coloured 5px pieces per repaint and allocated a params array for each of them.
+        private const int FrameArmPoints = 8;
+        private const int FrameArcPoints = 6;
+        private const int FrameEdgePoints = 30;
 
-        private static readonly System.Collections.Generic.List<Vector2> FramePointsScratch = new(160);
-        private static readonly Vector3[] ArcBufferScratch = new Vector3[ArcChunkSegments + 1];
+        internal const int FramePointCount =
+            FrameArmPoints + FrameArcPoints + FrameEdgePoints + FrameArcPoints + (FrameArmPoints - 1);
+
+        private static readonly Vector3[] FramePoints = new Vector3[FramePointCount];
+        private static readonly Color[] FrameColors = new Color[FramePointCount];
+        private static readonly float[] FrameDistances = new float[FramePointCount];
 
         /// <summary>
         ///     Smooth animated spectrum "half-frame" hugging the property card: left edge with rounded
-        ///     corners plus short top/bottom arms whose tips fade out. Continuous HSV hue along the path
-        ///     (no palette seams) replaces the old segmented left line.
+        ///     corners plus short top/bottom arms whose tips fade out. Continuous HSV hue along the path,
+        ///     drawn as a single anti-aliased polyline with per-vertex colours.
         /// </summary>
         private static void DrawRainbowHalfFrame(Rect panel, NeoComponentHealth.Mood mood, bool playMode)
         {
-            const float lineWidth = 2.5f;
-            const float step = 5f;
-            const int arcSlices = 16;
+            const float lineWidth = 2f;
             float inset = lineWidth * 0.5f + 0.5f;
             // WHY: The stroke centreline must sit at (card radius - inset) to stay concentric with the
             // card corner; a larger radius reads as the line peeling off exactly at the corners.
@@ -113,205 +57,160 @@ namespace Neo.Editor
                 return;
             }
 
-            float arm = Mathf.Clamp(r.width * 0.30f, 24f, 64f);
+            float arm = Mathf.Clamp(r.width * 0.25f, 20f, 48f);
+            if (!BuildFramePath(r, radius, arm))
+            {
+                return;
+            }
+
             bool animate = CustomEditorSettings.EnableRainbowLineAnimation && NeoInspectorAnimation.IsActive();
-            // WHY: In Play Mode the healthy spectrum flows faster — the frame "plays along".
+            // WHY: In Play Mode the healthy spectrum flows faster - the frame "plays along".
             float speedMul = playMode && mood == NeoComponentHealth.Mood.Ok ? 1.8f : 1f;
             float time = animate
                 ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 1.6f * speedMul
                 : 0f;
             float pulseT = animate ? (float)EditorApplication.timeSinceStartup : 0f;
 
-            // WHY: Segments must share exact joint points (arm end == arc start etc.) — walking with an
-            // open-ended for-loop leaves sub-step gaps that read as kinks at the corners.
-            System.Collections.Generic.List<Vector2> points = FramePointsScratch;
-            points.Clear();
-            Vector2 tlCenter = new(r.x + radius, r.y + radius);
-            Vector2 blCenter = new(r.x + radius, r.yMax - radius);
-
-            AppendLine(points, new Vector2(r.x + radius + arm, r.y), new Vector2(r.x + radius, r.y), step);
-            int tlStart = points.Count - 1;
-            // WHY: GUI y grows down and AppendArc negates sin, so the top-left quadrant sweeps 90°
-            // (top of the corner circle) -> 180° (left); sweeping from 270° traced the wrong
-            // quadrant and drew the visible "crooked corner" chord.
-            AppendArc(points, tlCenter, radius, 90f, 180f, arcSlices);
-            int tlEnd = points.Count - 1;
-            AppendLine(points, new Vector2(r.x, r.y + radius), new Vector2(r.x, r.yMax - radius), step);
-            int blStart = points.Count - 1;
-            AppendArc(points, blCenter, radius, 180f, 270f, arcSlices);
-            int blEnd = points.Count - 1;
-            AppendLine(points, new Vector2(r.x + radius, r.yMax), new Vector2(r.x + radius + arm, r.yMax), step);
-
-            Handles.BeginGUI();
-            int count = points.Count;
-            // WHY: Editor IMGUI is single-threaded and the frame animates every repaint — reuse
-            // scratch buffers instead of allocating per draw.
-            Vector3[] arcBuffer = ArcBufferScratch;
-            int i = 0;
-            while (i < count - 1)
+            float length = FrameDistances[FramePointCount - 1];
+            float fadeLength = Mathf.Max(8f, arm * 0.85f);
+            for (int i = 0; i < FramePointCount; i++)
             {
-                if (i == tlStart && tlEnd > tlStart)
-                {
-                    DrawArcRange(points, tlStart, tlEnd, count, arcBuffer, lineWidth, mood, time, pulseT);
-                    i = tlEnd;
-                }
-                else if (i == blStart && blEnd > blStart)
-                {
-                    DrawArcRange(points, blStart, blEnd, count, arcBuffer, lineWidth, mood, time, pulseT);
-                    i = blEnd;
-                }
-                else
-                {
-                    Handles.color = FrameColor(i / (float)(count - 1), mood, time, pulseT);
-                    Handles.DrawAAPolyLine(lineWidth, points[i], points[i + 1]);
-                    i++;
-                }
+                float distance = FrameDistances[i];
+                float fade = Mathf.Min(Mathf.InverseLerp(0f, fadeLength, distance),
+                    Mathf.InverseLerp(length, length - fadeLength, distance));
+                FrameColors[i] = FrameColor(distance / length, fade, mood, time, pulseT);
             }
 
+            Handles.BeginGUI();
+            Color previous = Handles.color;
+            Handles.color = Color.white;
+            Handles.DrawAAPolyLine(lineWidth, FrameColors, FramePoints);
+            Handles.color = previous;
             Handles.EndGUI();
         }
 
-        /// <summary>Draws one corner arc as a few multi-point AA polylines so its joints stay smooth.</summary>
-        private static void DrawArcRange(System.Collections.Generic.List<Vector2> points, int start, int end,
-            int totalCount, Vector3[] buffer, float width, NeoComponentHealth.Mood mood, float time, float pulseT)
+        /// <summary>
+        ///     Fills <see cref="FramePoints" /> with the half-frame path (top arm tip, top-left arc, left edge,
+        ///     bottom-left arc, bottom arm tip) and <see cref="FrameDistances" /> with the path length at each vertex.
+        ///     Segments share their joint vertices, so the corners have no gaps or kinks.
+        /// </summary>
+        internal static bool BuildFramePath(Rect r, float radius, float arm)
         {
-            for (int s = start; s < end; s += ArcChunkSegments)
+            int index = 0;
+            Vector2 tlCenter = new(r.x + radius, r.y + radius);
+            Vector2 blCenter = new(r.x + radius, r.yMax - radius);
+
+            AddLine(ref index, new Vector2(r.x + radius + arm, r.y), new Vector2(r.x + radius, r.y), FrameArmPoints,
+                true);
+            // WHY: GUI y grows down and AddArc negates sin, so the top-left quadrant sweeps 90° (top of the corner
+            // circle) -> 180° (left).
+            AddArc(ref index, tlCenter, radius, 90f, 180f, FrameArcPoints);
+            AddLine(ref index, new Vector2(r.x, r.y + radius), new Vector2(r.x, r.yMax - radius), FrameEdgePoints,
+                false);
+            AddArc(ref index, blCenter, radius, 180f, 270f, FrameArcPoints);
+            AddLine(ref index, new Vector2(r.x + radius, r.yMax), new Vector2(r.x + radius + arm, r.yMax),
+                FrameArmPoints - 1, false);
+
+            if (index != FramePointCount)
             {
-                int e = Mathf.Min(s + ArcChunkSegments, end);
-                int n = e - s + 1;
-                for (int k = 0; k < n; k++)
+                return false;
+            }
+
+            float distance = 0f;
+            FrameDistances[0] = 0f;
+            for (int i = 1; i < FramePointCount; i++)
+            {
+                distance += Vector3.Distance(FramePoints[i - 1], FramePoints[i]);
+                FrameDistances[i] = distance;
+            }
+
+            return distance > 0f;
+        }
+
+        /// <summary>Path vertex <paramref name="index" /> of the last <see cref="BuildFramePath" /> call (test hook).</summary>
+        internal static Vector3 GetFramePoint(int index)
+        {
+            return FramePoints[index];
+        }
+
+        /// <summary>Adds <paramref name="count" /> points from <paramref name="from" /> towards <paramref name="to" />.</summary>
+        /// <param name="includeStart">True for the first segment; later ones start after the shared joint.</param>
+        private static void AddLine(ref int index, Vector2 from, Vector2 to, int count, bool includeStart)
+        {
+            int steps = includeStart ? count - 1 : count;
+            for (int i = includeStart ? 0 : 1; i <= steps; i++)
+            {
+                if (index >= FramePointCount)
                 {
-                    buffer[k] = points[s + k];
+                    return;
                 }
 
-                Handles.color = FrameColor((s + e) * 0.5f / (totalCount - 1), mood, time, pulseT);
-                Handles.DrawAAPolyLine(width, n, buffer);
+                Vector2 p = Vector2.Lerp(from, to, i / (float)steps);
+                FramePoints[index++] = new Vector3(p.x, p.y, 0f);
+            }
+        }
+
+        /// <summary>Adds <paramref name="count" /> arc points after the shared start point.</summary>
+        private static void AddArc(ref int index, Vector2 center, float radius, float fromDeg, float toDeg, int count)
+        {
+            for (int i = 1; i <= count; i++)
+            {
+                if (index >= FramePointCount)
+                {
+                    return;
+                }
+
+                float a = Mathf.Lerp(fromDeg, toDeg, i / (float)count) * Mathf.Deg2Rad;
+                Vector2 p = center + new Vector2(Mathf.Cos(a), -Mathf.Sin(a)) * radius;
+                FramePoints[index++] = new Vector3(p.x, p.y, 0f);
             }
         }
 
         /// <summary>Half-frame colour at normalized path position <paramref name="t" /> (0 = top tip, 1 = bottom tip).</summary>
-        private static Color FrameColor(float t, NeoComponentHealth.Mood mood, float time, float pulseT)
+        private static Color FrameColor(float t, float fade, NeoComponentHealth.Mood mood, float time, float pulseT)
         {
             Color color;
             float alphaMax;
             switch (mood)
             {
-                // WHY: Worried = amber shimmer, Alarmed = red with a faster, deeper pulse — the frame
+                // WHY: Worried = amber shimmer, Alarmed = red with a faster, deeper pulse - the frame
                 // mirrors the mascot's mood so problems are visible before reading anything.
                 case NeoComponentHealth.Mood.Worried:
                     color = Color.HSVToRGB(0.085f + 0.025f * Mathf.Sin((t * 3f + pulseT * 0.9f) * Mathf.PI * 2f),
                         CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
-                    alphaMax = 0.8f + 0.15f * Mathf.Sin(pulseT * Mathf.PI * 1.6f);
+                    alphaMax = 0.78f + 0.14f * Mathf.Sin(pulseT * Mathf.PI * 1.6f);
                     break;
 
                 case NeoComponentHealth.Mood.Alarmed:
                     color = Color.HSVToRGB(
                         Mathf.Repeat(0.985f + 0.030f * Mathf.Sin((t * 3f + pulseT * 1.4f) * Mathf.PI * 2f), 1f),
                         CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
-                    alphaMax = 0.7f + 0.3f * Mathf.Sin(pulseT * Mathf.PI * 3.2f);
+                    alphaMax = 0.72f + 0.24f * Mathf.Sin(pulseT * Mathf.PI * 3.2f);
                     break;
 
                 default:
                     // WHY: HSV hue is circular, so hue + time wraps with no visible seam or banding.
                     color = Color.HSVToRGB(Mathf.Repeat(t + time, 1f),
                         CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
-                    alphaMax = 0.95f;
+                    alphaMax = 0.88f;
                     break;
             }
 
-            float fade = Mathf.Min(Mathf.InverseLerp(0f, 0.10f, t), Mathf.InverseLerp(1f, 0.90f, t));
             color.a = Mathf.SmoothStep(0f, Mathf.Clamp01(alphaMax), fade);
             return color;
         }
 
-        private static void AppendLine(System.Collections.Generic.List<Vector2> points,
-            Vector2 from, Vector2 to, float step)
-        {
-            float length = Vector2.Distance(from, to);
-            int slices = Mathf.Max(1, Mathf.CeilToInt(length / step));
-            int start = points.Count > 0 && (points[points.Count - 1] - from).sqrMagnitude < 0.01f ? 1 : 0;
-            for (int i = start; i <= slices; i++)
-            {
-                points.Add(Vector2.Lerp(from, to, i / (float)slices));
-            }
-        }
-
-        private static void AppendArc(System.Collections.Generic.List<Vector2> points,
-            Vector2 center, float radius, float fromDeg, float toDeg, int slices)
-        {
-            for (int i = 0; i <= slices; i++)
-            {
-                float a = Mathf.Lerp(fromDeg, toDeg, i / (float)slices) * Mathf.Deg2Rad;
-                Vector2 p = center + new Vector2(Mathf.Cos(a), -Mathf.Sin(a)) * radius;
-                if (points.Count > 0 && (points[points.Count - 1] - p).sqrMagnitude < 0.01f)
-                {
-                    continue;
-                }
-
-                points.Add(p);
-            }
-        }
-
-        private void DrawRainbowBorder(Rect rect, float borderWidth, float time)
-        {
-            const int segments = 40;
-            float perimeter = (rect.width + rect.height) * 2;
-
-            for (int i = 0; i < segments; i++)
-            {
-                float t = (float)i / segments;
-                float hue = Mathf.Repeat(time + t, 1f);
-                var color = Color.HSVToRGB(hue,
-                    CustomEditorSettings.RainbowSaturation,
-                    CustomEditorSettings.RainbowBrightness);
-
-                float nextT = (float)(i + 1) / segments;
-                Vector2 start = GetPointOnRectPerimeter(rect, t);
-                Vector2 end = GetPointOnRectPerimeter(rect, nextT);
-
-                Handles.BeginGUI();
-                Handles.color = color;
-                Handles.DrawAAPolyLine(borderWidth, start, end);
-                Handles.EndGUI();
-            }
-        }
-
         /// <summary>
-        ///     Samples a point on the rectangle perimeter (0–1 along the outline).
-        /// </summary>
-        private Vector2 GetPointOnRectPerimeter(Rect rect, float t)
-        {
-            float perimeter = (rect.width + rect.height) * 2;
-            float distance = t * perimeter;
-
-            if (distance < rect.width)
-            {
-                return new Vector2(rect.x + distance, rect.y);
-            }
-
-            distance -= rect.width;
-
-            if (distance < rect.height)
-            {
-                return new Vector2(rect.xMax, rect.y + distance);
-            }
-
-            distance -= rect.height;
-
-            if (distance < rect.width)
-            {
-                return new Vector2(rect.xMax - distance, rect.yMax);
-            }
-
-            distance -= rect.width;
-
-            return new Vector2(rect.x, rect.yMax - distance);
-        }
-
-        /// <summary>
-        ///     Draws a button using Unity natural style or the gradient style.
+        ///     Draws an action button in the Neoxider style: brand gradient, eased hover highlight, pressed state with
+        ///     the label dropping a pixel, dimmed when disabled. Click semantics match a GUI.Button (press, then
+        ///     release over the button).
         /// </summary>
         internal bool DrawGradientButton(string text, float width, float height = 0)
+        {
+            return DrawGradientButton(NeoInspectorStyles.TempContent(text), width, height);
+        }
+
+        private bool DrawGradientButton(GUIContent content, float width, float height)
         {
             if (height == 0)
             {
@@ -320,61 +219,71 @@ namespace Neo.Editor
 
             if (GradientButtonSettings.UseNaturalStyle)
             {
-                if (width > 0f)
-                {
-                    return GUILayout.Button(text, EditorStyles.miniButton, GUILayout.Width(width),
-                        GUILayout.Height(height));
-                }
-
-                return GUILayout.Button(text, EditorStyles.miniButton, GUILayout.Height(height),
-                    GUILayout.ExpandWidth(true));
+                return width > 0f
+                    ? GUILayout.Button(content, EditorStyles.miniButton, NeoInspectorStyles.Width(width))
+                    : GUILayout.Button(content, EditorStyles.miniButton, NeoInspectorStyles.HeightExpandWidth(height));
             }
 
             Rect buttonRect = width > 0f
                 ? GUILayoutUtility.GetRect(width, height)
-                : GUILayoutUtility.GetRect(0f, height, GUILayout.ExpandWidth(true));
+                : GUILayoutUtility.GetRect(0f, height, NeoInspectorStyles.ExpandWidth);
 
+            return DrawGradientButton(buttonRect, content);
+        }
+
+        /// <summary>Rect-based core of <see cref="DrawGradientButton(string, float, float)" />.</summary>
+        internal static bool DrawGradientButton(Rect buttonRect, GUIContent content)
+        {
             int controlId = GUIUtility.GetControlID(FocusType.Passive, buttonRect);
-            bool isHover = buttonRect.Contains(Event.current.mousePosition);
-            bool isPressed = GUIUtility.hotControl == controlId;
+            bool enabled = GUI.enabled;
+            bool isHover = enabled && buttonRect.Contains(Event.current.mousePosition);
+            bool isPressed = enabled && GUIUtility.hotControl == controlId;
 
             if (Event.current.type == EventType.Repaint)
             {
-                Rect shadowRect = new(buttonRect.x + 1.5f, buttonRect.y + 2.5f, buttonRect.width - 3f,
-                    buttonRect.height);
-                NeoInspectorTheme.DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, isPressed ? 0.10f : 0.22f),
-                    NeoInspectorTheme.RadiusButton);
+                Rect r = NeoInspectorTheme.Snap(buttonRect);
+                float hover = NeoInspectorAnimation.Hover(NeoInspectorAnimation.ControlKey(r), isHover);
+                float radius = Mathf.Min(NeoInspectorTheme.RadiusButton - 1f, r.height * 0.5f);
 
-                Texture2D gradient = isHover || isPressed
-                    ? NeoInspectorTheme.ButtonGradientHover
-                    : NeoInspectorTheme.ButtonGradient;
-                float edgeAlpha = isPressed ? 0.45f : isHover ? 0.34f : 0.18f;
-                NeoInspectorTheme.DrawRoundedTexture(buttonRect, gradient,
-                    new Color(1f, 1f, 1f, edgeAlpha), NeoInspectorTheme.RadiusButton, Color.white, 1f);
+                if (!isPressed && enabled)
+                {
+                    NeoInspectorTheme.DrawRoundedRect(new Rect(r.x, r.y + 1f, r.width, r.height),
+                        new Color(0f, 0f, 0f, 0.16f + 0.06f * hover), radius);
+                }
+
+                Color tint = enabled ? Color.white : new Color(0.62f, 0.64f, 0.70f, 0.55f);
+                float edgeAlpha = isPressed ? 0.34f : 0.14f + 0.16f * hover;
+                NeoInspectorTheme.DrawRoundedTexture(r, NeoInspectorTheme.ButtonGradient,
+                    new Color(1f, 1f, 1f, enabled ? edgeAlpha : 0.08f), radius, tint, 1f);
 
                 if (isPressed)
                 {
-                    NeoInspectorTheme.DrawRoundedRect(buttonRect, new Color(0f, 0f, 0f, 0.16f),
-                        NeoInspectorTheme.RadiusButton);
+                    NeoInspectorTheme.DrawRoundedRect(r, new Color(0f, 0f, 0f, 0.16f), radius);
                 }
-                else
+                else if (enabled)
                 {
-                    Rect sheen = new(buttonRect.x + 2f, buttonRect.y + 1f, buttonRect.width - 4f,
-                        Mathf.Max(1f, buttonRect.height * 0.42f));
-                    NeoInspectorTheme.DrawRoundedRect(sheen, new Color(1f, 1f, 1f, isHover ? 0.16f : 0.10f),
-                        NeoInspectorTheme.RadiusButton - 2f);
+                    NeoInspectorTheme.DrawRoundedRect(r, new Color(1f, 1f, 1f, 0.09f * hover), radius);
+                    EditorGUI.DrawRect(new Rect(r.x + radius, r.y + 1f, Mathf.Max(0f, r.width - radius * 2f), 1f),
+                        new Color(1f, 1f, 1f, 0.14f + 0.08f * hover));
                 }
 
-                float textDrop = isPressed ? 1.5f : 0f;
-                GUI.Label(new Rect(buttonRect.x, buttonRect.y + 1f + textDrop, buttonRect.width, buttonRect.height),
-                    text, NeoInspectorStyles.ButtonShadow);
-                GUI.Label(new Rect(buttonRect.x, buttonRect.y + textDrop, buttonRect.width, buttonRect.height),
-                    text, NeoInspectorStyles.ButtonText);
+                float textDrop = isPressed ? 1f : 0f;
+                GUIStyle textStyle = NeoInspectorStyles.ButtonText;
+                Color previousText = textStyle.normal.textColor;
+                textStyle.normal.textColor = new Color(1f, 1f, 1f, enabled ? 0.98f : 0.6f);
+                if (enabled)
+                {
+                    GUI.Label(new Rect(r.x, r.y + 1f + textDrop, r.width, r.height), content.text,
+                        NeoInspectorStyles.ButtonShadow);
+                }
+
+                GUI.Label(new Rect(r.x, r.y + textDrop, r.width, r.height), content, textStyle);
+                textStyle.normal.textColor = previousText;
             }
 
             // WHY: Proper click semantics (press down, release over the button) with repaint on hover change.
             // DisabledScope does not guard a custom event handler; respect it before capturing input.
-            if (!GUI.enabled)
+            if (!enabled)
             {
                 if (GUIUtility.hotControl == controlId)
                 {
@@ -395,6 +304,14 @@ namespace Neo.Editor
 
                     break;
 
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == controlId)
+                    {
+                        Event.current.Use();
+                    }
+
+                    break;
+
                 case EventType.MouseUp:
                     if (GUIUtility.hotControl == controlId)
                     {
@@ -410,37 +327,6 @@ namespace Neo.Editor
             }
 
             return false;
-        }
-
-        /// <summary>A small themed chip button (icon or text). <paramref name="filled" /> uses the accent as fill.</summary>
-        private bool DrawNeoMiniButton(Rect rect, GUIContent content, Color accent, bool filled)
-        {
-            bool hover = rect.Contains(Event.current.mousePosition);
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                Color bg = filled
-                    ? (hover ? Color.Lerp(accent, Color.white, 0.14f) : accent)
-                    : (hover ? new Color(1f, 1f, 1f, 0.16f) : new Color(1f, 1f, 1f, 0.07f));
-                Color edge = new(1f, 1f, 1f, hover ? 0.32f : 0.18f);
-                NeoInspectorTheme.DrawRoundedRect(rect, bg, edge, NeoInspectorTheme.RadiusButton - 1f, 1f);
-
-                if (content != null && content.image != null)
-                {
-                    Rect ir = new(rect.x + (rect.width - 14f) * 0.5f, rect.y + (rect.height - 14f) * 0.5f, 14f, 14f);
-                    Color oc = GUI.color;
-                    GUI.color = new Color(1f, 1f, 1f, hover ? 1f : 0.82f);
-                    GUI.DrawTexture(ir, content.image, ScaleMode.ScaleToFit, true);
-                    GUI.color = oc;
-                }
-                else if (content != null && !string.IsNullOrEmpty(content.text))
-                {
-                    GUI.Label(rect, content.text,
-                        NeoInspectorStyles.MiniChipText(filled ? Color.white : NeoInspectorTheme.TitleText));
-                }
-            }
-
-            return GUI.Button(rect, GUIContent.none, GUIStyle.none);
         }
     }
 }

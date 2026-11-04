@@ -1,15 +1,16 @@
 ﻿# SelectorItem
 
-**Purpose:** Receive logical selection from a parent `Selector` without requiring GameObject activation.
+**What it is:** a component that receives logical selection from a parent `Selector` without requiring GameObject activation.
 Namespace: `Neo.Tools`; assembly: `Neo.Tools.View`.
 
-## Setup
-
+**How to use:**
 - Attach to each item and enable the parent's `NotifySelectorItemsOnly`. The selector assigns `Index`.
 - Wire `OnActivated` / `OnDeactivated` to visuals or gameplay adapters. `SelectorItem.SetActive` changes
   logical state; it does not activate/deactivate its own GameObject.
 - The first parent synchronization can force matching-state callbacks once. Later identical values
   do not notify again unless `SetActive(value, forceNotify: true)` is requested.
+
+---
 
 ## C# API
 

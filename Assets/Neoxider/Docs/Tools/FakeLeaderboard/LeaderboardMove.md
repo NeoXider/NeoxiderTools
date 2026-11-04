@@ -1,15 +1,18 @@
 ﻿# LeaderboardMove
 
-`Neo.Tools.LeaderboardMove` scrolls its transform vertically toward the player's row and optionally
-pulses that row with DOTween. Add it through **Neoxider / Tools / FakeLeaderboard / LeaderboardMove**.
+**What it is:** `Neo.Tools.LeaderboardMove` scrolls its transform vertically toward the player's row and optionally
+pulses that row with DOTween. Add it through **Neoxider / Tools / FakeLeaderboard / LeaderboardMove**. Script: `Scripts/Tools/FakeLeaderboard/LeaderboardMove.cs`.
 
-## Setup
-
+**How to use:**
 Assign `leaderboard` explicitly, or leave it empty to resolve `Leaderboard.I`. The player's rank must
 have a corresponding non-null entry in `leaderboard.leaderboardItems`. A dedicated player summary is
 not used as the scrolling target. Place the component on the intended scrolling transform and configure
 `offsetY`; the legacy movement calculation aligns the row's world Y toward that offset when the row
 moves with this transform. UI layout and canvas coordinates must suit that arrangement.
+
+---
+
+## Setup
 
 | Field | Behavior |
 |-------|----------|

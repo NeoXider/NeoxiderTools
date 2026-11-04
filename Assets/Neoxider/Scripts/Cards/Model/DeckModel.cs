@@ -6,14 +6,56 @@ namespace Neo.Cards
     /// <summary>
     ///     Deck model (logic only, no view).
     /// </summary>
+    /// <remarks>
+    ///     Shuffling uses an injectable <see cref="System.Random" /> so replays, tests and networked games
+    ///     can reproduce the exact deck order: pass a seed or a shared random source to the constructor,
+    ///     or assign <see cref="ShuffleRandom" /> later.
+    /// </remarks>
     public class DeckModel : ICardContainer
     {
+        private const int SuitCount = 4;
+
         private readonly CardContainerModel _cards = new(CardLocation.Deck);
         private readonly List<CardData> _discardPile = new();
-        private readonly Random _random = new();
+        private Random _random;
         private List<CardData> _initialCards;
 
+        /// <summary>
+        ///     Creates a deck that shuffles with a fresh, time-seeded random source.
+        /// </summary>
+        public DeckModel() : this(null)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a deck whose shuffles are reproducible for the given seed.
+        /// </summary>
+        /// <param name="seed">Seed for the shuffle random source.</param>
+        public DeckModel(int seed) : this(new Random(seed))
+        {
+        }
+
+        /// <summary>
+        ///     Creates a deck that shuffles with the given random source (shared or seeded by the caller).
+        /// </summary>
+        /// <param name="random">Random source; null creates a fresh time-seeded one.</param>
+        public DeckModel(Random random)
+        {
+            _random = random ?? new Random();
+        }
+
         internal int Revision { get; private set; }
+
+        /// <summary>
+        ///     Random source used by <see cref="Shuffle()" />, <see cref="ReshuffleDiscardPile" /> and shuffling
+        ///     initialization/reset. Replace it to reseed the deck without rebuilding it.
+        /// </summary>
+        /// <exception cref="ArgumentNullException">The assigned value is null.</exception>
+        public Random ShuffleRandom
+        {
+            get => _random;
+            set => _random = value ?? throw new ArgumentNullException(nameof(value));
+        }
 
         /// <summary>
         ///     Cards still in the deck.
@@ -74,11 +116,11 @@ namespace Neo.Cards
 
             Rank minRank = deckType.GetMinRank();
 
-            foreach (Suit suit in Enum.GetValues(typeof(Suit)))
+            for (int suit = 0; suit < SuitCount; suit++)
             {
                 for (int r = (int)minRank; r <= (int)Rank.Ace; r++)
                 {
-                    _cards.Add(new CardData(suit, (Rank)r));
+                    _cards.Add(new CardData((Suit)suit, (Rank)r));
                 }
             }
 
@@ -108,7 +150,7 @@ namespace Neo.Cards
                 throw new ArgumentNullException(nameof(cards));
             }
 
-            // Snapshot before clearing: callers may pass this deck's Cards or a deferred query over it.
+            // WHY: snapshot before clearing; callers may pass this deck's Cards or a deferred query over it.
             List<CardData> initialCards = new(cards);
             _cards.Clear();
             _discardPile.Clear();
@@ -131,7 +173,24 @@ namespace Neo.Cards
         /// </summary>
         public void Shuffle()
         {
-            ShuffleInternal();
+            ShuffleInternal(_random);
+            NotifyDeckChanged();
+        }
+
+        /// <summary>
+        ///     Shuffles the draw pile (Fisher–Yates) with a one-off random source, leaving
+        ///     <see cref="ShuffleRandom" /> untouched.
+        /// </summary>
+        /// <param name="random">Random source for this shuffle only.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="random" /> is null.</exception>
+        public void Shuffle(Random random)
+        {
+            if (random == null)
+            {
+                throw new ArgumentNullException(nameof(random));
+            }
+
+            ShuffleInternal(random);
             NotifyDeckChanged();
         }
 
@@ -143,10 +202,16 @@ namespace Neo.Cards
 
         private void ShuffleInternal()
         {
-            for (int i = _cards.Count - 1; i > 0; i--)
+            ShuffleInternal(_random);
+        }
+
+        private void ShuffleInternal(Random random)
+        {
+            List<CardData> cards = _cards.Mutable;
+            for (int i = cards.Count - 1; i > 0; i--)
             {
-                int j = _random.Next(i + 1);
-                (_cards.Mutable[i], _cards.Mutable[j]) = (_cards.Mutable[j], _cards.Mutable[i]);
+                int j = random.Next(i + 1);
+                (cards[i], cards[j]) = (cards[j], cards[i]);
             }
         }
 
@@ -180,11 +245,12 @@ namespace Neo.Cards
         /// <summary>
         ///     Draws up to <paramref name="count" /> cards.
         /// </summary>
-        /// <param name="count">How many.</param>
+        /// <param name="count">How many; zero or negative returns an empty list.</param>
         /// <returns>Drawn cards.</returns>
         public List<CardData> Draw(int count)
         {
-            List<CardData> result = new(count);
+            // WHY: List capacity must be non-negative, and over-asking should not over-allocate.
+            List<CardData> result = new(Math.Max(0, Math.Min(count, _cards.Count)));
 
             for (int i = 0; i < count && _cards.Count > 0; i++)
             {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -26,45 +27,89 @@ namespace Neo.Network
     }
 #endif
 
+    /// <summary>Where <see cref="NetworkContextActionRelay"/> takes the context object from.</summary>
     public enum NetworkContextSourceMode
     {
+        /// <summary>The relay's own GameObject.</summary>
         Self = 0,
+
+        /// <summary>The local player object (host player on a server).</summary>
         LocalPlayer = 1,
+
+        /// <summary>The player object of the connection that owns the relay.</summary>
         Owner = 2,
+
+        /// <summary>The object passed to <c>Trigger(Collider)</c> / <c>Trigger(GameObject)</c>.</summary>
         EventArgument = 3,
+
+        /// <summary>The assigned <see cref="NetworkContextActionRelay.ExplicitContext"/>.</summary>
         ExplicitObject = 4
     }
 
+    /// <summary>How the context object is climbed to the networked root that identifies it on every peer.</summary>
     public enum NetworkContextRootMode
     {
+        /// <summary>The context object itself.</summary>
         SourceObject = 0,
+
+        /// <summary>The nearest <c>NetworkIdentity</c> in the parents.</summary>
         NetworkIdentityInParents = 1,
+
+        /// <summary>The nearest <see cref="NeoNetworkPlayer"/> in the parents.</summary>
         NeoNetworkPlayerInParents = 2
     }
 
+    /// <summary>Where the action target is found below the resolved root.</summary>
     public enum NetworkContextTargetMode
     {
+        /// <summary>The root itself.</summary>
         Root = 0,
+
+        /// <summary>The first descendant with the configured name (depth-first).</summary>
         ChildByName = 1,
+
+        /// <summary>A <c>Transform.Find</c> path below the root.</summary>
         ChildByPath = 2,
+
+        /// <summary>The first object below the root carrying the configured component type.</summary>
         ChildByComponent = 3
     }
 
+    /// <summary>What <see cref="NetworkContextActionRelay"/> does with the resolved target.</summary>
     public enum NetworkContextActionType
     {
+        /// <summary>Only raise the relay's UnityEvents.</summary>
         InvokeEventsOnly = 0,
+
+        /// <summary><c>SetActive</c> with the configured bool.</summary>
         SetActive = 1,
+
+        /// <summary><c>SendMessage</c> with the configured method name.</summary>
         SendMessage = 2,
+
+        /// <summary>Call a public method of a component on the target via reflection.</summary>
         InvokeComponentMethod = 3
     }
 
+    /// <summary>Argument passed to the method of <see cref="NetworkContextActionType.InvokeComponentMethod"/>.</summary>
     public enum NetworkContextMethodArgumentMode
     {
+        /// <summary>Parameterless method.</summary>
         None = 0,
+
+        /// <summary>The configured bool.</summary>
         Bool = 1,
+
+        /// <summary>The configured float.</summary>
         Float = 2,
+
+        /// <summary>The configured string (null allowed).</summary>
         String = 3,
+
+        /// <summary>The resolved target GameObject.</summary>
         TargetGameObject = 4,
+
+        /// <summary>The resolved context root GameObject.</summary>
         ContextGameObject = 5
     }
 
@@ -130,10 +175,33 @@ namespace Neo.Network
 
         private static bool s_verboseRegistrationLogging;
 
+        /// <summary>
+        ///     Resolved component types by configured name. Without it every apply of a
+        ///     ChildByComponent / InvokeComponentMethod relay rescanned every loaded assembly on every peer.
+        /// </summary>
+        private static readonly Dictionary<string, Type> s_resolvedTypes = new(StringComparer.Ordinal);
+
+        /// <summary>
+        ///     Unresolved type names with the <see cref="s_assemblyLoads"/> value of their last scan. A miss is
+        ///     scanned again only after another assembly has loaded (a mod or hot-update DLL loaded at runtime).
+        /// </summary>
+        private static readonly Dictionary<string, int> s_unresolvedTypes = new(StringComparer.Ordinal);
+
+        private static int s_assemblyLoads;
+        private static bool s_assemblyLoadHooked;
+
+        private Type _cachedMethodOwner;
+        private Type _cachedMethodArgumentType;
+        private string _cachedMethodName;
+        private MethodInfo _cachedMethod;
+        private object[] _singleArgument;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticDiagnosticsState()
         {
             s_verboseRegistrationLogging = false;
+            s_resolvedTypes.Clear();
+            s_unresolvedTypes.Clear();
 #if MIRROR
             s_enabledRelays.Clear();
             ResetServerIngressState();
@@ -188,36 +256,42 @@ namespace Neo.Network
         protected override float NetworkRateLimit => 0f;
 #endif
 
+        /// <summary>Where the context object comes from.</summary>
         public NetworkContextSourceMode ContextSource
         {
             get => _contextSource;
             set => _contextSource = value;
         }
 
+        /// <summary>How the context is climbed to its networked root.</summary>
         public NetworkContextRootMode RootMode
         {
             get => _rootMode;
             set => _rootMode = value;
         }
 
+        /// <summary>Where the action target is found below the root.</summary>
         public NetworkContextTargetMode TargetMode
         {
             get => _targetMode;
             set => _targetMode = value;
         }
 
+        /// <summary>What is done with the resolved target.</summary>
         public NetworkContextActionType Action
         {
             get => _action;
             set => _action = value;
         }
 
+        /// <summary>Who applies the action: all clients, the server only, or everyone except the sender.</summary>
         public NetworkActionScope Scope
         {
             get => _scope;
             set => _scope = value;
         }
 
+        /// <summary>Which remote senders may trigger the relay.</summary>
         public NetworkAuthorityMode AuthorityMode
         {
             get => _authorityMode;
@@ -236,72 +310,84 @@ namespace Neo.Network
             set => _triggerOnlyForLocalContext = value;
         }
 
+        /// <summary>Descendant name for <see cref="NetworkContextTargetMode.ChildByName"/>.</summary>
         public string TargetChildName
         {
             get => _targetName;
             set => _targetName = value;
         }
 
+        /// <summary><c>Transform.Find</c> path for <see cref="NetworkContextTargetMode.ChildByPath"/>.</summary>
         public string TargetChildPath
         {
             get => _targetPath;
             set => _targetPath = value;
         }
 
+        /// <summary>Full or assembly-qualified component type for <see cref="NetworkContextTargetMode.ChildByComponent"/>.</summary>
         public string TargetComponentTypeName
         {
             get => _targetComponentType;
             set => _targetComponentType = value;
         }
 
+        /// <summary>Include inactive children when searching for the target or component.</summary>
         public bool IncludeInactive
         {
             get => _includeInactive;
             set => _includeInactive = value;
         }
 
+        /// <summary>Value for <see cref="NetworkContextActionType.SetActive"/> and the Bool method argument.</summary>
         public bool ActionBoolValue
         {
             get => _boolValue;
             set => _boolValue = value;
         }
 
+        /// <summary>Value of the Float method argument.</summary>
         public float ActionFloatValue
         {
             get => _floatValue;
             set => _floatValue = value;
         }
 
+        /// <summary>Method name for <see cref="NetworkContextActionType.SendMessage"/>.</summary>
         public string SendMessageName
         {
             get => _messageName;
             set => _messageName = value;
         }
 
+        /// <summary>Value of the String method argument.</summary>
         public string ActionStringValue
         {
             get => _stringValue;
             set => _stringValue = value;
         }
 
+        /// <summary>Full or assembly-qualified component type whose method is invoked.</summary>
         public string MethodComponentTypeName
         {
             get => _methodComponentType;
             set => _methodComponentType = value;
         }
 
+        /// <summary>Public method invoked by <see cref="NetworkContextActionType.InvokeComponentMethod"/>.</summary>
         public string MethodName
         {
             get => _methodName;
             set => _methodName = value;
         }
 
+        /// <summary>Selects the method signature and its argument.</summary>
         public NetworkContextMethodArgumentMode MethodArgumentMode
         {
             get => _methodArgumentMode;
             set => _methodArgumentMode = value;
         }
 
+        /// <summary>Context object for <see cref="NetworkContextSourceMode.ExplicitObject"/>.</summary>
         public GameObject ExplicitContext
         {
             get => _explicitContext;
@@ -318,8 +404,13 @@ namespace Neo.Network
             set => _editorPreviewTarget = value;
         }
 
+        /// <summary>Raised on every peer that applies the action, after server validation.</summary>
         public UnityEvent OnNetworkTriggered => _onNetworkTriggered;
+
+        /// <summary>Raised with the resolved context root (for example the entering player).</summary>
         public GameObjectEvent OnContextResolved => _onContextResolved;
+
+        /// <summary>Raised with the resolved target.</summary>
         public GameObjectEvent OnTargetResolved => _onTargetResolved;
 
         /// <summary>Enable to print step-by-step trace logs (Trigger → Send → Receive → Apply).</summary>
@@ -333,6 +424,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Enable to log Mirror handler registration (transport setup diagnostics).</summary>
         public bool VerboseRegistrationLogging
         {
             get => _verboseRegistrationLogging;
@@ -357,7 +449,7 @@ namespace Neo.Network
         private void Awake()
         {
             s_verboseRegistrationLogging |= _verboseRegistrationLogging || _verboseLogging;
-            // Track only active, enabled relays; OnEnable handles later activation.
+            // WHY: Awake also runs for a disabled component; OnEnable tracks it once it is enabled.
             if (isActiveAndEnabled)
             {
                 TrackEnabledRelay();
@@ -497,21 +589,25 @@ namespace Neo.Network
             TriggerFromSource(null);
         }
 
+        /// <summary>Applies the action with this object as the context.</summary>
         public void TriggerSelf()
         {
             TriggerWithContext(gameObject);
         }
 
+        /// <summary>Applies the action with the local player as the context.</summary>
         public void TriggerLocalPlayer()
         {
             TriggerWithContext(GetLocalPlayerObject());
         }
 
+        /// <summary>Entry point for physics events; the collider is the event argument.</summary>
         public void Trigger(Collider context)
         {
             TriggerFromSource(context != null ? context.gameObject : null);
         }
 
+        /// <summary>Entry point for events that pass a GameObject; it is the event argument.</summary>
         public void Trigger(GameObject context)
         {
             TriggerFromSource(context);
@@ -827,7 +923,7 @@ namespace Neo.Network
             }
 
             object argument = GetConfiguredArgument(target, context);
-            // Resolve the configured signature even when a reference argument is null.
+            // WHY: resolve the configured signature even when a reference argument is null.
             Type argumentType = _methodArgumentMode switch
             {
                 NetworkContextMethodArgumentMode.Bool => typeof(bool),
@@ -837,9 +933,7 @@ namespace Neo.Network
                 NetworkContextMethodArgumentMode.ContextGameObject => typeof(GameObject),
                 _ => null
             };
-            MethodInfo method = argumentType != null
-                ? component.GetType().GetMethod(_methodName, new[] { argumentType })
-                : component.GetType().GetMethod(_methodName, Type.EmptyTypes);
+            MethodInfo method = ResolveConfiguredMethod(component.GetType(), argumentType);
 
             if (method == null)
             {
@@ -853,8 +947,48 @@ namespace Neo.Network
                 return false;
             }
 
-            method.Invoke(component, argumentType != null ? new[] { argument } : null);
+            if (argumentType == null)
+            {
+                method.Invoke(component, null);
+                return true;
+            }
+
+            object[] arguments = _singleArgument ??= new object[1];
+            arguments[0] = argument;
+            try
+            {
+                method.Invoke(component, arguments);
+            }
+            finally
+            {
+                arguments[0] = null;
+            }
+
             return true;
+        }
+
+        /// <summary>
+        ///     Returns the configured method of <paramref name="componentType"/>, reusing the last lookup while the
+        ///     component type, method name and argument signature stay the same.
+        /// </summary>
+        private MethodInfo ResolveConfiguredMethod(Type componentType, Type argumentType)
+        {
+            if (_cachedMethod != null
+                && ReferenceEquals(_cachedMethodOwner, componentType)
+                && ReferenceEquals(_cachedMethodArgumentType, argumentType)
+                && string.Equals(_cachedMethodName, _methodName, StringComparison.Ordinal))
+            {
+                return _cachedMethod;
+            }
+
+            MethodInfo method = argumentType != null
+                ? componentType.GetMethod(_methodName, new[] { argumentType })
+                : componentType.GetMethod(_methodName, Type.EmptyTypes);
+            _cachedMethodOwner = componentType;
+            _cachedMethodArgumentType = argumentType;
+            _cachedMethodName = _methodName;
+            _cachedMethod = method;
+            return method;
         }
 
         private object GetConfiguredArgument(GameObject target, GameObject context)
@@ -893,29 +1027,69 @@ namespace Neo.Network
             return root.GetComponentInChildren(componentType, _includeInactive);
         }
 
-        private static Type ResolveType(string typeName)
+        /// <summary>
+        ///     Resolves a configured type name (full or assembly-qualified) once per name; later calls are a
+        ///     dictionary lookup without allocation. An unresolved name is scanned again only after a new
+        ///     assembly has loaded, so a type from a DLL loaded at runtime is still found.
+        /// </summary>
+        internal static Type ResolveType(string typeName)
         {
             if (string.IsNullOrEmpty(typeName))
             {
                 return null;
             }
 
-            Type type = Type.GetType(typeName);
-            if (type != null)
+            if (s_resolvedTypes.TryGetValue(typeName, out Type cached))
             {
-                return type;
+                return cached;
             }
 
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            HookAssemblyLoads();
+            // WHY: read before the scan, so an assembly that loads while it runs triggers another scan later.
+            int assemblyLoads = Volatile.Read(ref s_assemblyLoads);
+            if (s_unresolvedTypes.TryGetValue(typeName, out int scannedAt) && scannedAt == assemblyLoads)
             {
-                type = assembly.GetType(typeName);
-                if (type != null)
+                return null;
+            }
+
+            Type type = Type.GetType(typeName);
+            if (type == null)
+            {
+                Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                for (int i = 0; i < assemblies.Length && type == null; i++)
                 {
-                    return type;
+                    type = assemblies[i].GetType(typeName);
                 }
             }
 
-            return null;
+            if (type == null)
+            {
+                s_unresolvedTypes[typeName] = assemblyLoads;
+                return null;
+            }
+
+            s_unresolvedTypes.Remove(typeName);
+            s_resolvedTypes[typeName] = type;
+            return type;
+        }
+
+        private static void HookAssemblyLoads()
+        {
+            if (s_assemblyLoadHooked)
+            {
+                return;
+            }
+
+            // WHY: the flag is not reset at play start; the AppDomain (and this subscription) survives a play
+            // session when domain reload is disabled, and a second subscription would only count loads twice.
+            s_assemblyLoadHooked = true;
+            AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoaded;
+        }
+
+        // WHY: may run on a loader thread, so it only bumps a counter; the caches stay main-thread only.
+        private static void OnAssemblyLoaded(object sender, AssemblyLoadEventArgs args)
+        {
+            Interlocked.Increment(ref s_assemblyLoads);
         }
 
         private GameObject GetLocalPlayerObject()
@@ -1140,17 +1314,11 @@ namespace Neo.Network
 
         /// <summary>
         ///     Server-side dispatch: applies the action authoritatively (when meaningful for the local instance)
-        ///     and broadcasts a <see cref="NetworkContextActionMessage"/> to the remaining clients.
-        ///
-        ///     The original implementation tried to deliver the per-client effect via Mirror's <c>[ClientRpc]</c>,
-        ///     which is observer-driven: the RPC reaches every connection that observes the trigger's
-        ///     <see cref="NetworkIdentity"/>. In practice this is fragile for triggers that live on scene
-        ///     <see cref="NetworkIdentity"/> objects — the observer list can be empty mid-spawn or be filtered by
-        ///     AOI/interest management. The result was a "host sees it, remote doesn't" bug.
-        ///
-        ///     This version always uses the direct <see cref="NetworkConnection.Send{T}"/> path so every
-        ///     connected client receives the action regardless of the relay's observer state. The host's
-        ///     local connection is skipped because the server already applied locally, avoiding a double-apply.
+        ///     and sends a <see cref="NetworkContextActionMessage"/> to the relay's observers, the connections
+        ///     that have the relay's object spawned (see <see cref="SendToClients"/>).
+        ///     <para>The host's local connection is skipped because the server applies locally, avoiding a
+        ///     double-apply. Remote observers are sent to before the local apply, so a throwing host-side listener
+        ///     cannot leave them out of sync.</para>
         /// </summary>
         private void DispatchOnServer(NetworkContextActionMessage message, NetworkConnectionToClient sender)
         {
@@ -1196,16 +1364,18 @@ namespace Neo.Network
             }
 
             // WHY: AllClients - apply once on the host's client view (via the server-side apply) and broadcast to remotes.
-            // A dedicated server only relays to clients; it has no local client view to apply.
+            // A dedicated server only relays to clients; it has no local client view to apply. Remotes are sent to
+            // first: an exception from a host listener must not skip them.
             if (isHost)
             {
-                ApplyResolved(root);
                 int sent = SendToClients(message, true);
                 if (_verboseLogging)
                 {
                     LogVerbose(
-                        $"AllClients broadcast complete on '{name}' (host): applied locally + sent to {sent} remote connection(s)");
+                        $"AllClients broadcast on '{name}' (host): sent to {sent} remote connection(s), applying locally");
                 }
+
+                ApplyResolved(root);
             }
             else
             {
@@ -1314,7 +1484,24 @@ namespace Neo.Network
                     $"OnServerMessage on '{relay.name}#{message.relayComponentIndex}': from connId={sender.connectionId}, relayNetId={message.relayNetId}, contextNetId={message.contextNetId}");
             }
 
-            relay.DispatchOnServer(message, sender);
+            try
+            {
+                relay.DispatchOnServer(message, sender);
+            }
+            catch (Exception exception)
+            {
+                // WHY: Mirror disconnects the sending peer when a message handler throws. A bug in a server-side
+                // gameplay listener must not kick the player whose valid message triggered it.
+                LogListenerException(exception, relay);
+            }
+        }
+
+        private static void LogListenerException(Exception exception, NetworkContextActionRelay relay)
+        {
+            Exception reported = exception is TargetInvocationException invocation && invocation.InnerException != null
+                ? invocation.InnerException
+                : exception;
+            NetworkDiagnostics.LogException(reported, relay);
         }
 
         private static void OnClientMessage(NetworkContextActionMessage message)
@@ -1356,7 +1543,15 @@ namespace Neo.Network
                     $"OnClientMessage on '{relay.name}#{message.relayComponentIndex}': applying with relayNetId={message.relayNetId}, contextNetId={message.contextNetId} ('{root.name}')");
             }
 
-            relay.ApplyResolved(root);
+            try
+            {
+                relay.ApplyResolved(root);
+            }
+            catch (Exception exception)
+            {
+                // WHY: an exception escaping a client message handler makes Mirror drop the whole connection.
+                LogListenerException(exception, relay);
+            }
         }
 
         /// <summary>
@@ -1436,17 +1631,28 @@ namespace Neo.Network
             return TryResolveClientObject(netId, out result);
         }
 
+        /// <summary>
+        ///     Sends to the observers of the relay's <see cref="NetworkIdentity"/>: exactly the connections Mirror
+        ///     sent that object's spawn message to, spectators without a player included.
+        /// </summary>
+        /// <remarks>
+        ///     Any other connection has no relay to apply the action, and often no handler for the message: a client
+        ///     that is still loading, or one whose relay object is hidden by interest management (hiding a scene
+        ///     object disables it, and the last disabled relay unregisters the client handler). Mirror disconnects a
+        ///     client that receives a message id it has no handler for.
+        /// </remarks>
         private int SendToClients(NetworkContextActionMessage message, bool skipHostLocal)
         {
-            int sent = 0;
-            foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
+            Dictionary<int, NetworkConnectionToClient> observers = GetRelayObservers(message.relayNetId);
+            if (observers == null)
             {
-                if (connection == null)
-                {
-                    continue;
-                }
+                return 0;
+            }
 
-                if (skipHostLocal && IsHostLocalConnection(connection))
+            int sent = 0;
+            foreach (NetworkConnectionToClient connection in observers.Values)
+            {
+                if (connection == null || (skipHostLocal && IsHostLocalConnection(connection)))
                 {
                     continue;
                 }
@@ -1458,11 +1664,18 @@ namespace Neo.Network
             return sent;
         }
 
+        /// <summary>Same audience as <see cref="SendToClients"/>, minus the sender.</summary>
         private int SendToOthers(NetworkConnectionToClient sender, NetworkContextActionMessage message,
             bool skipHostSender)
         {
+            Dictionary<int, NetworkConnectionToClient> observers = GetRelayObservers(message.relayNetId);
+            if (observers == null)
+            {
+                return 0;
+            }
+
             int sent = 0;
-            foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
+            foreach (NetworkConnectionToClient connection in observers.Values)
             {
                 if (IsSenderConnection(connection, sender, skipHostSender))
                 {
@@ -1474,6 +1687,18 @@ namespace Neo.Network
             }
 
             return sent;
+        }
+
+        private static Dictionary<int, NetworkConnectionToClient> GetRelayObservers(uint relayNetId)
+        {
+            if (relayNetId == NoNetId ||
+                !NetworkServer.spawned.TryGetValue(relayNetId, out NetworkIdentity relayIdentity) ||
+                relayIdentity == null)
+            {
+                return null;
+            }
+
+            return relayIdentity.observers;
         }
 
         private static bool IsSenderConnection(NetworkConnectionToClient connection, NetworkConnectionToClient sender,
@@ -1515,6 +1740,7 @@ namespace Neo.Network
         }
 #endif
 
+        /// <summary>UnityEvent carrying a GameObject (serializable for the inspector).</summary>
         [Serializable]
         public class GameObjectEvent : UnityEvent<GameObject>
         {

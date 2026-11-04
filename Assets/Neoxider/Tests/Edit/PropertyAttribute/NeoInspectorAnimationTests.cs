@@ -235,6 +235,55 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void Ticker_InTheBackground_KeepsClientsAndLiveData_AndRepaintsOnceOnRefocus()
+        {
+            Assume.That(EditorApplication.isPlaying, Is.False);
+            CustomEditorSettings.SetEnableAnimations(true);
+
+            Probe liveProbe = ScriptableObject.CreateInstance<Probe>();
+            ProbeEditor liveEditor = null;
+            try
+            {
+                liveEditor = (ProbeEditor)UnityEditor.Editor.CreateEditor(liveProbe, typeof(ProbeEditor));
+                _editor.RequestAnimation();
+                liveEditor.RequestLive();
+
+                // WHY: inside both 0.5 s leases, yet past any channel interval the real ticker may just have used.
+                double background = EditorApplication.timeSinceStartup + 0.2;
+                int animatedBefore = _editor.TickerRepaintCount;
+                int liveBefore = liveEditor.TickerRepaintCount;
+
+                CustomEditorBase.TickRepaintClients(background, false);
+
+                Assert.That(_editor.IsRepaintClient, Is.True,
+                    "A client is kept, not dropped, while Unity is in the background.");
+                Assert.That(_editor.TickerRepaintCount, Is.EqualTo(animatedBefore),
+                    "Decorative animation idles while another application has focus.");
+                Assert.That(liveEditor.TickerRepaintCount, Is.EqualTo(liveBefore + 1),
+                    "Live data (a NeoCondition result, update-check progress) keeps refreshing in the background.");
+
+                double refocus = background + 0.05;
+                CustomEditorBase.TickRepaintClients(refocus, true);
+
+                Assert.That(_editor.TickerRepaintCount, Is.GreaterThan(animatedBefore),
+                    "Every kept client repaints once when the editor is focused again.");
+                Assert.That(liveEditor.TickerRepaintCount, Is.GreaterThan(liveBefore + 1));
+                Assert.That(_editor.HasRepaintLease(refocus + 0.4), Is.True,
+                    "The refocus repaint extends the status lease, so the inspector draws again and renews its own " +
+                    "animation lease instead of dropping out of the ticker.");
+            }
+            finally
+            {
+                if (liveEditor != null)
+                {
+                    Object.DestroyImmediate(liveEditor);
+                }
+
+                Object.DestroyImmediate(liveProbe);
+            }
+        }
+
+        [Test]
         public void GetButtonMethods_FindsOnlyButtonMethods_AndCachesTheResult()
         {
             MethodInfo[] first = _editor.GetButtonMethods();

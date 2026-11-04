@@ -247,10 +247,11 @@ namespace Neo.Settings
                     _graphicsPresetDropdown.SetValueWithoutNotify(PresetToDropdownIndex(GameSettings.GraphicsPreset));
                 }
 
-                if (_qualityDropdown != null && QualitySettings.names.Length > 0)
+                int qualityCount = QualitySettings.count;
+                if (_qualityDropdown != null && qualityCount > 0)
                 {
                     _qualityDropdown.SetValueWithoutNotify(
-                        Mathf.Clamp(GameSettings.QualityLevelIndex, 0, QualitySettings.names.Length - 1));
+                        Mathf.Clamp(GameSettings.QualityLevelIndex, 0, qualityCount - 1));
                 }
 
                 if (_fullScreenToggle != null)

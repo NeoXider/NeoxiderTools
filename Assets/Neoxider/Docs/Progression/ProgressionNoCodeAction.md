@@ -1,14 +1,15 @@
 ﻿# ProgressionNoCodeAction
 
-`ProgressionNoCodeAction` is a UnityEvent-friendly bridge component for triggering progression actions without writing code. File: `Assets/Neoxider/Scripts/Progression/Bridge/ProgressionNoCodeAction.cs`.
+**What it is:** a UnityEvent-friendly bridge component (`Scripts/Progression/Bridge/ProgressionNoCodeAction.cs`) for triggering progression actions without writing code. Each action calls one typed `ProgressionManager` method.
 
-## Typical use
-
+**How to use:**
 1. Add `ProgressionNoCodeAction` to a scene object.
 2. Assign `ProgressionManager`, or leave it empty if the project uses singleton access.
 3. Choose an `Action Type`.
 4. Fill fields such as XP amount, perk points, node id, or perk id depending on the action.
 5. Call `Execute()` from a `Button`, animation event, quest event, or other UnityEvent source.
+
+---
 
 ## Supported actions
 
@@ -21,6 +22,9 @@
 | `ResetProgression` | Resets the profile |
 | `SaveProfile` | Forces profile save |
 | `LoadProfile` | Forces profile load |
+| `ActivatePremium` | Calls `ActivatePremium()` (retroactive premium rewards); raises `OnFailed` with `Premium track is already active.` when the profile already owns it |
+
+Action values are serialized; new actions are appended, so existing scenes keep their selection.
 
 ## Events
 
@@ -35,6 +39,7 @@
 - Reward button that grants XP
 - Inspector-driven perk purchase button
 - Unlock node trigger after mission completion
+- "Buy battle pass" flow: after a successful purchase, call `Execute()` on an `ActivatePremium` action
 - Debug scene button for reset/save/load actions
 
 ## API for UnityEvent wiring
@@ -43,9 +48,10 @@
 - `SetNodeId(string)` / `SetPerkId(string)` — 1-arg setters so a UnityEvent can supply the target id before `Execute()`.
 - `XpAmount`, `PerkPointsAmount`, `NodeId`, `PerkId`, `ActionType`, `Manager` — public accessors for runtime configuration.
 
-For code, call the manager's typed APIs directly: `manager.TryAddXp(amount, out string reason)`, `TryUnlockNode`, or `TryBuyPerk`. `Execute()` resolves an explicit manager first, then the singleton. Unsupported action values raise `OnFailed`; every emitted success/failure also produces one `OnResultMessage`. For XP failures the reasons are `XP amount must be greater than zero.` or `Level provider is not assigned.`.
+For code, call the manager's typed APIs directly: `manager.TryAddXp(amount, out string reason)`, `TryUnlockNode`, `TryBuyPerk`, or `ActivatePremium()`. `Execute()` resolves an explicit manager first, then the singleton. Unsupported action values raise `OnFailed`; every emitted success/failure also produces one `OnResultMessage`. For XP failures the reasons are `XP amount must be greater than zero.` or `Level provider is not assigned.`.
 
 ## See also
 
 - [README](./README.md)
 - [ProgressionManager](./ProgressionManager.md)
+- [ProgressionConditionAdapter](./ProgressionConditionAdapter.md)

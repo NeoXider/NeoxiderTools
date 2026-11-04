@@ -65,7 +65,8 @@
         "UniTask",
         "Neo.Tools.Draw",
         "Neo.Tests.Fixtures",
-        "Neo.Tests.Fixtures.Network"
+        "Neo.Tests.Fixtures.Network",
+        "Neo.Tests.Performance"
     ],
     "includePlatforms": [
         "Editor"

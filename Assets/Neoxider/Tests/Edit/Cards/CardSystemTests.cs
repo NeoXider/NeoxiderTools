@@ -42,24 +42,24 @@ namespace Neo.Editor.Tests
         [Test]
         public void CardData_EqualityAndComparison_Correct()
         {
-            var card1 = new CardData(Suit.Hearts, Rank.Ace);
-            var card2 = new CardData(Suit.Hearts, Rank.Ace);
-            var card3 = new CardData(Suit.Spades, Rank.King);
+            CardData card1 = new CardData(Suit.Hearts, Rank.Ace);
+            CardData card2 = new CardData(Suit.Hearts, Rank.Ace);
+            CardData card3 = new CardData(Suit.Spades, Rank.King);
 
             Assert.AreEqual(card1, card2);
             Assert.AreNotEqual(card1, card3);
 
-            var card4 = new CardData(Suit.Hearts, Rank.King);
+            CardData card4 = new CardData(Suit.Hearts, Rank.King);
             Assert.IsTrue(card1.Beats(card4, Suit.Clubs), "Ace of Hearts should beat King of Hearts");
 
             Assert.IsFalse(card1.Beats(card3, Suit.Clubs), "Different suits, neither is trump -> false");
 
-            var trumpCard = new CardData(Suit.Clubs, Rank.Two);
-            var nonTrumpCard = new CardData(Suit.Spades, Rank.Ace);
+            CardData trumpCard = new CardData(Suit.Clubs, Rank.Two);
+            CardData nonTrumpCard = new CardData(Suit.Spades, Rank.Ace);
             Assert.IsTrue(trumpCard.Beats(nonTrumpCard, Suit.Clubs), "Trump 2 should beat non-trump Ace");
 
-            var redJoker = CardData.CreateJoker(true);
-            var blackJoker = CardData.CreateJoker(false);
+            CardData redJoker = CardData.CreateJoker(true);
+            CardData blackJoker = CardData.CreateJoker(false);
 
             Assert.IsTrue(redJoker.IsJoker, "Joker should be identified");
             Assert.AreNotEqual(redJoker, blackJoker, "Red and Black Jokers are different");
@@ -68,9 +68,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void CardData_CustomCards_SupportGenericGames()
         {
-            var wolf = CardData.CreateCustom("beast_wolf", "Wolf", 2, "Beast");
-            var bear = CardData.CreateCustom("beast_bear", "Bear", 5, "Beast");
-            var fireball = CardData.CreateCustom("spell_fireball", "Fireball", 5, "Spell");
+            CardData wolf = CardData.CreateCustom("beast_wolf", "Wolf", 2, "Beast");
+            CardData bear = CardData.CreateCustom("beast_bear", "Bear", 5, "Beast");
+            CardData fireball = CardData.CreateCustom("spell_fireball", "Fireball", 5, "Spell");
 
             Assert.IsTrue(wolf.IsCustom);
             Assert.AreEqual("beast_wolf", wolf.CustomId);
@@ -85,7 +85,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void DeckModel_Initialization_GeneratesCorrectCounts()
         {
-            var deck = new DeckModel();
+            DeckModel deck = new DeckModel();
 
             deck.Initialize(DeckType.Standard36, false);
             Assert.AreEqual(36, deck.RemainingCount, "Standard36 should have 36 cards");
@@ -103,7 +103,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void DeckModel_DrawAction_ModifiesStateCorrectly()
         {
-            var deck = new DeckModel();
+            DeckModel deck = new DeckModel();
             deck.Initialize(DeckType.Standard36, false);
 
             int initialCount = deck.RemainingCount;
@@ -122,9 +122,9 @@ namespace Neo.Editor.Tests
         {
             // WHY: regression — CardData is a value-equality struct; Draw() used List.Remove which
             // deleted the FIRST duplicate (bottom copy) instead of the drawn top card.
-            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
-            var bottom = new CardData(Suit.Clubs, Rank.Seven);
-            var deck = new DeckModel();
+            CardData duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            CardData bottom = new CardData(Suit.Clubs, Rank.Seven);
+            DeckModel deck = new DeckModel();
             deck.Initialize(new[] { duplicate, bottom, duplicate }, false);
 
             Assert.AreEqual(duplicate, deck.Draw());
@@ -138,12 +138,12 @@ namespace Neo.Editor.Tests
         [Test]
         public void DeckModel_ExplicitCustomDeck_PreservesCardsAndEmptyDrawsSafely()
         {
-            var cards = new List<CardData>
+            List<CardData> cards = new List<CardData>
             {
                 CardData.CreateCustom("hero_mage", "Mage", 10, "Hero"),
                 CardData.CreateCustom("spell_arcane", "Arcane Bolt", 3, "Spell")
             };
-            var deck = new DeckModel();
+            DeckModel deck = new DeckModel();
 
             deck.Initialize(cards, false);
 
@@ -157,18 +157,18 @@ namespace Neo.Editor.Tests
         [Test]
         public void CardViewApis_AllowStandaloneCustomCardsWithoutDeckConfig()
         {
-            var texture = new Texture2D(2, 2);
-            var sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * 0.5f);
-            var cardObject = new GameObject("StandaloneCard");
-            var viewObject = new GameObject("StandaloneView");
-            var universalObject = new GameObject("StandaloneUniversalView");
+            Texture2D texture = new Texture2D(2, 2);
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * 0.5f);
+            GameObject cardObject = new GameObject("StandaloneCard");
+            GameObject viewObject = new GameObject("StandaloneView");
+            GameObject universalObject = new GameObject("StandaloneUniversalView");
 
             try
             {
                 CardComponent card = cardObject.AddComponent<CardComponent>();
                 CardView view = viewObject.AddComponent<CardView>();
                 CardViewUniversal universal = universalObject.AddComponent<CardViewUniversal>();
-                var custom = CardData.CreateCustom("minion_custom", "Custom Minion", 4, "Neutral");
+                CardData custom = CardData.CreateCustom("minion_custom", "Custom Minion", 4, "Neutral");
 
                 Assert.DoesNotThrow(() => card.SetSpriteOverrides(sprite));
                 Assert.DoesNotThrow(() => card.SetData(custom));
@@ -195,8 +195,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void BoardComponent_CustomCapacityAndFaceUp_ArePubliclyConfigurable()
         {
-            var boardObject = new GameObject("Board");
-            var cardObject = new GameObject("Card");
+            GameObject boardObject = new GameObject("Board");
+            GameObject cardObject = new GameObject("Card");
 
             try
             {
@@ -221,7 +221,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void HandModel_SortingAndFetching_ReturnsExpected()
         {
-            var hand = new HandModel();
+            HandModel hand = new HandModel();
             hand.Add(new CardData(Suit.Diamonds, Rank.Ten));
             hand.Add(new CardData(Suit.Clubs, Rank.Seven));
             hand.Add(new CardData(Suit.Diamonds, Rank.Ace));
@@ -254,9 +254,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void HandModel_RemoveAt_WithDuplicateData_RemovesIndexedCardAndKeepsOrder()
         {
-            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
-            var middle = new CardData(Suit.Clubs, Rank.Seven);
-            var hand = new HandModel();
+            CardData duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            CardData middle = new CardData(Suit.Clubs, Rank.Seven);
+            HandModel hand = new HandModel();
             hand.Add(duplicate);
             hand.Add(middle);
             hand.Add(duplicate);
@@ -270,9 +270,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void HandModel_CapacityRejectsOverflowAndSupportsTryAdd()
         {
-            var first = new CardData(Suit.Hearts, Rank.Ace);
-            var overflow = new CardData(Suit.Clubs, Rank.Seven);
-            var hand = new HandModel { Capacity = 1 };
+            CardData first = new CardData(Suit.Hearts, Rank.Ace);
+            CardData overflow = new CardData(Suit.Clubs, Rank.Seven);
+            HandModel hand = new HandModel { Capacity = 1 };
 
             Assert.IsTrue(hand.TryAdd(first));
             Assert.IsTrue(hand.IsFull);
@@ -293,7 +293,7 @@ namespace Neo.Editor.Tests
                 new(Suit.Clubs, Rank.Seven),
                 new(Suit.Diamonds, Rank.Ten)
             };
-            var hand = new HandModel { Capacity = 2 };
+            HandModel hand = new HandModel { Capacity = 2 };
 
             int added = hand.AddRangeUntilFull(cards);
 
@@ -305,18 +305,18 @@ namespace Neo.Editor.Tests
         [Test]
         public void HandPresenter_RemoveAt_WithDuplicateData_RemovesIndexedPresenterAndKeepsOrder()
         {
-            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
-            var middle = new CardData(Suit.Clubs, Rank.Seven);
+            CardData duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            CardData middle = new CardData(Suit.Clubs, Rank.Seven);
             DeckConfig config = ScriptableObject.CreateInstance<DeckConfig>();
-            var handViewObject = new GameObject("HandView");
-            var firstObject = new GameObject("FirstPresenterView");
-            var secondObject = new GameObject("MiddlePresenterView");
-            var thirdObject = new GameObject("IndexedPresenterView");
+            GameObject handViewObject = new GameObject("HandView");
+            GameObject firstObject = new GameObject("FirstPresenterView");
+            GameObject secondObject = new GameObject("MiddlePresenterView");
+            GameObject thirdObject = new GameObject("IndexedPresenterView");
 
             try
             {
                 HandView handView = handViewObject.AddComponent<HandView>();
-                var presenter = new HandPresenter(new HandModel(), handView);
+                HandPresenter presenter = new HandPresenter(new HandModel(), handView);
                 CardPresenter first = CreatePresenter(duplicate, config, firstObject);
                 CardPresenter second = CreatePresenter(middle, config, secondObject);
                 CardPresenter third = CreatePresenter(duplicate, config, thirdObject);
@@ -345,12 +345,12 @@ namespace Neo.Editor.Tests
         [Test]
         public void HandComponent_RemoveAt_WithDuplicateData_RemovesIndexedComponentAndKeepsOrder()
         {
-            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
-            var middle = new CardData(Suit.Clubs, Rank.Seven);
-            var handObject = new GameObject("Hand");
-            var firstObject = new GameObject("FirstDuplicate");
-            var secondObject = new GameObject("Middle");
-            var thirdObject = new GameObject("IndexedDuplicate");
+            CardData duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            CardData middle = new CardData(Suit.Clubs, Rank.Seven);
+            GameObject handObject = new GameObject("Hand");
+            GameObject firstObject = new GameObject("FirstDuplicate");
+            GameObject secondObject = new GameObject("Middle");
+            GameObject thirdObject = new GameObject("IndexedDuplicate");
 
             try
             {
@@ -390,8 +390,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void HandComponent_RemoveCard_PreservesExternalCardClickListeners()
         {
-            var handObject = new GameObject("Hand");
-            var cardObject = new GameObject("CardWithExternalListener");
+            GameObject handObject = new GameObject("Hand");
+            GameObject cardObject = new GameObject("CardWithExternalListener");
 
             try
             {
@@ -427,7 +427,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void DeckComponent_InitializeTwice_UnsubscribesOldModelEmptyEvent()
         {
-            var deckObject = new GameObject("Deck");
+            GameObject deckObject = new GameObject("Deck");
             DeckConfig config = ScriptableObject.CreateInstance<DeckConfig>();
 
             try
@@ -583,7 +583,7 @@ namespace Neo.Editor.Tests
                 new CardData(Suit.Spades, Rank.Jack),
                 new CardData(Suit.Hearts, Rank.Ten)
             };
-            var players = new List<IEnumerable<CardData>>
+            List<IEnumerable<CardData>> players = new List<IEnumerable<CardData>>
             {
                 new[] { new CardData(Suit.Clubs, Rank.Two), new CardData(Suit.Diamonds, Rank.Three) },
                 new[] { new CardData(Suit.Spades, Rank.Four), new CardData(Suit.Clubs, Rank.Five) }
@@ -595,7 +595,7 @@ namespace Neo.Editor.Tests
         private static CardPresenter CreatePresenter(CardData data, DeckConfig config, GameObject viewObject)
         {
             CardView view = viewObject.AddComponent<CardView>();
-            var presenter = new CardPresenter(view, config);
+            CardPresenter presenter = new CardPresenter(view, config);
             presenter.SetData(data);
             return presenter;
         }

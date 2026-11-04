@@ -10,14 +10,21 @@ namespace Neo.Tools
     internal static class InteractiveObjectSceneSetup
     {
         private static bool _eventSystemChecked;
+        private static EventSystem _lastFoundEventSystem;
+        private static int _sceneSearchCount;
 
         private static readonly Type InputSystemUiInputModuleType =
             ResolveType("UnityEngine.InputSystem.UI.InputSystemUIInputModule");
 
+        /// <summary>Scene searches for an EventSystem since the last reset; pins the lookup cost in tests.</summary>
+        internal static int SceneSearchCount => _sceneSearchCount;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
+        internal static void ResetStaticState()
         {
             _eventSystemChecked = false;
+            _lastFoundEventSystem = null;
+            _sceneSearchCount = 0;
         }
 
         public static void EnsureEventSystem(MonoBehaviour owner, bool autoCheckEventSystem,
@@ -28,7 +35,7 @@ namespace Neo.Tools
                 return;
             }
 
-            EventSystem eventSystem = EventSystem.current ?? Object.FindFirstObjectByType<EventSystem>();
+            EventSystem eventSystem = FindEventSystem();
             if (_eventSystemChecked && eventSystem != null)
             {
                 EnsureInputModule(eventSystem.gameObject);
@@ -86,7 +93,7 @@ namespace Neo.Tools
 
             if (hasCollider3D)
             {
-                // Physics2DRaycaster derives from PhysicsRaycaster; it cannot serve 3D hits.
+                // WHY: Physics2DRaycaster derives from PhysicsRaycaster; it cannot serve 3D hits.
                 bool has3DRaycaster = false;
                 foreach (PhysicsRaycaster raycaster in cam.GetComponents<PhysicsRaycaster>())
                 {
@@ -104,6 +111,32 @@ namespace Neo.Tools
             }
 
             return true;
+        }
+
+        /// <summary>
+        ///     The current EventSystem, else the first one a scene search finds. The found instance is remembered and
+        ///     returned without a new search while its GameObject stays active; once it is deactivated or destroyed
+        ///     (for example by a scene change) the next call searches again. With several active EventSystems the
+        ///     remembered one is simply the first found, not necessarily the one a new search would return.
+        /// </summary>
+        internal static EventSystem FindEventSystem()
+        {
+            // WHY: during a scene load every InteractiveObject Awake can run before the EventSystem's OnEnable
+            // registers it as current, and a scene search per object made loading N objects cost N searches.
+            EventSystem current = EventSystem.current;
+            if (current != null)
+            {
+                return current;
+            }
+
+            if (_lastFoundEventSystem != null && _lastFoundEventSystem.gameObject.activeInHierarchy)
+            {
+                return _lastFoundEventSystem;
+            }
+
+            _sceneSearchCount++;
+            _lastFoundEventSystem = Object.FindFirstObjectByType<EventSystem>();
+            return _lastFoundEventSystem;
         }
 
         private static EventSystem CreateEventSystem()
@@ -150,8 +183,16 @@ namespace Neo.Tools
             eventSystemObject.AddComponent<StandaloneInputModule>();
         }
 
+        // WHY: in an Input System-only configuration the probe always throws, so skipping it there stops spawning
+        // many InteractiveObjects from throwing and catching one exception per Awake. The probe itself stays the
+        // answer elsewhere: a forced optional backend in a Both project must keep the legacy UI module.
         private static bool IsLegacyInputAvailable()
         {
+            if (!InputBackendCompat.IsLegacyInputConfigured)
+            {
+                return false;
+            }
+
             try
             {
                 Vector3 _ = Input.mousePosition;
@@ -165,6 +206,13 @@ namespace Neo.Tools
 
         private static void RemoveStandaloneInputModule(GameObject eventSystemObject)
         {
+            // WHY: this runs in every InteractiveObject Awake; the common case has no legacy module, and only the
+            // removal path needs the allocating component array.
+            if (!eventSystemObject.TryGetComponent(out StandaloneInputModule _))
+            {
+                return;
+            }
+
             StandaloneInputModule[] modules = eventSystemObject.GetComponents<StandaloneInputModule>();
             foreach (StandaloneInputModule module in modules)
             {

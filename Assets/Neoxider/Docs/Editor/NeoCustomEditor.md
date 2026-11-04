@@ -1,8 +1,8 @@
 # NeoCustomEditor Editor
 
-**What it is:** It combines several features:
+**What it is:** the fallback inspector for every `MonoBehaviour`: it draws the Neoxider look for `Neo.*` components, turns `[Button]` methods into actions and runs the `[GetComponent]` / `[FindInScene]` / `[LoadFromResources]` lookups for any script.
 
-**How to use:** see the sections below.
+**How to use:** nothing to register - Unity picks it for any component without its own editor. An explicit `[CustomEditor]` for a type always wins over it; derive from `CustomEditorBase` (or `NeoCustomEditor`) to keep the shared look.
 
 ---
 
@@ -28,8 +28,9 @@ It combines several features:
 A custom editor for all `MonoBehaviour`s that activates all the attribute magic, such as `[Button]`, `[GetComponent]`, and `[LoadFromResources]`.
 
 **Key features**
-- **Global effect**: Since the editor is created for `MonoBehaviour` with the `editorForChildClasses = true` flag, it works for all your scripts automatically.
-- **Central hub**: Serves as the entry point that invokes the logic from `ComponentDrawer` and `ResourceDrawer` to process the corresponding attributes.
+- **Global effect**: The editor is registered for `MonoBehaviour` with `editorForChildClasses = true` and `isFallback = true`, so it covers every script that has no dedicated editor. Under `MIRROR`, exact-type subclasses (`CounterNeoEditor`, `SpawnerNeoEditor`, ...) keep the Neoxider look for components that derive from `NetworkBehaviour`.
+- **Cheap for foreign scripts**: the attribute lookups resolve their attributed fields once per type; a script without such attributes costs a dictionary lookup per Inspector event and allocates nothing.
+- **Central hub**: Serves as the entry point that invokes the logic from `ComponentDrawer` and `ResourceDrawer` to process the corresponding attributes - for every selected object when several are selected. Lookups that found nothing are throttled on this path (retried after a hierarchy or project change, at most every 0.5 s otherwise), so an unresolved `[FindInScene]` or `[LoadFromResources]` no longer rescans the scene or the Resources on every IMGUI event.
 - **Extensibility**: Built on the `CustomEditorBase` base class, making it easy to add new functionality.
 
 **Public methods**

@@ -126,7 +126,7 @@ namespace Neo.Editor.Tests
         {
             _controller.ProcessDragSample(Vector2.zero, true, true, 1f);
             _controller.enabled = false;
-            // Explicit callback delivery checks cleanup; native lifecycle delivery remains a Play Mode acceptance case.
+            // WHY: explicit callback delivery checks cleanup; native lifecycle delivery remains a Play Mode acceptance case.
             Invoke("OnDisable");
             Invoke("OnDisable");
             Assert.That(_ends, Is.EqualTo(1));

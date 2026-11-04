@@ -30,7 +30,7 @@ namespace Neo.Editor.Tests
                 view.SetCurrentState(0);
 
                 Assert.That(view.MaxStates, Is.EqualTo(2));
-                Assert.That(view.currentStateIndex, Is.Zero);
+                Assert.That(view.CurrentStateIndex, Is.Zero);
                 Assert.That(visual.activeSelf, Is.True);
                 view.SetCurrentState(1);
                 Assert.That(visual.activeSelf, Is.True);
@@ -53,7 +53,7 @@ namespace Neo.Editor.Tests
                 settings.ApplyModifiedPropertiesWithoutUndo();
 
                 Assert.That(view.MaxStates, Is.Zero);
-                Assert.That(view.currentStateIndex, Is.Zero);
+                Assert.That(view.CurrentStateIndex, Is.Zero);
             }
             finally
             {

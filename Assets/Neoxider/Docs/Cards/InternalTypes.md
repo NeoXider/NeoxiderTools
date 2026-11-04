@@ -1,12 +1,18 @@
 ﻿# Cards Module — Internal Types
 
+**What it is:** a one-page reference of the supporting enums, interfaces, models, presenters and utilities of the Cards module (`Scripts/Cards/`, namespace `Neo.Cards`).
+
+**How to use:** look up a type here, then follow the linked component page or the XML docs in code for the full API.
+
+---
+
 ## Config
 
 ### CardLayoutSettings
 **Purpose:** Serializable layout settings for spacing, fan angles/radius, grids, stacks, scattering, and position/rotation jitter. `Default` supplies reusable starting values.
 
 ### CardSettingsRuntime
-**Purpose:** Holds the optional `GlobalAnimationConfig` fallback. Decks may assign it at startup; it is shared runtime state, not a per-card layout instance.
+**Purpose:** Holds the optional `GlobalAnimationConfig` fallback. Decks may assign it at startup; it is shared runtime state, not a per-card layout instance. It is cleared at the start of every play session, so a config from a previous session never leaks in when domain reload is disabled.
 
 ### HandLayoutType
 **Purpose:** Obsolete compatibility enum. Use `CardLayoutType`: `Fan`, `Line`, `Stack`, `Grid`, `Slots`, `Scattered`.
@@ -72,10 +78,10 @@
 **Purpose:** Logical container with a nonnegative finite maximum. `Add` throws on capacity rejection; zero capacity accepts no cards.
 
 ### DeckModel
-**Purpose:** Draw/discard piles, shuffle, return, and reset. Explicit initialization snapshots composition; reset restores that snapshot including order/duplicates when shuffling is disabled.
+**Purpose:** Draw/discard piles, shuffle, return, and reset. Explicit initialization snapshots composition; reset restores that snapshot including order/duplicates when shuffling is disabled. Shuffling uses an injectable `System.Random`: `new DeckModel(seed)`, `new DeckModel(random)`, the `ShuffleRandom` property, or a one-off `Shuffle(random)`.
 
 ### HandModel
-**Purpose:** Player hand logical model (add, remove, sort). Supports `Capacity` (0 = unlimited), `RemainingCapacity`, `IsFull`, `TryAdd(...)`, and `AddRangeUntilFull(...)` for finite hands, benches, draft trays, and market rows.
+**Purpose:** Player hand logical model (add, remove, stable sort). Supports `Capacity` (0 = unlimited), `RemainingCapacity`, `IsFull`, `TryAdd(...)`, and `AddRangeUntilFull(...)` for finite hands, benches, draft trays, and market rows. `Sort(IComparer<CardData>)`/`Sort(Comparison<CardData>)` accept any rule; queries allocate nothing, and so do `SortByRank`/`SortBySuit`/`Sort(Comparison)` on hands of up to 32 cards (larger hands use a merge sort with two temporary arrays; `Sort(IComparer)` creates one delegate per call).
 
 ## Poker
 
@@ -83,13 +89,13 @@
 **Purpose:** Poker combination enum (`HighCard` – `RoyalFlush`).
 
 ### PokerHandEvaluator
-**Purpose:** Poker hand evaluator (determines combination and strength).
+**Purpose:** Best five-card hand (`Evaluate`) and allocation-free comparable strength (`EvaluateStrength`, `GetCombination`). See [PokerHandEvaluator](Poker/PokerHandEvaluator.md).
 
 ### PokerHandResult
-**Purpose:** Poker hand evaluation result (combination, kickers).
+**Purpose:** Poker hand evaluation result (combination, tie-break ranks, kickers, best hand). See [PokerHandResult](Poker/PokerHandResult.md).
 
 ### PokerRules
-**Purpose:** Poker rules (hand comparison, winner determination).
+**Purpose:** Hand comparison, winners/split pots, Texas Hold'em and outs. See [PokerRules](Poker/PokerRules.md).
 
 ## Presenters
 
@@ -97,18 +103,18 @@
 **Purpose:** Links `CardData` and `ICardView`, delegates interaction/animations, and reports the view's actual face state. Dispose detaches its click subscription.
 
 ### DeckPresenter
-**Purpose:** Links `DeckModel`, `IDeckView`, `DeckConfig`, and a `CardView` prefab. Initialization honors standard and custom config generation.
+**Purpose:** Links `DeckModel`, `IDeckView`, `DeckConfig`, and a `CardView` prefab. Initialization honors standard and custom config generation. For a standard 36-card game deck the view shows the bottom (trump) card and refreshes it whenever the model changes (shuffle, reset, returns); otherwise the top card stays hidden.
 
 ### HandPresenter
-**Purpose:** Links `HandModel`, ordered `CardPresenter` instances, and `IHandView`. Sort/removal keep all three orders aligned; duplicate presenter insertion is ignored.
+**Purpose:** Links `HandModel`, ordered `CardPresenter` instances, and `IHandView`. Sort (`SortByRankAsync`, `SortBySuitAsync`, `SortAsync(comparer)`) and removal keep all three orders aligned; duplicate presenter insertion is ignored.
 
 ## Utils
 
 ### CardComparer
-**Purpose:** Card comparer (sort by suit, rank, custom rules).
+**Purpose:** Ready comparers: `ByRankAscending/Descending`, `BySuitThenRankAscending/Descending`, `WithTrump(suit)` for standard cards, and `ByValueAscending/Descending`, `ByGroupThenValueAscending` for custom cards (uses `CardData.CompareTo`).
 
 ### CardLayoutCalculator
-**Purpose:** Card position calculator for layouts (fan, line, grid).
+**Purpose:** Local positions/rotations for `Fan`, `Line`, `Slots`, `Grid`, `Stack` and `Scattered` layouts. Scatter and jitter are deterministic per card index and optional seed (no `UnityEngine.Random` use), so re-layouts keep existing cards in place. List-filling overloads `CalculatePositions(type, count, settings, results, seed)` and `CalculateRotations(...)` reuse caller buffers without allocating.
 
 ### CardViewAnimationTemplates
 **Purpose:** Animation preset templates for card visuals (DOTween presets).

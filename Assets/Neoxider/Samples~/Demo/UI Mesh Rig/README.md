@@ -18,11 +18,16 @@ The bottom row compares the output adapters using the same sprite and geometry c
 1. **uGUI / Simple Bounce** — `UIMeshRigGraphic` in the Canvas.
 2. **UI Toolkit / Character** — `UIMeshRigElement` hosted by `UIMeshRigUIToolkitHost`.
 3. **World / Flag Cloth** — `UIMeshRigWorldRenderer` on `MeshFilter` + `MeshRenderer`, without Canvas.
+4. **SpriteRenderer / Character** — `[Demo] World/Sprite Renderer - Character`: `UIMeshRigSpriteRenderer` on a
+   plain `SpriteRenderer` whose sprite is deformed through a runtime clone (the `UIMeshRigDemoLogo.png` asset
+   is never modified). Create your own from `GameObject > 2D Object > Neoxider UI Mesh Rig (Sprite Renderer)`.
 
-The package also ships a fourth adapter, `UIMeshRigSpriteRenderer` (a plain `SpriteRenderer` whose sprite
-is deformed through a runtime clone). It is **not yet present in this scene** — create it from
-`GameObject > 2D Object > Neoxider UI Mesh Rig (Sprite Renderer)` to try it, and see
-`Docs/UI/UIMeshRig.md`.
+The collapsed info card in the top-left corner (`[Demo] Info Card`, press `+` in Play Mode) lists the objects
+to select and the equivalent C# calls (`UIMeshRigLayoutBuilder.Apply`, `UIMeshRigPointMotion.ApplyPreset`,
+`SetSource`).
+
+The `[Demo] ...` objects are authored by the editor builder `UIMeshRigDemoBuilder`
+(`Neoxider/Demo/Rebuild Active Demo Scene`); everything else in the scene is hand-authored and left untouched.
 
 The UI Toolkit host binds to `PanelRenderer` on Unity 6.5+ and falls back to the `UIDocument` this scene
 carries on older editors, so the example keeps working either way.

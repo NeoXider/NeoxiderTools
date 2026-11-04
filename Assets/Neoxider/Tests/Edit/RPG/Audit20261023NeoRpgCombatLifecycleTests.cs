@@ -24,7 +24,7 @@ namespace Neo.Editor.Tests
             yield return new EnterPlayMode();
             _ownsPlayMode = true;
             Assert.That(Application.isPlaying, Is.True);
-            // Allow ordinary host startup without resetting its scenes, managers or providers.
+            // WHY: Allow ordinary host startup without resetting its scenes, managers or providers.
             yield return null;
             _previousTimeScale = Time.timeScale;
             _hasTimeScaleSnapshot = true;
@@ -389,7 +389,7 @@ namespace Neo.Editor.Tests
                 yield return null;
             } while (Time.realtimeSinceStartupAsDouble < observationDeadline);
 
-            // Remove cancellation only after observing beyond the cancelled cooldown's original duration.
+            // WHY: Remove cancellation only after observing beyond the cancelled cooldown's original duration.
             cancelled = false;
             evade.OnCooldownStarted.RemoveAllListeners();
             evade.OnCooldownStarted.AddListener(() => cooldownStarts++);
@@ -449,7 +449,7 @@ namespace Neo.Editor.Tests
                 yield return null;
             }
 
-            // Observe looping Timer completion through Health's public behavior.
+            // WHY: Observe looping Timer completion through Health's public behavior.
             Assert.That(health.HpValue, Is.GreaterThan(3));
             _source.SetActive(false);
             int pausedHp = health.HpValue;

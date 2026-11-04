@@ -35,10 +35,13 @@ namespace Neo.NoCode
         [SerializeField]
         private GameObject _prefabPreview;
 
+        [Tooltip("GameObject that holds the source component. Empty = the binding component's own GameObject.")]
         [SerializeField] private GameObject _sourceRoot;
+        [Tooltip("Full or short type name of the source component.")]
         [SerializeField] private string _componentTypeName = "";
         [Tooltip("Zero-based occurrence among components matching Component Type Name. Missing or negative occurrences fail to resolve.")]
         [SerializeField] private int _componentOccurrence;
+        [Tooltip("Readable field or non-indexed property: a number or ReactivePropertyFloat/Int/Bool.")]
         [SerializeField] private string _memberName = "";
 
         [NonSerialized] private Component _cachedComponent;
@@ -47,7 +50,47 @@ namespace Neo.NoCode
         [NonSerialized] private bool _cacheValid;
         [NonSerialized] private bool _hasLoggedMissing;
         [NonSerialized] private BindingSourceGameObjectResolver.ResolveCache _sourceResolveCache;
+        [NonSerialized] private int _invalidationVersion;
 
+        /// <summary>
+        ///     When true, the source is resolved with <see cref="GameObject.Find(string)"/> using
+        ///     <see cref="SearchObjectName"/> instead of <see cref="SourceRoot"/>.
+        /// </summary>
+        public bool UseSceneSearch
+        {
+            get => _useSceneSearch;
+            set
+            {
+                if (_useSceneSearch != value)
+                {
+                    _useSceneSearch = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        /// <summary>GameObject name used when <see cref="UseSceneSearch"/> is on.</summary>
+        public string SearchObjectName
+        {
+            get => _searchObjectName;
+            set
+            {
+                if (_searchObjectName != value)
+                {
+                    _searchObjectName = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        /// <summary>Suppresses the one-time warning while the named object has not spawned yet.</summary>
+        public bool WaitForObject
+        {
+            get => _waitForObject;
+            set => _waitForObject = value;
+        }
+
+        /// <summary>GameObject that holds the source component; null uses the host's GameObject.</summary>
         public GameObject SourceRoot
         {
             get => _sourceRoot;
@@ -61,6 +104,7 @@ namespace Neo.NoCode
             }
         }
 
+        /// <summary>Full or short type name of the source component.</summary>
         public string ComponentTypeName
         {
             get => _componentTypeName;
@@ -74,6 +118,7 @@ namespace Neo.NoCode
             }
         }
 
+        /// <summary>Readable field or non-indexed property to read (number or supported reactive property).</summary>
         public string MemberName
         {
             get => _memberName;
@@ -138,8 +183,20 @@ namespace Neo.NoCode
             }
         }
 
+        /// <summary>
+        ///     Increments on every <see cref="Invalidate"/> (setters call it too), so owners can detect a rewire that
+        ///     happened inside their own output callback.
+        /// </summary>
+        internal int InvalidationVersion => _invalidationVersion;
+
+        /// <summary>Drops the resolved component/member and the Find cache; the next read resolves again.</summary>
         public void Invalidate()
         {
+            unchecked
+            {
+                _invalidationVersion++;
+            }
+
             _cacheValid = false;
             _cachedComponent = null;
             _cachedHost = null;
@@ -153,6 +210,11 @@ namespace Neo.NoCode
         ///     <paramref name="host"/>.
         /// </summary>
         public bool EnsureCache(MonoBehaviour host, out string error)
+        {
+            return EnsureCache(host, true, out error);
+        }
+
+        private bool EnsureCache(MonoBehaviour host, bool describeError, out string error)
         {
             error = null;
             if (host == null)
@@ -188,9 +250,14 @@ namespace Neo.NoCode
                 _findRetryIntervalSeconds);
             if (root == null)
             {
-                error = _useSceneSearch && !string.IsNullOrEmpty(_searchObjectName)
-                    ? $"GameObject.Find(\"{_searchObjectName}\") returned no object."
-                    : "Source GameObject is missing.";
+                // WHY: unresolved bindings are retried on every poll; only build the message when a caller wants it.
+                if (describeError)
+                {
+                    error = _useSceneSearch && !string.IsNullOrEmpty(_searchObjectName)
+                        ? $"GameObject.Find(\"{_searchObjectName}\") returned no object."
+                        : "Source GameObject is missing.";
+                }
+
                 return false;
             }
 
@@ -200,38 +267,8 @@ namespace Neo.NoCode
                 return false;
             }
 
-            Component[] components;
-            try
-            {
-                components = root.GetComponents<Component>();
-            }
-            catch (MissingReferenceException)
-            {
-                error = "Source GameObject was destroyed.";
-                return false;
-            }
-
-            int occurrence = 0;
-            foreach (Component comp in components)
-            {
-                if (comp == null)
-                {
-                    continue;
-                }
-
-                Type ct = comp.GetType();
-                if (ct.FullName == _componentTypeName || ct.Name == _componentTypeName)
-                {
-                    if (occurrence == _componentOccurrence)
-                    {
-                        _cachedComponent = comp;
-                        break;
-                    }
-
-                    occurrence++;
-                }
-            }
-
+            _cachedComponent =
+                BindingSourceGameObjectResolver.FindComponentOccurrence(root, _componentTypeName, _componentOccurrence);
             if (_cachedComponent == null)
             {
                 if (!_hasLoggedMissing)
@@ -241,7 +278,11 @@ namespace Neo.NoCode
                     _hasLoggedMissing = true;
                 }
 
-                error = $"Component '{_componentTypeName}' occurrence {_componentOccurrence} not found.";
+                if (describeError)
+                {
+                    error = $"Component '{_componentTypeName}' occurrence {_componentOccurrence} not found.";
+                }
+
                 return false;
             }
 
@@ -261,7 +302,11 @@ namespace Neo.NoCode
                 _hasLoggedMissing = true;
             }
 
-            error = $"Member '{_memberName}' not found.";
+            if (describeError)
+            {
+                error = $"Member '{_memberName}' not found.";
+            }
+
             return false;
         }
 
@@ -282,6 +327,11 @@ namespace Neo.NoCode
             }
         }
 
+        /// <summary>
+        ///     Resolves <paramref name="memberName"/> on <paramref name="componentType"/> to a supported source member
+        ///     (see <see cref="IsSupportedSourceMember"/>): a readable non-indexed property first, then a field.
+        /// </summary>
+        /// <returns>False for methods, write-only properties, indexers (including overloaded ones) and unknown names.</returns>
         public static bool TryResolveSupportedSourceMember(Type componentType, string memberName, out MemberInfo member)
         {
             member = null;
@@ -291,16 +341,9 @@ namespace Neo.NoCode
             }
 
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            PropertyInfo prop;
-            try
-            {
-                prop = ReflectionCache.GetProperty(componentType, memberName, flags);
-            }
-            catch (AmbiguousMatchException)
-            {
-                // Overloaded indexers have the same property name and are not valid data sources.
-                prop = null;
-            }
+            // WHY: overloaded indexers share one property name and are not valid data sources; the exception-free
+            // lookup caches that ambiguity so unresolved bindings can retry cheaply.
+            ReflectionCache.TryGetProperty(componentType, memberName, flags, out PropertyInfo prop);
             if (IsSupportedSourceMember(prop))
             {
                 member = prop;
@@ -317,10 +360,15 @@ namespace Neo.NoCode
             return false;
         }
 
+        /// <summary>
+        ///     Resolves the binding (when needed) and reads the member value. Value-type members are boxed; reactive
+        ///     properties are returned as their instance.
+        /// </summary>
+        /// <returns>False when the source cannot be resolved or the getter throws.</returns>
         public bool TryReadRaw(MonoBehaviour host, out object raw)
         {
             raw = null;
-            if (!EnsureCache(host, out _))
+            if (!EnsureCache(host, false, out _))
             {
                 return false;
             }
@@ -352,11 +400,17 @@ namespace Neo.NoCode
         public bool TryReadFloat(MonoBehaviour host, out float value)
         {
             value = 0f;
-            if (!TryReadRaw(host, out object raw))
-            {
-                return false;
-            }
+            return TryReadRaw(host, out object raw) && TryConvertToFloat(raw, out value);
+        }
 
+        /// <summary>
+        ///     Converts a value read by <see cref="TryReadRaw"/> to float: numbers, and the current value of
+        ///     <see cref="ReactivePropertyFloat"/> / <see cref="ReactivePropertyInt"/> / <see cref="ReactivePropertyBool"/>
+        ///     (bool maps to 1/0).
+        /// </summary>
+        public static bool TryConvertToFloat(object raw, out float value)
+        {
+            value = 0f;
             switch (raw)
             {
                 case null:
@@ -392,17 +446,29 @@ namespace Neo.NoCode
             }
         }
 
+        /// <summary>
+        ///     Reads the member and returns its reactive instance when it holds a supported reactive property.
+        ///     Exactly one out value is non-null on success.
+        /// </summary>
         public bool TryGetReactiveProperty(MonoBehaviour host, out ReactivePropertyFloat reactiveFloat,
             out ReactivePropertyInt reactiveInt, out ReactivePropertyBool reactiveBool)
         {
             reactiveFloat = null;
             reactiveInt = null;
             reactiveBool = null;
-            if (!TryReadRaw(host, out object raw))
-            {
-                return false;
-            }
+            return TryReadRaw(host, out object raw) &&
+                   TryGetReactivePropertyFromValue(raw, out reactiveFloat, out reactiveInt, out reactiveBool);
+        }
 
+        /// <summary>
+        ///     Classifies a value read by <see cref="TryReadRaw"/>; exactly one out value is non-null on success.
+        /// </summary>
+        public static bool TryGetReactivePropertyFromValue(object raw, out ReactivePropertyFloat reactiveFloat,
+            out ReactivePropertyInt reactiveInt, out ReactivePropertyBool reactiveBool)
+        {
+            reactiveFloat = null;
+            reactiveInt = null;
+            reactiveBool = null;
             switch (raw)
             {
                 case ReactivePropertyFloat rpf:

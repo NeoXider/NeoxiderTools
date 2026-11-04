@@ -93,7 +93,7 @@ namespace Neo.Tools.Tests
         [Test]
         public void InventorySlotGridViewReset_ClearsPendingSelection()
         {
-            var owner = new GameObject("AuditFixesInventoryGrid");
+            GameObject owner = new GameObject("AuditFixesInventoryGrid");
             _created.Add(owner);
             InventorySlotGridView grid = owner.AddComponent<InventorySlotGridView>();
             SetPrivateStatic(typeof(InventorySlotGridView), "_selectedGrid", grid);
@@ -108,7 +108,7 @@ namespace Neo.Tools.Tests
         [Test]
         public void MoneyReset_ClearsWalletRegistry()
         {
-            var owner = new GameObject("AuditFixesMoneyRegistry");
+            GameObject owner = new GameObject("AuditFixesMoneyRegistry");
             _created.Add(owner);
             Money money = owner.AddComponent<Money>();
             List<Money> registry = (List<Money>)GetPrivateStatic(typeof(Money), "Registry");
@@ -135,7 +135,7 @@ namespace Neo.Tools.Tests
         [Test]
         public void UiReset_ClearsStaticInstance()
         {
-            var owner = new GameObject("AuditFixesUi");
+            GameObject owner = new GameObject("AuditFixesUi");
             _created.Add(owner);
             UIManager.I = owner.AddComponent<UIManager>();
 
@@ -218,7 +218,7 @@ namespace Neo.Tools.Tests
 
         private FieldGenerator CreateFieldGenerator()
         {
-            var owner = new GameObject("AuditFixesFieldGenerator");
+            GameObject owner = new GameObject("AuditFixesFieldGenerator");
             _created.Add(owner);
             owner.AddComponent<Grid>();
             return owner.AddComponent<FieldGenerator>();

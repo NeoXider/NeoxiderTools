@@ -1,10 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Neo
 {
@@ -15,6 +13,13 @@ namespace Neo
     {
         private const string SettingsPath = "ProjectSettings/NeoxiderSettings.json";
         private static NeoxiderData currentSettings;
+
+        /// <summary>Test seam: redirects load/save to another file; null uses the project settings file.</summary>
+        internal static string SettingsPathOverride;
+
+        private static string ActiveSettingsPath => string.IsNullOrEmpty(SettingsPathOverride)
+            ? SettingsPath
+            : SettingsPathOverride;
         private static CreateSceneHierarchy sceneHierarchyInstance;
 
         #region Editor Methods
@@ -57,6 +62,12 @@ namespace Neo
             };
 
             public bool validateFoldersOnStart = true;
+
+            /// <summary>
+            ///     Scene hierarchy template (<see cref="CreateSceneHierarchy" />) as JSON. Empty in files written
+            ///     before 11.x; the template defaults are used then.
+            /// </summary>
+            public string sceneHierarchyJson = string.Empty;
         }
 
         #endregion
@@ -89,7 +100,17 @@ namespace Neo
             {
                 if (sceneHierarchyInstance == null)
                 {
-                    sceneHierarchyInstance = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
+                    // WHY: the menu items (Create/Sort Scene Hierarchy and their validator) can be the first settings
+                    // access after a restart or domain reload; a bare CreateInstance would ignore the saved template.
+                    if (currentSettings == null)
+                    {
+                        LoadSettings();
+                    }
+                    else
+                    {
+                        sceneHierarchyInstance = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
+                        ApplySavedSceneHierarchy();
+                    }
                 }
 
                 return sceneHierarchyInstance;
@@ -124,6 +145,35 @@ namespace Neo
         public static bool FolderExists(string folderName)
         {
             return Directory.Exists(GetFolderPath(folderName));
+        }
+
+        /// <summary>
+        ///     Lists the configured project folders that do not exist on disk: the root folder first (when missing),
+        ///     then each entry of <see cref="NeoxiderData.folders" /> by name. Empty when the structure is complete.
+        /// </summary>
+        public static List<string> FindMissingFolders()
+        {
+            List<string> missing = new();
+            NeoxiderData data = Current;
+            if (!Directory.Exists(RootFolderPath))
+            {
+                missing.Add(data.rootFolder);
+            }
+
+            if (data.folders == null)
+            {
+                return missing;
+            }
+
+            foreach (string folder in data.folders)
+            {
+                if (!string.IsNullOrEmpty(folder) && !FolderExists(folder))
+                {
+                    missing.Add(folder);
+                }
+            }
+
+            return missing;
         }
 
         /// <summary>
@@ -165,9 +215,9 @@ namespace Neo
         {
             try
             {
-                if (File.Exists(SettingsPath))
+                if (File.Exists(ActiveSettingsPath))
                 {
-                    string json = File.ReadAllText(SettingsPath);
+                    string json = File.ReadAllText(ActiveSettingsPath);
                     currentSettings = JsonUtility.FromJson<NeoxiderData>(json);
                 }
             }
@@ -185,6 +235,38 @@ namespace Neo
             {
                 sceneHierarchyInstance = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
             }
+
+            ApplySavedSceneHierarchy();
+        }
+
+        /// <summary>
+        ///     Test seam: replaces the cached settings and template without touching the file; (null, null) mimics the
+        ///     state right after a domain reload. Callers own both objects.
+        /// </summary>
+        internal static void SetCachedStateForTests(NeoxiderData data, CreateSceneHierarchy hierarchy)
+        {
+            currentSettings = data;
+            sceneHierarchyInstance = hierarchy;
+        }
+
+        private static void ApplySavedSceneHierarchy()
+        {
+            // WHY: the template edited in the settings window used to live only in this in-memory instance, so every
+            // change was lost on the next domain reload or editor restart.
+            if (currentSettings == null || sceneHierarchyInstance == null ||
+                string.IsNullOrEmpty(currentSettings.sceneHierarchyJson))
+            {
+                return;
+            }
+
+            try
+            {
+                JsonUtility.FromJsonOverwrite(currentSettings.sceneHierarchyJson, sceneHierarchyInstance);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to load Neoxider scene hierarchy settings: {e.Message}");
+            }
         }
 
         /// <summary>
@@ -199,12 +281,15 @@ namespace Neo
 
             try
             {
-                string json = JsonUtility.ToJson(currentSettings, true);
-                File.WriteAllText(SettingsPath, json);
+                if (sceneHierarchyInstance != null)
+                {
+                    currentSettings.sceneHierarchyJson = JsonUtility.ToJson(sceneHierarchyInstance);
+                }
 
-#if UNITY_EDITOR
-                AssetDatabase.Refresh();
-#endif
+                string json = JsonUtility.ToJson(currentSettings, true);
+                // WHY: ProjectSettings/ is not an asset folder, so no AssetDatabase.Refresh: the settings window
+                // saves on every GUI change and each refresh rescanned the whole project (one per typed character).
+                File.WriteAllText(ActiveSettingsPath, json);
             }
             catch (Exception e)
             {

@@ -226,7 +226,8 @@ namespace Neo.Tests.Play
             int grants = 0;
             reward.OnRewardClaimed.AddListener(() => grants++);
             _root.SetActive(true);
-            yield return null; // Real Start wires completion and persists the first trusted deadline.
+            // WHY: the real Start wires completion and persists the first trusted deadline.
+            yield return null;
 
             Assert.That(ReadSavedDeadline(reward), Is.EqualTo(_clock.UtcNow.AddSeconds(1d)));
             _clock.Advance(1d);
@@ -290,7 +291,8 @@ namespace Neo.Tests.Play
             Assert.That(ReadSavedDeadline(reward), Is.EqualTo(firstDeadline));
             _clock.Advance(20d);
             reward.Tick(20f);
-            original.SetActive(false); // Real OnDisable persists through the trusted provider hook.
+            // WHY: the real OnDisable persists through the trusted provider hook.
+            original.SetActive(false);
             Assert.That(ReadSavedDeadline(reward), Is.EqualTo(firstDeadline));
             SaveProvider.Save();
             Object.DestroyImmediate(original);
@@ -305,7 +307,8 @@ namespace Neo.Tests.Play
             restored.SetAdditionalKey(key, false);
             SetField(restored, "_startTimerOnStart", false);
             restored.OnRewardClaimed.AddListener(() => grants++);
-            restoredObject.SetActive(true); // Real Awake/Init/OnEnable restore from the reopened store.
+            // WHY: the real Awake/Init/OnEnable restore from the reopened store.
+            restoredObject.SetActive(true);
             yield return null;
 
             Assert.That(restored.IsRunning, Is.True);
@@ -473,7 +476,8 @@ namespace Neo.Tests.Play
             roulette.OnWin = new UnityEvent<int>();
             int grants = 0;
             roulette.OnWin.AddListener(_ => grants++);
-            yield return null; // Let the real Start callback initialize its layout.
+            // WHY: lets the real Start callback initialize its layout.
+            yield return null;
 
             roulette.StartRolling();
             yield return null;

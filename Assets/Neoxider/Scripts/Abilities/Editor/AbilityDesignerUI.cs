@@ -368,6 +368,10 @@ namespace Neo.Abilities.Editor
     {
         private static readonly ushort[] Indices = { 0, 1, 2, 2, 3, 0 };
 
+        // WHY: SetAllVertices copies the data, so one shared buffer replaces a new array on every mesh
+        // regeneration (each resize and repaint of every header strip, badge and underline).
+        private static readonly Vertex[] VertexBuffer = new Vertex[4];
+
         private readonly Color32 _left;
         private readonly Color32 _right;
 
@@ -387,7 +391,7 @@ namespace Neo.Abilities.Editor
                 return;
             }
 
-            Vertex[] vertices = new Vertex[4];
+            Vertex[] vertices = VertexBuffer;
             vertices[0].position = new Vector3(rect.xMin, rect.yMax, Vertex.nearZ);
             vertices[0].tint = _left;
             vertices[1].position = new Vector3(rect.xMin, rect.yMin, Vertex.nearZ);

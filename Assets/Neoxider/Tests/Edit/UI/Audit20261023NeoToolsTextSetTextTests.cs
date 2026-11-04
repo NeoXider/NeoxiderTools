@@ -17,7 +17,7 @@ namespace Neo.Tests.Edit
     [Serializable]
     public class Audit20261023NeoToolsTextSetTextTests
     {
-        // The runner serializes the fixture across Enter/ExitPlayMode domain reloads.
+        // WHY: The runner serializes the fixture across Enter/ExitPlayMode domain reloads.
         [SerializeField] private bool _ownsPlaySession;
         private Behaviour _nativeDriver;
         private readonly List<Tween> _ownedTweens = new List<Tween>();
@@ -76,7 +76,7 @@ namespace Neo.Tests.Edit
             }
             catch (Exception exception)
             {
-                // Keep the cleanup fault observable while still exiting the session this fixture acquired.
+                // WHY: Keep the cleanup fault observable while still exiting the session this fixture acquired.
                 Debug.LogException(exception);
             }
 
@@ -504,7 +504,7 @@ namespace Neo.Tests.Edit
                 Assert.AreNotSame(retired, owned, "A non-recyclable retired tween must not become the replacement.");
             }
 
-            // Configure the created tween after DOTween's first-use settings load, not its global default.
+            // WHY: Configure the created tween after DOTween's first-use settings load, not its global default.
             owned.SetUpdate(UpdateType.Manual, true);
             Assert.Greater(owned.Duration(false), 0f, "The authored transition must have positive duration.");
             Assert.Greater(owned.timeScale, 0f, "The owned tween clock must advance.");

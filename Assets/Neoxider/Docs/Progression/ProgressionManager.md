@@ -23,7 +23,10 @@
 | `_unlockTree` | Unlock node graph |
 | `_perkTree` | Perk graph |
 | `_saveKey` | Persistent profile key |
+| `_loadOnAwake` | Load the saved profile on initialization; otherwise start fresh |
+| `_autoSave` | Save the profile after every change (also the `AutoSave` property) |
 | `_conditionContext` | Context object for `ConditionEntry` evaluation |
+| Events | `On Xp Changed`, `On Level Changed`, `On Perk Points Changed`, `On Node Unlocked`, `On Perk Purchased`, `On Profile Loaded`, `On Profile Saved`, `On Profile Reset`, `On Premium Activated` |
 
 ## Reactive state
 
@@ -51,10 +54,32 @@ In 11.0, manager-owned XP/level commands, premium activation, and reset stage ru
 | `AddPerkPoints(int)` | Ignores nonpositive grants; direct and level grants saturate at `int.MaxValue`. |
 | `CanUnlockNode` / `TryUnlockNode` | Checks level, prerequisite nodes, and conditions; successful unlocks dispatch rewards once for that identifier. |
 | `CanBuyPerk` / `TryBuyPerk` | Also checks point cost, prerequisite perks, and required unlock nodes. |
+| `ActivatePremium()` | Enables the premium track once and replays premium rewards of the levels already reached; raises `OnPremiumActivated` / `PremiumActivated`. |
 | `GetProfileSnapshot()` | Returns an independent copy of the Progression profile; XP/level remain in the Core profile. |
 | `SetDefinitions(...)` | Assigns assets. Configure before initialization, or call `LoadProfile()` to reapply defaults after changing trees. |
 | `LevelProvider` | Rebinds level listeners and refreshes state when replaced, including null. Incoming levels are treated as already rewarded. Reassigning the same instance preserves the reward watermark. |
-| `OnProfileLoaded` | Read-only `UnityEvent` accessor for the existing Inspector profile-loaded event; C# can add/remove listeners on the same notification. |
+| `OnProfileLoaded`, `OnProfileSaved`, `OnProfileReset`, `OnPremiumActivated` | Read-only `UnityEvent` accessors for the Inspector events; C# can add/remove listeners on the same notifications. |
+| `NodeUnlocked`, `PerkPurchased` (`Action<string>`), `PremiumActivated` (`Action`) | C# events raised after the matching UnityEvent, once per successful claim. |
+
+### Unlock and purchase claims
+
+Node and perk conditions run user code (`ConditionEntry` getters/methods). If a condition unlocks the same node or buys the same perk re-entrantly, that nested claim wins: `CanUnlockNode` / `CanBuyPerk` re-check ownership and perk points after the conditions, so the outer `TryUnlockNode` / `TryBuyPerk` returns false (`Unlock node is already unlocked.` / `Perk is already purchased.` / `Not enough perk points.`) and the cost, rewards and events are applied exactly once.
+
+A successful claim dispatches all of its rewards inside one runtime update: reactive fields and `OnXpChanged` / `OnLevelChanged` / `OnPerkPointsChanged` publish one settled snapshot after every reward was applied, followed by `OnNodeUnlocked` / `NodeUnlocked` (or `OnPerkPurchased` / `PerkPurchased`). Each XP or perk-point reward still saves the profile as before when Auto Save is enabled.
+
+```csharp
+void OnEnable()
+{
+    _progression.NodeUnlocked += HandleNodeUnlocked;
+    _progression.PremiumActivated += HandlePremium;
+}
+
+void OnDisable()
+{
+    _progression.NodeUnlocked -= HandleNodeUnlocked;
+    _progression.PremiumActivated -= HandlePremium;
+}
+```
 
 Subscribe with `manager.OnProfileLoaded.AddListener(HandleProfileLoaded)` and remove the same handler with `RemoveListener`. Inspector **On Profile Loaded** bindings and C# listeners share the existing serialized UnityEvent. Profile loading applies the profile and refreshes runtime state before invoking it. Initial loading uses that same path when `Load On Awake` is enabled; deliberately fresh initialization with loading disabled does not invoke it. The accessor adds no separate event or dispatch path.
 
@@ -66,9 +91,9 @@ An exception from a runtime-state or `OnProfileLoaded` observer after the profil
 
 `LoadProfile()` restores only the Progression profile. Reloading the same active key preserves the maximum of this session's rewarded level and the incoming Core level, so downgrade/reload/recovery cannot grant those level rewards again. A different loaded key establishes a new baseline at the current Core level. The active identity is the last loaded/reset key; assigning `SaveKey` or saving to another key does not itself load a different profile.
 
-`SaveProfile()` flushes only the selected Progression profile through the active save provider. `ResetProgression()` also resets and saves the configured Core level provider, then clears the Progression profile, resets its reward baseline, and reapplies default nodes/perks. A later fresh level-up can award rewards again. To restore/switch accounts or seasons, configure both keys, load the Core component first, then call `LoadProfile()` to establish the Progression baseline. The manager remains a singleton even when its save key changes.
+`SaveProfile()` flushes only the selected Progression profile through the active save provider. Unlocked-node and purchased-perk ids are copied into the profile lists only by `SaveProfile()` and `GetProfileSnapshot()`, so a change copies them once per save with `AutoSave` on and not at all with it off, and a snapshot taken from a reward or event already lists the new id. `ResetProgression()` also resets and saves the configured Core level provider, then clears the Progression profile, resets its reward baseline, and reapplies default nodes/perks. A later fresh level-up can award rewards again. To restore/switch accounts or seasons, configure both keys, load the Core component first, then call `LoadProfile()` to establish the Progression baseline. The manager remains a singleton even when its save key changes.
 
-Level rewards are claimed for increasing levels after the provider's initial level. Lowering and restoring a level does not replay rewards during that initialized session. Premium activation replays only premium rewards for levels achieved when activation begins; new levels reached by those XP rewards go through normal level reward dispatch. Repeated activation does nothing. The profile does not contain a durable per-reward claim ledger, so external reward delivery and profile saves are not an atomic transaction.
+Level rewards are claimed for increasing levels after the provider's initial level. Only levels that have an entry in the reward track are visited (via `LevelCurveDefinition.TryGetNextDefinition`), so the cost of a jump does not depend on the number of levels skipped; premium replay walks the track the same way. An ascending track (the order the Inspector keeps) is walked in one pass, O(entries) per level-up or replay; an unsorted track gives the same rewards but rescans the track per step (O(entries^2)). Lowering and restoring a level does not replay rewards during that initialized session. Premium activation replays only premium rewards for levels achieved when activation begins; new levels reached by those XP rewards go through normal level reward dispatch. Repeated activation does nothing. The profile does not contain a durable per-reward claim ledger, so external reward delivery and profile saves are not an atomic transaction.
 
 ## Typical use cases
 

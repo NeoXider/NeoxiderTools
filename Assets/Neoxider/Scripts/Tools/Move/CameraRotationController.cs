@@ -106,7 +106,7 @@ namespace Neo.Tools
             float mouseX = mouseDelta.x;
             float mouseY = mouseDelta.y;
 
-            // Preserve the existing pixels * sensitivity * rotationSpeed * deltaTime contract.
+            // WHY: keeps the existing pixels * sensitivity * rotationSpeed * deltaTime contract.
             if (xAxisSettings != null && xAxisSettings.isEnabled)
             {
                 currentRotation.x -= mouseY * xAxisSettings.rotationSpeed * deltaTime;

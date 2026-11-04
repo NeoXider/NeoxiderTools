@@ -1,6 +1,8 @@
 ﻿# PlayerPrefsUtils
 
-**Purpose:** Utility class extending `PlayerPrefs` with primitive array helpers.
+**What it is:** a static utility class extending `PlayerPrefs` with `int[]`, `float[]`, `string[]` and `bool[]` helpers stored as invariant-culture separated strings. File: `Scripts/Extensions/PlayerPrefsUtils.cs`, namespace `Neo.Extensions`.
+
+**How to use:** call `PlayerPrefsUtils.SetIntArray(key, values)` and read it back with `PlayerPrefsUtils.GetIntArray(key, fallback)`.
 
 ## API
 

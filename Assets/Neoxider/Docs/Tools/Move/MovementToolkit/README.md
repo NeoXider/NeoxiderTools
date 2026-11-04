@@ -1,8 +1,10 @@
 ﻿# Tools / Move / MovementToolkit
 
-Small movement and rotation components in namespace `Neo.Tools`, assembly `Neo.Tools.Move`.
+**What it is:** small movement and rotation components in `Scripts/Tools/Move/MovementToolkit/`, namespace `Neo.Tools`, assembly `Neo.Tools.Move`, sharing the `IMover` command contract.
 
-## Choose a component
+**Navigation:** [← Tools/Move](../README.md)
+
+**Contents:**
 
 - [KeyboardMover](./KeyboardMover.md): keyboard/gamepad motion and typed `IMover` commands.
 - [MouseMover2D](./MouseMover2D.md): pointer deltas or point targets, with optional `Rigidbody2D` on XY.
@@ -10,6 +12,8 @@ Small movement and rotation components in namespace `Neo.Tools`, assembly `Neo.T
 - [ConstantMover](./ConstantMover.md): constant motion along an authored direction.
 - [ConstantRotator](./ConstantRotator.md): constant rotation around an authored axis.
 - [IMover](./IMover.md): shared command contract.
+
+---
 
 ## Plane coordinates and timing
 
@@ -23,8 +27,8 @@ are applied even below `0.01` units; an arrival threshold belongs to point-follo
 
 Use `Rigidbody2D` on XY. For XZ/YZ motion use a Transform or `MouseMover3D` with a 3D Rigidbody.
 Mouse components and the camera rotation helpers reuse `MouseInputCompat` for legacy/new input
-compatibility. The two mouse movers resolve `Camera.main` in `Awake`; create/tag the camera before
-activating them.
+compatibility. The two mouse movers resolve `Camera.main` in `Awake` and resolve it again when the cached
+camera has been destroyed.
 
 ## Code and Inspector workflows
 

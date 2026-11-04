@@ -28,12 +28,19 @@ namespace Neo.Shop
 
         private static readonly List<Money> Registry = new();
 
+        /// <summary>
+        ///     Raised when a wallet joins the save-key registry (Awake/OnEnable, or first lookup of an inactive
+        ///     wallet). Lets views that started before any wallet existed bind without polling the scene.
+        /// </summary>
+        internal static event System.Action<Money> WalletRegistered;
+
         // WHY: the registry keeps destroyed wallets from the previous play session when domain reload is
         // disabled, so Register() compares Contains against fake-null entries.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
             Registry.Clear();
+            WalletRegistered = null;
         }
 
         [Header("Networking")]
@@ -324,7 +331,7 @@ namespace Neo.Shop
             PersistBalanceToSave();
         }
 
-        // A refund compensates a confirmed debit: it must bypass the reward cap without increasing AllMoney.
+        // WHY: a refund compensates a confirmed debit: it must bypass the reward cap without increasing AllMoney.
         internal void RefundSpend(float amount)
         {
             if (!IsValidAddAmount(amount, nameof(RefundSpend)))
@@ -367,12 +374,13 @@ namespace Neo.Shop
             if (money != null && !Registry.Contains(money))
             {
                 Registry.Add(money);
+                WalletRegistered?.Invoke(money);
             }
         }
 
         private void LoadFromSave()
         {
-            // Views can subscribe in OnEnable before this wallet's Start, regardless of script execution order.
+            // WHY: views can subscribe in OnEnable before this wallet's Start, regardless of script execution order.
             CurrentMoney.Value = SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue);
             AllMoney.Value = SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
         }
@@ -400,7 +408,7 @@ namespace Neo.Shop
                 return;
             }
 
-            // Public reloads notify so shop affordability, HUD counters and reactive text update.
+            // WHY: public reloads notify so shop affordability, HUD counters and reactive text update.
             CurrentMoney.Value = SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue);
             AllMoney.Value = SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
             ApplyMoneyToText();
@@ -580,7 +588,7 @@ namespace Neo.Shop
                 return false;
             }
 
-            // Positive prices must lower the stored float. Keep ordinary rounding rather than
+            // WHY: positive prices must lower the stored float. Keep ordinary rounding rather than
             // requiring the representable delta to equal the nominal price (e.g. 1e8 - 5 loses 8).
             float balanceAfter = balance - count;
             return count == 0f || balanceAfter < balance;
@@ -710,7 +718,7 @@ namespace Neo.Shop
 
         private bool CanAcceptClientMutation(MoneyOp op, float amount, NetworkConnectionToClient sender)
         {
-            // Refund7 and unknown opcodes never enter the client mutation path, even for trusted server callers.
+            // WHY: Refund7 and unknown opcodes never enter the client mutation path, even for trusted server callers.
             if (!isNetworked || (byte)op > (byte)MoneyOp.AddOverflow ||
                 float.IsNaN(amount) || float.IsInfinity(amount) ||
                 ((op == MoneyOp.Add || op == MoneyOp.AddOverflow) && amount < 0f))

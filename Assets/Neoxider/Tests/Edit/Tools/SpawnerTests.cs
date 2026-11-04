@@ -91,7 +91,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NeoObjectPool_ReturnObject_Twice_IsIdempotent()
         {
-            var pool = new NeoObjectPool(_prefab, 1, true);
+            NeoObjectPool pool = new NeoObjectPool(_prefab, 1, true);
             GameObject instance = pool.GetObject(Vector3.zero, Quaternion.identity);
             int inactiveAfterGet = pool.CountInactive;
 
@@ -107,7 +107,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NeoObjectPool_SpawnGeneration_TracksReuse()
         {
-            var pool = new NeoObjectPool(_prefab, 1, true);
+            NeoObjectPool pool = new NeoObjectPool(_prefab, 1, true);
             GameObject instance = pool.GetObject(Vector3.zero, Quaternion.identity);
             PooledObjectInfo info = instance.GetComponent<PooledObjectInfo>();
 
@@ -131,7 +131,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void NeoObjectPool_ClearInEditMode_DestroysPrewarmedObjectsWithoutDestroyWarning()
         {
-            var pool = new NeoObjectPool(_prefab, 2, true);
+            NeoObjectPool pool = new NeoObjectPool(_prefab, 2, true);
 
             Assert.That(pool.CountInactive, Is.EqualTo(2));
 

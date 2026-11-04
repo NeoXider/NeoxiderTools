@@ -1,3 +1,4 @@
+using System.Globalization;
 using Neo.Audio;
 using TMPro;
 using UnityEngine;
@@ -6,266 +7,277 @@ using UnityEngine.UI;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Bright, self-contained demo for the <b>Neo.Audio</b> module. Ensures an <see cref="AM" /> singleton
-    ///     exists (creating one if the scene has none), then plays fully procedural <see cref="AudioClip" />s
-    ///     (sine beep, major chord, noise burst, looping pad) through the real <see cref="AM" /> API and wires
-    ///     a volume slider and a music toggle to it. Every press is logged with the exact call it makes.
-    ///     Robust in an empty scene: the shell builds its own camera, canvas and EventSystem.
+    ///     Controller of the authored <b>Neo.Audio</b> demo scene. The UI, the <see cref="AM" /> sound entries and
+    ///     music pools, the <see cref="AMSettings" /> service and the <see cref="MusicControl" /> component are saved
+    ///     in AudioDemo.unity by its DemoSceneKit builder. Buttons call <c>AM.Play(id)</c>,
+    ///     <see cref="MusicControl" /> and <see cref="AMSettings" /> directly through persistent UnityEvents (the
+    ///     NoCode path); this component only logs those calls, mirrors the live state into the authored labels and
+    ///     syncs the controls with the persisted settings on start. It builds no UI and creates no clips at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Demos/Audio Demo")]
     public sealed class AudioDemoController : MonoBehaviour
     {
-        private const int SampleRate = 44100;
+        [Header("Services")]
+        [Tooltip("Scene audio manager with the demo's sound entries and music pools.")]
+        [SerializeField] private AM _audio;
 
-        private AM _am;
-        private NeoDemoShell.Context _shell;
-        private TMP_Text _musicValue;
-        private Toggle _musicToggle;
+        [Tooltip("Player settings service: persisted volumes and mutes.")]
+        [SerializeField] private AMSettings _settings;
 
-        private AudioClip _beep;
-        private AudioClip _chord;
-        private AudioClip _noise;
-        private AudioClip _pad;
-        private AudioClip _padHigh;
-        private AudioClip _padLow;
+        [Header("Live values")]
+        [SerializeField] private TMP_Text _nowPlaying;
+        [SerializeField] private DemoValueReadout _musicMuteReadout;
+        [SerializeField] private DemoValueReadout _efxMuteReadout;
 
-        private void OnEnable() => _shell?.SetVisible(true);
-        private void OnDisable() => _shell?.SetVisible(false);
+        [Header("Controls synced on start")]
+        [SerializeField] private Slider _musicVolume;
+        [SerializeField] private DemoValueReadout _musicVolumeReadout;
+        [SerializeField] private Slider _efxVolume;
+        [SerializeField] private DemoValueReadout _efxVolumeReadout;
+        [SerializeField] private Slider _uiVolume;
+        [SerializeField] private DemoValueReadout _uiVolumeReadout;
+        [SerializeField] private Toggle _musicToggle;
+        [SerializeField] private Toggle _efxToggle;
+
+        [Header("Feed")]
+        [SerializeField] private DemoLogFeed _log;
+
+        private AM _subscribedAudio;
+        private bool _started;
+        private bool _warnedUnbuilt;
+
+        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _audio != null && _settings != null && _nowPlaying != null && _log != null &&
+                                    _musicVolume != null && _efxVolume != null && _musicToggle != null &&
+                                    _efxToggle != null;
+
+        /// <summary>Audio manager the demo drives.</summary>
+        public AM Audio => _audio;
+
+        /// <summary>Settings service the demo drives.</summary>
+        public AMSettings Settings => _settings;
+
+        private void OnEnable()
+        {
+            if (_started)
+            {
+                Subscribe();
+            }
+        }
 
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Audio", new Color(0.25f, 0.79f, 0.94f), transform);
-
-            NeoDemoShell.ShowInfoCardOnce(
-                "Neo.Audio · AM",
-                "Central audio manager. All clips below are generated in code with AudioClip.Create — no imported assets.",
-                "Press Beep / Chord / Noise to call AM.I.PlayAt(clip, Vector3.zero, 1, 0) (2D)",
-                "Volume slider drives AM.I.SetEfxVolume(v)",
-                "Music toggle loops a generated pad via AM.I.PlayMusicByClip(clip)",
-                "Random row shuffles generated pads via AM.I.EnableRandomMusic()");
-
-            EnsureAudioManager();
-            BuildClips();
-
-            _shell.AddButtonRow(
-                ("Beep", PlayBeep),
-                ("Chord", PlayChord),
-                ("Noise burst", PlayNoise));
-
-            _shell.AddSlider("Effects volume", 0f, 1f, 1f, v =>
+            _started = true;
+            if (!IsSceneBuilt)
             {
-                _am.SetEfxVolume(v);
-                _shell.Log($"AM.I.SetEfxVolume({v:0.00})");
-            });
-
-            _musicValue = _shell.AddValueLabel("Music (looping pad)");
-            _musicValue.text = "OFF";
-            _musicToggle = _shell.AddToggle("Music on/off", false, ToggleMusic);
-
-            _shell.AddButtonRow(
-                ("Random music", StartRandomMusic),
-                ("Stop music", StopAllMusic));
-
-            _am.OnRandomMusicTrackChanged += OnRandomTrackChanged;
-            _am.OnMusicStopped += OnMusicStopped;
-
-            _shell.Log("AM ready — clips generated at runtime");
-        }
-
-        private void EnsureAudioManager()
-        {
-            _am = AM.I;
-            if (_am == null)
-            {
-                // WHY: no AM in the scene — opt the singleton into lazy creation, then resolve it.
-                AM.CreateInstance = true;
-                _am = AM.I;
-                _shell.Log("Created AM singleton (GameObject + AM)");
+                WarnUnbuilt();
             }
-            else
+
+            ResolveServices();
+            Subscribe();
+            SyncControls();
+            RefreshNowPlaying();
+            if (_audio != null)
             {
-                _shell.Log("Reused existing AM.I from scene");
+                Log("AM ready: " + _audio.SoundEntries.Count + " sound entries, " + _audio.MusicEntries.Count +
+                    " music pools (select 'Audio Demo' to see them)");
             }
         }
 
-        private void PlayBeep()
+        private void OnDisable()
         {
-            _am.PlayAt(_beep, Vector3.zero, 1f, 0f);
-            _shell.Log("AM.I.PlayAt(beep, zero, 1, 0) — 2D 880Hz sine");
+            Unsubscribe();
         }
 
-        private void PlayChord()
+        /// <summary>Sound button listener next to the NoCode <c>AM.Play(id)</c> call.</summary>
+        public void LogSound(string id)
         {
-            _am.PlayAt(_chord, Vector3.zero, 1f, 0f);
-            _shell.Log("AM.I.PlayAt(chord, zero, 1, 0) — 2D A-major");
+            Log("AM.I.Play(\"" + id + "\")");
         }
 
-        private void PlayNoise()
+        /// <summary>Music slider listener next to <see cref="AMSettings.SetMusicVolume" />.</summary>
+        public void LogMusicVolume(float value)
         {
-            _am.PlayAt(_noise, Vector3.zero, 1f, 0f);
-            _shell.Log("AM.I.PlayAt(noise, zero, 1, 0) — 2D noise burst");
+            Log("AMSettings.SetMusicVolume(" + Format(value) + ") -> saved");
         }
 
-        private void ToggleMusic(bool on)
+        /// <summary>Effects slider listener next to <see cref="AMSettings.SetEfxVolume" />.</summary>
+        public void LogEfxVolume(float value)
         {
-            if (on)
+            Log("AMSettings.SetEfxVolume(" + Format(value) + ") -> saved");
+        }
+
+        /// <summary>UI slider listener next to <see cref="AM.SetUiVolume" />.</summary>
+        public void LogUiVolume(float value)
+        {
+            Log("AM.I.SetUiVolume(" + Format(value) + ")");
+        }
+
+        /// <summary>Music toggle listener next to <see cref="AMSettings.SetMusic" />.</summary>
+        public void LogMusicEnabled(bool enabled)
+        {
+            Log("AMSettings.SetMusic(" + (enabled ? "true" : "false") + ") -> mute saved");
+        }
+
+        /// <summary>Effects toggle listener next to <see cref="AMSettings.SetEfx" />.</summary>
+        public void LogEfxEnabled(bool enabled)
+        {
+            Log("AMSettings.SetEfx(" + (enabled ? "true" : "false") + ") -> mute saved");
+        }
+
+        private void ResolveServices()
+        {
+            if (_audio == null && AM.TryGetInstance(out AM audio))
             {
-                // WHY: music AudioSource loops by default (AM.CreateMusic), so the short pad tiles seamlessly.
-                _am.PlayMusicByClip(_pad);
-                _musicValue.text = "ON";
-                _shell.Log("AM.I.PlayMusicByClip(pad) — looping");
-            }
-            else
-            {
-                _am.StopMusic();
-                _musicValue.text = "OFF";
-                _shell.Log("AM.I.StopMusic()");
-            }
-
-            _musicToggle.SetIsOnWithoutNotify(on);
-        }
-
-        private void StartRandomMusic()
-        {
-            _am.SetRandomMusicTracks(_pad, _padHigh, _padLow);
-            _am.EnableRandomMusic();
-            _musicValue.text = "RANDOM";
-            _musicToggle.SetIsOnWithoutNotify(true);
-            _shell.Log("AM.I.SetRandomMusicTracks(3 pads) + EnableRandomMusic()");
-        }
-
-        private void StopAllMusic()
-        {
-            _am.StopMusic();
-            _musicValue.text = "OFF";
-            _musicToggle.SetIsOnWithoutNotify(false);
-            _shell.Log("AM.I.StopMusic()");
-        }
-
-        private void OnRandomTrackChanged(AudioClip clip)
-        {
-            _shell.Log($"AM.OnRandomMusicTrackChanged → {clip.name}");
-        }
-
-        private void OnMusicStopped()
-        {
-            _musicValue.text = "OFF";
-            _musicToggle.SetIsOnWithoutNotify(false);
-            _shell.Log("AM.OnMusicStopped");
-        }
-
-        private void OnDestroy()
-        {
-            _shell?.SetVisible(false);
-            if (_am != null)
-            {
-                _am.OnRandomMusicTrackChanged -= OnRandomTrackChanged;
-                _am.OnMusicStopped -= OnMusicStopped;
+                _audio = audio;
             }
 
-            AudioClip[] ownedClips = { _beep, _chord, _noise, _pad, _padHigh, _padLow };
-            _beep = _chord = _noise = _pad = _padHigh = _padLow = null;
-            try
+            if (_settings == null && AMSettings.TryGetInstance(out AMSettings settings))
             {
-                // Release exact voices (including outgoing music) before destroying their clips.
-                if (_am != null) _am.ReleaseClips(ownedClips);
-            }
-            finally
-            {
-                foreach (AudioClip clip in ownedClips) NeoDemoShell.DestroyOwnedObject(clip);
-                _shell?.Dispose();
+                _settings = settings;
             }
         }
 
-        private void BuildClips()
+        private void Subscribe()
         {
-            _beep = MakeTone("demo_beep", 0.16f, 880f, 0.9f);
-            _chord = MakeChord("demo_chord", 0.55f, new[] { 440f, 554.37f, 659.25f });
-            _noise = MakeNoise("demo_noise", 0.22f);
-            _pad = MakePad("demo_pad", 1.6f, 110f);
-            _padHigh = MakePad("demo_pad_high", 1.6f, 165f);
-            _padLow = MakePad("demo_pad_low", 1.6f, 82.5f);
-        }
-
-        private static AudioClip MakeTone(string name, float seconds, float freq, float amp)
-        {
-            int count = Mathf.CeilToInt(SampleRate * seconds);
-            var data = new float[count];
-            for (int i = 0; i < count; i++)
+            if (_audio == null || ReferenceEquals(_subscribedAudio, _audio))
             {
-                float t = i / (float)SampleRate;
-                float env = Envelope(i, count);
-                data[i] = Mathf.Sin(2f * Mathf.PI * freq * t) * amp * env;
+                return;
             }
 
-            return ToClip(name, data);
+            Unsubscribe();
+            _subscribedAudio = _audio;
+            _audio.OnMusicStarted += HandleMusicStarted;
+            _audio.OnRandomMusicTrackChanged += HandleTrackChanged;
+            _audio.OnMusicStopped += HandleMusicStopped;
         }
 
-        private static AudioClip MakeChord(string name, float seconds, float[] freqs)
+        private void Unsubscribe()
         {
-            int count = Mathf.CeilToInt(SampleRate * seconds);
-            var data = new float[count];
-            for (int i = 0; i < count; i++)
+            // WHY ReferenceEquals: a destroyed manager still holds the managed delegates; unsubscribing them is safe.
+            if (ReferenceEquals(_subscribedAudio, null))
             {
-                float t = i / (float)SampleRate;
-                float env = Envelope(i, count);
-                float sum = 0f;
-                for (int f = 0; f < freqs.Length; f++)
+                return;
+            }
+
+            _subscribedAudio.OnMusicStarted -= HandleMusicStarted;
+            _subscribedAudio.OnRandomMusicTrackChanged -= HandleTrackChanged;
+            _subscribedAudio.OnMusicStopped -= HandleMusicStopped;
+            _subscribedAudio = null;
+        }
+
+        private void HandleMusicStarted(AudioClip clip)
+        {
+            RefreshNowPlaying();
+            Log("AM.OnMusicStarted -> " + Describe(clip));
+        }
+
+        private void HandleTrackChanged(AudioClip clip)
+        {
+            RefreshNowPlaying();
+            Log("AM.OnRandomMusicTrackChanged -> " + Describe(clip) + " (Shuffle pool)");
+        }
+
+        private void HandleMusicStopped()
+        {
+            RefreshNowPlaying();
+            Log("AM.OnMusicStopped");
+        }
+
+        private void SyncControls()
+        {
+            if (_settings != null)
+            {
+                SyncSlider(_musicVolume, _musicVolumeReadout, _settings.GetMusicVolumeNormalized());
+                SyncSlider(_efxVolume, _efxVolumeReadout, _settings.GetEfxVolumeNormalized());
+                SyncToggle(_musicToggle, !_settings.MuteMusicValue);
+                SyncToggle(_efxToggle, !_settings.MuteEfxValue);
+                if (_musicMuteReadout != null)
                 {
-                    sum += Mathf.Sin(2f * Mathf.PI * freqs[f] * t);
+                    _musicMuteReadout.SetBool(_settings.MuteMusicValue);
                 }
 
-                data[i] = sum / freqs.Length * 0.9f * env;
+                if (_efxMuteReadout != null)
+                {
+                    _efxMuteReadout.SetBool(_settings.MuteEfxValue);
+                }
             }
 
-            return ToClip(name, data);
-        }
-
-        private static AudioClip MakeNoise(string name, float seconds)
-        {
-            int count = Mathf.CeilToInt(SampleRate * seconds);
-            var data = new float[count];
-            var rng = new System.Random(12345);
-            for (int i = 0; i < count; i++)
+            if (_audio != null)
             {
-                float env = Envelope(i, count);
-                data[i] = (float)(rng.NextDouble() * 2.0 - 1.0) * 0.7f * env;
+                SyncSlider(_uiVolume, _uiVolumeReadout, _audio.UiVolume);
             }
-
-            return ToClip(name, data);
         }
 
-        private static AudioClip MakePad(string name, float seconds, float baseFreq)
+        private void RefreshNowPlaying()
         {
-            // WHY: a soft, seamlessly-looping pad — two detuned saw-ish partials, no hard start/stop envelope.
-            int count = Mathf.CeilToInt(SampleRate * seconds);
-            var data = new float[count];
-            for (int i = 0; i < count; i++)
+            if (_nowPlaying == null)
             {
-                float t = i / (float)SampleRate;
-                float a = Mathf.Sin(2f * Mathf.PI * baseFreq * t);
-                float b = Mathf.Sin(2f * Mathf.PI * (baseFreq * 1.5f) * t);
-                float c = Mathf.Sin(2f * Mathf.PI * (baseFreq * 2.01f) * t) * 0.4f;
-                data[i] = (a * 0.5f + b * 0.3f + c) * 0.35f;
+                return;
             }
 
-            return ToClip(name, data);
+            AudioClip clip = _audio != null ? _audio.GetCurrentMusicClip() : null;
+            bool playing = _audio != null && _audio.Music != null && _audio.Music.isPlaying && clip != null;
+            if (!playing)
+            {
+                _nowPlaying.text = "silence";
+                return;
+            }
+
+            string pool = _audio.CurrentMusicId;
+            _nowPlaying.text = string.IsNullOrEmpty(pool) ? clip.name : pool + " · " + clip.name;
         }
 
-        private static float Envelope(int i, int count)
+        private static void SyncSlider(Slider slider, DemoValueReadout readout, float value)
         {
-            // WHY: short attack + exponential-ish decay so effect clips don't click.
-            float attack = Mathf.Clamp01(i / (SampleRate * 0.005f));
-            float pos = i / (float)count;
-            float decay = Mathf.Pow(1f - pos, 1.6f);
-            return attack * decay;
+            if (slider != null)
+            {
+                slider.SetValueWithoutNotify(value);
+            }
+
+            if (readout != null)
+            {
+                readout.SetFloat(value);
+            }
         }
 
-        private static AudioClip ToClip(string name, float[] data)
+        private static void SyncToggle(Toggle toggle, bool isOn)
         {
-            AudioClip clip = AudioClip.Create(name, data.Length, 1, SampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
+            if (toggle != null)
+            {
+                toggle.SetIsOnWithoutNotify(isOn);
+            }
+        }
+
+        private static string Describe(AudioClip clip)
+        {
+            return clip != null ? clip.name : "none";
+        }
+
+        private static string Format(float value)
+        {
+            return value.ToString("0.00", CultureInfo.InvariantCulture);
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[AudioDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                this);
         }
     }
 }

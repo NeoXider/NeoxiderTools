@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Neo;
-using Neo.Audio;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
@@ -30,6 +27,10 @@ namespace Neo.Pages
     /// <summary>
     ///     PageManager — UI page controller (enable/disable, switch, return to previous).
     /// </summary>
+    /// <remarks>
+    ///     Page switches and setup warnings log only when <see cref="DebugLogs" /> is on (or NeoDiagnostics enables
+    ///     runtime logs/warnings); errors for pages that cannot be found log unless NeoDiagnostics errors are off.
+    /// </remarks>
     [MovedFrom("")]
     [CreateFromMenu("Neoxider/Pages/PM")]
     [AddComponentMenu("Neoxider/Pages/" + nameof(PM))]
@@ -47,6 +48,7 @@ namespace Neo.Pages
         private const string LosePageIdName = "PageLose";
         private const string EndPageIdName = "PageEnd";
         private const string MenuPageIdName = "PageMenu";
+        private const string OtherPageIdName = "PageOther";
 
         [Header("GM Integration")] [SerializeField]
         private bool integrateWithGM = true;
@@ -77,16 +79,41 @@ namespace Neo.Pages
         [SerializeField] private PageId editorActivePageId;
         [SerializeField] private bool autoSelectEditorPage = true;
 
+        [Header("Debug")]
+        [Tooltip("Logs page switches and setup warnings (missing, duplicate or blocked pages) of this manager. " +
+                 "Errors for pages that cannot be found log unless NeoDiagnostics errors are off.")]
+        [SerializeField]
+        private bool debugLogs;
+
         private Coroutine gmSubscribeRoutine;
         private Coroutine exclusivePageTransitionRoutine;
         private UnityAction onEndHandler;
         private UnityAction onLoseHandler;
         private UnityAction onWinHandler;
 
-        private Dictionary<PageId, UIPage> pageIdDict = new();
+        private readonly Dictionary<PageId, UIPage> pageIdDict = new();
+        private readonly Dictionary<string, PageNameEntry> pageIdsByName = new(StringComparer.Ordinal);
+        private readonly Dictionary<PageId, bool> otherPageFlags = new();
+        private bool pageNameIndexDirty = true;
 
         public UIPage[] AllPages => allPages;
 
+        /// <summary>Opening a non-popup page closes active popups (Inspector: Close Popups On Exclusive Page Change).</summary>
+        public bool ClosePopupsOnExclusivePageChange
+        {
+            get => closePopupsOnExclusivePageChange;
+            set => closePopupsOnExclusivePageChange = value;
+        }
+
+        /// <summary>Logs page switches and setup warnings of this manager (Inspector: Debug Logs).</summary>
+        public bool DebugLogs
+        {
+            get => debugLogs;
+            set => debugLogs = value;
+        }
+
+        private bool InfoLogsEnabled => debugLogs || NeoDiagnostics.RuntimeLogsEnabled;
+        private bool WarningsEnabled => debugLogs || NeoDiagnostics.RuntimeWarningsEnabled;
 
         private void Start()
         {
@@ -119,6 +146,7 @@ namespace Neo.Pages
         private void OnValidate()
         {
             name = nameof(PM);
+            pageNameIndexDirty = true;
 
             // WHY: the editor page preview never runs in Play Mode: there the pages belong to the game,
             // and OnValidate also fires on scene load, which would flip them behind its back.
@@ -145,16 +173,38 @@ namespace Neo.Pages
 
             SetAllPages();
             EnsureDefaultStartupPage();
-            ActivateAll(false);
             PageId last = editorActivePageId;
-            UIPage page = editorActivePageId != null
-                ? ActivatePages(editorActivePageId, true, ignoredPageIds)
-                : null;
+            UIPage page = ShowEditorPreview(editorActivePageId);
 
             if (autoSelectEditorPage && page != null && last != page.PageId)
             {
                 Selection.activeGameObject = page.gameObject;
             }
+        }
+
+        /// <summary>
+        ///     Edit Mode preview: shows <paramref name="pageId" /> and hides the other pages (the ignore list is
+        ///     respected) without raising <see cref="OnPageChanged" /> or changing the page history. Does nothing in
+        ///     Play Mode, where the pages belong to the game.
+        /// </summary>
+        /// <returns>The shown page, or null.</returns>
+        public UIPage PreviewPageInEditor(PageId pageId)
+        {
+            if (Application.isPlaying || pageId == null)
+            {
+                return null;
+            }
+
+            SetAllPages();
+            return ShowEditorPreview(pageId);
+        }
+
+        private UIPage ShowEditorPreview(PageId pageId)
+        {
+            // WHY: the preview must not raise OnPageChanged: Editor-and-Runtime listeners and project subscribers
+            // would react to an edit-time page flip.
+            ActivateAll(false);
+            return pageId != null ? ActivatePagesCore(pageId, true, ignoredPageIds, false) : null;
         }
 #endif
 
@@ -163,7 +213,6 @@ namespace Neo.Pages
             base.Init();
 
             SetAllPages();
-            allPages = allPages.Where(p => p != null).ToArray();
             SetDictPage();
             EnsureDefaultStartupPage();
         }
@@ -248,7 +297,11 @@ namespace Neo.Pages
                     ChangePageByName(EndPageIdName);
                     break;
                 default:
-                    Debug.LogWarning($"[PM] Unknown page: {page}");
+                    if (WarningsEnabled)
+                    {
+                        NeoDiagnostics.LogWarning($"[PM] Unknown page: {page}", this, true);
+                    }
+
                     break;
             }
         }
@@ -260,60 +313,108 @@ namespace Neo.Pages
         {
             if (string.IsNullOrWhiteSpace(pageIdName))
             {
-                Debug.LogWarning("[PM] PageId name is empty.");
+                if (WarningsEnabled)
+                {
+                    NeoDiagnostics.LogWarning("[PM] PageId name is empty.", this, true);
+                }
+
                 return;
             }
 
-            PageId id = TryFindPageIdByName(pageIdName);
-            if (id == null)
+            if (!TryGetPageIdByName(pageIdName, out PageId id))
             {
-                Debug.LogError(
-                    $"[PM] PageId '{pageIdName}' not found in scene pages. Known PageId names: {DescribeKnownPageIdNames()}.");
+                NeoDiagnostics.LogError(
+                    $"[PM] PageId '{pageIdName}' not found in scene pages. Known PageId names: {DescribeKnownPageIdNames()}.",
+                    this);
                 return;
             }
 
             ChangePage(id);
         }
 
-        private PageId TryFindPageIdByName(string pageIdName)
+        /// <summary>
+        ///     Finds the <see cref="PageId" /> of a page under this PM by asset name ("PageGame"); falls back to the
+        ///     page GameObject name ("Game Page"). Rescans the PM hierarchy only when the known pages do not match.
+        /// </summary>
+        /// <returns>True when a page with that name exists under this PM.</returns>
+        public bool TryGetPageIdByName(string pageIdName, out PageId pageId)
         {
-            SetAllPages();
+            pageId = null;
+            if (string.IsNullOrWhiteSpace(pageIdName))
+            {
+                return false;
+            }
 
-            if (allPages == null || allPages.Length == 0)
+            pageId = FindPageIdInKnownPages(pageIdName);
+            if (pageId == null)
+            {
+                // WHY: pages added under the PM after startup are only known after a rescan.
+                SetAllPages();
+                pageId = FindPageIdInKnownPages(pageIdName);
+            }
+
+            return pageId != null;
+        }
+
+        private PageId FindPageIdInKnownPages(string pageIdName)
+        {
+            if (pageNameIndexDirty)
+            {
+                RebuildPageNameIndex();
+            }
+
+            if (!pageIdsByName.TryGetValue(pageIdName, out PageNameEntry entry))
             {
                 return null;
             }
 
-            foreach (UIPage page in allPages)
+            if (entry.IsCurrent)
             {
-                if (page == null)
-                {
-                    continue;
-                }
+                return entry.PageId;
+            }
 
-                PageId id = page.PageId;
-                if (id != null && id.name == pageIdName)
+            // WHY: the indexed page was destroyed or got another PageId since the index was built.
+            RebuildPageNameIndex();
+            return pageIdsByName.TryGetValue(pageIdName, out entry) ? entry.PageId : null;
+        }
+
+        private void RebuildPageNameIndex()
+        {
+            // WHY: Object.name allocates a new string on every read; the names are read once per page list, not
+            // on every ChangePageByName (the GM Win/Lose/End path).
+            pageIdsByName.Clear();
+            pageNameIndexDirty = false;
+            if (allPages == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < allPages.Length; i++)
+            {
+                UIPage page = allPages[i];
+                PageId id = page != null ? page.PageId : null;
+                if (id != null)
                 {
-                    return id;
+                    pageIdsByName.TryAdd(id.name, new PageNameEntry(page, id));
                 }
             }
 
             // WHY: Fallback: match by the page GameObject name ("Game Page"), a common author mistake
-            // when the PageId asset is named differently ("PageGame").
-            foreach (UIPage page in allPages)
+            // when the PageId asset is named differently ("PageGame"). Asset names added above win.
+            for (int i = 0; i < allPages.Length; i++)
             {
-                if (page != null && page.PageId != null && page.gameObject.name == pageIdName)
+                UIPage page = allPages[i];
+                PageId id = page != null ? page.PageId : null;
+                if (id != null)
                 {
-                    return page.PageId;
+                    pageIdsByName.TryAdd(page.gameObject.name, new PageNameEntry(page, id));
                 }
             }
-
-            return null;
         }
 
         private string DescribeKnownPageIdNames()
         {
-            var names = new List<string>();
+            List<string> names = new();
             if (allPages != null)
             {
                 foreach (UIPage page in allPages)
@@ -333,30 +434,26 @@ namespace Neo.Pages
         /// </summary>
         public void SetDictPage()
         {
-            pageIdDict = new Dictionary<PageId, UIPage>();
+            pageIdDict.Clear();
+            if (allPages == null)
+            {
+                return;
+            }
 
             foreach (UIPage page in allPages)
             {
-                if (page == null)
+                if (page == null || page.PageId == null)
                 {
                     continue;
                 }
 
-                if (page.PageId != null)
+                if (!pageIdDict.TryAdd(page.PageId, page) && WarningsEnabled)
                 {
-                    if (!pageIdDict.ContainsKey(page.PageId))
-                    {
-                        pageIdDict.Add(page.PageId, page);
-                    }
-                    else
-                    {
-                        Debug.LogWarning(
-                            $"[PM] Duplicate page for PageId {page.PageId.name} — the first match will be used.");
-                    }
+                    NeoDiagnostics.LogWarning(
+                        $"[PM] Duplicate page for PageId {page.PageId.name} — the first match will be used.", this, true);
                 }
             }
         }
-
 
         /// <summary>
         ///     Switches page by PageId asset.
@@ -365,20 +462,24 @@ namespace Neo.Pages
         {
             if (pageId == null)
             {
-                Debug.LogWarning("[PM] PageId is null.");
+                if (WarningsEnabled)
+                {
+                    NeoDiagnostics.LogWarning("[PM] PageId is null.", this, true);
+                }
+
                 return;
             }
 
             if (IsOther(pageId))
             {
-                Debug.LogWarning("[PM] Switching to PageOther is disabled.");
+                WarnOtherPageBlocked();
                 return;
             }
 
             UIPage target = FindPage(pageId);
             if (target == null)
             {
-                Debug.LogError($"[PM] PageId {pageId.name} not found in scene!");
+                NeoDiagnostics.LogError($"[PM] PageId {pageId.name} not found in scene!", this);
                 return;
             }
 
@@ -393,7 +494,8 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Activates a page without deactivating others.
+        ///     Activates a page without deactivating others. When the page cannot be found the current and previous
+        ///     pages are kept.
         /// </summary>
         public void ActivePage(PageId pageId)
         {
@@ -404,41 +506,53 @@ namespace Neo.Pages
 
             if (IsOther(pageId))
             {
-                Debug.LogWarning("[PM] Switching to PageOther is disabled.");
+                WarnOtherPageBlocked();
                 return;
             }
 
-            Debug.Log($"[PM] Activating PageId: {pageId.name}");
-
-            previousUiPage = currentUiPage;
-
-            currentUiPage = FindPage(pageId);
-
-            if (currentUiPage == null)
+            UIPage page = FindPage(pageId);
+            if (page == null)
             {
-                Debug.LogError($"[PM] PageId {pageId.name} not found!");
+                NeoDiagnostics.LogError($"[PM] PageId {pageId.name} not found!", this);
                 return;
             }
 
-            SetPageActive(currentUiPage, true);
+            if (InfoLogsEnabled)
+            {
+                NeoDiagnostics.Log($"[PM] Activating PageId: {pageId.name}", this, true);
+            }
 
-            OnPageChanged?.Invoke(currentUiPage);
+            RememberPreviousPage(page);
+            currentUiPage = page;
+            SetPageActive(page, true);
+
+            OnPageChanged?.Invoke(page);
         }
 
         /// <summary>
-        ///     Swaps current and previous pages.
+        ///     Swaps current and previous pages. Does nothing when there is no previous page.
         /// </summary>
         /// <param name="keepPreviousActive">If true, the previous page stays active.</param>
         public void SwitchToPreviousPage(bool keepPreviousActive = false)
         {
             // WHY: with no history the swap would set currentUiPage to null and blank the UI; keep the current page.
-            if (previousUiPage == null)
+            // A history that points at the current page would show and then close that same page.
+            if (previousUiPage == null || previousUiPage == currentUiPage)
             {
-                Debug.LogWarning("[PM] SwitchToPreviousPage called with no previous page.");
+                if (WarningsEnabled)
+                {
+                    NeoDiagnostics.LogWarning("[PM] SwitchToPreviousPage called with no previous page.", this, true);
+                }
+
                 return;
             }
 
-            Debug.Log($"[PM] Switching to Previous Page: {previousUiPage.PageId?.name}");
+            if (InfoLogsEnabled)
+            {
+                PageId previousId = previousUiPage.PageId;
+                NeoDiagnostics.Log("[PM] Switching to Previous Page: " + (previousId != null ? previousId.name : "<no PageId>"),
+                    this, true);
+            }
 
             UIPage temp = previousUiPage;
             previousUiPage = currentUiPage;
@@ -450,7 +564,8 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Makes a page active and deactivates others (respecting the ignore list).
+        ///     Makes a page active and deactivates others (respecting the ignore list). Raises
+        ///     <see cref="OnPageChanged" /> once; when the page cannot be found the current and previous pages are kept.
         /// </summary>
         public void SetPage(PageId pageId)
         {
@@ -461,19 +576,35 @@ namespace Neo.Pages
 
             if (IsOther(pageId))
             {
-                Debug.LogWarning("[PM] Switching to PageOther is disabled.");
+                WarnOtherPageBlocked();
                 return;
             }
 
-            Debug.Log($"[PM] Setting PageId: {pageId.name}");
+            if (InfoLogsEnabled)
+            {
+                NeoDiagnostics.Log($"[PM] Setting PageId: {pageId.name}", this, true);
+            }
 
-            previousUiPage = currentUiPage;
-            currentUiPage = ActivatePages(pageId, true, ignoredPageIds);
-            OnPageChanged?.Invoke(currentUiPage);
+            UIPage page = ActivatePagesCore(pageId, true, ignoredPageIds, false);
+            if (page == null)
+            {
+                if (WarningsEnabled)
+                {
+                    NeoDiagnostics.LogWarning($"[PM] SetPage: no page under this PM uses PageId {pageId.name}.", this,
+                        true);
+                }
+
+                return;
+            }
+
+            RememberPreviousPage(page);
+            currentUiPage = page;
+            OnPageChanged?.Invoke(page);
         }
 
         /// <summary>
-        ///     Activates the target page by <see cref="PageId" /> and sets other pages according to filters.
+        ///     Activates the target page by <see cref="PageId" /> and sets other pages according to filters. Does not
+        ///     change <see cref="currentUiPage" />; raises <see cref="OnPageChanged" /> with the found page.
         /// </summary>
         /// <param name="targetPageId">Target PageId.</param>
         /// <param name="active">Whether to activate the target page.</param>
@@ -482,6 +613,17 @@ namespace Neo.Pages
         /// <returns>The found target page, or null.</returns>
         public UIPage ActivatePages(PageId targetPageId, bool active = true,
             PageId[] ignoreList = null, bool otherActive = false)
+        {
+            UIPage foundUiPage = ActivatePagesCore(targetPageId, active, ignoreList, otherActive);
+            if (foundUiPage != null)
+            {
+                OnPageChanged?.Invoke(foundUiPage);
+            }
+
+            return foundUiPage;
+        }
+
+        private UIPage ActivatePagesCore(PageId targetPageId, bool active, PageId[] ignoreList, bool otherActive)
         {
             if (targetPageId == null)
             {
@@ -492,10 +634,16 @@ namespace Neo.Pages
             UIPage foundUiPage = FindPageInAllPages(targetPageId);
             if (foundUiPage == null)
             {
-                return null;
+                // WHY: a page added under the PM after startup is only known after a rescan.
+                SetAllPages();
+                foundUiPage = FindPageInAllPages(targetPageId);
+                if (foundUiPage == null)
+                {
+                    return null;
+                }
             }
 
-            bool ignoreTarget = foundUiPage.PageId != null && ignoreList.Contains(foundUiPage.PageId);
+            bool ignoreTarget = ContainsPageId(ignoreList, foundUiPage.PageId);
             StopExclusivePageTransition();
 
             if (active)
@@ -505,7 +653,9 @@ namespace Neo.Pages
                     SetPageActive(foundUiPage, true);
                 }
 
-                if (ShouldDeferHidingOtherPages(foundUiPage))
+                // WHY: coroutines only tick in Play Mode on an active PM; elsewhere (editor preview, inactive
+                // manager) the other pages are hidden at once instead of never.
+                if (ShouldDeferHidingOtherPages(foundUiPage) && Application.isPlaying && isActiveAndEnabled)
                 {
                     exclusivePageTransitionRoutine = StartCoroutine(
                         DeactivateOtherPagesAfterIncomingShow(foundUiPage, targetPageId, ignoreList, otherActive));
@@ -520,8 +670,17 @@ namespace Neo.Pages
                 SetPageActive(foundUiPage, false);
             }
 
-            OnPageChanged?.Invoke(foundUiPage);
             return foundUiPage;
+        }
+
+        private void RememberPreviousPage(UIPage next)
+        {
+            // WHY: reopening the current page must not overwrite the history with itself; Back would then show and
+            // close that same page and leave an empty screen.
+            if (currentUiPage != next)
+            {
+                previousUiPage = currentUiPage;
+            }
         }
 
         private UIPage FindPageInAllPages(PageId targetPageId)
@@ -546,6 +705,24 @@ namespace Neo.Pages
         private static bool ShouldDeferHidingOtherPages(UIPage incoming)
         {
             return incoming != null && incoming.HasShowAnimation;
+        }
+
+        private static bool ContainsPageId(PageId[] pageIds, PageId pageId)
+        {
+            if (pageIds == null || pageId == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < pageIds.Length; i++)
+            {
+                if (pageIds[i] == pageId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void ApplyExclusivePageTransition(UIPage incoming, UIPage outgoing, bool keepOutgoingActive)
@@ -580,7 +757,7 @@ namespace Neo.Pages
                     continue;
                 }
 
-                ApplyOtherPageState(page, targetPageId, ignoreList, otherActive);
+                ApplyOtherPageState(page, ignoreList, otherActive);
             }
         }
 
@@ -596,15 +773,14 @@ namespace Neo.Pages
             exclusivePageTransitionRoutine = null;
         }
 
-        private void ApplyOtherPageState(UIPage page, PageId targetPageId, PageId[] ignoreList, bool otherActive)
+        private void ApplyOtherPageState(UIPage page, PageId[] ignoreList, bool otherActive)
         {
             if (page.IgnoreOnExclusiveChange)
             {
                 return;
             }
 
-            bool ignoreById = page.PageId != null && ignoreList.Contains(page.PageId);
-            if (ignoreById)
+            if (ContainsPageId(ignoreList, page.PageId))
             {
                 return;
             }
@@ -647,7 +823,7 @@ namespace Neo.Pages
                     continue;
                 }
 
-                if (page.PageId != null && ignoredPageIds != null && ignoredPageIds.Contains(page.PageId))
+                if (ContainsPageId(ignoredPageIds, page.PageId))
                 {
                     continue;
                 }
@@ -665,7 +841,11 @@ namespace Neo.Pages
         {
             if (uiPage == null)
             {
-                Debug.LogWarning("[PM] Attempted to activate a null page.");
+                if (WarningsEnabled)
+                {
+                    NeoDiagnostics.LogWarning("[PM] Attempted to activate a null page.", this, true);
+                }
+
                 return;
             }
 
@@ -685,13 +865,26 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Closes the current page (calls EndActive on currentUiPage).
+        ///     Closes the current page (calls EndActive on currentUiPage). When the closed page was a popup over the
+        ///     previous page, that still visible page becomes current again and <see cref="OnPageChanged" /> is raised.
         /// </summary>
         public void CloseCurrentPage()
         {
-            if (currentUiPage != null)
+            UIPage closing = currentUiPage;
+            if (closing == null)
             {
-                currentUiPage.EndActive();
+                return;
+            }
+
+            closing.EndActive();
+
+            // WHY: closing a popup reveals the page under it. Keeping the closed popup as current made Back and
+            // Android-Back mappings act on a page that is no longer on screen.
+            if (previousUiPage != null && previousUiPage != closing && previousUiPage.gameObject.activeInHierarchy)
+            {
+                currentUiPage = previousUiPage;
+                previousUiPage = null;
+                OnPageChanged?.Invoke(currentUiPage);
             }
         }
 
@@ -706,7 +899,8 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Finds a page by PageId using the internal dictionary.
+        ///     Finds a page by PageId using the internal dictionary; rescans the PM hierarchy when the cached entry is
+        ///     missing, destroyed or now uses another PageId.
         /// </summary>
         /// <returns>Page or null.</returns>
         public UIPage FindPage(PageId pageId)
@@ -716,64 +910,86 @@ namespace Neo.Pages
                 return null;
             }
 
-            if (pageIdDict == null || pageIdDict.Count == 0)
+            if (pageIdDict.Count == 0)
             {
                 SetDictPage();
             }
 
-            if (pageIdDict.TryGetValue(pageId, out UIPage p))
+            if (TryGetCachedPage(pageId, out UIPage page))
             {
-                return p;
+                return page;
             }
 
             SetAllPages();
             SetDictPage();
-            if (pageIdDict.TryGetValue(pageId, out p))
+            if (TryGetCachedPage(pageId, out page))
             {
-                return p;
+                return page;
             }
 
-            Debug.LogWarning($"[PM] Page for PageId {pageId.name} not found in dictionary.");
+            if (WarningsEnabled)
+            {
+                NeoDiagnostics.LogWarning($"[PM] Page for PageId {pageId.name} not found in dictionary.", this, true);
+            }
+
             return null;
         }
 
-
-        /// <summary>
-        ///     Checks the page list for duplicates and logs warnings.
-        /// </summary>
-        private void CheckForDuplicates(UIPage[] pages)
+        private bool TryGetCachedPage(PageId pageId, out UIPage page)
         {
-            if (pages == null || pages.Length == 0)
-            {
-                return;
-            }
-
-            IEnumerable<UIPage> duplicates = pages
-                .Where(x => x != null)
-                .GroupBy(x => x)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key);
-
-            foreach (UIPage duplicate in duplicates)
-            {
-                Debug.LogWarning($"[PM] Duplicate page found: {duplicate.name}");
-            }
+            // WHY: the dictionary is built once; a cached page can be destroyed or get another PageId later.
+            return pageIdDict.TryGetValue(pageId, out page) && page != null && page.PageId == pageId;
         }
 
         private void SetAllPages()
         {
             UIPage[] foundPages = FindAllScenePages();
-            CheckForDuplicates(foundPages);
             allPages = foundPages ?? Array.Empty<UIPage>();
+            pageNameIndexDirty = true;
+            otherPageFlags.Clear();
             if (allPages.Length == 0)
             {
-                pageIdDict?.Clear();
+                pageIdDict.Clear();
             }
         }
 
-        private static bool IsOther(PageId pageId)
+        private bool IsOther(PageId pageId)
         {
-            return pageId != null && pageId.name == "PageOther";
+            if (pageId == null)
+            {
+                return false;
+            }
+
+            // WHY: Object.name allocates a new string; read it once per PageId instead of on every switch.
+            if (!otherPageFlags.TryGetValue(pageId, out bool isOther))
+            {
+                isOther = pageId.name == OtherPageIdName;
+                otherPageFlags[pageId] = isOther;
+            }
+
+            return isOther;
+        }
+
+        private readonly struct PageNameEntry
+        {
+            public readonly UIPage Page;
+            public readonly PageId PageId;
+
+            public PageNameEntry(UIPage page, PageId pageId)
+            {
+                Page = page;
+                PageId = pageId;
+            }
+
+            public bool IsCurrent => Page != null && Page.PageId == PageId;
+        }
+
+        private void WarnOtherPageBlocked()
+        {
+            if (WarningsEnabled)
+            {
+                NeoDiagnostics.LogWarning("[PM] Switching to PageOther is disabled.", this, true);
+            }
         }
 
         private void EnsureDefaultStartupPage()
@@ -783,8 +999,7 @@ namespace Neo.Pages
                 return;
             }
 
-            PageId menuPageId = TryFindPageIdByName(MenuPageIdName);
-            if (menuPageId != null)
+            if (TryGetPageIdByName(MenuPageIdName, out PageId menuPageId))
             {
                 startupPage = menuPageId;
             }

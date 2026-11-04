@@ -1,6 +1,10 @@
 ﻿# FieldSpawner
 
-**Purpose:** instantiate cell views or gameplay objects at `FieldGenerator` cell centers. Use [FieldObjectSpawner](FieldObjectSpawner.md) when per-cell tracking and occupancy are required.
+**What it is:** `FieldSpawner` (`Scripts/GridSystem/FieldSpawner.cs`, namespace `Neo.GridSystem`) instantiates cell views or gameplay objects at `FieldGenerator` cell centers without tracking them. Use [FieldObjectSpawner](FieldObjectSpawner.md) when per-cell tracking and occupancy are required.
+
+**How to use:** see Setup below.
+
+---
 
 ## Setup
 

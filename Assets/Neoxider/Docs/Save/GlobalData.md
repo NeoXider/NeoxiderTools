@@ -1,6 +1,8 @@
 ﻿# GlobalData
 
-**Purpose:** A serializable container class for global game data (currency, levels, settings). Empty by default — add your own fields. Saved via `GlobalSave`. Namespace: `Neo.Save`.
+**What it is:** A serializable container class for global game data (currency, levels, settings). Empty by default — add your own fields. Saved via `GlobalSave`. Namespace: `Neo.Save`.
+
+**How to use:** Add serializable fields to `GlobalData` and access them through `GlobalSave.data`.
 
 ## Usage
 Open `GlobalData.cs` and add your fields (public or `[SerializeField]`). Access from code: `GlobalSave.data.fieldName`. Fields must be serializable.

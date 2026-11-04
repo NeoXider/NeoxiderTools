@@ -38,7 +38,9 @@ namespace Neo.Quest
         [SerializeField]
         private string _targetId = "";
 
-        [Tooltip("Required count for counter objectives (KillCount, CollectCount).")] [SerializeField]
+        [Tooltip("Required count for counter objectives (KillCount, CollectCount). Values below 1 behave as 1.")]
+        [SerializeField]
+        [Min(1)]
         private int _requiredCount = 1;
 
         [Tooltip("Custom objective text for UI. If empty, text can be generated from Type/TargetId.")] [SerializeField]
@@ -76,6 +78,15 @@ namespace Neo.Quest
             get => _displayText;
             set => _displayText = value ?? "";
         }
+
+        /// <summary>
+        ///     True for counter objectives (KillCount, CollectCount) whose progress accumulates to RequiredCount;
+        ///     other types are binary (progress 0 or 1).
+        /// </summary>
+        public bool IsCounter => _type == QuestObjectiveType.KillCount || _type == QuestObjectiveType.CollectCount;
+
+        /// <summary>Progress value that completes this objective: RequiredCount (at least 1) for counters, otherwise 1.</summary>
+        public int TargetProgress => IsCounter ? Mathf.Max(1, _requiredCount) : 1;
 
         /// <summary>Condition for CustomCondition (may be null — then only external trigger applies).</summary>
         public ConditionEntry Condition

@@ -1,12 +1,25 @@
 # Shop
 
-**Purpose:** Main in-game shop controller. Responsible for:
+**What it is:** the main shop controller (`MonoBehaviour`, `Scripts/Shop/Shop.cs`, namespace `Neo.Shop`). It owns the
+catalog (`ShopItemData` / `ShopBundleData`), runs item and bundle purchases, keeps the equipped item, and persists
+owned items, the equipped id and runtime discounts as one JSON blob (`ShopProfileData`) through `SaveProvider`.
+Currency comes from `IMoneySpend` wallets, with per-item / per-bundle overrides by `Money.SaveKey`.
 
-- generating item UI from `ShopItemData`;
-- processing purchases of individual items and bundles (`ShopBundleData`);
-- persisting state (owned items, equipped id, runtime discounts) as a single JSON blob via `SaveProvider`;
-- managing the selected (equipped) item;
-- multi-currency support through per-item and per-bundle `IMoneySpend` overrides.
+**How to use:**
+1. Add `Neoxider > Shop > Shop` to a GameObject and fill `_shopItemDatas` (and optionally `_bundles`).
+2. Assign `moneySpendSource` (or rely on `Money.I`).
+3. Let the Shop spawn rows from `_prefab`, or disable `Auto Spawn Items` and use [ShopListView](./ShopListView.md).
+4. Buy from C# with `TryBuy(item)` (typed result) or `Buy(item)`, or wire `ShopItem.buttonBuy` / UnityEvents for NoCode.
+
+```csharp
+ShopPurchaseStatus status = shop.TryBuy(skin);
+if (status == ShopPurchaseStatus.InsufficientFunds)
+{
+    ShowNotEnoughCoins();
+}
+```
+
+---
 
 **Inventory integration** lives in the separate `Neo.Shop.Bridges` assembly:
 [ShopInventoryGrantBridge](Bridges.md). The bridge listens to
@@ -27,6 +40,10 @@ Since **8.5.1**, if catalog assets still have an empty `Id`, `Shop` backfills un
 - Use `ShopCategoryButton` for Inspector-only category tabs.
 - Runtime catalog helpers: `SetItems(...)`, `SetBundles(...)`, `SetMoneySpendSource(...)`, `SetAutoSpawnItems(...)`.
 - Refresh helpers/events: `RefreshVisuals()`, `OnShopChanged`, `GetCategories(...)`.
+
+With `Auto Spawn Items` on and a `_prefab` assigned, `SetItems(...)` with a larger catalog spawns the missing
+Shop-owned rows and binds their buy buttons once (re-subscribing never stacks a second listener). A smaller catalog
+keeps the extra rows bound to an empty item.
 
 This keeps one `Shop` as the source of truth for save, ownership, prices, currency, bundles, and inventory bridge events.
 
@@ -84,7 +101,9 @@ Prefer these overloads when gameplay/UI code already works with catalog assets. 
 | Member | Purpose |
 |--------|---------|
 | `Buy(ShopItemData itemData)` | Buy / equip by item asset. |
+| `TryBuy(ShopItemData itemData) : ShopPurchaseStatus` | Same flow and events as `Buy`, returns the outcome. |
 | `BuyBundle(ShopBundleData bundleData)` | Buy a bundle by bundle asset. |
+| `TryBuyBundle(ShopBundleData bundleData) : ShopPurchaseStatus` | Same flow and events as `BuyBundle`, returns the outcome. |
 | `Select(ShopItemData itemData)` | Equip by item asset; pass `null` to clear selection. |
 | `ShowPreview(ShopItemData itemData)` | Set preview by item asset; pass `null` to clear preview. |
 | `IsOwned(ShopItemData itemData)` / `IsBundleOwned(ShopBundleData bundleData)` | Ownership query by typed asset. |
@@ -101,7 +120,9 @@ Use this API when code stores or receives ids rather than assets.
 | `EquippedId : string` | Currently equipped item. |
 | `PreviewIdString : string` | Item shown in the preview slot. |
 | `Buy(string itemId)` | Buy / equip by id. Respects `_purchaseFlow`. |
+| `TryBuy(string itemId) : ShopPurchaseStatus` | `Buy` with a typed outcome (see below). |
 | `BuyBundle(string bundleId)` | Buy a bundle by id. |
+| `TryBuyBundle(string bundleId) : ShopPurchaseStatus` | `BuyBundle` with a typed outcome. |
 | `Select(string itemId)` | Equip without buying or checking ownership. Pass `""` to clear selection and Shop-owned highlights. |
 | `ShowPreview(string itemId)` | Set the preview slot. |
 | `IsOwned(string itemId)` / `IsBundleOwned(string bundleId)` | Ownership query. |
@@ -109,8 +130,32 @@ Use this API when code stores or receives ids rather than assets.
 | `CanAfford(string itemId)` | True when the item could be bought right now: owned/free items always; priced items query the same wallet the purchase would use (per-item currency override included). Wallets without `IMoneyCanSpend` stay optimistic. |
 | `ResolveCurrencyMoney(string itemId)` | The `Money` the purchase would spend from (null for custom non-`Money` wallets) — for balance subscriptions in views like `ShopPurchaseButtonView`. |
 | `SetRuntimePrice(string itemId, float price)` / `ClearRuntimePrice(string itemId)` | Discounts / temporary price overrides. |
-| `GetItemsInCategory(string category)` | Filter by `ShopItemData.Category`. |
+| `GetItemsInCategory(string category)` | Filter by `ShopItemData.Category` (returns a new array). |
+| `GetItemsInCategory(string category, List<ShopItemData> results) : int` | Same filter into a caller-owned list, without allocating. |
 | `ShopItemDatas`, `Bundles` | Catalog access. |
+
+Id lookups (`GetPrice`, `CanAfford`, `ResolveCurrencyMoney`, `TryBuy`, ...) go through an id index that is checked
+against the live catalog on every hit, so per-row view refreshes stay linear in the number of rows and do not
+allocate. Replacing an entry of `ShopItemDatas` in place or calling `SetItems` is picked up on the next lookup.
+With duplicate ids the first catalog entry wins, as before, for every catalog applied through `SetItems` (or loaded
+in `Awake`). An in-place edit that gives an earlier slot the id of an already indexed later slot keeps resolving to
+the later slot until the catalog is re-applied: call `SetItems(shop.ShopItemDatas, false)` after such edits.
+
+### Typed purchase result (`ShopPurchaseStatus`)
+
+`TryBuy` / `TryBuyBundle` run exactly the same flow as `Buy` / `BuyBundle` and raise the same events; the return
+value lets C# code branch without subscribing to UnityEvents.
+
+| Status | Meaning |
+|--------|---------|
+| `Purchased` | Spending (if any) and the profile commit succeeded; purchase events were raised. |
+| `AlreadyOwned` | Item or single-purchase bundle already owned: nothing spent. An item is also selected (`BuyAndEquip`) and previewed; an owned bundle has no side effects. |
+| `Selected` | `EquipOnly` flow: selected and previewed without spending. |
+| `InsufficientFunds` | The wallet rejected the debit (not enough balance or no wallet). `OnPurchaseFailedId` was raised. |
+| `CommitFailed` | The debit succeeded but saving the profile failed; profile rolled back, debit refunded, `OnPurchaseFailedId` raised. |
+| `PendingServerAuthority` | The wallet cannot confirm the debit locally (networked client). Nothing was spent or granted locally, no failure event was raised, and Shop does not finish this purchase later; run authoritative purchases on the server. |
+| `Unavailable` | Empty/unknown id, or the `Browse` flow (or `EquipOnly` for bundles). |
+| `Busy` | Another purchase on this shop is still running (nested call from a callback). |
 
 ### Legacy Int API (`[Obsolete]`, retained for compatibility)
 
@@ -147,7 +192,11 @@ After a successful save, item visuals, `OnShopChanged`, purchase events, selecti
 
 Bundle item ids/ownership decisions are captured before external callbacks. The whole bundle profile is saved before its first `OnPurchasedId`; one child's observer fault does not suppress later child ids or `OnPurchasedBundle`. Automatic selection is already visible in the committed item profile when purchase observers run, while select notifications retain their later order. A single UnityEvent invocation still has normal Unity listener behavior: an exception can stop its remaining listeners. The bridge therefore remains **best effort**; capacity limits, missing mappings or an earlier failing listener can prevent delivery without refunding the committed shop purchase. There is no inventory reservation or delivery acknowledgement.
 
-`Buy` and `BuyBundle` share one guard acquired before currency queries/debit and released in `finally`, including when a failure callback throws. Nested item/bundle purchase calls from wallet, view or purchase callbacks are ignored without spending/granting; no deferred purchase is queued. Schedule the next purchase after the outer call returns.
+`Buy` and `BuyBundle` share one guard acquired before currency queries/debit and released in `finally`, including when a failure callback throws. Nested item/bundle purchase calls from wallet, view or purchase callbacks are ignored without spending/granting (`TryBuy` reports `Busy`); no deferred purchase is queued. Schedule the next purchase after the outer call returns.
+
+A purchase notifies in this order: Shop-owned rows and `OnShopChanged`, `OnPurchased`/`OnPurchasedId` (per item for
+bundles), then `OnSelect`/`OnSelectId` for `BuyAndEquip`, then the preview. `ShopListView` rebuilds on the first of
+these and skips the follow-up notifications that carry no new state, so one purchase costs one list rebuild.
 
 ```csharp
 shop.OnNotificationFault.AddListener(fault => HandleObserverFailure(fault.PurchaseId, fault.Observer, fault.Message));
@@ -156,7 +205,7 @@ shop.Buy(item); // a saved purchase stays committed even if UI/analytics feedbac
 
 Migration: move fallible eligibility checks before `Buy`; do not throw from `OnPurchasedId` to request a refund. Notifications observe a settled purchase. Projects requiring guaranteed full delivery need an explicit delivery contract beyond this legacy best-effort bridge.
 
-`ShopProfileData.Sanitize()` repairs missing collections, removes empty/duplicate ids and non-finite price overrides, and normalizes the schema version. Shop calls it on load/save. Call it after deserializing a profile yourself. `SetRuntimePrice` / `SetPriceOverride` ignore `NaN` and infinities; finite prices at or below zero remain free. Profile collection properties remain mutable for compatibility.
+`ShopProfileData.Sanitize()` repairs missing collections, removes empty/duplicate ids and non-finite price overrides, and normalizes the schema version. Shop calls it on load/save; a warm call does not allocate. Call it after deserializing a profile yourself. `SetRuntimePrice` / `SetPriceOverride` ignore `NaN` and infinities; finite prices at or below zero remain free. Profile collection properties remain mutable for compatibility.
 
 ## Legacy Scene Compatibility
 
@@ -167,6 +216,8 @@ Migration: move fallible eligibility checks before `Buy`; do not throw from `OnP
 ## Tests
 
 - `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` - main PlayMode coverage for purchases, bundles, shop flows, multi-currency, inventory, `ShopListView`, and typed asset API.
+- `Assets/Neoxider/Tests/Edit/Shop/ShopTypedPurchaseAndRefreshTests.cs` - `TryBuy` / `TryBuyBundle` statuses, list refresh coalescing and zero-allocation rebinding, runtime catalog growth, event-driven `TextMoney` binding, indexed id lookups (in-place catalog edits, duplicate ids, zero allocation).
+- `Assets/Neoxider/Tests/Edit/Bonus/CodeBuiltComponentEventsTests.cs` - every Shop, Shop.Bridges, Bonus and NPC component added from code has each UnityEvent it declares.
 - `Assets/Neoxider/Tests/Edit/Shop/ShopProfileDataTests.cs` - EditMode profile, JSON, sanitize, and runtime price override coverage.
 - `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` - legacy Shop/Save coverage.
 

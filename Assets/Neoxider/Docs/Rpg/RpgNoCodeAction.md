@@ -2,6 +2,12 @@
 
 **What it is:** a `MonoBehaviour` bridge from `Scripts/Rpg/Bridge/RpgNoCodeAction.cs` for invoking RPG actions without code via UnityEvent. It remains in `Neo.Rpg` so existing code and serialized UnityEvent type names preserve their assembly identity.
 
+**How to use:**
+1. Add `RpgNoCodeAction` to an object.
+2. Select `Action Type`.
+3. Fill `Amount`, `Level`, `Buff Id`, `Status Id`, `Attack Id`, `_resource`, or `_stat` depending on type.
+4. Bind `Execute()` to `Button.onClick` or another UnityEvent.
+
 **Navigation:** [← RPG](./README.md)
 
 ---
@@ -42,10 +48,3 @@
 - `OnSuccess` — when action succeeds.
 - `OnFailed` — when action fails (e.g. `ApplyBuff` / `ApplyStatus`).
 - `OnResultMessage` — result message (success or error).
-
-## Usage
-
-1. Add `RpgNoCodeAction` to an object.
-2. Select `Action Type`.
-3. Fill `Amount`, `Level`, `Buff Id`, `Status Id`, `Attack Id`, `_resource`, or `_stat` depending on type.
-4. Bind `Execute()` to `Button.onClick` or another UnityEvent.

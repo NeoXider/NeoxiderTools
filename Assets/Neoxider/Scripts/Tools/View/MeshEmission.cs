@@ -51,6 +51,14 @@ namespace Neo.Tools.View
         private MeshRenderer _meshRenderer;
         private Color _originalEmissionColor;
 
+        // WHY cached: HasProperty, EnableKeyword(string) and the GI flags are native calls (the keyword one also a
+        // string lookup); per frame they only need to run when the emission actually changes or switches on/off.
+        private bool _hasEmissionColor;
+        private bool _hasEmissiveColor;
+        private bool _emissionWritten;
+        private bool _emissionOn;
+        private Color _writtenEmission;
+
         /// <summary>
         ///     Current emission intensity (read-only).
         /// </summary>
@@ -83,9 +91,13 @@ namespace Neo.Tools.View
             _meshRenderer.sharedMaterial = _material;
             _material.EnableKeyword(EmissionKW);
             _material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            _originalEmissionColor = _material.HasProperty(EmissionColorID)
+            _emissionOn = true;
+            _emissionWritten = false;
+            _hasEmissionColor = _material.HasProperty(EmissionColorID);
+            _hasEmissiveColor = _material.HasProperty(EmissiveColorID);
+            _originalEmissionColor = _hasEmissionColor
                 ? _material.GetColor(EmissionColorID)
-                : _material.HasProperty(EmissiveColorID) ? _material.GetColor(EmissiveColorID) : Color.black;
+                : _hasEmissiveColor ? _material.GetColor(EmissiveColorID) : Color.black;
         }
 
         private void Start()
@@ -188,44 +200,65 @@ namespace Neo.Tools.View
 
             if (intensity <= emissionCutoff)
             {
-                if (_material.HasProperty(EmissionColorID))
-                {
-                    _material.SetColor(EmissionColorID, Color.black);
-                }
-
-                if (_material.HasProperty(EmissiveColorID))
-                {
-                    _material.SetColor(EmissiveColorID, Color.black);
-                }
-
-                _material.DisableKeyword(EmissionKW);
-                _material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                WriteEmission(Color.black, false, false);
                 return;
             }
 
-            _material.EnableKeyword(EmissionKW);
-
-            if (_material.HasProperty(EmissionColorID))
-            {
-                _material.SetColor(EmissionColorID, color * intensity);
-            }
-
-            if (_material.HasProperty(EmissiveColorID))
-            {
-                _material.SetColor(EmissiveColorID, color * intensity);
-            }
-
-            _material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            WriteEmission(color * intensity, true, false);
         }
 
         /// <summary>
-        ///     Resets emission to original values.
+        ///     Writes the emission color and on/off state to the owned material, skipping what is already there.
+        ///     <paramref name="force" /> rewrites everything, for restoring after outside edits.
+        /// </summary>
+        private void WriteEmission(Color emission, bool emissionOn, bool force)
+        {
+            bool colorChanged = force || !_emissionWritten || !emission.Equals(_writtenEmission);
+            if (colorChanged)
+            {
+                if (_hasEmissionColor)
+                {
+                    _material.SetColor(EmissionColorID, emission);
+                }
+
+                if (_hasEmissiveColor)
+                {
+                    _material.SetColor(EmissiveColorID, emission);
+                }
+            }
+
+            if (force || !_emissionWritten || emissionOn != _emissionOn)
+            {
+                if (emissionOn)
+                {
+                    _material.EnableKeyword(EmissionKW);
+                }
+                else
+                {
+                    _material.DisableKeyword(EmissionKW);
+                }
+
+                _material.globalIlluminationFlags = emissionOn
+                    ? MaterialGlobalIlluminationFlags.RealtimeEmissive
+                    : MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                _emissionOn = emissionOn;
+            }
+
+            _writtenEmission = emission;
+            _emissionWritten = true;
+        }
+
+        /// <summary>
+        ///     Restores the owned material to the captured baseline: the source emission color with emission on,
+        ///     whatever <see cref="emissionCutoff" /> is.
         /// </summary>
         public void ResetToOriginal()
         {
             if (_material != null)
             {
-                ApplyEmission(_originalEmissionColor, 1f);
+                // WHY not ApplyEmission(original, 1): with a cutoff of 1 or more that blacked the emission out
+                // while CurrentColor still reported the original color.
+                WriteEmission(_originalEmissionColor, true, true);
                 CurrentIntensity = 1f;
                 CurrentColor = _originalEmissionColor;
             }

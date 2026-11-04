@@ -1,6 +1,14 @@
 ﻿# InventoryItemData
 
-Reusable ScriptableObject metadata for one logical item id. Namespace `Neo.Tools`.
+**What it is:** `ScriptableObject` with reusable metadata for one logical item id (name, icon, stack cap, instance
+state, world prefab). `Scripts/Tools/Inventory/Data/InventoryItemData.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Create the asset (**Create > Neoxider > Tools > Inventory > Inventory Item Data**) and set a stable **Item Id**.
+2. Add it to an [InventoryDatabase](InventoryDatabase.md) assigned to your `InventoryComponent`.
+3. Reference the id from pickups, droppers, shops and UI.
+
+---
 
 ## Setup
 

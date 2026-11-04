@@ -32,6 +32,12 @@ namespace Neo.Rpg
 
         [SerializeField] private RpgButtonBinding _primaryAttackBinding = RpgButtonBinding.CreatePrimaryAttackDefault();
 
+        [Header("Attack Speed")]
+        [Tooltip("When enabled, the next cooldown is divided by the source RpgCharacter's attack speed multiplier " +
+                 "(AttackSpeedPercent buffs). Already running cooldowns are not changed.")]
+        [SerializeField]
+        private bool _scaleCooldownByAttackSpeed;
+
         [Header("Events")] [SerializeField] private RpgAttackEvent _onAttackStarted = new();
 
         [SerializeField] private RpgAttackEvent _onAttackResolved = new();
@@ -40,6 +46,9 @@ namespace Neo.Rpg
         [SerializeField] private RpgStringEvent _onAttackFailed = new();
 
         private readonly Dictionary<string, float> _cooldowns = new(StringComparer.Ordinal);
+        private readonly HashSet<IRpgCombatReceiver> _affectedReceivers = new();
+        private RpgPhysicsQueryBuffers _queryBuffers;
+        private bool _queryInUse;
         private Coroutine _castCoroutine;
         private bool _isStartingAttack;
         private int _castVersion;
@@ -59,10 +68,20 @@ namespace Neo.Rpg
             set => _enableBuiltInInput = value;
         }
 
+        /// <summary>
+        ///     Gets or sets whether new cooldowns are divided by the source character's attack speed multiplier.
+        /// </summary>
+        public bool ScaleCooldownByAttackSpeed
+        {
+            get => _scaleCooldownByAttackSpeed;
+            set => _scaleCooldownByAttackSpeed = value;
+        }
+
         private void Update()
         {
-            if (_enableBuiltInInput && CanProcessBuiltInInput() &&
-                _primaryAttackBinding != null && _primaryAttackBinding.IsPressedThisFrame())
+            // WHY: the cheap press check runs first; the authority check resolves components and is only needed on a press.
+            if (_enableBuiltInInput && _primaryAttackBinding != null && _primaryAttackBinding.IsPressedThisFrame() &&
+                CanProcessBuiltInInput())
             {
                 UsePrimaryAttack();
             }
@@ -252,6 +271,27 @@ namespace Neo.Rpg
         }
 
         /// <summary>
+        ///     Cooldown the next use of <paramref name="definition" /> would start: the authored cooldown, divided by the
+        ///     source character's attack speed multiplier when <see cref="ScaleCooldownByAttackSpeed" /> is enabled.
+        /// </summary>
+        public float GetEffectiveCooldown(RpgAttackDefinition definition)
+        {
+            if (definition == null)
+            {
+                return 0f;
+            }
+
+            float cooldown = definition.Cooldown;
+            if (!_scaleCooldownByAttackSpeed || cooldown <= 0f ||
+                !(ResolveSourceReceiver() is RpgCharacter character) || character == null)
+            {
+                return cooldown;
+            }
+
+            return cooldown / Mathf.Max(0.01f, character.GetAttackSpeedMultiplier());
+        }
+
+        /// <summary>
         ///     Returns remaining cooldown for an attack.
         /// </summary>
         public float GetRemainingCooldown(string attackId)
@@ -309,36 +349,43 @@ namespace Neo.Rpg
         {
             Vector3 origin = GetOriginPosition();
             Vector3 direction = GetAttackDirection(origin, forcedTarget, aimAtTarget);
-            int hits = 0;
-            HashSet<IRpgCombatReceiver> affectedReceivers = new();
-
-            if (definition.Use3D)
+            RpgPhysicsQueryBuffers buffers = RentQueryBuffers(out bool pooled);
+            HashSet<IRpgCombatReceiver> affectedReceivers = pooled ? _affectedReceivers : new HashSet<IRpgCombatReceiver>();
+            affectedReceivers.Clear();
+            try
             {
-                if (definition.Radius > 0f)
+                int hits = 0;
+                if (definition.Use3D)
                 {
-                    RaycastHit[] hitBuffer = Physics.SphereCastAll(origin, definition.Radius, direction,
-                        definition.Range, definition.TargetLayers);
-                    hits += ApplyHits3D(hitBuffer, definition, definition.MaxTargets, affectedReceivers);
+                    if (definition.Radius > 0f)
+                    {
+                        int count = buffers.SphereCast(origin, definition.Radius, direction, definition.Range,
+                            definition.TargetLayers);
+                        hits += ApplyHits3D(buffers.Hits3D, count, definition, definition.MaxTargets,
+                            affectedReceivers);
+                    }
+                    else if (Physics.Raycast(origin, direction, out RaycastHit hit, definition.Range,
+                                 definition.TargetLayers))
+                    {
+                        hits += ApplyHitToGameObject(hit.collider.gameObject, definition, affectedReceivers) ? 1 : 0;
+                    }
                 }
-                else if (Physics.Raycast(origin, direction, out RaycastHit hit, definition.Range,
-                             definition.TargetLayers))
+
+                if (hits >= definition.MaxTargets || !definition.Use2D)
                 {
-                    hits += ApplyHitToGameObject(hit.collider.gameObject, definition, affectedReceivers) ? 1 : 0;
+                    return;
                 }
-            }
 
-            if (hits >= definition.MaxTargets)
-            {
-                return;
-            }
-
-            if (definition.Use2D)
-            {
-                RaycastHit2D[] hitBuffer = definition.Radius > 0f
-                    ? Physics2D.CircleCastAll(origin, definition.Radius, direction, definition.Range,
+                int count2D = definition.Radius > 0f
+                    ? buffers.CircleCast2D(origin, definition.Radius, direction, definition.Range,
                         definition.TargetLayers)
-                    : Physics2D.RaycastAll(origin, direction, definition.Range, definition.TargetLayers);
-                ApplyHits2D(hitBuffer, definition, definition.MaxTargets - hits, affectedReceivers);
+                    : buffers.Raycast2D(origin, direction, definition.Range, definition.TargetLayers);
+                RpgHitSort.Sort(buffers.Hits2D, buffers.Hits2D.Count, RpgHit2DDistanceComparer.Instance);
+                ApplyHits2D(buffers.Hits2D, count2D, definition, definition.MaxTargets - hits, affectedReceivers);
+            }
+            finally
+            {
+                ReturnQueryBuffers(buffers, pooled, affectedReceivers);
             }
         }
 
@@ -348,27 +395,59 @@ namespace Neo.Rpg
                 ? forcedTarget.transform.position
                 : GetOriginPosition() + GetAttackDirection(GetOriginPosition(), forcedTarget, aimAtTarget) *
                 definition.Range;
-            int hits = 0;
-            HashSet<IRpgCombatReceiver> affectedReceivers = new();
-
-            if (definition.Use3D)
+            float radius = Mathf.Max(0.01f, definition.Radius);
+            RpgPhysicsQueryBuffers buffers = RentQueryBuffers(out bool pooled);
+            HashSet<IRpgCombatReceiver> affectedReceivers = pooled ? _affectedReceivers : new HashSet<IRpgCombatReceiver>();
+            affectedReceivers.Clear();
+            try
             {
-                Collider[] colliders = Physics.OverlapSphere(center, Mathf.Max(0.01f, definition.Radius),
-                    definition.TargetLayers);
-                hits += ApplyColliders3D(colliders, definition, definition.MaxTargets, affectedReceivers);
+                int hits = 0;
+                if (definition.Use3D)
+                {
+                    int count = buffers.OverlapSphere(center, radius, definition.TargetLayers);
+                    hits += ApplyColliders3D(buffers.Colliders3D, count, definition, definition.MaxTargets,
+                        affectedReceivers);
+                }
+
+                if (hits >= definition.MaxTargets || !definition.Use2D)
+                {
+                    return;
+                }
+
+                int count2D = buffers.OverlapCircle2D(center, radius, definition.TargetLayers);
+                ApplyColliders2D(buffers.Colliders2D, count2D, definition, definition.MaxTargets - hits,
+                    affectedReceivers);
+            }
+            finally
+            {
+                ReturnQueryBuffers(buffers, pooled, affectedReceivers);
+            }
+        }
+
+        private RpgPhysicsQueryBuffers RentQueryBuffers(out bool pooled)
+        {
+            // WHY: a hit callback may start another attack on this controller; nested queries get private buffers.
+            pooled = !_queryInUse;
+            if (!pooled)
+            {
+                return new RpgPhysicsQueryBuffers();
             }
 
-            if (hits >= definition.MaxTargets)
+            _queryInUse = true;
+            return _queryBuffers ??= new RpgPhysicsQueryBuffers();
+        }
+
+        private void ReturnQueryBuffers(RpgPhysicsQueryBuffers buffers, bool pooled,
+            HashSet<IRpgCombatReceiver> affectedReceivers)
+        {
+            affectedReceivers.Clear();
+            if (!pooled)
             {
                 return;
             }
 
-            if (definition.Use2D)
-            {
-                Collider2D[] colliders2D = Physics2D.OverlapCircleAll(center, Mathf.Max(0.01f, definition.Radius),
-                    definition.TargetLayers);
-                ApplyColliders2D(colliders2D, definition, definition.MaxTargets - hits, affectedReceivers);
-            }
+            buffers.Release();
+            _queryInUse = false;
         }
 
         private void SpawnProjectile(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget)
@@ -618,21 +697,18 @@ namespace Neo.Rpg
 
         private IRpgAttackNetworkAdapter ResolveNetworkAdapter()
         {
+            if (_networkAdapter is UnityEngine.Object adapterObject && adapterObject == null)
+            {
+                _networkAdapter = null;
+            }
+
             if (_networkAdapter != null)
             {
                 return _networkAdapter;
             }
 
-            MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
-            for (int i = 0; i < behaviours.Length; i++)
-            {
-                if (behaviours[i] is IRpgAttackNetworkAdapter adapter)
-                {
-                    _networkAdapter = adapter;
-                    break;
-                }
-            }
-
+            // WHY: TryGetComponent with the interface type allocates neither an array nor an editor fake-null.
+            _networkAdapter = TryGetComponent(out IRpgAttackNetworkAdapter adapter) ? adapter : null;
             return _networkAdapter;
         }
 
@@ -669,56 +745,72 @@ namespace Neo.Rpg
                 return false;
             }
 
-            receiver = target.GetComponent<RpgCharacter>();
-            if (receiver == null)
+            // WHY: TryGetComponent never yields the editor-only fake-null that would defeat the fallbacks below.
+            if (target.TryGetComponent(out RpgCharacter character))
             {
-                receiver = target.GetComponentInParent<RpgCharacter>();
+                receiver = character;
+                return true;
             }
 
-            if (receiver == null)
+            character = target.GetComponentInParent<RpgCharacter>();
+            if (character != null)
             {
-                receiver = target.GetComponent<IRpgCombatReceiver>() ??
-                           target.GetComponentInChildren<IRpgCombatReceiver>() ??
-                           target.GetComponentInParent<IRpgCombatReceiver>();
+                receiver = character;
+                return true;
             }
 
+            if (target.TryGetComponent(out IRpgCombatReceiver direct))
+            {
+                receiver = direct;
+                return true;
+            }
+
+            receiver = target.GetComponentInChildren<IRpgCombatReceiver>() ??
+                       target.GetComponentInParent<IRpgCombatReceiver>();
             return receiver != null;
         }
 
-        private int ApplyHits3D(RaycastHit[] hits, RpgAttackDefinition definition, int remainingTargets,
+        private int ApplyHits3D(RaycastHit[] hits, int count, RpgAttackDefinition definition, int remainingTargets,
             HashSet<IRpgCombatReceiver> affectedReceivers)
         {
             int applied = 0;
-            for (int i = 0; i < hits.Length && applied < remainingTargets; i++)
+            for (int i = 0; i < count && applied < remainingTargets; i++)
             {
-                applied += ApplyHitToGameObject(hits[i].collider.gameObject, definition, affectedReceivers) ? 1 : 0;
-            }
-
-            return applied;
-        }
-
-        private int ApplyHits2D(RaycastHit2D[] hits, RpgAttackDefinition definition, int remainingTargets,
-            HashSet<IRpgCombatReceiver> affectedReceivers)
-        {
-            int applied = 0;
-            for (int i = 0; i < hits.Length && applied < remainingTargets; i++)
-            {
-                if (hits[i].collider == null)
+                Collider hitCollider = hits[i].collider;
+                if (hitCollider == null)
                 {
                     continue;
                 }
 
-                applied += ApplyHitToGameObject(hits[i].collider.gameObject, definition, affectedReceivers) ? 1 : 0;
+                applied += ApplyHitToGameObject(hitCollider.gameObject, definition, affectedReceivers) ? 1 : 0;
             }
 
             return applied;
         }
 
-        private int ApplyColliders3D(Collider[] colliders, RpgAttackDefinition definition, int remainingTargets,
-            HashSet<IRpgCombatReceiver> affectedReceivers)
+        private int ApplyHits2D(List<RaycastHit2D> hits, int count, RpgAttackDefinition definition,
+            int remainingTargets, HashSet<IRpgCombatReceiver> affectedReceivers)
         {
             int applied = 0;
-            for (int i = 0; i < colliders.Length && applied < remainingTargets; i++)
+            for (int i = 0; i < count && i < hits.Count && applied < remainingTargets; i++)
+            {
+                Collider2D hitCollider = hits[i].collider;
+                if (hitCollider == null)
+                {
+                    continue;
+                }
+
+                applied += ApplyHitToGameObject(hitCollider.gameObject, definition, affectedReceivers) ? 1 : 0;
+            }
+
+            return applied;
+        }
+
+        private int ApplyColliders3D(Collider[] colliders, int count, RpgAttackDefinition definition,
+            int remainingTargets, HashSet<IRpgCombatReceiver> affectedReceivers)
+        {
+            int applied = 0;
+            for (int i = 0; i < count && applied < remainingTargets; i++)
             {
                 if (colliders[i] == null)
                 {
@@ -731,11 +823,11 @@ namespace Neo.Rpg
             return applied;
         }
 
-        private int ApplyColliders2D(Collider2D[] colliders, RpgAttackDefinition definition, int remainingTargets,
-            HashSet<IRpgCombatReceiver> affectedReceivers)
+        private int ApplyColliders2D(List<Collider2D> colliders, int count, RpgAttackDefinition definition,
+            int remainingTargets, HashSet<IRpgCombatReceiver> affectedReceivers)
         {
             int applied = 0;
-            for (int i = 0; i < colliders.Length && applied < remainingTargets; i++)
+            for (int i = 0; i < count && i < colliders.Count && applied < remainingTargets; i++)
             {
                 if (colliders[i] == null)
                 {
@@ -758,7 +850,7 @@ namespace Neo.Rpg
         {
             int version = ++_castVersion;
             _isStartingAttack = true;
-            _cooldowns[definition.Id] = Time.time + definition.Cooldown;
+            _cooldowns[definition.Id] = Time.time + GetEffectiveCooldown(definition);
             try
             {
                 _onAttackStarted?.Invoke(eventId);
@@ -804,7 +896,7 @@ namespace Neo.Rpg
             }
 
             target = RpgTargetingUtility.SelectTarget(_origin != null ? _origin : transform, preset.TargetQuery,
-                ResolveReceiverFromGameObject, ResolveSourceReceiver());
+                ResolveReceiver, ResolveSourceReceiver());
             if (target != null)
             {
                 return true;
@@ -818,6 +910,9 @@ namespace Neo.Rpg
 
             return true;
         }
+
+        // WHY: cached; a method-group argument would allocate a new delegate on every preset target search.
+        private static readonly Func<GameObject, IRpgCombatReceiver> ResolveReceiver = ResolveReceiverFromGameObject;
 
         private static IRpgCombatReceiver ResolveReceiverFromGameObject(GameObject target)
         {

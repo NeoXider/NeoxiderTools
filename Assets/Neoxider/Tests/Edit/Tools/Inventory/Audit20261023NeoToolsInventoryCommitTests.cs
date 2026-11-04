@@ -485,29 +485,107 @@ namespace Neo.Tests.Edit
         [Test]
         public void ItemAuthoring_DoesNotSerializePresentationPreview_AndPreservesExplicitIcon()
         {
-            Texture2D texture = new(2, 2);
-            CreatedObjects.Add(texture);
-            Sprite authored = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.zero);
-            CreatedObjects.Add(authored);
-            GameObject prefab = CreateObject("IconPrefab");
-            prefab.AddComponent<SpriteRenderer>().sprite = authored;
-            InventoryItemData item = CreateItem(7);
-            Configure(item, serialized => serialized.FindProperty("_worldDropPrefab").objectReferenceValue = prefab);
+            InventoryItemData item = CreatePreviewAuthoringItem(out Sprite authored, out GameObject prefab);
             MethodInfo validate = typeof(InventoryItemData).GetMethod("OnValidate",
                 BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(validate, Is.Not.Null);
             validate.Invoke(item, null);
 
             Assert.That(item.Icon, Is.Null);
             Assert.That(prefab.GetPreviewSprite(), Is.SameAs(authored));
+
+            Configure(item, serialized => serialized.FindProperty("_icon").objectReferenceValue = authored);
+            validate.Invoke(item, null);
+            Assert.That(item.Icon, Is.SameAs(authored));
+            Assert.That(authored != null, Is.True);
+        }
+
+        [Test]
+        public void ItemAuthoring_GlobalPreviewCacheClear_PreservesAuthoredIconInAnEmptyCache()
+        {
+            RequireEmptyPreviewSpriteCache();
+            InventoryItemData item = CreatePreviewAuthoringItem(out Sprite authored, out GameObject prefab);
+            MethodInfo validate = typeof(InventoryItemData).GetMethod("OnValidate",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(validate, Is.Not.Null);
+            validate.Invoke(item, null);
+            Assert.That(item.Icon, Is.Null);
+            Assert.That(prefab.GetPreviewSprite(), Is.SameAs(authored));
+
+            // WHY: borrowed sprites are never cleared to arrange this prerequisite; a non-empty cache ignores the test.
+            RequireEmptyPreviewSpriteCache();
             PrefabPreviewExtensions.ClearPreviewSpriteCache();
             Assert.That(prefab.GetPreviewSprite(), Is.SameAs(authored));
             Assert.That(item.Icon, Is.Null);
 
             Configure(item, serialized => serialized.FindProperty("_icon").objectReferenceValue = authored);
             validate.Invoke(item, null);
+            RequireEmptyPreviewSpriteCache();
             PrefabPreviewExtensions.ClearPreviewSpriteCache();
             Assert.That(item.Icon, Is.SameAs(authored));
             Assert.That(authored != null, Is.True);
+        }
+
+        [Test]
+        public void ItemAuthoring_ForeignPreviewCache_RefusesGlobalClearWithoutChangingTheSentinel()
+        {
+            RequireEmptyPreviewSpriteCache();
+            Dictionary<Texture2D, Sprite> cache = GetPreviewSpriteCache();
+            Texture2D texture = new(2, 2);
+            CreatedObjects.Add(texture);
+            Sprite sentinel = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.zero);
+            CreatedObjects.Add(sentinel);
+            cache.Add(texture, sentinel);
+            try
+            {
+                // WHY: ordinary authoring must remain safe even while a different view owns a cached preview.
+                ItemAuthoring_DoesNotSerializePresentationPreview_AndPreservesExplicitIcon();
+                IgnoreException refusal = Assert.Throws<IgnoreException>(() =>
+                    ItemAuthoring_GlobalPreviewCacheClear_PreservesAuthoredIconInAnEmptyCache());
+                Assert.That(refusal.Message, Does.Contain("empty shared preview cache"));
+                Assert.That(GetPreviewSpriteCache(), Is.SameAs(cache));
+                Assert.That(cache.Count, Is.EqualTo(1));
+                Assert.That(cache.TryGetValue(texture, out Sprite retained), Is.True);
+                Assert.That(retained, Is.SameAs(sentinel));
+                Assert.That(sentinel != null && texture != null, Is.True);
+                Assert.That(sentinel.texture, Is.SameAs(texture));
+            }
+            finally
+            {
+                // WHY: remove only the control's own entry; the shared cache is never reset.
+                cache.Remove(texture);
+            }
+        }
+
+        private InventoryItemData CreatePreviewAuthoringItem(out Sprite authored, out GameObject prefab)
+        {
+            Texture2D texture = new(2, 2);
+            CreatedObjects.Add(texture);
+            authored = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.zero);
+            CreatedObjects.Add(authored);
+            GameObject createdPrefab = CreateObject("IconPrefab");
+            prefab = createdPrefab;
+            createdPrefab.AddComponent<SpriteRenderer>().sprite = authored;
+            InventoryItemData item = CreateItem(7);
+            Configure(item, serialized => serialized.FindProperty("_worldDropPrefab").objectReferenceValue = createdPrefab);
+            return item;
+        }
+
+        private static void RequireEmptyPreviewSpriteCache()
+        {
+            if (GetPreviewSpriteCache().Count != 0)
+                Assert.Ignore("This global-clear oracle requires an empty shared preview cache in a clean isolated host. " +
+                    "Borrowed previews were left untouched; this scenario has not passed.");
+        }
+
+        private static Dictionary<Texture2D, Sprite> GetPreviewSpriteCache()
+        {
+            FieldInfo field = typeof(PrefabPreviewExtensions).GetField("CachedPreviewSprites",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, "The shared preview cache must be observable before a global clear.");
+            Dictionary<Texture2D, Sprite> cache = field.GetValue(null) as Dictionary<Texture2D, Sprite>;
+            Assert.That(cache, Is.Not.Null);
+            return cache;
         }
 
         private static InventoryItemInstance NewInstance(int count = 1)

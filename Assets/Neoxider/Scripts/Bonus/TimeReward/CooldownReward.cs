@@ -189,7 +189,7 @@ namespace Neo.Bonus
 
             if (GetClaimableCount() < 1)
             {
-                // Frame time may reach zero slightly before the persisted UTC deadline.
+                // WHY: Frame time may reach zero slightly before the persisted UTC deadline.
                 // Keep ticking that remainder instead of leaving auto-claim permanently stopped.
                 if (TryGetEndUtcFromSave(out DateTime endUtc))
                 {
@@ -240,12 +240,13 @@ namespace Neo.Bonus
 
             if (!TryGetEndUtcFromSave(out DateTime endUtc))
             {
-                return CooldownRewardExtensions.CapToMaxPerTake(_rewardAvailableOnStart ? 1 : 0, _maxRewardsPerTake);
+                return CooldownSchedule.CountClaimable(false, default, duration, default, _maxRewardsPerTake,
+                    _rewardAvailableOnStart);
             }
 
             DateTime lastRewardUtc = endUtc.AddSeconds(-duration);
-            int accumulated = lastRewardUtc.GetAccumulatedClaimCount(duration, NeoTrustedTime.UtcNow);
-            return CooldownRewardExtensions.CapToMaxPerTake(accumulated, _maxRewardsPerTake);
+            return CooldownSchedule.CountClaimable(true, lastRewardUtc, duration, NeoTrustedTime.UtcNow,
+                _maxRewardsPerTake, _rewardAvailableOnStart);
         }
 
         /// <summary>Attempts to claim reward(s). Returns true when at least one claim succeeds.</summary>
@@ -266,13 +267,13 @@ namespace Neo.Bonus
             _claimInProgress = true;
             try
             {
-                // Consume before callbacks: a UnityEvent may attempt another claim or inspect the saved state.
+                // WHY: Consume before callbacks: a UnityEvent may attempt another claim or inspect the saved state.
                 if (_saveTimeOnTakeReward)
                 {
                     _waitingForManualStart = false;
                     _canTakeReward = false;
 
-                    // Re-arm the non-looping timer after completion for continuous regeneration.
+                    // WHY: Re-arm the non-looping timer after completion for continuous regeneration.
                     if (!IsRunning)
                     {
                         Play();
@@ -328,7 +329,7 @@ namespace Neo.Bonus
             _waitingForManualStart = false;
             if (!IsRunning)
             {
-                // TimerObject.Play resets its time. Starting updates must preserve a restored countdown.
+                // WHY: TimerObject.Play resets its time. Starting updates must preserve a restored countdown.
                 float remaining = GetRemainingTime();
                 Play();
                 SetTime(remaining);
@@ -370,7 +371,7 @@ namespace Neo.Bonus
             if (!IsRunning)
             {
                 Play();
-                // An initially available reward configures Play to start at zero.
+                // WHY: An initially available reward configures Play to start at zero.
                 SetTime(duration);
                 SaveState();
             }
@@ -393,7 +394,7 @@ namespace Neo.Bonus
             // available (small back-date guards DateTime.AddSeconds millisecond rounding).
             SaveProvider.SetString(GetSaveKey() + "_rt", NeoTrustedTime.UtcNow.AddSeconds(-0.05).ToString("o"));
             SetTime(0f);
-            _canTakeReward = true;
+            // WHY: RefreshTimeState raises OnRewardAvailable only on the not-available -> available edge.
             RefreshTimeState();
         }
 

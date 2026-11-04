@@ -165,6 +165,8 @@ namespace Neo.Tools
         private Vector2? _externalLookInput;
         private bool _externalJumpPressed;
         private bool _externalRunHeld;
+        private bool _subscribedToGameSettings;
+        private EM _pauseEventSource;
 
         private bool HasInputAuthority
         {
@@ -221,7 +223,7 @@ namespace Neo.Tools
             set => _enableCursorControl = value;
         }
 
-        private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
+        private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !MoveCursor.Visible);
 
         private void Awake()
         {
@@ -282,7 +284,7 @@ namespace Neo.Tools
         {
             if (ShouldHandleEscape() && ReadEscapePressed())
             {
-                if (Cursor.visible)
+                if (MoveCursor.Visible)
                 {
                     SetCursorLocked(true);
                     SetLookEnabled(true);
@@ -298,6 +300,10 @@ namespace Neo.Tools
             if (HasInputAuthority)
             {
                 HandleLookInput();
+                // WHY: the camera pivot is not simulated, so it follows look input every rendered frame; only
+                // the body yaw goes through Rigidbody.MoveRotation in FixedUpdate. Writing the pivot at the fixed
+                // rate made pitch visibly step at high frame rates.
+                ApplyCameraPivotRotation();
             }
 
             bool movingNow = _movementEnabled && _moveInput.sqrMagnitude > 0.001f;
@@ -332,29 +338,39 @@ namespace Neo.Tools
 
         private void OnEnable()
         {
-            if (_useGameSettingsMouseSensitivity)
+            // WHY: remember exactly what was subscribed so OnDisable undoes it even when the flags changed or the
+            // EM singleton was replaced in between; re-reading the flags left stale or missing unsubscriptions.
+            if (_useGameSettingsMouseSensitivity && !_subscribedToGameSettings)
             {
                 GameSettings.OnSettingsChanged += OnGameSettingsChanged;
+                _subscribedToGameSettings = true;
             }
 
-            if (_disableLookOnPause && EM.TryGetInstance(out EM eventManager))
+            if (_disableLookOnPause && _pauseEventSource == null && EM.TryGetInstance(out EM eventManager))
             {
                 eventManager.OnPause.AddListener(OnPauseLook);
                 eventManager.OnResume.AddListener(OnResumeLook);
+                _pauseEventSource = eventManager;
             }
         }
 
         private void OnDisable()
         {
-            if (_useGameSettingsMouseSensitivity)
+            if (_subscribedToGameSettings)
             {
                 GameSettings.OnSettingsChanged -= OnGameSettingsChanged;
+                _subscribedToGameSettings = false;
             }
 
-            if (_disableLookOnPause && EM.TryGetInstance(out EM eventManager))
+            if (!ReferenceEquals(_pauseEventSource, null))
             {
-                eventManager.OnPause.RemoveListener(OnPauseLook);
-                eventManager.OnResume.RemoveListener(OnResumeLook);
+                if (_pauseEventSource != null)
+                {
+                    _pauseEventSource.OnPause.RemoveListener(OnPauseLook);
+                    _pauseEventSource.OnResume.RemoveListener(OnResumeLook);
+                }
+
+                _pauseEventSource = null;
             }
         }
 
@@ -453,20 +469,39 @@ namespace Neo.Tools
                 return;
             }
 
-            Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !locked;
+            MoveCursor.LockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+            MoveCursor.Visible = !locked;
         }
 
         /// <summary>
         ///     True when an active <see cref="CursorLockController"/> owns the cursor. All internal cursor paths
         ///     (lock on Start, Escape toggle, look auto-lock) are skipped and <see cref="SetCursorLocked"/> forwards
-        ///     to that controller.
+        ///     to that controller. False while the bound controller is disabled (component or Controller Enabled) or
+        ///     its GameObject is inactive; the binding is kept, so the player defers again once it is active. Also
+        ///     false while that controller is being disabled, deactivated or destroyed and this player stays in play
+        ///     (its scene stays loaded and its GameObject stays active), so the look it hands back during that cleanup
+        ///     auto-locks like a standalone player.
         /// </summary>
         public bool HasExternalCursorControl()
         {
-            return _externalCursorLockController != null &&
-                   _externalCursorLockController.enabled &&
-                   _externalCursorLockController.ControllerEnabled;
+            CursorLockController owner = _externalCursorLockController;
+            if (owner == null || !owner.enabled || !owner.ControllerEnabled)
+            {
+                return false;
+            }
+
+            // WHY: an owner that is cleaning up no longer holds the cursor for a player that stays in play. A player
+            // leaving play with it (its scene unloading, or its own GameObject deactivated or destroyed, as with an
+            // owner on the player root) keeps deferring, so neither a scene change nor a despawn re-locks the cursor.
+            if (owner.IsReleasingOwnership)
+            {
+                return !gameObject.scene.isLoaded || !gameObject.activeInHierarchy;
+            }
+
+            // WHY: an inactive owner runs no Update, so it handles no Escape, and a forwarded SetCursorLocked would
+            // push it onto the cursor stack after its OnDisable already left it. Until it is active again the player
+            // owns its cursor paths, as it does for an owner with enabled = false.
+            return owner.gameObject.activeInHierarchy;
         }
 
         /// <summary>
@@ -511,6 +546,8 @@ namespace Neo.Tools
             transform.position = worldPosition;
             if (_rigidbody != null)
             {
+                // WHY: with interpolation the body would otherwise blend from its old simulated pose for one step.
+                _rigidbody.position = worldPosition;
                 _rigidbody.linearVelocity = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
             }
@@ -605,7 +642,7 @@ namespace Neo.Tools
                             Vector3.down * _groundProbeOffset;
             int hitCount = Physics.OverlapSphereNonAlloc(probe, _groundCheckRadius, _groundHits, _groundMask,
                 QueryTriggerInteraction.Ignore);
-            // A full prefix may contain only self colliders; retry until the configured query is complete.
+            // WHY: a full prefix may contain only self colliders; retry until the configured query is complete.
             while (hitCount == _groundHits.Length)
             {
                 Array.Resize(ref _groundHits, checked(_groundHits.Length * 2));
@@ -764,33 +801,28 @@ namespace Neo.Tools
                 return;
             }
 
-            var yawRotation = Quaternion.Euler(0f, _yaw, 0f);
-            bool characterRotated = false;
-            switch (_lookYawMode)
+            if (_lookYawMode == LookYawMode.RotateCharacter || _lookYawMode == LookYawMode.RotateBoth)
             {
-                case LookYawMode.RotateCharacter:
-                    _rigidbody.MoveRotation(yawRotation);
-                    characterRotated = true;
-                    break;
-                case LookYawMode.RotateCameraPivot:
-                    break;
-                case LookYawMode.RotateBoth:
-                    _rigidbody.MoveRotation(yawRotation);
-                    characterRotated = true;
-                    break;
+                _rigidbody.MoveRotation(Quaternion.Euler(0f, _yaw, 0f));
             }
 
-            if (_cameraPivot != null)
+            ApplyCameraPivotRotation();
+        }
+
+        private void ApplyCameraPivotRotation()
+        {
+            if (_cameraPivot == null || !_canLook || !IsLookActive)
             {
-                if (_lookYawMode == LookYawMode.RotateCameraPivot ||
-                    (_lookYawMode == LookYawMode.RotateBoth && !characterRotated))
-                {
-                    _cameraPivot.rotation = Quaternion.Euler(_pitch, _yaw, 0f);
-                }
-                else
-                {
-                    _cameraPivot.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
-                }
+                return;
+            }
+
+            if (_lookYawMode == LookYawMode.RotateCameraPivot)
+            {
+                _cameraPivot.rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+            }
+            else
+            {
+                _cameraPivot.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
             }
         }
 
@@ -825,7 +857,8 @@ namespace Neo.Tools
                 return true;
             }
 
-            if (!IsLegacyInputAvailable())
+            // WHY: cached probe; this runs up to five times per frame and must not touch Input or throw each time.
+            if (!NeoInputAvailability.IsLegacyInputAvailable())
             {
                 return true;
             }
@@ -840,19 +873,6 @@ namespace Neo.Tools
             }
 
             return false;
-        }
-
-        private static bool IsLegacyInputAvailable()
-        {
-            try
-            {
-                Vector3 _ = Input.mousePosition;
-                return true;
-            }
-            catch (InvalidOperationException)
-            {
-                return false;
-            }
         }
 
         private bool ReadEscapePressed()

@@ -1,6 +1,8 @@
 ﻿# ColorExtension
 
-**Purpose:** Extension methods for Unity `Color` — modify individual channels, darken, lighten, and convert to HEX string.
+**What it is:** extension methods for Unity `Color` — modify individual channels, darken, lighten, and convert to a HEX string. File: `Scripts/Extensions/ColorExtension.cs`, namespace `Neo.Extensions`.
+
+**How to use:** add `using Neo.Extensions;` and call the method on a color: `image.color = image.color.WithAlpha(0.5f);`.
 
 ---
 

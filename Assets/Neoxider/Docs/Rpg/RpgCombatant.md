@@ -1,6 +1,10 @@
 ﻿# RpgCombatant
 
-`RpgCombatant` was removed in v8.4.0.
+**What it is:** a legacy pointer page: `RpgCombatant` was removed in v8.4.0.
+
+**How to use:** migrate to [RpgCharacter](./RpgCharacter.md) with the steps below.
+
+---
 
 Use [RpgCharacter](./RpgCharacter.md). It replaces the old scene-local combat actor and supports the same NPC, enemy, pet, and destructible scenarios with universal resources, stats, buffs, statuses, NoCode API, and Mirror synchronization.
 

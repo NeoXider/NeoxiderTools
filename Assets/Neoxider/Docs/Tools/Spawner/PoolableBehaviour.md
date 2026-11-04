@@ -1,6 +1,13 @@
 ﻿# PoolableBehaviour
 
-**Purpose:** A base class for scripts intended to work with pools. Implements the `IPoolable` interface. If your script inherits from this (instead of `MonoBehaviour`), it automatically receives callbacks when taken from or returned to a pool.
+**What it is:** Abstract `MonoBehaviour` implementing [IPoolable](IPoolable.md) with empty virtual callbacks. `Scripts/Tools/Spawner/PoolableBehaviour.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Inherit your pooled script from `PoolableBehaviour` instead of `MonoBehaviour`.
+2. Override only the callbacks you need (`OnPoolGet` to reset health/timers, `OnPoolRelease` to stop effects).
+3. Spawn the prefab through a pool; `Instantiate` does not invoke these callbacks.
+
+---
 
 ## API
 

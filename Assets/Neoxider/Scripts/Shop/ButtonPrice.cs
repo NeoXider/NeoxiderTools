@@ -44,10 +44,10 @@ namespace Neo.UI
 
             [SerializeField] private bool _editorView = true;
 
-            [SerializeField] private UnityEvent OnBuy;
-            [SerializeField] private UnityEvent OnSelect;
-            [SerializeField] private UnityEvent OnSelected;
-            [SerializeField] private UnityEvent OnUnaffordable;
+            [SerializeField] private UnityEvent OnBuy = new();
+            [SerializeField] private UnityEvent OnSelect = new();
+            [SerializeField] private UnityEvent OnSelected = new();
+            [SerializeField] private UnityEvent OnUnaffordable = new();
 
             /// <summary>Current visual state.</summary>
             public ButtonType CurrentType => _type;

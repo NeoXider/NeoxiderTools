@@ -109,6 +109,39 @@ namespace Neo.Editor.Tests
             }
         }
 
+        [Test]
+        public void Start_SkipsEmptySlotsInsteadOfStoppingThePlaylist()
+        {
+            AudioClip playable = CreateClip("playable");
+            for (int seed = 0; seed < 12; seed++)
+            {
+                UnityEngine.Random.InitState(20261102 + seed);
+                RandomMusicController controller = CreateController();
+                controller.Initialize(_source, new AudioClip[] { null, playable, null });
+                int stopped = 0;
+                controller.OnStopped += () => stopped++;
+
+                controller.Start();
+
+                Assert.AreSame(playable, controller.CurrentTrack, "A null slot must not be picked (seed " + seed + ").");
+                Assert.IsTrue(controller.IsPlaying, "One empty slot must not stop the playlist.");
+                Assert.AreEqual(0, stopped);
+                controller.Stop();
+            }
+        }
+
+        [Test]
+        public void Start_WithOnlyEmptySlots_StopsWithoutPlaying()
+        {
+            RandomMusicController controller = CreateController();
+            controller.Initialize(_source, new AudioClip[] { null, null });
+
+            controller.Start();
+
+            Assert.IsFalse(controller.IsPlaying);
+            Assert.IsNull(controller.CurrentTrack);
+        }
+
         private RandomMusicController CreateController()
         {
             RandomMusicController controller = new RandomMusicController();

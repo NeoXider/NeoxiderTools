@@ -1,6 +1,13 @@
 ﻿# PickableItem
 
-**Purpose:** A component for world items (coins, potions, weapons) that the player can pick up. Reacts to triggers (2D/3D), filters by tag, validates the collector, and auto-destroys/deactivates after collection.
+**What it is:** `MonoBehaviour` for world items (coins, potions, weapons) that adds them to an inventory on trigger (2D/3D) or by call, validating the collector and destroying/deactivating itself after collection. `Scripts/Tools/Inventory/Runtime/PickableItem.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `PickableItem` and a trigger collider to the world prefab; assign **Item Data** (or **Item Id**) and **Amount**.
+2. Give the collector (player) an `InventoryComponent` on itself or a parent, or assign **Target Inventory**.
+3. Collect automatically on trigger, or call `Collect()` / `CollectFromGameObject(collector)` from code or UnityEvents.
+
+---
 
 ## Fields (Inspector)
 

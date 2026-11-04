@@ -47,7 +47,7 @@ namespace Neo.Tests.Play.RPG
                 Object.DestroyImmediate(_npc);
             }
 
-            // Only this fixture's uniquely named template clones belong to this test.
+            // WHY: Only this fixture's uniquely named template clones belong to this test.
             foreach (RpgProjectile leftover in Object.FindObjectsByType<RpgProjectile>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {

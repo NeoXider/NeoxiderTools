@@ -39,6 +39,16 @@ namespace Neo.Tools
         [SerializeField] private string _blendYParam = "MoveY";
         [SerializeField] private float _blendDampTime = 0.08f;
 
+        private readonly AnimatorParameterCache _parameters = new();
+        private int _parametersVersion = -1;
+        private AnimatorParameterHandle _isGroundedHandle;
+        private AnimatorParameterHandle _isMovingHandle;
+        private AnimatorParameterHandle _isRunningHandle;
+        private AnimatorParameterHandle _speedHandle;
+        private AnimatorParameterHandle _locomotionStateHandle;
+        private AnimatorParameterHandle _jumpTriggerHandle;
+        private AnimatorParameterHandle _blendXHandle;
+        private AnimatorParameterHandle _blendYHandle;
         private bool _wasGrounded;
 
         /// <summary>
@@ -49,6 +59,11 @@ namespace Neo.Tools
         private void Awake()
         {
             TryAutoAssignReferences();
+        }
+
+        private void OnValidate()
+        {
+            _parameters.Invalidate();
         }
 
         private void Update()
@@ -119,44 +134,111 @@ namespace Neo.Tools
                 return;
             }
 
+            bool isGrounded = _controller.IsGrounded;
+            if (!RefreshParameters())
+            {
+                // WHY: keep the jump edge detector current while the Animator cannot take writes, so an Animator
+                // that initializes mid-air does not fire a Jump trigger from a stale grounded state.
+                _wasGrounded = isGrounded;
+                return;
+            }
+
             Vector2 velocity = _rigidbody.linearVelocity;
             float speed = velocity.magnitude;
             bool isMoving = speed > _movingThreshold;
-            bool isGrounded = _controller.IsGrounded;
             bool isRunning = _controller.IsRunning && isMoving;
 
-            SetBoolSafe(_isGroundedParam, isGrounded);
-            SetBoolSafe(_isMovingParam, isMoving);
-            SetBoolSafe(_isRunningParam, isRunning);
-            SetFloatSafe(_speedParam, speed);
+            SetBool(_isGroundedHandle, isGrounded);
+            SetBool(_isMovingHandle, isMoving);
+            SetBool(_isRunningHandle, isRunning);
+            SetFloat(_speedHandle, speed);
 
-            if (_useLocomotionStateInt)
+            if (_useLocomotionStateInt && _locomotionStateHandle.Exists)
             {
                 int state = !isGrounded ? 3 : isRunning ? 2 : isMoving ? 1 : 0;
-                SetIntSafe(_locomotionStateParam, state);
+                _animator.SetInteger(_locomotionStateHandle.Hash, state);
             }
 
-            if (_useJumpTrigger && _wasGrounded && !isGrounded && _rigidbody.linearVelocity.y > 0.05f)
+            if (_useJumpTrigger && _jumpTriggerHandle.Exists && _wasGrounded && !isGrounded && velocity.y > 0.05f)
             {
-                SetTriggerSafe(_jumpTriggerParam);
+                _animator.SetTrigger(_jumpTriggerHandle.Hash);
             }
 
             if (_useBlendTree)
             {
                 Vector2 blend = CalculateBlend(velocity);
-                if (_blendDampTime > 0f)
-                {
-                    _animator.SetFloat(_blendXParam, blend.x, _blendDampTime, Time.deltaTime);
-                    _animator.SetFloat(_blendYParam, blend.y, _blendDampTime, Time.deltaTime);
-                }
-                else
-                {
-                    _animator.SetFloat(_blendXParam, blend.x);
-                    _animator.SetFloat(_blendYParam, blend.y);
-                }
+                SetBlendFloat(_blendXHandle, blend.x);
+                SetBlendFloat(_blendYHandle, blend.y);
             }
 
             _wasGrounded = isGrounded;
+        }
+
+        /// <summary>
+        ///     Re-resolves parameter handles when the Animator or its controller changed. Missing or differently typed
+        ///     parameters are skipped instead of producing a Unity warning every frame; each one that is in use is reported
+        ///     once per binding through the gated <see cref="NeoDiagnostics" /> warning channel.
+        /// </summary>
+        private bool RefreshParameters()
+        {
+            if (!_parameters.Refresh(_animator))
+            {
+                return false;
+            }
+
+            if (_parametersVersion == _parameters.Version)
+            {
+                return true;
+            }
+
+            _parametersVersion = _parameters.Version;
+            _isGroundedHandle = _parameters.Resolve(_isGroundedParam, AnimatorControllerParameterType.Bool, this, true);
+            _isMovingHandle = _parameters.Resolve(_isMovingParam, AnimatorControllerParameterType.Bool, this, true);
+            _isRunningHandle = _parameters.Resolve(_isRunningParam, AnimatorControllerParameterType.Bool, this, true);
+            _speedHandle = _parameters.Resolve(_speedParam, AnimatorControllerParameterType.Float, this, true);
+            _locomotionStateHandle = _parameters.Resolve(_locomotionStateParam, AnimatorControllerParameterType.Int,
+                this, _useLocomotionStateInt);
+            _jumpTriggerHandle = _parameters.Resolve(_jumpTriggerParam, AnimatorControllerParameterType.Trigger,
+                this, _useJumpTrigger);
+            _blendXHandle = _parameters.Resolve(_blendXParam, AnimatorControllerParameterType.Float, this,
+                _useBlendTree);
+            // WHY: HorizontalOnly writes MoveY as a constant 0, so a controller without it is a valid setup.
+            _blendYHandle = _parameters.Resolve(_blendYParam, AnimatorControllerParameterType.Float, this,
+                _useBlendTree && _blendMode == BlendMode2D.TwoAxis);
+            return true;
+        }
+
+        private void SetBool(AnimatorParameterHandle handle, bool value)
+        {
+            if (handle.Exists)
+            {
+                _animator.SetBool(handle.Hash, value);
+            }
+        }
+
+        private void SetFloat(AnimatorParameterHandle handle, float value)
+        {
+            if (handle.Exists)
+            {
+                _animator.SetFloat(handle.Hash, value);
+            }
+        }
+
+        private void SetBlendFloat(AnimatorParameterHandle handle, float value)
+        {
+            if (!handle.Exists)
+            {
+                return;
+            }
+
+            if (_blendDampTime > 0f)
+            {
+                _animator.SetFloat(handle.Hash, value, _blendDampTime, Time.deltaTime);
+            }
+            else
+            {
+                _animator.SetFloat(handle.Hash, value);
+            }
         }
 
         private Vector2 CalculateBlend(Vector2 velocity)
@@ -174,38 +256,6 @@ namespace Neo.Tools
 
             float y = Mathf.Clamp(velocity.y / _blendMaxSpeed, -1f, 1f);
             return Vector2.ClampMagnitude(new Vector2(x, y), 1f);
-        }
-
-        private void SetBoolSafe(string param, bool value)
-        {
-            if (!string.IsNullOrWhiteSpace(param))
-            {
-                _animator.SetBool(param, value);
-            }
-        }
-
-        private void SetFloatSafe(string param, float value)
-        {
-            if (!string.IsNullOrWhiteSpace(param))
-            {
-                _animator.SetFloat(param, value);
-            }
-        }
-
-        private void SetIntSafe(string param, int value)
-        {
-            if (!string.IsNullOrWhiteSpace(param))
-            {
-                _animator.SetInteger(param, value);
-            }
-        }
-
-        private void SetTriggerSafe(string param)
-        {
-            if (!string.IsNullOrWhiteSpace(param))
-            {
-                _animator.SetTrigger(param);
-            }
         }
 
         private enum BlendMode2D

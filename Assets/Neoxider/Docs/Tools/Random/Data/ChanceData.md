@@ -1,13 +1,14 @@
 ﻿# ChanceData
 
-ScriptableObject configuration for a reusable [ChanceManager](../ChanceManager.md) table. Use namespace `Neo.Tools` and assembly `Neo.Tools.Random`.
+**What it is:** ScriptableObject configuration for a reusable [ChanceManager](../ChanceManager.md) table. Use namespace `Neo.Tools` and assembly `Neo.Tools.Random`. Script: `Scripts/Tools/Random/Data/ChanceData.cs`.
 
-## Setup
-
+**How to use:**
 1. Create **Assets > Create > Neoxider > Tools > Random > Chance Data**.
 2. Configure entries, locks, normalization target, and zero-weight redistribution in **Manager**. Editor validation sanitizes the table and repairs custom IDs.
 3. Assign the asset to a [ChanceSystemBehaviour](../ChanceSystemBehaviour.md). The component copies configuration at `Awake`; subsequent scene-table edits do not change the asset.
 4. Wire scene-specific events on the component. The asset stores reusable data; do not put scene object references in it.
+
+---
 
 ## Runtime API
 
@@ -15,7 +16,7 @@ ScriptableObject configuration for a reusable [ChanceManager](../ChanceManager.m
 |-------|-------------|
 | `Manager` | The asset's mutable table. Direct callers share it. |
 | `int GenerateId()` | Roll on the asset's table, invoke its `OnIdGenerated`, and return a list index or `-1`. |
-| `OnIdGenerated` | Runs only when `GenerateId()` is called on this asset. Component rolls do not forward to it. |
+| `OnIdGenerated` | **Obsolete** (warning): a ScriptableObject must not carry scene wiring. Runs only when `GenerateId()` is called on this asset; component rolls do not forward to it. Listeners already saved on the asset still load and fire. Subscribe to `ChanceSystemBehaviour.OnIdGenerated` / `OnIndexSelected` instead, or use the index `GenerateId()` returns. |
 | `int AddChance(float weight)` | Add a weight and return its index. |
 | `RemoveChance`, `GetChance`, `SetChance`, `ClearChances` | Forward to the corresponding manager operations. |
 

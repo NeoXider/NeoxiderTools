@@ -8,19 +8,29 @@ namespace Neo.Save
 {
     /// <summary>
     ///     Save provider implementation backed by a JSON file.
-    ///     All data is stored in a single JSON file.
+    ///     All data is stored in a single JSON file. Values are staged in memory and reach disk only on
+    ///     <see cref="Save" />; a flush with no pending change does not rewrite the file.
     /// </summary>
-    public class FileSaveProvider : ISaveProvider
+    public class FileSaveProvider : ILongSaveProvider
     {
         private const string TempSuffix = ".tmp";
         private const string BackupSuffix = ".bak";
 
+        private const string IntType = "int";
+        private const string LongType = "long";
+        private const string FloatType = "float";
+        private const string StringType = "string";
+        private const string BoolType = "bool";
+
         private readonly string _rootDirectory;
         private readonly FileSaveEncryptionConfig _encryption;
+        private readonly SaveData _writeBuffer = new() { items = new List<KeyValuePair>() };
+        private readonly List<KeyValuePair> _pairPool = new();
         private string _filePath;
         private Dictionary<string, SaveValue> _data;
         private bool _isDirty;
         private bool _loadedFromBackup;
+        private bool _rewritePending;
 
         /// <summary>
         ///     Creates a new FileSaveProvider instance.
@@ -54,9 +64,15 @@ namespace Neo.Save
         ///     Switches files only after pending data is successfully saved. On failure, keeps the current
         ///     slot and its in-memory data so the caller can retry.
         /// </summary>
-        /// <returns>Whether the new slot was activated.</returns>
+        /// <returns>Whether the new slot was activated. False for an empty file name.</returns>
         public bool TryChangeSlot(string fileName)
         {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                SaveProvider.LogWarning("[FileSaveProvider] TryChangeSlot: file name is empty; slot kept.");
+                return false;
+            }
+
             string nextPath = Path.Combine(_rootDirectory, fileName);
             if (_isDirty)
             {
@@ -78,6 +94,16 @@ namespace Neo.Save
         public SaveProviderType ProviderType => SaveProviderType.File;
 
         /// <summary>
+        ///     Full path of the active slot file.
+        /// </summary>
+        public string FilePath => _filePath;
+
+        /// <summary>
+        ///     Whether values changed since the last successful <see cref="Save" /> or <see cref="Load" />.
+        /// </summary>
+        public bool HasUnsavedChanges => _isDirty;
+
+        /// <summary>
         ///     Raised after data is saved.
         /// </summary>
         public event Action OnDataSaved;
@@ -97,12 +123,11 @@ namespace Neo.Save
         /// </summary>
         public int GetInt(string key, int defaultValue = 0)
         {
-            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == "int")
+            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == IntType
+                && SaveProviderExtensions.TryParseInteger(saveValue.value, out long result)
+                && result >= int.MinValue && result <= int.MaxValue)
             {
-                if (int.TryParse(saveValue.value, out int result))
-                {
-                    return result;
-                }
+                return (int)result;
             }
 
             return defaultValue;
@@ -113,9 +138,31 @@ namespace Neo.Save
         /// </summary>
         public void SetInt(string key, int value)
         {
-            _data[key] = new SaveValue { type = "int", value = value.ToString() };
-            _isDirty = true;
-            OnKeyChanged?.Invoke(key);
+            SetValue(key, IntType, value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>
+        ///     Gets a 64-bit integer by key. Entries written by <see cref="SetInt" /> or as an integer string by
+        ///     <see cref="SetString" /> are widened, so existing saves keep their values.
+        /// </summary>
+        public long GetLong(string key, long defaultValue = 0L)
+        {
+            if (_data.TryGetValue(key, out SaveValue saveValue)
+                && (saveValue.type == LongType || saveValue.type == IntType || saveValue.type == StringType)
+                && SaveProviderExtensions.TryParseInteger(saveValue.value, out long result))
+            {
+                return result;
+            }
+
+            return defaultValue;
+        }
+
+        /// <summary>
+        ///     Sets a 64-bit integer by key, stored with the <c>long</c> type tag in invariant culture.
+        /// </summary>
+        public void SetLong(string key, long value)
+        {
+            SetValue(key, LongType, value.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -123,7 +170,7 @@ namespace Neo.Save
         /// </summary>
         public float GetFloat(string key, float defaultValue = 0f)
         {
-            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == "float")
+            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == FloatType)
             {
                 if (float.TryParse(saveValue.value, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
                 {
@@ -139,9 +186,7 @@ namespace Neo.Save
         /// </summary>
         public void SetFloat(string key, float value)
         {
-            _data[key] = new SaveValue { type = "float", value = value.ToString(CultureInfo.InvariantCulture) };
-            _isDirty = true;
-            OnKeyChanged?.Invoke(key);
+            SetValue(key, FloatType, value.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -149,7 +194,7 @@ namespace Neo.Save
         /// </summary>
         public string GetString(string key, string defaultValue = "")
         {
-            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == "string")
+            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == StringType)
             {
                 return saveValue.value ?? defaultValue;
             }
@@ -162,9 +207,7 @@ namespace Neo.Save
         /// </summary>
         public void SetString(string key, string value)
         {
-            _data[key] = new SaveValue { type = "string", value = value ?? "" };
-            _isDirty = true;
-            OnKeyChanged?.Invoke(key);
+            SetValue(key, StringType, value ?? "");
         }
 
         /// <summary>
@@ -172,7 +215,7 @@ namespace Neo.Save
         /// </summary>
         public bool GetBool(string key, bool defaultValue = false)
         {
-            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == "bool")
+            if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == BoolType)
             {
                 if (bool.TryParse(saveValue.value, out bool result))
                 {
@@ -188,8 +231,23 @@ namespace Neo.Save
         /// </summary>
         public void SetBool(string key, bool value)
         {
-            _data[key] = new SaveValue { type = "bool", value = value.ToString() };
-            _isDirty = true;
+            SetValue(key, BoolType, value ? bool.TrueString : bool.FalseString);
+        }
+
+        /// <summary>
+        ///     Stages a typed value. Writing the value a key already holds keeps the provider clean, so repeated
+        ///     writes of unchanged settings do not force the next <see cref="Save" /> to rewrite the file.
+        /// </summary>
+        private void SetValue(string key, string type, string value)
+        {
+            if (!_data.TryGetValue(key, out SaveValue current) || current == null
+                || !string.Equals(current.type, type, StringComparison.Ordinal)
+                || !string.Equals(current.value, value, StringComparison.Ordinal))
+            {
+                _data[key] = new SaveValue { type = type, value = value };
+                _isDirty = true;
+            }
+
             OnKeyChanged?.Invoke(key);
         }
 
@@ -222,19 +280,23 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Flushes data to disk.
+        ///     Flushes data to disk. When nothing changed since the last commit and the file is intact, the write is
+        ///     skipped and <see cref="OnDataSaved" /> is still raised.
         /// </summary>
         public void Save()
         {
+            // WHY: SaveManager, the SaveProvider facade and focus/pause hooks may all flush in the same frame;
+            // rewriting an unchanged file also rotates the backup, so skip it unless recovery or format migration
+            // needs a fresh commit.
+            if (!_isDirty && !_loadedFromBackup && !_rewritePending && File.Exists(_filePath))
+            {
+                OnDataSaved?.Invoke();
+                return;
+            }
+
             try
             {
-                SaveData saveData = new() { items = new List<KeyValuePair>() };
-                foreach (KeyValuePair<string, SaveValue> kvp in _data)
-                {
-                    saveData.items.Add(new KeyValuePair { key = kvp.Key, value = kvp.Value });
-                }
-
-                string json = JsonUtility.ToJson(saveData, true);
+                string json = SerializeData();
 
                 string directory = Path.GetDirectoryName(_filePath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -248,7 +310,8 @@ namespace Neo.Save
                     if (!SaveFileEncryption.TryEncrypt(json, _encryption.Key, _encryption.Iv, out string cipher) ||
                         string.IsNullOrEmpty(cipher))
                     {
-                        SaveProvider.LogError("[FileSaveProvider] Encryption failed; save aborted.");
+                        SaveProvider.LogCritical(
+                            $"[FileSaveProvider] Encryption failed; save to {_filePath} aborted and pending data kept.");
                         return;
                     }
 
@@ -262,11 +325,54 @@ namespace Neo.Save
 
                 _isDirty = false;
                 _loadedFromBackup = false;
+                _rewritePending = false;
                 OnDataSaved?.Invoke();
             }
             catch (Exception ex)
             {
                 SaveProvider.LogCritical($"[FileSaveProvider] Failed to save data to {_filePath}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        ///     Serializes the staged data with reused wrapper objects instead of a new key/value list per flush.
+        /// </summary>
+        private string SerializeData()
+        {
+            List<KeyValuePair> items = _writeBuffer.items;
+            items.Clear();
+            int used = 0;
+            try
+            {
+                foreach (KeyValuePair<string, SaveValue> entry in _data)
+                {
+                    KeyValuePair pair;
+                    if (used < _pairPool.Count)
+                    {
+                        pair = _pairPool[used];
+                    }
+                    else
+                    {
+                        pair = new KeyValuePair();
+                        _pairPool.Add(pair);
+                    }
+
+                    used++;
+                    pair.key = entry.Key;
+                    pair.value = entry.Value;
+                    items.Add(pair);
+                }
+
+                return JsonUtility.ToJson(_writeBuffer, true);
+            }
+            finally
+            {
+                items.Clear();
+                for (int i = 0; i < used; i++)
+                {
+                    _pairPool[i].key = null;
+                    _pairPool[i].value = null;
+                }
             }
         }
 
@@ -278,6 +384,7 @@ namespace Neo.Save
         {
             DeleteQuietly(TempPath);
             _loadedFromBackup = false;
+            _rewritePending = false;
             _data = ReadDataOrEmpty();
             _isDirty = false;
             OnDataLoaded?.Invoke();
@@ -361,15 +468,18 @@ namespace Neo.Save
 
         private Dictionary<string, SaveValue> ReadDataOrEmpty()
         {
-            if (TryReadFile(_filePath, out Dictionary<string, SaveValue> primary))
+            if (TryReadFile(_filePath, out Dictionary<string, SaveValue> primary, out bool plaintextWithEncryption))
             {
+                // WHY: a legacy plaintext file read while encryption is enabled must be rewritten encrypted on the
+                // next flush even when no value changes.
+                _rewritePending = plaintextWithEncryption;
                 return primary;
             }
 
             // WHY: a backup only exists after a successful commit, so it is always a complete save.
             // Preferring it over an empty dictionary is what turns a crash mid-write into a lost session
             // instead of a lost profile.
-            if (TryReadFile(BackupPath, out Dictionary<string, SaveValue> backup))
+            if (TryReadFile(BackupPath, out Dictionary<string, SaveValue> backup, out _))
             {
                 // Keep the known-good backup when the next save replaces the damaged primary.
                 _loadedFromBackup = true;
@@ -387,9 +497,10 @@ namespace Neo.Save
             return new Dictionary<string, SaveValue>();
         }
 
-        private bool TryReadFile(string path, out Dictionary<string, SaveValue> data)
+        private bool TryReadFile(string path, out Dictionary<string, SaveValue> data, out bool plaintextWithEncryption)
         {
             data = null;
+            plaintextWithEncryption = false;
             try
             {
                 if (!File.Exists(path))
@@ -405,7 +516,7 @@ namespace Neo.Save
                     return false;
                 }
 
-                return TryBuildDictionaryFromFilePayload(raw, out data);
+                return TryBuildDictionaryFromFilePayload(raw, out data, out plaintextWithEncryption);
             }
             catch (Exception ex)
             {
@@ -429,9 +540,11 @@ namespace Neo.Save
             }
         }
 
-        private bool TryBuildDictionaryFromFilePayload(string raw, out Dictionary<string, SaveValue> data)
+        private bool TryBuildDictionaryFromFilePayload(string raw, out Dictionary<string, SaveValue> data,
+            out bool plaintextWithEncryption)
         {
             data = new Dictionary<string, SaveValue>();
+            plaintextWithEncryption = false;
             if (string.IsNullOrEmpty(raw))
             {
                 return true;
@@ -439,6 +552,7 @@ namespace Neo.Save
 
             if (TryDeserializeSaveDataJson(raw, out SaveData fromPlain))
             {
+                plaintextWithEncryption = _encryption != null && _encryption.Enabled;
                 return CopyItemsToDictionary(fromPlain, ref data);
             }
 

@@ -32,9 +32,6 @@ namespace Neo.Editor.Tests
         private ShopItemData _itemA;
         private ShopItemData _itemB;
 
-        /// <summary>Records the states the panel pushes.</summary>
-
-
         [SetUp]
         public void SetUp()
         {
@@ -47,7 +44,8 @@ namespace Neo.Editor.Tests
             _shop = _root.AddComponent<ShopBehaviour>();
             _shop.moneySpendSource = _root;
             SetPrivate(_shop, "_keySave", TestSaveKey);
-            SetPrivate(_shop, "_purchaseFlow", ShopPurchaseFlow.BuyOnly); // panel must do the equipping
+            // WHY: BuyOnly leaves the equipping to the panel.
+            SetPrivate(_shop, "_purchaseFlow", ShopPurchaseFlow.BuyOnly);
 
             _itemA = CreateItem("chair", 100);
             _itemB = CreateItem("table", 100);
@@ -72,6 +70,7 @@ namespace Neo.Editor.Tests
             try
             {
                 if (_panel != null) InvokeLifecycle(_panel, "OnDisable");
+                if (_listView != null) InvokeLifecycle(_listView, "OnDisable");
                 Object.DestroyImmediate(_root);
                 Object.DestroyImmediate(_itemA);
                 Object.DestroyImmediate(_itemB);
@@ -85,7 +84,7 @@ namespace Neo.Editor.Tests
 
         private ShopItem CreateSlot(string name, out TestVariantView view)
         {
-            var go = new GameObject(name);
+            GameObject go = new GameObject(name);
             go.transform.SetParent(_root.transform);
             ShopItem slot = go.AddComponent<ShopItem>();
             view = go.AddComponent<TestVariantView>();
@@ -94,7 +93,7 @@ namespace Neo.Editor.Tests
 
         private static ShopItemData CreateItem(string id, int price)
         {
-            var data = ScriptableObject.CreateInstance<ShopItemData>();
+            ShopItemData data = ScriptableObject.CreateInstance<ShopItemData>();
             SetPrivate(data, "_id", id);
             SetPrivate(data, "_price", price);
             SetPrivate(data, "_isSinglePurchase", true);
@@ -121,6 +120,47 @@ namespace Neo.Editor.Tests
         {
             FieldInfo info = typeof(ShopBehaviour).GetField("_profile", BindingFlags.Instance | BindingFlags.NonPublic);
             return (ShopProfileData)info.GetValue(_shop);
+        }
+
+        /// <summary>
+        ///     Subscribes the list view to the shop as a scene does (Refresh On Shop Events on). The order decides whose
+        ///     shop listeners run first, so tests cover both.
+        /// </summary>
+        private void EnableListViewAndPanel(bool listViewFirst)
+        {
+            if (listViewFirst)
+            {
+                InvokeLifecycle(_listView, "OnEnable");
+                InvokeLifecycle(_panel, "OnEnable");
+            }
+            else
+            {
+                InvokeLifecycle(_panel, "OnEnable");
+                InvokeLifecycle(_listView, "OnEnable");
+            }
+        }
+
+        private static List<ShopVariantState> PushedSince(TestVariantView view, int before)
+        {
+            return view.States.GetRange(before, view.States.Count - before);
+        }
+
+        private EquipmentManager CreateEquipment(params EquipItemDefinition[] definitions)
+        {
+            GameObject equipmentGo = new GameObject("Equipment");
+            equipmentGo.transform.SetParent(_root.transform);
+            EquipmentManager equipment = equipmentGo.AddComponent<EquipmentManager>();
+            SetPrivate(equipment, "_persist", false);
+            SetPrivate(equipment, "_items", definitions);
+            return equipment;
+        }
+
+        private static EquipItemDefinition CreateDefinition(string id, string categoryId)
+        {
+            EquipItemDefinition definition = ScriptableObject.CreateInstance<EquipItemDefinition>();
+            SetPrivate(definition, "_id", id);
+            SetPrivate(definition, "_categoryId", categoryId);
+            return definition;
         }
 
         [Test]
@@ -151,6 +191,62 @@ namespace Neo.Editor.Tests
             Assert.AreEqual("chair", _shop.EquippedId,
                 "BuyOnly flow does not equip — the panel must equip after the purchase.");
             Assert.AreEqual(ShopVariantState.Equipped, _viewA.Current);
+        }
+
+        [Test]
+        public void Purchase_ThatEquips_RendersEachSlotOncePerChange()
+        {
+            _money.SetMoney(500f);
+            InvokeLifecycle(_panel, "OnEnable");
+            int before = _viewA.States.Count;
+
+            _shop.Buy("chair");
+
+            List<ShopVariantState> pushed = _viewA.States.GetRange(before, _viewA.States.Count - before);
+            Assert.That(pushed, Is.EqualTo(new[] { ShopVariantState.Owned, ShopVariantState.Equipped }),
+                "The purchase and the equip that follows render the slot once each, not once per notification.");
+        }
+
+        [Test]
+        public void EquipAndUnequip_ThroughEquipmentManager_RenderEachSlotOnce()
+        {
+            GameObject equipmentGo = new GameObject("Equipment");
+            equipmentGo.transform.SetParent(_root.transform);
+            EquipmentManager equipment = equipmentGo.AddComponent<EquipmentManager>();
+            SetPrivate(equipment, "_persist", false);
+
+            EquipItemDefinition definition = ScriptableObject.CreateInstance<EquipItemDefinition>();
+            try
+            {
+                SetPrivate(definition, "_id", "chair");
+                SetPrivate(definition, "_categoryId", "furniture");
+                SetPrivate(equipment, "_items", new[] { definition });
+                SetPrivate(_panel, "_equipment", equipment);
+                SetPrivate(_panel, "_unequipCategoryId", "furniture");
+                Profile().TryAddOwnedItem("chair");
+                InvokeLifecycle(_panel, "OnEnable");
+                ShopVariantState? stateWhenRaised = null;
+                _panel.OnVariantEquipped.AddListener(_ => stateWhenRaised = _viewA.Current);
+
+                int beforeEquip = _viewA.States.Count;
+                _panel.Equip("chair");
+
+                Assert.That(_viewA.States.Count - beforeEquip, Is.EqualTo(1),
+                    "Equipment, selection and shop notifications of one equip render the slot once.");
+                Assert.That(_viewA.Current, Is.EqualTo(ShopVariantState.Equipped));
+                Assert.That(stateWhenRaised, Is.EqualTo(ShopVariantState.Equipped),
+                    "OnVariantEquipped is raised after the slots show the new state.");
+
+                int beforeUnequip = _viewA.States.Count;
+                _panel.Unequip();
+
+                Assert.That(_viewA.States.Count - beforeUnequip, Is.EqualTo(1));
+                Assert.That(_viewA.Current, Is.EqualTo(ShopVariantState.Owned));
+            }
+            finally
+            {
+                Object.DestroyImmediate(definition);
+            }
         }
 
         [Test]
@@ -187,12 +283,12 @@ namespace Neo.Editor.Tests
         [Test]
         public void EquipmentManagerBridge_EquipsAndReportsState()
         {
-            var equipmentGo = new GameObject("Equipment");
+            GameObject equipmentGo = new GameObject("Equipment");
             equipmentGo.transform.SetParent(_root.transform);
             EquipmentManager equipment = equipmentGo.AddComponent<EquipmentManager>();
             SetPrivate(equipment, "_persist", false);
 
-            var definition = ScriptableObject.CreateInstance<EquipItemDefinition>();
+            EquipItemDefinition definition = ScriptableObject.CreateInstance<EquipItemDefinition>();
             try
             {
                 SetPrivate(definition, "_id", "chair");
@@ -216,6 +312,133 @@ namespace Neo.Editor.Tests
             {
                 Object.DestroyImmediate(definition);
             }
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ShopSelect_WithSubscribedListView_PushesEachChangedSlotOnce(bool listViewFirst)
+        {
+            Profile().TryAddOwnedItem("chair");
+            Profile().TryAddOwnedItem("table");
+            Profile().EquippedId = "chair";
+            EnableListViewAndPanel(listViewFirst);
+            Assert.That(_viewA.Current, Is.EqualTo(ShopVariantState.Equipped));
+            int beforeA = _viewA.States.Count;
+            int beforeB = _viewB.States.Count;
+
+            _shop.Select("table");
+
+            Assert.That(PushedSince(_viewA, beforeA), Is.EqualTo(new[] { ShopVariantState.Owned }));
+            Assert.That(PushedSince(_viewB, beforeB), Is.EqualTo(new[] { ShopVariantState.Equipped }),
+                "The list refresh, OnSelectId and the batch end describe one change and push it once.");
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ShopSelect_ForwardedToEquipment_PushesOnlyTheFinalStateOnce(bool listViewFirst)
+        {
+            EquipItemDefinition chair = CreateDefinition("chair", "furniture");
+            EquipItemDefinition table = CreateDefinition("table", "furniture");
+            try
+            {
+                EquipmentManager equipment = CreateEquipment(chair, table);
+                SetPrivate(_panel, "_equipment", equipment);
+                Profile().TryAddOwnedItem("chair");
+                Profile().TryAddOwnedItem("table");
+                Profile().EquippedId = "chair";
+                equipment.EquipById("chair");
+                EnableListViewAndPanel(listViewFirst);
+                int beforeA = _viewA.States.Count;
+                int beforeB = _viewB.States.Count;
+
+                _shop.Select("table");
+
+                Assert.That(equipment.IsEquipped("table"), Is.True, "The selection is forwarded.");
+                Assert.That(PushedSince(_viewA, beforeA), Is.EqualTo(new[] { ShopVariantState.Owned }));
+                Assert.That(PushedSince(_viewB, beforeB), Is.EqualTo(new[] { ShopVariantState.Equipped }),
+                    "A list refresh that runs before the selection reaches the EquipmentManager must not push the " +
+                    "stale state.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(chair);
+                Object.DestroyImmediate(table);
+            }
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void PurchaseThatEquips_WithSubscribedListView_PushesOwnedThenEquipped(bool listViewFirst)
+        {
+            _money.SetMoney(500f);
+            EnableListViewAndPanel(listViewFirst);
+            int beforeA = _viewA.States.Count;
+            int beforeB = _viewB.States.Count;
+            int equippedEvents = 0;
+            _panel.OnVariantEquipped.AddListener(_ => equippedEvents++);
+
+            _shop.Buy("chair");
+
+            Assert.That(PushedSince(_viewA, beforeA),
+                Is.EqualTo(new[] { ShopVariantState.Owned, ShopVariantState.Equipped }),
+                "The purchase and the equip are pushed once each, whatever order the listeners run in.");
+            Assert.That(PushedSince(_viewB, beforeB), Is.Empty, "A slot whose state did not change is not pushed.");
+            Assert.That(equippedEvents, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void PurchaseThatEquips_ThroughEquipment_WithSubscribedListView_PushesOwnedThenEquipped()
+        {
+            EquipItemDefinition chair = CreateDefinition("chair", "furniture");
+            try
+            {
+                EquipmentManager equipment = CreateEquipment(chair);
+                SetPrivate(_panel, "_equipment", equipment);
+                _money.SetMoney(500f);
+                EnableListViewAndPanel(true);
+                int beforeA = _viewA.States.Count;
+
+                _shop.Buy("chair");
+
+                Assert.That(equipment.IsEquipped("chair"), Is.True);
+                Assert.That(PushedSince(_viewA, beforeA),
+                    Is.EqualTo(new[] { ShopVariantState.Owned, ShopVariantState.Equipped }));
+            }
+            finally
+            {
+                Object.DestroyImmediate(chair);
+            }
+        }
+
+        [Test]
+        public void RefreshStates_RepushesUnchangedSlots()
+        {
+            InvokeLifecycle(_panel, "OnEnable");
+            int beforeA = _viewA.States.Count;
+
+            _panel.RefreshStates();
+
+            Assert.That(PushedSince(_viewA, beforeA), Is.EqualTo(new[] { ShopVariantState.Unowned }),
+                "The public call keeps its full-push contract.");
+        }
+
+        [Test]
+        public void SlotCallbackThatEquips_DoesNotLeaveAStaleStateOnAnyView()
+        {
+            SetPrivate(_panel, "_equipAfterPurchase", false);
+            ShopVariantStateView stateView = _slotA.gameObject.AddComponent<ShopVariantStateView>();
+            stateView.OnOwned.AddListener(data => _panel.Equip(data.Id));
+            _money.SetMoney(500f);
+            InvokeLifecycle(_panel, "OnEnable");
+            int beforeA = _viewA.States.Count;
+
+            _shop.Buy("chair");
+
+            Assert.That(_shop.EquippedId, Is.EqualTo("chair"));
+            Assert.That(PushedSince(_viewA, beforeA),
+                Is.EqualTo(new[] { ShopVariantState.Owned, ShopVariantState.Equipped }));
+            Assert.That(stateView.CurrentState, Is.EqualTo(ShopVariantState.Equipped),
+                "The render requested from inside a slot callback runs as a follow-up pass once the current one ends.");
         }
     }
 }

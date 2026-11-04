@@ -1,6 +1,13 @@
 # StatePredicate
 
-**Purpose:** Serializable base class for transition predicates: a predicate gates whether a transition may run. Concrete predicates are composed in code or (via `[SerializeReference]`) in Inspector-driven NoCode setups.
+**What it is:** the `[Serializable]` abstract base class for transition predicates — a predicate gates whether a transition may run — plus the built-in predicates. Concrete predicates are composed in code or (via `[SerializeReference]`) in Inspector-driven NoCode setups. Path: `Scripts/StateMachine/StatePredicate.cs`, namespace `Neo.StateMachine`.
+
+**How to use:**
+1. Add predicates to a `StateTransition` (all must pass), in the transition editor or with `transition.AddPredicate(...)`.
+2. Combine with `AndPredicate` / `OrPredicate` / `NotPredicate`, or flip one node with `IsInverted`.
+3. For custom logic derive from `StatePredicate` and override `EvaluateInternal(IState)`; keep it allocation-free, it runs every frame while its source state is active.
+
+---
 
 ## Base API
 
@@ -10,7 +17,7 @@
 | `IsInverted` | When `true`, negates the evaluated result. |
 | `Evaluate(IState currentState)` / `Evaluate()` | Runs the predicate (invert applied). |
 | `EvaluateInternal(IState)` | Core logic — override in derived types. |
-| `OnOwnerStateEntered(float enterTime)` | Virtual entry hook; composites forward it. Time is in the owning machine's clock domain. |
+| `OnOwnerStateEntered(float enterTime)` | Virtual entry hook; composites forward it. Time is in the owning machine's clock domain. A machine calls it only for transitions that leave the entered state (or have no source); before 12.0 a NoCode machine called it for every NoCode transition on every entry. |
 
 ## Built-in predicates
 

@@ -1,6 +1,13 @@
 ﻿# KeyboardMover
 
-Moves from keyboard/gamepad input or typed `IMover` commands. Namespace `Neo.Tools`, assembly `Neo.Tools.Move`.
+**What it is:** a `MonoBehaviour` (`Scripts/Tools/Move/MovementToolkit/KeyboardMover.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Move`) that moves from keyboard/gamepad axes or typed `IMover` commands.
+
+**How to use:**
+1. Add **Neoxider > Tools > KeyboardMover** and choose `movementPlane`, `speed` and `inputBackend`.
+2. Optionally add a `Rigidbody2D` (XY plane) for physics movement.
+3. Connect `OnMoveStart` / `OnMoveStop`, or drive it from code through `IMover`.
+
+---
 
 ## Setup
 
@@ -25,17 +32,15 @@ fallback stays on the optional new-input path rather than calling unavailable le
 
 | Field | Description |
 |-------|-------------|
-| `AxisMode` | Axis Mode. |
-| `IsMoving` | Is Moving. |
-| `MovementPlane` | Movement Plane. |
-| `OnMoveStart` | On Move Start. |
-| `OnMoveStop` | On Move Stop. |
-| `axisMode` | Axis Mode. |
-| `horizontalAxis` | Horizontal Axis. |
-| `inputBackend` | Input Backend. |
-| `movementPlane` | Movement Plane. |
-| `verticalAxis` | Vertical Axis. |
+| `movementPlane` | `XY`, `XZ` or `YZ`. |
+| `axisMode` | `AxisRaw` keeps the input magnitude; `AxisNormalized` normalizes nonzero input. |
+| `speed` | Units per second. |
+| `inputBackend` | `AutoPreferNew`, `NewInputSystem` or `LegacyInputManager`. |
+| `horizontalAxis` / `verticalAxis` | Legacy Input Manager axis names. |
+| `_logInputFallbackWarnings` | One-time warning when falling back to legacy input. |
+| `OnMoveStart` / `OnMoveStop` | Automatic movement started or stopped. |
 
 ## See Also
 
-- [Module Root](../README.md)
+- [IMover](./IMover.md)
+- [MovementToolkit](./README.md)

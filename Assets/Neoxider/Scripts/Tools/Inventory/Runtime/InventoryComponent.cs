@@ -91,8 +91,8 @@ namespace Neo.Tools
         [Tooltip("Read-only mirror of contents in Play mode; refreshed when the inventory changes.")]
         private List<InventoryEntry> _debugEntries = new();
 
-        [Header("Events")]
         /// <summary>Raised after any mutation that changes stored items (add, remove, slot move, clear).</summary>
+        [Header("Events")]
         public UnityEvent OnInventoryChanged = new();
 
         /// <summary>Raised when items are added successfully. Arguments: item id, amount added.</summary>
@@ -119,6 +119,13 @@ namespace Neo.Tools
         /// <summary>Raised after <see cref="Save" /> writes JSON to SaveProvider.</summary>
         public UnityEvent OnSaved = new();
 
+        /// <summary>
+        ///     Raised when <see cref="SelectedItemId" /> is changed from code (for example by <see cref="InventoryHand" />).
+        ///     Argument: new selected item id. Selection is not an item mutation, so it neither saves nor raises
+        ///     <see cref="OnInventoryChanged" />.
+        /// </summary>
+        public UnityEvent<int> OnSelectedItemChanged = new();
+
         private readonly InventoryConstraints _constraints = new();
         private IInventoryStorage _storage;
         private bool _runtimeInitialized;
@@ -128,6 +135,16 @@ namespace Neo.Tools
 
         /// <summary>SaveProvider key used by <see cref="Save" /> and <see cref="Load" />.</summary>
         public string SaveKey => _saveKey;
+
+        /// <summary>
+        ///     When true (Inspector "Auto Save"), every mutation that changes the contents writes the inventory JSON
+        ///     to SaveProvider. Use <see cref="DeferAutoSave" /> to write a burst of mutations once.
+        /// </summary>
+        public bool AutoSave
+        {
+            get => _autoSave;
+            set => _autoSave = value;
+        }
 
         /// <summary>Configured storage layout (aggregated stacks vs fixed slot grid).</summary>
         public InventoryStorageMode StorageMode => _storageMode;
@@ -150,11 +167,23 @@ namespace Neo.Tools
         public int SlotCapacity => _storage is ISlottedInventory slotted ? slotted.SlotCapacity :
             _storageMode == InventoryStorageMode.SlotGrid ? _slotCount : 0;
 
-        /// <summary>Item id used by <see cref="SelectedItemCount" /> for NeoCondition-style checks.</summary>
+        /// <summary>
+        ///     Item id used by <see cref="SelectedItemCount" /> for NeoCondition-style checks.
+        ///     Setting a different value raises <see cref="OnSelectedItemChanged" />.
+        /// </summary>
         public int SelectedItemId
         {
             get => _selectedItemId;
-            set => _selectedItemId = value;
+            set
+            {
+                if (_selectedItemId == value)
+                {
+                    return;
+                }
+
+                _selectedItemId = value;
+                OnSelectedItemChanged?.Invoke(value);
+            }
         }
 
         /// <summary>Current count of <see cref="SelectedItemId" />.</summary>
@@ -222,12 +251,16 @@ namespace Neo.Tools
 
         private void RefreshDebugContent()
         {
+#if UNITY_EDITOR
+            // WHY: The mirror only exists for the Inspector; rebuilding it on every change in a player build
+            // would allocate per mutation for a list nobody can see.
             if (!Application.isPlaying || _storage == null)
             {
                 return;
             }
 
             _debugEntries = GetSnapshotEntries();
+#endif
         }
 
         private void EnsureRuntimeInitialized()

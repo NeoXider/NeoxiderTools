@@ -6,6 +6,10 @@ using UnityEngine.Events;
 
 namespace Neo.Level
 {
+        /// <summary>
+        ///     Scene singleton for map/level selection: owns a set of <see cref="Map" />s, the selected map and level, saved
+        ///     progress per map and the level-button grid. Progress keys use <c>Map_{saveKey}_{mapIndex}_</c>.
+        /// </summary>
         [CreateFromMenu("Neoxider/Level/LevelManager")]
         [AddComponentMenu("Neoxider/Level/" + nameof(LevelManager))]
         [NeoDoc("Level/LevelManager.md")]
@@ -27,14 +31,21 @@ namespace Neo.Level
 
             [SerializeField] private Transform _parentLevel;
 
+            /// <summary>Raised with the selected zero-based level after <see cref="SetLevel" /> and the helpers that call it.</summary>
             [Space] public UnityEvent<int> OnChangeLevel;
 
+            /// <summary>Raised with the new map index after a successful <see cref="SetMapId" />.</summary>
             public UnityEvent<int> OnChangeMap;
+            /// <summary>Raised with the current map frontier on init, map change and after progress is saved.</summary>
             [Space] public UnityEvent<int> OnChangeMaxLevel;
 
+            /// <summary>Frontier of the current map: completed level count and index of the next level to play.</summary>
             public int MaxLevel => TryGetCurrentMap(out Map map) ? map.level : 0;
+            /// <summary>Index of the selected map.</summary>
             public int MapId => _mapId;
+            /// <summary>Selected zero-based level.</summary>
             public int CurrentLevel => _currentLevel;
+            /// <summary>Selected map, or null when none is configured.</summary>
             public Map Map => TryGetCurrentMap(out Map map) ? map : null;
 
             private void OnValidate()
@@ -96,6 +107,7 @@ namespace Neo.Level
                 UpdateVisual();
             }
 
+            /// <summary>Selects the first incomplete map, or the last configured map when all are complete.</summary>
             [Button]
             public void SetLastMap()
             {
@@ -120,6 +132,7 @@ namespace Neo.Level
                 SetMapId(mapId);
             }
 
+            /// <summary>Index of the first incomplete map, or -1 when every map is complete or none is configured.</summary>
             public int GetLastIdMap()
             {
                 if (!HasMapsConfigured())
@@ -129,7 +142,7 @@ namespace Neo.Level
 
                 for (int i = 0; i < _maps.Length; i++)
                 {
-                    if (_maps[i] != null && !_maps[i].GetCopmplete())
+                    if (_maps[i] != null && !_maps[i].IsComplete)
                     {
                         return i;
                     }
@@ -138,11 +151,13 @@ namespace Neo.Level
                 return -1;
             }
 
+            /// <summary>Same as <see cref="MaxLevel" />.</summary>
             public int GetLastLevelId()
             {
                 return TryGetCurrentMap(out Map map) ? map.level : 0;
             }
 
+            /// <summary>Selects a configured map by index; invalid indices are ignored with a warning.</summary>
             [Button]
             public void SetMapId(int id)
             {
@@ -156,12 +171,14 @@ namespace Neo.Level
                 UpdateVisual();
             }
 
+            /// <summary>Selects the next level (wrapped on looping maps, clamped otherwise).</summary>
             [Button]
             public void NextLevel()
             {
                 SetLevel(_currentLevel < int.MaxValue ? _currentLevel + 1 : int.MaxValue);
             }
 
+            /// <summary>Selects the frontier level of the current map.</summary>
             [Button]
             public void SetLastLevel()
             {
@@ -173,12 +190,17 @@ namespace Neo.Level
                 SetLevel(map.level);
             }
 
+            /// <summary>Re-selects the current level and raises <see cref="OnChangeLevel" /> again.</summary>
             [Button]
             public void Restart()
             {
                 SetLevel(_currentLevel);
             }
 
+            /// <summary>
+            ///     Marks the current level completed when it is the frontier: advances and stages the map progress, raises
+            ///     <see cref="OnChangeMaxLevel" /> and refreshes buttons. Call it before <see cref="NextLevel" />.
+            /// </summary>
             [Button]
             public void SaveLevel()
             {
@@ -194,7 +216,7 @@ namespace Neo.Level
                     map.SaveLevel();
                     OnChangeMaxLevel?.Invoke(MaxLevel);
 
-                    if (_onAwakeNextMap && _mapId == completedMapId && map.GetCopmplete())
+                    if (_onAwakeNextMap && _mapId == completedMapId && map.IsComplete)
                     {
                         int nextMapId = GetLastIdMap();
                         if (nextMapId > completedMapId)
@@ -205,6 +227,105 @@ namespace Neo.Level
 
                     UpdateVisual();
                 }
+            }
+
+            /// <summary>
+            ///     Clears the saved progress of one map: its frontier returns to level 0 and the save key
+            ///     <c>Map_{saveKey}_{mapId}__level</c> is deleted. For the selected map it raises
+            ///     <see cref="OnChangeMaxLevel" /> and refreshes the level buttons; the selected level is kept. Works before
+            ///     the manager initialized too: a map that is not bound to its save key yet is bound first.
+            /// </summary>
+            /// <returns>False when <paramref name="mapId" /> is not a configured map.</returns>
+            /// <remarks>
+            ///     The key is deleted before the in-memory frontier changes, so when the save provider throws, the map,
+            ///     its stored value and the events stay as they were and the exception reaches the caller.
+            /// </remarks>
+            public bool TryResetProgress(int mapId)
+            {
+                if (!HasMapsConfigured() || mapId < 0 || mapId >= _maps.Length || _maps[mapId] == null)
+                {
+                    return false;
+                }
+
+                ResetMapProgress(mapId);
+                if (mapId == _mapId)
+                {
+                    NotifyFrontierChanged();
+                }
+
+                return true;
+            }
+
+            /// <summary>
+            ///     UnityEvent-friendly form of <see cref="TryResetProgress" />. An invalid map index is ignored; the
+            ///     warning goes through the <see cref="NeoDiagnostics" /> warning channel, which is off by default.
+            /// </summary>
+            [Button(PlayModeOnly = true)]
+            public void ResetProgress(int mapId)
+            {
+                if (!TryResetProgress(mapId))
+                {
+                    NeoDiagnostics.LogWarning($"[LevelManager] Cannot reset map {mapId}: it is not configured.", this);
+                }
+            }
+
+            /// <summary>Clears the saved progress of every configured map (see <see cref="TryResetProgress" />).</summary>
+            /// <remarks>
+            ///     Maps are reset in index order. When the save provider throws for one map, the maps before it stay
+            ///     reset, that map and the ones after it keep their progress, the exception reaches the caller, and the
+            ///     frontier event and button refresh still run when the selected map was among the reset ones.
+            /// </remarks>
+            [Button(PlayModeOnly = true)]
+            public void ResetAllProgress()
+            {
+                if (!HasMapsConfigured())
+                {
+                    return;
+                }
+
+                bool selectedMapReset = false;
+                try
+                {
+                    for (int i = 0; i < _maps.Length; i++)
+                    {
+                        if (_maps[i] == null)
+                        {
+                            continue;
+                        }
+
+                        ResetMapProgress(i);
+                        if (i == _mapId)
+                        {
+                            selectedMapReset = true;
+                        }
+                    }
+                }
+                finally
+                {
+                    if (selectedMapReset)
+                    {
+                        NotifyFrontierChanged();
+                    }
+                }
+            }
+
+            private void ResetMapProgress(int mapId)
+            {
+                Map map = _maps[mapId];
+                if (!map.IsBound)
+                {
+                    // WHY: before Init (inactive object, early caller) the map does not know its save key, so the reset
+                    // would only clear memory and the next Init would read the old frontier back.
+                    map.Load(mapId, _saveKey);
+                }
+
+                map.ResetProgress();
+            }
+
+            private void NotifyFrontierChanged()
+            {
+                OnChangeMaxLevel?.Invoke(MaxLevel);
+                UpdateVisual();
             }
 
             private void UpdateVisual()
@@ -255,6 +376,7 @@ namespace Neo.Level
                 OnChangeLevel?.Invoke(_currentLevel);
             }
 
+            /// <summary>Wraps a level index into <c>[0, count)</c>.</summary>
             public static int GetLoopLevel(int idLevel, int count)
             {
                 return idLevel.Wrap(0, count);

@@ -1,6 +1,13 @@
 ﻿# PoolManager
 
-**Purpose:** Central object pool manager. Automatically creates pools upon first request (or pre-warms configured ones at start), preventing costly `Instantiate` and `Destroy` calls.
+**What it is:** Persistent singleton `MonoBehaviour` that owns one [NeoObjectPool](NeoObjectPool.md) per prefab, creating pools on first request or prewarming configured ones at startup. `Scripts/Tools/Spawner/PoolManager.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `PoolManager` to a bootstrap/managers object (it is kept across scenes).
+2. Optionally fill **Preconfigured Pools** with prefabs and sizes to prewarm.
+3. Spawn through `SpawnUtility.Spawn` (works with or without a manager) or `PoolManager.Get`; return with `SpawnUtility.Despawn` / `PoolManager.Release`.
+
+---
 
 ## Fields (Inspector)
 
@@ -19,7 +26,11 @@
 | `static void Release(GameObject instance)` | Returns the object to its pool. If the object isn't from a pool, it is destroyed (`Destroy`). |
 | `static bool RetirePool(GameObject source)` | Removes and retires the exact source registration in the current manager, without creating/searching for a manager. True means a registration was removed; later Get in that manager returns null for this retired source. |
 
-The manager and its inactive storage survive scene changes. Active objects use the requested parent (null leaves them unparented), so scene ownership still applies until returned. Null/empty preconfiguration entries are ignored; duplicate singleton managers do not prewarm pools. See [NeoObjectPool](NeoObjectPool.md) for callback order, prewarm behavior, and retention limits. Use [SpawnUtility](SpawnUtility.md) when a manager is optional.
+The manager and its inactive storage survive scene changes. Active objects use the requested parent; a null parent leaves them unparented in the active scene, not in the manager's DontDestroyOnLoad scene, so scene ownership applies until they are returned and a Single scene load destroys rentals still out. Before 12.0 a rental without a parent stayed in DontDestroyOnLoad and leaked into the next scene. Null/empty preconfiguration entries are ignored; duplicate singleton managers do not prewarm pools. See [NeoObjectPool](NeoObjectPool.md) for callback order, prewarm behavior, and retention limits. Use [SpawnUtility](SpawnUtility.md) when a manager is optional.
+
+**Destroying the manager** (`Singleton.DestroyInstance()`, `Destroy`, application quit) retires every pool it owns. Its inactive instances are destroyed, also when only the component is destroyed and the storage roots stay behind; a rental that is still out survives and is destroyed when it is returned later (`SpawnUtility.Despawn`, `PooledObjectInfo.Return`, a `Despawner`), running its release cleanup once. Before 12.0 such a late return was deactivated in place and never reused. A manager created afterwards starts with fresh pools; `Get` on a manager that is being destroyed returns null.
+
+Уничтоженный `PoolManager` выводит из работы все свои пулы: неактивные объекты удаляются вместе с ним, а объект, ещё находящийся «на руках», уничтожается при позднем возврате вместо того, чтобы навсегда остаться выключенным на месте. Объект, выданный без родителя, попадает в активную сцену и выгружается вместе с ней, а не остаётся в DontDestroyOnLoad.
 
 For an exclusively owned automatic source, prefer `SpawnUtility.RetirePool(source)` so both manager and fallback registrations are retired if routing changed. Retirement removes the exact registration before releasing retained objects, blocks recreation in the current manager, and leaves valid outstanding rentals alive until a destructive late return. It never deletes a root found by name; equal prefab names do not establish shared ownership. An unrelated same-named prefab and its rentals remain usable. Retired-source markers have weak keys. This is terminal source disposal, not a replacement for reusable `NeoObjectPool.Clear()` or a shared-prefab reference counter.
 

@@ -99,7 +99,7 @@ namespace Neo.Network.Realtime
 
         private void OnMessage(T message)
         {
-            // Defensive: a host's loopback never carries these (Publish skips it), but a custom relay might.
+            // WHY: defensive: a host's loopback never carries these (Publish skips it), but a custom relay might.
             if (NetworkServer.active)
             {
                 return;

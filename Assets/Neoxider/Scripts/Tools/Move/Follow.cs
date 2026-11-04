@@ -88,28 +88,29 @@ namespace Neo.Tools
         public UnityEvent onTargetLost;
 
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
+
+        private const float MinAimDistanceSqr = 0.000001f;
+
         private bool _hadTargetLastFrame;
 
         private bool _isFollowing;
-        private Vector3 _lastTargetPosition;
 
         private Vector3 _positionVelocity;
         private Vector3 _rotationVelocity;
+
+        private bool _hasRotationWrite;
+        private Quaternion _lastRotationWritten;
+        private Quaternion _lastRotationStored;
 
         private void Start()
         {
             if (target == null && findTargetByTag && !string.IsNullOrEmpty(targetTag))
             {
-                var go = GameObject.FindWithTag(targetTag);
-                if (go != null)
+                GameObject found = GameObject.FindWithTag(targetTag);
+                if (found != null)
                 {
-                    target = go.transform;
+                    target = found.transform;
                 }
-            }
-
-            if (target != null)
-            {
-                _lastTargetPosition = target.position;
             }
 
             _hadTargetLastFrame = target != null;
@@ -136,7 +137,8 @@ namespace Neo.Tools
                 UpdatePosition();
             }
 
-            if (followRotation)
+            // WHY: a follow-state listener may have cleared the target or destroyed this follower.
+            if (followRotation && this != null && target != null)
             {
                 UpdateRotation();
             }
@@ -177,7 +179,8 @@ namespace Neo.Tools
             Vector3 targetPos = CalculateTargetPosition();
             targetPos = ApplyPositionLimits(targetPos);
 
-            float distanceToTarget = Vector3.Distance(transform.position, targetPos);
+            Vector3 current = transform.position;
+            float distanceToTarget = Vector3.Distance(current, targetPos);
 
             if (distanceControl.activationDistance > 0f && distanceToTarget < distanceControl.activationDistance)
             {
@@ -185,12 +188,29 @@ namespace Neo.Tools
                 return;
             }
 
-            UpdateFollowingState(true);
+            if (UpdateFollowingState(true))
+            {
+                // WHY: an onStartFollowing listener may clear or replace the target, move the follower (for
+                // example TeleportToTarget) or destroy it; continue from the state it left, never a stale one.
+                if (this == null || target == null)
+                {
+                    return;
+                }
 
-            targetPos = ApplyDeadzone(targetPos);
-            targetPos = ApplyStoppingDistance(targetPos);
+                current = transform.position;
+                targetPos = ApplyPositionLimits(CalculateTargetPosition());
+            }
 
-            transform.position = SmoothPosition(transform.position, targetPos);
+            targetPos = ApplyDeadzone(current, targetPos);
+            targetPos = ApplyStoppingDistance(current, targetPos);
+
+            Vector3 next = SmoothPosition(current, targetPos);
+            // WHY: exact comparison; skipping the write keeps idle followers from dirtying their transform
+            // hierarchy every frame without ever leaving a sub-epsilon step unapplied.
+            if (next.x != current.x || next.y != current.y || next.z != current.z)
+            {
+                transform.position = next;
+            }
         }
 
         private Vector3 CalculateTargetPosition()
@@ -225,54 +245,60 @@ namespace Neo.Tools
             return position;
         }
 
-        private Vector3 ApplyDeadzone(Vector3 targetPos)
+        private Vector3 ApplyDeadzone(Vector3 current, Vector3 targetPos)
         {
             if (!deadzone.enabled)
             {
                 return targetPos;
             }
 
-            Vector3 diff = targetPos - transform.position;
+            Vector3 diff = targetPos - current;
             float distance = diff.magnitude;
 
             if (distance <= deadzone.radius)
             {
-                return transform.position;
+                return current;
             }
 
-            return transform.position + diff.normalized * (distance - deadzone.radius);
+            return current + diff.normalized * (distance - deadzone.radius);
         }
 
-        private Vector3 ApplyStoppingDistance(Vector3 targetPos)
+        private Vector3 ApplyStoppingDistance(Vector3 current, Vector3 targetPos)
         {
             if (distanceControl.stoppingDistance <= 0f)
             {
                 return targetPos;
             }
 
-            Vector3 diff = targetPos - transform.position;
+            Vector3 diff = targetPos - current;
             float distance = diff.magnitude;
 
             if (distance <= distanceControl.stoppingDistance)
             {
-                return transform.position;
+                return current;
             }
 
-            return transform.position + diff.normalized * (distance - distanceControl.stoppingDistance);
+            return current + diff.normalized * (distance - distanceControl.stoppingDistance);
         }
 
-        private void UpdateFollowingState(bool shouldFollow)
+        /// <summary>Updates the follow state; returns true when a state event was invoked.</summary>
+        private bool UpdateFollowingState(bool shouldFollow)
         {
             if (shouldFollow && !_isFollowing)
             {
                 _isFollowing = true;
                 onStartFollowing?.Invoke();
+                return true;
             }
-            else if (!shouldFollow && _isFollowing)
+
+            if (!shouldFollow && _isFollowing)
             {
                 _isFollowing = false;
                 onStopFollowing?.Invoke();
+                return true;
             }
+
+            return false;
         }
 
         private Vector3 SmoothPosition(Vector3 current, Vector3 target)
@@ -294,71 +320,113 @@ namespace Neo.Tools
 
         private void UpdateRotation()
         {
-            if (followMode == FollowMode.ThreeD)
-            {
-                UpdateRotation3D();
-            }
-            else
-            {
-                UpdateRotation2D();
-            }
-        }
-
-        private void UpdateRotation3D()
-        {
-            Vector3 direction = target.position - transform.position;
-            if (direction.sqrMagnitude < 0.001f)
+            if (!TryGetAimRotation(out Quaternion targetRotation))
             {
                 return;
             }
 
-            Quaternion targetRotation = Quaternion.LookRotation(direction) * Quaternion.Euler(rotationOffset3D);
-            targetRotation = ApplyRotationLimits3D(targetRotation);
-            transform.rotation = SmoothRotation(transform.rotation, targetRotation);
+            Quaternion current = transform.rotation;
+            WriteRotation(current, SmoothRotation(current, targetRotation));
         }
 
-        private void UpdateRotation2D()
+        /// <summary>
+        ///     Rotation that aims at the target from the current position, with the offsets and rotation limits of
+        ///     the follow mode applied. False when the follower sits on the target and the aim is undefined.
+        /// </summary>
+        private bool TryGetAimRotation(out Quaternion rotation)
         {
             Vector3 direction = target.position - transform.position;
+            if (followMode == FollowMode.ThreeD)
+            {
+                if (direction.sqrMagnitude < 0.001f)
+                {
+                    rotation = Quaternion.identity;
+                    return false;
+                }
+
+                rotation = ApplyRotationLimits3D(Quaternion.LookRotation(direction) *
+                                                 Quaternion.Euler(rotationOffset3D));
+                return true;
+            }
+
+            // WHY: on top of the target the aim is undefined; Atan2(0, 0) would snap the follower to -90 degrees.
+            if (direction.x * direction.x + direction.y * direction.y < MinAimDistanceSqr)
+            {
+                rotation = Quaternion.identity;
+                return false;
+            }
+
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f + rotationOffset2D;
 
             if (rotationLimitZ.enabled)
             {
-                angle = Mathf.Clamp(angle, rotationLimitZ.min, rotationLimitZ.max);
+                angle = ClampAngleToSector(angle, rotationLimitZ.min, rotationLimitZ.max);
             }
 
-            var targetRotation = Quaternion.AngleAxis(angle, Vector3.forward);
-            transform.rotation = SmoothRotation(transform.rotation, targetRotation);
+            rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+            return true;
+        }
+
+        /// <summary>
+        ///     Assigns <paramref name="next" /> unless that would repeat what the transform already holds, so an
+        ///     aligned follower stops dirtying its transform hierarchy every frame.
+        /// </summary>
+        private void WriteRotation(Quaternion current, Quaternion next)
+        {
+            // WHY: exact comparisons only. Unity may store a renormalized copy of the assigned value, so an aligned
+            // follower is recognised by computing the same rotation as its last write while the transform still holds
+            // what that write stored; a new aim, smoothing progress or an external rotation is always written.
+            if (ExactlyEqual(next, current) || (_hasRotationWrite && ExactlyEqual(next, _lastRotationWritten) &&
+                                                ExactlyEqual(current, _lastRotationStored)))
+            {
+                return;
+            }
+
+            transform.rotation = next;
+            _lastRotationWritten = next;
+            _lastRotationStored = transform.rotation;
+            _hasRotationWrite = true;
+        }
+
+        private static bool ExactlyEqual(Quaternion a, Quaternion b)
+        {
+            return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
         }
 
         private Quaternion ApplyRotationLimits3D(Quaternion rotation)
         {
             Vector3 euler = rotation.eulerAngles;
 
+            // WHY: the same sector clamp as 2D, so a yaw sector such as [135, 225] stays reachable and a target
+            // crossing behind an asymmetric sector snaps to the nearer edge instead of flipping to the min edge.
             if (rotationLimitX.enabled)
             {
-                float angleX = NormalizeAngle(euler.x);
-                euler.x = Mathf.Clamp(angleX, rotationLimitX.min, rotationLimitX.max);
+                euler.x = ClampAngleToSector(NormalizeAngle(euler.x), rotationLimitX.min, rotationLimitX.max);
             }
 
             if (rotationLimitY.enabled)
             {
-                float angleY = NormalizeAngle(euler.y);
-                euler.y = Mathf.Clamp(angleY, rotationLimitY.min, rotationLimitY.max);
+                euler.y = ClampAngleToSector(NormalizeAngle(euler.y), rotationLimitY.min, rotationLimitY.max);
             }
 
             return Quaternion.Euler(euler);
         }
 
-        private float NormalizeAngle(float angle)
+        private static float NormalizeAngle(float angle)
         {
-            angle = angle % 360f;
-            if (angle > 180f)
-            {
-                angle -= 360f;
-            }
+            return Mathf.DeltaAngle(0f, angle);
+        }
 
-            return angle;
+        /// <summary>
+        ///     Clamps <paramref name="angle" /> into the sector from <paramref name="min" /> to <paramref name="max" />
+        ///     and returns the nearer edge for an angle outside it, with the sector rules of <see cref="AngleSector" />
+        ///     (shared with <see cref="UniversalRotator" />): sectors beyond [-180, 180] such as [-225, -135] stay
+        ///     reachable, a range whose max is below its min wraps through 180, and a range of 360 degrees or more leaves
+        ///     the angle unchanged.
+        /// </summary>
+        internal static float ClampAngleToSector(float angle, float min, float max)
+        {
+            return AngleSector.Clamp(angle, min, max);
         }
 
         private Quaternion SmoothRotation(Quaternion current, Quaternion target)
@@ -424,10 +492,6 @@ namespace Neo.Tools
         public void SetTarget(Transform newTarget)
         {
             target = newTarget;
-            if (target != null)
-            {
-                _lastTargetPosition = target.position;
-            }
         }
 
         /// <summary>
@@ -564,7 +628,11 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Teleport to target position immediately (ignoring smooth).
+        ///     Snaps whatever this follower follows onto the target immediately (ignoring smoothing, deadzone and
+        ///     stopping distance). With position following on, it moves to the target position: position limits still
+        ///     apply, and the SmoothDamp velocity is reset so the next frame does not overshoot. With rotation following
+        ///     on, it then turns straight to the aim (offsets and rotation limits apply) and resets the rotation
+        ///     velocity. A rotation-only follower, such as a turret, therefore keeps its place and only turns.
         /// </summary>
         public void TeleportToTarget()
         {
@@ -573,7 +641,17 @@ namespace Neo.Tools
                 return;
             }
 
-            transform.position = CalculateTargetPosition();
+            if (followPosition)
+            {
+                transform.position = ApplyPositionLimits(CalculateTargetPosition());
+                _positionVelocity = Vector3.zero;
+            }
+
+            if (followRotation && TryGetAimRotation(out Quaternion aim))
+            {
+                WriteRotation(transform.rotation, aim);
+                _rotationVelocity = Vector3.zero;
+            }
         }
     }
 }

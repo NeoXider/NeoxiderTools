@@ -90,6 +90,37 @@ namespace Neo.Cards
         }
 
         /// <summary>
+        ///     Unparents the card when a hand or board releases it, keeping its world pose. A world card goes to the
+        ///     scene root; a UI card goes under the root Canvas of its former zone, so it keeps rendering and its
+        ///     canvas scale while a caller animates it to the next zone (a UI object at the scene root is not drawn).
+        /// </summary>
+        internal void DetachFromZone()
+        {
+            Transform target = null;
+            Transform parent = transform.parent;
+            if (transform is RectTransform && parent != null)
+            {
+                // WHY: walks the live hierarchy instead of reading Canvas.rootCanvas, so the result never depends on
+                // canvas state cached by the UI update (inactive canvases, same-frame reparenting).
+                Canvas canvas = parent.GetComponentInParent<Canvas>(true);
+                while (canvas != null)
+                {
+                    target = canvas.transform;
+                    Transform above = target.parent;
+                    canvas = above != null ? above.GetComponentInParent<Canvas>(true) : null;
+                }
+
+                // WHY: a zone that is itself the root Canvas must still release the card from its children.
+                if (target == parent)
+                {
+                    target = parent.parent;
+                }
+            }
+
+            transform.SetParent(target, true);
+        }
+
+        /// <summary>
         ///     Current card data.
         /// </summary>
         public CardData Data { get; private set; }

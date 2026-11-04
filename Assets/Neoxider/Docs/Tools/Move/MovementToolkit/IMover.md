@@ -1,11 +1,13 @@
 ﻿# IMover
 
-## Overview
-`IMover` is a simple interface used by movement components in `Tools/Move/MovementToolkit`.
-It allows other systems to control movement without knowing the concrete implementation.
+**What it is:** the movement command interface (`Scripts/Tools/Move/MovementToolkit/IMover.cs`, namespace `Neo.Tools`) implemented by `KeyboardMover`, `MouseMover2D` and `MouseMover3D`. Other systems can move an object through it without knowing the concrete mover.
 
-- **Namespace**: `Neo.Tools`
-- **Path**: `Assets/Neoxider/Scripts/Tools/Move/MovementToolkit/IMover.cs`
+**How to use:**
+1. Get the mover as `IMover` (`GetComponent<KeyboardMover>()` or any implementation).
+2. Call `MoveDelta(Vector2)` for a displacement or `MoveToPoint(Vector2)` for a target in the mover's plane.
+3. Read `IsMoving` for the automatic, input-driven movement state.
+
+---
 
 ## Members
 - `bool IsMoving { get; }`

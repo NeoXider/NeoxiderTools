@@ -145,7 +145,7 @@ namespace Neo.Tests.Edit
         }
     }
 
-    // These ownership checks need native OnEnable/OnDisable/OnDestroy. Keep their Play Mode
+    // WHY: These ownership checks need native OnEnable/OnDisable/OnDestroy. Keep their Play Mode
     // lifetime separate from the pure view contracts and the base fixture's global save provider.
     public sealed class Audit20261023NeoToolsInventoryViewLifetimeTests
     {
@@ -207,7 +207,7 @@ namespace Neo.Tests.Edit
                         }
                     }
 
-                    // This is an Editor poll; completion requires an actual native frame above.
+                    // WHY: This is an Editor poll; completion requires an actual native frame above.
                     yield return null;
                 }
 
@@ -219,7 +219,7 @@ namespace Neo.Tests.Edit
                     cleanupFault ??= ExceptionDispatchInfo.Capture(drainFault);
                 }
 
-                // Keep ExitPlayMode top-level, and attempt it even after a destruction/drain fault.
+                // WHY: Keep ExitPlayMode top-level, and attempt it even after a destruction/drain fault.
                 if (Application.isPlaying)
                 {
                     yield return new ExitPlayMode();
@@ -257,7 +257,7 @@ namespace Neo.Tests.Edit
             Assert.That(hand.isActiveAndEnabled, Is.True);
             Assert.That(anchor.transform.childCount, Is.Zero);
 
-            // No explicit refresh: this grant must reach the subscriber installed by native OnEnable.
+            // WHY: No explicit refresh: this grant must reach the subscriber installed by native OnEnable.
             int grantFrame = Time.frameCount;
             Assert.That(inventory.AddItemById(7), Is.EqualTo(1));
             yield return WaitForNativeCompletion(grantFrame, () => anchor.transform.childCount == 1,
@@ -283,7 +283,7 @@ namespace Neo.Tests.Edit
             yield return WaitForNativeCompletion(destructionFrame, () => hand == null,
                 "hand owner destruction");
             Assert.That(hand == null, Is.True, "Native owner destruction must occur first.");
-            // OnDestroy can itself schedule deferred destruction of its external visual.
+            // WHY: OnDestroy can itself schedule deferred destruction of its external visual.
             int ownerObservedFrame = Time.frameCount;
             yield return WaitForNativeCompletion(ownerObservedFrame, () => secondVisual == null,
                 "hand visual destruction after its owner");
@@ -353,7 +353,7 @@ namespace Neo.Tests.Edit
             Assert.That(spawnedItem.BoundItemId, Is.EqualTo(7));
             Assert.That(spawnedItem.gameObject.activeInHierarchy, Is.True);
 
-            // These changes prove actual subscriptions; do not call Refresh or private lifecycle methods.
+            // WHY: These changes prove actual subscriptions; do not call Refresh or private lifecycle methods.
             Assert.That(inventory.RemoveItemById(7), Is.EqualTo(1));
             Assert.That(spawnedItem.gameObject.activeSelf, Is.False);
             Assert.That(inventory.AddItemById(7), Is.EqualTo(1));
@@ -424,7 +424,7 @@ namespace Neo.Tests.Edit
 
                 Assert.That(EditorApplication.timeSinceStartup, Is.LessThan(deadline),
                     $"Timed out waiting for {description}; native frame {Time.frameCount}, starting frame {afterFrame}.");
-                // Edit-assembly UnityTests still poll from the Editor after EnterPlayMode.
+                // WHY: Edit-assembly UnityTests still poll from the Editor after EnterPlayMode.
                 yield return null;
             }
         }

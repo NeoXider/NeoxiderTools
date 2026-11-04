@@ -175,7 +175,7 @@ namespace Neo.Core.Level
 
         private int GetCurveLevelLimit()
         {
-            // Only integer levels inside the authored domain are reachable. Keep the existing scan cap.
+            // WHY: Only integer levels inside the authored domain are reachable. Keep the existing scan cap.
             float lastKeyTime = _animationCurve[_animationCurve.length - 1].time;
             return lastKeyTime >= CurveLevelLimit ? CurveLevelLimit : lastKeyTime >= 1f ? (int)lastKeyTime : 1;
         }

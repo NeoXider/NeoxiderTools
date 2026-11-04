@@ -15,7 +15,7 @@
 
 | Field | Type | Purpose |
 |-------|------|---------|
-| `Controller` | `AdvancedWalkerController` | Auto-found on this GameObject. |
+| `Controller` | `AdvancedWalkerController` | Auto-found on this GameObject. If none is found in `Awake`, the component logs one gated `NeoDiagnostics` warning and disables itself; a controller destroyed later also disables it instead of throwing every frame. |
 | `Input` | `NeoCharacterInput` | Auto-found on this GameObject. Sprint never engages when missing. |
 
 ### Speed

@@ -1,6 +1,14 @@
 # NpcAnimatorDriver
 
-**Purpose:** Drives an Animator from the `NavMeshAgent` velocity so walk/run clips follow movement. Sets a normalized `Speed` float (normally 0..1, agent velocity / agent speed, smoothed) and an `IsMoving` bool.
+**What it is:** a `MonoBehaviour` (`Scripts/NPC/NpcAnimatorDriver.cs`, namespace `Neo.NPC`) that drives an Animator
+from the `NavMeshAgent` velocity so walk/run clips follow movement. It sets a normalized `Speed` float (normally
+0..1, agent velocity / agent speed, smoothed) and an `IsMoving` bool through `NpcAnimationCore`.
+
+**How to use:**
+1. Add it next to `NpcNavigation` / `NavMeshAgent`.
+2. Give the Animator controller a float `Speed` and a bool `IsMoving` parameter (or rename them in the fields).
+
+---
 
 ## Setup
 
@@ -24,6 +32,12 @@
 - A disabled or unbound agent contributes zero speed and `IsMoving = false`; its native stop state is not queried off the NavMesh.
 - `NpcAnimationCore.Tick(float deltaTime)` uses the supplied time step for smoothing. A zero step preserves the speed value; callers can choose their own update clock. The component passes `Time.deltaTime`.
 - The speed value is a ratio and can exceed 1 if external motion exceeds the configured agent speed.
+- Parameters are checked once per bound controller (name and type). A missing or mistyped parameter is skipped
+  instead of being written every frame, so a misnamed parameter no longer floods the console; the other parameter is
+  still driven. Swapping `runtimeAnimatorController` re-validates on the next tick. `HasSpeedParameter` /
+  `HasIsMovingParameter` on the core report the result. Without a controller the core stays idle.
+- To find a misnamed parameter, enable warnings with `NeoDiagnostics.Configure(warnings: true)`: each validated
+  controller then logs one warning per missing or mistyped (non-empty) parameter name.
 
 ## Direct C# usage
 

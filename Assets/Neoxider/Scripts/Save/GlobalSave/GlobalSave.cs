@@ -3,6 +3,10 @@ using UnityEngine;
 
 namespace Neo.Save
 {
+    /// <summary>
+    ///     Static holder of one project-wide <see cref="GlobalData" /> object, stored as JSON under the
+    ///     <c>SavesData</c> key of the active <see cref="SaveProvider" />.
+    /// </summary>
     public static class GlobalSave
     {
         private static GlobalData _data;
@@ -18,6 +22,10 @@ namespace Neo.Save
             IsReady = false;
         }
 
+        /// <summary>
+        ///     The global data object. Reading loads it lazily (a fresh object on first launch or corrupt JSON);
+        ///     assigning replaces and stages it immediately. Assigning <c>null</c> resets it to a fresh object.
+        /// </summary>
         public static GlobalData data
         {
             get
@@ -31,13 +39,19 @@ namespace Neo.Save
             }
             set
             {
-                _data = value;
+                _data = value ?? new GlobalData();
                 SaveProgress();
             }
         }
 
+        /// <summary>
+        ///     Whether <see cref="data" /> was read from the provider at least once this session.
+        /// </summary>
         public static bool IsReady { get; set; }
 
+        /// <summary>
+        ///     Reads <see cref="data" /> from the active provider, replacing the in-memory object.
+        /// </summary>
         public static void LoadingData()
         {
             try
@@ -60,8 +74,19 @@ namespace Neo.Save
             }
         }
 
+        /// <summary>
+        ///     Stages the in-memory <see cref="data" /> in the provider. Call <see cref="SaveProvider.Save" /> to flush
+        ///     it to disk. Does nothing while the data was never loaded or assigned.
+        /// </summary>
         public static void SaveProgress()
         {
+            // WHY: JsonUtility.ToJson(null) is an empty string; writing it would erase the stored profile when a
+            // quit/checkpoint handler saves before anything read GlobalSave.data.
+            if (_data == null)
+            {
+                return;
+            }
+
             try
             {
                 string jsonData = JsonUtility.ToJson(_data);

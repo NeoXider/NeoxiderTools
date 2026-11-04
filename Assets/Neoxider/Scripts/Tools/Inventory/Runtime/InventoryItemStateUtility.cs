@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Neo.Tools
 {
@@ -20,16 +21,16 @@ namespace Neo.Tools
                 return false;
             }
 
-            MonoBehaviour[] behaviours = root.GetComponentsInChildren<MonoBehaviour>(true);
-            for (int i = 0; i < behaviours.Length; i++)
+            List<IInventoryItemState> states = ListPool<IInventoryItemState>.Get();
+            try
             {
-                if (behaviours[i] is IInventoryItemState)
-                {
-                    return true;
-                }
+                root.GetComponentsInChildren(true, states);
+                return states.Count > 0;
             }
-
-            return false;
+            finally
+            {
+                ListPool<IInventoryItemState>.Release(states);
+            }
         }
 
         /// <summary>
@@ -43,18 +44,22 @@ namespace Neo.Tools
                 return instance;
             }
 
-            MonoBehaviour[] behaviours = root.GetComponentsInChildren<MonoBehaviour>(true);
-            for (int i = 0; i < behaviours.Length; i++)
+            // WHY: Pooled list instead of a MonoBehaviour[] per call: pickups capture on every collect. A rented list
+            // also stays valid if a capture callback re-enters this utility.
+            List<IInventoryItemState> states = ListPool<IInventoryItemState>.Get();
+            try
             {
-                if (behaviours[i] is not IInventoryItemState state)
+                root.GetComponentsInChildren(true, states);
+                for (int i = 0; i < states.Count; i++)
                 {
-                    continue;
+                    IInventoryItemState state = states[i];
+                    instance.ComponentStates.Add(new InventoryItemComponentState(ResolveKey(state),
+                        state.CaptureInventoryState()));
                 }
-
-                string key = string.IsNullOrWhiteSpace(state.InventoryStateKey)
-                    ? behaviours[i].GetType().FullName
-                    : state.InventoryStateKey;
-                instance.ComponentStates.Add(new InventoryItemComponentState(key, state.CaptureInventoryState()));
+            }
+            finally
+            {
+                ListPool<IInventoryItemState>.Release(states);
             }
 
             return instance;
@@ -83,22 +88,29 @@ namespace Neo.Tools
                 byKey[state.Key] = state;
             }
 
-            MonoBehaviour[] behaviours = root.GetComponentsInChildren<MonoBehaviour>(true);
-            for (int i = 0; i < behaviours.Length; i++)
+            List<IInventoryItemState> states = ListPool<IInventoryItemState>.Get();
+            try
             {
-                if (behaviours[i] is not IInventoryItemState state)
+                root.GetComponentsInChildren(true, states);
+                for (int i = 0; i < states.Count; i++)
                 {
-                    continue;
-                }
-
-                string key = string.IsNullOrWhiteSpace(state.InventoryStateKey)
-                    ? behaviours[i].GetType().FullName
-                    : state.InventoryStateKey;
-                if (byKey.TryGetValue(key, out InventoryItemComponentState componentState))
-                {
-                    state.RestoreInventoryState(componentState.Json);
+                    IInventoryItemState state = states[i];
+                    if (byKey.TryGetValue(ResolveKey(state), out InventoryItemComponentState componentState))
+                    {
+                        state.RestoreInventoryState(componentState.Json);
+                    }
                 }
             }
+            finally
+            {
+                ListPool<IInventoryItemState>.Release(states);
+            }
+        }
+
+        private static string ResolveKey(IInventoryItemState state)
+        {
+            string key = state.InventoryStateKey;
+            return string.IsNullOrWhiteSpace(key) ? state.GetType().FullName : key;
         }
     }
 }

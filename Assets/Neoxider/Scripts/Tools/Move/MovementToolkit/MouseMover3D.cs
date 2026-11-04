@@ -365,6 +365,12 @@ namespace Neo.Tools
 
         private bool RaycastCursor(out Vector3 world)
         {
+            // WHY: re-resolve after the cached main camera was destroyed (scene reload, camera swap).
+            if (cam == null)
+            {
+                cam = Camera.main;
+            }
+
             if (cam == null || !MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
             {
                 world = Vector3.zero;

@@ -1,6 +1,14 @@
 ﻿# ShopItemData
 
-**Purpose:** A `ScriptableObject` describing one shop item. Since version **8.5.0** it carries a stable `Id`, an optional category, and an optional per-item currency. Inventory grants are configured in a separate bridge — see [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md).
+**What it is:** a `ScriptableObject` (`Scripts/Shop/ShopItemData.cs`, namespace `Neo.Shop`) describing one shop
+item: stable `Id`, display data, base price, optional category and optional per-item currency. Inventory grants are
+configured in a separate bridge — see [ShopInventoryGrantBridge](./Bridges.md).
+
+**How to use:**
+1. Create it via `Create > Neoxider > Shop > Shop Item Data` and set a unique `Id`.
+2. Add it to the Shop's `_shopItemDatas` and buy it with `shop.TryBuy(item)` / `Buy(item)`.
+
+---
 
 ## Currency Override
 
@@ -29,7 +37,7 @@ Use `Currency Override Save Key` for asset-safe multi-currency setup.
 | `_category` | Optional category string (`"weapons"`, `"skins"`, ...). Used by `Shop.GetItemsInCategory(category)`. Empty string = no category. |
 | `_currencyOverrideSaveKey` | Optional `Money.SaveKey`. When set, the item is charged from the matching `Money`; when empty, the Shop default `moneySpendSource` is used, then `Money.I`. |
 
-> Inventory grants are configured in [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) — its mapping table maps `ShopItemData.Id → InventoryItemData + Amount`.
+> Inventory grants are configured in [`ShopInventoryGrantBridge`](./Bridges.md) — its mapping table maps `ShopItemData.Id → InventoryItemData + Amount`.
 
 ## Id auto-fill
 
@@ -52,4 +60,4 @@ data.CurrencyOverrideSaveKey;
 
 ## See also
 
-- [Shop](./Shop.md) · [ShopItem](./ShopItem.md) · [Module root](../README.md)
+- [Shop](./Shop.md) · [ShopItem](./ShopItem.md) · [Module root](./README.md)

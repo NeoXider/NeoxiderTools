@@ -1,18 +1,25 @@
 # DiceBoardService
 
-`DiceBoardService` is the MonoBehaviour wrapper for reusable Dice placement and merge mechanics on top of `FieldGenerator`.
+**What it is:** the MonoBehaviour wrapper (`Scripts/GridSystem/Dice/DiceBoardService.cs`, namespace `Neo.GridSystem.Dice`) for reusable Dice placement and merge mechanics on top of `FieldGenerator`. The logic lives in the plain C# `DiceBoard` core.
 
-It does not own score, spawn-pool progression, game-over rules, UI, or input. Those rules belong to a concrete game/demo controller.
+**How to use:**
+1. Add `DiceBoardService` beside a `FieldGenerator` and configure the dice rules in the Inspector.
+2. Generate the field, then call `Place(piece, anchor)` from your input controller.
+3. Refresh views from `OnBoardChanged` / `OnMergesResolved`; check `CanPlaceAnywhere(nextPiece)` for game over.
+
+It does not own score, spawn-pool progression, UI, or input. Those rules belong to a concrete game/demo controller; the service only answers whether a piece still fits.
+
+---
 
 ## Plain C# core — `DiceBoard`
 
-Since 9.12.0 the whole logic lives in `Neo.GridSystem.Dice.DiceBoard`, a plain C# class: `new DiceBoard(fieldGenerator)` with the same members (`CanPlace`, `Place`, `ResolveMerges`, `ClearBoard`, `EmptyContentId`, `MinMergeGroupSize`, `MergeStep`, `MaxContentId`, `RequireWalkable`) and C# events `BoardChanged` / `MergesResolved`. It still needs a live, generated Unity `FieldGenerator`; only the dice scene wrapper is optional. Use it for tests, replay logic, and custom loops over that field. `DiceBoardService` exposes the core via `Board` and re-raises its events as UnityEvents.
+Since 9.12.0 the whole logic lives in `Neo.GridSystem.Dice.DiceBoard`, a plain C# class: `new DiceBoard(fieldGenerator)` with the same members (`CanPlace`, `CanPlaceAnywhere`, `TryFindPlacement`, `Place`, `ResolveMerges`, `ClearBoard`, `EmptyContentId`, `MinMergeGroupSize`, `MergeStep`, `MaxContentId`, `RequireWalkable`) and C# events `BoardChanged` / `MergesResolved`. It still needs a live, generated Unity `FieldGenerator`; only the dice scene wrapper is optional. Use it for tests, replay logic, and custom loops over that field. `DiceBoardService` exposes the core via `Board` and re-raises its events as UnityEvents.
 
 ## Scene and UnityEvent setup
 
 1. Add `DiceBoardService` to the field's GameObject. Its required `FieldGenerator` and `Grid` components provide the grid state and coordinate conversion.
 2. Configure the field size, shape/disabled cells, walkability, and movement directions. Dice merges follow those directions; choose `FourDirections2D` for side-adjacent merges.
-3. Set the dice rules in the Inspector before the first `Board` access (normally `Awake`). Inspector values are copied at initialization; use the public service properties for live rule changes from C#.
+3. Set the dice rules in the Inspector. Values are copied into the core at the first `Board` access (normally `Awake`) and again whenever they are edited in the Inspector, including during Play Mode; use the public service properties for rule changes from C#.
 4. Generate the field before calling `Place`. `ClearBoard()` initializes enabled cells to `EmptyContentId` and unoccupied state, preserving disabled cells. It can be wired to `OnFieldGenerated` or a UI button.
 5. Connect `OnBoardChanged` to board refresh actions and `OnMergesResolved` to merge feedback. Each successful placement raises one board event after its optional merge pass. A standalone merge pass raises events only when a group merges. `ClearBoard()` raises a board event even if the enabled cells are already empty.
 
@@ -24,7 +31,9 @@ Reserve `EmptyContentId` for empty cells: dice pools and possible merged results
 
 | Member | Description |
 |--------|-------------|
-| `CanPlace(DicePiece piece, Vector3Int anchor)` | Checks whether every dice cell fits inside the board and passes placement filters. |
+| `CanPlace(DicePiece piece, Vector3Int anchor)` | Checks whether every dice cell fits inside the board and passes placement filters. Allocation-free. |
+| `CanPlaceAnywhere(DicePiece piece, bool allowRotations = true)` | True when the piece fits at some anchor (optionally in any of its four rotations). Use it as the game-over check. Allocation-free. |
+| `TryFindPlacement(DicePiece piece, bool allowRotations, out Vector3Int anchor, out int clockwiseTurns)` | First fitting anchor and the number of `RotateClockwise` calls that produce the fitting orientation (rotations first, then cells in field order). |
 | `Place(DicePiece piece, Vector3Int anchor, bool resolveMerges = true)` | Writes the dice footprint to grid content and optionally resolves merges. |
 | `ResolveMerges(IEnumerable<Vector3Int> seeds)` | Runs dice merge resolution from seed cells. |
 | `ClearBoard()` | Clears enabled cells to `EmptyContentId` and unoccupied state; disabled cells are preserved. |

@@ -31,7 +31,7 @@ namespace Neo.Editor.Tests
             yield return new EnterPlayMode();
             _ownsPlayMode = true;
             Assert.That(Application.isPlaying, Is.True);
-            // Let the host's ordinary Start callbacks settle; do not reset its scenes or providers.
+            // WHY: Let the host's ordinary Start callbacks settle; do not reset its scenes or providers.
             yield return null;
             _previousTimeScale = Time.timeScale;
             _hasTimeScaleSnapshot = true;
@@ -162,7 +162,7 @@ namespace Neo.Editor.Tests
         {
             AdvancedAttackCollider attack = CreateActors(use2D, true);
             Health health = _target.GetComponent<Health>();
-            // Establish actual native damage and payload delivery before any negative inference.
+            // WHY: Establish actual native damage and payload delivery before any negative inference.
             MoveHitbox(use2D, true);
             yield return WaitForNativePhysicsSteps();
             AssertAcceptedHit(health);
@@ -194,7 +194,7 @@ namespace Neo.Editor.Tests
                 settings.ApplyModifiedPropertiesWithoutUndo();
             }
 
-            // Same swing: removing the ignore entry must not leave a poisoned repeat-hit cache.
+            // WHY: Same swing: removing the ignore entry must not leave a poisoned repeat-hit cache.
             MoveHitbox(use2D, true);
             yield return WaitForNativePhysicsSteps();
             AssertAcceptedHit(health);

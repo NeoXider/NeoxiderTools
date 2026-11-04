@@ -12,9 +12,11 @@ namespace Neo.Editor.Tests.Edit
 {
 
 
-    // Exercises serialized Inspector authoring and explicit public refresh/reactive contracts in Edit Mode.
-    // Unity dispatches validation when serialized edits are applied; no lifecycle message is invoked manually.
-    // These tests do not claim native enable/disable or PlayerLoop scheduling coverage.
+    /// <summary>
+    ///     Exercises serialized Inspector authoring and explicit public refresh/reactive contracts in Edit Mode.
+    ///     Unity dispatches validation when serialized edits are applied; no lifecycle message is invoked manually.
+    ///     These tests do not claim native enable/disable or PlayerLoop scheduling coverage.
+    /// </summary>
     public sealed class Audit20261023NeoNoCodeBindingTests
     {
         private readonly List<GameObject> _objects = new();

@@ -127,6 +127,9 @@ namespace Neo.Tools
 #endif
         private string ActiveBodyInfo => Is3DActive() ? "Rigidbody (3D)" : Is2DActive() ? "Rigidbody2D (2D)" : "None";
 
+        private const int PostForceClampSteps = 2;
+        private int _clampStepsRemaining;
+
         private void Awake()
         {
             if (rigidbody3D == null)
@@ -182,21 +185,15 @@ namespace Neo.Tools
             if (Resolve3D())
             {
                 rigidbody3D.AddForce(dir * chosenForce, forceMode3D);
-                if (clampMaxSpeed && rigidbody3D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
-                {
-                    rigidbody3D.linearVelocity = rigidbody3D.linearVelocity.normalized * maxSpeed;
-                }
-
+                ClampVelocityNow();
+                ScheduleStepClamp();
                 OnApplyForce?.Invoke();
             }
             else if (Resolve2D())
             {
                 rigidbody2D.AddForce(dir * chosenForce, forceMode2D);
-                if (clampMaxSpeed && rigidbody2D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
-                {
-                    rigidbody2D.linearVelocity = rigidbody2D.linearVelocity.normalized * maxSpeed;
-                }
-
+                ClampVelocityNow();
+                ScheduleStepClamp();
                 OnApplyForce?.Invoke();
             }
             else
@@ -207,18 +204,57 @@ namespace Neo.Tools
 
         private void FixedUpdate()
         {
-            if (!clampMaxSpeed || !clampSpeedEveryFixedUpdate)
+            if (!clampMaxSpeed)
+            {
+                _clampStepsRemaining = 0;
+                return;
+            }
+
+            if (!clampSpeedEveryFixedUpdate && _clampStepsRemaining <= 0)
             {
                 return;
             }
 
-            if (Resolve3D() && rigidbody3D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
+            ClampVelocityNow();
+            if (_clampStepsRemaining > 0)
             {
-                rigidbody3D.linearVelocity = rigidbody3D.linearVelocity.normalized * maxSpeed;
+                _clampStepsRemaining--;
             }
-            else if (Resolve2D() && rigidbody2D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
+        }
+
+        /// <summary>
+        ///     Forces are integrated by a later simulation step, so the velocity read right after AddForce is still
+        ///     the old one. Keeping the cap for the next two fixed updates covers calls made from Update, FixedUpdate
+        ///     and physics callbacks: whichever step integrates the force is followed by a clamp.
+        /// </summary>
+        private void ScheduleStepClamp()
+        {
+            _clampStepsRemaining = clampMaxSpeed ? PostForceClampSteps : 0;
+        }
+
+        private void ClampVelocityNow()
+        {
+            if (!clampMaxSpeed)
             {
-                rigidbody2D.linearVelocity = rigidbody2D.linearVelocity.normalized * maxSpeed;
+                return;
+            }
+
+            float maxSpeedSqr = maxSpeed * maxSpeed;
+            if (Resolve3D())
+            {
+                Vector3 velocity = rigidbody3D.linearVelocity;
+                if (velocity.sqrMagnitude > maxSpeedSqr)
+                {
+                    rigidbody3D.linearVelocity = velocity.normalized * maxSpeed;
+                }
+            }
+            else if (Resolve2D())
+            {
+                Vector2 velocity = rigidbody2D.linearVelocity;
+                if (velocity.sqrMagnitude > maxSpeedSqr)
+                {
+                    rigidbody2D.linearVelocity = velocity.normalized * maxSpeed;
+                }
             }
         }
 

@@ -7,19 +7,19 @@ namespace Neo.Tools
 {
     public sealed partial class InventoryComponent
     {
-        [Button(PlayModeOnly = true)]
         /// <summary>Adds one unit of <paramref name="itemId" /> respecting stack rules and limits.</summary>
         /// <returns>Amount actually added (may be less than requested).</returns>
+        [Button(PlayModeOnly = true)]
         public int AddItemById(int itemId)
         {
             return AddItemByIdAmount(itemId, 1);
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Adds stackable or instance-based items depending on <see cref="InventoryItemData.SupportsInstanceState" />.</summary>
         /// <param name="itemId">Runtime item identifier.</param>
         /// <param name="amount">Requested amount; for instance-based items each unit becomes a separate instance.</param>
         /// <returns>Amount actually added.</returns>
+        [Button(PlayModeOnly = true)]
         public int AddItemByIdAmount(int itemId, int amount)
         {
             MutationReceipt receipt = CommitItemAdd(itemId, amount);
@@ -67,17 +67,17 @@ namespace Neo.Tools
             return receipt.AcceptedCount;
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Removes one unit of <paramref name="itemId" /> from aggregated storage or the first matching stack/slot.</summary>
         /// <returns>Amount actually removed.</returns>
+        [Button(PlayModeOnly = true)]
         public int RemoveItemById(int itemId)
         {
             return RemoveItemByIdAmount(itemId, 1);
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Removes up to <paramref name="amount" /> of <paramref name="itemId" />.</summary>
         /// <returns>Amount actually removed.</returns>
+        [Button(PlayModeOnly = true)]
         public int RemoveItemByIdAmount(int itemId, int amount)
         {
             EnsureRuntimeInitialized();
@@ -104,8 +104,8 @@ namespace Neo.Tools
             return RemoveItemByIdAmount(itemId, amount) == amount;
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Removes all items and raises delta events before <see cref="OnInventoryChanged" />.</summary>
+        [Button(PlayModeOnly = true)]
         public void ClearInventory()
         {
             EnsureRuntimeInitialized();
@@ -114,16 +114,16 @@ namespace Neo.Tools
             FinalizeMutation(before);
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Delegates to <see cref="InventoryDropper" /> for the configured selection policy.</summary>
         /// <returns>Amount dropped into the world.</returns>
+        [Button(PlayModeOnly = true)]
         public int DropSelected(int amount = 1)
         {
             return _dropper != null ? _dropper.DropSelected(amount) : 0;
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Drops <paramref name="amount" /> of <paramref name="itemId" /> via <see cref="InventoryDropper" />.</summary>
+        [Button(PlayModeOnly = true)]
         public int DropById(int itemId, int amount = 1)
         {
             return _dropper != null ? _dropper.DropById(itemId, amount) : 0;
@@ -135,29 +135,29 @@ namespace Neo.Tools
             return _dropper != null ? _dropper.DropData(itemData, amount) : 0;
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Drops from the first non-empty packed record.</summary>
+        [Button(PlayModeOnly = true)]
         public int DropFirst(int amount = 1)
         {
             return _dropper != null ? _dropper.DropFirst(amount) : 0;
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Drops from the last non-empty packed record.</summary>
+        [Button(PlayModeOnly = true)]
         public int DropLast(int amount = 1)
         {
             return _dropper != null ? _dropper.DropLast(amount) : 0;
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Editor/debug: adds one of <see cref="SelectedItemId" />.</summary>
+        [Button(PlayModeOnly = true)]
         public int TestAdd1Selected()
         {
             return AddItemById(_selectedItemId);
         }
 
-        [Button(PlayModeOnly = true)]
         /// <summary>Editor/debug: removes one of <see cref="SelectedItemId" />.</summary>
+        [Button(PlayModeOnly = true)]
         public int TestRemove1Selected()
         {
             return RemoveItemById(_selectedItemId);
@@ -168,6 +168,12 @@ namespace Neo.Tools
             Dictionary<int, int> counts = new();
             if (_storage == null)
             {
+                return counts;
+            }
+
+            if (_storage is IInventoryRecordReader reader)
+            {
+                reader.AccumulateCounts(counts);
                 return counts;
             }
 
@@ -208,6 +214,13 @@ namespace Neo.Tools
             }
 
             bool shouldSave = changed && _autoSave;
+            if (shouldSave && _autoSaveDeferDepth > 0)
+            {
+                // WHY: the outermost DeferAutoSave scope writes once for the whole burst.
+                _autoSavePending = true;
+                shouldSave = false;
+            }
+
             ExceptionDispatchInfo firstFault = null;
             try
             {
@@ -239,43 +252,23 @@ namespace Neo.Tools
             return changed;
         }
 
+        // WHY: Walking "before" and then the after-only ids keeps the former merged-id event order without
+        // allocating a set per mutation; both maps belong to this mutation, so a listener that mutates the
+        // inventory again builds its own maps and cannot invalidate the enumeration.
         private bool EmitDeltaEvents(Dictionary<int, int> before, Dictionary<int, int> after, bool contentChanged)
         {
-            HashSet<int> ids = new();
+            bool changed = contentChanged;
             foreach (KeyValuePair<int, int> pair in before)
             {
-                ids.Add(pair.Key);
+                after.TryGetValue(pair.Key, out int newCount);
+                changed |= EmitItemDelta(pair.Key, pair.Value, newCount);
             }
 
             foreach (KeyValuePair<int, int> pair in after)
             {
-                ids.Add(pair.Key);
-            }
-
-            bool changed = contentChanged;
-            foreach (int itemId in ids)
-            {
-                before.TryGetValue(itemId, out int oldCount);
-                after.TryGetValue(itemId, out int newCount);
-                if (oldCount == newCount)
+                if (!before.ContainsKey(pair.Key))
                 {
-                    continue;
-                }
-
-                changed = true;
-                if (newCount > oldCount)
-                {
-                    OnItemAdded?.Invoke(itemId, newCount - oldCount);
-                }
-                else
-                {
-                    OnItemRemoved?.Invoke(itemId, oldCount - newCount);
-                }
-
-                OnItemCountChanged?.Invoke(itemId, newCount);
-                if (oldCount > 0 && newCount <= 0)
-                {
-                    OnItemBecameZero?.Invoke(itemId);
+                    changed |= EmitItemDelta(pair.Key, 0, pair.Value);
                 }
             }
 
@@ -285,6 +278,31 @@ namespace Neo.Tools
             }
 
             return changed;
+        }
+
+        private bool EmitItemDelta(int itemId, int oldCount, int newCount)
+        {
+            if (oldCount == newCount)
+            {
+                return false;
+            }
+
+            if (newCount > oldCount)
+            {
+                OnItemAdded?.Invoke(itemId, newCount - oldCount);
+            }
+            else
+            {
+                OnItemRemoved?.Invoke(itemId, oldCount - newCount);
+            }
+
+            OnItemCountChanged?.Invoke(itemId, newCount);
+            if (oldCount > 0 && newCount <= 0)
+            {
+                OnItemBecameZero?.Invoke(itemId);
+            }
+
+            return true;
         }
     }
 }

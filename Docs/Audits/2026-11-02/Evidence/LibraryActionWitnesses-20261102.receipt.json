@@ -1,0 +1,9 @@
+{
+  "verifiedUtc": "2026-11-02T02:09:36.382519+00:00",
+  "bytes": 302208,
+  "sha256": "e7460316e3979b077de14d733d673c10e85a8b4b1b405be266990dea6f20108f",
+  "payloadCount": 10,
+  "uniqueActions": 246,
+  "isFinalBugClosure": false,
+  "crcAndMemberHashesVerified": true
+}

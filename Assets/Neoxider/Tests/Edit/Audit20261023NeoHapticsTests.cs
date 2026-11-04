@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Neo.Tests.Performance;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 using DeviceHaptics = Neo.Haptics.Haptics;
 using HapticType = Neo.Haptics.HapticType;
 
@@ -203,6 +207,47 @@ namespace Neo.Editor.Tests
             DeviceHaptics.Play(HapticType.Light);
 
             CollectionAssert.AreEqual(new[] { HapticType.Light }, _played);
+        }
+
+        [Test]
+        public void ThrowingObserver_DoesNotReachCallerOrConsumeMoreThanOnePulse()
+        {
+            Action<HapticType> throwing = type => throw new InvalidOperationException("haptics observer failure");
+            DeviceHaptics.Played += throwing;
+            try
+            {
+                LogAssert.Expect(LogType.Exception, new Regex("haptics observer failure"));
+
+                Assert.DoesNotThrow(() => DeviceHaptics.Play(HapticType.Light));
+                DeviceHaptics.Play(HapticType.Light);
+
+                CollectionAssert.AreEqual(new[] { HapticType.Light }, _played,
+                    "Observers subscribed before the faulty one still see the pulse, and the throttle still applies.");
+            }
+            finally
+            {
+                DeviceHaptics.Played -= throwing;
+            }
+        }
+
+        [Test]
+        public void Play_WarmGates_DoNotAllocate()
+        {
+            DeviceHaptics.Played -= RecordPulse;
+            DeviceHaptics.MinRepeatInterval = 0f;
+            DeviceHaptics.Play(HapticType.Selection);
+            DeviceHaptics.Play(HapticType.Heavy);
+
+            using GcAllocCounter allocationCounter = GcAllocCounter.CreateOrIgnore();
+            allocationCounter.Begin();
+            for (int i = 0; i < 1000; i++)
+            {
+                DeviceHaptics.Play((HapticType)(i % 9));
+            }
+
+            long allocationCalls = allocationCounter.End();
+
+            Assert.That(allocationCalls, Is.EqualTo(0L));
         }
 
         private void RecordPulse(HapticType type)

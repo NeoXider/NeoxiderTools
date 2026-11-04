@@ -19,6 +19,7 @@ namespace Neo.Editor.Tests
     {
         private const string PendingKey = "Neo.Audit20261023.EditorTests.ValidationHost.Pending";
         private const string HostSegment = "/Local/Audits/assembly-2026-10-23/unity/final/";
+        private const string ExpectedPackageVersionArgument = "-neoValidationExpectedPackageVersion";
         private static ImportState _pending;
         private static readonly Regex GuidReference = new Regex(@"guid:\s*([0-9a-fA-F]{32})", RegexOptions.Compiled);
 
@@ -76,6 +77,7 @@ namespace Neo.Editor.Tests
             public EnvironmentRecord environment;
             public string packageName;
             public string packageVersion;
+            public string expectedPackageVersion;
             public string packageSource;
             public string packageResolvedPath;
             public SampleRecord[] samples;
@@ -116,6 +118,7 @@ namespace Neo.Editor.Tests
                 output = RequireOwnedHost();
                 if (!string.IsNullOrEmpty(SessionState.GetString(PendingKey, string.Empty)))
                     throw new InvalidOperationException("An import is already pending in this host.");
+                receipt.expectedPackageVersion = RequireExpectedPackageVersion(Argument(ExpectedPackageVersionArgument));
                 receipt.environment = ProbeOwnedPersistence();
                 PackageInfo package = Audit20261023NeoEditorTestsPaths.RegisteredPackage;
                 if (package == null || (package.source.ToString() != "Local" && package.source.ToString() != "Embedded"))
@@ -124,8 +127,7 @@ namespace Neo.Editor.Tests
                     StringComparison.OrdinalIgnoreCase))
                     throw new InvalidOperationException("Registered package root differs from the operator's explicit frozen package root.");
                 Audit20261023NeoEditorTestsPaths.PackageManifest manifest = Audit20261023NeoEditorTestsPaths.Manifest;
-                if (manifest.version != "11.0.0" || package.version != manifest.version || manifest.samples.Length != 3)
-                    throw new InvalidOperationException("Expected the actual 11.0.0 package and all three manifest samples.");
+                RequireSampleImportVersions(manifest, package.version, receipt.expectedPackageVersion);
                 receipt.packageName = package.name;
                 receipt.packageVersion = package.version;
                 receipt.packageSource = package.source.ToString();
@@ -155,6 +157,29 @@ namespace Neo.Editor.Tests
                 receipt.error = exception.ToString();
                 Finish(output, receipt);
             }
+        }
+
+        /// <summary>The operator pins this version independently of the observed package/manifest.</summary>
+        internal static string RequireExpectedPackageVersion(string expectedVersion)
+        {
+            if (string.IsNullOrWhiteSpace(expectedVersion) ||
+                !Regex.IsMatch(expectedVersion, @"\A[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\z"))
+                throw new ArgumentException("An explicit frozen package version is required via " +
+                    ExpectedPackageVersionArgument + ".", nameof(expectedVersion));
+            return expectedVersion;
+        }
+
+        /// <summary>Pure admission used before the actual registered-package Sample API import.</summary>
+        internal static void RequireSampleImportVersions(Audit20261023NeoEditorTestsPaths.PackageManifest manifest,
+            string registeredVersion, string expectedVersion)
+        {
+            expectedVersion = RequireExpectedPackageVersion(expectedVersion);
+            if (manifest == null || manifest.name != Audit20261023NeoEditorTestsPaths.PackageName ||
+                manifest.version != expectedVersion || registeredVersion != expectedVersion ||
+                manifest.samples == null || manifest.samples.Length != 3)
+                throw new InvalidDataException("Sample import requires the frozen " + expectedVersion +
+                    " package and all three manifest samples; manifest version: " + manifest?.version +
+                    "; registered version: " + registeredVersion + ".");
         }
 
         private static string RequireOwnedHost()
@@ -285,9 +310,13 @@ namespace Neo.Editor.Tests
                 if (_pending == null) throw new InvalidOperationException("Missing pending sample import state.");
                 string output = RequireOwnedHost();
                 if (output != _pending.output) throw new InvalidOperationException("Pending receipt path changed.");
+                if (RequireExpectedPackageVersion(Argument(ExpectedPackageVersionArgument)) != _pending.receipt.expectedPackageVersion)
+                    throw new InvalidOperationException("Pending import expected package version changed or is absent.");
                 if (EditorApplication.timeSinceStartup >= _pending.deadlineEditorSeconds)
                     throw new TimeoutException("UPM sample import exceeded the ten-minute real-time deadline.");
                 if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+                RequireSampleImportVersions(Audit20261023NeoEditorTestsPaths.Manifest,
+                    Audit20261023NeoEditorTestsPaths.RegisteredPackage?.version, _pending.receipt.expectedPackageVersion);
                 if (_pending.nextSample == _pending.receipt.samples.Length)
                 {
                     // Integration scenes may reference sibling samples (for example the Pages PM prefab).

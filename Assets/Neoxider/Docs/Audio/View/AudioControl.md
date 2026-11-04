@@ -1,11 +1,10 @@
 ﻿# AudioControl
 
-**Purpose:** A UI component that finds a `Slider` or `Toggle` on the object and binds it to `AMSettings`.
+**What it is:** A UI component that finds a `Slider` or `Toggle` on the object and binds it to `AMSettings`.
 It refreshes on startup and re-enable; toggles also follow reactive mute changes. External volume-only
 changes are read on the next re-enable. See the [full component guide](../AudioControl.md).
 
-## Setup
-
+**How to use:**
 1. Add a standard UI `Toggle` (for mute/unmute) or `Slider` (for volume) to the scene.
 2. Attach the `AudioControl` script to the exact same object.
 3. Select what it should control (Master, Music, Efx).
@@ -27,6 +26,8 @@ another input callback. Disabled AudioControl does not apply UI input or receive
 
 If settings itself started before AM existed, first call `settings.Initialize(manager)` or re-enable
 AMSettings. These explicit methods also support scene/UnityEvent setup without a polling loop.
+
+---
 
 ## Key Fields (Inspector)
 

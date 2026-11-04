@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -56,8 +55,11 @@ namespace Neo.Shop
         public UnityEvent OnRefreshed = new();
 
         private readonly List<ShopItemData> _visibleItems = new();
-        private UnityEventDelegateCache _buttonDelegates;
+        private readonly List<UnityAction> _buttonActions = new();
+        private readonly List<UnityEvent> _boundButtonEvents = new();
         private bool _subscribedToShop;
+        private Shop _refreshedShop;
+        private int _refreshedShopVersion;
 
         public Shop Shop => _shop;
         public string Category => _category;
@@ -187,15 +189,19 @@ namespace Neo.Shop
         {
             BindIfNeeded();
             SubscribeShop(true);
-            SubscribeButtons(false);
             _visibleItems.Clear();
 
             if (_shop == null)
             {
+                _refreshedShop = null;
                 SetActiveViewCount(0);
+                SubscribeButtons(true);
                 OnRefreshed?.Invoke();
                 return;
             }
+
+            _refreshedShop = _shop;
+            _refreshedShopVersion = _shop.StateVersion;
 
             ShopItemData[] allItems = _shop.ShopItemDatas;
             if (allItems != null)
@@ -267,6 +273,14 @@ namespace Neo.Shop
 
         private void HandleShopIdEvent(string _)
         {
+            // WHY: one purchase raises OnShopChanged, then OnPurchasedId per item and OnSelectId; the first
+            // refresh already shows the committed state, so the follow-up notifications skip the rebuild.
+            if (_shop != null && ReferenceEquals(_refreshedShop, _shop) &&
+                _refreshedShopVersion == _shop.StateVersion)
+            {
+                return;
+            }
+
             Refresh();
         }
 
@@ -352,46 +366,57 @@ namespace Neo.Shop
             }
 
             bool owned = _shop.IsOwned(data.Id);
-            float price = _shop.GetPrice(data.Id);
+            float price = _shop.PriceOf(data);
             _views[index].Visual(data, owned ? 0 : Mathf.RoundToInt(price));
             _views[index].Select(_shop.EquippedId == data.Id);
         }
 
         private void SubscribeButtons(bool subscribe)
         {
-            if (subscribe && (!_autoBindButtons || !isActiveAndEnabled))
+            if (!subscribe || !_autoBindButtons || !isActiveAndEnabled)
             {
-                return;
-            }
-
-            _buttonDelegates ??= new UnityEventDelegateCache();
-
-            if (subscribe)
-            {
-                _buttonDelegates.Clear();
-                for (int i = 0; i < _visibleItems.Count && i < _views.Count; i++)
+                for (int i = 0; i < _boundButtonEvents.Count; i++)
                 {
-                    if (_views[i] == null || _views[i].buttonBuy == null)
-                    {
-                        continue;
-                    }
-
-                    int index = i;
-                    _buttonDelegates.SubscribeAt(i, _views[i].buttonBuy.onClick, () => ExecuteButtonAction(index));
+                    BindButton(i, null);
                 }
 
                 return;
             }
 
-            for (int i = 0; i < _views.Count && i < _buttonDelegates.Count; i++)
+            int bound = Mathf.Min(_visibleItems.Count, _views.Count);
+            for (int i = 0; i < bound; i++)
             {
-                if (_views[i] != null && _views[i].buttonBuy != null)
-                {
-                    _buttonDelegates.UnsubscribeAt(i, _views[i].buttonBuy.onClick);
-                }
+                ShopItem view = _views[i];
+                BindButton(i, view != null && view.buttonBuy != null ? view.buttonBuy.onClick : null);
             }
 
-            _buttonDelegates.Clear();
+            for (int i = bound; i < _boundButtonEvents.Count; i++)
+            {
+                BindButton(i, null);
+            }
+        }
+
+        // WHY: views keep their slot index across refreshes, so each slot reuses one cached action and only
+        // touches listeners when its button changes. Rebinding every refresh allocated a closure per row.
+        private void BindButton(int slot, UnityEvent target)
+        {
+            while (_buttonActions.Count <= slot)
+            {
+                int captured = _buttonActions.Count;
+                _buttonActions.Add(() => ExecuteButtonAction(captured));
+                _boundButtonEvents.Add(null);
+            }
+
+            UnityEvent current = _boundButtonEvents[slot];
+            if (ReferenceEquals(current, target))
+            {
+                return;
+            }
+
+            UnityAction action = _buttonActions[slot];
+            current?.RemoveListener(action);
+            target?.AddListener(action);
+            _boundButtonEvents[slot] = target;
         }
 
         private void ExecuteButtonAction(int visibleIndex)

@@ -1,9 +1,19 @@
 # AnimationFly
 
-**Purpose:** singleton fly animation for bonuses, currency, items, and UI icons. The component spawns prefabs and moves them along an arc with DOTween.
+**What it is:** `Neo.UI.AnimationFly` is a singleton `MonoBehaviour` (`Scripts/UI/AnimationFly.cs`) that spawns
+prefab or `Sprite` visuals for bonuses, currency, items and UI icons and flies them to a target with DOTween.
+Existing serialized components remain compatible with the former `Neo` namespace; C# callers import `Neo.UI`.
 
-Namespace: `Neo.UI`. Existing serialized components remain compatible with the former `Neo` namespace;
-C# callers should import `Neo.UI`.
+**How to use:**
+1. Add `Neoxider > UI > AnimationFly` to a scene object (one per scene; access it through `AnimationFly.I`).
+2. For Canvas effects assign `Parent Canvas` and `Spawn Parent`, and set `Spawn Space = Canvas`.
+3. From code call `AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest { ... })`, or `PlayByType...` with
+   the prefabs of `Bonus Prefab List`. The `Play`/`PlayByType` overloads take several arguments, so a UnityEvent
+   cannot bind them directly: point the event at a one-method component that builds the request (the demo's
+   `AnimationFlyDemoController` does exactly that). `Test Fly By Type` flies a list entry from the Inspector.
+4. Grant the reward in `OnReward` (or `OnAllArrived`) instead of right after the call.
+
+---
 
 Supported flows:
 
@@ -19,7 +29,17 @@ Supported flows:
 
 The demo scene is `<Demo sample>/Scenes/UI/AnimationFlyDemo.unity` (import the Demo sample via Package Manager).
 
-It contains runtime buttons for world -> UI, UI -> UI, prefab pooling, a real sample sprite asset, screen-point starts, reset, and the four advanced motion presets (`Fountain`, `Magnet`, `Fountain + Magnet`, `Scatter`). The panel also exposes labeled sliders for `Count`, `Duration`, `Delay`, `Arc`, `Scale`, and `Rotation` so programmers and agents can quickly inspect the main parameters without changing scene fields by hand.
+Everything is saved in the scene, so the wiring is visible in the Hierarchy and Inspector without entering Play Mode (the scene is authored by the editor builder `AnimationFlyDemoBuilder`, nothing is built at runtime):
+
+| Object | What to look at |
+|---|---|
+| `[Demo] Services/Animation Fly` | The configured `AnimationFly`: `Parent Canvas`, `Spawn Parent` = `[Demo] Frame/Fly Layer`, `Spawn Space = Canvas`, `Use Unscaled Time`, and `Bonus Prefab List` entry 0 (glow-gem prefab flying to the gem counter; try `Test Fly By Type` in Play Mode). |
+| `[Demo] World/World Pickup`, `World Chest` | World-space start points (sprites behind the overlay canvas). |
+| `[Demo] Frame/Content` | Wallet and gem targets (`EndTransform` of coin and gem flights), live request callbacks (`OnReward`, `OnItemStarted`, `OwnedVisualCount`) and the tuning sliders (`Count`, `Duration`, `Delay`, `Arc` in canvas pixels, `Scale`, `Rotation`). |
+| `[Demo] Frame/Play Panel` | Play buttons. Each `Button.onClick` calls one public method of `AnimationFlyDemoController`, which builds an `AnimationFlyRequest` and calls `AnimationFly.Play`: World → Wallet, Screen point → Wallet, UI burst / Scatter → Gems, `Fountain`, `Magnet`, `Fountain + Magnet`, a sample `Sprite` asset, a pooled prefab (`DisableAndPool`) and the Inspector-list path (`PlayByType`). The buttons use `ButtonScale` for the press effect. |
+| `Time · pause menus` toggles | `Time.timeScale = 0` and `AnimationFly.useUnscaledTime`: with unscaled time the flights (and the `ButtonScale` press) keep running while the game is paused. |
+
+The log feed at the bottom prints the C# call behind every button.
 
 ## Setup
 
@@ -103,6 +123,38 @@ AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
 
 Request timing is resolved as `Duration / SpeedMultiplier`. The same speed multiplier is applied to fountain holds and the delay between items. `UiSize` takes priority over `UiSizeSource` when both are supplied. Scale and size are reset before a pooled visual is reused.
 
+### Request lifetime and callbacks
+
+- `Play(request)` works on a copy of the request (`request.Clone()`). Changing or reusing the same request
+  object for the next call never retargets or re-wires flights that are already running, and resolving a
+  `Type` no longer writes the type's `endPos` back into your request.
+- Keep a configured request as a template with `Clone()` (shallow copy: callbacks and scene references are
+  shared, values are copied).
+- Upgrade note: fields assigned on the request after `Play` (for example `request.OnAllArrived = ...`) no
+  longer affect the running flight, and a `Type` request no longer gets its resolved `EndTransform` written
+  back. Set everything before `Play`; use the returned `AnimationFlyResult` to follow progress.
+- Every callback (`OnItemStarted`, `OnItemArrived`, `OnReward`, `OnAllArrived`, legacy `onStart` / `onEnd`)
+  runs isolated. An exception is logged through `NeoDiagnostics.LogException` and the flight still completes:
+  the visual is destroyed or pooled, `AnimationFlyResult` counts the arrival and the remaining callbacks run.
+- `OwnedVisualCount` reports how many spawned visuals the component still owns (in flight or pooled).
+  Visuals destroyed from outside are forgotten on the next `Play`.
+
+```csharp
+AnimationFly.AnimationFlyRequest coinTemplate = new AnimationFly.AnimationFlyRequest
+{
+    Sprite = coinSprite,
+    SpawnSpace = AnimationFlySpawnSpace.Canvas,
+    EndTransform = walletRect,
+    RewardTiming = AnimationFlyRewardTiming.OnEachArrived
+};
+
+AnimationFly.AnimationFlyRequest request = coinTemplate.Clone();
+request.StartTransform = pickup;
+request.Count = coins;
+request.OnReward = () => wallet.Add(1);
+AnimationFly.AnimationFlyResult flight = AnimationFly.I.Play(request);
+```
+
 ## Key Fields (Inspector)
 
 | Field | Description |
@@ -119,10 +171,11 @@ Request timing is resolved as `Duration / SpeedMultiplier`. The same speed multi
 | `spawnParent` | Parent for spawned objects. For UI, usually a container under Canvas. |
 | `animationCamera` | Camera used for world/screen/canvas conversion. Falls back to Canvas camera or `Camera.main`. |
 | `useAnchoredPositionForUI` | Moves UI objects through `RectTransform.anchoredPosition` instead of world position. |
+| `defaultScreenToWorldDepth` | Camera depth used when a Screen/Canvas point is converted to a world spawn space and no target depth is known. Each component uses its own value. |
 | `flyDuration` | Flight duration. |
 | `delayBetweenBonuses` | Delay between multiple spawned objects. |
 | `countMultiplier` | Multiplier for spawned object count. |
-| `maxBonusCount` | Maximum objects spawned by one call. |
+| `maxBonusCount` | Maximum objects spawned by one call (the global cap; a request `MaxCount` can only lower it). |
 | `arcStrength` | Arc strength. |
 | `middlePoint` | Middle arc point position from 0 to 1. |
 | `multY` | Multiplier for the vertical arc component. |
@@ -197,14 +250,18 @@ AnimationFly.I.Play(
 
 New typed API:
 
-- `Play(AnimationFlyRequest request)` - one universal entry point for prefab, sprite, type, parent, spaces, pooling, and reward timing.
+- `Play(AnimationFlyRequest request)` - one universal entry point for prefab, sprite, type, parent, spaces, pooling, and reward timing. The request is copied on entry.
 - `PlaySprite(...)` / `PlaySpriteWorldToCanvas(...)` - quick helpers for icon-only effects without prefab authoring.
 - `AnimationFlyResult` - exposes `TotalCount`, `StartedCount`, `CompletedCount`, `IsCompleted`, and active visuals.
+- `AnimationFlyRequest.FromPrefab(prefab, count = 1, start = null, end = null)` / `FromSprite(...)` - short factories; set the remaining fields afterwards.
+- `AnimationFlyRequest.Clone()` - shallow copy for request templates.
+- `OwnedVisualCount` - number of spawned visuals the component still owns.
 
 Important `AnimationFlyRequest` overrides:
 
 | Field | Description |
 |-------|-------------|
+| `Count` / `CountMultiplier` / `MaxCount` | Spawned items: `ceil(Count * CountMultiplier * countMultiplier)`, clamped to `[0, cap]`. The cap is `maxBonusCount`, or the smaller `MaxCount` when it is positive. A product beyond the cap (even beyond `int` range) spawns the cap; a NaN or non-positive product spawns nothing and returns `AnimationFlyResult.Empty`. |
 | `Duration` | Optional base duration for this request; otherwise uses `flyDuration`. |
 | `SpeedMultiplier` | Positive request speed. `1.5` makes movement, holds, and item stagger 1.5x faster. Invalid values safely fall back to `1`. |
 | `DelayBetweenItems` | Optional per-request spawn delay before the speed multiplier is applied. |
@@ -235,9 +292,37 @@ visual (or a legacy visual completed with `destroyOnComplete = false`) is transf
 survives the component. Interrupted requests remain incomplete in `AnimationFlyResult`; destruction does
 not grant arrival rewards. Disabling the component is not a cancellation API.
 
+### Several AnimationFly components
+
+`AnimationFly.I` is the component whose `Set Instance On Awake` is on. Further components (for example one per
+Canvas, with `Set Instance On Awake` off) are called through their own references. Every component resolves
+its `Bonus Prefab List` types on its own: a type missing from the cache is looked up in the authored list
+before the call fails, so `PlayByType`, `Execute(type, ...)`, `GetPrefab`, `GetPos` and typed requests work on
+extra components in a player build too. Call `RefreshPrefabCache()` after you change or remove list entries
+at runtime.
+
 `WorldToCanvasPosition` and `CanvasToWorldPosition` accept an explicit camera. When it is omitted for a
 non-overlay Canvas, they use `Canvas.worldCamera` before the fallback camera. Overlay conversion uses no
 event camera. These helpers can be called without an `AnimationFly` instance when the Canvas is supplied.
+
+## Performance
+
+- One yield instruction is created per flight, not per spawned item; it is rebuilt only when the delay or
+  the time mode changes.
+- `DisableAndPool` reuses visuals per prefab/sprite and spawn space up to `maxPoolPerKey`.
+- `UiSizeSource` measurement uses a shared corner buffer instead of allocating per request.
+
+## Code structure
+
+The component keeps its serialized fields and public API; the rules it applies live in plain C# types next
+to it so they are testable without a scene:
+
+- `AnimationFlyMath` (`Scripts/UI/AnimationFlyMath.cs`) - item count, duration, delay, speed multiplier,
+  stage ratios and the magnet approach point.
+- `AnimationFlyVisualPool` (`Scripts/UI/AnimationFlyVisualPool.cs`) - ownership of spawned visuals, per-key
+  pooling, KeepAlive hand-over, pruning of externally destroyed visuals and teardown.
+
+Both are internal to `Neo.UI`; EditMode coverage lives in `Tests/Edit/UI/AnimationFlyCoreTests.cs`.
 
 ## See Also
 

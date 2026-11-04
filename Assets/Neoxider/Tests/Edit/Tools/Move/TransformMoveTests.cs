@@ -111,7 +111,7 @@ namespace Neo.Editor.Tests
             _go.transform.rotation = Quaternion.identity;
 
             // WHY: target is along Z axis (forward)
-            var targetPoint = new Vector3(0, 0, 5);
+            Vector3 targetPoint = new Vector3(0, 0, 5);
             rotator.RotateTo(targetPoint, true);
 
             Vector3 forward = _go.transform.forward;

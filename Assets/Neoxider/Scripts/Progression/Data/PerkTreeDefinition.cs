@@ -11,17 +11,36 @@ namespace Neo.Progression
     [Serializable]
     public sealed class PerkDefinition
     {
-        [SerializeField] private string _id = "perk-id";
-        [SerializeField] private string _displayName = "Perk";
-        [SerializeField] [TextArea(2, 4)] private string _description;
-        [SerializeField] private Sprite _icon;
-        [SerializeField] private bool _purchasedByDefault;
-        [SerializeField] [Min(0)] private int _cost = 1;
-        [SerializeField] [Min(1)] private int _requiredLevel = 1;
-        [SerializeField] private List<string> _prerequisitePerkIds = new();
-        [SerializeField] private List<string> _requiredUnlockNodeIds = new();
-        [SerializeField] private List<ConditionEntry> _conditions = new();
-        [SerializeField] private List<ProgressionReward> _rewards = new();
+        [Tooltip("Stable unique id stored in saves. Do not rename after release.")] [SerializeField]
+        private string _id = "perk-id";
+
+        [Tooltip("UI title.")] [SerializeField] private string _displayName = "Perk";
+
+        [Tooltip("UI description.")] [SerializeField] [TextArea(2, 4)]
+        private string _description;
+
+        [Tooltip("Optional UI icon.")] [SerializeField] private Sprite _icon;
+
+        [Tooltip("Owned on load/reset without cost and without dispatching its rewards.")] [SerializeField]
+        private bool _purchasedByDefault;
+
+        [Tooltip("Perk points spent by TryBuyPerk.")] [SerializeField] [Min(0)]
+        private int _cost = 1;
+
+        [Tooltip("Minimum Core level required to buy.")] [SerializeField] [Min(1)]
+        private int _requiredLevel = 1;
+
+        [Tooltip("Perk ids that must be purchased first.")] [SerializeField]
+        private List<string> _prerequisitePerkIds = new();
+
+        [Tooltip("Unlock node ids that must be unlocked first.")] [SerializeField]
+        private List<string> _requiredUnlockNodeIds = new();
+
+        [Tooltip("Extra checks evaluated against the manager's Condition Context (all must pass).")] [SerializeField]
+        private List<ConditionEntry> _conditions = new();
+
+        [Tooltip("Rewards dispatched once when the perk is purchased.")] [SerializeField]
+        private List<ProgressionReward> _rewards = new();
 
         /// <summary>
         ///     Gets the stable perk identifier.

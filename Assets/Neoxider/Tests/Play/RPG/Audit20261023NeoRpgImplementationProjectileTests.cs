@@ -63,7 +63,7 @@ namespace Neo.Tests.Play.RPG
             RpgCharacter source = Character("source", Origin);
             RpgAttackController controller = source.gameObject.AddComponent<RpgAttackController>();
             controller.EnableBuiltInInput = false;
-            // Raw capacity is one. The first colliders have no valid delivery, then one receiver has three hurtboxes.
+            // WHY: Raw capacity is one. The first colliders have no valid delivery, then one receiver has three hurtboxes.
             GameObject ignored = Track(new GameObject("no-receiver"));
             ignored.transform.position = Origin + Vector3.right * 0.3f;
             Hurtbox(ignored, twoDimensional, 0f);
@@ -86,7 +86,7 @@ namespace Neo.Tests.Play.RPG
             Physics.SyncTransforms();
             Physics2D.SyncTransforms();
 
-            // Exercise the public initialization and actual Update/physics path, never a private hit helper.
+            // WHY: Exercise the public initialization and actual Update/physics path, never a private hit helper.
             projectile.Initialize(controller, attack, source, Vector3.right);
             for (int frame = 0; frame < 30 && projectile != null; frame++) { yield return null; }
 

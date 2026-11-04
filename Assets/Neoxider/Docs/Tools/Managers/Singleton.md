@@ -1,16 +1,16 @@
 ﻿# Singleton<T>
 
-## Overview
-`Singleton<T>` is the generic base class for managers and services that need a single active instance and a shared access point.
+**What it is:** the generic `MonoBehaviour` base for managers that need one active instance and a shared access
+point (`T.I`). Safe with Enter Play Mode Options (domain reload disabled). Script:
+`Scripts/Tools/Managers/Singleton.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Managers`.
 
-- **Namespace**: `Neo.Tools`
-- **Path**: `Assets/Neoxider/Scripts/Tools/Managers/Singleton.cs`
-
-## How to use
+**How to use:**
 1. Inherit from `Singleton<YourType>`.
-2. Place the component on the scene.
-3. Override `Init()` when you need custom startup logic and call `base.Init()`.
-4. Use `TryGetInstance(out T)` or `HasInstance` for optional dependencies.
+2. Place the component on the scene (a root GameObject when it should persist).
+3. Override `Init()` for startup logic and call `base.Init()`.
+4. Use `YourType.I` when the manager must exist, `TryGetInstance(out T)` / `HasInstance` for optional dependencies.
+
+---
 
 ## Public API
 - `CreateInstance`
@@ -39,7 +39,7 @@ Override `Init()` for startup and call `base.Init()`. If overriding `Awake()` or
 
 `OnInstanceCreated()` runs only for the auto-create path. Unity can run `Awake()` / `Init()` while `AddComponent<T>()` executes, before `OnInstanceCreated()`; this hook is not a configuration step before initialization.
 
-`DestroyInstance()` clears the cache and schedules the GameObject for destruction. The resolver excludes that pending object immediately. A subsequent `I` returns another eligible instance, null, or a newly created manager when `CreateInstance` is enabled. Destruction of the old object does not clear a replacement's cache.
+`DestroyInstance()` clears the cache and schedules the GameObject for destruction (`Destroy` in Play Mode; in Edit Mode, where `Destroy` is not allowed, the GameObject is destroyed immediately with `DestroyImmediate`, for example in EditMode tests). The resolver excludes that pending object immediately. A subsequent `I` returns another eligible instance, null, or a newly created manager when `CreateInstance` is enabled. Destruction of the old object does not clear a replacement's cache.
 
 ## `I` vs `TryGetInstance(out T)`
 Use `I` when the singleton must exist.
@@ -76,7 +76,11 @@ if (MyManager.TryGetInstance(out MyManager manager))
 ## Unity runtime initialization
 Do not place `[RuntimeInitializeOnLoadMethod]` on static methods **declared inside** a type that inherits `Singleton<T>` — Unity reports an error (“method … is in a generic class”). Use a separate non-generic static bootstrap class (same pattern as **`SingletonRuntimeReset`**, **`SaveManagerSubsystemRegistration`**, **`MouseInputManagerSubsystemRegistration`**) or call into an `internal static` reset helper from such a class.
 
-`SingletonRuntimeReset` clears cached instances and failed searches at subsystem registration, including indirect subclasses sharing a closed generic base. `CreateInstance` is configuration and is not reset. Validate reload-disabled and IL2CPP startup behavior in the consuming project's Unity test/build matrix.
+`SingletonRuntimeReset` clears cached instances and failed searches (and the `SingletonById<T>` registries) at
+subsystem registration, including indirect subclasses sharing a closed generic base. It only scans
+`Neo.Tools.Managers` and assemblies that reference it directly or transitively, so engine, editor and BCL assemblies
+are skipped. The sweep runs in the Editor only: a player process always starts with fresh statics, so builds (IL2CPP
+included) pay no reflection cost at startup. `CreateInstance` is configuration and is not reset.
 
 ## See also
 - [`Bootstrap`](./Bootstrap.md)

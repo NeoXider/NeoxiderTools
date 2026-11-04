@@ -161,7 +161,8 @@ namespace Neo.Tools
         private bool drawInteractionRayForOneSecond;
 
         [SerializeField] private float interactionRayDrawDuration = 1f;
-        private InteractionRayHit[] interactionHits = new InteractionRayHit[16];
+        private readonly InteractionHitProjector _hitProjector = new();
+        private readonly InteractionDebugRay _debugRay = new();
         private readonly bool[] mouseButtonsHeldPrev = new bool[3];
         private readonly bool[] mouseButtonsPressedOnObject = new bool[3];
 
@@ -173,10 +174,6 @@ namespace Neo.Tools
         private Vector3 currentMouseHitPoint;
         private bool hasCurrentMouseHit;
         private ulong _mouseHitEpoch;
-        private Color lastDebugRayColor = Color.cyan;
-        private Vector3 lastDebugRayEnd;
-        private Vector3 lastDebugRayStart;
-        private float lastDebugRayUntilTime;
         private bool isInteractingThisFrame;
         private PointerEventData.InputButton lastProcessedClickButton;
         private int lastProcessedClickFrame = -1;
@@ -215,7 +212,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Preserve the scene-authoring default: checkpoints auto-bind only to a tagged main camera.
+            // WHY: Preserve the scene-authoring default: checkpoints auto-bind only to a tagged main camera.
             Camera interactionCamera = InteractionCameraResolver.Resolve(null, false);
             if (distanceCheckPoint == null && interactionCamera != null)
             {
@@ -231,7 +228,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            // A listener can explicitly request another Update. Keep one automatic operation per target.
+            // WHY: A listener can explicitly request another Update. Keep one automatic operation per target.
             if (_automaticQueryDepth != 0)
             {
                 return;
@@ -271,7 +268,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Hover and clicks share a query unless the provider uses different rays for them.
+            // WHY: Hover and clicks share a query unless the provider uses different rays for them.
             if (useHoverDetection || useMouseInteraction)
             {
                 UpdateMouseTargetRaycast();
@@ -294,7 +291,7 @@ namespace Neo.Tools
 
             bool inRange = IsInRange();
             bool rangeChanged = inRange != wasInRange;
-            // Commit before observers: OnDisable/ResetInputState owns any nested reset.
+            // WHY: Commit before observers: OnDisable/ResetInputState owns any nested reset.
             wasInRange = inRange;
             if (rangeChanged)
             {
@@ -366,12 +363,11 @@ namespace Neo.Tools
                 Gizmos.DrawWireSphere(transform.position, interactionDistance);
             }
 
-            bool showLegacy = drawInteractionRayForOneSecond && Time.realtimeSinceStartup <= lastDebugRayUntilTime;
-            if (drawDebugRay || showLegacy)
+            if (_debugRay.IsVisible(drawDebugRay, drawInteractionRayForOneSecond, Time.realtimeSinceStartup))
             {
-                Gizmos.color = lastDebugRayColor;
-                Gizmos.DrawLine(lastDebugRayStart, lastDebugRayEnd);
-                Gizmos.DrawWireSphere(lastDebugRayEnd, 0.05f);
+                Gizmos.color = _debugRay.Color;
+                Gizmos.DrawLine(_debugRay.Start, _debugRay.End);
+                Gizmos.DrawWireSphere(_debugRay.End, 0.05f);
             }
         }
 
@@ -494,7 +490,7 @@ namespace Neo.Tools
             RefreshMouseHitAfterBoundary();
             bool canUseCurrentMouseTarget = hasCurrentMouseHit && CanMouseInteractAtPoint(currentMouseHitPoint);
 
-            // In Both mode the click ray can target a different object from the hover ray.
+            // WHY: In Both mode the click ray can target a different object from the hover ray.
             bool pointerOnTarget = canUseCurrentMouseTarget;
             ulong eligibilityEpoch = InteractionPhysicsQueries.Epoch;
 
@@ -517,7 +513,7 @@ namespace Neo.Tools
 
                 bool wasHeld = mouseButtonsHeldPrev[buttonIndex];
                 bool pressedOnTarget = mouseButtonsPressedOnObject[buttonIndex];
-                // Commit sampled input before notification, so reentrant reset cannot be overwritten.
+                // WHY: Commit sampled input before notification, so reentrant reset cannot be overwritten.
                 mouseButtonsHeldPrev[buttonIndex] = mouseHeld;
 
                 if (mouseHeld && !wasHeld)
@@ -707,7 +703,7 @@ namespace Neo.Tools
                     return;
                 }
 
-                // A press and release can be sampled in the same frame. Observers may change aim/range/settings.
+                // WHY: A press and release can be sampled in the same frame. Observers may change aim/range/settings.
                 if (keyUp)
                 {
                     canInteract = CanKeyboardInteractNow();
@@ -791,8 +787,8 @@ namespace Neo.Tools
                         return false;
                     }
 
-                    int candidateCount = BuildInteractionHits3D(hits, true);
-                    if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
+                    int candidateCount = ProjectLineOfSight3D(hits);
+                    if (InteractionQueryMath.TryGetNearestHit(_hitProjector.Hits, candidateCount,
                             out InteractionRayHit nearestHit) && !nearestHit.IsTarget)
                     {
                         return false;
@@ -816,8 +812,10 @@ namespace Neo.Tools
                         return false;
                     }
 
-                    int candidateCount2D = BuildInteractionHits2D(hits2D, true, true);
-                    if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount2D,
+                    int candidateCount2D = _hitProjector.Project2D(hits2D, CreateTargetScope(),
+                        foreignTriggersBlock: true, includeTriggers: true, requireClearPath: true,
+                        keepNonTargetsOnMiss: true);
+                    if (InteractionQueryMath.TryGetNearestHit(_hitProjector.Hits, candidateCount2D,
                             out InteractionRayHit nearestHit2D) && !nearestHit2D.IsTarget)
                     {
                         return false;
@@ -833,8 +831,8 @@ namespace Neo.Tools
                         return false;
                     }
 
-                    int candidateCount = BuildInteractionHits3D(hits, true);
-                    if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
+                    int candidateCount = ProjectLineOfSight3D(hits);
+                    if (InteractionQueryMath.TryGetNearestHit(_hitProjector.Hits, candidateCount,
                             out InteractionRayHit nearestHit) && !nearestHit.IsTarget)
                     {
                         return false;
@@ -901,11 +899,14 @@ namespace Neo.Tools
                 // hardcoded true: foreign trigger volumes counted as blockers and line-of-sight was demanded
                 // even with checkObstacles off. A pickup standing inside a door's trigger volume was therefore
                 // clickable with the mouse while E silently did nothing.
-                int candidateCount = BuildInteractionHits3D(hits, false);
-                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount,
+                // WHY: The nearest non-target hit only feeds the debug ray end, so a miss keeps it only while a
+                // debug ray is recorded; otherwise target-only selection can skip the complete projection.
+                int candidateCount = _hitProjector.Project3D(hits, CreateTargetScope(), foreignTriggersBlock: false,
+                    requireClearPath: checkObstacles, keepNonTargetsOnMiss: IsRecordingDebugRay);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(_hitProjector.Hits, candidateCount,
                     checkObstacles, out InteractionRayHit targetHit);
                 Vector3 debugEnd = hasTargetHit ? targetHit.Point : origin + forward * maxRayDistance;
-                if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
+                if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(_hitProjector.Hits, candidateCount,
                         out InteractionRayHit nearestHit))
                 {
                     debugEnd = nearestHit.Point;
@@ -936,12 +937,13 @@ namespace Neo.Tools
                     return false;
                 }
                 // WHY: Same serialized settings as the 3D branch above and as the mouse ray.
-                int candidateCount2D = BuildInteractionHits2D(hits2D, false,
-                    includeTriggerCollidersInLookRay);
-                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D,
+                int candidateCount2D = _hitProjector.Project2D(hits2D, CreateTargetScope(),
+                    foreignTriggersBlock: false, includeTriggers: includeTriggerCollidersInLookRay,
+                    requireClearPath: checkObstacles, keepNonTargetsOnMiss: IsRecordingDebugRay);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(_hitProjector.Hits, candidateCount2D,
                     checkObstacles, out InteractionRayHit targetHit);
                 Vector3 debugEnd = hasTargetHit ? targetHit.Point : origin + (Vector3)(dir2D * maxRay2D);
-                if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount2D,
+                if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(_hitProjector.Hits, candidateCount2D,
                         out InteractionRayHit nearestHit))
                 {
                     debugEnd = nearestHit.Point;
@@ -1258,13 +1260,40 @@ namespace Neo.Tools
                 return;
             }
 
-            cachedCollider3D = targetCollider3D != null
-                ? targetCollider3D
-                : GetComponent<Collider>() ?? GetComponentInChildren<Collider>(true);
-            cachedCollider2D = targetCollider2D != null
-                ? targetCollider2D
-                : GetComponent<Collider2D>() ?? GetComponentInChildren<Collider2D>(true);
+            cachedCollider3D = ResolveTargetCollider(targetCollider3D);
+            cachedCollider2D = ResolveTargetCollider(targetCollider2D);
             _collidersResolved = true;
+        }
+
+        // WHY: '??' after GetComponent skipped the children in the Editor, where a missing component comes back as
+        // a fake-null object that is not a C# null; TryGetComponent returns a real result on every platform.
+        private T ResolveTargetCollider<T>(T explicitCollider) where T : Component
+        {
+            if (explicitCollider != null)
+            {
+                return explicitCollider;
+            }
+
+            return TryGetComponent(out T own) ? own : GetComponentInChildren<T>(true);
+        }
+
+        /// <summary>Test seam: the 3D and 2D colliders the automatic queries currently resolve.</summary>
+        internal Collider ResolvedCollider3D
+        {
+            get
+            {
+                RefreshCachedReferences();
+                return cachedCollider3D;
+            }
+        }
+
+        internal Collider2D ResolvedCollider2D
+        {
+            get
+            {
+                RefreshCachedReferences();
+                return cachedCollider2D;
+            }
         }
 
         /// <summary>
@@ -1314,8 +1343,9 @@ namespace Neo.Tools
                     return false;
                 }
 
-                int candidateCount = BuildInteractionHits3D(hits, false);
-                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount,
+                int candidateCount = _hitProjector.Project3D(hits, CreateTargetScope(), foreignTriggersBlock: false,
+                    requireClearPath: checkObstacles, keepNonTargetsOnMiss: false);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(_hitProjector.Hits, candidateCount,
                     checkObstacles, out InteractionRayHit targetHit);
                 hitPoint = targetHit.Point;
                 return hasTargetHit;
@@ -1326,7 +1356,7 @@ namespace Neo.Tools
                 // WHY: 2D honours includeTriggerCollidersInMouseRaycast by filtering hits, not the query.
                 // Physics2D.GetRayIntersectionNonAlloc takes no QueryTriggerInteraction — it obeys the global
                 // Physics2D.queriesHitTriggers — so the 3D trick of excluding triggers inside the query is not
-                // available here. BuildInteractionHits2D drops them afterwards and reaches the same result.
+                // available here. The 2D projection drops them afterwards and reaches the same result.
                 // The literal true that used to stand here made the checkbox a silent no-op for 2D objects.
                 InteractionPhysicsQueries.Hits2D hits2D = InteractionPhysicsQueries.GetRayIntersection2D(cam,
                     ray, float.MaxValue, ~0, QueryMode, InteractionPhysicsQueries.QueryPurpose.Camera);
@@ -1335,9 +1365,10 @@ namespace Neo.Tools
                     return false;
                 }
 
-                int candidateCount2D = BuildInteractionHits2D(hits2D, false,
-                    includeTriggerCollidersInMouseRaycast);
-                bool hasTargetHit2D = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D,
+                int candidateCount2D = _hitProjector.Project2D(hits2D, CreateTargetScope(),
+                    foreignTriggersBlock: false, includeTriggers: includeTriggerCollidersInMouseRaycast,
+                    requireClearPath: checkObstacles, keepNonTargetsOnMiss: false);
+                bool hasTargetHit2D = InteractionQueryMath.TrySelectTarget(_hitProjector.Hits, candidateCount2D,
                     checkObstacles, out InteractionRayHit targetHit2D);
                 hitPoint = targetHit2D.Point;
                 return hasTargetHit2D;
@@ -1346,112 +1377,28 @@ namespace Neo.Tools
             return false;
         }
 
-        private int BuildInteractionHits3D(InteractionPhysicsQueries.Hits3D hits, bool foreignTriggersBlock)
+        private InteractionTargetScope CreateTargetScope()
         {
-            using ProfilerMarker.AutoScope classificationScope =
-                InteractionPhysicsQueries.ProfileClassification(hits.Count, false);
-            int candidateCount = 0;
-            int validCount = hits.Count;
-            EnsureInteractionHitCapacity(validCount);
-            for (int i = 0; i < validCount; i++)
-            {
-                RaycastHit physicsHit = hits[i];
-                Collider hitCollider = physicsHit.collider;
-                if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
-                {
-                    continue;
-                }
-
-                bool isTarget = IsTargetHierarchyCollider(hitCollider);
-                bool blocksInteraction = !isTarget && (foreignTriggersBlock || !hitCollider.isTrigger);
-                interactionHits[candidateCount] = new InteractionRayHit(physicsHit.distance, physicsHit.point,
-                    isTarget, blocksInteraction);
-                candidateCount++;
-            }
-
-            return candidateCount;
+            return new InteractionTargetScope(transform, targetCollider3D, targetCollider2D,
+                ignoreDistancePointHierarchyColliders, distanceCheckPoint, viewCheckPoint);
         }
 
-        private int BuildInteractionHits2D(InteractionPhysicsQueries.Hits2D hits, bool foreignTriggersBlock,
-            bool includeTriggers)
+        private int ProjectLineOfSight3D(InteractionPhysicsQueries.Hits3D hits)
         {
-            using ProfilerMarker.AutoScope classificationScope =
-                InteractionPhysicsQueries.ProfileClassification(hits.Count, true);
-            int candidateCount = 0;
-            int validCount = hits.Count;
-            EnsureInteractionHitCapacity(validCount);
-            for (int i = 0; i < validCount; i++)
-            {
-                RaycastHit2D physicsHit = hits[i];
-                Collider2D hitCollider = physicsHit.collider;
-                if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider) ||
-                    (!includeTriggers && hitCollider.isTrigger))
-                {
-                    continue;
-                }
-
-                bool isTarget = IsTargetHierarchyCollider(hitCollider);
-                bool blocksInteraction = !isTarget && (foreignTriggersBlock || !hitCollider.isTrigger);
-                interactionHits[candidateCount] = new InteractionRayHit(physicsHit.distance, physicsHit.point,
-                    isTarget, blocksInteraction);
-                candidateCount++;
-            }
-
-            return candidateCount;
+            // WHY: Range line of sight needs the nearest hit of any kind, and foreign triggers block it.
+            return _hitProjector.Project3D(hits, CreateTargetScope(), foreignTriggersBlock: true,
+                requireClearPath: true, keepNonTargetsOnMiss: true);
         }
 
-        private void EnsureInteractionHitCapacity(int count)
-        {
-            if (interactionHits.Length < count)
-            {
-                Array.Resize(ref interactionHits, count);
-            }
-        }
+        private bool IsRecordingDebugRay => drawDebugRay || drawInteractionRayForOneSecond;
 
-        private bool ShouldIgnoreHitCollider(Component hitCollider)
-        {
-            if (hitCollider == null || !ignoreDistancePointHierarchyColliders ||
-                IsTargetHierarchyCollider(hitCollider))
-            {
-                return false;
-            }
+        /// <summary>Test seam: the projector and live target scope used by automatic queries.</summary>
+        internal InteractionHitProjector HitProjector => _hitProjector;
 
-            Transform hitTransform = hitCollider.transform;
-            return IsSameHierarchy(hitTransform, distanceCheckPoint) ||
-                   IsSameHierarchy(hitTransform, viewCheckPoint);
-        }
+        internal InteractionTargetScope TargetScope => CreateTargetScope();
 
-        private bool IsTargetHierarchyCollider(Component hitCollider)
-        {
-            if (hitCollider == null)
-            {
-                return false;
-            }
-
-            if (hitCollider is Collider hitCollider3D)
-            {
-                if (targetCollider3D != null)
-                {
-                    return hitCollider3D == targetCollider3D;
-                }
-
-                Transform t = hitCollider3D.transform;
-                return t == transform || t.IsChildOf(transform);
-            }
-
-            if (hitCollider is Collider2D hitCollider2D)
-            {
-                if (targetCollider2D != null)
-                {
-                    return hitCollider2D == targetCollider2D;
-                }
-
-                Transform t2 = hitCollider2D.transform;
-                return t2 == transform || t2.IsChildOf(transform);
-            }
-
-            return false;
-        }
+        /// <summary>Test seam: the recorded debug ray drawn by the gizmo.</summary>
+        internal InteractionDebugRay DebugRay => _debugRay;
 
         private Transform ResolveLookSource()
         {
@@ -1475,31 +1422,14 @@ namespace Neo.Tools
             return cachedCamera;
         }
 
-        private bool IsSameHierarchy(Transform a, Transform b)
-        {
-            if (a == null || b == null)
-            {
-                return false;
-            }
-
-            // A shared level container must not make every target and obstacle part of the player rig.
-            return a == b || a.IsChildOf(b) || b.IsChildOf(a) ||
-                   (a.root == b.root && a.root != transform.root);
-        }
-
         private void CacheDebugRay(Vector3 start, Vector3 end, Color color)
         {
-            if (!drawInteractionRayForOneSecond && !drawDebugRay)
+            if (!IsRecordingDebugRay)
             {
                 return;
             }
 
-            lastDebugRayStart = start;
-            lastDebugRayEnd = end;
-            lastDebugRayColor = color;
-            lastDebugRayUntilTime = drawDebugRay
-                ? float.PositiveInfinity
-                : Time.realtimeSinceStartup + Mathf.Max(0f, interactionRayDrawDuration);
+            _debugRay.Record(start, end, color, drawDebugRay, Time.realtimeSinceStartup, interactionRayDrawDuration);
         }
 
         /// <summary>
@@ -1520,34 +1450,12 @@ namespace Neo.Tools
             }
 
             Vector3 origin = source.position;
-            Vector3 target = GetInteractionTargetPosition();
-            Vector3 end = target;
-
-            Color rayColor;
-            if (isInteractingThisFrame)
-            {
-                rayColor = Color.green;
-            }
-            else if (IsHovered)
-            {
-                rayColor = Color.yellow;
-            }
-            else if (wasInRange)
-            {
-                rayColor = Color.cyan;
-            }
-            else
-            {
-                rayColor = Color.gray;
-            }
-
-            lastDebugRayStart = origin;
-            lastDebugRayEnd = end;
-            lastDebugRayColor = rayColor;
+            Vector3 end = GetInteractionTargetPosition();
+            Color rayColor = InteractionDebugRay.ResolvePersistentColor(isInteractingThisFrame, IsHovered, wasInRange);
+            _debugRay.SetSegment(origin, end, rayColor);
 
             Debug.DrawLine(origin, end, rayColor);
         }
-
 
         private bool IsKeyboardActionDown()
         {

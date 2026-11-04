@@ -92,6 +92,39 @@ namespace Neo.Tests.UI
         }
 
         [Test]
+        public void PoseRebuilds_RewritePositionsAndKeepTheUploadedUvAndIndices()
+        {
+            UIMeshRigPoint[] points = UIMeshRigLayoutBuilder.Apply(
+                _rig, UIMeshRigLayoutPreset.SimpleBounce, true, false);
+            _rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
+            _rig.Rebuild();
+
+            for (int frame = 1; frame <= 3; frame++)
+            {
+                points[0].SetProceduralPose(new Vector2(12f * frame, -6f * frame), 5f * frame, Vector2.one);
+                _rig.Rebuild();
+            }
+
+            AssertCloneMatches(_rig.BuildGeometry(), "after three pose-only rebuilds");
+        }
+
+        [Test]
+        public void GridChangeWithTheSameVertexCount_ReuploadsTheIndices()
+        {
+            _rig.SetGridResolution(6, 5);
+            _rig.Rebuild();
+            int[] wideIndices = _rig.BuildGeometry().Indices;
+
+            _rig.SetGridResolution(5, 6);
+            _rig.Rebuild();
+            UIMeshRigGeometry tall = _rig.BuildGeometry();
+
+            Assert.That(tall.Vertices, Has.Length.EqualTo(6 * 7), "6x5 and 5x6 grids share one vertex count.");
+            Assert.That(tall.Indices, Is.Not.EqualTo(wideIndices), "The transposed grid needs other triangles.");
+            AssertCloneMatches(tall, "after a transposed grid with the same vertex count");
+        }
+
+        [Test]
         public void CloneBounds_CarryDeformHeadroom_SoAWarpedSpriteIsNotCulledEarly()
         {
             _rig.Rebuild();
@@ -145,6 +178,31 @@ namespace Neo.Tests.UI
             Assert.That(_rig.Points.Count, Is.EqualTo(4),
                 "A new adapter must be discovered by the shared owner resolver, not by a hard-coded type list.");
             Assert.That(UIMeshRigOwnerResolver.Find(points[0].transform), Is.SameAs(_rig));
+        }
+
+        private void AssertCloneMatches(UIMeshRigGeometry expected, string context)
+        {
+            Sprite clone = _rig.DeformedSprite;
+            Assert.That(clone, Is.Not.Null);
+            Vector3[] positions = clone.GetVertexAttribute<Vector3>(VertexAttribute.Position).ToArray();
+            Vector2[] uv = clone.GetVertexAttribute<Vector2>(VertexAttribute.TexCoord0).ToArray();
+            ushort[] indices = clone.GetIndices().ToArray();
+
+            Assert.That(positions, Has.Length.EqualTo(expected.Vertices.Length), context);
+            Assert.That(uv, Has.Length.EqualTo(expected.UV.Length), context);
+            Assert.That(indices, Has.Length.EqualTo(expected.Indices.Length), context);
+            for (int index = 0; index < expected.Vertices.Length; index++)
+            {
+                Assert.That(Vector3.Distance(positions[index], expected.Vertices[index]), Is.LessThan(0.0001f),
+                    context + ": position " + index);
+                Assert.That(Vector2.Distance(uv[index], expected.UV[index]), Is.LessThan(0.0001f),
+                    context + ": uv " + index);
+            }
+
+            for (int index = 0; index < expected.Indices.Length; index++)
+            {
+                Assert.That((int)indices[index], Is.EqualTo(expected.Indices[index]), context + ": index " + index);
+            }
         }
     }
 }

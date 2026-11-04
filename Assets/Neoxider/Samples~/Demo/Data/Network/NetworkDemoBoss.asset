@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53633ec5c08ead847945f0aefb93fa48, type: 3}
+  m_Name: NetworkDemoBoss
+  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.RpgCharacterTemplate
+  resources:
+  - id:
+      preset: 1
+      customId: 
+    displayName: 
+    startCurrent: 200
+    startMax: 200
+    restoreOnAwake: 1
+    restoreToFull: 1
+    regen:
+      enabled: 0
+      mode: 1
+      value: 1
+      tickInterval: 1
+      scalingStat:
+        preset: 0
+        customId: 
+      scalingMultiplier: 1
+      onlyWhenNotFull: 1
+      onlyWhenAlive: 1
+      pauseAfterSpend: 0
+      pauseAfterSpendSeconds: 1
+      pauseAfterDamage: 0
+      pauseAfterDamageSeconds: 3
+    canGoBelowZero: 0
+    canOverfill: 0
+    minValue: 0
+    maxCap: -1
+  stats: []
+  knownBuffs: []
+  knownStatuses: []
+  progression: {fileID: 0}
+  displayName: Shared Boss
+  description: 'Network demo target: one HP pool replicated by RpgCharacterNetworkAdapter.'
+  icon: {fileID: 0}

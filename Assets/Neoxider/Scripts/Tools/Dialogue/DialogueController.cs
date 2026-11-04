@@ -20,6 +20,14 @@ namespace Neo.Tools
 
         [Header("Typewriter Settings")] public bool useTypewriterEffect = true;
 
+        [Tooltip(
+            "RebuildText passes a growing string to DialogueUI every character. MaxVisibleCharacters assigns the whole " +
+            "sentence once and reveals it through TMP maxVisibleCharacters: no string per character and no word-wrap " +
+            "jumps. While typing, <br>, sprites and '<' text that is not a TMP tag can make the reveal lag behind; " +
+            "a finished sentence is always shown in full.")]
+        [SerializeField]
+        private TypewriterRevealMode _revealMode = TypewriterRevealMode.RebuildText;
+
         [SerializeField] private TypewriterEffect _typewriter = new();
 
         [Header("Auto Start")] [Tooltip("Automatically start first dialogue on Start")]
@@ -58,8 +66,17 @@ namespace Neo.Tools
         private int _playbackVersion;
 
         private CancellationTokenSource _typewriterCts;
+        private Action<string> _setDialogueTextCallback;
+        private Action<int> _setVisibleCharactersCallback;
 
         public TypewriterEffect Typewriter => _typewriter;
+
+        /// <summary>How typed sentences reach <see cref="DialogueUI" />; applies to the next sentence.</summary>
+        public TypewriterRevealMode RevealMode
+        {
+            get => _revealMode;
+            set => _revealMode = value;
+        }
         public int CurrentDialogueId { get; private set; }
         public int CurrentMonologId { get; private set; }
         public int CurrentSentenceId { get; private set; }
@@ -550,9 +567,29 @@ namespace Neo.Tools
 
             try
             {
-                await _typewriter.PlayAsync(text, t => _dialogueUI?.SetDialogueText(t), token);
-                // PlayAsync handles cancellation internally, so a normal return can belong to an old run.
+                bool reveal = _revealMode == TypewriterRevealMode.MaxVisibleCharacters;
+                if (reveal)
+                {
+                    _dialogueUI?.SetDialogueTextRevealed(text, 0);
+                    _setVisibleCharactersCallback ??= SetVisibleCharactersFromTypewriter;
+                    await _typewriter.PlayRevealAsync(text, _setVisibleCharactersCallback, token);
+                }
+                else
+                {
+                    _setDialogueTextCallback ??= SetDialogueTextFromTypewriter;
+                    await _typewriter.PlayAsync(text, _setDialogueTextCallback, token);
+                }
+
+                // WHY: the typewriter handles cancellation internally, so a normal return can belong to an old run.
                 token.ThrowIfCancellationRequested();
+
+                if (reveal)
+                {
+                    // WHY: the typewriter skips every '<...>' as a tag, while TMP counts <br>, sprites and '<' text
+                    // that is not a TMP tag as characters, so the run's final count can leave the end of the
+                    // sentence hidden; a finished sentence is always shown in full.
+                    _dialogueUI?.ShowAllCharacters();
+                }
 
                 if (autoNextSentence)
                 {
@@ -571,6 +608,16 @@ namespace Neo.Tools
                     cancellationSource.Dispose();
                 }
             }
+        }
+
+        private void SetDialogueTextFromTypewriter(string text)
+        {
+            _dialogueUI?.SetDialogueText(text);
+        }
+
+        private void SetVisibleCharactersFromTypewriter(int visibleCharacters)
+        {
+            _dialogueUI?.SetVisibleCharacters(visibleCharacters);
         }
 
         private void ScheduleAutoDelay(float delay, Action action)

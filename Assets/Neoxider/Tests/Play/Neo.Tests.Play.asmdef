@@ -41,7 +41,8 @@
         "Neo.Tools.Time",
         "UnityEngine.UI",
         "Unity.TextMeshPro",
-        "UniTask"
+        "UniTask",
+        "Neo.Tests.Performance"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

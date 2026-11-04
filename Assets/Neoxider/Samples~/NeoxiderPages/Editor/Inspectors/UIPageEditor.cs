@@ -1,4 +1,3 @@
-using System;
 using Neo.Editor;
 using Neo.Pages;
 using UnityEditor;
@@ -7,13 +6,27 @@ using UnityEngine;
 namespace Neo.Pages.Editor
 {
     [CustomEditor(typeof(UIPage))]
+    [CanEditMultipleObjects]
     public sealed class UIPageEditor : CustomEditorBase
     {
-        private const float ModeButtonHeight = 22f;
-        private const string SourceLabelAll = "Source: all project folders";
+        private const string AnimationHelp =
+            "Compatibility setting for older scenes and project extensions. The base page switches instantly; a " +
+            "subclass reports its animation timing through HasShowAnimation / ShowAnimationDuration.";
+
+        private static readonly GUIContent PageContent = new("Page");
+        private static readonly GUIContent PageAssetContent = new("Page Id (asset)");
+        private static readonly GUIContent PageNameContent = new("Page Name");
+        private static readonly GUIContent GenerateContent = new("Generate & Assign",
+            "Create (or reuse) the PageId asset 'Page<Name>' and assign it.");
+        private static readonly GUIContent PopupContent = new("Popup");
+        private static readonly GUIContent IgnoreOnExclusiveContent = new("Ignore On Exclusive Change");
+        private static readonly GUIContent AnimationModeContent = new("Animation Mode");
+
         private SerializedProperty animationModeProp;
 
         private string generateName = "Menu";
+        private PageId shownNameSource;
+        private string shownName;
         private SerializedProperty ignoreOnExclusiveChangeProp;
         private SerializedProperty pageIdProp;
         private SerializedProperty popupProp;
@@ -36,15 +49,13 @@ namespace Neo.Pages.Editor
 
             EditorGUILayout.LabelField("Page", EditorStyles.boldLabel);
             DrawPageIdSelector(pageIdProp);
-            DrawPropertyIfAvailable(popupProp, "Popup");
-            DrawPropertyIfAvailable(ignoreOnExclusiveChangeProp, "Ignore On Exclusive Change");
+            DrawPropertyIfAvailable(popupProp, PopupContent);
+            DrawPropertyIfAvailable(ignoreOnExclusiveChangeProp, IgnoreOnExclusiveContent);
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Anim", EditorStyles.boldLabel);
-            DrawPropertyIfAvailable(animationModeProp, "Animation Mode");
-            EditorGUILayout.HelpBox(
-                "Compatibility setting for older scenes and project extensions. The base NeoxiderPages sample has no required tween dependency.",
-                MessageType.Info);
+            DrawPropertyIfAvailable(animationModeProp, AnimationModeContent);
+            EditorGUILayout.HelpBox(AnimationHelp, MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -62,154 +73,93 @@ namespace Neo.Pages.Editor
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Page Id", EditorStyles.miniBoldLabel);
+            selectorMode = PagesEditorGUI.SegmentedMode(selectorMode, PagesEditorGUI.DropdownOrAsset);
+            EditorGUILayout.Space(2);
+
+            if (selectorMode == 0)
             {
-                EditorGUILayout.LabelField("Page Id", EditorStyles.miniBoldLabel);
-                selectorMode = DrawSegmentedMode(selectorMode,
-                    new GUIContent("Dropdown", "Pick from PageId assets in the folder"),
-                    new GUIContent("Asset", "Manually pick a specific PageId asset"));
-                EditorGUILayout.Space(2);
-
-                if (selectorMode == 0)
+                if (PagesEditorGUI.PageIdPopup(pageId, PageContent))
                 {
-                    PageId[] ids = FindAllPageIds(null);
-                    if (ids.Length == 0)
-                    {
-                        EditorGUILayout.HelpBox(
-                            "There are no PageId assets in the project.\nCreate a PageId manually or generate one via menu: Tools → Neo → Pages → Generate Default PageIds.",
-                            MessageType.Warning);
-                        return;
-                    }
-
-                    string[] labels = PageIdEditorCache.GetLabels(null);
-
-                    var current = pageId.objectReferenceValue as PageId;
-                    int currentIdx = current == null ? 0 : Array.FindIndex(ids, x => x == current) + 1;
-                    if (currentIdx < 0)
-                    {
-                        currentIdx = 0;
-                    }
-
-                    int newIdx = EditorGUILayout.Popup(new GUIContent("Page"), currentIdx, labels);
-                    if (newIdx == 0)
-                    {
-                        pageId.objectReferenceValue = null;
-                    }
-                    else if (newIdx > 0 && newIdx <= ids.Length)
-                    {
-                        pageId.objectReferenceValue = ids[newIdx - 1];
-                    }
-
-                    EditorGUILayout.LabelField(SourceLabelAll, EditorStyles.miniLabel);
-                }
-                else
-                {
-                    EditorGUILayout.PropertyField(pageId, new GUIContent("Page Id (asset)"));
+                    EditorGUILayout.LabelField(PagesEditorGUI.SourceLabelAll, EditorStyles.miniLabel);
                 }
             }
+            else
+            {
+                EditorGUILayout.PropertyField(pageId, PageAssetContent);
+            }
 
+            EditorGUILayout.EndVertical();
             DrawGenerateAndAssign(pageId);
         }
 
-        private static void DrawPropertyIfAvailable(SerializedProperty property, string label)
+        private static void DrawPropertyIfAvailable(SerializedProperty property, GUIContent label)
         {
             if (property == null)
             {
-                EditorGUILayout.HelpBox($"Serialized field for '{label}' was not found on UIPage.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Serialized field for '" + label.text + "' was not found on UIPage.",
+                    MessageType.Warning);
                 return;
             }
 
-            EditorGUILayout.PropertyField(property);
+            EditorGUILayout.PropertyField(property, label);
         }
 
-        private static int DrawSegmentedMode(int value, GUIContent left, GUIContent right)
+        private string DisplayNameOf(PageId id)
         {
-            using (new EditorGUILayout.HorizontalScope())
+            // WHY: DisplayName reads Object.name, a new string per call; cache it per assigned PageId.
+            if (shownNameSource != id)
             {
-                int selected = value;
-
-                Color prevBg = GUI.backgroundColor;
-                Color prevContent = GUI.contentColor;
-
-                DrawModeButton(0, left, ref selected, EditorStyles.miniButtonLeft);
-                DrawModeButton(1, right, ref selected, EditorStyles.miniButtonRight);
-
-                GUI.backgroundColor = prevBg;
-                GUI.contentColor = prevContent;
-
-                return selected;
+                shownNameSource = id;
+                shownName = id.DisplayName;
             }
-        }
 
-        private static void DrawModeButton(int index, GUIContent content, ref int selected, GUIStyle style)
-        {
-            bool isSelected = selected == index;
-            GUI.backgroundColor = isSelected ? GetSelectedBackgroundColor() : Color.white;
-            GUI.contentColor = isSelected ? GetSelectedContentColor() : Color.white;
-
-            if (GUILayout.Button(content, style, GUILayout.Height(ModeButtonHeight)))
-            {
-                selected = index;
-            }
-        }
-
-        private static Color GetSelectedBackgroundColor()
-        {
-            return EditorGUIUtility.isProSkin
-                ? new Color(0.25f, 0.55f, 0.95f, 1f)
-                : new Color(0.20f, 0.45f, 0.90f, 1f);
-        }
-
-        private static Color GetSelectedContentColor()
-        {
-            return Color.white;
+            return shownName;
         }
 
         private void DrawGenerateAndAssign(SerializedProperty pageId)
         {
+            if (pageId.hasMultipleDifferentValues)
+            {
+                return;
+            }
+
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Generate", EditorStyles.miniBoldLabel);
-            var current = pageId.objectReferenceValue as PageId;
-            if (current != null)
+            PageId current = pageId.objectReferenceValue as PageId;
+            bool hasPage = current != null;
+
+            using (new EditorGUI.DisabledScope(hasPage))
             {
-                generateName = current.DisplayName;
+                // WHY: with a PageId assigned the field shows its name without writing it back every repaint.
+                string shown = EditorGUILayout.TextField(PageNameContent, hasPage ? DisplayNameOf(current) : generateName);
+                if (!hasPage)
+                {
+                    generateName = shown;
+                }
             }
 
-            using (new EditorGUI.DisabledScope(current != null))
+            using (new EditorGUI.DisabledScope(hasPage || string.IsNullOrWhiteSpace(generateName)))
             {
-                generateName = EditorGUILayout.TextField("Page Name", generateName);
-            }
-
-            using (new EditorGUI.DisabledScope(current != null || string.IsNullOrWhiteSpace(generateName)))
-            {
-                if (GUILayout.Button("Generate & Assign"))
+                if (GUILayout.Button(GenerateContent))
                 {
                     string folder = PageIdGenerator.GetPreferredFolder();
-                    string normalizedName = generateName;
-                    string assetName = normalizedName.Trim().StartsWith("Page", StringComparison.Ordinal)
-                        ? normalizedName.Trim()
-                        : "Page" + normalizedName.Trim();
-                    string path = $"{folder}/{assetName}.asset";
+                    string path = PageIdGenerator.GetAssetPath(generateName, folder);
                     bool alreadyExists = AssetDatabase.LoadAssetAtPath<PageId>(path) != null;
 
-                    PageId id = PageIdGenerator.GetOrCreate(normalizedName, folder);
+                    PageId id = PageIdGenerator.GetOrCreate(generateName, folder);
                     if (id != null)
                     {
                         if (alreadyExists)
                         {
-                            Debug.LogWarning($"[UIPage] PageId already exists: {path}. Assigned existing.",
-                                (UIPage)target);
+                            Debug.LogWarning($"[UIPage] PageId already exists: {path}. Assigned existing.", target);
                         }
 
                         pageId.objectReferenceValue = id;
                     }
                 }
             }
-        }
-
-        private static PageId[] FindAllPageIds(string folder = null)
-        {
-            return PageIdEditorCache.GetIds(folder);
         }
     }
 }

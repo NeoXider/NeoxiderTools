@@ -24,10 +24,10 @@ namespace Neo.Editor.Tests
             _root = new GameObject("SpinControllerEconomyTests");
             _spin = _root.AddComponent<SpinController>();
 
-            var rows = new Row[3];
+            Row[] rows = new Row[3];
             for (int i = 0; i < rows.Length; i++)
             {
-                var rowGo = new GameObject($"Row{i}");
+                GameObject rowGo = new GameObject($"Row{i}");
                 rowGo.transform.SetParent(_root.transform);
                 rows[i] = rowGo.AddComponent<Row>();
             }
@@ -107,7 +107,7 @@ namespace Neo.Editor.Tests
             // WHY: Column-major fill order (x outer, y inner): put ONE special where column 1 crosses line 0.
             int specialColumn = 1;
             int specialRow = lineRows[0, specialColumn];
-            var queue = new Queue<int>();
+            Queue<int> queue = new Queue<int>();
             for (int x = 0; x < cols; x++)
             for (int y = 0; y < windowRows; y++)
             {

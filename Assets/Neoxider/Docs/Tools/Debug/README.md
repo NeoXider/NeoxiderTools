@@ -1,6 +1,12 @@
 ﻿# Tools / Debug
 
-Runtime diagnostics in assembly `Neo.Tools.Debug`, namespace `Neo.Tools`. These components use TextMeshPro and can be added independently. Scripts live in `Scripts/Tools/Debug/`.
+**What it is:** runtime diagnostics components in assembly `Neo.Tools.Debug`, namespace `Neo.Tools`: an FPS counter,
+an on-screen Unity log and a self-building debug overlay. They use TextMeshPro and can be added independently.
+Scripts live in `Scripts/Tools/Debug/`.
+
+**Contents:** the component table below plus the C#/scene paths for each.
+
+---
 
 ## Components
 
@@ -12,7 +18,7 @@ Runtime diagnostics in assembly `Neo.Tools.Debug`, namespace `Neo.Tools`. These 
 
 ## C# and scene use
 
-Reference `Neo.Tools.Debug` from a custom asmdef and use `using Neo.Tools;`. `FPS.CurrentFps`, `FPS.SetTargetFramerate(int)`, `FPS.SetVSync(bool)`, `ErrorLogger.UpdateText(string)` and `ErrorLogger.AppendText(string)` are the public C# entry points. The component pages describe Inspector setup and UnityEvent-compatible methods.
+Reference `Neo.Tools.Debug` from a custom asmdef and use `using Neo.Tools;`. `FPS.CurrentFps`, `FPS.SetTargetFramerate(int)`, `FPS.SetVSync(bool)`, `ErrorLogger.UpdateText(string)`, `ErrorLogger.AppendText(string)`, `ErrorLogger.Clear()`, `ErrorLogger.Entries`, `ErrorLogger.MaxEntries` and `ErrorLogger.MaxCharacters` are the public C# entry points. The component pages describe Inspector setup and UnityEvent-compatible methods.
 
 | Component | Scene / NoCode path | C# path |
 |-----------|---------------------|---------|
@@ -24,7 +30,11 @@ Reference `Neo.Tools.Debug` from a custom asmdef and use `using Neo.Tools;`. `FP
 
 These are opt-in scene tools. The overlay reads existing managers without creating or resolving missing singletons. Frame-rate and VSync changes are global and occur only through explicit `FPS` calls or its opt-in **Unlock Framerate On Awake** setting.
 
-ErrorLogger history and appended text remain unlimited. Replacing the label does not clear duplicate history; the component currently has no public capture/history-clear API.
+ErrorLogger history is bounded by **Max Entries** (default 50, `0` = unlimited) and optionally by **Max Characters**
+(default `0` = unlimited; the newest entry always stays); `Clear()` empties history, the
+duplicate filter and the label. The FPS label reuses its string while the displayed value is unchanged, and the
+overlay caches the active scene name and reads manager flags through typed delegates instead of boxing reflection
+calls.
 
 ## Related modules
 

@@ -36,8 +36,97 @@ namespace Neo.Editor.Network
         private static readonly Color TargetAccent = new(0.26f, 0.82f, 0.52f, 1f);
         private static readonly Color ActionAccent = new(1f, 0.64f, 0.22f, 1f);
         private static readonly Color NetworkingAccent = new(0.70f, 0.42f, 0.98f, 1f);
+        private static readonly Color DiagnosticsAccent = new(0.86f, 0.86f, 0.26f, 1f);
+        private static readonly Color HelpersAccent = new(0.62f, 0.62f, 0.62f, 1f);
 
         private static readonly string MethodNoneLabel = "<none>";
+        private const string CustomStringLabel = "<custom string>";
+
+        // WHY: this inspector used to build every label and tooltip below as a new GUIContent on each IMGUI
+        // event, plus one Action per section and a copy of the component list for the popup.
+        private static readonly GUIContent IsNetworkedContent = new("Is Networked",
+            "When ON, the action is dispatched through Mirror so every client sees it. When OFF, the action runs only locally.");
+
+        private static readonly GUIContent SourceContent = new("Source",
+            "Where the context object comes from. EventArgument uses the Collider/GameObject passed by the event (e.g. OnTriggerEnter).");
+
+        private static readonly GUIContent ExplicitContextContent = new("Explicit Context",
+            "The fixed GameObject used as the context root. Must contain a NetworkIdentity when running networked.");
+
+        private static readonly GUIContent RootModeContent = new("Root Mode",
+            "How to climb from the raw context object up to a stable root (usually NetworkIdentity in parents).");
+
+        private static readonly GUIContent TargetModeContent = new("Target Mode",
+            "How to select the GameObject the action will run on, relative to the resolved root.");
+
+        private static readonly GUIContent ChildNameContent = new("Child Name",
+            "Recursively searches for a child with this exact name. Use the editor preview target to verify.");
+
+        private static readonly GUIContent ChildPathContent = new("Child Path",
+            "Transform.Find path from the root (e.g. \"Visual/Sphere\").");
+
+        private static readonly GUIContent ChildByComponentContent = new("Child by Component",
+            "Pick a component type — the action runs on the first GameObject under root that owns it.");
+
+        private static readonly GUIContent IncludeInactiveContent = new("Include Inactive",
+            "When searching by name/path/component, include inactive children.");
+
+        private static readonly GUIContent ActionContent = new("Action",
+            "What the relay does after resolving the target. Use Invoke Component Method for full reflection access.");
+
+        private static readonly GUIContent SetActiveContent = new("Set Active",
+            "Active state to apply to the target GameObject (calls GameObject.SetActive).");
+
+        private static readonly GUIContent MessageNameContent = new("Message Name",
+            "Method name to call via UnityEngine.SendMessage on the target. The method must take no parameters or one of the supported types.");
+
+        private static readonly GUIContent ComponentContent = new("Component",
+            "Component on the target that owns the method to invoke.");
+
+        private static readonly GUIContent MethodFieldContent = new("Method",
+            "Method name on the component. Drag an Editor Preview Target to enable the dropdown.");
+
+        private static readonly GUIContent MethodPopupContent = new("Method",
+            "Picks a method from the chosen component. The list shows public instance methods with no arg or a single primitive/GameObject arg.");
+
+        private static readonly GUIContent ArgumentModeContent = new("Argument Mode",
+            "How the argument passed to the method is produced. Auto-populated when you pick a method from the dropdown.");
+
+        private static readonly GUIContent BoolValueContent = new("Bool Value");
+        private static readonly GUIContent FloatValueContent = new("Float Value");
+        private static readonly GUIContent StringValueContent = new("String Value");
+
+        private static readonly GUIContent ScopeContent = new("Scope",
+            "AllClients: every client (including host) applies. ServerOnly: only the server. OthersOnly: every client except the originator.");
+
+        private static readonly GUIContent AuthorityModeContent = new("Authority Mode",
+            "Who is allowed to send Commands for this relay. None lets any client trigger; OwnerOnly restricts to the context owner; ServerOnly disables client-originated triggers.");
+
+        private static readonly GUIContent LocalOnlyContent = new("Trigger Only For Local Context",
+            "Recommended ON for physics triggers. Each client runs physics on every replicated collider, " +
+            "so a single player entering the trigger fires OnTriggerEnter on every client and produces duplicate messages. " +
+            "With this ON, only the client that actually owns the entering player dispatches; remote clients wait for the server's broadcast.");
+
+        private static readonly GUIContent VerboseLoggingContent = new("Verbose Logging",
+            "Trace every step of dispatch and receipt: Trigger → Send → OnServer → Broadcast → OnClient → Apply. " +
+            "Turn on while reproducing a multiplayer issue, then check the console on host AND each client.");
+
+        private static readonly GUIContent PreviewTargetContent = new("Preview Target",
+            "Optional reference GameObject used ONLY by this inspector to populate component/method dropdowns. " +
+            "Drop a representative player/template/prefab here.");
+
+        private static readonly GUIContent StoredTypeNameContent = new("Stored Type Name",
+            "Full type name actually serialized (Type.FullName). Type manually if your target isn't represented in the Preview Target.");
+
+        private static GUIStyle s_sectionTitleStyle;
+        private static bool s_sectionTitleStyleProSkin;
+
+        private readonly List<string> _componentPopupLabels = new();
+
+        // WHY: the popup arrays are cached per inspector instance. Keying a static cache by this editor kept
+        // destroyed inspectors and their lists alive.
+        private string[] _componentPopupOptions;
+        private string[] _methodPopupOptions;
 
         // WHY: Cached dropdown data for the currently inspected target. Rebuilt every OnInspectorGUI.
         private readonly List<string> _componentDisplayNames = new();
@@ -60,22 +149,34 @@ namespace Neo.Editor.Network
         {
             serializedObject.Update();
 
-            DrawSection("Context", SourceAccent, DrawContextSection);
+            BeginRelaySection("Context", SourceAccent);
+            DrawContextSection();
+            EndRelaySection();
             EditorGUILayout.Space(4);
 
-            DrawSection("Target", TargetAccent, DrawTargetSection);
+            BeginRelaySection("Target", TargetAccent);
+            DrawTargetSection();
+            EndRelaySection();
             EditorGUILayout.Space(4);
 
-            DrawSection("Action", ActionAccent, DrawActionSection);
+            BeginRelaySection("Action", ActionAccent);
+            DrawActionSection();
+            EndRelaySection();
             EditorGUILayout.Space(4);
 
-            DrawSection("Networking", NetworkingAccent, DrawNetworkingSection);
+            BeginRelaySection("Networking", NetworkingAccent);
+            DrawNetworkingSection();
+            EndRelaySection();
             EditorGUILayout.Space(4);
 
-            DrawSection("Diagnostics", new Color(0.86f, 0.86f, 0.26f, 1f), DrawDiagnosticsSection);
+            BeginRelaySection("Diagnostics", DiagnosticsAccent);
+            DrawDiagnosticsSection();
+            EndRelaySection();
             EditorGUILayout.Space(4);
 
-            DrawSection("Editor Helpers", new Color(0.62f, 0.62f, 0.62f, 1f), DrawEditorHelpersSection);
+            BeginRelaySection("Editor Helpers", HelpersAccent);
+            DrawEditorHelpersSection();
+            EndRelaySection();
 
             // WHY: Reuse the same Events foldout that NeoConditionEditor uses (auto-discovers UnityEvents,
             // collapsible, listener counts, broken-listener warnings). Matches the rest of the project's look.
@@ -93,25 +194,18 @@ namespace Neo.Editor.Network
 
             if (isNetworked != null)
             {
-                EditorGUILayout.PropertyField(isNetworked,
-                    new GUIContent("Is Networked",
-                        "When ON, the action is dispatched through Mirror so every client sees it. When OFF, the action runs only locally."));
+                EditorGUILayout.PropertyField(isNetworked, IsNetworkedContent);
             }
 
-            EditorGUILayout.PropertyField(contextSource,
-                new GUIContent("Source",
-                    "Where the context object comes from. EventArgument uses the Collider/GameObject passed by the event (e.g. OnTriggerEnter)."));
+            EditorGUILayout.PropertyField(contextSource, SourceContent);
 
-            if (contextSource.enumValueIndex == (int)NetworkContextSourceMode.ExplicitObject)
+            if (contextSource.hasMultipleDifferentValues ||
+                contextSource.enumValueIndex == (int)NetworkContextSourceMode.ExplicitObject)
             {
-                EditorGUILayout.PropertyField(explicitContext,
-                    new GUIContent("Explicit Context",
-                        "The fixed GameObject used as the context root. Must contain a NetworkIdentity when running networked."));
+                EditorGUILayout.PropertyField(explicitContext, ExplicitContextContent);
             }
 
-            EditorGUILayout.PropertyField(rootMode,
-                new GUIContent("Root Mode",
-                    "How to climb from the raw context object up to a stable root (usually NetworkIdentity in parents)."));
+            EditorGUILayout.PropertyField(rootMode, RootModeContent);
         }
 
         private void DrawTargetSection()
@@ -122,35 +216,33 @@ namespace Neo.Editor.Network
             SerializedProperty targetComponentType = serializedObject.FindProperty("_targetComponentType");
             SerializedProperty includeInactive = serializedObject.FindProperty("_includeInactive");
 
-            EditorGUILayout.PropertyField(targetMode,
-                new GUIContent("Target Mode",
-                    "How to select the GameObject the action will run on, relative to the resolved root."));
+            EditorGUILayout.PropertyField(targetMode, TargetModeContent);
 
-            switch (targetMode.enumValueIndex)
+            if (targetMode.hasMultipleDifferentValues)
             {
-                case (int)NetworkContextTargetMode.Root:
-                    EditorGUILayout.HelpBox("Action runs on the root GameObject (the resolved context).",
-                        MessageType.Info);
-                    break;
-                case (int)NetworkContextTargetMode.ChildByName:
-                    EditorGUILayout.PropertyField(targetName, new GUIContent("Child Name",
-                        "Recursively searches for a child with this exact name. Use the editor preview target to verify."));
-                    break;
-                case (int)NetworkContextTargetMode.ChildByPath:
-                    EditorGUILayout.PropertyField(targetPath, new GUIContent("Child Path",
-                        "Transform.Find path from the root (e.g. \"Visual/Sphere\")."));
-                    break;
-                case (int)NetworkContextTargetMode.ChildByComponent:
-                    DrawComponentTypeDropdown(
-                        new GUIContent("Child by Component",
-                            "Pick a component type — the action runs on the first GameObject under root that owns it."),
-                        targetComponentType);
-                    break;
+                EditorGUILayout.HelpBox("The selected relays use different target modes.", MessageType.None);
+            }
+            else
+            {
+                switch (targetMode.enumValueIndex)
+                {
+                    case (int)NetworkContextTargetMode.Root:
+                        EditorGUILayout.HelpBox("Action runs on the root GameObject (the resolved context).",
+                            MessageType.Info);
+                        break;
+                    case (int)NetworkContextTargetMode.ChildByName:
+                        EditorGUILayout.PropertyField(targetName, ChildNameContent);
+                        break;
+                    case (int)NetworkContextTargetMode.ChildByPath:
+                        EditorGUILayout.PropertyField(targetPath, ChildPathContent);
+                        break;
+                    case (int)NetworkContextTargetMode.ChildByComponent:
+                        DrawComponentTypeDropdown(ChildByComponentContent, targetComponentType);
+                        break;
+                }
             }
 
-            EditorGUILayout.PropertyField(includeInactive,
-                new GUIContent("Include Inactive",
-                    "When searching by name/path/component, include inactive children."));
+            EditorGUILayout.PropertyField(includeInactive, IncludeInactiveContent);
         }
 
         private void DrawActionSection()
@@ -164,9 +256,13 @@ namespace Neo.Editor.Network
             SerializedProperty methodName = serializedObject.FindProperty("_methodName");
             SerializedProperty methodArgumentMode = serializedObject.FindProperty("_methodArgumentMode");
 
-            EditorGUILayout.PropertyField(action,
-                new GUIContent("Action",
-                    "What the relay does after resolving the target. Use Invoke Component Method for full reflection access."));
+            EditorGUILayout.PropertyField(action, ActionContent);
+
+            if (action.hasMultipleDifferentValues)
+            {
+                EditorGUILayout.HelpBox("The selected relays use different actions.", MessageType.None);
+                return;
+            }
 
             switch (action.enumValueIndex)
             {
@@ -177,15 +273,11 @@ namespace Neo.Editor.Network
                     break;
 
                 case (int)NetworkContextActionType.SetActive:
-                    EditorGUILayout.PropertyField(boolValue,
-                        new GUIContent("Set Active",
-                            "Active state to apply to the target GameObject (calls GameObject.SetActive)."));
+                    EditorGUILayout.PropertyField(boolValue, SetActiveContent);
                     break;
 
                 case (int)NetworkContextActionType.SendMessage:
-                    EditorGUILayout.PropertyField(messageName,
-                        new GUIContent("Message Name",
-                            "Method name to call via UnityEngine.SendMessage on the target. The method must take no parameters or one of the supported types."));
+                    EditorGUILayout.PropertyField(messageName, MessageNameContent);
                     break;
 
                 case (int)NetworkContextActionType.InvokeComponentMethod:
@@ -200,19 +292,15 @@ namespace Neo.Editor.Network
             SerializedProperty stringValue)
         {
             GameObject preview = ResolvePreviewTarget();
-            DrawComponentTypeDropdown(
-                new GUIContent("Component", "Component on the target that owns the method to invoke."),
-                componentType);
+            DrawComponentTypeDropdown(ComponentContent, componentType);
 
             Component previewComponent = preview != null
                 ? ComponentBindingInspectorShared.FindComponentByTypeName(preview, componentType.stringValue)
                 : null;
 
-            if (previewComponent == null)
+            if (previewComponent == null || methodName.hasMultipleDifferentValues)
             {
-                EditorGUILayout.PropertyField(methodName,
-                    new GUIContent("Method",
-                        "Method name on the component. Drag an Editor Preview Target to enable the dropdown."));
+                EditorGUILayout.PropertyField(methodName, MethodFieldContent);
             }
             else
             {
@@ -221,10 +309,7 @@ namespace Neo.Editor.Network
                 string[] labels = BuildMethodLabelsArray();
 
                 EditorGUI.BeginChangeCheck();
-                int newIdx = EditorGUILayout.Popup(
-                    new GUIContent("Method",
-                        "Picks a method from the chosen component. The list shows public instance methods with no arg or a single primitive/GameObject arg."),
-                    idx, labels);
+                int newIdx = EditorGUILayout.Popup(MethodPopupContent, idx, labels);
                 if (EditorGUI.EndChangeCheck())
                 {
                     ApplyMethodSelection(newIdx, methodName, argumentMode);
@@ -237,22 +322,25 @@ namespace Neo.Editor.Network
         private void DrawArgumentField(SerializedProperty argumentMode, SerializedProperty boolValue,
             SerializedProperty floatValue, SerializedProperty stringValue)
         {
-            EditorGUILayout.PropertyField(argumentMode,
-                new GUIContent("Argument Mode",
-                    "How the argument passed to the method is produced. Auto-populated when you pick a method from the dropdown."));
+            EditorGUILayout.PropertyField(argumentMode, ArgumentModeContent);
+
+            if (argumentMode.hasMultipleDifferentValues)
+            {
+                return;
+            }
 
             switch (argumentMode.enumValueIndex)
             {
                 case (int)NetworkContextMethodArgumentMode.None:
                     break;
                 case (int)NetworkContextMethodArgumentMode.Bool:
-                    EditorGUILayout.PropertyField(boolValue, new GUIContent("Bool Value"));
+                    EditorGUILayout.PropertyField(boolValue, BoolValueContent);
                     break;
                 case (int)NetworkContextMethodArgumentMode.Float:
-                    EditorGUILayout.PropertyField(floatValue, new GUIContent("Float Value"));
+                    EditorGUILayout.PropertyField(floatValue, FloatValueContent);
                     break;
                 case (int)NetworkContextMethodArgumentMode.String:
-                    EditorGUILayout.PropertyField(stringValue, new GUIContent("String Value"));
+                    EditorGUILayout.PropertyField(stringValue, StringValueContent);
                     break;
                 case (int)NetworkContextMethodArgumentMode.TargetGameObject:
                     EditorGUILayout.HelpBox("Passes the resolved target GameObject as the argument.",
@@ -271,19 +359,14 @@ namespace Neo.Editor.Network
             SerializedProperty authority = serializedObject.FindProperty("_authorityMode");
             SerializedProperty localOnly = serializedObject.FindProperty("_triggerOnlyForLocalContext");
 
-            EditorGUILayout.PropertyField(scope, new GUIContent("Scope",
-                "AllClients: every client (including host) applies. ServerOnly: only the server. OthersOnly: every client except the originator."));
-            EditorGUILayout.PropertyField(authority, new GUIContent("Authority Mode",
-                "Who is allowed to send Commands for this relay. None lets any client trigger; OwnerOnly restricts to the context owner; ServerOnly disables client-originated triggers."));
+            EditorGUILayout.PropertyField(scope, ScopeContent);
+            EditorGUILayout.PropertyField(authority, AuthorityModeContent);
 
             if (localOnly != null)
             {
-                EditorGUILayout.PropertyField(localOnly, new GUIContent("Trigger Only For Local Context",
-                    "Recommended ON for physics triggers. Each client runs physics on every replicated collider, " +
-                    "so a single player entering the trigger fires OnTriggerEnter on every client and produces duplicate messages. " +
-                    "With this ON, only the client that actually owns the entering player dispatches; remote clients wait for the server's broadcast."));
+                EditorGUILayout.PropertyField(localOnly, LocalOnlyContent);
 
-                if (!localOnly.boolValue)
+                if (!localOnly.hasMultipleDifferentValues && !localOnly.boolValue)
                 {
                     EditorGUILayout.HelpBox(
                         "Trigger Only For Local Context is OFF — expect duplicate dispatches (one per connected client) for physics triggers.",
@@ -295,9 +378,7 @@ namespace Neo.Editor.Network
         private void DrawDiagnosticsSection()
         {
             SerializedProperty verboseProp = serializedObject.FindProperty("_verboseLogging");
-            EditorGUILayout.PropertyField(verboseProp, new GUIContent("Verbose Logging",
-                "Trace every step of dispatch and receipt: Trigger → Send → OnServer → Broadcast → OnClient → Apply. " +
-                "Turn on while reproducing a multiplayer issue, then check the console on host AND each client."));
+            EditorGUILayout.PropertyField(verboseProp, VerboseLoggingContent);
 
             if (verboseProp.boolValue)
             {
@@ -310,9 +391,7 @@ namespace Neo.Editor.Network
         private void DrawEditorHelpersSection()
         {
             SerializedProperty preview = serializedObject.FindProperty("_editorPreviewTarget");
-            EditorGUILayout.PropertyField(preview, new GUIContent("Preview Target",
-                "Optional reference GameObject used ONLY by this inspector to populate component/method dropdowns. " +
-                "Drop a representative player/template/prefab here."));
+            EditorGUILayout.PropertyField(preview, PreviewTargetContent);
 
             EditorGUILayout.HelpBox(
                 "Preview Target is editor-only — runtime always resolves the target via Context Source + Root Mode + Target Mode.",
@@ -327,7 +406,7 @@ namespace Neo.Editor.Network
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (_componentFullNames.Count == 0)
+                if (_componentFullNames.Count == 0 || fullTypeNameProp.hasMultipleDifferentValues)
                 {
                     EditorGUILayout.PropertyField(fullTypeNameProp, label);
                     if (preview == null)
@@ -342,14 +421,17 @@ namespace Neo.Editor.Network
                 int currentIndex = ComponentBindingInspectorShared.IndexOfFullName(_componentFullNames,
                     fullTypeNameProp.stringValue);
 
-                List<string> displayed = new(_componentDisplayNames) { "<custom string>" };
+                _componentPopupLabels.Clear();
+                _componentPopupLabels.AddRange(_componentDisplayNames);
+                _componentPopupLabels.Add(CustomStringLabel);
                 if (currentIndex < 0)
                 {
-                    currentIndex = displayed.Count - 1;
+                    currentIndex = _componentPopupLabels.Count - 1;
                 }
 
                 EditorGUI.BeginChangeCheck();
-                int newIndex = EditorGUILayout.Popup(label, currentIndex, displayed.ToArray());
+                int newIndex = EditorGUILayout.Popup(label, currentIndex,
+                    ComponentBindingInspectorShared.ReuseOptions(ref _componentPopupOptions, _componentPopupLabels));
                 if (EditorGUI.EndChangeCheck())
                 {
                     fullTypeNameProp.stringValue = newIndex < _componentFullNames.Count
@@ -360,8 +442,7 @@ namespace Neo.Editor.Network
 
             // WHY: Always show the raw text field so it's clear what's stored and the user can type a full name manually.
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(fullTypeNameProp, new GUIContent("Stored Type Name",
-                "Full type name actually serialized (Type.FullName). Type manually if your target isn't represented in the Preview Target."));
+            EditorGUILayout.PropertyField(fullTypeNameProp, StoredTypeNameContent);
             EditorGUI.indentLevel--;
         }
 
@@ -399,7 +480,43 @@ namespace Neo.Editor.Network
             _methodInfos.Add(null);
             _methodKinds.Add(MethodKind.NoArg);
 
-            Type type = component.GetType();
+            RelayMethod[] methods = GetRelayMethods(component.GetType());
+            for (int i = 0; i < methods.Length; i++)
+            {
+                _methodLabels.Add(methods[i].Label);
+                _methodInfos.Add(methods[i].Method);
+                _methodKinds.Add(methods[i].Kind);
+            }
+
+            return _methodInfos;
+        }
+
+        private readonly struct RelayMethod
+        {
+            public readonly MethodInfo Method;
+            public readonly MethodKind Kind;
+            public readonly string Label;
+
+            public RelayMethod(MethodInfo method, MethodKind kind, string label)
+            {
+                Method = method;
+                Kind = kind;
+                Label = label;
+            }
+        }
+
+        // WHY: the method popup is rebuilt on every IMGUI event; a type's public methods only change with a domain
+        // reload, so reflect and format them once per type.
+        private static readonly Dictionary<Type, RelayMethod[]> s_relayMethods = new();
+
+        private static RelayMethod[] GetRelayMethods(Type type)
+        {
+            if (s_relayMethods.TryGetValue(type, out RelayMethod[] cached))
+            {
+                return cached;
+            }
+
+            List<RelayMethod> methods = new();
             foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (method.DeclaringType == typeof(object) || method.DeclaringType == typeof(Component) ||
@@ -431,12 +548,12 @@ namespace Neo.Editor.Network
                 string label = parameters.Length == 0
                     ? $"{method.Name} ()"
                     : $"{method.Name} ({FormatKind(kind.Value)})";
-                _methodLabels.Add(label);
-                _methodInfos.Add(method);
-                _methodKinds.Add(kind.Value);
+                methods.Add(new RelayMethod(method, kind.Value, label));
             }
 
-            return _methodInfos;
+            cached = methods.ToArray();
+            s_relayMethods[type] = cached;
+            return cached;
         }
 
         private static MethodKind? ClassifyParameter(Type parameterType)
@@ -480,7 +597,7 @@ namespace Neo.Editor.Network
 
         private string[] BuildMethodLabelsArray()
         {
-            return _methodLabels.ToArray();
+            return ComponentBindingInspectorShared.ReuseOptions(ref _methodPopupOptions, _methodLabels);
         }
 
         private int IndexOfMethod(string storedName, int storedArgMode)
@@ -568,23 +685,32 @@ namespace Neo.Editor.Network
             };
         }
 
-        private static void DrawSection(string title, Color accent, Action body)
+        private static void BeginRelaySection(string title, Color accent)
         {
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+            // WHY: the copied boldLabel bakes in the text colour of the skin it was made for, so it is rebuilt
+            // after a light/dark skin switch.
+            if (s_sectionTitleStyle == null || s_sectionTitleStyleProSkin != EditorGUIUtility.isProSkin)
             {
-                Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                GUIStyle titleStyle = new(EditorStyles.boldLabel) { fontSize = 12 };
-                EditorGUI.LabelField(
-                    new Rect(headerRect.x + 6f, headerRect.y, headerRect.width - 6f, headerRect.height),
-                    title, titleStyle);
-                if (Event.current.type == EventType.Repaint)
-                {
-                    EditorGUI.DrawRect(new Rect(headerRect.x - 4f, headerRect.y, 3f, headerRect.height), accent);
-                }
-
-                EditorGUILayout.Space(2);
-                body();
+                s_sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 12 };
+                s_sectionTitleStyleProSkin = EditorGUIUtility.isProSkin;
             }
+
+            EditorGUI.LabelField(
+                new Rect(headerRect.x + 6f, headerRect.y, headerRect.width - 6f, headerRect.height),
+                title, s_sectionTitleStyle);
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(new Rect(headerRect.x - 4f, headerRect.y, 3f, headerRect.height), accent);
+            }
+
+            EditorGUILayout.Space(2);
+        }
+
+        private static void EndRelaySection()
+        {
+            EditorGUILayout.EndVertical();
         }
     }
 }

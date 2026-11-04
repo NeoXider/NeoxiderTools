@@ -447,7 +447,7 @@ namespace Neo.Tests.Play
             yield return new WaitForFixedUpdate();
             yield return null;
 
-            // WHY: The obstacle raycast ignores triggers, but IsTargetHierarchyCollider
+            // WHY: The obstacle raycast ignores triggers, but InteractionTargetScope.Contains
             // should still detect this object's own collider when the ray hits it.
             // IsInRange distance check should pass since 3 < 10.
             Assert.IsTrue(InvokeIsInRange(io),

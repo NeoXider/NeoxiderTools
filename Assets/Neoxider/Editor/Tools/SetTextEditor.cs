@@ -31,7 +31,7 @@ namespace Neo.Editor.Tools
                 return;
             }
 
-            var host = target as Component;
+            Component host = target as Component;
             if (host == null)
             {
                 return;

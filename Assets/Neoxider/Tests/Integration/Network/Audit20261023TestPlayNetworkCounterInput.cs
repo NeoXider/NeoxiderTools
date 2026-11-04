@@ -117,7 +117,7 @@ namespace Neo.Tests.Network.Integration
                     }
                     float operand = reader.ReadFloat();
                     float before = Counter.ValueFloat;
-                    // Installed Mirror emits InMessageEvent after decoding and BEFORE the handler.
+                    // WHY: Installed Mirror emits InMessageEvent after decoding and BEFORE the handler.
                     _commands.Add(new MatrixCounterCommand
                     {
                         operation = operation, operandKind = Kind(operand), operandBits = Bits(operand),

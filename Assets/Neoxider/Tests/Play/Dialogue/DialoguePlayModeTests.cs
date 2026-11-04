@@ -37,7 +37,7 @@ namespace Neo.Tests.Play
 
         private static Dialogue BuildDialogue(string speaker, params string[] sentences)
         {
-            var monolog = new Monolog
+            Monolog monolog = new Monolog
             {
                 characterName = speaker,
                 sentences = new Sentence[sentences.Length]

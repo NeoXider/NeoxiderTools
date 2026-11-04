@@ -1,10 +1,16 @@
 ﻿# SlotElement
 
-**Purpose:** See Inspector fields below for configuration.
+**What it is:** one symbol cell on a slot reel (`MonoBehaviour`, `Scripts/Bonus/Slot/SlotElement.cs`). It shows a `SlotVisualData` (sprite on an `Image` or `SpriteRenderer`, optional description text), keeps its symbol `id`, plays an optional alpha crossfade and motion-stretch effect, and draws `[col,row] id` labels in the Scene view.
 
-## Setup
+**How to use:**
+1. Put at least `countSlotElement + 1` `SlotElement` objects under each [Row](Row.md); assign `image` or `spriteRenderer` (auto-filled from the same object in `OnValidate`).
+2. Leave symbol assignment to the reel; call `SetVisuals(data)` / `SetVisuals(data, smooth)` yourself only for custom reels.
+3. Tune **Crossfade Seconds** and **Motion Stretch Max Y** for the look; use the gizmo fields for Scene debugging.
 
-- Add the component via the Unity menu.
+---
+
+`SetVisuals` skips redundant work on reel wraps (the description object is only toggled when its state changes).
+Scene labels resolve their window row and column without sorting copies of the reel.
 
 ## Key Fields (Inspector)
 
@@ -20,7 +26,10 @@
 | `gizmoManualRow` | Gizmo Manual Row. |
 | `gizmoOutline` | Gizmo Outline. |
 | `gizmoOutlineColor` | Gizmo Outline Color. |
-| `gizmoOutlineOffset` | Gizmo Outline Offset. |
+| `gizmoOutlineScreenPixels` | Label outline thickness in Scene view pixels. |
+| `gizmoRowLabelMode` | Row index source: visible window (default) or full reel order. |
+| `crossfadeSeconds` | Alpha crossfade length on a smooth symbol change (0 = instant). |
+| `motionStretchMaxY` | Maximum Y stretch while the reel moves fast (1 = off). |
 | `id` | Id. |
 | `image` | Image. |
 | `spriteRenderer` | Sprite Renderer. |

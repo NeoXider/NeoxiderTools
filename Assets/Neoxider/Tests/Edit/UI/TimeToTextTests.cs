@@ -82,7 +82,7 @@ namespace Neo.Tests.Edit
         [Test]
         public void ToCompactString_WithTimeFormat_ZeroTime_FormatsCorrectly()
         {
-            var timeSpan = TimeSpan.FromSeconds(0);
+            TimeSpan timeSpan = TimeSpan.FromSeconds(0);
             string result = timeSpan.ToCompactString(TimeFormat.HoursMinutes);
 
             Assert.AreEqual("0h 00m", result);
@@ -92,7 +92,7 @@ namespace Neo.Tests.Edit
         public void ToCompactString_DaysAndMinutes_ZerosAreKept()
         {
             // WHY: Just verifying the extension method itself
-            var timeSpan = TimeSpan.FromSeconds(86401);
+            TimeSpan timeSpan = TimeSpan.FromSeconds(86401);
             string result = timeSpan.ToCompactString(true, 3);
 
             // WHY: 1 day, 0 hours, 0 minutes (since max parts is 3, it stops at minutes)

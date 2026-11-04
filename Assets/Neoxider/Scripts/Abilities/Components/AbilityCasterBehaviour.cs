@@ -102,30 +102,52 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>
+        ///     Typed outcome of the most recent TryCast* call on this caster: success, the precise
+        ///     <see cref="CastFailureReason" /> and the cast id. Default (failed, None) before the first call.
+        /// </summary>
+        public CastResult LastCastResult { get; private set; }
+
+        /// <summary>Casts a no-target/self ability. Returns false and fires OnCastFailed with the reason name on failure.</summary>
         public bool TryCast(string abilityId)
         {
             return Execute(CastRequest.NoTarget(UnitBehaviour.UnitId, abilityId));
         }
 
+        /// <summary>Casts at another unit's scene presence. A null target fails with <see cref="CastFailureReason.InvalidTarget" />.</summary>
         public bool TryCastAtUnit(string abilityId, AbilityUnitBehaviour target)
         {
             if (target == null)
             {
-                _onCastFailed.Invoke(CastFailureReason.InvalidTarget.ToString());
+                LastCastResult = CastResult.Fail(CastFailureReason.InvalidTarget);
+                _onCastFailed.Invoke(CastFailureReasonNames.Of(CastFailureReason.InvalidTarget));
                 return false;
             }
 
             return Execute(CastRequest.AtUnit(UnitBehaviour.UnitId, abilityId, target.UnitId));
         }
 
+        /// <summary>Casts a point-targeted ability at a world position.</summary>
         public bool TryCastAtPoint(string abilityId, Vector3 point)
         {
             return Execute(CastRequest.AtPoint(UnitBehaviour.UnitId, abilityId, point));
         }
 
+        /// <summary>Casts a direction-targeted ability (skillshot) along <paramref name="direction" />.</summary>
         public bool TryCastTowards(string abilityId, Vector3 direction)
         {
             return Execute(CastRequest.Towards(UnitBehaviour.UnitId, abilityId, direction));
+        }
+
+        /// <summary>
+        ///     Casts a fully specified request (custom seed, explicit caster/target ids) through this
+        ///     component so its UnityEvents and <see cref="LastCastResult" /> stay in sync. The request's
+        ///     Caster is replaced by this component's unit.
+        /// </summary>
+        public CastResult Cast(CastRequest request)
+        {
+            request.Caster = UnitBehaviour.UnitId;
+            return ExecuteRequest(request);
         }
 
         /// <summary>Cooldown state of one granted ability for UI (0 = ready).</summary>
@@ -152,24 +174,32 @@ namespace Neo.Abilities
 
         private bool Execute(CastRequest request)
         {
+            return ExecuteRequest(request).Success;
+        }
+
+        private CastResult ExecuteRequest(CastRequest request)
+        {
             AbilityUnit unit = UnitBehaviour.Unit;
             if (unit == null)
             {
-                _onCastFailed.Invoke(CastFailureReason.UnknownCaster.ToString());
-                return false;
+                CastResult unknown = CastResult.Fail(CastFailureReason.UnknownCaster);
+                LastCastResult = unknown;
+                _onCastFailed.Invoke(CastFailureReasonNames.Of(CastFailureReason.UnknownCaster));
+                return unknown;
             }
 
             CastResult result = unit.System.Cast(request);
+            LastCastResult = result;
             if (result.Success)
             {
                 _onCastSuccess.Invoke(request.AbilityId);
             }
             else
             {
-                _onCastFailed.Invoke(result.Failure.ToString());
+                _onCastFailed.Invoke(CastFailureReasonNames.Of(result.Failure));
             }
 
-            return result.Success;
+            return result;
         }
     }
 }

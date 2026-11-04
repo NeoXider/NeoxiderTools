@@ -1,8 +1,11 @@
 # Cookbook — recipes & interesting examples
 
-Practical **cross-module** combinations: how to assemble a common mechanic from ready-made NeoxiderTools
-components **without custom code** (or with minimal code). Unlike the per-component references, these
-are end-to-end recipes — what to put on which object and which events to wire.
+**What it is:** practical **cross-module** combinations: how to assemble a common mechanic from ready-made
+NeoxiderTools components **without custom code** (or with minimal code). Unlike the per-component references,
+these are end-to-end recipes — what to put on which object and which events to wire.
+
+**How to use:** pick a recipe from the contents, add the listed components and wire the events as described;
+each recipe ends with links to the component pages.
 
 > Per-component docs live in their modules ([README](./README.md)). This page is about **combining** them.
 
@@ -15,6 +18,11 @@ are end-to-end recipes — what to put on which object and which events to wire.
 - [Reward fly to HUD](#reward-fly-to-hud)
 - [Reward earned on a popup: fly on the next screen](#reward-earned-on-a-popup-fly-on-the-next-screen)
 - [Mobile audio: music, ambience, background pause](#mobile-audio-music-ambience-background-pause)
+- [Sound-off that survives restarts](#sound-off-that-survives-restarts)
+- [Jackpot with exact odds](#jackpot-with-exact-odds)
+- [Money in cents](#money-in-cents)
+- [NPC barks that do not repeat](#npc-barks-that-do-not-repeat)
+- [Quest credit from enemy prefabs](#quest-credit-from-enemy-prefabs)
 - [Android Back over PM pages](#android-back-over-pm-pages)
 
 ---
@@ -84,9 +92,13 @@ Components: [CooldownReward](./Bonus/TimeReward/CooldownReward.md) · [Money](./
 
 ## Slot machine → wallet
 
-`SpinController` spins the reels; wire the payout via event: `SpinController.OnWin (int)` → `Money.Add`.
+Assign the wallet (`Money`) to the `SpinController` money field. With **Auto Payout** on (the default) the
+controller charges the spin price from that wallet and credits winnings itself, so use
+`SpinController.OnWin (int)` for feedback only (sound, `AnimationFly`, a win label). Wire `OnWin` → `Money.Add`
+only after turning **Auto Payout** off, otherwise the player is paid twice.
 "Spin" button → `SpinController.StartSpin()`. Spin cost — via `betsData`/price or a separate currency
 (e.g. energy: call `energy.Spend(1)` before `StartSpin`). Exact symbol outcome — `GetLastResult()` (`SpinResult`).
+Servers and tests can compute the same price and payout with the plain C# `SlotSpinMath`.
 
 Components: [SpinController](./Bonus/Slot/SpinController.md) · [Money](./Shop/Money.md)
 
@@ -95,7 +107,9 @@ Components: [SpinController](./Bonus/Slot/SpinController.md) · [Money](./Shop/M
 ## Shop: buy and equip
 
 `Shop` with a `ShopItemData` catalog and `_purchaseFlow = BuyAndEquip`. Buy buttons auto-subscribe
-(`_autoSubscribe`) or call `Shop.Buy(item)`. Ownership — `Shop.IsOwned(item)`; price/"sold" — via `ButtonPrice`.
+(`_autoSubscribe`) or call `Shop.Buy(item)`. From C#, prefer `Shop.TryBuy(item)`: it returns a
+`ShopPurchaseStatus` (`Purchased`, `AlreadyOwned`, `InsufficientFunds`, ...) so you can show the right message
+without listening to UnityEvents. Ownership — `Shop.IsOwned(item)`; price/"sold" — via `ButtonPrice`.
 For several **simultaneously** equipped categories (dress+shoes+…), track the per-category selection yourself
 (`GetItemsInCategory`, your own equip layer) and let `Shop` handle purchase/ownership.
 
@@ -124,7 +138,8 @@ hidden looks like they vanished, so the flight plays on the screen the player la
 2. When the destination page opens, wait for its entrance (~0.35 s), set its counter to
    `balanceAfter - amount`, and play one flight into that page's counter icon:
    `AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest { Sprite, Count = min(amount, 12),
-   StartTransform, EndTransform, …, OnItemArrived, OnAllArrived })`.
+   StartTransform, EndTransform, …, OnItemArrived, OnAllArrived })`. Set every field before `Play`:
+   the request is copied, so later edits do not reach the running flight.
 3. `OnItemArrived` raises the counter by `amount * arrived / count` and punches the icon;
    `OnAllArrived` sets the exact balance. Use `MotionPreset = FountainMagnet` and
    `EndScaleMultiplier ≈ 0.3` so arrivals melt into the icon.
@@ -148,6 +163,78 @@ Components: [AnimationFly](./UI/AnimationFly.md)
   `Warning` on a locked tap, with `Haptics.EnabledProvider` bound to the vibration setting.
 
 Components: [AM](./Audio/AM.md), [Haptics](./Haptics/Haptics.md)
+
+---
+
+## Sound-off that survives restarts
+
+Put `AMSettings` next to `AM` and leave **Persist Volume** and **Persist Mute** on (the defaults). Wire the
+music and sound toggles to `AMSettings.SetMusic(bool)` / `SetEfx(bool)` (or `ToggleMusic()` / `ToggleEfx()`).
+The choice is saved and restored on the next launch, and binding to `AM` no longer turns sound back on.
+Do not use these methods for temporary silence: for a pause menu, an ad or a cutscene use
+`AudioListener.pause`, a mixer snapshot or `AudioFocusMute`, so the player's saved preference stays intact.
+
+Components: [AMSettings](./Audio/AMSettings.md), [AudioFocusMute](./Audio/AudioFocusMute.md)
+
+---
+
+## Jackpot with exact odds
+
+Float weights cannot express "1 in a million" exactly. Keep a serialized `IntegerChanceTable` on your
+reward component and author the rows in the Inspector (Jackpot `1`, Big win `4999`, Nothing `995000`);
+call `Roll()` for the outcome index. The probability of each row is exactly `weight / TotalWeight`, and
+assigning `RandomBelow` lets tests and servers inject their own seeded source.
+
+```csharp
+using Neo.Tools;
+using UnityEngine;
+
+public sealed class DailyChest : MonoBehaviour
+{
+    [SerializeField] private IntegerChanceTable _odds = new IntegerChanceTable();
+
+    public int Open()
+    {
+        return _odds.Roll();
+    }
+}
+```
+
+Components: [IntegerChanceTable](./Tools/Random/IntegerChanceTable.md), [ChanceSystemBehaviour](./Tools/Random/ChanceSystemBehaviour.md) for float weights with UnityEvents
+
+---
+
+## Money in cents
+
+Store large or fractional currencies as a 64-bit integer number of cents instead of a float:
+`SaveProvider.SetLong("Wallet.Cents", cents)` and `SaveProvider.GetLong("Wallet.Cents", 0L)`. Values above
+`int.MaxValue` round-trip on every provider, and keys written earlier with `SetInt` read back unchanged.
+
+Components: [SaveProvider](./Save/SaveProvider.md)
+
+---
+
+## NPC barks that do not repeat
+
+Add **Neoxider > Tools > Dialogue > DialogueLinePlayer** to an NPC, fill **Lines** with a tag per situation
+(`idle`, `hit`, `greet`) and assign a TMP label. Idle lines play on **Idle Interval**; wire gameplay
+UnityEvents to `RequestContext("hit")` to interrupt idle chatter. The pool never repeats the previous line
+of a tag back to back, and `FirstOnly` lines play only for the first pick (a greeting). From C#, use the
+plain `DialogueLinePool` without a component.
+
+Components: [DialogueLinePool](./Tools/Dialogue/DialogueLinePool.md)
+
+---
+
+## Quest credit from enemy prefabs
+
+Give each enemy prefab a `QuestNoCodeAction` with the **NotifyKill** action and a **Target Id** (`wolf`),
+and call its `Execute()` from the enemy's death event. Pickups use **NotifyCollect**, trigger zones
+**NotifyReachPoint**, and NPC dialogs **NotifyTalk**. No scene reference to the quest manager is needed;
+from C#, call `QuestManager.NotifyKill("wolf")` or `Notify(type, targetId, amount)`. An empty Target Id
+credits nothing.
+
+Components: [Quest](./Quest/README.md)
 
 ---
 

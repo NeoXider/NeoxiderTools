@@ -46,5 +46,16 @@ namespace Neo.Rpg.Runtime
         public float Number { get; }
         public int Integer { get; }
         public bool Flag { get; }
+
+        /// <summary>
+        ///     True when <paramref name="type" /> is a named command. Transports receive the type as a raw integer
+        ///     and drop any other value before executing or publishing anything.
+        /// </summary>
+        public static bool IsKnownType(RpgCharacterNetworkCommandType type)
+        {
+            // WHY: the values are contiguous; a range check avoids the boxing Enum.IsDefined does on server ingress.
+            return type >= RpgCharacterNetworkCommandType.Damage &&
+                   type <= RpgCharacterNetworkCommandType.ApplyLevelGrowth;
+        }
     }
 }

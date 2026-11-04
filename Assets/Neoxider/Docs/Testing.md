@@ -1,5 +1,16 @@
 # Testing NeoxiderTools
 
+**What it is:** the canonical guide to the package's Edit Mode tests (`Neo.Editor.Tests`, sources in
+`Assets/Neoxider/Tests/Edit`): runtime API contracts, component and NoCode workflows, sample validation,
+performance and allocation tests, and the isolated validation host.
+
+**How to use:** run `Neo.Editor.Tests` from the Test Runner's EditMode tab in an isolated host project, then follow
+the [runtime API](#runtime-api-contracts), [component](#components-and-nocode-workflows) and
+[performance](#performance-and-allocation-tests) sections when you add tests. Play Mode coverage is in
+[PlayModeTesting](PlayModeTesting.md).
+
+---
+
 Windows verification from 26–27 October 2026 is recorded for Unity `6000.3.14f1` and `6000.6.0f1`; see
 [Verification 11](../Verification11.md) for exact runs, overlapping profiles and qualification of unchanged
 inputs. Focused acceptance passed per SDK: P27 Cards **149/149 Edit**, P29 Cards + Samples **46/46 Play**
@@ -9,12 +20,9 @@ CardGame rounds are separate evidence. Fresh P31 imports cover all three public 
 **20/20 imported Play** cases per SDK; **28/28 Edit** retains P30 evidence through unchanged graph identity.
 These results accept their recorded inputs, not arbitrary later changes or every platform.
 
-HtmlToUitk Round3 ran the complete assembly **370/370,0 skipped per6000.3.14f1/6000.6.0f1**, including
-real three external CLI runs/native ownership import/theme and Play UIDocument. Round2 CLI solution is
-**2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**. Debt remains7 validate-only,22 open goldens
-and1 S08 expected-diagnostic case. Net9 used process-local Major on.NET 10.0.9; net8 used8.0.21; portable
-CLI uses LatestMajor without ENV. Four diagnostic csprojs remain machine-specific.
-[Exact current evidence and manual OS scope](UI/HtmlToUitkVerification11.md).
+HtmlToUitk (HTML → UI Toolkit) and its tests moved to the separate `com.neoxider.htmltouitk` package
+after 11.0.1; its 11.0.0 Round3 evidence is in that package's `Documentation~/HtmlToUitkVerification11.md`
+([HtmlToUitk](https://github.com/NeoXider/HtmlToUitk)).
 
 The hosted package-integrity check passed for 11.0.0; its hosted Unity jobs did not run because GameCI secrets were unavailable. GitHub Actions workflows were subsequently removed.
 Full-checkout/UPM testables remain the source-suite route; final archive contents are listed in the release-input manifest.
@@ -120,7 +128,7 @@ Fixtures с тестовым define. NUnit/UnityEditor-код остаётся �
 
 `Neo.Editor.Tests` contains the package's cross-module Edit Mode tests. Its assembly is Editor-only,
 requires `UNITY_INCLUDE_TESTS`, and references NUnit and the Unity Test Framework. Tests belonging to
-nested assembly definitions, such as HtmlToUitk, have their own scope. The broad suite currently also
+nested assembly definitions have their own scope. The broad suite currently also
 references optional integrations including Mirror; a module's runtime API can have fewer dependencies
 than this test assembly.
 
@@ -244,6 +252,218 @@ The preview ownership helper is
 [`Audit20261023NeoEditorTestsPreviewSceneScope`](../Tests/Edit/Editor/Audit20261023NeoEditorTestsPreviewSceneScope.cs).
 Do not import or rename samples just to run a source/YAML check.
 
+Native sample validation (`SampleAssetValidationTests`, `Audit20261023NeoEditorTestsSampleEvidenceTests`) checks each
+visible sample on its own and skips only the hidden or not-imported ones; the log names every validated root
+(`Native sample <name> @ <version>: <root>`) and every skipped one. An asset is skipped only when its missing scripts
+are fully accounted for by script slots of a hidden sample (counted per nested prefab instance); a reference that
+resolves nowhere still fails. A sample visible at a non-canonical path is reported as such, not as hidden.
+
+### Sample, demo and packaging tests
+
+| Test | Assembly / platform | What it checks |
+| --- | --- | --- |
+| `Neo.Tests.Play.SampleScenePlaySmokeTests.SampleScene_LoadsTicksWithoutErrorsAndShowsItsGuide` | `Neo.Tests.Play` / PlayMode | One case per scene of the visible samples (named by the scene path): load, 12 frames, no error/assert/exception logs, Filled Images with sprites, no demo controller reporting `IsSceneBuilt == false` and no "scene not authored / Rebuild Active Demo Scene" warning, and the authored `ModuleDemoSceneInfo` card on every scene a Demo builder owns. |
+| `Neo.Tests.Play.SampleScenePlaySmokeTests.EveryRegisteredSceneBuilder_HasItsSceneSavedInTheVisibleSample` | `Neo.Tests.Play` / PlayMode | Every registered demo scene builder has its scene saved in the visible sample. |
+| `Neo.Tests.Play.AudioDemoScenePlayTests` | `Neo.Tests.Play` / PlayMode | Presses the authored buttons of `Scenes/Audio/AudioDemo.unity` (AM voice, music pool and track changes), then removes `AudioDemoController` mid-crossfade: the borrowed music keeps playing and nothing leaks. Needs enabled Unity audio. |
+| `Neo.Editor.Tests.SampleSceneSaveKeyTests` | `Neo.Editor.Tests` / EditMode | Scans the YAML of every sample scene and prefab, prefab-instance overrides included, and fails when a persisting component (inventory, level profile, progression, quests, counter, selector, timer, wallet, shop, score, level manager, equipment, leaderboard, box, collection, rewards) keeps its library default save key. Remaining offenders are listed in `KnownOffenders`, which may only shrink; a listed offender that became clean fails too. |
+| `Neo.Editor.Tests.PackageSampleIsolationTests` | `Neo.Editor.Tests` / EditMode | No package asset outside `Samples~` / `Samples` references a GUID that ships only inside the samples (parsed from disk, so it also runs while `Samples~` is hidden). |
+| `Neo.Editor.Tests.ParamsOverloadAllocationTests` | `Neo.Editor.Tests` / EditMode | Source guard: no `Mathf.Max` / `Mathf.Min` call with three or more arguments (the `params` overloads allocate an array per call). |
+| `Neo.Tests.NeoxiderPagesChangedBehaviorTests` | `Assembly-CSharp-Editor` / EditMode | PM, `BtnChangePage` (legacy actions, primary-button clicks, `Reset` without asset creation), `PageSubscriber`, `ToggleAudio`, the UIKit facades without managers, `PageIdGenerator`, `PagesEditorGUI` and two Play Mode `FakeLoad`-on-startup-page cases. Ignored while the Pages sample is hidden. |
+| `Neo.Demo.Editor.Tests.*` | `Neo.Demo.Editor.Tests` / EditMode | The kit and every builder end to end in a temporary scene, built twice (wiring present, the second pass creates and removes nothing). Wave additions: `AnimatorsAndUIComponentsDemoBuildersTests`, `BonusRewardsDemoBuilderTests`, `Physics3DDemoBuilderTests` (wiring, explicit references, `NeoDemo.` save keys) and `DemoSceneRunnerSceneCreationTests` (a missing builder scene is created). |
+
+The Play Mode sample cases and the Demo/Pages tests report Ignored in the release layout, because Unity does not
+compile scripts inside `Samples~`. Make **Demo Scenes** and **NeoxiderPages** visible first: import them, or rename
+`Samples~/Demo` and `Samples~/NeoxiderPages` to the development `Samples` folder (keep Character Movement
+Fundamentals hidden while the repository's older `Assets/Samples/CharacterMovementFundamentals` copy exists, because
+both share their GUIDs). Hidden layouts and scenes that need a hidden sample report an explicit Ignore. In Input
+System-only projects the Character Movement Fundamentals scenes report Ignored (they need Active Input Handling =
+Both); SurvivorDemo runs on either backend. The smoke checks error, assert and exception logs through
+`Application.logMessageReceivedThreaded` rather than `LogAssert.NoUnexpectedReceived`, which in Unity Test Framework
+1.6 also rejects routine `Debug.Log` and warnings. The older `SampleRuntimeSceneSmokeTests` keeps its scene-specific
+gameplay cases; its generic `CoreModuleDemoScenes_LoadAndTickWithoutRuntimeErrors` overlaps the new smoke test.
+
+## Performance and allocation tests
+
+Allocation guards and benchmarks of every test assembly share one test-only assembly,
+`Neo.Tests.Performance` (`Tests/Performance`, namespace `Neo.Tests.Performance`). It is gated by
+`UNITY_INCLUDE_TESTS`, has no platform restriction, and references only NUnit and `UnityEngine.TestRunner`.
+`Neo.Editor.Tests` and `Neo.Tests.Play` reference it; no production or fixture assembly does. Do not add a
+private counter, recorder loop or `NEO_PERF` formatter to a test file: extend the shared types instead.
+
+### Why the managed byte counter is not used
+
+`System.GC.GetAllocatedBytesForCurrentThread()` returns 0 under the Boehm GC of the Unity 6 Editor
+(6000.3) and IL2CPP, even for a retained `byte[4096]`. A guard such as `after - before == 0` built on it can
+never fail, so it is not used anywhere in `Tests/**`. Allocations are counted with the native `GC.Alloc`
+profiler marker, the same source as the Unity Test Framework constraint `Is.Not.AllocatingGCMemory()`.
+A count is the number of managed allocations (GC.Alloc calls), not bytes; zero calls means zero bytes.
+
+### Calibrated counter
+
+`GcAllocCounter` records `GC.Alloc` on the calling thread inside an explicit window. Before a counter is
+used it must pass admission: a warm-up window, an empty window that reads 0, an allocation made outside any
+window that is not counted, a retained `byte[4096]` that reads exactly 1 (two passes), no sample leaking into
+the next window, and the whole calibration within one frame. When the recorder is unavailable (for example a
+player built without profiler support) or calibration fails, the calling test is reported as Ignored with a
+`NotSupported: the native GC.Alloc counter was not admitted (...)` message; it never passes silently. In
+the Editor the self-test `GcAllocCounterTests.Counter_IsAdmittedInTheEditor` fails instead, so a broken
+recorder is visible in one place rather than as many ignored guards.
+
+| API | Use |
+| --- | --- |
+| `GcAlloc.AssertNone(Action body, string message)` | Simple guard: the warm body makes no allocation. |
+| `GcAlloc.AssertAtMost(long maxCalls, Action body, string message)` | Documented bounded paths, for example fewer calls than iterations. |
+| `GcAlloc.Count(Action body)` | Returns the calls of one window (ignores the test when not admitted). |
+| `GcAlloc.TryCount(Action body, out string notAdmitted)` + `GcAlloc.IgnoreIfNotAdmitted(notAdmitted)` | Run the body, finish functional asserts, then ignore only the allocation claim. |
+| `GcAllocCounter.CreateOrIgnore()` / `TryCreate(out counter, out failure)` | Several windows in one test; `Begin()`, `End()`, `Count(Action)`, `Dispose()`. |
+
+```csharp
+using Neo.Tests.Performance;
+
+service.Tick(0.1f); // warm caches, pools and lazy state outside the window
+GcAlloc.AssertNone(() =>
+{
+    for (int i = 0; i < 1000; i++)
+    {
+        service.Tick(0.1f);
+    }
+}, "A warm Tick must not allocate.");
+
+using (GcAllocCounter counter = GcAllocCounter.CreateOrIgnore())
+{
+    counter.Begin();
+    int hits = Poll(256);
+    long calls = counter.End();
+    Assert.That(hits, Is.EqualTo(256));
+    Assert.That(calls, Is.Zero);
+}
+```
+
+Rules for allocation guards:
+
+- Warm the path first (first call, pool growth, lazy caches) and keep setup, assertions and message strings
+  outside the window. Create the delegate before the window: a capturing lambda allocates where it is created.
+- A window must open and close in the same frame on the thread that created the counter; a window across
+  `yield return` throws. In PlayMode measure synchronous work inside one frame.
+- Warm hot paths assert zero. A bound is acceptable only with a stated reason, for example
+  `Is.LessThan(2 * boxCalls)` where `boxCalls` is the calibrated count of one box per iteration, or a bound
+  below the iteration count that proves nothing allocates per iteration.
+- `Is.Not.AllocatingGCMemory()` (`UnityEngine.TestTools.Constraints`) remains acceptable for one warm delegate.
+  It has no admission step, so pair it with a positive control such as `Is.AllocatingGCMemory()` on a
+  `byte[4096]`, as the StateMachine runtime tests do.
+
+Zero-allocation guards run in the normal EditMode/PlayMode suites. Examples: `SelectorHotPathTests`,
+`Match3SearchHotPathTests`, `RpgAllocationTests` and the RPG PlayMode cases `AreaAttack_WarmCast_DoesNotAllocate`,
+`DirectSphereCast_WarmCast_DoesNotAllocate` and `AuraPulse_Warm_DoesNotAllocate`,
+`ShopTypedPurchaseAndRefreshTests`, `NpcHotPathAndChaseTests`, `InventoryHotPathTests`, `PoolingHotPathTests`
+and the Abilities, Audio and Bonus `*HotPathAllocationTests`. Editor repaint guards (`EditorLibraryPassTests`,
+`InspectorVisualPassTests`) compare a redraw with Unity's own floor of one text draw: in Unity 6.3 every IMGUI text
+draw and `CalcSize` costs one GC.Alloc in the native binding, and changing a `GUIContent.text` costs another, so
+those guards assert "no more than Unity itself", not zero. `EditorRepaintCacheTests` checks that inspector badges
+and row texts are rebuilt only when a value changes.
+
+### Benchmarks and the Performance category
+
+A benchmark measures and prints numbers; it asserts correctness of its workload, never a timing threshold.
+Mark every benchmark (or its fixture) with both attributes so normal runs skip it:
+
+```csharp
+[Test]
+[Category(NeoPerf.Category)]        // "Performance"
+[Explicit(NeoPerf.ExplicitReason)]
+public void Performance_TickScaling()
+{
+    NeoPerf.MeasureSynchronous("module.tick.n64", 64, 100, NeoPerf.DefaultWarmupSamples, 120,
+            () => service.Tick(0.1f))
+        .Add("role", "current")
+        .Emit();
+}
+```
+
+- `NeoPerf.MeasureSynchronous(caseId, scale, operationsPerSample, warmupSamples, samples, operation)` runs
+  warm-up batches, timed batches (Stopwatch) and a separate allocation pass of up to eight batches, so the
+  recorder never sits inside a timed sample. `NeoPerf.MeasureSamples(...)` takes a delegate that already runs
+  one whole sample. `NeoPerf.CallsPerMeasure(warmupSamples, samples)` gives the batch count for checksums.
+- `NeoPerf.EmitCalibration(fixture, samples)` in `[OneTimeSetUp]` prints the positive-control row
+  `<fixture>.calibration.gc_allocs_byte4096` and ignores the fixture unless it reads one call per sample.
+- `NeoPerf.EstimateBytesPerOperation(...)` (coroutine) estimates bytes per call from the frame-scoped
+  `GC Allocated In Frame` counter: median of loaded frames minus median of interleaved idle frames.
+- PlayerLoop benchmarks add `NeoPerfUpdateWindowBegin` and `NeoPerfUpdateWindowEnd` to a scene object and call
+  `NeoPerfUpdateWindow.Start(frames)`: each complete Update phase records wall time and GC.Alloc calls.
+
+### NEO_PERF line format
+
+Each measured case prints exactly one line to the Unity log and to the NUnit output:
+
+```text
+NEO_PERF <case> key=value key=value ... profiler_enabled=0|1
+NEO_PERF view.selector.getters.n1000.component scale=1 k=100 samples=120 p50_ms=0.0123 p95_ms=0.0141 p99_ms=0.02 max_ms=0.031 mean_ms=0.0127 op_p50_us=0.123 gc_allocs_per_sample=0 gc_allocs_per_op=0 profiler_enabled=0
+```
+
+The case id has no spaces; values use the invariant culture, and spaces inside string values become `_`.
+`MeasureSynchronous` writes `scale`, `k` (operations per sample), `samples`, `p50_ms`, `p95_ms`, `p99_ms`,
+`max_ms`, `mean_ms`, `op_p50_us`, `gc_allocs_per_sample` and `gc_allocs_per_op`
+(`gc_allocs_per_sample=unavailable` when no counter is admitted). Suites add their own keys, for example
+`ns_per_op_p50`, `gc_calls_per_op`, `bytes_per_op_est`, `scripting_backend`, `role` or `kind`. Every line
+ends with `profiler_enabled`, added by `NeoPerf.Line.Emit()`.
+
+### Running and reading benchmarks
+
+Explicit tests are not part of normal runs. Select them with the Performance category plus an explicit
+filter naming the fixtures or tests, then collect the lines from the log:
+
+```text
+"<Unity.exe>" -batchmode -projectPath "<project>" -runTests -testPlatform EditMode -testCategory Performance -testFilter "Neo.Tools.Tests.SelectorPerformanceTests;Neo.Editor.Tests.GridSystem.Match3SearchPerformanceTests" -testResults "<out>/perf-edit.xml" -logFile "<out>/perf-edit.log"
+"<Unity.exe>" -batchmode -projectPath "<project>" -runTests -testPlatform PlayMode -testCategory Performance -testFilter "Neo.Tests.Play.Audit20261102LibraryHotpathMeasurementTests;Neo.Tests.Play.Audit20261023NeoToolsInteractableObjectLifecycleTests.Perf_" -testResults "<out>/perf-play.xml" -logFile "<out>/perf-play.log"
+grep "^NEO_PERF" "<out>/perf-play.log"
+```
+
+When a normal run selects a fixture that also contains benchmarks by regex, exclude their names, for
+example `^Neo\.Tests\.Play\.Audit20261023NeoToolsInteractableObjectLifecycleTests\.(?!Perf_)`.
+
+| Platform | Benchmark | Lines |
+| --- | --- | --- |
+| EditMode | `Neo.Tools.Tests.SelectorPerformanceTests` | `view.selector.*` getters and `Set`, with `legacy_emulated` controls |
+| EditMode | `Neo.Editor.Tests.GridSystem.Match3SearchPerformanceTests` | `grid.match3.*` valid-swap search and rejected swaps |
+| EditMode | `Neo.Editor.Tests.Edit.Audit20261023NeoStateMachineRuntimeTests.Performance_EvaluateTransitionsScanAndTypeActivation` | `statemachine.*` transition scan and type activation |
+| EditMode | `Neo.Tests.Edit.Audit20261102NeoToolsInputPollingPerformanceTests` | `Input.Edit.*` adapter polling |
+| EditMode | `Neo.Tests.Edit.UI.Audit20261102NeoUIEditorPersistenceTests.Perf_MotionPreviewDriverTick_PlayingPausedStopped` | `ui.meshrig.preview_tick.*` |
+| PlayMode | `Neo.Tests.Play.Audit20261023NeoCardsLifecycleTests.Performance_BoardImmediateLayoutAndAdmission` | `cards.board.*` immediate layout and admission |
+| PlayMode | `Neo.Tests.Play.Audit20261102LibraryHotpathMeasurementTests` | Reactive notify, resource pool tick, interaction query backend, byte calibration |
+| PlayMode | `Neo.Tests.Play.Audit20261102NeoToolsInputPollingPerformancePlayTests` | `Input.Play.*` device polling with byte estimates |
+| PlayMode | `Neo.Tests.Play.Audit20261023NeoToolsInteractableObjectLifecycleTests.Perf_*` | Automatic interaction routes on the real PlayerLoop, including the small-hit cases `Perf_Interaction_Camera3D_SmallHitsComplete_{2,4,6,8,12,16}` / `SmallHitsIndex_*` (`strategy=index_always`) |
+| EditMode | `Neo.Editor.Tests.Abilities.AbilityDomainBenchmarks` | `abilities.domain.tick_dot.n*` (system tick with a DoT on every unit) and `abilities.domain.publish_target.unrelated*` (event publish among unrelated observers) |
+| EditMode | `Neo.Editor.Tests.Abilities.AbilityQueryBenchmarks` | `abilities.hub_query.{linear,grid,grid_move,grid_rebuild}.n*` hub radius queries |
+| EditMode | `Neo.Editor.Tests.Cards.CardZonePlacementTests.Performance_StackPlacement_BatchVersusSequential` | `cards.board.place_stack.{batch,sequential}.n*` |
+| EditMode | `Neo.Editor.Tests.ResourcePoolTickHotPathTests.Benchmark_Tick_HalfRegeneratingPools` | `core.resource_pool.tick_half_regen.pools*` |
+| EditMode | `Neo.Editor.Tests.ReactivePropertyFoundationTests.Benchmark_SetAndNotify_DistinctListeners` | `reactive.float.set_notify.distinct_listeners*` (a distinct delegate per listener) |
+| EditMode | `Neo.Editor.Tests.Edit.StateMachineRoutingTests.Performance_NoCodeEvaluationScalesWithOutgoingTransitions` | `statemachine.nocode_evaluate.s*`, with `legacy_emulated` controls |
+| EditMode | `Neo.Tests.UI.UIMeshRigPerformanceTests` | `ui.meshrig.rebuild.animated.*` per adapter and grid, `ui.meshrig.frame.clean.*` controls |
+| PlayMode | `Neo.Tests.Play.PoolPerformanceTests` | `tools.spawner.pool.warm_get_return.*`, `tools.spawner.fallback.warm_spawn_despawn.*` |
+
+The numbers measured for 12.0.0 (Unity 6000.3.14f1 Editor, Mono, batch, profiler off) are recorded in the repository
+at `Docs/Audits/2026-11-02/Performance/MeasuredResults-12.0.md`, with the raw `NEO_PERF` lines next to it. Slices
+without a timing suite (Drawer smoothing, NoCode bindings and Condition evaluation, Quest, Inventory autosave bursts,
+Shop refresh, network due polls) are listed there as `NOT_MEASURED`.
+
+Compare lines only with lines of the same case id from the same machine, Unity version, scripting backend
+and `profiler_enabled` value; profiler-on runs carry marker overhead. Read p50 for the typical cost and
+p95/p99/max for spikes. `gc_allocs_per_op` should be 0 on warm hot paths; a calibration row
+(`*.calibration.gc_allocs_byte4096`, `Input.Play.Calibration.Bytes4096`, `Perf_Calibration_GcBytes4096`)
+must read one call per sample or about 4 KB per operation, otherwise the numbers next to it are not trusted.
+`bytes_per_op_est` is a frame-scoped estimate; treat small values as noise unless the calibration row agrees.
+
+По-русски: тесты сэмплов (`SampleScenePlaySmokeTests`, `AudioDemoScenePlayTests`, `SampleSceneSaveKeyTests`,
+`PackageSampleIsolationTests`) и тесты билдеров `Neo.Demo.Editor.Tests` описаны в таблице выше; Play Mode-случаи
+требуют видимых сэмплов Demo и NeoxiderPages. Проверки аллокаций и бенчмарки используют общую тестовую сборку `Neo.Tests.Performance`.
+`GC.GetAllocatedBytesForCurrentThread()` в редакторе Unity 6 всегда возвращает 0, поэтому вместо него
+считаются вызовы `GC.Alloc` через откалиброванный `GcAllocCounter` (пустое окно = 0, удерживаемый
+`byte[4096]` = 1). Если счётчик недоступен, тест помечается Ignored с сообщением `NotSupported`, а не
+проходит молча. Бенчмарки помечаются `[Category(NeoPerf.Category)]` и `[Explicit(NeoPerf.ExplicitReason)]`,
+печатают по одной строке `NEO_PERF <case> key=value ...` и запускаются через `-testCategory Performance`
+вместе с явным `-testFilter`. Сравнивать строки можно только с тем же case id, машиной, версией Unity и
+значением `profiler_enabled`.
+
 ## Running and reviewing results
 
 Use a dedicated test project or clean editor session. Some fixtures deliberately reset singleton,
@@ -284,8 +504,12 @@ records the active provider/file root, and proves the actual Windows Editor Play
 with a GUID sentinel that it removes in `finally`. Unknown providers or redirected file roots fail closed.
 No entrypoint changes PlayerSettings or deletes another preference key.
 
-Sample import additionally requires `-neoValidationPackageRoot` matching the registered frozen local
-or embedded `com.neoxider.tools` 11.0.0 package. All three current-version destinations must be absent.
+Import and discovery additionally require `-neoValidationExpectedPackageVersion` from the operator's
+independently frozen validation request (for example `12.0.0`). There is no default or implementation
+version pin. Missing/malformed expectations, wrong observed versions and changed expectations after
+domain reload fail explicitly; the receipt records expected and observed versions separately.
+Sample import also requires `-neoValidationPackageRoot` matching the registered frozen local
+or embedded `com.neoxider.tools` package. All three current-version destinations must be absent.
 The driver calls the public UPM `Sample.FindByPackage` / `Sample.Import` API, resumes after domain reload,
 and waits at most ten minutes. It records actual import paths, version, native import return observation,
 nonzero asset/script/reference counts, per-asset GUIDs/dependency counts and reference failures.
@@ -298,7 +522,7 @@ All methods exit batch mode themselves: omit Unity's early `-quit` for asynchron
 Run it in a separate batch invocation after import and compilation have finished, outside Play Mode:
 
 ```text
-"<Unity.exe>" -batchmode -projectPath "<isolated-final-host>" -executeMethod Neo.Editor.Tests.Audit20261023NeoEditorTestsValidationHost.DiscoverCompiledTests -neoValidationCompany "<NeoQA_20261023_identity>" -neoValidationProduct "<NeoTools_identity>" -neoValidationOutput "<host>/Artifacts/discovery.json" -logFile "<host>/Artifacts/discovery.log"
+"<Unity.exe>" -batchmode -projectPath "<isolated-final-host>" -executeMethod Neo.Editor.Tests.Audit20261023NeoEditorTestsValidationHost.DiscoverCompiledTests -neoValidationCompany "<NeoQA_20261023_identity>" -neoValidationProduct "<NeoTools_identity>" -neoValidationExpectedPackageVersion "<frozen-expected-version>" -neoValidationOutput "<host>/Artifacts/discovery.json" -logFile "<host>/Artifacts/discovery.log"
 ```
 
 This uses the installed Test Framework's public instance API
@@ -314,10 +538,10 @@ trees. It does not compile a player, prove a successful fresh compile or infer M
 Compilation logs and any player-profile evidence remain separate operator responsibilities.
 
 Neo provenance supports both final-host profiles. An actual registered `com.neoxider.tools` is
-authoritative: its version must be exactly `11.0.0`, and its observed source/root are used. A wrong
+authoritative: its version must exactly match the independent frozen expectation, and its observed source/root are used. A wrong
 registered version fails even if a valid Assets copy exists. Only when no registered Neo exists does
 discovery read the exact project `Assets/Neoxider/package.json`, requiring a readable JSON object with
-name `com.neoxider.tools` and version `11.0.0`. Missing, malformed or mismatched manifests fail.
+name `com.neoxider.tools` and the expected version. Missing, malformed or mismatched manifests fail.
 The selected `discovery.neoPackage` summary records `kind`, `source`, canonical `resolvedPath` and
 `manifestOrigin`. Assets selection uses `ProjectAssets` for both kind/source and the actual manifest
 path as its origin. Registered selection uses `RegisteredPackageInfo`, the native source and

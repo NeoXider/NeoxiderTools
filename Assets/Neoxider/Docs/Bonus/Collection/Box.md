@@ -1,11 +1,19 @@
 ﻿# Box
 
-Exchanges one positive **Max Progress** threshold for a locked item from `Collection.I`.
+**What it is:** a scene/UI progress box (`MonoBehaviour`, `Scripts/Bonus/Collection/Box.cs`) that exchanges one positive **Max Progress** threshold for a locked item from a [Collection](Collection.md). Its readiness, payment and bar fill use the shared `BoxProgressRules`; for integer progress with idempotent claims and no scene object use [BoxProgress](BoxProgress.md).
+
+**How to use:**
+1. Add `Box`, set a unique **Save Name**, **Add Progress** and **Max Progress**, and optionally assign the **Collection** (empty uses `Collection.I`).
+2. Assign optional bar, texts, closed/open box sprites, prize image and prize animation object.
+3. Wire gameplay rewards to `AddProgress()` / `AddProgress(float)` and the claim button to `TakePrize()`.
+
+---
 
 ## Scene setup
 
 Assign a unique **Save Name**, progress amounts, and any optional bar, text, closed/open box sprites,
-prize image, and prize animation object. A `Collection` must be available to grant items.
+prize image, and prize animation object. A `Collection` must be available to grant items: assign it to
+the **Collection** field or set `TargetCollection` from code; when empty the global `Collection.I` is used.
 Wire gameplay rewards to `AddProgress()` or `AddProgress(float)`, and the claim button to `TakePrize()`.
 
 ## C# API
@@ -22,6 +30,8 @@ if (box.CheckProgress)
 bar, and text immediately. `AddProgress` and `ChangeProgress` also emit `OnChangeProgress(bool)` and
 the corresponding `OnProgressReached` / `OnProgressNotReached` event. These events describe the state
 after each change; they are not limited to threshold crossings. `ProgressValue` exposes the reactive value.
+`ResetProgress()` empties the box (writes 0) and raises the same events, so a NoCode reset button keeps bound
+bars and labels in step; a direct `progress = 0` only saves and redraws.
 
 A nested progress command from a save-key observer supersedes the outer setter's pending reactive
 and visual publication, including same-value writes and changes that return to the earlier value.

@@ -1,7 +1,17 @@
 # TypewriterEffect and TypewriterEffectComponent
 
-`Neo.Tools.TypewriterEffect` is a serializable C# playback object using UniTask.
-`TypewriterEffectComponent` adapts it to a TMP label and UnityEvents.
+**What it is:** `TypewriterEffect` is a serializable plain C# playback object (UniTask) that reveals text character by
+character; `TypewriterEffectComponent` is the `MonoBehaviour` that adapts it to a TMP label and UnityEvents. Scripts:
+`Scripts/Tools/Components/TypewriterEffect.cs` and `TypewriterEffectComponent.cs`, namespace `Neo.Tools`, assembly
+`Neo.Tools.Components`.
+
+**How to use:**
+1. Scene: add **Neoxider / Tools / TypewriterEffectComponent** next to a TMP label, set **Reveal Mode**
+   (`MaxVisibleCharacters` recommended for long text) and leave **Auto Start** on, or call `Play(text)`.
+2. Code: create a `TypewriterEffect` and await `PlayAsync` (string callback) or `PlayRevealAsync` (visible count).
+3. Subscribe to `OnCharacterTyped` / `OnComplete` (C# events) or the component's UnityEvents.
+
+---
 
 ## C# playback
 
@@ -10,7 +20,18 @@ TypewriterEffect effect = new TypewriterEffect(50f, useUnscaledTime: true);
 await effect.PlayAsync("<b>Hello</b>", text => label.text = text, cancellationToken);
 ```
 
-`PlayAsync` replaces the current run and reports text through its callback. `Stop()` cancels playback
+Allocation-free reveal for TMP labels: assign the full text once and raise `maxVisibleCharacters`.
+
+```csharp
+label.text = line;
+label.maxVisibleCharacters = 0;
+await effect.PlayRevealAsync(line, count => label.maxVisibleCharacters = count, cancellationToken);
+label.maxVisibleCharacters = 99999; // TMP default: show everything (covers sprites and <br>)
+```
+
+`PlayAsync` builds a new prefix string for every step; `PlayRevealAsync` reports the number of revealed visible
+(non-tag) characters instead, so typing costs no allocation per character and words never jump between lines
+while they are typed. Both replace the current run. `Stop()` cancels playback
 without completing it and preserves current text. `Complete()` reveals full text, emits progress and
 completion, and returns the completed text. `Reset()` stops and clears internal state.
 
@@ -44,12 +65,39 @@ Disabling stops playback; destruction also detaches event forwarding from an ext
 
 `PlayAutoText`, `Stop`, and `Clear` have Play Mode-only Inspector buttons.
 
+### Reveal mode
+
+| Mode | Behavior |
+|------|----------|
+| `RebuildText` (default) | Assigns the typed prefix as a new string every character (the classic behavior; layout reflows while typing). |
+| `MaxVisibleCharacters` | Assigns the full text once and raises `TMP_Text.maxVisibleCharacters` through `PlayRevealAsync`: no per-character string, no word-wrap jumps. |
+
+After a `MaxVisibleCharacters` run, natural completion, `Complete()`, `Clear()` and the next `RebuildText` run
+restore `maxVisibleCharacters` to TMP's unlimited default (99999); `Stop()` (and disabling) keeps the current
+reveal. The component restores whatever limit it set itself, whatever `RevealMode` is now, so switching the mode
+during a run never leaves the label truncated. The reveal count skips rich-text tags, so inline sprites and `<br>`
+(one TMP character each) can appear one step early or late; completion always shows everything. Set the mode from
+code with `RevealMode`; it applies to the next `Play` call.
+
 ## Timing, rich text, and audio
 
 Configure characters per second, scaled/unscaled time, and punctuation pauses through the effect's
 properties or serialized Inspector fields. `SetPunctuationPause`, `RemovePunctuationPause`,
 `SetPunctuationPauses`, and `ClearPunctuationPauses` update the pause map. Call `RebuildPauseMap()` after
-editing `PunctuationPauses` directly; `PlayAsync` also rebuilds it.
+editing `PunctuationPauses` directly; `PlayAsync` / `PlayRevealAsync` also rebuild it.
+
+The rate is kept over time, not per frame: each wait resumes on the first frame at or past its due time, and that
+overshoot is spent on the next characters. When a character's delay is shorter than a frame, several characters
+are typed in one frame, so 70 characters per second stays 70 at 60 fps (before 12.0 the run typed at most one
+character per frame, about 60 per second). A delay below 0.5 ms does not wait at all, so very high rates still
+complete synchronously. In Edit Mode, where the frame clock may not advance, each character falls back to one
+plain delay.
+
+The catch-up is capped at 0.1 s. That keeps the configured rate down to 10 fps, but one long frame (a loading
+hitch, a GC spike, an app resume with unscaled time) types at most 0.1 s worth of extra characters, about 7 at
+70 per second, instead of revealing the rest of the line at once; it also shortens a punctuation pause by at most
+0.1 s. The overshoot is measured on the double-precision frame clock (`Time.timeAsDouble` or
+`Time.unscaledTimeAsDouble`), so the pace stays exact in long sessions.
 
 The current tokenizer treats angle-bracket sequences as tags and counts other UTF-16 characters for
 progress/audio cadence. It does not provide grapheme-aware reveal or full TMP tag semantics.

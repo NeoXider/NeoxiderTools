@@ -1,14 +1,15 @@
 ﻿# LevelComponent
 
-**Purpose:** a scene adapter for `LevelModel` that implements `ILevelProvider`, exposes reactive state, and persists a `LevelProfileData` through `SaveProvider`. File: `Scripts/Core/Level/Components/LevelComponent.cs`. Namespace: `Neo.Core.Level`; assembly: `Neo.Core.Level.Components`.
+**What it is:** a scene adapter for `LevelModel` that implements `ILevelProvider`, exposes reactive state, and persists a `LevelProfileData` through `SaveProvider`. File: `Scripts/Core/Level/Components/LevelComponent.cs`. Namespace: `Neo.Core.Level`; assembly: `Neo.Core.Level.Components`.
 
-## Setup
-
+**How to use:**
 - Add via **Add Component → Neoxider → Core → Level Component**.
 - Assign a `Level Curve` asset, or leave it empty to use the model's default linear curve: 100 XP per level, starting at level 1 with 0 XP.
 - With `Use Xp` enabled, `Start Xp` determines the initial level. With it disabled, `Start Level` sets the level directly and `AddXp` only changes the XP total.
 - Give every independently persisted profile its own `Save Key`. Multiple components with the default key share the same stored profile. An empty or whitespace key disables persistence.
 - `Load On Awake` loads saved progress during the first initialization; `Auto Save` saves when an initialized component is disabled. Saved progress replaces the starting XP, level, and max level. The curve and `Use Xp` remain component configuration.
+
+---
 
 ## Key Fields (Inspector)
 
@@ -27,7 +28,7 @@
 - `EnsureInitialized()` creates the model and optionally loads the profile. `Awake`, provider getters, `AddXp`, `SetLevel`, `ResetProgress`, and `GetProfileSnapshot` call it automatically. Repeated calls are safe, including reads from initialization listeners. A provider read failure propagates to the caller and initialization can be retried.
 - `AddXp(amount)` delegates to the model; nonpositive amounts are ignored. With XP enabled, the model evaluates the curve. `SetLevel(level)` synchronizes XP to the target level's minimum threshold; an unreachable level resolves according to the curve. With XP disabled, it changes the level directly. Levels are at least 1 and respect the active cap.
 - `Level`, `TotalXp`, `XpToNextLevel`, `UseXp`, `HasMaxLevel`, and `MaxLevel` read the model. `LevelState`, `XpState`, and `XpToNextLevelState` are output mirrors. Their `*StateValue` convenience getters read those mirrors without initializing; call `EnsureInitialized()` before using them before `Awake`.
-- All three reactive values are synchronized before XP/level callbacks. Use `LevelState.AddListener(...)` or `XpState.Subscribe(...)` for code subscriptions, and dispose/remove subscriptions when the consumer is destroyed. Reactive refreshes can notify more than once during one API call; callbacks should tolerate refreshes of the same value. A listener can perform another mutation before later callbacks run; do not assume that a captured `OnLevelUp` argument equals a later read of `Level`. Notifications do not form a transaction around arbitrary callback mutations.
+- All three reactive values are synchronized before XP/level callbacks. On a level change `XpState` and `XpToNextLevelState` notify before `LevelState` and `OnLevelUp`, so an XP label or bar bound next to a level label already shows the new values inside a level callback. Use `LevelState.AddListener(...)` or `XpState.Subscribe(...)` for code subscriptions, and dispose/remove subscriptions when the consumer is destroyed. Each `AddXp` and `SetLevel` call notifies every reactive state exactly once, also when an `OnLevelUp` listener adds XP (the nested call publishes the final values and the outer call does not repeat them); an `XpState` binding therefore also sees the XP jump of a direct `SetLevel` (XP moves to the level's threshold even when the level itself does not change). `ResetProgress` ends with a refresh of all three states. A listener can perform another mutation before later callbacks run; do not assume that a captured `OnLevelUp` argument equals a later read of `Level`. Notifications do not form a transaction around arbitrary callback mutations.
 - Assigning `LevelCurveDefinition` after initialization reevaluates XP and refreshes the mirrors. Assigning `null` restores the default model curve. Curve reassignment does not raise `OnLevelUp`.
 - `GetProfileSnapshot()` returns an independent data object containing the current XP, level, and cap, including initial saved progress. Editing the snapshot does not modify the component.
 - `ResetProgress()` restores configured starting values and the configured cap. It initializes first, so a later getter cannot load an old save over the reset. It does not delete or immediately overwrite the stored profile; call `Save()` to persist the reset.

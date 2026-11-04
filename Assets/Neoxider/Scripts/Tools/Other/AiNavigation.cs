@@ -131,8 +131,13 @@ namespace Neo.Tools
         private bool hasActiveRequest;
         private Vector3 requestedDestination;
         private int requestSubmittedFrame;
+        private static readonly WaitForSeconds PatrolRetryWait = new(0.5f);
+
         private Coroutine patrolWaitCoroutine;
         private Coroutine patrolRetryCoroutine;
+        private NavMeshPath reachabilityPath;
+        private WaitForSeconds patrolWait;
+        private float patrolWaitSeconds;
         private int patrolVersion;
         private int speedHash;
 
@@ -359,7 +364,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Observe the previous request before a due refresh stamps this submission frame.
+            // WHY: Observe the previous request before a due refresh stamps this submission frame.
             CheckPathStatus();
             if (this == null || version != requestVersion || !isActiveAndEnabled)
             {
@@ -512,7 +517,7 @@ namespace Neo.Tools
             agent.isStopped = false;
             agent.stoppingDistance = stoppingDistance;
 
-            // All request state is committed before user callbacks. A callback's Stop/replacement wins.
+            // WHY: All request state is committed before user callbacks. A callback's Stop/replacement wins.
             onPathUpdated?.Invoke(destination);
         }
 
@@ -669,10 +674,12 @@ namespace Neo.Tools
 
             if (NavMesh.SamplePosition(position, out NavMeshHit hit, maxPathLength, NavMesh.AllAreas))
             {
-                NavMeshPath path = new();
-                if (NavMesh.CalculatePath(transform.position, hit.position, NavMesh.AllAreas, path))
+                // WHY: the result is only a bool, so one path object is reused instead of a native-backed
+                // NavMeshPath per query; CalculatePath overwrites it.
+                reachabilityPath ??= new NavMeshPath();
+                if (NavMesh.CalculatePath(transform.position, hit.position, NavMesh.AllAreas, reachabilityPath))
                 {
-                    return path.status == NavMeshPathStatus.PathComplete;
+                    return reachabilityPath.status == NavMeshPathStatus.PathComplete;
                 }
             }
 
@@ -864,9 +871,10 @@ namespace Neo.Tools
                 return;
             }
 
-            float distanceToTarget = Vector3.Distance(transform.position, target.position);
+            // WHY: runs every frame; compare squared distances instead of taking a square root.
+            float distanceToTargetSqr = (transform.position - target.position).sqrMagnitude;
 
-            if (distanceToTarget > triggerDistance)
+            if (distanceToTargetSqr > triggerDistance * triggerDistance)
             {
                 if (!agent.isStopped)
                 {
@@ -922,7 +930,7 @@ namespace Neo.Tools
 
             if (shouldUpdatePath && Time.time >= lastPathUpdateTime + pathUpdateInterval)
             {
-                // Reserve the interval before callbacks, including unsuccessful native submissions.
+                // WHY: Reserve the interval before callbacks, including unsuccessful native submissions.
                 lastPathUpdateTime = Time.time;
                 return UpdatePath();
             }
@@ -1010,7 +1018,7 @@ namespace Neo.Tools
                 : (agent.nextPosition - destination).sqrMagnitude <= agent.stoppingDistance * agent.stoppingDistance;
             if (reached && !hasPath)
             {
-                // An accepted destination already within stopping distance needs no remaining path.
+                // WHY: An accepted destination already within stopping distance needs no remaining path.
                 status = NavMeshPathStatus.PathComplete;
             }
 
@@ -1177,7 +1185,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Inspect at most one route, including routes whose waypoints were destroyed at runtime.
+            // WHY: Inspect at most one route, including routes whose waypoints were destroyed at runtime.
             for (int inspected = 0; inspected < patrolPoints.Length; inspected++)
             {
                 if (index >= patrolPoints.Length)
@@ -1255,9 +1263,24 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     The patrol wait, reused while <c>patrolWaitTime</c> is unchanged: one allocation per value instead of
+        ///     one per wait. Unity only reads the duration when the coroutine yields it, so sharing is safe.
+        /// </summary>
+        private WaitForSeconds GetPatrolWait()
+        {
+            if (patrolWait == null || patrolWaitSeconds != patrolWaitTime)
+            {
+                patrolWaitSeconds = patrolWaitTime;
+                patrolWait = new WaitForSeconds(patrolWaitTime);
+            }
+
+            return patrolWait;
+        }
+
         private IEnumerator RetryMoveToRandomPoint(int version)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return PatrolRetryWait;
 
             if (version == patrolVersion && IsPatrolling && isActiveAndEnabled && !isMovementPaused &&
                 patrolZone != null)
@@ -1303,7 +1326,7 @@ namespace Neo.Tools
                 NeoDiagnostics.Log($"[{gameObject.name}] Reached patrol {pointInfo}, waiting {patrolWaitTime}s");
             }
 
-            yield return new WaitForSeconds(patrolWaitTime);
+            yield return GetPatrolWait();
 
             if (version != patrolVersion || !IsPatrolling || !isActiveAndEnabled || isMovementPaused)
             {
@@ -1400,7 +1423,7 @@ namespace Neo.Tools
         {
             isWaitingAtPatrol = true;
 
-            yield return new WaitForSeconds(patrolWaitTime);
+            yield return GetPatrolWait();
 
             if (version != patrolVersion || !IsPatrolling || !isActiveAndEnabled || isMovementPaused)
             {

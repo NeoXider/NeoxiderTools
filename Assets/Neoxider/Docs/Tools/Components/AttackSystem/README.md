@@ -1,5 +1,12 @@
 ﻿# Tools / Components / AttackSystem
 
+**What it is:** the legacy combat components (`Health`, `AttackExecution`, `Evade`, `AdvancedAttackCollider`) and the
+`RpgStatsDamageableBridge`, kept for existing scenes. Sources: `Scripts/Rpg/Combat/`, optional assembly `Neo.Rpg.Combat`.
+
+**Contents:** the replacement table and per-component pages below.
+
+---
+
 **Legacy.** For new projects use the [RPG module](../../../Rpg/README.md) with `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, and `RpgEvadeController`.
 
 The compatibility sources live in `Scripts/Rpg/Combat/` and compile in the optional

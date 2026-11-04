@@ -126,7 +126,7 @@ namespace Neo.Network
                 return;
             }
 
-            // Timestamp the read attempt independently of whether a value is dirty or ready.
+            // WHY: timestamp the read attempt independently of whether a value is dirty or ready.
             _lastSyncTime = now;
             ResolveMember();
             if (_cachedMember == null)
@@ -266,7 +266,7 @@ namespace Neo.Network
 
             bool changed = !_syncFloat.Equals(v);
             _syncFloat = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnFloatSynced(default, v);
@@ -284,7 +284,7 @@ namespace Neo.Network
 
             bool changed = !_syncInt.Equals(v);
             _syncInt = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnIntSynced(default, v);
@@ -302,7 +302,7 @@ namespace Neo.Network
 
             bool changed = !_syncBool.Equals(v);
             _syncBool = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnBoolSynced(default, v);
@@ -320,7 +320,7 @@ namespace Neo.Network
 
             bool changed = !string.Equals(_syncString, v, StringComparison.Ordinal);
             _syncString = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnStringSynced(default, v);
@@ -338,7 +338,7 @@ namespace Neo.Network
 
             bool changed = !_syncVector3.Equals(v);
             _syncVector3 = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnVector3Synced(default, v);

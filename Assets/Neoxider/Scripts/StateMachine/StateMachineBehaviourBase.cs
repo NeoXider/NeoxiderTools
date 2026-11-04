@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Neo.StateMachine.NoCode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -68,12 +69,16 @@ namespace Neo.StateMachine
         [SerializeField] private int stateChangeCount;
         [SerializeField] private float stateEnterTime;
 
+        // WHY: weak keys - an unnamed transition that is unregistered and dropped by its owner must not be kept alive
+        // (with its StateData) for the lifetime of this component just because its label was once reported.
+        private readonly ConditionalWeakTable<StateTransition, TransitionNameEntry> transitionNameCache = new();
         private StateMachine<IState> stateMachine;
         private bool initialized;
         private bool started;
 
         /// <summary>
-        ///     Underlying State Machine instance.
+        ///     Underlying State Machine instance. Created on first access, so it can be configured before Awake
+        ///     (for example on an inactive object); Awake keeps that instance.
         /// </summary>
         public StateMachine<IState> StateMachine
         {
@@ -81,8 +86,7 @@ namespace Neo.StateMachine
             {
                 if (stateMachine == null)
                 {
-                    stateMachine = new StateMachine<IState>();
-                    SetupEvents();
+                    CreateStateMachine();
                 }
 
                 return stateMachine;
@@ -99,18 +103,76 @@ namespace Neo.StateMachine
         /// </summary>
         public IState PreviousState => StateMachine.PreviousState;
 
+        /// <summary>Name of the active state (StateData name or C# type name); empty when stopped.</summary>
         public string CurrentStateName => currentStateName;
 
+        /// <summary>Name of the state before the last change; empty when there was none.</summary>
         public string PreviousStateName => previousStateName;
 
+        /// <summary>Number of state changes since initialization (stops included).</summary>
         public int StateChangeCount => stateChangeCount;
 
+        /// <summary>Seconds (<see cref="Time.time"/>) since the active state was entered; 0 when stopped.</summary>
         public float CurrentStateElapsedTime => CurrentState == null ? 0f : Mathf.Max(0f, Time.time - stateEnterTime);
 
+        /// <summary>True while a state is active.</summary>
         public bool HasCurrentState => CurrentState != null;
 
         /// <summary>GameObjects mapped to Override1..5 slots in transition conditions (set in the scene).</summary>
-        public GameObject[] ContextOverrides => contextOverrides ?? new GameObject[0];
+        public GameObject[] ContextOverrides => contextOverrides ?? Array.Empty<GameObject>();
+
+        /// <summary>
+        ///     When true (default), transitions are evaluated every Update. Disable to drive evaluation manually
+        ///     through <see cref="EvaluateTransitionsNow"/>.
+        /// </summary>
+        public bool AutoEvaluateTransitions
+        {
+            get => autoEvaluateTransitions;
+            set => autoEvaluateTransitions = value;
+        }
+
+        /// <summary>
+        ///     This component's Enable Debug Log: gates its own logs and its machine's
+        ///     (<see cref="Neo.StateMachine.StateMachine{TState}.DebugLogEnabled"/>), including the NoCode actions the
+        ///     machine runs. Another behaviour's setting does not change it.
+        /// </summary>
+        public bool EnableDebugLog
+        {
+            get => enableDebugLog;
+            set
+            {
+                enableDebugLog = value;
+                if (stateMachine != null)
+                {
+                    stateMachine.DebugLogEnabled = value;
+                }
+            }
+        }
+
+        /// <summary>Optional NoCode configuration; call <see cref="ReloadFromStateMachineData"/> after changing it.</summary>
+        public StateMachineData StateMachineData
+        {
+            get => stateMachineData;
+            set => stateMachineData = value;
+        }
+
+        /// <summary>Invoked once when the component initializes its machine (Awake).</summary>
+        public UnityEvent OnInitialized => onInitialized;
+
+        /// <summary>Invoked after a state is entered.</summary>
+        public UnityEvent OnStateEntered => onStateEntered;
+
+        /// <summary>Invoked after a state is exited (including Stop).</summary>
+        public UnityEvent OnStateExited => onStateExited;
+
+        /// <summary>Invoked on every change with (previous name, current name); names are empty for "no state".</summary>
+        public StateChangedEvent OnStateChanged => onStateChanged;
+
+        /// <summary>
+        ///     Invoked for every evaluated transition with (transition name, result). Unnamed transitions report a
+        ///     cached "From -> To" label.
+        /// </summary>
+        public TransitionEvaluatedEvent OnTransitionEvaluated => onTransitionEvaluated;
 
         private void Awake()
         {
@@ -119,7 +181,10 @@ namespace Neo.StateMachine
 
         private void OnEnable()
         {
+            // WHY: the shared switch only serves logs that run outside any machine (asset validation); this
+            // machine and the actions it runs use its own DebugLogEnabled.
             StateMachineLog.Enabled = enableDebugLog;
+            StateMachine.DebugLogEnabled = enableDebugLog;
             if (!initialized)
             {
                 InitializeStateMachine();
@@ -140,9 +205,19 @@ namespace Neo.StateMachine
             }
         }
 
+        // WHY: the per-frame callbacks push the scene context inline; the former RunWithContext(() => ...) lambdas
+        // captured 'this' and allocated a delegate on every Update/FixedUpdate/LateUpdate/evaluation.
         private void Update()
         {
-            RunWithContext(() => StateMachine.Update());
+            PushContext();
+            try
+            {
+                StateMachine.Update();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
 
             if (autoEvaluateTransitions)
             {
@@ -152,28 +227,55 @@ namespace Neo.StateMachine
 
         private void FixedUpdate()
         {
-            RunWithContext(() => StateMachine.FixedUpdate());
+            PushContext();
+            try
+            {
+                StateMachine.FixedUpdate();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
         }
 
         private void LateUpdate()
         {
-            RunWithContext(() => StateMachine.LateUpdate());
+            PushContext();
+            try
+            {
+                StateMachine.LateUpdate();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
         }
 
         private void OnDestroy()
         {
-            RunWithContext(() => StateMachine.Stop());
-            StateMachine?.ClearStateCache();
-            StateMachine?.ClearTransitionCache();
+            StopWithContext();
+            StateMachine.ClearStateCache();
+            StateMachine.ClearTransitionCache();
         }
 
         private void OnDisable()
         {
             if (exitCurrentStateOnDisable)
             {
-                RunWithContext(() => StateMachine.Stop());
+                StopWithContext();
             }
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            // WHY: an Inspector toggle during Play Mode reaches the running machine without a re-enable.
+            if (stateMachine != null)
+            {
+                stateMachine.DebugLogEnabled = enableDebugLog;
+            }
+        }
+#endif
 
         /// <summary>
         ///     Changes state by concrete type.
@@ -181,11 +283,19 @@ namespace Neo.StateMachine
         /// <typeparam name="T">Target state type.</typeparam>
         public void ChangeState<T>() where T : class, IState, new()
         {
-            RunWithContext(() => StateMachine.ChangeState<T>());
+            PushContext();
+            try
+            {
+                StateMachine.ChangeState<T>();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
 
             if (enableDebugLog)
             {
-                StateMachineLog.Info($"[StateMachineBehaviour] Changed state to {typeof(T).Name}", this);
+                StateMachineLog.Info(true, $"[StateMachineBehaviour] Changed state to {typeof(T).Name}", this);
             }
         }
 
@@ -197,26 +307,49 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                StateMachineLog.Warning(
+                StateMachineLog.Warning(enableDebugLog,
                     "[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
                     this);
                 return;
             }
 
-            StateData stateData = Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
+            StateData stateData = stateMachineData.GetStateByName(stateName);
             if (stateData != null)
             {
-                RunWithContext(() => StateMachine.ChangeState(stateData));
-
-                if (enableDebugLog)
-                {
-                    StateMachineLog.Info($"[StateMachineBehaviour] Changed state to {stateName}", this);
-                }
+                ChangeState(stateData);
             }
             else
             {
-                StateMachineLog.Warning(
+                StateMachineLog.Warning(enableDebugLog,
                     $"[StateMachineBehaviour] State with name '{stateName}' not found in StateMachineData.", this);
+            }
+        }
+
+        /// <summary>
+        ///     Changes to the given StateData asset with this component's scene context (typed equivalent of
+        ///     <see cref="ChangeState(string)"/>; also works for states not listed in StateMachineData).
+        /// </summary>
+        /// <param name="stateData">Target state asset; null is ignored.</param>
+        public void ChangeState(StateData stateData)
+        {
+            if (stateData == null)
+            {
+                return;
+            }
+
+            PushContext();
+            try
+            {
+                StateMachine.ChangeState(stateData);
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
+
+            if (enableDebugLog)
+            {
+                StateMachineLog.Info(true, $"[StateMachineBehaviour] Changed state to {stateData.StateName}", this);
             }
         }
 
@@ -257,7 +390,7 @@ namespace Neo.StateMachine
 
             if (stateMachineData.InitialState != null)
             {
-                RunWithContext(() => StateMachine.ChangeState(stateMachineData.InitialState));
+                ChangeState(stateMachineData.InitialState);
                 return;
             }
 
@@ -274,17 +407,20 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                StateMachineLog.Warning("[StateMachineBehaviour] Cannot load: StateMachineData is null.", this);
+                StateMachineLog.Warning(enableDebugLog, "[StateMachineBehaviour] Cannot load: StateMachineData is null.",
+                    this);
                 return;
             }
 
-            RunWithContext(() => StateMachine.Stop());
+            StopWithContext();
             StateMachine.ClearTransitionCache();
             stateMachineData.LoadIntoStateMachine(StateMachine);
 
+            // WHY: enter the assigned asset itself. Resolving it by name picked the first state with that name, so
+            // two states left with the default "New State" name could start the machine in the wrong state.
             if (stateMachineData.InitialState != null)
             {
-                ChangeState(stateMachineData.InitialState.StateName);
+                ChangeState(stateMachineData.InitialState);
             }
             else if (!string.IsNullOrEmpty(stateMachineData.InitialStateName))
             {
@@ -294,14 +430,26 @@ namespace Neo.StateMachine
 
         private void InitializeStateMachine()
         {
-            stateMachine = new StateMachine<IState>();
-            SetupEvents();
+            // WHY: code may configure the machine (RegisterTransition, ChangeState, listeners) through the lazy
+            // StateMachine getter before Awake, e.g. on a component added to an inactive object. Replacing that
+            // instance in Awake silently dropped the configuration.
+            if (stateMachine == null)
+            {
+                CreateStateMachine();
+            }
+
+            initialized = true;
+            onInitialized?.Invoke();
+        }
+
+        private void CreateStateMachine()
+        {
+            stateMachine = new StateMachine<IState> { DebugLogEnabled = enableDebugLog };
             currentStateName = "";
             previousStateName = "";
             stateChangeCount = 0;
             stateEnterTime = Time.time;
-            initialized = true;
-            onInitialized?.Invoke();
+            SetupEvents();
         }
 
         private void SetupEvents()
@@ -326,7 +474,7 @@ namespace Neo.StateMachine
                 {
                     string fromName = string.IsNullOrEmpty(previousStateName) ? "None" : previousStateName;
                     string toName = string.IsNullOrEmpty(currentStateName) ? "None" : currentStateName;
-                    StateMachineLog.Info($"[StateMachineBehaviour] State changed: {fromName} -> {toName}", this);
+                    StateMachineLog.Info(true, $"[StateMachineBehaviour] State changed: {fromName} -> {toName}", this);
                 }
             });
 
@@ -337,23 +485,66 @@ namespace Neo.StateMachine
             });
         }
 
-        private void EvaluateTransitionsInternal()
+        private string GetTransitionName(StateTransition transition)
         {
-            RunWithContext(() => StateMachine.EvaluateTransitions());
+            if (transition == null)
+            {
+                return "";
+            }
+
+            if (!string.IsNullOrEmpty(transition.TransitionName))
+            {
+                return transition.TransitionName;
+            }
+
+            // WHY: unnamed transitions are reported for every evaluation (every frame); reuse the fallback label
+            // while its inputs are the same instances instead of concatenating (and Type.Name-allocating) each time.
+            if (transitionNameCache.TryGetValue(transition, out TransitionNameEntry cached))
+            {
+                if (!cached.Matches(transition))
+                {
+                    cached.Rebuild(transition);
+                }
+
+                return cached.Name;
+            }
+
+            TransitionNameEntry entry = new();
+            entry.Rebuild(transition);
+            transitionNameCache.Add(transition, entry);
+            return entry.Name;
         }
 
-        private void RunWithContext(Action action)
+        private void EvaluateTransitionsInternal()
         {
-            StateMachineEvaluationContext.Push(gameObject,
-                contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
+            PushContext();
             try
             {
-                action?.Invoke();
+                StateMachine.EvaluateTransitions();
             }
             finally
             {
                 StateMachineEvaluationContext.Pop();
             }
+        }
+
+        private void StopWithContext()
+        {
+            PushContext();
+            try
+            {
+                StateMachine.Stop();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
+        }
+
+        private void PushContext()
+        {
+            StateMachineEvaluationContext.Push(gameObject,
+                contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
         }
 
         private static string GetStateName(IState state)
@@ -371,33 +562,50 @@ namespace Neo.StateMachine
             return state.GetType().Name;
         }
 
-        private static string GetTransitionName(StateTransition transition)
+        /// <summary>Fallback "From -> To" label of an unnamed transition plus the inputs it was built from.</summary>
+        private sealed class TransitionNameEntry
         {
-            if (transition == null)
+            private StateData fromData;
+            private StateData toData;
+            private string fromDataName;
+            private string toDataName;
+            private Type fromType;
+            private Type toType;
+
+            public string Name { get; private set; }
+
+            public void Rebuild(StateTransition transition)
             {
-                return "";
+                fromData = transition.FromStateData;
+                toData = transition.ToStateData;
+                fromDataName = fromData != null ? fromData.StateName : null;
+                toDataName = toData != null ? toData.StateName : null;
+                fromType = transition.FromStateType;
+                toType = transition.ToStateType;
+                string from = fromData != null ? fromDataName : fromType?.Name;
+                string to = toData != null ? toDataName : toType?.Name;
+                Name = $"{from ?? "Any"} -> {to ?? "None"}";
             }
 
-            if (!string.IsNullOrEmpty(transition.TransitionName))
+            public bool Matches(StateTransition transition)
             {
-                return transition.TransitionName;
+                StateData currentFrom = transition.FromStateData;
+                StateData currentTo = transition.ToStateData;
+                return ReferenceEquals(fromData, currentFrom) && ReferenceEquals(toData, currentTo) &&
+                       ReferenceEquals(fromType, transition.FromStateType) &&
+                       ReferenceEquals(toType, transition.ToStateType) &&
+                       ReferenceEquals(fromDataName, currentFrom != null ? currentFrom.StateName : null) &&
+                       ReferenceEquals(toDataName, currentTo != null ? currentTo.StateName : null);
             }
-
-            string from = transition.FromStateData != null
-                ? transition.FromStateData.StateName
-                : transition.FromStateType?.Name;
-            string to = transition.ToStateData != null
-                ? transition.ToStateData.StateName
-                : transition.ToStateType?.Name;
-
-            return $"{from ?? "Any"} -> {to ?? "None"}";
         }
 
+        /// <summary>UnityEvent with (previous state name, current state name).</summary>
         [Serializable]
         public class StateChangedEvent : UnityEvent<string, string>
         {
         }
 
+        /// <summary>UnityEvent with (transition name, evaluation result).</summary>
         [Serializable]
         public class TransitionEvaluatedEvent : UnityEvent<string, bool>
         {

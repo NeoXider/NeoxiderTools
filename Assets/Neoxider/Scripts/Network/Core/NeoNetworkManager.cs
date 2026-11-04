@@ -338,7 +338,7 @@ namespace Neo.Network
                 ApplyTransportQueueLimits();
             }
 
-            // A duplicate manager is destroyed by Mirror in base.Awake; only the live singleton may listen.
+            // WHY: a duplicate manager is destroyed by Mirror in base.Awake; only the live singleton may listen.
             if (singleton == this && !_sceneActivationSubscribed)
             {
                 _sceneActivationSubscribed = true;
@@ -512,8 +512,6 @@ namespace Neo.Network
             UnregisterScenePlayerTemplateSpawnHandler();
         }
 
-        // ---- server-side per-connection events ---------------------------------------------------
-
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
             base.OnServerConnect(conn);
@@ -561,11 +559,10 @@ namespace Neo.Network
             base.OnServerDisconnect(conn);
         }
 
-        // ---- client handshake -----------------------------------------------------------------------
-
         public override void OnClientConnect()
         {
-            // Mirror's own path: Ready always, AddPlayer when autoCreatePlayer, but only when no scene change is pending.
+            // WHY: Mirror's own path sends Ready always and AddPlayer when autoCreatePlayer, but only when no scene
+            // change is pending; the request is tracked here so EnsureClientHandshake does not send it twice.
             bool mirrorHandshakeRuns = !clientLoadedScene;
             if (mirrorHandshakeRuns && autoCreatePlayer)
             {
@@ -585,7 +582,7 @@ namespace Neo.Network
 
         public override void OnClientSceneChanged()
         {
-            // base: Ready, and AddPlayer when autoCreatePlayer and the local player is gone.
+            // WHY: base sends Ready, and AddPlayer when autoCreatePlayer and the local player is gone.
             if (autoCreatePlayer && NetworkClient.localPlayer == null)
             {
                 _addPlayerRequested = true;
@@ -710,8 +707,6 @@ namespace Neo.Network
                 this);
             return false;
         }
-
-        // ---- handshake / events / activation internals -------------------------------------------
 
         private void EnsureClientHandshake()
         {
@@ -845,7 +840,7 @@ namespace Neo.Network
             }
         }
 
-        // Listener failures must not interrupt handshake continuation or disconnect cleanup.
+        // WHY: listener failures must not interrupt handshake continuation or disconnect cleanup.
         private static void RaiseServerEvent(Action<NetworkConnectionToClient> handler,
             UnityEvent<NetworkConnectionToClient> unityEvent, NetworkConnectionToClient conn)
         {
@@ -893,7 +888,7 @@ namespace Neo.Network
             }
         }
 
-        // The disabled scene template (and its children) must stay off: only spawned copies may be active.
+        // WHY: the disabled scene template (and its children) must stay off: only spawned copies may be active.
         private bool IsScenePlayerTemplateObject(GameObject candidate)
         {
             return _useScenePlayerTemplate
@@ -1201,8 +1196,10 @@ namespace Neo.Network
         public void StartAsHost() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
         public void StartAsClient() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
         public void StartAsClient(string address) => StartAsClient();
+        public void StartAsClient(string address, ushort port) => StartAsClient();
         public void StartAsServer() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
         public void StopNetwork() { }
+        public bool ApplyPort(ushort port) => false;
 #endif
     }
 }

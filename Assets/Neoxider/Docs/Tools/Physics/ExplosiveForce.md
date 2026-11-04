@@ -1,6 +1,13 @@
 ﻿# ExplosiveForce
 
-**Purpose:** Applies an impulse to nearby 3D rigidbodies, with custom falloff, optional random force variation, and optional destruction of the emitter. Automatic modes fire once; `Manual` permits repeated calls.
+**What it is:** a `MonoBehaviour` (`Scripts/Tools/Physics/ExplosiveForce.cs`, namespace `Neo.Tools`) that applies an impulse to nearby 3D rigidbodies, with custom falloff, optional random force variation, and optional destruction of the emitter. Automatic modes fire once; `Manual` permits repeated calls.
+
+**How to use:**
+1. Add **Neoxider > Tools > Physics > ExplosiveForce** to an empty object (a grenade, mine or barrel).
+2. Set **Activation Mode** (`OnStart`, `OnAwake`, `Delayed` or `Manual`), **Force**, **Radius** and **Affected Layers**.
+3. For `Manual`, call `Explode()` from code or a UnityEvent; subscribe to `OnExplode` / `OnObjectAffected` for effects and damage.
+
+---
 
 ## Fields (Inspector)
 
@@ -23,12 +30,15 @@
 | `void Explode(float customForce)` | Positive values override the base force; zero or negative values use the base force. Random variance still applies. |
 | `void SetForce(float newForce)` / `SetRadius(float newRadius)` | Change base force/radius; negative values clamp to zero. |
 | `float CurrentForce` / `CurrentRadius` | Read the configured base values. |
+| `LayerMask AffectedLayers { get; set; }` | Layers queried by the next explosion. |
 | `bool HasExploded` | Whether a detonation has occurred since the last reset; also set in `Manual` mode. |
 | `void ResetExplosion()` | Clear `HasExploded`, permitting another explicit call in automatic modes. Does not schedule a new delayed explosion. |
 
 Compound colliders receive one impulse per Rigidbody and one `OnObjectAffected` notification, carrying a representative detected collider GameObject. The emitter's own attached Rigidbody is excluded, including its child colliders. The **Explode Now** Inspector button is available in Play Mode.
 
 If an `OnObjectAffected` listener immediately destroys the emitter component or its GameObject, the current explosion stops before affecting another body or emitting `OnExplode`. Already submitted impulses remain applied. If an `OnExplode` listener destroys the emitter, the old automatic destruction step is skipped; destroying only the component leaves its GameObject alive. Explicit calls on a live disabled component remain supported, subject to the normal activation/repeat rules. A queued `Destroy` follows Unity's deferred lifetime timing; these checks respond to actual destruction.
+
+The overlap query reuses a buffer that grows when it is filled, so every collider in range is reached and repeated `Manual` explosions do not allocate a new collider array or body set: once the buffer has grown, a repeated explosion makes no managed allocations at all, with or without a Rigidbody on the emitter (guarded by the EditMode test `Explosion_WarmRepeatedManualExplode_DoesNotAllocate`). An `OnObjectAffected` listener may call `Explode()` again: that nested explosion runs with its own buffers and the outer pass continues unchanged.
 
 Automatic scheduling happens once from `Awake`/`Start`. Disabling the GameObject cancels Unity coroutines; enabling it again does not rearm the delay. For pooled effects, use `Manual` and explicitly call `Explode()` when needed.
 
@@ -52,7 +62,7 @@ Create a grenade prefab (just an empty object). Attach `ExplosiveForce`. Set `Ac
 
 public void StepOnMine()
 {
-    // Force the mine to detonate
+    _mineExplosion.AffectedLayers = LayerMask.GetMask("Default", "Enemies");
     _mineExplosion.Explode();
 }
 ```

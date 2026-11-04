@@ -83,7 +83,7 @@ namespace Neo.Tools
         {
             if (!subscribe)
             {
-                // Keep the event itself: its Shop may already be destroyed or its field replaced.
+                // WHY: keep the event itself: its Shop may already be destroyed or its field replaced.
                 _purchasedEvent?.RemoveListener(HandlePurchasedId);
                 _purchasedEvent = null;
                 return;

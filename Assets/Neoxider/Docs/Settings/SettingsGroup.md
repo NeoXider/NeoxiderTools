@@ -1,6 +1,8 @@
 ﻿# SettingsGroup
 
-**Purpose:** Enum for logical settings groups, used for persistence and reset management.
+**What it is:** Enum for logical settings groups, used for persistence and reset management.
+
+**How to use:** Pass it to `GameSettings.ResetGroup(group)`; the matching persist flags live on `GameSettingsComponent`.
 
 ## Values
 

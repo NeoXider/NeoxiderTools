@@ -23,12 +23,17 @@ namespace Neo.Rpg.Network
     {
         private readonly RpgCharacterProfileService _profileService = new();
         private RpgCharacter _character;
+        private int _publishedSnapshots;
+
+        /// <summary>Number of snapshots this adapter serialized into the replicated state (a test seam).</summary>
+        internal int PublishedSnapshotCount => _publishedSnapshots;
 
 #if MIRROR
         [SyncVar(hook = nameof(OnSnapshotSynced))]
         private string _syncSnapshot = string.Empty;
 #endif
 
+        /// <summary>True on a pure client of a networked character: the server simulates regeneration and effects, the client only applies snapshots.</summary>
         public bool SuppressLocalSimulation
         {
             get
@@ -49,6 +54,7 @@ namespace Neo.Rpg.Network
             isNetworked = IsEnabled;
         }
 
+        /// <summary>Sends <paramref name="command"/> to the server from a pure client; <see langword="false"/> when the caller must execute it locally.</summary>
         public bool TryRoute(RpgCharacterNetworkCommand command)
         {
 #if MIRROR
@@ -61,6 +67,11 @@ namespace Neo.Rpg.Network
             return false;
         }
 
+        /// <summary>
+        ///     Server: publishes the character profile into the replicated snapshot. <see cref="RpgCharacter"/> calls it
+        ///     once per completed step (see <see cref="RpgCharacter.DeferSnapshotPublication"/>); an executed command
+        ///     publishes exactly once.
+        /// </summary>
         public void NotifyStateChanged()
         {
 #if MIRROR
@@ -70,50 +81,60 @@ namespace Neo.Rpg.Network
             }
 
             _syncSnapshot = _profileService.Serialize(_character.CaptureProfile());
+            _publishedSnapshots++;
 #endif
         }
 
+        /// <summary>Damages the character on the authority (routed through the server from a pure client).</summary>
         public void NetDamage(float amount)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Damage, number: amount));
         }
 
+        /// <summary>Typed damage on the authority (routed through the server from a pure client).</summary>
         public void NetDamageType(string damageType, float amount)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Damage, damageType, amount));
         }
 
+        /// <summary>Heals on the authority (routed through the server from a pure client).</summary>
         public void NetHeal(float amount)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Heal, number: amount));
         }
 
+        /// <summary>Spends a resource on the authority (routed through the server from a pure client).</summary>
         public void NetSpend(string resourceId, float amount)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Spend, resourceId, amount));
         }
 
+        /// <summary>Refills a resource on the authority (routed through the server from a pure client).</summary>
         public void NetRefill(string resourceId, float amount)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Refill, resourceId, amount));
         }
 
+        /// <summary>Applies a buff by id on the authority (routed through the server from a pure client).</summary>
         public void NetApplyBuffById(string id)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyBuff, id));
         }
 
+        /// <summary>Applies an inline template buff on the authority (routed through the server from a pure client).</summary>
         public void NetApplyInlineBuff(int index)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyInlineBuff,
                 integer: index));
         }
 
+        /// <summary>Applies a status by id on the authority (routed through the server from a pure client).</summary>
         public void NetApplyStatusById(string id)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyStatus, id));
         }
 
+        /// <summary>Adds levels on the authority (routed through the server from a pure client).</summary>
         public void NetAddLevel(int delta)
         {
             RouteOrExecute(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddLevel, integer: delta));
@@ -121,7 +142,7 @@ namespace Neo.Rpg.Network
 
         private void RouteOrExecute(RpgCharacterNetworkCommand command)
         {
-            // Public UnityEvent calls can reach an inactive object before Awake has run.
+            // WHY: public UnityEvent calls can reach an inactive object before Awake has run.
             if (_character == null)
             {
                 _character = GetComponent<RpgCharacter>();
@@ -129,7 +150,22 @@ namespace Neo.Rpg.Network
 
             if (!TryRoute(command))
             {
+                ExecuteAndPublish(command);
+            }
+        }
+
+        private void ExecuteAndPublish(RpgCharacterNetworkCommand command)
+        {
+            int published = _publishedSnapshots;
+            // WHY: one command (a lethal hit, a level-up) used to serialize the profile after every inner change
+            // and once more here; the deferral publishes the final state once.
+            using (_character.DeferSnapshotPublication())
+            {
                 Execute(command);
+            }
+
+            if (published == _publishedSnapshots)
+            {
                 NotifyStateChanged();
             }
         }
@@ -144,9 +180,15 @@ namespace Neo.Rpg.Network
                 return;
             }
 
-            Execute(new RpgCharacterNetworkCommand((RpgCharacterNetworkCommandType)type, text, number, integer,
-                flag));
-            NotifyStateChanged();
+            // WHY: the wire carries a raw int; an unnamed value would execute nothing yet still make the server
+            // capture, serialize and replicate a full snapshot.
+            if (!RpgCharacterNetworkCommand.IsKnownType((RpgCharacterNetworkCommandType)type))
+            {
+                return;
+            }
+
+            ExecuteAndPublish(new RpgCharacterNetworkCommand((RpgCharacterNetworkCommandType)type, text, number,
+                integer, flag));
         }
 
         private bool IsAuthorized(NetworkConnectionToClient sender)
@@ -165,7 +207,7 @@ namespace Neo.Rpg.Network
 
         public override void OnStartClient()
         {
-            // Runtime prefab setup may change the character toggle after this adapter's Awake.
+            // WHY: runtime prefab setup may change the character toggle after this adapter's Awake.
             isNetworked = IsEnabled;
             base.OnStartClient();
         }

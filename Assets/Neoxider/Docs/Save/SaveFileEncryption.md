@@ -1,6 +1,8 @@
 # SaveFileEncryption
 
-**Purpose:** an AES-CBC wrapper over the JSON string before writing it to a file, and the reverse decryption on load (the format is a Base64 string, with no JSON wrapper).
+**What it is:** an AES-CBC wrapper over the JSON string before writing it to a file, and the reverse decryption on load (the format is a Base64 string, with no JSON wrapper).
+
+**How to use:** Enable file encryption in `SaveProviderSettings`, or call `TryEncrypt` / `TryDecrypt` with a key/IV built by `FileSaveEncryptionConfig.TryCreate`.
 
 It is used by **`FileSaveProvider`** only when saving to **File** is enabled in **[SaveProviderSettings](Settings/SaveProviderSettings.md)** and file encryption is checked.
 

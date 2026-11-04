@@ -73,7 +73,7 @@ namespace Neo.Editor.Tests
         {
             SaveProvider.SetFloat("Money", 77f);
             SaveProvider.SetFloat("Money" + nameof(Money.AllMoney), 90f);
-            var observed = new List<float>();
+            List<float> observed = new List<float>();
             _money.CurrentMoney.AddListener(observed.Add);
 
             _money.ReloadBalanceFromSave();

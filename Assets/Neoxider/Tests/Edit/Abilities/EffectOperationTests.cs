@@ -35,7 +35,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void HealOp_RestoresHealth_AndFiresHealReceived()
         {
-            var log = new EventLog(_system);
+            EventLog log = new EventLog(_system);
             AbilityUnit ally = AbilityTestSupport.CreateUnit(_system, team: 1, health: 100f, healthCurrent: 50f);
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: ally.Id);
 
@@ -63,7 +63,7 @@ namespace Neo.Editor.Tests.Abilities
             AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2);
             _system.RegisterModifier(AbilityTestSupport.Modifier("poison", 5f));
 
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.ApplyModifier,
                 Target = EffectTargetSelector.Target,
@@ -83,7 +83,7 @@ namespace Neo.Editor.Tests.Abilities
             AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2);
             _system.Modifiers.Apply(AbilityTestSupport.Modifier("poison", 5f), _caster.Id, enemy.Id);
 
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.RemoveModifier,
                 Target = EffectTargetSelector.Target,
@@ -100,7 +100,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2, mana: 100f);
 
-            var burn = new EffectNodeData
+            EffectNodeData burn = new EffectNodeData
             {
                 OpId = AbilityEffectOps.ResourceChange,
                 Target = EffectTargetSelector.Target,
@@ -111,7 +111,7 @@ namespace Neo.Editor.Tests.Abilities
             _system.ExecuteEffects(AbilityTestSupport.Nodes(burn), ctx);
             Assert.That(enemy.Resources.GetCurrent(AbilityResourceIds.Mana), Is.EqualTo(60f).Within(0.001f));
 
-            var gain = new EffectNodeData
+            EffectNodeData gain = new EffectNodeData
             {
                 OpId = AbilityEffectOps.ResourceChange,
                 Target = EffectTargetSelector.Target,
@@ -125,7 +125,7 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void AreaSelector_HitsOnlyLivingTeamFilteredUnitsInRadius()
         {
-            var world = new FakeWorldAdapter();
+            FakeWorldAdapter world = new FakeWorldAdapter();
             _system.World = world;
 
             AbilityUnit enemyIn = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
@@ -140,7 +140,7 @@ namespace Neo.Editor.Tests.Abilities
             world.SetPosition(deadEnemy.Id, new Vector3(1f, 0f, 0f)); // WHY: inside, enemy but dead -> skipped
             _system.MarkDead(deadEnemy, UnitId.None);
 
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Damage,
                 Target = EffectTargetSelector.AreaAroundCaster,
@@ -182,7 +182,7 @@ namespace Neo.Editor.Tests.Abilities
             float RunProbabilistic(uint runSeed)
             {
                 AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
-                var nodes = new List<EffectNodeData>();
+                List<EffectNodeData> nodes = new List<EffectNodeData>();
                 for (int i = 0; i < 8; i++)
                 {
                     EffectNodeData n = AbilityTestSupport.DamageNode(10f);
@@ -205,10 +205,10 @@ namespace Neo.Editor.Tests.Abilities
         [Test]
         public void NestedExecution_IsCappedAtMaxDepth()
         {
-            var recursive = new RecursiveOp();
+            RecursiveOp recursive = new RecursiveOp();
             _system.Ops.Register(recursive);
 
-            var node = new EffectNodeData { OpId = recursive.Id, Target = EffectTargetSelector.Caster };
+            EffectNodeData node = new EffectNodeData { OpId = recursive.Id, Target = EffectTargetSelector.Caster };
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(node), ctx);
 

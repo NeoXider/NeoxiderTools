@@ -161,7 +161,7 @@ namespace Neo.Tests.Edit
             NeoCharacterInput input = _go.AddComponent<NeoCharacterInput>();
             input.SetMoveInput(new Vector2(3f, 4f));
 
-            var move = new Vector2(input.GetHorizontalMovementInput(), input.GetVerticalMovementInput());
+            Vector2 move = new Vector2(input.GetHorizontalMovementInput(), input.GetVerticalMovementInput());
 
             Assert.AreEqual(1f, move.magnitude, 1e-4f);
             Assert.AreEqual(0.6f, move.x, 1e-4f);

@@ -10,10 +10,20 @@ namespace Neo.Progression
     [Serializable]
     public sealed class ProgressionLevelDefinition
     {
-        [SerializeField] [Min(1)] private int _level = 1;
-        [SerializeField] [Min(0)] private int _requiredXp;
-        [SerializeField] [Min(0)] private int _grantedPerkPoints;
-        [SerializeField] private List<ProgressionReward> _rewards = new();
+        [Tooltip("Core level this entry rewards. Keep levels unique and ascending.")] [SerializeField] [Min(1)]
+        private int _level = 1;
+
+        [Tooltip("Legacy cumulative XP threshold used only by EvaluateLevel/GetXpToNextLevel helpers.")]
+        [SerializeField]
+        [Min(0)]
+        private int _requiredXp;
+
+        [Tooltip("Perk points granted once when this level is reached.")] [SerializeField] [Min(0)]
+        private int _grantedPerkPoints;
+
+        [Tooltip("Rewards dispatched once when this level is reached; premium entries need ActivatePremium().")]
+        [SerializeField]
+        private List<ProgressionReward> _rewards = new();
 
         /// <summary>
         ///     Gets the numeric level represented by this entry.
@@ -118,6 +128,61 @@ namespace Neo.Progression
 
             definition = null;
             return false;
+        }
+
+        /// <summary>
+        ///     Finds the entry with the smallest level in the range (<paramref name="afterLevel" />,
+        ///     <paramref name="maxLevel" />]. For duplicate levels the first entry wins, matching
+        ///     <see cref="TryGetDefinition" />. Each call scans all entries (O(entries)). Lets callers walk only defined
+        ///     levels instead of every numeric level, so the cost of a level jump does not depend on the size of the
+        ///     gap. A walk built from repeated calls is O(entries^2); <see cref="ProgressionManager" /> walks an
+        ///     ascending track (see <see cref="IsAscending" />) in one pass instead.
+        /// </summary>
+        public bool TryGetNextDefinition(int afterLevel, int maxLevel, out ProgressionLevelDefinition definition)
+        {
+            definition = null;
+            for (int i = 0; i < _levels.Count; i++)
+            {
+                ProgressionLevelDefinition candidate = _levels[i];
+                if (candidate == null || candidate.Level <= afterLevel || candidate.Level > maxLevel)
+                {
+                    continue;
+                }
+
+                if (definition == null || candidate.Level < definition.Level)
+                {
+                    definition = candidate;
+                }
+            }
+
+            return definition != null;
+        }
+
+        /// <summary>
+        ///     Whether the non-null entries are ordered by non-decreasing level, which is the order the Inspector keeps
+        ///     (<c>OnValidate</c> sorts the list). On such a track the first entry above a level is also the smallest
+        ///     one, so a walk can resume from its previous position. O(entries).
+        /// </summary>
+        public bool IsAscending()
+        {
+            int previousLevel = int.MinValue;
+            for (int i = 0; i < _levels.Count; i++)
+            {
+                ProgressionLevelDefinition candidate = _levels[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                if (candidate.Level < previousLevel)
+                {
+                    return false;
+                }
+
+                previousLevel = candidate.Level;
+            }
+
+            return true;
         }
 
         /// <summary>

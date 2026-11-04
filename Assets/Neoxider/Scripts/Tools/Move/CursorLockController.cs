@@ -230,6 +230,9 @@ namespace Neo.Tools
         private CursorLockMode _lifecycleSnapshotExitLockState;
         private bool _lifecycleSnapshotExitVisible;
 
+        private bool _releasingOnDisable;
+        private bool _destroyed;
+
 #if UNITY_EDITOR
         private ConfigurationPreset _presetAppliedInEditor = ConfigurationPreset.Custom;
 #endif
@@ -244,7 +247,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Gets whether cursor is currently locked.
         /// </summary>
-        public bool IsLocked => Cursor.lockState == CursorLockMode.Locked;
+        public bool IsLocked => MoveCursor.LockState == CursorLockMode.Locked;
 
         public bool ControllerEnabled => _controllerEnabled;
 
@@ -276,6 +279,14 @@ namespace Neo.Tools
             set => _disableMovementWhileCursorVisible = value;
         }
         public bool HasCursorOwnership { get; private set; }
+
+        /// <summary>
+        ///     True while this controller is being disabled, deactivated or destroyed. Players bound to it stop deferring
+        ///     to it (<see cref="PlayerController3DPhysics.HasExternalCursorControl" />) during that cleanup, so a look
+        ///     gate it restores takes the player's standalone auto-lock path exactly as after
+        ///     <see cref="DisableController" /> or <c>enabled = false</c>.
+        /// </summary>
+        internal bool IsReleasingOwnership => _releasingOnDisable || _destroyed;
 
         public ControlMode Mode => _controlMode;
 
@@ -411,8 +422,8 @@ namespace Neo.Tools
 
             if (_lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnEnable)
             {
-                _lifecycleSnapshotEnterLockState = Cursor.lockState;
-                _lifecycleSnapshotEnterVisible = Cursor.visible;
+                _lifecycleSnapshotEnterLockState = MoveCursor.LockState;
+                _lifecycleSnapshotEnterVisible = MoveCursor.Visible;
                 _hasLifecycleSnapshotFromEnable = true;
             }
 
@@ -420,6 +431,21 @@ namespace Neo.Tools
         }
 
         private void OnDisable()
+        {
+            // WHY: Destroy and SetActive(false) keep `enabled` true, so without this flag a bound player would still
+            // defer to this controller while it hands look back, and the standalone auto-lock would be skipped.
+            _releasingOnDisable = true;
+            try
+            {
+                ReleaseOnDisable();
+            }
+            finally
+            {
+                _releasingOnDisable = false;
+            }
+        }
+
+        private void ReleaseOnDisable()
         {
             bool applyDisableState = AutomaticManagementActive && _controllerEnabled && _applyOnDisable;
             bool lockOnDisable = _lockOnDisable;
@@ -429,8 +455,8 @@ namespace Neo.Tools
 
             if (_lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnDisable && applyDisableState)
             {
-                _lifecycleSnapshotExitLockState = Cursor.lockState;
-                _lifecycleSnapshotExitVisible = Cursor.visible;
+                _lifecycleSnapshotExitLockState = MoveCursor.LockState;
+                _lifecycleSnapshotExitVisible = MoveCursor.Visible;
                 _hasLifecycleSnapshotFromDisable = true;
             }
 
@@ -484,13 +510,14 @@ namespace Neo.Tools
                 return;
             }
 
-            Cursor.lockState = lockState;
-            Cursor.visible = visible;
+            MoveCursor.LockState = lockState;
+            MoveCursor.Visible = visible;
             SyncPlayersToCursor(lockState == CursorLockMode.Locked);
         }
 
         private void OnDestroy()
         {
+            _destroyed = true;
             RestoreSuspendedPlayers();
             _cursorAccessActive = false;
             _hasLifecycleSnapshotFromEnable = false;
@@ -645,14 +672,14 @@ namespace Neo.Tools
             switch (_mode)
             {
                 case CursorStateMode.LockAndHide:
-                    Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
-                    Cursor.visible = !locked;
+                    MoveCursor.LockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+                    MoveCursor.Visible = !locked;
                     break;
                 case CursorStateMode.OnlyHide:
-                    Cursor.visible = !locked;
+                    MoveCursor.Visible = !locked;
                     break;
                 case CursorStateMode.OnlyLock:
-                    Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+                    MoveCursor.LockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
                     break;
             }
         }
@@ -699,7 +726,7 @@ namespace Neo.Tools
         {
             if (!HasCursorOwnership)
             {
-                // Lifecycle snapshots may have acquired player gates without entering the cursor stack.
+                // WHY: lifecycle snapshots may have acquired player gates without entering the cursor stack.
                 RestoreSuspendedPlayers();
                 return;
             }
@@ -710,7 +737,7 @@ namespace Neo.Tools
             ActiveControllers.Remove(this);
             HasCursorOwnership = false;
 
-            // Each gate retains its first baseline until every requesting controller releases it.
+            // WHY: each gate retains its first baseline until every requesting controller releases it.
             RestoreSuspendedPlayers();
 
             if (reapplyBelowIfWasTop && wasTop)
@@ -876,7 +903,7 @@ namespace Neo.Tools
                 gates.Add(player, gate);
             }
 
-            // Register even when a different owner has already disabled the same gate.
+            // WHY: register even when a different owner has already disabled the same gate.
             gate.Owners.Add(this);
             SetPlayerGate(player, look, false);
         }
@@ -894,8 +921,8 @@ namespace Neo.Tools
             if (player != null)
             {
                 SetPlayerGate(player, look, gate.PriorEnabled);
-                // Restoring look can auto-lock through the player's now-disabled assigned owner.
-                // Preserve the surviving cursor request without replaying events or acquiring gates again.
+                // WHY: restoring look can auto-lock through the player's now-released assigned owner; preserve the
+                // surviving cursor request without replaying events or acquiring gates again.
                 if (look && gate.PriorEnabled && GlobalCursorManagement)
                 {
                     CursorLockController top = GetTopController();

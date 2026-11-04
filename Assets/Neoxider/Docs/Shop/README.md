@@ -1,6 +1,24 @@
 # Shop module
 
-Shop controller, items, bundles, currency, inventory integration, and purchase UI. Scripts in `Scripts/Shop/`.
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/shop.jpg" alt="Concept art for the Shop module" width="100%" /></p>
+<!-- module-art:end -->
+
+**What it is:** shop controller, item/bundle catalog assets, `Money` wallets, purchase/list/category UI views and an
+optional Inventory bridge. Scripts live in `Scripts/Shop/` (`Neo.Shop`; the bridge in `Scripts/Shop/Bridges/`,
+`Neo.Shop.Bridges`).
+
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Shop.jpg" alt="Shop: storefront cards, purchase states and a wallet" width="100%" /></p>
+
+*Demo scene: `Scenes/Shop/Shop.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
+
+**Contents:** the table below; start with [Shop](./Shop.md) and [Money](./Money.md).
+
+**Navigation:** [← Docs](../README.md)
+
+---
 
 Since version **8.5.0**: stable string-ids for items, JSON profile save (`ShopProfileData`), bundles, categories, multi-currency, and an optional [Inventory](../Tools/Inventory/README.md) link via the [ShopInventoryGrantBridge](Bridges.md) component.
 
@@ -22,6 +40,7 @@ Since version **8.5.0**: stable string-ids for items, JSON profile save (`ShopPr
 | [ShopResolver](./ShopResolver.md) | Shared parent-first, scene-fallback lookup policy for optional shop references |
 | [Shop bridges](./Bridges.md) | Canonical setup, fallback/lifecycle rules and API of the optional Inventory grant bridge |
 | [EquipmentManager](./Equipment/EquipmentManager.md) | Independent equipment state and optional sprite slots per category |
+| [EquipItemDefinition](./Equipment/EquipItemDefinition.md) | One equippable piece (`Id`, `CategoryId`, `Sprite`) |
 | [ShopItem](./ShopItem.md), [TextMoney](./TextMoney.md) | Reusable item cells and reactive wallet text |
 
 ## Runtime API
@@ -34,11 +53,18 @@ shop.SetMoneySpendSource(wallet.gameObject);
 shop.OnPurchasedId.AddListener(HandlePurchased);
 if (shop.CanAfford(item))
 {
-    shop.Buy(item);
+    ShopPurchaseStatus status = shop.TryBuy(item);
+    if (status == ShopPurchaseStatus.Purchased)
+    {
+        PlayPurchaseFeedback();
+    }
 }
 ```
 
-`CanAfford` is a precheck; purchase success comes from `OnPurchasedId`. `Select` changes equipment directly and does not check ownership. Use `Buy` for the purchase flow. `Select((ShopItemData)null)` clears selection and its highlights.
+`CanAfford` is a precheck; `TryBuy` / `TryBuyBundle` return the actual outcome (`Purchased`, `AlreadyOwned`,
+`InsufficientFunds`, `CommitFailed`, `PendingServerAuthority`, ...) and raise the same events as `Buy` / `BuyBundle`,
+so `OnPurchasedId` remains the hook for scene/NoCode reactions. `Select` changes equipment directly and does not check
+ownership. Use `Buy` / `TryBuy` for the purchase flow. `Select((ShopItemData)null)` clears selection and its highlights.
 
 ## Dynamic Storefront Views
 
@@ -50,12 +76,34 @@ In **11.0.0**, free/paid profile mutation and persistence share rollback. A fail
 
 Networked Money now defaults to server-only client mutation authority. Choose cooperative `None` or wallet `OwnerOnly` explicitly when needed; see [Money](Money.md#client-mutation-authority-1100).
 
+## Demo scene
+
+`Samples~/Demo/Scenes/Shop/Shop.unity` (`Samples/...` while the samples are unpacked for development) is a storefront
+made only of the module's components, all saved in the scene:
+
+- `Shop` keeps the catalog (`Resources/Shop/*.asset`) and its **Shop Items** are the authored cards under
+  `[Demo] Frame/Content/Storefront Cards`; **Auto Spawn Items** is off and **Auto Subscribe** binds each card's price
+  button to `Buy`.
+- Each card is a `ShopItem` + `ShopPurchaseButtonView` with a `ButtonPrice` price button (Buy / Equip / Equipped /
+  Unaffordable). `ShopItem.OnSelectItem` / `OnDeselectItem` toggle the card's `Equipped Glow` (NoCode).
+- `Money` is the wallet; the balance label is a `TextMoney`, and the +25 / +100 / Empty buttons call `Money.Add` and
+  `Money.SetCurrentMoney` directly.
+- The control card shows the typed C# path: `shop.TryBuy(item)` and the returned `ShopPurchaseStatus`,
+  `SetRuntimePrice` / `ClearRuntimePrice`, and a reset of the `SaveProvider` keys. `Shop.OnPurchasedId`,
+  `OnPurchaseFailedId`, `OnSelectId` and `OnShopChanged` are wired to `Demo Controller` (`ShopDemoController`).
+
+The scene is authored by the editor builder `Samples~/Demo/Editor/Builders/Shop/ShopDemoBuilder.cs` (menu
+**Neoxider/Demo/Rebuild Active Demo Scene**).
+
 ## Tests
 
 Shop has both EditMode and PlayMode coverage:
 
 - `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` — purchases, bundles, runtime prices, `Browse` / `EquipOnly` flows, inventory integration, multi-currency, and `ShopListView`.
-- `Assets/Neoxider/Tests/Edit/Shop/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, runtime price overrides, and clone.
+- `Assets/Neoxider/Tests/Edit/Shop/ShopTypedPurchaseAndRefreshTests.cs` — typed purchase statuses, one list rebuild per purchase, allocation-free row rebinding, runtime catalog growth, event-driven `TextMoney` binding, indexed allocation-free id lookups.
+- `Assets/Neoxider/Tests/Edit/Bonus/CodeBuiltComponentEventsTests.cs` — every Shop and Shop.Bridges component (with Bonus and NPC) added from code has each UnityEvent it declares.
+- `Assets/Neoxider/Tests/Edit/Shop/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe (allocation-free when warm), runtime price overrides, and clone.
+- `Assets/Neoxider/Tests/Edit/Shop/ShopVariantsPanelTests.cs` — unowned/owned/equipped rendering, buy-then-equip, the EquipmentManager bridge, Unequip, one push per changed slot for every listener order with a subscribed `ShopListView` (selection, forwarded selection, purchase that equips), the full-push `RefreshStates`, and the follow-up pass for a slot callback that equips.
 - `Assets/Neoxider/Tests/Edit/Shop/Audit20261023NeoShopRegressionTests.cs` — failed/free purchases, capped refunds, invalid numbers/profile collections, equipment restore, row rebinding, and view lifecycle/source changes.
 - `Assets/Neoxider/Tests/Edit/Shop/Audit20261023NeoShopMoneyAuthorityTests.cs` — authority/default serialization and local admission-unit coverage.
 - `Assets/Neoxider/Tests/Play/Audit20261023NeoShopCommitPlayModeTests.cs` — post-delivery observer faults, wallet/profile/inventory conservation, native TextMoney lifecycle and paused limiter cadence.

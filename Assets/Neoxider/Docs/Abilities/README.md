@@ -1,12 +1,22 @@
 # Abilities
 
-`Neo.Abilities` is a Dota-derived, data-driven ability/modifier system. Abilities cast effects; **modifiers** are the single durable-effect concept — buffs, debuffs, DoTs, shields, and stuns all share one lifecycle. New content is authored in ScriptableObjects, without touching code.
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/abilities.jpg" alt="Concept art for the Abilities module" width="100%" /></p>
+<!-- module-art:end -->
+
+**What it is:** `Neo.Abilities` is a Dota-derived, data-driven ability/modifier system. Abilities cast effects; **modifiers** are the single durable-effect concept — buffs, debuffs, DoTs, shields, and stuns all share one lifecycle. New content is authored in ScriptableObjects, without touching code.
+
+<!-- demo-shots:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SurvivorDemo.jpg" alt="SurvivorDemo: a survivor arena with waves, upgrades and auto-cast abilities" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AbilitiesNoCodeDemo.jpg" alt="AbilitiesNoCodeDemo: NoCode ability buttons, HP and cooldown bars, auto caster" width="49%" /></p>
+
+*Demo scenes: `Scenes/SurvivorDemo.unity`, `Scenes/Abilities/AbilitiesNoCodeDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+<!-- demo-shots:end -->
 
 - **Abilities** resolve, per cast, into a list of effect operations (damage, heal, apply modifier, spawn, …) through a validated cast pipeline (states, costs, cooldown/charges, target, range).
 - **Modifiers** attach to a unit and, while active: contribute **properties** (`{ Add | Mul | Max }`, aggregated in a fixed `add -> mul -> max` order), declare **states** (boolean, any-true-wins), run **tick effects** on an interval, and run **declarative event reactions** (on an event id -> an effect list). Expiry is guaranteed.
 - The runtime logic uses ordinary C# objects, injected time and a seeded PRNG. It runs without GameObjects, but still depends on Unity value types/math and `Neo.Core.Resources`. Gameplay receipts flow through the **event stream** for UI, presentation, and network integration.
 
-**По-русски:** основной C# API — `AbilitySystem`, `AbilityUnit`, `ModifierEngine` и `IEffectOperation`. Компоненты сцены и NoCode вызывают тот же runtime API. Сначала зарегистрируйте определения, затем создайте юнитов, добавьте ресурсы и выдайте способности. Продвигайте время через `Tick(dt)`; для области действия, движения и снарядов нужен `IAbilityWorldAdapter`. Ограничения времени, callbacks и доставки описаны ниже и на страницах компонентов.
+**По-русски:** основной C# API — `AbilitySystem`, `AbilityUnit`, `ModifierEngine` и `IEffectOperation`. Компоненты сцены и NoCode вызывают тот же runtime API. Сначала зарегистрируйте определения, затем создайте юнитов, добавьте ресурсы и выдайте способности. Продвигайте время через `Tick(dt)`; для области действия, движения и снарядов нужен `IAbilityWorldAdapter`. Ограничения времени, callbacks и доставки описаны ниже и на страницах компонентов. Касты (мгновенные и снарядами), попадания снарядов, тики модификаторов, реакции и публикация событий в домене не выделяют память после прогрева; создание объекта снаряда в сцене идёт через `PoolManager` и в эту гарантию не входит. Для сотен юнитов включите **Spatial Cell Size** на `AbilitySystemBehaviour` (см. [Performance for many units](#performance-for-many-units)); перемещения через `TryMoveUnit` (отбрасывание, притягивание, телепорт) и снятие убитых юнитов с регистрации обновляют сетку на месте, без полной перестройки перед следующим запросом. Радиус проверяется точно (`AbilitySpatialGrid.IsWithinRadius`, расстояние в double), поэтому сетка и линейный перебор дают одинаковый результат на любой платформе. Снаряд способности с наведением `Direction` летит на эффективную дальность (**Range** + `cast_range_bonus`). При Range 0 (без ограничения) он летит на длину переданного вектора направления, но не меньше 10 единиц: `transform.forward` не обрывает выстрел через одну единицу, а вектор к цели или курсору долетает до неё.
 
 ## Contents
 
@@ -35,6 +45,12 @@
 - [AbilityAutoCaster](./AbilityAutoCaster.md) — Survivor-style auto-cast with nearest-target lock-on
 - [AbilityCooldownSource](./AbilityCooldownSource.md) — cooldown values for `SetProgress` / `NoCodeBindText` bindings
 
+**Guides**
+
+- [Survivor Demo](./SurvivorDemo.md) — a complete auto-fire survivor game built on this module
+- [Building a Vampire Survivors game](../VampireSurvivor_Guide.md) — step-by-step scene assembly and the performance checklist
+- [Performance for many units](#performance-for-many-units) — allocation-free hot paths and the spatial query grid
+
 Source: `Assets/Neoxider/Scripts/Abilities` (`Domain/` pure C#, `Data/` ScriptableObjects, `Components/` wrappers).
 
 ## Quick start (no code)
@@ -43,16 +59,29 @@ Source: `Assets/Neoxider/Scripts/Abilities` (`Domain/` pure C#, `Data/` Scriptab
 Start with **Hit Player 20**, then **Cast Heal**: numeric HP and the result explain the actual heal.
 Try Heal again during cooldown, **Zap dummy**, **Next level**, and compare 12/20/30 damage.
 **Auto Zap** starts off so the dummy survives while you read; enable it to inspect automatic casting.
-**Reset demo** restores both units, level and cooldowns. The original damage/heal buttons still call
-scene-authored `AbilityNoCodeAction`; the guide only adds sample UI and feedback over those APIs.
+**Reset demo** restores both units, level and cooldowns. The whole wiring is saved in the scene, so it is
+readable without entering Play Mode (the scene is authored by `Editor/Builders/Abilities/AbilitiesNoCodeDemoBuilder.cs`):
+
+- `Btn_Hit Player 20` / `Btn_Cast Heal` each carry their own `AbilityNoCodeAction` (ApplyDamage 20 on the
+  Player / CastById `heal_pulse` through the Player's caster); `Button.OnClick → AbilityNoCodeAction.Execute`,
+  and the action's **On Result Message** feeds the log at the bottom.
+- The HP and Zap cooldown bars are `SetProgress` bindings on `AbilityUnitBehaviour.HealthNormalized` and
+  `AbilityCooldownSource.CooldownNormalized` (no code).
+- The Auto Zap toggle sets `AbilityAutoCaster.enabled` directly (persistent `bool enabled` call).
+- **Zap dummy / Next level / Reset demo** are the C# path: `AbilitiesDemoGuide` calls
+  `AbilityCasterBehaviour.TryCastAtUnit` and `AbilityUnitBehaviour.SetLevel`; the Player's and dummy's
+  **On Damaged / On Healed** and the caster's **On Cast Failed** feed its result panel.
+
 The tutorial units have no automatic health regeneration so hits and healing remain visible between
 actions. Zap explicitly reads caster unit level from its authored effect configuration.
 
 **По-русски:** сначала нанесите урон игроку и вылечите его, затем проверьте отклонение каста на кулдауне,
 урон по манекену и зависимость урона от уровня. Экран показывает численные HP, готовность и причину
 отказа; Reset позволяет повторить опыт. Автоатака включается явно и не завершает демонстрацию до чтения.
+Вся связка сохранена в сцене: кнопки несут свой `AbilityNoCodeAction`, полосы HP и кулдауна — это
+`SetProgress`, переключатель Auto Zap включает `AbilityAutoCaster.enabled`; всё видно в инспекторе без Play Mode.
 Release source is `Assets/Neoxider/Samples~`, developer layout is `Assets/Neoxider/Samples`; imported
-UPM samples are under `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes`.
+UPM samples are under `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` (`12.0.0` for this release).
 
 1. Create a [UnitTemplate](./UnitTemplate.md) with a `health` pool (and `mana` if it casts).
 2. Create [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets, add them to an [AbilityLibrary](./AbilityLibrary.md).
@@ -236,7 +265,11 @@ Area effects and projectiles need world positions, so they only resolve with a w
 | Removal callbacks | `RemoveById`, `RemoveWhere` and `RemoveAllFrom` operate on a snapshot. Callbacks may remove starting instances or create replacements; replacements survive the outer removal. Return counts include only removals performed by that call. An engine cannot remove another engine's instance. |
 | Shield callbacks | After `shield_absorbed`, break checks use the current instance's live activity and capacity. Each exhausted instance emits at most one `shield_broken`; its own reaction runs before removal. Reapplying that id during the break creates a replacement that survives old-instance removal and participates in subsequent hits. |
 | Resource maximum bonuses | Set up pools before base properties. `max_health_bonus` / `max_mana_bonus` synchronize their pool maxima when set or changed by modifiers. Increasing a maximum does not heal. |
+| Direction casts | A `Direction` cast aims along the normalized `CastRequest.Direction` (world forward when it is zero or not finite). With a positive **Range** it reaches the effective cast range, `Range + cast_range_bonus` (at least 0), the same distance the range check and `AbilityAutoCaster` use; the aim vector's length does not matter. With Range `0` (unlimited) it reaches the aim vector's length, but at least `AbilitySystem.DefaultDirectionReach` (10): `transform.forward` flies 10 units, `target - origin` or `cursor - origin` arrives at the target or cursor. The reach is evaluated once per cast, so the cast's target point and, for projectile delivery, `SpawnRequest.Direction` always end at the same place, where the scene projectile detonates. |
+| Range checks | The cast range check, `QueryUnitsInRadius`, `AbilitySpatialGrid` and `AbilityAutoCaster` all use `AbilitySpatialGrid.IsWithinRadius` (inclusive, exact double-precision distance). A unit the auto-caster selects on the range boundary, or far away where float squares overflow, is therefore never rejected as `OutOfRange`. A negative effective range (`Range + cast_range_bonus < 0`) reaches nothing. Nearest-target choices (auto-caster, capped area effects, `chain`) rank candidates with `AbilitySpatialGrid.SqrDistance`, also in double. |
 | Cast receipt correlation | Nested effect contexts and modifier reactions retain the triggering `CastId`. Modifier lifecycle and shield receipts currently use `0`; they do not provide full per-cast attribution. |
+| Effect contexts | The `EffectContext` instances the system creates for casts, projectile hits, modifier ticks and event reactions are pooled and recycled as soon as their effects finish. A custom op must not keep such a context, its `PrimaryTargets` list or its `Random` after `Execute` returns; copy the values it needs. A `CreateNested` child of such a context shares its `Random` and has the same lifetime. Once the lifetime ends, `IsReleased` is `true` and `ExecuteEffects` ignores the context (with a gated, throttled `NeoDiagnostics` warning). Contexts you build with `new EffectContext(...)`, and their nested children, are never pooled or released. |
+| Unit destruction | `DestroyUnit` removes the unit, its slots and modifiers, and forgets the unit's modifier version entry (`ModifierEngine.ForgetOwner`), so long sessions that churn thousands of units do not accumulate per-unit bookkeeping. Call `ForgetOwner(unitId)` yourself only when you drive a standalone `ModifierEngine` and retire an owner without `DestroyUnit`; owners that still hold modifiers are kept. `ModifierEngine.TrackedOwnerCount` exposes the count for diagnostics. `ModifierEngine.VersionOf` values come from one engine-wide counter: compare them for equality only, since they jump between changes and read `0` once the owner is forgotten. |
 | Event subscriptions | `Events.Clear()` removes specific, global and Target user subscriptions while preserving the system's internal modifier-reaction route. Specific handlers run first; matching Target and global observers are then captured together; internal reactions run next; the captured observers run in common registration order. Specific callback subscription changes affect the current observer batch; internal/observer changes affect future or nested publications and cannot cancel an already captured batch. A standalone `new AbilityEventBus()` has only user subscriptions. Handler exceptions still propagate and can stop later phases. |
 
 For a scene unit, disable destroys its domain instance and re-enable creates a new one. Set its template, team override and level source before enable; [AbilityUnitBehaviour](./AbilityUnitBehaviour.md) explains the lifecycle. Retain event delegates and unsubscribe from `AbilitySystem.Events` when your listener is disposed. The event bus and domain are intended for one calling thread.
@@ -259,16 +292,18 @@ system.Events.UnsubscribeTarget(goblin.Id, onGoblin);
 
 Scene unit wrappers use Target subscriptions and keep their own identity check for disable/re-enable.
 Publishing copies only the matching Target observers plus global observers, rather than every registered
-unit wrapper. It allocates one observer array when that combined batch is nonempty; specific-event
-snapshots and internal reaction work remain separate. Registration also allocates its observer record.
+unit wrapper. Snapshots go into buffers reused per nesting level, so once they are warm a publication
+allocates nothing; registration allocates its observer record. An event without an id (`EventId == null`)
+is ignored.
 
-The bus exposes read-only cumulative `long` counters: `ObserverSnapshotCount` counts these nonempty arrays,
+The bus exposes read-only cumulative `long` counters: `ObserverSnapshotCount` counts nonempty observer snapshots,
 `ObserverSnapshotEntryCount` counts copied entries, and `ObserverInvocationCount` counts attempted
 global/Target calls (including a throwing call). They include nested publications, exclude specific-event
 handlers, and are retained by `Clear`; compare before/after values for a workload. They measure dispatch
 work, not elapsed CPU time or allocated bytes. With one matching unit wrapper and one global observer,
 each publication copies/invokes two observers whether 1, 100 or 1000 units are registered. The source
-regressions specify those workloads; runtime/allocation acceptance remains a separate central check.
+regressions specify those workloads; `AbilityHotPathAllocationTests` asserts that warm publications allocate
+nothing.
 
 ## Extensibility
 
@@ -299,11 +334,110 @@ AbilitySystemBehaviour.I.System.Ops.Register(new HitSparksOp());
 
 Nodes then set `OpId = "hit_sparks"`. Re-registering a built-in id overrides it. Custom ops read `node.Amount`, `node.CustomParam`, and the other node fields as they see fit.
 
+Rules for custom ops on hot paths:
+
+- The `context` (and any `CreateNested` child of it) is valid only during `Execute` (see **Effect contexts** above). To run more nodes later, for example a delayed or coroutine effect, store the ids and values you need and build a fresh `EffectContext` at that time. Check `context.IsReleased` if you are unsure.
+- `targets` is a scratch list owned by the system; read it, do not keep it.
+- Keep `Execute` allocation-free when the op runs per tick or per hit: reuse fields for scratch lists and, if the op can re-enter itself through event reactions, keep one scratch per nesting level (see `ChainEffectOperation`).
+
 ## Determinism
 
-Every cast carries a seed. `CastRequest.Seed` (when non-zero) is used directly; otherwise the system derives one from the cast id and caster. Chance rolls (`EffectNodeData.Chance`) and built-in combat randomness use `XorShiftRandom` (`IRandomSource`). The domain does not read `UnityEngine.Random` or `Time`.
+Every cast carries a seed. `CastRequest.Seed` (when non-zero) is used directly; otherwise the system derives one from the cast id and caster. Chance rolls (`EffectNodeData.Chance`) and built-in combat randomness use `XorShiftRandom` (`IRandomSource`). The domain does not read `UnityEngine.Random` or `Time`. `XorShiftRandom.Reseed(seed)` restarts an existing instance exactly as `new XorShiftRandom(seed)` would, so pooled contexts (and your own reusable generators) need no new object per cast.
+
+Each modifier tick and each modifier event reaction rolls with its own seed: the instance seed for the first roll, then the instance seed mixed with the tick/reaction count. A 50% tick node therefore fires on roughly half the ticks (not on all or none), and an identical tick/event sequence still rolls identically.
+
+**Replay compatibility.** Before the 2026-11 quality pass every tick and reaction of a modifier instance reused one seed. The first tick/reaction roll is unchanged, but every later one now uses a different stream, so replays or lockstep sessions recorded with an older package version diverge once a modifier ticks or reacts a second time. Re-record such replays.
 
 Reproduce the same initial data, unit/cast creation order, tick-step sequence and adapter query order as well as the seed. Unlimited area selectors preserve adapter order; capped areas and chain bounces sort by distance with a unit-id tie-break. The eight-tick modifier catch-up cap means a single large step can differ from many small steps. This is a replay-friendly runtime seam, not a complete cross-platform lockstep or snapshot protocol.
+
+## Performance for many units
+
+The domain is built for survivor-scale combat (hundreds of enemies, projectiles and DoTs):
+
+- In the domain, casts (instant and projectile delivery, including costs and capped area effects that keep the nearest N targets), projectile hits and releases, modifier ticks, event reactions, event publication, `chain`, `dispel` and `remove_modifier` allocate nothing once their pooled buffers are warm. In a scene, hub radius queries (linear scan, grid query, grid rebuild and grid patched by `TryMoveUnit`) and an `AbilityAutoCaster` pass that casts allocate nothing either; so do `AbilitySpatialGrid` queries, moves and removals. `Tests/Edit/Abilities/AbilityHotPathAllocationTests.cs` guards these paths with Unity's native `GC.Alloc` profiler counter (`Neo.Tests.Performance.GcAllocCounter`).
+- The explicit `AbilityDomainBenchmarks` (category `Performance`) print `NEO_PERF` rows for a system tick with one damage-over-time modifier per unit (64, 256 and 1024 units) and for a publication to one Target observer while 1, 100 or 1000 other units hold Target subscriptions; the publication rows should stay flat across the three counts, because Target observers are looked up by unit id and unrelated ones are never copied or invoked (the benchmark asserts they are never invoked).
+- Property values are cached per unit and invalidated by modifier/base-value versions; `GetProperty` is a dictionary lookup on the hot path.
+- Ids stay case-insensitive everywhere (properties, states, slots, catalogs, op ids, event ids, reactions, damage types), with exactly the `StringComparer.OrdinalIgnoreCase` rules, but the Abilities domain compares and hashes them with its own ASCII fast path (resource pools of `Neo.Core` still use `OrdinalIgnoreCase`): in Unity's Mono an `OrdinalIgnoreCase` hash of a 12-character id costs about ten times an ordinal lookup, and every unit, cast and tick does many such lookups. Keyed lookups in your own per-frame code that need case-insensitive ids pay the same price; prefer ordinal keys there when the ids come from the same constants.
+- Allocation that remains is per lifetime, not per frame: creating a unit (`CreateUnit`, pools, slots), applying a new modifier instance, and subscribing handlers. A modifier applied again after the previous one expired allocates only its `ModifierInstance`: the owner's modifier list is recycled.
+- In a scene, the hub spawns projectile, zone and summon prefabs through `PoolManager`. That spawn is outside the domain guarantee; give the archetype prefabs a pool with a suitable initial size so steady-state combat reuses instances instead of instantiating them.
+
+### Spatial queries for many units
+
+Radius queries (`AreaAroundTarget` / `AreaAroundCaster` nodes, `chain` hops, projectile hit tests, auto-caster target search) go through `IAbilityWorldAdapter.QueryUnitsInRadius`. The scene hub scans every registered unit by default. For large scenes set **Spatial Cell Size** on [AbilitySystemBehaviour](./AbilitySystemBehaviour.md) (or `SpatialCellSize` from code): the hub then snapshots positions once per frame into an `AbilitySpatialGrid` and each query visits only nearby cells. Motion ops (`TryMoveUnit`) and units that unregister (for example a killed enemy) update that snapshot in place, so frames full of knockback and kills do not rebuild it before every query; a newly registered unit still triggers one rebuild, which keeps grid results in the linear scan's order. To measure the trade-off on your machine, run the explicit `AbilityQueryBenchmarks` (category `Performance`): it prints `NEO_PERF` rows for the linear scan, the warm grid, a grid rebuilt before every query and a grid patched by a `TryMoveUnit` before every query at 64, 256 and 1024 units.
+
+Custom world adapters can use the same grid:
+
+```csharp
+public sealed class ArenaWorldAdapter : IAbilityWorldAdapter
+{
+    private readonly AbilitySpatialGrid _grid = new AbilitySpatialGrid(cellSize: 3f);
+    private readonly Dictionary<UnitId, Vector3> _positions = new Dictionary<UnitId, Vector3>();
+    private bool _dirty = true;
+
+    // Your movement code calls this. A known unit is moved inside the grid; a new unit changes the fill
+    // order, so the grid is refilled lazily on the next query.
+    public void SetPosition(UnitId unit, Vector3 position)
+    {
+        bool known = _positions.ContainsKey(unit);
+        _positions[unit] = position;
+        if (!known || _dirty || !_grid.Move(unit, position))
+        {
+            _dirty = true;
+        }
+    }
+
+    public void QueryUnitsInRadius(Vector3 point, float radius, List<UnitId> results)
+    {
+        if (_dirty)
+        {
+            _grid.Clear();
+            foreach (KeyValuePair<UnitId, Vector3> pair in _positions)
+            {
+                _grid.Add(pair.Key, pair.Value);
+            }
+
+            _dirty = false;
+        }
+
+        _grid.Query(point, radius, results); // insertion order, inclusive radius, no allocation when warm
+    }
+
+    public bool TryGetPosition(UnitId unit, out Vector3 position)
+    {
+        return _positions.TryGetValue(unit, out position);
+    }
+
+    public bool TryMoveUnit(UnitId unit, Vector3 newPosition)
+    {
+        if (!_positions.ContainsKey(unit))
+        {
+            return false;
+        }
+
+        SetPosition(unit, newPosition);
+        return true;
+    }
+
+    public void RequestSpawn(SpawnRequest request)
+    {
+    }
+}
+```
+
+The grid returns ids in insertion order, so an adapter that fills it in the same order as its linear scan keeps area-effect results (and therefore replays) identical. Cell size about the typical query radius works well; queries whose radius spans more cells than there are units fall back to a plain scan.
+
+`AbilitySpatialGrid` API: `new AbilitySpatialGrid(float cellSize = 4f)`, `CellSize` (changing it clears the grid), `Count` (entries added since `Clear`, removed ones included), `Clear()`, `int Add(UnitId, Vector3)` (returns the entry's insertion index) and `Query(Vector3 point, float radius, List<UnitId> results)` (appends, does not clear `results`). Between fills, `bool Move(UnitId, Vector3)` relocates an added unit and `bool Remove(UnitId)` takes it out; both keep the insertion order of every other entry, so later queries return exactly what a refill with the live entries in the same order would. They return `false` for an id that was not added since the last `Clear` (or was removed) and cost O(1) plus one cell's entries; the first of them after a fill indexes the ids once (O(`Count`)). Membership is the static `AbilitySpatialGrid.IsWithinRadius(position, center, radius)`: inclusive, a negative radius acts like its absolute value, NaN never matches, and the distance is computed in double precision. `AbilitySpatialGrid.SqrDistance(a, b)` returns that squared distance as a `double` (finite for finite inputs), for ranking the candidates a query returned, e.g. picking the nearest one. Use the same test in a custom adapter's linear path so both paths agree for far-away coordinates and huge radii: a float `(a - b).sqrMagnitude <= r * r` overflows to infinity beyond about `1.8e19`, and whether `r * r` overflows depends on the runtime keeping float intermediates in double precision.
+
+```csharp
+// Linear fallback that returns exactly what the grid returns:
+foreach (KeyValuePair<UnitId, Vector3> pair in _positions)
+{
+    if (AbilitySpatialGrid.IsWithinRadius(pair.Value, point, radius))
+    {
+        results.Add(pair.Key);
+    }
+}
+```
 
 ## Worked examples
 

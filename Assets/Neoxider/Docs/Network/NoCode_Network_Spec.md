@@ -1,5 +1,14 @@
 # NoCode Multiplayer Guidelines (Spec)
 
+**What it is:** the rule set every networked NoCode component in NeoxiderTools follows (opt-in `isNetworked`,
+server-validated commands, RPC-driven events, late-join state).
+
+**How to use:**
+1. Read it before writing a new networked component; derive it from `NeoNetworkComponent`.
+2. Check a new component against each numbered rule below.
+
+---
+
 This document describes the fundamental rules and conventions for NeoxiderTools network components, to keep "NoCode"-style automatic synchronization consistent.
 
 ## Rule 1: A single boolean toggle — `isNetworked`

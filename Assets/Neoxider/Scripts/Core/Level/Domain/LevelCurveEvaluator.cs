@@ -161,7 +161,7 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            // RequiredXp(L) = base * factor^(L-1); estimate completed steps, then verify adjacent thresholds.
+            // WHY: RequiredXp(L) = base * factor^(L-1); estimate completed steps, then verify adjacent thresholds.
             int level = LevelFromSteps(Math.Log(Math.Max(1d, totalXp / (double)baseValue)) / Math.Log(factor));
             if (level > 1 && baseValue * Math.Pow(factor, level - 1d) > totalXp)
             {
@@ -365,7 +365,7 @@ namespace Neo.Core.Level
 
         private static int GetXpDifference(double requiredXp, int totalXp)
         {
-            // Subtract before converting: a threshold beyond Int32 can still have a small remaining gap.
+            // WHY: Subtract before converting: a threshold beyond Int32 can still have a small remaining gap.
             double difference = Math.Ceiling(requiredXp) - totalXp;
             if (double.IsNaN(difference) || difference <= 0d)
             {

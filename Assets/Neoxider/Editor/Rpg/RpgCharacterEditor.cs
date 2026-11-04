@@ -28,6 +28,11 @@ namespace Neo.Editor.Rpg
         private SerializedProperty _authorityMode;
         private SerializedProperty _isNetworked;
 
+        // WHY: the event list used to be rediscovered by walking every visible property on each inspector
+        // event. The serialized layout of the target cannot change while this editor lives, so it is
+        // collected once.
+        private readonly System.Collections.Generic.List<SerializedProperty> _eventProperties = new();
+
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
         protected override void ProcessAttributeAssignments()
@@ -57,6 +62,18 @@ namespace Neo.Editor.Rpg
             _autoSave = serializedObject.FindProperty("_autoSave");
             _authorityMode = serializedObject.FindProperty("_authorityMode");
             _isNetworked = serializedObject.FindProperty("isNetworked");
+
+            _eventProperties.Clear();
+            SerializedProperty iterator = serializedObject.GetIterator();
+            bool enterChildren = true;
+            while (iterator.NextVisible(enterChildren))
+            {
+                enterChildren = false;
+                if (iterator.name.StartsWith("_on", System.StringComparison.Ordinal))
+                {
+                    _eventProperties.Add(iterator.Copy());
+                }
+            }
         }
 
         protected override void DrawCustomNeoxiderInspectorGUI()
@@ -124,29 +141,24 @@ namespace Neo.Editor.Rpg
                 EditorGUILayout.LabelField("Resources / Stats",
                     $"{character.Resources.Count} / {character.Stats.Count}");
             }
+
+            if (Application.isPlaying)
+            {
+                // WHY: HP and level change during play while the editor sees no input; a capped live lease keeps
+                // the readout current and lapses on its own once the inspector is hidden.
+                EnsureLiveRepaint();
+            }
         }
 
         private void DrawEventsSection()
         {
-            var events = new System.Collections.Generic.List<SerializedProperty>();
-            SerializedProperty iterator = serializedObject.GetIterator();
-            bool enterChildren = true;
-            while (iterator.NextVisible(enterChildren))
-            {
-                enterChildren = false;
-                if (iterator.name.StartsWith("_on"))
-                {
-                    events.Add(iterator.Copy());
-                }
-            }
-
-            if (events.Count == 0)
+            if (_eventProperties.Count == 0)
             {
                 return;
             }
 
             EditorGUILayout.Space(4);
-            DrawUnityEventsFoldout(events);
+            DrawUnityEventsFoldout(_eventProperties);
         }
     }
 }

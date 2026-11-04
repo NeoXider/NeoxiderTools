@@ -25,8 +25,14 @@ The ability's **Projectile Speed** overrides **Speed** when non-zero (passed as 
 | Member | Description |
 |--------|-------------|
 | `void OnSpawned(SpawnRequest request, AbilitySystemBehaviour hub)` | `ISpawnedAbilityEntity` entry point. The hub calls it on spawn with the cast id, owner, target/direction, and speed. You normally never call it yourself. |
+| `bool IsFlying` | `true` from `OnSpawned` until the projectile finishes, despawns or is disabled. |
+| `uint CastId` | The cast whose hits this projectile reports (`0` before the first spawn). |
 
-Behavior: each frame it advances, re-homes toward the live target if it has one, and calls `QueryUnitsInRadius`. For each enemy of the owner within **Hit Radius** it calls `NotifyProjectileHit(castId, hitUnit, position)` (running Impact Effects), counts a hit, and despawns at **Max Hits**. A directional/point projectile with no homing target detonates at its target point (reporting a hit with `UnitId.None`). It despawns at **Max Lifetime**.
+Behavior: each frame it advances, re-homes toward the live target if it has one, and calls `QueryUnitsInRadius`. For each enemy of the owner within **Hit Radius** it calls `NotifyProjectileHit(castId, hitUnit, position)` (running Impact Effects), counts a hit, and despawns at **Max Hits**. A directional/point projectile with no homing target detonates at `SpawnRequest.Position + SpawnRequest.Direction` (reporting a hit with `UnitId.None`): the cast point for `Point` abilities, and the end of the ability's reach for `Direction` skillshots. A positive **Range** reaches `Range + cast_range_bonus` along the aim, whatever the length of the vector passed to `TryCastTowards`. With Range `0` (unlimited) the reach is that vector's length, at least `AbilitySystem.DefaultDirectionReach` (10), so `target - origin` arrives at the target. It despawns at **Max Lifetime**.
+
+Lifecycle: despawning releases the pending cast (`ReleaseProjectileCast`) and returns the object to the pool. If the object is disabled or destroyed from outside (scene unload, pool clear, `SetActive(false)`), `OnDisable` releases the pending cast immediately, so later hit reports for that cast return `false` instead of waiting for the domain timeout. If the hub is destroyed while the projectile flies, the projectile returns itself to the pool on its next update.
+
+Performance: the projectile caches its transform and does one radius query per frame. With many projectiles enable **Spatial Cell Size** on the hub so each query visits only nearby units.
 
 ## Example
 
@@ -38,6 +44,8 @@ Casting then handles the rest:
 caster.TryCastAtUnit("fireball", enemyUnitBehaviour); // spawns a homing projectile
 // or
 caster.TryCastAtPoint("fireball", groundPoint);       // flies to the point, detonates there
+// or, for a Direction-targeted skillshot:
+caster.TryCastTowards("arrow", transform.forward);    // flies Range (+ cast_range_bonus) along the aim, hitting enemies on the way
 ```
 
 ## Pitfalls

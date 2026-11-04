@@ -72,6 +72,8 @@ namespace Neo.Tools
 
         private Vector3 _originalPosition;
         private Quaternion _originalRotation;
+        private Vector3 _restorePosition;
+        private Quaternion _restoreRotation = Quaternion.identity;
         private Tween _positionTween;
         private Tween _rotationTween;
         private Sequence _sequence;
@@ -149,12 +151,16 @@ namespace Neo.Tools
             StopShake();
             if (_shakeVersion != expectedVersion || !isActiveAndEnabled)
             {
-                // A stop listener issued a newer request.
+                // WHY: A stop listener issued a newer request.
                 return;
             }
 
             int shakeVersion = ++_shakeVersion;
             _activeShakeType = shakeType;
+            // WHY: a relative shake must settle where it started; the Awake pose is wrong for a camera that
+            // moved (follow camera) and snapped it back on every StopShake or interrupting shake.
+            _restorePosition = relativeShake ? transform.localPosition : _originalPosition;
+            _restoreRotation = relativeShake ? transform.localRotation : _originalRotation;
             IsShaking = true;
 
             Sequence sequence = DOTween.Sequence().SetUpdate(useUnscaledTime).Pause();
@@ -223,7 +229,7 @@ namespace Neo.Tools
                 OnShakeComplete?.Invoke();
             });
 
-            // The sequence must already be owned when a listener stops or replaces this shake.
+            // WHY: The sequence must already be owned when a listener stops or replaces this shake.
             OnShakeStart?.Invoke();
             if (shakeVersion == _shakeVersion && IsShaking)
             {
@@ -257,12 +263,12 @@ namespace Neo.Tools
 
             if (_activeShakeType == ShakeType.Position || _activeShakeType == ShakeType.Both)
             {
-                transform.localPosition = _originalPosition;
+                transform.localPosition = _restorePosition;
             }
 
             if (_activeShakeType == ShakeType.Rotation || _activeShakeType == ShakeType.Both)
             {
-                transform.localRotation = _originalRotation;
+                transform.localRotation = _restoreRotation;
             }
 
             IsShaking = false;

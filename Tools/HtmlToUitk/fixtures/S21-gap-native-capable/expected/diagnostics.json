@@ -1,9 +1,0 @@
-[
-  {
-    "rule": "C002",
-    "severity": "Info",
-    "tier": "Native",
-    "file": "page.html",
-    "line": 9
-  }
-]

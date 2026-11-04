@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75fd169d89e4c884587c859e88aa5b96, type: 3}
+  m_Name: DemoQuest_ScoutRuins
+  m_EditorClassIdentifier: Neo.Quest::Neo.Quest.QuestConfig
+  _id: demo_scout_ruins
+  _title: Scout Ruins
+  _description: Find the entrance to the sunken ruins.
+  _icon: {fileID: 0}
+  _objectives:
+  - _type: 3
+    _targetId: ruins_gate
+    _requiredCount: 1
+    _displayText: Reach the ruins gate
+    _condition:
+      _sourceMode: 0
+      _useSceneSearch: 0
+      _searchObjectName: 
+      _waitForObject: 0
+      _findRetryIntervalSeconds: 0
+      _prefabPreview: {fileID: 0}
+      _sourceObject: {fileID: 0}
+      _componentIndex: 0
+      _componentOccurrence: 0
+      _componentTypeName: 
+      _propertyName: 
+      _valueType: 0
+      _compareOp: 0
+      _invert: 0
+      _thresholdSource: 0
+      _thresholdInt: 0
+      _thresholdFloat: 0
+      _thresholdBool: 0
+      _thresholdString: 
+      _otherSourceMode: 0
+      _otherUseSceneSearch: 0
+      _otherSearchObjectName: 
+      _otherWaitForObject: 0
+      _otherFindRetryIntervalSeconds: 0
+      _otherSourceObject: {fileID: 0}
+      _otherComponentIndex: 0
+      _otherComponentOccurrence: 0
+      _otherComponentTypeName: 
+      _otherPropertyName: 
+      _isMethodWithArgument: 0
+      _propertyArgumentKind: 0
+      _propertyArgumentInt: 0
+      _propertyArgumentFloat: 0
+      _propertyArgumentString: 
+      _otherIsMethodWithArgument: 0
+      _otherPropertyArgumentKind: 0
+      _otherPropertyArgumentInt: 0
+      _otherPropertyArgumentFloat: 0
+      _otherPropertyArgumentString: 
+  _startConditions: []
+  _nextQuestIds: []

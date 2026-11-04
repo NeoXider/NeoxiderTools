@@ -1,6 +1,10 @@
 ﻿# RpgStatsManager
 
-`RpgStatsManager` was removed in v8.4.0.
+**What it is:** a legacy pointer page: `RpgStatsManager` was removed in v8.4.0.
+
+**How to use:** migrate to [RpgCharacter](./RpgCharacter.md) with the steps below.
+
+---
 
 Use [RpgCharacter](./RpgCharacter.md). It replaces the old singleton profile manager and is now the single source of truth for HP/Mana/Stamina/custom resources, stats, level, XP, upgrade points, buffs, statuses, persistence, and network synchronization.
 

@@ -131,7 +131,7 @@ namespace Neo.Editor.Tests
             model.Teleport(0f, 0f);
             for (uint t = 1; t <= 10; t++) model.Step(t, 1f, 0f, Speed);
 
-            // the server has applied ticks 1..6 only: it stands at 6 ticks of travel
+            // WHY: the server has applied ticks 1..6 only: it stands at 6 ticks of travel
             float serverX = 6 * Speed * Tick;
             PredictionReport report = model.Reconcile(serverX, 0f, 6u, Speed);
 
@@ -149,7 +149,7 @@ namespace Neo.Editor.Tests
             ToyServer server = new ToyServer();
             model.Teleport(0f, 0f);
 
-            const int delaySteps = 6; // 120 ms one way
+            const int delaySteps = 6; // WHY: 120 ms one way
             uint tick = 0;
             float maxError = 0f;
             int snaps = 0;

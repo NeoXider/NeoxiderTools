@@ -1,6 +1,15 @@
 ﻿# ShopBundleData
 
-**Purpose:** A `ScriptableObject` describing a **bundle** — a set of `ShopItemData` sold for one combined price. On successful purchase the Shop adds every bundle item to `ShopProfileData.OwnedItemIds` and (optionally) grants each item's `InventoryItemData` to the attached inventory.
+**What it is:** a `ScriptableObject` (`Scripts/Shop/Data/ShopBundleData.cs`, namespace `Neo.Shop`) describing a
+**bundle** — a set of `ShopItemData` sold for one combined price. On a successful purchase the Shop marks every
+single-purchase bundle item as owned and raises `OnPurchasedId` per item; the optional
+[ShopInventoryGrantBridge](./Bridges.md) turns those events into inventory grants.
+
+**How to use:**
+1. Create it via `Create > Neoxider > Shop > Shop Bundle Data`, fill `_items` and `_bundlePrice`.
+2. Add it to the Shop's `_bundles` and buy it with `shop.TryBuyBundle(bundle)` / `BuyBundle(bundle)`.
+
+---
 
 Available since version **8.5.0**.
 
@@ -29,18 +38,18 @@ Use `Currency Override Save Key` for asset-safe multi-currency bundles.
 | `_sprite`, `_icon` | Preview and icon. |
 | `_bundlePrice` | Bundle price. `0` = free bundle. |
 | `_isSinglePurchase` | When `true`, the bundle id lands in `OwnedBundleIds` and cannot be purchased again. |
-| `_items` | `ShopItemData` array the player receives. Per-item inventory granting is configured on each item (see [ShopItemData](./ShopItemData.md)). |
+| `_items` | `ShopItemData` array the player receives. Inventory granting is configured per item id in the [bridge](./Bridges.md) mapping table. |
 | `_currencyOverrideSaveKey` | Optional `Money.SaveKey`. When set, the bundle is charged from the matching `Money`; when empty, the Shop default `moneySpendSource` is used, then `Money.I`. |
 
 ## Purchase behaviour
 
-`Shop.BuyBundle(id)`:
+`Shop.BuyBundle(id)` / `Shop.TryBuyBundle(id)`:
 
-1. If `_purchaseFlow` is `Browse` or `EquipOnly` — no-op.
-2. If the bundle is `isSinglePurchase` and already in `OwnedBundleIds` — no-op.
-3. Charges `_bundlePrice` through the resolved `IMoneySpend` (`_currencyOverrideSaveKey` first, then Shop default).
-4. For each `ShopItemData` in `_items`: when `isSinglePurchase`, add to `OwnedItemIds`; when `InventoryItem != null` and the Shop has an inventory, call `AddItemData(item, amount)`.
-5. Events: `OnPurchasedId(itemId)` per item, `OnPurchasedBundle(bundle)` after all grants. Inventory grants happen via [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), which subscribes to `OnPurchasedId`.
+1. If `_purchaseFlow` is `Browse` or `EquipOnly` — no-op (`Unavailable`).
+2. If the bundle is `isSinglePurchase` and already in `OwnedBundleIds` — no-op (`AlreadyOwned`).
+3. Charges `_bundlePrice` through the resolved `IMoneySpend` (`_currencyOverrideSaveKey` first, then Shop default); a rejected debit raises `OnPurchaseFailedId(bundleId)` (`InsufficientFunds`).
+4. Adds every single-purchase item to `OwnedItemIds` (and the bundle to `OwnedBundleIds` when single-purchase), then saves the profile; a failed save rolls back and refunds (`CommitFailed`).
+5. Events: `OnShopChanged`, `OnPurchasedId(itemId)` per item, then `OnPurchasedBundle(bundle)` (`Purchased`). Inventory grants happen via [`ShopInventoryGrantBridge`](./Bridges.md), which subscribes to `OnPurchasedId`.
 
 ## Code API
 
@@ -49,10 +58,10 @@ ShopBundleData bundle = ...;
 bundle.Id;
 bundle.price;
 bundle.isSinglePurchase;
-foreach (var item in bundle.Items) { ... }
+foreach (ShopItemData item in bundle.Items) { ... }
 bundle.CurrencyOverrideSaveKey;
 ```
 
 ## See also
 
-- [Shop](./Shop.md) · [ShopItemData](./ShopItemData.md) · [Module root](../README.md)
+- [Shop](./Shop.md) · [ShopItemData](./ShopItemData.md) · [Module root](./README.md)

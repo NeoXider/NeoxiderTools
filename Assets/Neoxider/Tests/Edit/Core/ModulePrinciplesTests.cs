@@ -199,7 +199,9 @@ namespace Neo.Editor.Tests
         // camelCase fields / properties that violate the PascalCase rule.
         // Do NOT add new entries here — fix the violation instead.
         // [Obsolete]-marked members are excluded at scan time (back-compat forwarders).
-        // TODO: migrate these to PascalCase + [Obsolete] forwarders.
+        // WHY: the migration (PascalCase members, [FormerlySerializedAs] on renamed serialized fields, [Obsolete]
+        // forwarders under the old names) is planned module by module in dev-docs/TODO.md, section "camelCase public
+        // members"; delete a file's entry here in the change that migrates it.
         private static readonly HashSet<string> CamelCasePascalViolationAllowedFiles = new()
         {
             "Assets/Neoxider/Scripts/Audio/AMSettings.cs",
@@ -314,13 +316,26 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Tools/Debug/ErrorLogger.cs",
             "Assets/Neoxider/Scripts/Tools/Move/UniversalRotator.cs",
             "Assets/Neoxider/Scripts/Tools/Text/TimeToText.cs",
+            // WHY: starObjects/scoreManager/stars are shipped serialized API that predates this check. The scan
+            // used to see only declarations starting with "public", so "[Header] public GameObject[] starObjects;"
+            // on one line hid them until their attributes moved to separate lines; this is not a new violation.
+            "Assets/Neoxider/Scripts/Tools/View/StarView.cs",
+            // WHY: shipped serialized camelCase fields (prize/wins, toggleDebug, x/y, intecactable) that the scan
+            // missed while it ignored declarations with same-line attributes; renaming them needs a migration.
+            "Assets/Neoxider/Scripts/Bonus/WheelFortune/WheelMoneyWin.cs",
+            "Assets/Neoxider/Scripts/Tools/InteractableObject/ToggleObject.cs",
+            "Assets/Neoxider/Scripts/UI/AnchorMove.cs",
+            "Assets/Neoxider/Scripts/UI/Simple/ButtonChangePage.cs",
         };
 
-        // WHY: Matches: "public <type> <camelCaseName>" where the member name starts with a lowercase letter.
+        // WHY: Matches: "public <type> <camelCaseName>" where the member name starts with a lowercase letter,
+        // including after same-line attributes ("[Header("X")] public int foo;"), so reformatting attributes
+        // neither hides nor reveals a violation.
         // Excludes: operator overloads, explicit interface implementations.
         // [Obsolete] forwarders are excluded by a separate line-context check.
         private static readonly Regex CamelCasePublicMemberPattern = new Regex(
-            @"^\s*public\s+(?:static\s+|readonly\s+|override\s+|virtual\s+|abstract\s+|sealed\s+|new\s+)*" +
+            @"^\s*(?:\[[^\]]*\]\s*)*" +
+            @"public\s+(?:static\s+|readonly\s+|override\s+|virtual\s+|abstract\s+|sealed\s+|new\s+)*" +
             @"(?!operator\b)(?!explicit\b)(?!implicit\b)" +
             @"[^\s(]+\s+([a-z][a-zA-Z0-9_]*)\s*[{;=(]",
             RegexOptions.Compiled);
@@ -363,7 +378,7 @@ namespace Neo.Editor.Tests
 
         private static List<string> FindPublicNameOffenders(string path, string source)
         {
-            // Preserve offsets/newlines while removing braces and declarations inside comments/literals.
+            // WHY: Preserve offsets/newlines while removing braces and declarations inside comments/literals.
             string code = NonCodePattern.Replace(source,
                 (Match match) => Regex.Replace(match.Value, @"[^\r\n]", " "));
             string[] lines = code.Replace("\r", string.Empty).Split('\n');
@@ -376,8 +391,8 @@ namespace Neo.Editor.Tests
                 Match member = CamelCasePublicMemberPattern.Match(lines[i]);
                 if (member.Success && IsCurrentTypePublic(scopes, false) && member.Groups[1].Value != "operator")
                 {
-                    bool isObsolete = false;
-                    for (int j = i - 1; j >= 0 && j >= i - 3; j--)
+                    bool isObsolete = lines[i].Contains("[Obsolete") || lines[i].Contains("[System.Obsolete");
+                    for (int j = i - 1; !isObsolete && j >= 0 && j >= i - 3; j--)
                     {
                         string previous = lines[j].Trim();
                         if (previous.Length == 0) continue;
@@ -438,6 +453,17 @@ namespace Neo.Editor.Tests
                 "    public string lowercase;\n}";
             CollectionAssert.AreEqual(new[] { "control.cs:4: public member 'lowercase' should be PascalCase" },
                 FindPublicNameOffenders("control.cs", source));
+        }
+
+        [Test]
+        public void PublicNameRule_LowercaseMemberAfterSameLineAttributes_IsRejected()
+        {
+            const string source = "public class PublicApi\n{\n" +
+                "    [Header(\"Settings [x]\")] [Range(0, 1)] public float lowercase = 0.5f;\n" +
+                "    [System.Obsolete(\"Use Upper\")] public int legacy;\n}";
+            CollectionAssert.AreEqual(new[] { "control.cs:3: public member 'lowercase' should be PascalCase" },
+                FindPublicNameOffenders("control.cs", source),
+                "Same-line attributes must not hide a member, and a same-line [Obsolete] still marks a forwarder.");
         }
 
         [Test]

@@ -13,6 +13,31 @@ namespace Neo.UI
 
     public static class UIMeshRigFalloffPresets
     {
+        private static readonly AnimationCurve[] SharedCurves = new AnimationCurve[5];
+
+        /// <summary>
+        ///     Read-only curve for <paramref name="preset" />, created once and shared. Evaluation paths use it
+        ///     to avoid allocating a curve per point per frame; never modify the returned curve.
+        /// </summary>
+        internal static AnimationCurve GetShared(UIMeshRigFalloffPreset preset)
+        {
+            int index = (int)preset;
+            if (index < 0 || index >= SharedCurves.Length)
+            {
+                return Create(preset);
+            }
+
+            AnimationCurve curve = SharedCurves[index];
+            if (curve == null)
+            {
+                curve = Create(preset);
+                SharedCurves[index] = curve;
+            }
+
+            return curve;
+        }
+
+        /// <summary>Creates a new editable falloff curve for <paramref name="preset" /> (Custom gets EaseInOut).</summary>
         public static AnimationCurve Create(UIMeshRigFalloffPreset preset)
         {
             switch (preset)

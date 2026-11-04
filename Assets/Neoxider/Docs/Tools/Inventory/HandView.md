@@ -1,6 +1,13 @@
 ﻿# HandView
 
-**Purpose:** A helper component added to the **item prefab** (WorldDropPrefab). Defines local position, rotation, and scale offsets when the item is equipped in the hand via `InventoryHand`.
+**What it is:** `MonoBehaviour` placed on an item's World Drop Prefab that defines its local position, rotation and scale while equipped by `InventoryHand`. `Scripts/Tools/Inventory/Runtime/HandView.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `HandView` to the item prefab (root or child).
+2. Tune **Position Offset**, **Rotation Offset** and **Scale In Hand** against the hand anchor.
+3. `InventoryHand` reads it when it spawns the visual; no code is required.
+
+---
 
 ## Fields (Inspector)
 

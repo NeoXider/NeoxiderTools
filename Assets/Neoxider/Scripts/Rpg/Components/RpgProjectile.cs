@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -23,8 +22,7 @@ namespace Neo.Rpg
 
         private readonly HashSet<GameObject> _hitTargets = new();
         private readonly HashSet<IRpgCombatReceiver> _hitReceivers = new();
-        private RaycastHit[] _hitBuffer;
-        private RaycastHit2D[] _hit2DBuffer;
+        private RpgPhysicsQueryBuffers _queries;
         private RpgAttackDefinition _definition;
         private Vector3 _direction = Vector3.forward;
         private float _elapsed;
@@ -36,29 +34,6 @@ namespace Neo.Rpg
         private float _speed;
         private int _generation;
         private bool _expired;
-        private const int MaxReusableHits = 4096;
-
-        private sealed class HitComparer : IComparer<RaycastHit>
-        {
-            public static readonly HitComparer Instance = new();
-            public int Compare(RaycastHit left, RaycastHit right)
-            {
-                int distance = left.distance.CompareTo(right.distance);
-                return distance != 0 ? distance : string.CompareOrdinal(
-                    NeoDiagnostics.StableId(left.collider), NeoDiagnostics.StableId(right.collider));
-            }
-        }
-
-        private sealed class Hit2DComparer : IComparer<RaycastHit2D>
-        {
-            public static readonly Hit2DComparer Instance = new();
-            public int Compare(RaycastHit2D left, RaycastHit2D right)
-            {
-                int distance = left.distance.CompareTo(right.distance);
-                return distance != 0 ? distance : string.CompareOrdinal(
-                    NeoDiagnostics.StableId(left.collider), NeoDiagnostics.StableId(right.collider));
-            }
-        }
 
         private void Update()
         {
@@ -115,6 +90,8 @@ namespace Neo.Rpg
         private void OnDisable()
         {
             _generation++;
+            // WHY: a pooled projectile must not keep the colliders of its last cast alive.
+            _queries?.Release();
         }
 
         private void Expire()
@@ -128,54 +105,6 @@ namespace Neo.Rpg
             }
         }
 
-        private int Query3D(Vector3 from, Vector3 direction, float distance)
-        {
-            if (_hitBuffer == null || _hitBuffer.Length == 0)
-            {
-                _hitBuffer = new RaycastHit[Mathf.Clamp(_maxHitsPerCast, 1, MaxReusableHits)];
-            }
-            while (true)
-            {
-                int count = Physics.SphereCastNonAlloc(from, Mathf.Max(0.01f, _definition.Radius), direction,
-                    _hitBuffer, distance, _definition.TargetLayers);
-                if (count < _hitBuffer.Length)
-                {
-                    return count;
-                }
-                if (_hitBuffer.Length >= MaxReusableHits)
-                {
-                    _hitBuffer = Physics.SphereCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction,
-                        distance, _definition.TargetLayers);
-                    return _hitBuffer.Length;
-                }
-                _hitBuffer = new RaycastHit[Mathf.Min(MaxReusableHits, _hitBuffer.Length * 2)];
-            }
-        }
-
-        private int Query2D(Vector3 from, Vector3 direction, float distance)
-        {
-            if (_hit2DBuffer == null || _hit2DBuffer.Length == 0)
-            {
-                _hit2DBuffer = new RaycastHit2D[Mathf.Clamp(_maxHitsPerCast, 1, MaxReusableHits)];
-            }
-            while (true)
-            {
-                int count = Physics2D.CircleCastNonAlloc(from, Mathf.Max(0.01f, _definition.Radius), direction,
-                    _hit2DBuffer, distance, _definition.TargetLayers);
-                if (count < _hit2DBuffer.Length)
-                {
-                    return count;
-                }
-                if (_hit2DBuffer.Length >= MaxReusableHits)
-                {
-                    _hit2DBuffer = Physics2D.CircleCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction,
-                        distance, _definition.TargetLayers);
-                    return _hit2DBuffer.Length;
-                }
-                _hit2DBuffer = new RaycastHit2D[Mathf.Min(MaxReusableHits, _hit2DBuffer.Length * 2)];
-            }
-        }
-
         private void HandleHitsBetween(Vector3 from, Vector3 to)
         {
             Vector3 delta = to - from;
@@ -186,14 +115,18 @@ namespace Neo.Rpg
             }
 
             Vector3 direction = delta / distance;
+            float radius = Mathf.Max(0.01f, _definition.Radius);
+            // WHY: one buffer set per projectile; a hit callback cannot start another query on this projectile.
+            _queries ??= new RpgPhysicsQueryBuffers(_maxHitsPerCast);
             int generation = _generation;
             if (_definition.Use3D)
             {
-                int hitCount = Query3D(from, direction, distance);
-                Array.Sort(_hitBuffer, 0, hitCount, HitComparer.Instance);
+                // WHY: complete and nearest-first; a saturated buffer grows instead of hiding farther receivers.
+                int hitCount = _queries.SphereCast(from, radius, direction, distance, _definition.TargetLayers);
+                RaycastHit[] hits = _queries.Hits3D;
                 for (int i = 0; i < hitCount; i++)
                 {
-                    TryHitTarget(_hitBuffer[i].collider != null ? _hitBuffer[i].collider.gameObject : null);
+                    TryHitTarget(hits[i].collider != null ? hits[i].collider.gameObject : null);
                     if (generation != _generation || _expired || !isActiveAndEnabled || _remainingHits <= 0)
                     {
                         return;
@@ -203,11 +136,13 @@ namespace Neo.Rpg
 
             if (_definition.Use2D)
             {
-                int hit2DCount = Query2D(from, direction, distance);
-                Array.Sort(_hit2DBuffer, 0, hit2DCount, Hit2DComparer.Instance);
-                for (int i = 0; i < hit2DCount; i++)
+                // WHY: the list overload grows on its own and replaces the deprecated CircleCastNonAlloc.
+                int hit2DCount = _queries.CircleCast2D(from, radius, direction, distance, _definition.TargetLayers);
+                List<RaycastHit2D> hits2D = _queries.Hits2D;
+                RpgHitSort.Sort(hits2D, hits2D.Count, RpgHit2DDistanceComparer.Instance);
+                for (int i = 0; i < hit2DCount && i < hits2D.Count; i++)
                 {
-                    TryHitTarget(_hit2DBuffer[i].collider != null ? _hit2DBuffer[i].collider.gameObject : null);
+                    TryHitTarget(hits2D[i].collider != null ? hits2D[i].collider.gameObject : null);
                     if (generation != _generation || _expired || !isActiveAndEnabled || _remainingHits <= 0)
                     {
                         return;

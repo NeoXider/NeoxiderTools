@@ -1,7 +1,13 @@
 # Play Mode testing
 
-`Neo.Tests.Play` verifies Unity lifecycle behavior and integration between the package's runtime APIs,
+**What it is:** `Neo.Tests.Play` verifies Unity lifecycle behavior and integration between the package's runtime APIs,
 scene components and UnityEvents. Its sources live in `Assets/Neoxider/Tests/Play`.
+
+**How to use:** run `Neo.Tests.Play` from the Test Runner's PlayMode tab (see
+[running and interpreting coverage](#running-and-interpreting-coverage)), and follow the API, allocation and scene
+sections when you add tests.
+
+---
 
 ## Running and interpreting coverage
 
@@ -122,6 +128,26 @@ Mult загружается аддитивно: учитываются точн�
 Cursor-only exit и положительный center-hover проверяются отдельно. Новые регрессии требуют последующего
 централизованного запуска.
 
+## Allocation guards and benchmarks
+
+Play Mode allocation guards and benchmarks use the shared `Neo.Tests.Performance` assembly described in
+[Performance and allocation tests](Testing.md#performance-and-allocation-tests). Do not measure with
+`System.GC.GetAllocatedBytesForCurrentThread()`: it reads 0 in the Unity 6 Editor and IL2CPP. Use
+`GcAlloc.AssertNone`/`GcAlloc.TryCount` or a `GcAllocCounter` from `GcAllocCounter.CreateOrIgnore()`; a player
+without profiler support reports such cases as Ignored (`NotSupported`), never as passed.
+
+A counting window must open and close inside one frame: yield to reach the state under test, warm the path,
+then measure synchronous calls between `Begin()` and `End()`. A window across `yield return` throws.
+PlayerLoop costs use `NeoPerfUpdateWindowBegin`/`NeoPerfUpdateWindowEnd` with `NeoPerfUpdateWindow.Start(frames)`,
+which records each Update phase separately, and `NeoPerf.EstimateBytesPerOperation` estimates bytes from the
+frame-scoped `GC Allocated In Frame` counter. Benchmarks carry `[Category(NeoPerf.Category)]` and
+`[Explicit(NeoPerf.ExplicitReason)]`, print one `NEO_PERF <case> key=value ...` line per case and run with
+`-testPlatform PlayMode -testCategory Performance -testFilter "<fixture or test>"`; the self-test
+`GcAllocCounterPlayTests` checks the counter on the real PlayerLoop.
+
+По-русски: в Play Mode окно подсчёта аллокаций должно открываться и закрываться в одном кадре; бенчмарки
+явные (`Explicit`), категория `Performance`, результат — строки `NEO_PERF` в логе.
+
 ## Scene and NoCode workflows
 
 Component tests construct scene adapters in code and exercise the same typed methods and UnityEvents
@@ -139,7 +165,10 @@ Supported demo roots are:
 Discovery prefers development samples, then visible imported samples. A hidden `Samples~` directory
 is a fallback and causes an explicit skip because Unity does not compile its sample scripts.
 Import Demo Scenes through Package Manager to exercise scene smoke coverage while keeping the package
-in release layout. If several imported versions exist, retain the version intended for testing;
+in release layout. `SampleScenePlaySmokeTests` loads every scene of the visible samples (one case per scene: 12
+frames, no error/assert/exception logs, Filled Images with sprites, no unbuilt demo scene, the authored info card on
+builder scenes) and `AudioDemoScenePlayTests` drives the authored AudioDemo buttons; see
+[sample, demo and packaging tests](Testing.md#sample-demo-and-packaging-tests). If several imported versions exist, retain the version intended for testing;
 automatic version selection is not guaranteed. The optional multiplayer tests in
 `MultSceneNetworkTests` need the development project's `Assets/Scenes/Mult.unity` and skip if absent.
 That fixture refuses an already loaded Mult scene and existing network managers/sessions. It loads

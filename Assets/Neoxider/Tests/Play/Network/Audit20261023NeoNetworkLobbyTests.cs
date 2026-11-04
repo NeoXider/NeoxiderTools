@@ -66,7 +66,7 @@ namespace Neo.Tests.Play
             GameObject discoveryObject = new GameObject("Audit LAN discovery");
             discoveryObject.transform.SetParent(_managerObject.transform);
             NeoNetworkDiscovery discovery = discoveryObject.AddComponent<NeoNetworkDiscovery>();
-            discovery.enabled = false; // No UDP discovery sockets; deliver Mirror's discovered response directly.
+            discovery.enabled = false; // WHY: no UDP discovery sockets; deliver Mirror's discovered response directly.
             Uri advertised = new Uri("tcp4://127.0.0.1:17891");
             int resolutions = 0;
             discovery.OnQuickPlayResolved.AddListener(host => resolutions += host ? 100 : 1);
@@ -220,6 +220,179 @@ namespace Neo.Tests.Play
             }
         }
 
+        [Test]
+        public void Discovery_ClientSessionStart_StopsTheLanSearch_AndKeepsTheList()
+        {
+            TestNetworkManager manager = CreateDiscoveryManager();
+            NeoNetworkDiscovery discovery = CreateDisabledDiscovery("Audit connected discovery");
+            NetworkDiscovery mirrorDiscovery = discovery.GetComponent<NetworkDiscovery>();
+            mirrorDiscovery.OnServerFound.Invoke(new ServerResponse
+            {
+                serverId = 777,
+                uri = new Uri("tcp4://127.0.0.1:17892")
+            });
+            Assert.That(discovery.ServerCount, Is.EqualTo(1));
+            // WHY: stands in for Mirror's StartDiscovery, which repeats this request until StopDiscovery; no socket opens.
+            mirrorDiscovery.InvokeRepeating(nameof(NetworkDiscovery.BroadcastDiscoveryRequest), 60f, 60f);
+            Assert.That(mirrorDiscovery.IsInvoking(nameof(NetworkDiscovery.BroadcastDiscoveryRequest)), Is.True);
+
+            // WHY: joined without the discovery component, like a lobby presenter or a bootstrap would.
+            manager.StartAsClient("127.0.0.1");
+            Assert.That(NetworkClient.active, Is.True);
+            SetPrivate(discovery, "_lastRefreshTime", double.NegativeInfinity);
+            InvokeUpdate(discovery);
+
+            Assert.That(mirrorDiscovery.IsInvoking(nameof(NetworkDiscovery.BroadcastDiscoveryRequest)), Is.False,
+                "a started session ends Mirror's repeating LAN broadcast, which only stops by itself once connected");
+            Assert.That(discovery.ServerCount, Is.EqualTo(1),
+                "a session must neither restart the LAN search nor wipe the shown server list");
+        }
+
+        [Test]
+        public void Discovery_ServerStart_AdvertisesOnItsEdge_AndReportsAFailureInsteadOfThrowing()
+        {
+            TestNetworkManager manager = CreateDiscoveryManager();
+            NeoNetworkDiscovery discovery = CreateDisabledDiscovery("Audit auto advertise");
+            // WHY: an invalid port makes Mirror's AdvertiseServer throw before it opens any socket, like a port that
+            // another host on this machine already holds.
+            SetPrivate(discovery.GetComponent<NetworkDiscovery>(), "serverBroadcastListenPort", -1);
+            SetPrivate(discovery, "_autoDiscoverOnClient", false);
+            int attempts = 0;
+            Application.LogCallback countAttempts = (message, stackTrace, type) =>
+            {
+                if (type == LogType.Warning && message.Contains("LAN advertising could not start"))
+                {
+                    attempts++;
+                }
+            };
+            Application.logMessageReceived += countAttempts;
+            try
+            {
+                // WHY: Mirror's own StartServer through a NetworkManager reference, not a Neo wrapper.
+                ((NetworkManager)manager).StartServer();
+                Assert.That(NetworkServer.active, Is.True);
+
+                Assert.DoesNotThrow(() => InvokeUpdate(discovery), "a socket error must not escape Update");
+                InvokeUpdate(discovery);
+
+                Assert.That(attempts, Is.EqualTo(1), "the server start is seen once, whatever started the server");
+                Assert.That(discovery.IsAdvertising, Is.False, "a failed advertise is not reported as advertising");
+            }
+            finally
+            {
+                Application.logMessageReceived -= countAttempts;
+                manager.StopNetwork();
+            }
+        }
+
+        [Test]
+        public void Discovery_ConnectToServer_GoesThroughTheNeoManagerWrapper()
+        {
+            TestNetworkManager manager = CreateDiscoveryManager();
+            NeoNetworkDiscovery discovery = CreateDisabledDiscovery("Audit connect wrapper");
+
+            discovery.ConnectToServer(" 10.0.0.7 ");
+
+            Assert.That(NetworkClient.isConnecting, Is.True);
+            Assert.That(manager.networkAddress, Is.EqualTo("10.0.0.7"),
+                "NeoNetworkManager.StartAsClient trims the address; Mirror's plain StartClient would keep the spaces");
+        }
+
+        [Test]
+        public void Discovery_StopsAdvertisingOnceTheServerIsGone()
+        {
+            CreateDiscoveryManager();
+            NeoNetworkDiscovery discovery = CreateDisabledDiscovery("Audit stale advertising");
+            SetPrivate(discovery, "_autoDiscoverOnClient", false);
+            SetPrivate(discovery, "_advertising", true);
+            Assert.That(NetworkServer.active, Is.False);
+
+            InvokeUpdate(discovery);
+
+            Assert.That(discovery.IsAdvertising, Is.False, "a stopped server must not keep answering LAN requests");
+        }
+
+        [Test]
+        public void Discovery_DeliberateStopWhileHosting_IsNotUndoneByLaterFrames()
+        {
+            TestNetworkManager manager = CreateDiscoveryManager();
+            NeoNetworkDiscovery discovery = CreateDisabledDiscovery("Audit deliberate stop");
+            SetPrivate(discovery, "_autoDiscoverOnClient", false);
+            try
+            {
+                manager.StartAsServer();
+                Assert.That(NetworkServer.active, Is.True);
+                // WHY: the session start was already seen; auto-advertise happens once per start, on its edge.
+                SetPrivate(discovery, "_wasServerActive", true);
+                discovery.StopDiscovery();
+
+                InvokeUpdate(discovery);
+                InvokeUpdate(discovery);
+
+                Assert.That(discovery.IsAdvertising, Is.False,
+                    "auto-advertise reacts to a session start, not to every frame of a running server");
+            }
+            finally
+            {
+                manager.StopNetwork();
+            }
+        }
+
+        [Test]
+        public void Discovery_IsSearching_EndsOnStopSessionStartAndDisabledDiscovery()
+        {
+            TestNetworkManager manager = CreateDiscoveryManager();
+            NeoNetworkDiscovery discovery = CreateDisabledDiscovery("Audit searching state");
+            SetPrivate(discovery, "_autoDiscoverOnClient", false);
+            NetworkDiscovery mirrorDiscovery = discovery.GetComponent<NetworkDiscovery>();
+            Assert.That(discovery.IsSearching, Is.False, "nothing searches before a search starts");
+
+            // WHY: stands in for a started search without opening a UDP socket.
+            SetPrivate(discovery, "_searching", true);
+            discovery.StopDiscovery();
+            Assert.That(discovery.IsSearching, Is.False, "StopDiscovery ends the search");
+
+            SetPrivate(discovery, "_searching", true);
+            InvokeUpdate(discovery);
+            Assert.That(discovery.IsSearching, Is.True, "an idle frame keeps a running search");
+            manager.StartAsClient("127.0.0.1");
+            Assert.That(NetworkClient.active, Is.True);
+            InvokeUpdate(discovery);
+            Assert.That(discovery.IsSearching, Is.False, "a started session ends the LAN search");
+
+            SetPrivate(discovery, "_searching", true);
+            mirrorDiscovery.enabled = false;
+            InvokeUpdate(discovery);
+            Assert.That(discovery.IsSearching, Is.False, "a disabled NetworkDiscovery closed its sockets");
+        }
+
+        private TestNetworkManager CreateDiscoveryManager()
+        {
+            DummyTransport transport = _managerObject.AddComponent<DummyTransport>();
+            TestNetworkManager manager = _managerObject.AddComponent<TestNetworkManager>();
+            manager.transport = transport;
+            manager.autoCreatePlayer = false;
+            manager.dontDestroyOnLoad = false;
+            Transport.active = transport;
+            _managerObject.SetActive(true);
+            return manager;
+        }
+
+        private NeoNetworkDiscovery CreateDisabledDiscovery(string name)
+        {
+            GameObject discoveryObject = new GameObject(name);
+            discoveryObject.transform.SetParent(_managerObject.transform);
+            NeoNetworkDiscovery discovery = discoveryObject.AddComponent<NeoNetworkDiscovery>();
+            discovery.enabled = false; // WHY: no UDP discovery sockets; the test drives Update itself.
+            return discovery;
+        }
+
+        private static void InvokeUpdate(NeoNetworkDiscovery discovery)
+        {
+            typeof(NeoNetworkDiscovery).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(discovery, null);
+        }
+
         private NeoLobbyPresenter CreatePresenter()
         {
             NeoLobbyManager manager = CreateLobbyManager();
@@ -257,13 +430,13 @@ namespace Neo.Tests.Play
             NetworkIdentity identity = template.AddComponent<NetworkIdentity>();
             T player = template.AddComponent<T>();
             identity.sceneId = 0;
-            // The public asset-bundle API assigns a nonzero id without private identity access.
+            // WHY: the public asset-bundle API assigns a nonzero id without private identity access.
             NetworkClient.RegisterPrefab(template, assetId);
             NetworkClient.UnregisterPrefab(template);
             Assert.That(identity.assetId, Is.EqualTo(assetId));
             Assert.That(identity.sceneId, Is.Zero);
             Assert.That(template.GetComponentsInChildren<NetworkIdentity>(true).Length, Is.EqualTo(1));
-            // Active prefab roots stay under an inactive holder; clones can receive their ordinary Awake.
+            // WHY: active prefab roots stay under an inactive holder; clones can receive their ordinary Awake.
             template.SetActive(true);
             Assert.That(template.activeInHierarchy, Is.False);
             return player;

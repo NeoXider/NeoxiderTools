@@ -1,13 +1,14 @@
 ﻿# SpriteMultiplayerData
 
-ScriptableObject containing per-symbol, per-run-length payout multipliers for `CheckSpin`.
+**What it is:** ScriptableObject containing per-symbol, per-run-length payout multipliers for `CheckSpin`. Script: `Scripts/Bonus/Slot/Data/SpriteMultiplayerData.cs`.
 
-## Inspector authoring
-
+**How to use:**
 Create it through **Create > Neoxider > Bonus > Slot > Sprite Multiplier Data**. Assign **Sprites Data**,
 choose **Min Count**, **Max Count**, and **Default Multiplayer**, then enable **Generate**. Generation
 initializes the table on a fresh asset, skips unassigned visual entries, and replaces the previous rows.
 Keep the count range small and ordered. Assign the result to the controller's `CheckSpin` multiplier field.
+
+---
 
 ## Runtime API
 

@@ -58,6 +58,6 @@ More on the level curve: **[LevelCurveDefinition.md](./LevelCurveDefinition.md)*
 ## See Also
 
 - [LevelCurveDefinition](./LevelCurveDefinition.md) — level curve definition (Formula, Curve, Custom).
-- [HealthComponent](./HealthComponent.md) — HP/Mana pools.
+- [HealthComponent](./Resources/Components/HealthComponent.md) — HP/Mana pools.
 - [Progression/README.md](../Progression/README.md) — level rewards, perks.
 - [Rpg/README.md](../Rpg/README.md) — level and stats in combat.

@@ -1,8 +1,16 @@
 # Deck configuration inspector
 
-`Neo.Cards.Editor` supplies the custom inspector for [DeckConfig](./DeckConfig.md), the reusable asset described in the [Cards module guide](./README.md). Create an asset with **Create > Neoxider > Cards > Deck Config**, then select it in the Project window. This editor assembly is optional for gameplay; runtime code references `Neo.Cards`.
+**What it is:** `Neo.Cards.Editor` supplies the custom inspector for [DeckConfig](./DeckConfig.md), the reusable asset described in the [Cards module guide](./README.md). Create an asset with **Create > Neoxider > Cards > Deck Config**, then select it in the Project window. This editor assembly is optional for gameplay; runtime code references `Neo.Cards`.
 
 The inspector edits one selected configuration at a time. It authors card data and artwork; scene components consume that asset separately.
+
+**How to use:**
+1. Create a deck config via **Create > Neoxider > Cards > Deck Config** and select it.
+2. For a standard deck pick the sprite and play deck types and assign the art (or **Auto-Fill From Folder...**);
+   for your own cards enable **Use Custom Deck** (see the sections below).
+3. Fix what **Configuration validation** reports, then assign the asset to a `DeckComponent`.
+
+---
 
 ## Standard decks
 
@@ -53,6 +61,8 @@ if (cards.Count > 0)
 ```
 
 `GenerateDeck()` selects the configured standard/custom mode. `GenerateCustomDeck()` always reads custom entries; `GenerateDeck(DeckType)` explicitly generates a standard deck. The inspector applies serialized edits before calling `Validate`, so the displayed diagnostics describe the currently applied asset values. Validation does not automatically change assets or scenes.
+
+The inspector keeps the last validation result until the asset changes (any edit, undo or redo) or the project changes, instead of rebuilding every message on each repaint. Deleting or re-importing a sprite elsewhere refreshes it too; **Validate configuration** forces a fresh check at any time. Suit titles use colours that stay readable in both the light and the dark editor skin.
 
 Folder auto-fill is a private inspector operation, with no supported public batch-import API. Custom sprite loaders can reuse the runtime `CardSpriteNameParser`; runtime consumers do not need to reference `Neo.Cards.Editor` or `UnityEditor`.
 

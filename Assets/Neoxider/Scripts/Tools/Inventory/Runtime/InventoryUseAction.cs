@@ -94,7 +94,7 @@ namespace Neo.Tools
             _using = true;
             try
             {
-                // Publish the committed inventory even if an effect listener throws.
+                // WHY: Publish the committed inventory even if an effect listener throws.
                 if (receipt != null)
                 {
                     try

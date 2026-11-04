@@ -28,6 +28,18 @@ namespace Neo.Tools
 
         private float lastTime;
 
+        private string _cachedDisplay;
+        private long _cachedUnitKey;
+        private bool _cachedNegative;
+        private TimeDisplayMode _cachedMode;
+        private TimeFormat _cachedFormat;
+        private bool _cachedCompactUseTimeFormat;
+        private bool _cachedCompactIncludeSeconds;
+        private int _cachedCompactMaxParts;
+        private string _cachedSeparator;
+        private string _cachedStartAddText;
+        private string _cachedEndAddText;
+
         #endregion
 
         #region Static Methods
@@ -138,6 +150,32 @@ namespace Neo.Tools
             set
             {
                 separator = value;
+                UpdateDisplay();
+            }
+        }
+
+        /// <summary>
+        ///     Text placed before the formatted time (Inspector "Start Add Text"); redraws immediately.
+        /// </summary>
+        public string Prefix
+        {
+            get => startAddText;
+            set
+            {
+                startAddText = value;
+                UpdateDisplay();
+            }
+        }
+
+        /// <summary>
+        ///     Text placed after the formatted time (Inspector "End Add Text"); redraws immediately.
+        /// </summary>
+        public string Suffix
+        {
+            get => endAddText;
+            set
+            {
+                endAddText = value;
                 UpdateDisplay();
             }
         }
@@ -275,27 +313,11 @@ namespace Neo.Tools
             bool shouldDisplay = (time == 0 && _zeroText) || time > 0 || (_allowNegative && time < 0);
             if (shouldDisplay)
             {
-                float displayValue = _allowNegative && time < 0 ? Mathf.Abs(time) : time;
-                string formatted = _displayMode == TimeDisplayMode.Compact
-                    ? _compactUseTimeFormat
-                        ? TimeSpan.FromSeconds(displayValue).ToCompactString(timeFormat)
-                        : TimeSpan.FromSeconds(displayValue).ToCompactString(_compactIncludeSeconds, _compactMaxParts)
-                    : displayValue.FormatTime(timeFormat, separator);
-                if (_allowNegative && time < 0)
-                {
-                    formatted = "-" + formatted;
-                }
-
-                if (string.IsNullOrEmpty(startAddText))
-                {
-                    text.text = string.IsNullOrEmpty(endAddText) ? formatted : formatted + endAddText;
-                }
-                else
-                {
-                    text.text = string.IsNullOrEmpty(endAddText)
-                        ? startAddText + formatted
-                        : startAddText + formatted + endAddText;
-                }
+                bool negative = _allowNegative && time < 0;
+                float displayValue = negative ? Mathf.Abs(time) : time;
+                // WHY: re-assigning the same cached string lets TMP skip the rebuild and keeps per-frame timers
+                // allocation-free while the visible unit (usually a whole second) does not change.
+                text.text = GetDisplayText(displayValue, negative);
             }
             else
             {
@@ -333,6 +355,108 @@ namespace Neo.Tools
             return CanDisplayTime(time, _displayMode);
         }
 
+        /// <summary>
+        ///     Returns the full display text (sign and affixes included), reusing the previous string while every
+        ///     formatting input and the displayed unit are unchanged.
+        /// </summary>
+        private string GetDisplayText(float displayValue, bool negative)
+        {
+            bool compact = _displayMode == TimeDisplayMode.Compact;
+            TimeSpan span = compact ? TimeSpan.FromSeconds(displayValue) : default;
+            long unitKey = GetDisplayUnitKey(displayValue, span, compact);
+
+            if (_cachedDisplay != null &&
+                unitKey == _cachedUnitKey &&
+                negative == _cachedNegative &&
+                _displayMode == _cachedMode &&
+                timeFormat == _cachedFormat &&
+                _compactUseTimeFormat == _cachedCompactUseTimeFormat &&
+                _compactIncludeSeconds == _cachedCompactIncludeSeconds &&
+                _compactMaxParts == _cachedCompactMaxParts &&
+                string.Equals(separator, _cachedSeparator, StringComparison.Ordinal) &&
+                string.Equals(startAddText, _cachedStartAddText, StringComparison.Ordinal) &&
+                string.Equals(endAddText, _cachedEndAddText, StringComparison.Ordinal))
+            {
+                return _cachedDisplay;
+            }
+
+            string formatted = compact
+                ? _compactUseTimeFormat
+                    ? span.ToCompactString(timeFormat)
+                    : span.ToCompactString(_compactIncludeSeconds, _compactMaxParts)
+                : displayValue.FormatTime(timeFormat, separator);
+
+            bool hasStart = !string.IsNullOrEmpty(startAddText);
+            bool hasEnd = !string.IsNullOrEmpty(endAddText);
+            string sign = negative ? "-" : string.Empty;
+            string display = !hasStart && !hasEnd && !negative
+                ? formatted
+                : string.Concat(hasStart ? startAddText : string.Empty, sign, formatted,
+                    hasEnd ? endAddText : string.Empty);
+
+            _cachedDisplay = display;
+            _cachedUnitKey = unitKey;
+            _cachedNegative = negative;
+            _cachedMode = _displayMode;
+            _cachedFormat = timeFormat;
+            _cachedCompactUseTimeFormat = _compactUseTimeFormat;
+            _cachedCompactIncludeSeconds = _compactIncludeSeconds;
+            _cachedCompactMaxParts = _compactMaxParts;
+            _cachedSeparator = separator;
+            _cachedStartAddText = startAddText;
+            _cachedEndAddText = endAddText;
+            return display;
+        }
+
+        /// <summary>
+        ///     Smallest unit the current format can show: equal keys always produce equal text.
+        /// </summary>
+        private long GetDisplayUnitKey(float displayValue, TimeSpan span, bool compact)
+        {
+            if (compact)
+            {
+                // WHY: compact text is built from this exact TimeSpan. Dynamic compact output and the whole-second
+                // formats only show whole seconds (and larger units derived from them); anything else is keyed by
+                // the exact TimeSpan.
+                return !_compactUseTimeFormat || ShowsWholeSecondsOrCoarser(timeFormat)
+                    ? span.Ticks / TimeSpan.TicksPerSecond
+                    : span.Ticks;
+            }
+
+            if (ShowsWholeSecondsOrCoarser(timeFormat))
+            {
+                // WHY: the clock formatter truncates to whole seconds (saturating at int.MaxValue) before splitting.
+                return (int)Math.Min((double)displayValue, int.MaxValue);
+            }
+
+            // WHY: fractional and unknown formats are not keyed by unit; only an identical value reuses the text.
+            return BitConverter.DoubleToInt64Bits(displayValue);
+        }
+
+        /// <summary>
+        ///     Allow-list of formats whose output depends only on the whole seconds. A format missing here (a
+        ///     sub-second one, or one added later) falls back to exact-value caching instead of showing stale text.
+        /// </summary>
+        private static bool ShowsWholeSecondsOrCoarser(TimeFormat format)
+        {
+            switch (format)
+            {
+                case TimeFormat.Seconds:
+                case TimeFormat.Minutes:
+                case TimeFormat.MinutesSeconds:
+                case TimeFormat.Hours:
+                case TimeFormat.HoursMinutes:
+                case TimeFormat.HoursMinutesSeconds:
+                case TimeFormat.Days:
+                case TimeFormat.DaysHours:
+                case TimeFormat.DaysHoursMinutes:
+                case TimeFormat.DaysHoursMinutesSeconds:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private bool CanDisplayTime(float time, TimeDisplayMode displayMode)
         {
             if (float.IsNaN(time) || float.IsInfinity(time))
@@ -343,7 +467,7 @@ namespace Neo.Tools
             double seconds = !_allowNegative && time < 0f ? 0d : Math.Abs((double)time);
             if (displayMode != TimeDisplayMode.Compact)
             {
-                // The clock formatter converts total seconds to Int32 before splitting units.
+                // WHY: the clock formatter converts total seconds to Int32 before splitting units.
                 return seconds <= int.MaxValue;
             }
 

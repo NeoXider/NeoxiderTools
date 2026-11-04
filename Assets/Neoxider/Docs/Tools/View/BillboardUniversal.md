@@ -1,7 +1,17 @@
 ﻿# BillboardUniversal
 
-**Purpose:** Orient an object toward/away from a camera, or along a fixed world-space direction.
-Namespace: `Neo.Tools`; assembly: `Neo.Tools.View`.
+**What it is:** a MonoBehaviour that orients an object toward or away from a camera, or along a fixed
+world-space direction, every `LateUpdate`. Script: `Scripts/Tools/View/BillboardUniversal.cs`, namespace
+`Neo.Tools`, assembly `Neo.Tools.View`. Typical uses: health bars, name labels, icons and world-space
+sprites that must stay readable from any camera angle (`ignoreY` keeps them upright). This is the
+component's canonical page.
+
+**How to use:**
+1. Add the component and choose `billboardMode`.
+2. Assign `targetCamera`, or keep `useMainCameraFallback` on; direction mode needs no camera.
+3. Change it at runtime with `SetBillboardMode`, `SetCustomDirection`, `SetIgnoreY`, `SetTargetCamera`.
+
+---
 
 ## Setup
 
@@ -31,14 +41,16 @@ billboard.SetIgnoreY(true);
 ```
 
 Use `SetTargetCamera(Camera)` to inject or replace the camera. Settings take effect on the next
-`LateUpdate`; the Inspector context menu also supports direction mode with no camera.
+`LateUpdate`; the Inspector context menu also supports direction mode with no camera. Read the current
+configuration through `Mode`, `IgnoreY`, `CustomDirection` and `TargetCamera`. The component caches its
+own and the camera's `Transform` (re-resolved when the camera changes), so a frame costs no extra
+native `transform` lookups.
 
 ## Edit Mode
 
 Rotation happens only in `LateUpdate` (Play Mode); there is no `OnValidate`, so loading or saving a prefab
 never writes a camera-dependent rotation into it. To preview the orientation in the editor, use the
-component's context menu **Face Camera Now** (recorded in Undo). Full description:
-[Tools/Other/BillboardUniversal](../Other/BillboardUniversal.md).
+component's context menu **Face Camera Now** (recorded in Undo).
 
 ## See Also
 

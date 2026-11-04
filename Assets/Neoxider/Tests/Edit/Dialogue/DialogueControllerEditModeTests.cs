@@ -9,7 +9,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void StartDialogue_SetsIndicesAndStartedFlag()
         {
-            var go = new GameObject("Dlg");
+            GameObject go = new GameObject("Dlg");
             try
             {
                 DialogueController dc = go.AddComponent<DialogueController>();

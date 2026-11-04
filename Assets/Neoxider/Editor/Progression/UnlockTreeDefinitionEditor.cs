@@ -9,6 +9,8 @@ namespace Neo.Editor.Progression
     [CanEditMultipleObjects]
     public sealed class UnlockTreeDefinitionEditor : CustomEditorBase
     {
+        private readonly DefinitionValidationCache _validation = new();
+
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
         protected override void ProcessAttributeAssignments()
@@ -19,9 +21,16 @@ namespace Neo.Editor.Progression
         {
             serializedObject.Update();
 
-            var definition = (UnlockTreeDefinition)target;
+            UnlockTreeDefinition definition = (UnlockTreeDefinition)target;
             SerializedProperty nodesProperty = serializedObject.FindProperty("_nodes");
-            IReadOnlyList<string> issues = definition.ValidateDefinition();
+            // WHY: validation walks every entry and builds its messages; it is re-run only when the asset
+            // changes instead of on every inspector event.
+            if (_validation.NeedsRefresh(definition))
+            {
+                _validation.Store(definition, definition.ValidateDefinition());
+            }
+
+            IReadOnlyList<string> issues = _validation.Issues;
             int nodeCount = nodesProperty != null ? nodesProperty.arraySize : 0;
 
             List<NeoxiderEditorGUI.Badge> badges = new()

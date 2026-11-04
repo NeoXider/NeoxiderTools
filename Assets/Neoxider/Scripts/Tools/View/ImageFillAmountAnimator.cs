@@ -133,7 +133,10 @@ namespace Neo.Tools
             KillTween();
         }
 
-        /// <summary>Animates the fill to target value (0..1). Kills previous tween.</summary>
+        /// <summary>
+        ///     Animates the fill to target value (0..1), replacing a tween that runs towards another value. Repeating
+        ///     the value of the running tween, or the value already shown, starts nothing new.
+        /// </summary>
         public void SetValue(float value)
         {
             Image image = ResolveImage();
@@ -144,6 +147,7 @@ namespace Neo.Tools
             }
 
             float target = Sanitize(value);
+            bool sameTarget = _hasTarget && target == _target;
             _target = target;
             _hasTarget = true;
             if (!isActiveAndEnabled)
@@ -158,12 +162,29 @@ namespace Neo.Tools
                 return;
             }
 
+            // WHY: bindings and polling scripts often push the same value every frame. Restarting the tween each
+            // time allocated a tween and two closures per call and restarted the ease, so the bar crept towards a
+            // target it should reach in Duration.
+            bool tweenAlive = _anim != null && _anim.IsActive();
+            bool alreadyHeadingThere = tweenAlive ? sameTarget && _anim.IsPlaying() : DisplayedValue == target;
+            if (alreadyHeadingThere)
+            {
+                return;
+            }
+
             KillTween();
             if (image == null || !ReferenceEquals(_image, image))
             {
                 return;
             }
 
+            StartTween(image, target);
+        }
+
+        // WHY: the tween closures capture locals; in SetValue the compiler allocated their closure object on every
+        // call, the early returns for a repeated target included. Here it is allocated only when a tween starts.
+        private void StartTween(Image image, float target)
+        {
             FillMode mode = _mode;
             if (mode != FillMode.FillAmount)
             {

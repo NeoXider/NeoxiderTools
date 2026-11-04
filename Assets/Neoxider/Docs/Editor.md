@@ -19,6 +19,7 @@ The key functions you will interact with are described below.
 All utilities are accessed through the top-level **Neoxider/** menu (windows under **Neoxider/Windows/**, utilities under **Neoxider/Tools/**).
 
 - **Settings**: Opens the main Neoxider settings window, where you can configure the project folder structure, scene hierarchy parameters, and other global options.
+- **Visual Settings**: How Neo component inspectors look and move - banner or compact header, spectrum frame, section accent, animation, transitions and their Play Mode rule. See [Visual Settings](Editor/RainbowSignature.md).
 - **Find & Remove Missing Scripts**: A powerful tool for finding and removing missing scripts across the entire project, including all scenes and prefabs.
 - **Texture Max Size**: Lets you bulk-change the maximum texture size for all assets of a specific type (for example, all sprites or all normal maps).
 - **Scene Saver Settings**: Opens the settings for the background scene auto-save utility. Helps prevent loss of work.
@@ -38,3 +39,5 @@ The editor automatically extends the inspector functionality for **all** `MonoBe
 
 - **`[Button]`**: Turns any method in your code into a clickable button in the inspector. Supports parameters.
 - **Auto-fill attributes**: Attributes such as `[GetComponent]`, `[FindInScene]`, `[LoadFromResources]` and their plural versions (`[GetComponents]`, etc.) automatically find and assign references to components and assets in your script's fields. This removes the need to do it manually.
+
+A demo scene with every attribute on one component is described in [Editor/README - Demo scene](Editor/README.md#demo-scene).

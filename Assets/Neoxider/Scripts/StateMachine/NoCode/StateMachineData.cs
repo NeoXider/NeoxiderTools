@@ -81,10 +81,10 @@ namespace Neo.StateMachine.NoCode
 
         private void OnValidate()
         {
-            // WHY: Automatic validation in the editor
+            // WHY: automatic validation in Play Mode keeps the debug gate; an explicit Validate(false) always reports.
             if (Application.isPlaying)
             {
-                Validate();
+                Validate(!StateMachineLog.Enabled);
             }
         }
 
@@ -156,36 +156,55 @@ namespace Neo.StateMachine.NoCode
                 return;
             }
 
-            foreach (StateTransition transition in transitions)
+            if (transitions == null)
             {
+                return;
+            }
+
+            // WHY: shared asset transitions are registered by reference, not cloned; per-machine timing lives in
+            // StateMachine, so several machines can load the same data.
+            for (int i = 0; i < transitions.Count; i++)
+            {
+                StateTransition transition = transitions[i];
                 if (transition != null)
                 {
-                    // WHY: NoCode transitions: resolve types from state names where needed
-                    SetupNoCodeTransition(transition);
                     stateMachine.RegisterTransition(transition);
                 }
             }
-
         }
 
         /// <summary>
-        ///     Finds a state asset by name.
+        ///     Finds a state asset by name (first match, ordinal).
         /// </summary>
         /// <param name="stateName">State name.</param>
         /// <returns>StateData or null.</returns>
         public StateData GetStateByName(string stateName)
         {
-            if (string.IsNullOrEmpty(stateName))
+            if (string.IsNullOrEmpty(stateName) || states == null)
             {
                 return null;
             }
 
-            return States.FirstOrDefault(s => s != null && s.StateName == stateName);
+            for (int i = 0; i < states.Length; i++)
+            {
+                StateData state = states[i];
+                if (state != null && state.StateName == stateName)
+                {
+                    return state;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
         ///     Validates the asset configuration.
         /// </summary>
+        /// <remarks>
+        ///     A non-silent call is an explicit request (the Inspector's Validate Configuration button), so it always
+        ///     writes its warnings; the automatic Play Mode check in OnValidate stays silent unless a
+        ///     StateMachineBehaviour with Enable Debug Log is enabled.
+        /// </remarks>
         /// <param name="silent">If true, skips console warnings and only returns the result.</param>
         /// <returns>True if the configuration is valid.</returns>
         public bool Validate(bool silent = false)
@@ -194,7 +213,7 @@ namespace Neo.StateMachine.NoCode
             {
                 if (!silent)
                 {
-                    StateMachineLog.Warning("[StateMachineData] No states defined.", this);
+                    StateMachineLog.Warning(true, "[StateMachineData] No states defined.", this);
                 }
 
                 return false;
@@ -206,14 +225,14 @@ namespace Neo.StateMachine.NoCode
                 isValid = false;
                 if (!silent)
                 {
-                    StateMachineLog.Warning("[StateMachineData] Initial state is not set.", this);
+                    StateMachineLog.Warning(true, "[StateMachineData] Initial state is not set.", this);
                 }
             }
             else if (initialState != null && !states.Contains(initialState))
             {
                 if (!silent)
                 {
-                    StateMachineLog.Warning(
+                    StateMachineLog.Warning(true,
                         $"[StateMachineData] Initial state '{initialState.StateName}' not found in states array.",
                         this);
                 }
@@ -224,12 +243,17 @@ namespace Neo.StateMachine.NoCode
             {
                 if (!silent)
                 {
-                    StateMachineLog.Warning(
+                    StateMachineLog.Warning(true,
                         $"[StateMachineData] Initial state '{initialStateName}' not found in states.",
                         this);
                 }
 
                 return false;
+            }
+
+            if (transitions == null)
+            {
+                return isValid;
             }
 
             foreach (StateTransition transition in transitions)
@@ -246,7 +270,7 @@ namespace Neo.StateMachine.NoCode
                         isValid = false;
                         if (!silent)
                         {
-                            StateMachineLog.Warning(
+                            StateMachineLog.Warning(true,
                                 $"[StateMachineData] Transition from state '{transition.FromStateData.StateName}' not found in States array.",
                                 this);
                         }
@@ -257,7 +281,7 @@ namespace Neo.StateMachine.NoCode
                     isValid = false;
                     if (!silent)
                     {
-                        StateMachineLog.Warning("[StateMachineData] Transition has null FromStateData.", this);
+                        StateMachineLog.Warning(true, "[StateMachineData] Transition has null FromStateData.", this);
                     }
                 }
 
@@ -268,7 +292,7 @@ namespace Neo.StateMachine.NoCode
                         isValid = false;
                         if (!silent)
                         {
-                            StateMachineLog.Warning(
+                            StateMachineLog.Warning(true,
                                 $"[StateMachineData] Transition to state '{transition.ToStateData.StateName}' not found in States array.",
                                 this);
                         }
@@ -279,19 +303,12 @@ namespace Neo.StateMachine.NoCode
                     isValid = false;
                     if (!silent)
                     {
-                        StateMachineLog.Warning("[StateMachineData] Transition has null ToStateData.", this);
+                        StateMachineLog.Warning(true, "[StateMachineData] Transition has null ToStateData.", this);
                     }
                 }
             }
 
             return isValid;
-        }
-
-        private void SetupNoCodeTransition(StateTransition transition)
-        {
-            // WHY: NoCode: types could be derived from StateData assets, but StateData is a ScriptableObject,
-            // not a runtime state class — identification is by state name.
-            // StateMachineBehaviour resolves transitions by name.
         }
 
         [Serializable]

@@ -1,6 +1,13 @@
 ﻿# SimpleSpawner
 
-**Purpose:** A lightweight version of the spawner. Ideal for one-off spawning (like a projectile when shooting or a particle effect) without complex wave or delay logic. Compatible with `PoolManager`.
+**What it is:** Lightweight `MonoBehaviour` spawner for one prefab at this transform (plus offset), without waves or delays; pooled by default. `Scripts/Tools/Spawner/SimpleSpawner.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `SimpleSpawner` to a muzzle, chest or button object and assign **Prefab**.
+2. Bind `Spawn()` to a UnityEvent (click, open, shot).
+3. From C#, call `SpawnInstance()` to get the spawned object back.
+
+---
 
 ## Fields (Inspector)
 
@@ -16,7 +23,8 @@
 
 | Method / Property | Description |
 |-------------------|-------------|
-| `void Spawn()` | Spawns the `Prefab` with the specified `Offset` and `Euler Angle`. Perfect for calling from a UnityEvent. |
+| `void Spawn()` | Spawns the `Prefab` with the specified `Offset` and `Euler Angle`. UnityEvent entry point. |
+| `GameObject SpawnInstance()` | Typed C# path: same spawn, returns the instance (null and an error log when no prefab is assigned). |
 
 ## Examples
 
@@ -29,7 +37,11 @@ Attach `SimpleSpawner` to a button or chest, and assign a "Coin" prefab. Bind th
 
 public void Fire()
 {
-    _bulletSpawner.Spawn(); // Perfect for simple, parameterless calls
+    GameObject bullet = _bulletSpawner.SpawnInstance();
+    if (bullet != null)
+    {
+        bullet.GetComponent<Rigidbody>().linearVelocity = _bulletSpawner.transform.forward * 20f;
+    }
 }
 ```
 

@@ -1,144 +1,191 @@
-using System.Collections.Generic;
-using System.Reflection;
-using Neo.Samples.Survivor;
+using System.Globalization;
+using Neo.Parallax;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Bright, self-contained demo for <b>Neo.Parallax</b>. Four procedural depth bands — far mountains, mid
-    ///     hills, near hills and a foreground ridge — are built from tinted <see cref="SurvivorArt" /> discs, each
-    ///     driven by a real <see cref="Neo.Parallax.ParallaxLayer" /> that tiles and recycles seamlessly against the camera.
-    ///     Each band has a different parallax multiplier, so when the demo auto-pans the camera left-right the
-    ///     bands slide at different apparent speeds and read as depth. A slider sets the pan speed and "Reverse"
-    ///     flips direction. Robust in an empty scene.
+    ///     Controller of the authored <b>Neo.Parallax</b> demo scene. The landscape bands - each a real
+    ///     <see cref="ParallaxLayer" /> with its own multiplier, tiling and sorting - the UI and the info card are
+    ///     saved in ParallaxDemo.unity by its DemoSceneKit builder. This component only moves the camera (auto pan,
+    ///     reverse, jumps) so the layers have something to react to, and mirrors the camera position into the
+    ///     authored label. It builds nothing at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Demos/Parallax Demo")]
     public sealed class ParallaxDemoController : MonoBehaviour
     {
-        private const float PanRange = 7f;
+        [Header("Scene")]
+        [Tooltip("Camera the ParallaxLayers are bound to. Falls back to Camera.main when empty.")]
+        [SerializeField] private Camera _camera;
 
-        private NeoDemoShell.Context _shell;
-        private readonly List<GameObject> _ownedLayers = new List<GameObject>();
-        private Camera _cam;
-        private float _camX;
-        private float _panSpeed = 1.5f;
-        private int _dir = 1;
+        [Tooltip("Authored layers (for the log and the C# reference); the controller never changes their settings.")]
+        [SerializeField] private ParallaxLayer[] _layers = new ParallaxLayer[0];
 
-        private void OnEnable() => _shell?.SetVisible(true);
-        private void OnDisable() => _shell?.SetVisible(false);
+        [Header("Camera pan")]
+        [Tooltip("Pan speed in world units per second.")]
+        [SerializeField] [Min(0f)] private float _panSpeed = 1.5f;
 
-        private void OnDestroy()
-        {
-            foreach (GameObject layer in _ownedLayers)
-            {
-                if (layer != null) layer.SetActive(false);
-                NeoDemoShell.DestroyOwnedObject(layer);
-            }
+        [SerializeField] private bool _autoPan = true;
 
-            _ownedLayers.Clear();
-            _shell?.Dispose();
-        }
+        [Header("UI")]
+        [SerializeField] private TMP_Text _cameraX;
+        [SerializeField] private Slider _speedSlider;
+        [SerializeField] private Toggle _autoPanToggle;
+        [SerializeField] private DemoLogFeed _log;
+
+        private Transform _cameraTransform;
+        private int _direction = 1;
+        private float _startX;
+        private int _shownTenths = int.MinValue;
+        private bool _warnedUnbuilt;
+
+        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        public bool IsSceneBuilt => _camera != null && _layers != null && _layers.Length > 0 && _cameraX != null &&
+                                    _log != null;
+
+        /// <summary>Authored parallax layers.</summary>
+        public ParallaxLayer[] Layers => _layers;
+
+        /// <summary>Current pan speed (world units per second).</summary>
+        public float PanSpeed => _panSpeed;
+
+        /// <summary>+1 when the camera pans right, -1 when it pans left.</summary>
+        public int Direction => _direction;
 
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Parallax", new Color(1f, 0.60f, 0.20f), transform);
-            HideBackdrop();
+            if (!IsSceneBuilt)
+            {
+                WarnUnbuilt();
+            }
 
-            NeoDemoShell.ShowInfoCardOnce(
-                "Neo.Parallax",
-                "Four ParallaxLayer bands tile and recycle as the camera pans; deeper bands scroll slower.",
-                "Each band has its own parallax multiplier (logged below)",
-                "Speed slider drives the auto camera pan; Reverse flips it",
-                "Layers are procedural discs — no imported art");
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
 
-            _cam = Camera.main;
+            _cameraTransform = _camera != null ? _camera.transform : null;
+            _startX = _cameraTransform != null ? _cameraTransform.position.x : 0f;
+            if (_speedSlider != null)
+            {
+                _speedSlider.SetValueWithoutNotify(_panSpeed);
+            }
 
-            // WHY: back-to-front — smaller multiplier = deeper = slower apparent scroll.
-            BuildLayer("Far mountains", new Color(0.31f, 0.35f, 0.53f), 0.9f, 4.6f, 3.4f, 0.05f, -40);
-            BuildLayer("Mid hills", new Color(0.24f, 0.46f, 0.55f), -1.5f, 3.3f, 2.5f, 0.28f, -30);
-            BuildLayer("Near hills", new Color(0.30f, 0.56f, 0.43f), -2.9f, 2.5f, 2.1f, 0.52f, -20);
-            BuildLayer("Foreground", new Color(0.44f, 0.37f, 0.27f), -4.3f, 1.9f, 1.7f, 0.80f, -10);
+            if (_autoPanToggle != null)
+            {
+                _autoPanToggle.SetIsOnWithoutNotify(_autoPan);
+            }
 
-            _shell.AddSlider("Camera pan speed", 0f, 4f, _panSpeed, v => _panSpeed = v);
-            _shell.AddButtonRow(("Reverse", Reverse));
-
-            _shell.Log("Parallax multipliers: far 0.05 · mid 0.28 · near 0.52 · fg 0.80");
+            RefreshCameraLabel();
+            Log(_layers != null ? _layers.Length + " ParallaxLayers follow '" + (_camera != null ? _camera.name : "no camera") +
+                                  "' - select a band under [Demo] World" : "No layers assigned");
         }
 
         private void Update()
         {
-            if (_cam == null)
+            if (_cameraTransform == null || !_autoPan || _panSpeed <= 0f)
             {
                 return;
             }
 
-            // WHY: ping-pong pan; ParallaxLayer.LateUpdate reads the camera delta and offsets each band.
-            _camX += _dir * _panSpeed * Time.deltaTime;
-            if (_camX > PanRange)
+            // WHY: endless pan; every ParallaxLayer reads the camera delta in LateUpdate and recycles its tiles.
+            Vector3 position = _cameraTransform.position;
+            position.x += _direction * _panSpeed * Time.deltaTime;
+            _cameraTransform.position = position;
+            RefreshCameraLabel();
+        }
+
+        /// <summary>Slider target: pan speed in world units per second.</summary>
+        public void SetPanSpeed(float unitsPerSecond)
+        {
+            _panSpeed = Mathf.Max(0f, unitsPerSecond);
+        }
+
+        /// <summary>Toggle target: starts or stops the automatic pan.</summary>
+        public void SetAutoPan(bool enabled)
+        {
+            _autoPan = enabled;
+            Log(enabled ? "Auto pan on" : "Auto pan off - the clouds keep drifting (scrollSpeed)");
+        }
+
+        /// <summary>Button target: flips the pan direction.</summary>
+        public void Reverse()
+        {
+            _direction = -_direction;
+            Log(_direction > 0 ? "Pan -> right" : "Pan <- left");
+        }
+
+        /// <summary>Button target: teleports the camera; every layer re-centres its tile pool in one step.</summary>
+        public void Jump(float distance)
+        {
+            if (_cameraTransform == null)
             {
-                _camX = PanRange;
-                _dir = -1;
+                return;
             }
-            else if (_camX < -PanRange)
+
+            Vector3 position = _cameraTransform.position;
+            position.x += distance;
+            _cameraTransform.position = position;
+            RefreshCameraLabel();
+            Log("Camera jumped " + distance.ToString("+0;-0", CultureInfo.InvariantCulture) +
+                " units - tiles recycle seamlessly");
+        }
+
+        /// <summary>Button target: returns the camera to where it started.</summary>
+        public void ResetCamera()
+        {
+            if (_cameraTransform == null)
             {
-                _camX = -PanRange;
-                _dir = 1;
+                return;
             }
 
-            Vector3 p = _cam.transform.position;
-            _cam.transform.position = new Vector3(_camX, p.y, p.z);
+            Vector3 position = _cameraTransform.position;
+            position.x = _startX;
+            _cameraTransform.position = position;
+            RefreshCameraLabel();
+            Log("Camera back at the start");
         }
 
-        private void Reverse()
+        private void RefreshCameraLabel()
         {
-            _dir = -_dir;
-            _shell.Log(_dir > 0 ? "Pan → right" : "Pan → left");
-        }
-
-        private void BuildLayer(string label, Color color, float y, float sizeX, float sizeY,
-            float multiplier, int order)
-        {
-            // WHY: scaler parent carries the size; the ParallaxLayer child stays at scale 1 so its tiles size and
-            // space by the parent's lossy scale (no double-scaling of the recycled tiles).
-            GameObject scaler = new GameObject(label);
-            _ownedLayers.Add(scaler);
-            scaler.transform.SetParent(transform, false);
-            scaler.transform.position = new Vector3(0f, y, 0f);
-            scaler.transform.localScale = new Vector3(sizeX, sizeY, 1f);
-
-            GameObject layerGo = new GameObject(label + " Layer");
-            layerGo.transform.SetParent(scaler.transform, false);
-            layerGo.transform.localPosition = Vector3.zero;
-            layerGo.transform.localScale = Vector3.one;
-
-            SpriteRenderer sr = layerGo.AddComponent<SpriteRenderer>();
-            sr.sprite = SurvivorArt.Disc;
-            sr.color = color;
-            sr.sortingOrder = order; // copied onto every recycled tile
-
-            // WHY: Awake → Initialise runs here and resolves Camera.main; set the multiplier after (read live each frame).
-            Neo.Parallax.ParallaxLayer layer = layerGo.AddComponent<Neo.Parallax.ParallaxLayer>();
-            SetPrivateField(layer, "parallaxMultiplier", new Vector2(multiplier, 0f));
-
-            _shell.Log($"{label}: ParallaxLayer ×{multiplier:0.00}");
-        }
-
-        private static void SetPrivateField(object target, string field, object value)
-        {
-            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            info?.SetValue(target, value);
-        }
-
-        private void HideBackdrop()
-        {
-            // WHY: the scrolling landscape IS the background here, so fully hide the shell's opaque gradient and let
-            // the camera clear color read as sky behind the world-space parallax bands.
-            Transform backdrop = _shell.Canvas != null ? _shell.Canvas.transform.Find("Backdrop") : null;
-            if (backdrop != null && backdrop.TryGetComponent(out UnityEngine.UI.Image img))
+            if (_cameraX == null || _cameraTransform == null)
             {
-                img.enabled = false;
+                return;
             }
+
+            float x = _cameraTransform.position.x;
+            int tenths = Mathf.RoundToInt(x * 10f);
+            if (tenths == _shownTenths)
+            {
+                return;
+            }
+
+            _shownTenths = tenths;
+            // WHY SetText with an argument: formats into TMP's own buffer without allocating a string per frame.
+            _cameraX.SetText("{0:1}", x);
+        }
+
+        private void Log(string message)
+        {
+            if (_log != null)
+            {
+                _log.Log(message);
+            }
+        }
+
+        private void WarnUnbuilt()
+        {
+            if (_warnedUnbuilt)
+            {
+                return;
+            }
+
+            _warnedUnbuilt = true;
+            global::Neo.Demo.SampleDiagnostics.Warn(
+                "[ParallaxDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                this);
         }
     }
 }

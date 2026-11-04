@@ -1,6 +1,19 @@
 # Network contracts
 
-`Neo.Network.Contracts` contains the shared declarations in namespace `Neo.Network`. Its two types are always available, with or without Mirror. The assembly has no explicit assembly references, and these declarations use no Unity or Mirror APIs. A custom gameplay assembly can reference `Neo.Network.Contracts` without referencing the networking implementation.
+**What it is:** the always-available network declarations `INeoOptionalNetworked`, `NetworkAuthorityMode` and
+the transport-free decision table `NetworkAuthorityPolicy` (`Scripts/NetworkContracts/`, assembly
+`Neo.Network.Contracts`, namespace `Neo.Network`).
+
+**How to use:**
+1. Reference `Neo.Network.Contracts` from a gameplay assembly that must compile without the networking layer.
+2. Implement `INeoOptionalNetworked` on a component whose networking can be switched off, and expose an
+   `NetworkAuthorityMode` field where remote callers need a policy.
+3. Decide authority with `NetworkAuthorityPolicy.IsAuthorized` (or `NeoNetworkState.IsAuthorized` with Mirror).
+4. Read live session state from `NeoNetworkState` in `Neo.Network`, not from these declarations.
+
+---
+
+`Neo.Network.Contracts` contains the shared declarations in namespace `Neo.Network`. Its three types are always available, with or without Mirror. The assembly has no explicit assembly references, and these declarations use no Unity or Mirror APIs. A custom gameplay assembly can reference `Neo.Network.Contracts` without referencing the networking implementation.
 
 Source: `Scripts/NetworkContracts/`. For runtime components and setup, start with the [Network entry point](README.md).
 
@@ -10,6 +23,7 @@ Source: `Scripts/NetworkContracts/`. For runtime components and setup, start wit
 |------|----------|
 | `INeoOptionalNetworked` | Read-only `bool IsNetworked { get; }`: whether the component is configured for networking. |
 | `NetworkAuthorityMode` | Serialized policy selected by network action consumers: `None = 0`, `OwnerOnly = 1`, `ServerOnly = 2`. |
+| `NetworkAuthorityPolicy` | Static, transport-free decision table: `IsKnown(mode)` and `IsAuthorized(mode, isDirectServerCall, isLocalHostSender, senderOwnsObject)`. See [Authority policy in C#](#authority-policy-in-c). |
 
 `IsNetworked` describes configuration, not whether a server or client is currently connected. Read session state through `NeoNetworkState` in the separate `Neo.Network` assembly. The interface itself does not enable objects, synchronize data, or own resources. Implementations may expose the property explicitly, so read it through an `INeoOptionalNetworked` reference.
 
@@ -38,14 +52,14 @@ Mirror disables scene `NetworkIdentity` objects during scene processing. Neoxide
 
 1. On components that expose it, disable **Is Networked** (`isNetworked` in C#). `NeoNetworkComponent` subclasses and `Money` forward that setting through the interface; the physics player controllers always report `false`.
 2. Check the whole identity hierarchy, including inactive children. It must contain at least one `INeoOptionalNetworked` implementation, and every implementation must return `false`. One component returning `true` prevents that identity's offline reactivation.
-3. The editor post-processor runs after Mirror during build/Play Mode scene processing. The runtime `NeoMirrorSceneReactivator` safety net runs on scene load only when enabled and neither a server nor a client is active.
+3. The editor post-processor runs after Mirror during build/Play Mode scene processing. The runtime `NeoMirrorSceneReactivator` safety net runs on scene load only when enabled and neither a server nor a client is active. `NeoMirrorSceneReactivator.Enabled` is restored to `true` at every play start (also with domain reload disabled); opt out from startup code that runs later, such as a `BeforeSceneLoad` `[RuntimeInitializeOnLoadMethod]`.
 4. Reactivation targets inactive scene identities with a nonzero scene ID and skips protected hidden/non-editable objects. Runtime-spawned identities (`sceneId == 0`) are outside this recovery path. An inactive parent can still prevent an activated child from becoming active in the hierarchy.
 
 Returning `false` is an opt-in condition, not an instruction to call `SetActive` immediately. Configure it before scene processing/loading. This assembly supplies the interface; the editor/runtime adapters perform the activation. It provides no Inspector component or NoCode action of its own.
 
 ## Authority selection
 
-Choose the policy in a consumer's Inspector field or through its exposed typed property, such as a relay's `AuthorityMode`. With Mirror enabled, `NeoNetworkState.IsAuthorized` in `Neo.Network` applies these meanings:
+Choose the policy in a consumer's Inspector field or through its exposed typed property, such as a relay's `AuthorityMode`. With Mirror enabled, `NeoNetworkState.IsAuthorized` in `Neo.Network` applies these meanings through `NetworkAuthorityPolicy`:
 
 | Policy | Persisted integer | Allowed caller |
 |--------|-------------------|----------------|
@@ -56,6 +70,31 @@ Choose the policy in a consumer's Inspector field or through its exposed typed p
 The local host exception applies even when another client owns the object. Passing the authority gate does not bypass the consumer's payload validation, readiness checks, or rate limits. Commands using `requiresAuthority = false` still need the consumer's explicit authority check; selecting an enum value alone enforces nothing.
 
 Keep all three numeric values stable: existing scenes, prefabs, and JSON settings persist the underlying integers. `default(NetworkAuthorityMode)` is `None`; individual consumers can initialize their serialized fields to a different policy. Use each component's documented default rather than assuming that all network actions accept any sender.
+
+## Authority policy in C#
+
+`NetworkAuthorityPolicy` is the single place where the table above is decided. It takes plain facts about
+the caller, so the rules can be unit-tested and reused by a custom transport without Mirror:
+
+| Method | Result |
+|--------|--------|
+| `IsKnown(NetworkAuthorityMode mode)` | `true` only for `None`, `OwnerOnly` and `ServerOnly`. |
+| `IsAuthorized(mode, isDirectServerCall, isLocalHostSender, senderOwnsObject)` | `None` allows every caller; `OwnerOnly` allows direct server code, the host's local connection and the owner; `ServerOnly` allows direct server code and the host's local connection; an unnamed value is rejected for everyone, including the server. |
+
+```csharp
+using Mirror;
+using Neo.Network;
+
+bool allowed = NetworkAuthorityPolicy.IsAuthorized(
+    NetworkAuthorityMode.OwnerOnly,
+    isDirectServerCall: sender == null,
+    isLocalHostSender: sender == NetworkServer.localConnection,
+    senderOwnsObject: identity != null && identity.connectionToClient == sender);
+```
+
+With Mirror, `NeoNetworkState.IsAuthorized(GameObject, NetworkConnectionToClient, NetworkAuthorityMode)`
+gathers exactly these facts from the sender and the target's `NetworkIdentity` and delegates to the policy.
+It reads the target's `NetworkIdentity` only for `OwnerOnly` checks of a remote sender.
 
 ## 11.0.0 invalid-policy migration
 

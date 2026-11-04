@@ -66,6 +66,11 @@ namespace Neo.Cards
 
         [SerializeField] private List<CustomCardEntry> _customCards = new();
 
+        private const int SuitCount = 4;
+
+        [NonSerialized] private Dictionary<string, int> _customSpriteIndex;
+        [NonSerialized] private int _customSpriteIndexCount = -1;
+
         /// <summary>
         ///     Sprite deck type (how many sprites are expected in the asset).
         /// </summary>
@@ -206,14 +211,14 @@ namespace Neo.Cards
         /// <returns>List of cards.</returns>
         public List<CardData> GenerateDeck(DeckType deckType)
         {
-            List<CardData> cards = new();
+            List<CardData> cards = new(Mathf.Max(0, deckType.GetTotalCardCount()));
             Rank minRank = deckType.GetMinRank();
 
-            foreach (Suit suit in Enum.GetValues(typeof(Suit)))
+            for (int suit = 0; suit < SuitCount; suit++)
             {
                 for (int r = (int)minRank; r <= (int)Rank.Ace; r++)
                 {
-                    cards.Add(new CardData(suit, (Rank)r));
+                    cards.Add(new CardData((Suit)suit, (Rank)r));
                 }
             }
 
@@ -334,15 +339,74 @@ namespace Neo.Cards
                 return null;
             }
 
-            foreach (CustomCardEntry entry in _customCards)
+            // WHY: GetSprite runs on every SetData/flip; a TCG deck with hundreds of entries made each refresh a
+            // linear scan with string trims. The index is verified on every hit, and a miss falls back to the
+            // authoritative scan, so inspector, Undo and serialized edits never return a stale sprite.
+            if (_customSpriteIndex == null || _customSpriteIndexCount != _customCards.Count)
             {
-                if (entry != null && string.Equals(entry.Id?.Trim(), customId, StringComparison.Ordinal))
+                RebuildCustomSpriteIndex();
+            }
+
+            if (TryGetIndexedCustomEntry(customId, out CustomCardEntry entry))
+            {
+                return entry.Sprite;
+            }
+
+            foreach (CustomCardEntry candidate in _customCards)
+            {
+                if (candidate != null && string.Equals(candidate.Id?.Trim(), customId, StringComparison.Ordinal))
                 {
-                    return entry.Sprite;
+                    RebuildCustomSpriteIndex();
+                    return candidate.Sprite;
                 }
             }
 
             return null;
+        }
+
+        private bool TryGetIndexedCustomEntry(string customId, out CustomCardEntry entry)
+        {
+            entry = null;
+            if (!_customSpriteIndex.TryGetValue(customId, out int index) || index >= _customCards.Count)
+            {
+                return false;
+            }
+
+            CustomCardEntry candidate = _customCards[index];
+            if (candidate == null || !string.Equals(candidate.Id?.Trim(), customId, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            entry = candidate;
+            return true;
+        }
+
+        private void RebuildCustomSpriteIndex()
+        {
+            _customSpriteIndex ??= new Dictionary<string, int>(StringComparer.Ordinal);
+            _customSpriteIndex.Clear();
+            _customSpriteIndexCount = _customCards.Count;
+            for (int i = 0; i < _customCards.Count; i++)
+            {
+                CustomCardEntry entry = _customCards[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.Id))
+                {
+                    continue;
+                }
+
+                string id = entry.Id.Trim();
+                // WHY: the first entry with an id wins, matching the original linear lookup for duplicates.
+                if (!_customSpriteIndex.ContainsKey(id))
+                {
+                    _customSpriteIndex.Add(id, i);
+                }
+            }
+        }
+
+        private void OnValidate()
+        {
+            _customSpriteIndex = null;
         }
 
         private void ValidateCustomCards(List<string> errors, List<string> warnings)

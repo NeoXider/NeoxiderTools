@@ -94,7 +94,7 @@ namespace Neo.Editor.Tests
             GameObject far = CreateOwnedObject("Far");
             far.transform.position = new Vector3(100, 0, 0);
 
-            var list = new List<Transform> { near.transform, far.transform };
+            List<Transform> list = new List<Transform> { near.transform, far.transform };
             Transform closest = origin.transform.GetClosest(list);
             Assert.AreEqual(near.transform, closest);
 
@@ -250,7 +250,7 @@ namespace Neo.Editor.Tests
         {
             GameObject a = CreateOwnedObject("A");
             GameObject b = CreateOwnedObject("B");
-            var list = new List<GameObject> { a, b };
+            List<GameObject> list = new List<GameObject> { a, b };
             list.SetActiveAll(false);
             Assert.IsFalse(a.activeSelf);
             Assert.IsFalse(b.activeSelf);
@@ -264,8 +264,8 @@ namespace Neo.Editor.Tests
             GameObject a = CreateOwnedObject("Active");
             GameObject b = CreateOwnedObject("Inactive");
             b.SetActive(false);
-            var list = new List<GameObject> { a, b };
-            var active = list.GetActiveObjects().ToList();
+            List<GameObject> list = new List<GameObject> { a, b };
+            List<GameObject> active = list.GetActiveObjects().ToList();
             Assert.AreEqual(1, active.Count);
             Assert.AreEqual(a, active[0]);
             Object.DestroyImmediate(a);
@@ -279,7 +279,7 @@ namespace Neo.Editor.Tests
             a.transform.position = new Vector3(1, 0, 0);
             GameObject b = CreateOwnedObject("Far");
             b.transform.position = new Vector3(100, 0, 0);
-            var list = new List<GameObject> { a, b };
+            List<GameObject> list = new List<GameObject> { a, b };
 
             GameObject closest = list.FindClosest(Vector3.zero);
             Assert.AreEqual(a, closest);
@@ -295,9 +295,9 @@ namespace Neo.Editor.Tests
             a.transform.position = new Vector3(1, 0, 0);
             GameObject b = CreateOwnedObject("TooFar");
             b.transform.position = new Vector3(50, 0, 0);
-            var list = new List<GameObject> { a, b };
+            List<GameObject> list = new List<GameObject> { a, b };
 
-            var within = list.WithinDistance(Vector3.zero, 5f).ToList();
+            List<GameObject> within = list.WithinDistance(Vector3.zero, 5f).ToList();
             Assert.AreEqual(1, within.Count);
             Assert.AreEqual(a, within[0]);
 
@@ -312,7 +312,7 @@ namespace Neo.Editor.Tests
             a.transform.position = new Vector3(0, 0, 0);
             GameObject b = CreateOwnedObject("B");
             b.transform.position = new Vector3(10, 0, 0);
-            var list = new List<GameObject> { a, b };
+            List<GameObject> list = new List<GameObject> { a, b };
 
             Vector3 avg = list.GetAveragePosition();
             Assert.AreEqual(5f, avg.x, 0.001f);
@@ -327,7 +327,7 @@ namespace Neo.Editor.Tests
             GameObject a = CreateOwnedObject("A");
             GameObject b = CreateOwnedObject("B");
             GameObject c = CreateOwnedObject("C");
-            var list = new List<GameObject> { a, b, c };
+            List<GameObject> list = new List<GameObject> { a, b, c };
 
             list.SetActiveRange(2, false);
             Assert.IsFalse(a.activeSelf);
@@ -345,7 +345,7 @@ namespace Neo.Editor.Tests
             GameObject parent = CreateOwnedObject("Parent");
             GameObject a = CreateOwnedObject("A");
             GameObject b = CreateOwnedObject("B");
-            var list = new List<GameObject> { a, b };
+            List<GameObject> list = new List<GameObject> { a, b };
 
             list.SetParentAll(parent.transform);
             Assert.AreEqual(parent.transform, a.transform.parent);

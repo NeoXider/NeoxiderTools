@@ -9,15 +9,24 @@ using UnityEngine.TestTools;
 
 namespace Neo.Editor.Tests
 {
+    /// <summary>
+    ///     Cursor ownership between several <see cref="CursorLockController" /> instances and one
+    ///     <see cref="PlayerController3DPhysics" />: gate baselines, release order, the surviving cursor request and
+    ///     the player's standalone auto-lock after the last owner lets go. The Move module reads and writes the cursor
+    ///     through <see cref="MoveCursor" />, and this fixture installs an in-memory cursor there, so every case runs
+    ///     on any host, including batch mode and an unfocused Game view where Unity refuses a native lock. The native
+    ///     write-through is covered by one PlayMode smoke case that may be Ignored on such hosts.
+    /// </summary>
     public sealed class Audit20261023NeoToolsMoveCursorOwnershipTests
     {
         private readonly List<GameObject> _objects = new List<GameObject>();
         private readonly List<CursorLockController> _controllers = new List<CursorLockController>();
         private bool _priorGlobalManagement;
-        private bool _priorVisible;
-        private CursorLockMode _priorLock;
         private PlayerController3DPhysics _player;
         private bool _enteredPlayMode;
+        private FakeCursor _cursor;
+        private MoveCursor.IBackend _priorCursorBackend;
+        private bool _installedCursor;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -28,8 +37,9 @@ namespace Neo.Editor.Tests
             _enteredPlayMode = true;
             Assert.That(Application.isPlaying, Is.True);
             _priorGlobalManagement = CursorLockController.GlobalCursorManagement;
-            _priorVisible = Cursor.visible;
-            _priorLock = Cursor.lockState;
+            _cursor = new FakeCursor();
+            _priorCursorBackend = MoveCursor.SetBackend(_cursor);
+            _installedCursor = true;
             CursorLockController.GlobalCursorManagement = true;
             GameObject owner = CreateObject();
             _player = owner.AddComponent<PlayerController3DPhysics>();
@@ -42,8 +52,6 @@ namespace Neo.Editor.Tests
             _player.SetMoveInput(Vector2.zero);
             owner.GetComponent<Rigidbody>().useGravity = false;
             owner.SetActive(true);
-            // Ask through the public editor menu; capability assertions below still require actual native focus/readback.
-            UnityEditor.EditorApplication.ExecuteMenuItem("Window/General/Game");
             yield return null;
         }
 
@@ -82,8 +90,13 @@ namespace Neo.Editor.Tests
             {
                 _controllers.Clear();
                 _objects.Clear();
-                Cursor.lockState = _priorLock;
-                Cursor.visible = _priorVisible;
+                if (_installedCursor)
+                {
+                    MoveCursor.SetBackend(_priorCursorBackend);
+                    _installedCursor = false;
+                }
+
+                _priorCursorBackend = null;
                 CursorLockController.GlobalCursorManagement = _priorGlobalManagement;
             }
 
@@ -251,11 +264,6 @@ namespace Neo.Editor.Tests
         public void DefaultPlayer_MixedGatesPreserveSurvivingCursorAndExactBaselines(
             bool lookOwnerIsTop, bool closeTopFirst, bool initialLook, bool initialMovement)
         {
-            if (initialLook)
-            {
-                AssertNativeCursorLockCapability();
-            }
-
             _player = CreateDefaultCursorPlayer(initialLook, initialMovement);
             CursorLockController lookOwner = CreateController(true, false);
             CursorLockController movementOwner = CreateController(false, true);
@@ -285,7 +293,7 @@ namespace Neo.Editor.Tests
             Assert.That(_player.LookEnabled, Is.EqualTo(first == lookOwner && initialLook));
             Assert.That(_player.MovementEnabled, Is.EqualTo(first == movementOwner && initialMovement));
             Assert.That(_player.ExternalCursorLockController, Is.SameAs(lookOwner));
-            // An exposed lower controller keeps its existing activation notification. Internal repair is silent.
+            // WHY: an exposed lower controller keeps its existing activation notification; internal repair is silent.
             Assert.That(lookUnlocks, Is.EqualTo(closeTopFirst && remaining == lookOwner ? 2 : 1));
             Assert.That(movementUnlocks, Is.EqualTo(closeTopFirst && remaining == movementOwner ? 2 : 1));
 
@@ -297,8 +305,8 @@ namespace Neo.Editor.Tests
             Assert.That(_player.MovementEnabled, Is.EqualTo(initialMovement));
             Assert.That(_player.ExternalCursorLockController, Is.SameAs(lookOwner));
             bool finalLookAutoLocks = remaining == lookOwner && initialLook;
-            Assert.That(Cursor.lockState, Is.EqualTo(finalLookAutoLocks ? CursorLockMode.Locked : CursorLockMode.None));
-            Assert.That(Cursor.visible, Is.EqualTo(!finalLookAutoLocks));
+            Assert.That(_cursor.LockState, Is.EqualTo(finalLookAutoLocks ? CursorLockMode.Locked : CursorLockMode.None));
+            Assert.That(_cursor.Visible, Is.EqualTo(!finalLookAutoLocks));
             Assert.That(lookUnlocks, Is.EqualTo(closeTopFirst && remaining == lookOwner ? 2 : 1));
             Assert.That(movementUnlocks, Is.EqualTo(closeTopFirst && remaining == movementOwner ? 2 : 1));
         }
@@ -310,11 +318,6 @@ namespace Neo.Editor.Tests
         public void DefaultPlayer_SingleOwnerPreservesStandaloneLookRestoration(
             bool initialLook, bool initialMovement)
         {
-            if (initialLook)
-            {
-                AssertNativeCursorLockCapability();
-            }
-
             _player = CreateDefaultCursorPlayer(initialLook, initialMovement);
             CursorLockController controller = CreateController();
             int unlocks = 0;
@@ -328,55 +331,170 @@ namespace Neo.Editor.Tests
 
             Assert.That(_player.LookEnabled, Is.EqualTo(initialLook));
             Assert.That(_player.MovementEnabled, Is.EqualTo(initialMovement));
-            Assert.That(Cursor.lockState, Is.EqualTo(initialLook ? CursorLockMode.Locked : CursorLockMode.None));
-            Assert.That(Cursor.visible, Is.EqualTo(!initialLook));
+            Assert.That(_cursor.LockState, Is.EqualTo(initialLook ? CursorLockMode.Locked : CursorLockMode.None));
+            Assert.That(_cursor.Visible, Is.EqualTo(!initialLook));
             Assert.That(unlocks, Is.EqualTo(1));
             Assert.That(_player.ExternalCursorLockController, Is.SameAs(controller));
+        }
+
+        /// <remarks>
+        ///     Destroy and SetActive(false) keep the controller's <c>enabled</c> flag true while it releases its
+        ///     players, so the player must stop deferring to it during that cleanup to auto-lock as it does after
+        ///     <see cref="CursorLockController.DisableController" />.
+        /// </remarks>
+        [TestCase(OwnerCleanup.DisableController, true)]
+        [TestCase(OwnerCleanup.DisableComponent, true)]
+        [TestCase(OwnerCleanup.DeactivateObject, true)]
+        [TestCase(OwnerCleanup.DestroyObject, true)]
+        [TestCase(OwnerCleanup.DisableController, false)]
+        [TestCase(OwnerCleanup.DisableComponent, false)]
+        [TestCase(OwnerCleanup.DeactivateObject, false)]
+        [TestCase(OwnerCleanup.DestroyObject, false)]
+        public void DefaultPlayer_EveryOwnerCleanupPathRestoresTheStandaloneLookAutoLock(OwnerCleanup cleanup,
+            bool initialLook)
+        {
+            _player = CreateDefaultCursorPlayer(initialLook, true);
+            CursorLockController controller = CreateController();
+            controller.ShowCursor();
+            AssertBlocked();
+            AssertVisibleCursor();
+
+            switch (cleanup)
+            {
+                case OwnerCleanup.DisableController:
+                    controller.DisableController();
+                    break;
+                case OwnerCleanup.DisableComponent:
+                    controller.enabled = false;
+                    break;
+                case OwnerCleanup.DeactivateObject:
+                    controller.gameObject.SetActive(false);
+                    break;
+                case OwnerCleanup.DestroyObject:
+                    Object.DestroyImmediate(controller.gameObject);
+                    break;
+            }
+
+            Assert.That(_player.LookEnabled, Is.EqualTo(initialLook), cleanup.ToString());
+            Assert.That(_player.MovementEnabled, Is.True, cleanup.ToString());
+            Assert.That(_cursor.LockState, Is.EqualTo(initialLook ? CursorLockMode.Locked : CursorLockMode.None),
+                cleanup + ": with no surviving owner the restored look locks the cursor like a standalone player.");
+            Assert.That(_cursor.Visible, Is.EqualTo(!initialLook), cleanup.ToString());
+        }
+
+        /// <remarks>
+        ///     An owner on the player root leaves together with its player (despawn, respawn, deactivation). The look
+        ///     it hands back during that cleanup must not auto-lock the cursor for a player that is leaving play too.
+        /// </remarks>
+        [TestCase(OwnerCleanup.DeactivateObject)]
+        [TestCase(OwnerCleanup.DestroyObject)]
+        public void DefaultPlayer_OwnerOnThePlayerRootLeavingWithThePlayer_DoesNotRelockTheCursor(OwnerCleanup cleanup)
+        {
+            _player = CreateDefaultPlayerWithRootOwner(out CursorLockController controller);
+            Assert.That(_player.ExternalCursorLockController, Is.SameAs(controller));
+            controller.ShowCursor();
+            AssertBlocked();
+            AssertVisibleCursor();
+            GameObject root = _player.gameObject;
+
+            if (cleanup == OwnerCleanup.DestroyObject)
+            {
+                Object.DestroyImmediate(root);
+            }
+            else
+            {
+                root.SetActive(false);
+                Assert.That(_player.LookEnabled, Is.True, "The owner still hands the look gate back.");
+                Assert.That(_player.MovementEnabled, Is.True, "The owner still hands the movement gate back.");
+            }
+
+            // WHY: the player recognises that it leaves play through its own activeInHierarchy, which Unity reports as
+            // false inside the OnDisable that SetActive(false) or a GameObject destroy drives.
+            Assert.That(_cursor.LockState, Is.EqualTo(CursorLockMode.None),
+                cleanup + ": a player leaving play with its owner must not lock the cursor (the player's GameObject " +
+                "still read as active in hierarchy while the owner cleaned up).");
+            Assert.That(_cursor.Visible, Is.True, cleanup.ToString());
+        }
+
+        /// <remarks>
+        ///     A deactivated owner runs no Update, so it handles no Escape. After its cleanup the player treats it
+        ///     like an owner with <c>enabled = false</c>: it keeps the binding, runs its own cursor paths and writes
+        ///     the cursor itself instead of pushing the inactive owner onto the cursor stack, and it defers again once
+        ///     the owner is active.
+        /// </remarks>
+        [Test]
+        public void DeactivatedOwner_IsTreatedAsAbsentUntilItIsActiveAgain()
+        {
+            _player = CreateDefaultCursorPlayer(true, true);
+            CursorLockController controller = CreateController();
+            controller.ShowCursor();
+            Assert.That(_player.HasExternalCursorControl(), Is.True);
+            Assert.That(_player.ShouldHandleEscape(), Is.False);
+
+            controller.gameObject.SetActive(false);
+
+            Assert.That(controller.IsReleasingOwnership, Is.False, "The cleanup flag only spans OnDisable.");
+            Assert.That(_player.ExternalCursorLockController, Is.SameAs(controller), "The binding is kept.");
+            Assert.That(_player.HasExternalCursorControl(), Is.False,
+                "Cleanup and the time after it agree: an inactive owner does not own the cursor.");
+            Assert.That(_player.ShouldHandleEscape(), Is.True,
+                "The player must handle Escape while its owner cannot, or a locked cursor has no way out.");
+            Assert.That(_player.ShouldLockCursorOnStart(), Is.True);
+            Assert.That(_cursor.LockState, Is.EqualTo(CursorLockMode.Locked));
+            Assert.That(_cursor.Visible, Is.False);
+
+            _player.SetCursorLocked(false);
+
+            Assert.That(controller.HasCursorOwnership, Is.False,
+                "A request must not be forwarded to the inactive owner and push it onto the cursor stack.");
+            AssertVisibleCursor();
+
+            controller.gameObject.SetActive(true);
+
+            Assert.That(_player.HasExternalCursorControl(), Is.True, "A reactivated owner owns the cursor again.");
+            Assert.That(_player.ShouldHandleEscape(), Is.False);
+            _player.SetCursorLocked(true);
+            Assert.That(controller.HasCursorOwnership, Is.True, "Requests are forwarded to the active owner again.");
+            Assert.That(_cursor.LockState, Is.EqualTo(CursorLockMode.Locked));
+            Assert.That(_cursor.Visible, Is.False);
         }
 
         [Test]
         public void DefaultPlayer_StandaloneSetLookEnabledStillLocksAndHides()
         {
-            AssertNativeCursorLockCapability();
             _player = CreateDefaultCursorPlayer(false, true);
             Assert.That(_player.ExternalCursorLockController, Is.Null);
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            _cursor.LockState = CursorLockMode.None;
+            _cursor.Visible = true;
 
             _player.SetLookEnabled(true);
 
             Assert.That(_player.LookEnabled, Is.True);
-            Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.Locked));
-            Assert.That(Cursor.visible, Is.False);
+            Assert.That(_cursor.LockState, Is.EqualTo(CursorLockMode.Locked));
+            Assert.That(_cursor.Visible, Is.False);
         }
 
-        private static void AssertNativeCursorLockCapability()
+        [Test]
+        public void MoveCursor_SwapsBackendsAndFallsBackToTheNativeCursor()
         {
-            const string requirement = "MOVE_NATIVE_CURSOR_CAPABILITY: validate in an interactive, focused Game view in Play; " +
-                                       "batch/unfocused None cannot establish standalone auto-lock or ownership correctness.";
-            Assert.That(Application.isPlaying, Is.True, requirement);
-            Assert.That(Application.isFocused, Is.True, requirement);
-            UnityEditor.EditorWindow focused = UnityEditor.EditorWindow.focusedWindow;
-            Assert.That(focused, Is.Not.Null, requirement);
-            Assert.That(focused.GetType().Name, Is.EqualTo("GameView"), requirement);
-            CursorLockMode priorLock = Cursor.lockState;
-            bool priorVisible = Cursor.visible;
+            MoveCursor.IBackend installed = MoveCursor.SetBackend(null);
             try
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-                Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.Locked), requirement);
-                Assert.That(Cursor.visible, Is.False, requirement);
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.None), requirement);
-                Assert.That(Cursor.visible, Is.True, requirement);
+                Assert.That(installed, Is.SameAs(_cursor), "SetBackend returns the backend it replaces.");
+                Assert.That(MoveCursor.HasBackend, Is.False);
+                Assert.That(MoveCursor.LockState, Is.EqualTo(Cursor.lockState));
+                Assert.That(MoveCursor.Visible, Is.EqualTo(Cursor.visible));
             }
             finally
             {
-                Cursor.lockState = priorLock;
-                Cursor.visible = priorVisible;
+                MoveCursor.SetBackend(installed);
             }
+
+            Assert.That(MoveCursor.HasBackend, Is.True);
+            MoveCursor.LockState = CursorLockMode.Confined;
+            MoveCursor.Visible = false;
+            Assert.That(_cursor.LockState, Is.EqualTo(CursorLockMode.Confined));
+            Assert.That(_cursor.Visible, Is.False);
         }
 
         private PlayerController3DPhysics CreateDefaultCursorPlayer(bool initialLook, bool initialMovement)
@@ -397,6 +515,29 @@ namespace Neo.Editor.Tests
             return player;
         }
 
+        private PlayerController3DPhysics CreateDefaultPlayerWithRootOwner(out CursorLockController controller)
+        {
+            GameObject owner = CreateObject();
+            PlayerController3DPhysics player = owner.AddComponent<PlayerController3DPhysics>();
+            SetField(player, "_groundCheck", owner.transform);
+            SetField(player, "_cameraPivot", owner.transform);
+            SetField(player, "_logSetupWarnings", false);
+            SetField(player, "_disableLookOnPause", false);
+            SetField(player, "_useGameSettingsMouseSensitivity", false);
+            Assert.That(player.CursorControlEnabled, Is.True,
+                "Exercise the serialized default, without disabling cursor control.");
+            player.SetMoveInput(Vector2.zero);
+            owner.GetComponent<Rigidbody>().useGravity = false;
+            controller = owner.AddComponent<CursorLockController>();
+            SetField(controller, "_controlMode", CursorLockController.ControlMode.ManualOnly);
+            controller.DisableLookWhileCursorVisible = true;
+            controller.DisableMovementWhileCursorVisible = true;
+            controller.RegisterPlayer(player);
+            _controllers.Add(controller);
+            owner.SetActive(true);
+            return player;
+        }
+
         private static void ObserveUnlock(CursorLockController controller, UnityAction callback)
         {
             UnityEvent unlocked = new UnityEvent();
@@ -404,10 +545,10 @@ namespace Neo.Editor.Tests
             SetField(controller, "_onCursorUnlocked", unlocked);
         }
 
-        private static void AssertVisibleCursor()
+        private void AssertVisibleCursor()
         {
-            Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.None));
-            Assert.That(Cursor.visible, Is.True);
+            Assert.That(_cursor.LockState, Is.EqualTo(CursorLockMode.None));
+            Assert.That(_cursor.Visible, Is.True);
         }
 
         private CursorLockController CreateController(bool disableLook = true, bool disableMovement = true)
@@ -449,6 +590,22 @@ namespace Neo.Editor.Tests
             MethodInfo method = target.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, name);
             method.Invoke(target, null);
+        }
+
+        /// <summary>How a cursor owner is taken out of play.</summary>
+        public enum OwnerCleanup
+        {
+            DisableController,
+            DisableComponent,
+            DeactivateObject,
+            DestroyObject
+        }
+
+        /// <summary>In-memory cursor that holds exactly what was written, like a focused Game view.</summary>
+        private sealed class FakeCursor : MoveCursor.IBackend
+        {
+            public CursorLockMode LockState { get; set; } = CursorLockMode.None;
+            public bool Visible { get; set; } = true;
         }
     }
 }

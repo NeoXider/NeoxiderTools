@@ -30,8 +30,15 @@ namespace Neo.Network
         /// <summary>Is this player ready?</summary>
         public bool IsReady => readyToBegin;
 
-        /// <summary>Player's connection ID (unique per session).</summary>
-        public int ConnectionId => (int)netId;
+        /// <summary>
+        ///     Session-unique player id, identical on every peer: the room player's <c>netId</c> as an int for UI
+        ///     and NoCode bindings. A client never knows the server-side connection ids of other players.
+        /// </summary>
+        public int PlayerId => (int)netId;
+
+        /// <summary>Old name of <see cref="PlayerId" />; despite the name it never was a connection id.</summary>
+        [System.Obsolete("ConnectionId returns the room player's netId, not a connection id. Use PlayerId.")]
+        public int ConnectionId => PlayerId;
 
         public override void OnStartLocalPlayer()
         {

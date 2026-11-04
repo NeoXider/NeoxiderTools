@@ -1,9 +1,0 @@
-{
-  "schema": 1,
-  "components": [
-    {
-      "id": "UitkAnimator",
-      "uses": "Motion.anim.json"
-    }
-  ]
-}

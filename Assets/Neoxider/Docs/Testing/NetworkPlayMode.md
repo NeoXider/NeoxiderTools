@@ -1,6 +1,9 @@
 # Network Play Mode testing
 
-This page describes the package's network test boundaries and how to add useful regression coverage. Start with the [Network module](../Network/README.md) for public runtime APIs and the [Multiplayer Guide](../Network/Multiplayer_Guide.md) for scene setup.
+**What it is:** This page describes the package's network test boundaries and how to add useful regression coverage. Start with the [Network module](../Network/README.md) for public runtime APIs and the [Multiplayer Guide](../Network/Multiplayer_Guide.md) for scene setup.
+
+**How to use:** pick the test arrangement that proves what you need from the table below, then follow
+[running and interpreting results](#running-and-interpreting-results).
 
 ## What each kind of test proves
 

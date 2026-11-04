@@ -39,6 +39,17 @@ namespace Neo.GridSystem
 
         private Grid unityGrid;
 
+        // WHY: GetCell/InBounds run in every gameplay scan; caching the dimensions avoids three GetLength calls per
+        // lookup. NonSerialized keeps a hot reload from restoring a size without the (unserializable) cell array.
+        [NonSerialized] private Vector3Int _generatedSize;
+
+        [NonSerialized] private PlacementScratch _placementScratch;
+
+#if UNITY_EDITOR
+        [NonSerialized] private string[] _gizmoLabels;
+        [NonSerialized] private FieldCell[,,] _gizmoLabelCells;
+#endif
+
         /// <summary>
         ///     Global singleton reference to the latest initialized generator.
         /// </summary>
@@ -61,13 +72,15 @@ namespace Neo.GridSystem
         ///     Dimensions of the generated cell array, or zero before a field is available.
         ///     Changing Config.Size takes effect when GenerateField is called.
         /// </summary>
-        public Vector3Int GeneratedSize => Cells != null
-            ? new Vector3Int(Cells.GetLength(0), Cells.GetLength(1), Cells.GetLength(2))
-            : Vector3Int.zero;
+        public Vector3Int GeneratedSize => Cells != null ? _generatedSize : Vector3Int.zero;
 
         /// <summary>
         ///     Returns a 2D projection (z=0) of the current grid.
         /// </summary>
+        /// <remarks>
+        ///     Every access allocates a new array. Read it once into a local, or use <see cref="GetCell(int,int)" /> in
+        ///     loops.
+        /// </remarks>
         public FieldCell[,] Cells2D
         {
             get
@@ -203,6 +216,7 @@ namespace Neo.GridSystem
             }
 
             Config ??= new FieldGeneratorConfig();
+            Config.ApplyMovementPreset();
             Vector3Int size = Config.Size;
             if (size.z == 0)
             {
@@ -217,10 +231,12 @@ namespace Neo.GridSystem
             {
                 NeoDiagnostics.LogError("FieldGenerator: Invalid field size! Size: " + size);
                 Cells = null;
+                _generatedSize = Vector3Int.zero;
                 return;
             }
 
             Cells = new FieldCell[size.x, size.y, size.z];
+            _generatedSize = size;
             for (int x = 0; x < size.x; x++)
             for (int y = 0; y < size.y; y++)
             for (int z = 0; z < size.z; z++)
@@ -358,13 +374,119 @@ namespace Neo.GridSystem
         ///     Finds the nearest generated cell center to a world-space point.
         ///     This is intended for cursor previews, touch drag/drop and shape placement.
         /// </summary>
+        /// <remarks>
+        ///     On rectangular Unity grids without cell gaps (and a positive cell size on every axis with several layers)
+        ///     the cell containing the point is the nearest one, so an eligible containing cell is returned in constant
+        ///     time. Other layouts, points outside the board and points over excluded (disabled) cells fall back to a
+        ///     scan of all cells. A point exactly on an edge shared by two cells resolves to the floored
+        ///     (positive-side) cell.
+        /// </remarks>
         public FieldCell GetNearestCellFromWorld(Vector3 worldPosition, bool includeDisabled = false)
+        {
+            FieldCell[,,] cells = Cells;
+            if (cells == null)
+            {
+                return null;
+            }
+
+            Grid grid = UnityGrid;
+            if (grid == null)
+            {
+                return GetNearestCellByScan(cells, worldPosition, includeDisabled);
+            }
+
+            if (TryGetContainingCell(worldPosition, includeDisabled, out FieldCell containingCell))
+            {
+                return containingCell;
+            }
+
+            Vector3 originCorrection = GetOriginWorldCorrection();
+            Vector3Int originOffset = GetGridOriginOffset();
+            FieldCell nearest = null;
+            float nearestDistance = float.PositiveInfinity;
+            Vector3Int size = _generatedSize;
+            for (int x = 0; x < size.x; x++)
+            for (int y = 0; y < size.y; y++)
+            for (int z = 0; z < size.z; z++)
+            {
+                FieldCell cell = cells[x, y, z];
+                if (cell == null || (!includeDisabled && !cell.IsEnabled))
+                {
+                    continue;
+                }
+
+                Vector3 center = grid.GetCellCenterWorld(cell.Position + originOffset) + originCorrection;
+                float distance = (center - worldPosition).sqrMagnitude;
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearest = cell;
+                }
+            }
+
+            return nearest;
+        }
+
+        /// <summary>
+        ///     Constant-time fast path of <see cref="GetNearestCellFromWorld" />: resolves the eligible cell whose box
+        ///     contains the point. A point on an edge shared by two cells resolves to the floored (positive-side) cell.
+        /// </summary>
+        /// <returns>
+        ///     False when the layout is not supported (see <see cref="CanResolveContainingCellDirectly" />), the point
+        ///     lies outside the board, or the containing cell is disabled and <paramref name="includeDisabled" /> is
+        ///     false; the caller then falls back to the full scan.
+        /// </returns>
+        internal bool TryGetContainingCell(Vector3 worldPosition, bool includeDisabled, out FieldCell cell)
+        {
+            cell = null;
+            FieldCell[,,] cells = Cells;
+            Grid grid = UnityGrid;
+            if (cells == null || grid == null || !CanResolveContainingCellDirectly(grid))
+            {
+                return false;
+            }
+
+            Vector3Int containing = grid.WorldToCell(worldPosition - GetOriginWorldCorrection()) -
+                                    GetGridOriginOffset();
+            if (!InBounds(containing))
+            {
+                return false;
+            }
+
+            FieldCell candidate = cells[containing.x, containing.y, containing.z];
+            if (candidate == null || (!includeDisabled && !candidate.IsEnabled))
+            {
+                return false;
+            }
+
+            cell = candidate;
+            return true;
+        }
+
+        // WHY: on a gapless rectangular lattice each axis is independent, so the cell whose box contains the point also
+        // has the nearest center. Axes with several layers but zero cell size collapse those layers onto one point;
+        // there the scan keeps its first-cell tie-break instead.
+        private bool CanResolveContainingCellDirectly(Grid grid)
+        {
+            if (grid.cellLayout != GridLayout.CellLayout.Rectangle || grid.cellGap != Vector3.zero)
+            {
+                return false;
+            }
+
+            Vector3 cellSize = grid.cellSize;
+            Vector3Int size = _generatedSize;
+            return (size.x <= 1 || cellSize.x > 0f) &&
+                   (size.y <= 1 || cellSize.y > 0f) &&
+                   (size.z <= 1 || cellSize.z > 0f);
+        }
+
+        private FieldCell GetNearestCellByScan(FieldCell[,,] cells, Vector3 worldPosition, bool includeDisabled)
         {
             FieldCell nearest = null;
             float nearestDistance = float.PositiveInfinity;
-            foreach (FieldCell cell in GetAllCells(includeDisabled))
+            foreach (FieldCell cell in cells)
             {
-                if (cell == null)
+                if (cell == null || (!includeDisabled && !cell.IsEnabled))
                 {
                     continue;
                 }
@@ -383,6 +505,10 @@ namespace Neo.GridSystem
         /// <summary>
         ///     Checks whether a multi-cell content footprint can be placed at the anchor position.
         /// </summary>
+        /// <remarks>
+        ///     Validation reuses internal buffers, so checking a list or array of entries allocates nothing. This keeps
+        ///     per-frame previews and "can this piece fit anywhere" scans cheap.
+        /// </remarks>
         public bool CanPlaceContentFootprint(
             Vector3Int anchor,
             IEnumerable<GridPlacementEntry> entries,
@@ -390,13 +516,21 @@ namespace Neo.GridSystem
             bool requireWalkable = true,
             bool requireUnoccupied = true)
         {
-            return ValidateContentFootprint(
-                anchor,
-                entries,
-                requireEnabled,
-                requireWalkable,
-                requireUnoccupied,
-                out _);
+            PlacementScratch scratch = AcquirePlacementScratch();
+            try
+            {
+                return ValidateContentFootprint(
+                    anchor,
+                    entries,
+                    requireEnabled,
+                    requireWalkable,
+                    requireUnoccupied,
+                    scratch);
+            }
+            finally
+            {
+                ReleasePlacementScratch(scratch);
+            }
         }
 
         /// <summary>
@@ -411,24 +545,35 @@ namespace Neo.GridSystem
             bool notify = true)
         {
             GridPlacementResult result = new GridPlacementResult();
-            if (!ValidateContentFootprint(
-                    anchor,
-                    entries,
-                    requireEnabled,
-                    requireWalkable,
-                    requireUnoccupied,
-                    out List<GridPlacementResolvedEntry> resolved))
+            PlacementScratch scratch = AcquirePlacementScratch();
+            try
             {
-                result.FailureReason = "Footprint contains invalid cells.";
-                return result;
-            }
+                if (!ValidateContentFootprint(
+                        anchor,
+                        entries,
+                        requireEnabled,
+                        requireWalkable,
+                        requireUnoccupied,
+                        scratch))
+                {
+                    result.FailureReason = "Footprint contains invalid cells.";
+                    return result;
+                }
 
-            foreach (GridPlacementResolvedEntry entry in resolved)
+                List<GridPlacementResolvedEntry> resolved = scratch.Resolved;
+                for (int i = 0; i < resolved.Count; i++)
+                {
+                    GridPlacementResolvedEntry entry = resolved[i];
+                    entry.Cell.ContentId = entry.ContentId;
+                    entry.Cell.IsOccupied = entry.OccupiesCell;
+                    result.Cells.Add(entry.Cell);
+                    result.Positions.Add(entry.Cell.Position);
+                }
+            }
+            finally
             {
-                entry.Cell.ContentId = entry.Entry.ContentId;
-                entry.Cell.IsOccupied = entry.Entry.OccupiesCell;
-                result.Cells.Add(entry.Cell);
-                result.Positions.Add(entry.Cell.Position);
+                // WHY: released before notifying so a listener can validate or place again without allocating.
+                ReleasePlacementScratch(scratch);
             }
 
             if (notify)
@@ -651,29 +796,71 @@ namespace Neo.GridSystem
         public List<FieldCell> GetNeighbors(FieldCell cell, IEnumerable<Vector3Int> directions = null)
         {
             List<FieldCell> neighbors = new();
+            CollectNeighbors(cell, neighbors, directions);
+            return neighbors;
+        }
+
+        /// <summary>
+        ///     Non-allocating variant of <see cref="GetNeighbors(FieldCell,IEnumerable{Vector3Int})" />: clears
+        ///     <paramref name="results" /> and fills it with the existing neighbor cells.
+        /// </summary>
+        /// <remarks>
+        ///     Neighbors are written in direction order, exactly as
+        ///     <see cref="GetNeighbors(FieldCell,IEnumerable{Vector3Int})" /> returns them; offsets that leave the board
+        ///     are skipped. A list or array of directions is indexed, so a warm call with a reused
+        ///     <paramref name="results" /> list does not allocate. Match3 swap search relies on this order and
+        ///     allocation contract.
+        /// </remarks>
+        /// <param name="cell">Source cell.</param>
+        /// <param name="results">Caller-owned output list; reuse it between calls.</param>
+        /// <param name="directions">Optional movement rule override; the configured movement rule when null.</param>
+        /// <returns>Number of neighbors written.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="results" /> is null.</exception>
+        public int CollectNeighbors(FieldCell cell, List<FieldCell> results, IEnumerable<Vector3Int> directions = null)
+        {
+            if (results == null)
+            {
+                throw new ArgumentNullException(nameof(results));
+            }
+
+            results.Clear();
             if (cell == null || Config == null)
             {
-                return neighbors;
+                return 0;
             }
 
             IEnumerable<Vector3Int> dirs =
                 directions ?? (Config.MovementRule != null ? Config.MovementRule.Directions : null);
             if (dirs == null)
             {
-                return neighbors;
+                return 0;
             }
 
-            foreach (Vector3Int dir in dirs)
+            if (dirs is IReadOnlyList<Vector3Int> list)
             {
-                Vector3Int np = cell.Position + dir;
-                FieldCell ncell = GetCell(np);
-                if (ncell != null)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    neighbors.Add(ncell);
+                    AddNeighbor(cell.Position, list[i], results);
+                }
+            }
+            else
+            {
+                foreach (Vector3Int dir in dirs)
+                {
+                    AddNeighbor(cell.Position, dir, results);
                 }
             }
 
-            return neighbors;
+            return results.Count;
+        }
+
+        private void AddNeighbor(Vector3Int origin, Vector3Int direction, List<FieldCell> results)
+        {
+            FieldCell neighbor = GetCell(origin + direction);
+            if (neighbor != null)
+            {
+                results.Add(neighbor);
+            }
         }
 
         /// <summary>
@@ -830,7 +1017,7 @@ namespace Neo.GridSystem
 
         internal static bool TryAddCoordinates(Vector3Int anchor, Vector3Int offset, out Vector3Int position)
         {
-            // Widen before addition: two invalid Int32 coordinates can otherwise wrap into a valid cell.
+            // WHY: widen before addition: two invalid Int32 coordinates can otherwise wrap into a valid cell.
             long x = (long)anchor.x + offset.x;
             long y = (long)anchor.y + offset.y;
             long z = (long)anchor.z + offset.z;
@@ -852,57 +1039,111 @@ namespace Neo.GridSystem
             bool requireEnabled,
             bool requireWalkable,
             bool requireUnoccupied,
-            out List<GridPlacementResolvedEntry> resolved)
+            PlacementScratch scratch)
         {
-            resolved = new List<GridPlacementResolvedEntry>();
             if (entries == null)
             {
                 return false;
             }
 
-            HashSet<Vector3Int> occupiedPositions = new HashSet<Vector3Int>();
-            foreach (GridPlacementEntry entry in entries)
+            if (entries is IReadOnlyList<GridPlacementEntry> list)
             {
-                if (entry == null)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    return false;
+                    if (!TryResolveFootprintEntry(anchor, list[i], requireEnabled, requireWalkable, requireUnoccupied,
+                            scratch))
+                    {
+                        return false;
+                    }
                 }
-
-                if (!TryAddCoordinates(anchor, entry.Offset, out Vector3Int position))
+            }
+            else
+            {
+                foreach (GridPlacementEntry entry in entries)
                 {
-                    return false;
+                    if (!TryResolveFootprintEntry(anchor, entry, requireEnabled, requireWalkable, requireUnoccupied,
+                            scratch))
+                    {
+                        return false;
+                    }
                 }
-
-                if (!occupiedPositions.Add(position))
-                {
-                    return false;
-                }
-
-                FieldCell cell = GetCell(position);
-                if (cell == null)
-                {
-                    return false;
-                }
-
-                if (requireEnabled && !cell.IsEnabled)
-                {
-                    return false;
-                }
-
-                if (requireWalkable && !cell.IsWalkable)
-                {
-                    return false;
-                }
-
-                if (requireUnoccupied && cell.IsOccupied)
-                {
-                    return false;
-                }
-
-                resolved.Add(new GridPlacementResolvedEntry(entry, cell));
             }
 
-            return resolved.Count > 0;
+            return scratch.Resolved.Count > 0;
+        }
+
+        private bool TryResolveFootprintEntry(
+            Vector3Int anchor,
+            GridPlacementEntry entry,
+            bool requireEnabled,
+            bool requireWalkable,
+            bool requireUnoccupied,
+            PlacementScratch scratch)
+        {
+            if (entry == null)
+            {
+                return false;
+            }
+
+            if (!TryAddCoordinates(anchor, entry.Offset, out Vector3Int position))
+            {
+                return false;
+            }
+
+            if (!scratch.Positions.Add(position))
+            {
+                return false;
+            }
+
+            FieldCell cell = GetCell(position);
+            if (cell == null)
+            {
+                return false;
+            }
+
+            if (requireEnabled && !cell.IsEnabled)
+            {
+                return false;
+            }
+
+            if (requireWalkable && !cell.IsWalkable)
+            {
+                return false;
+            }
+
+            if (requireUnoccupied && cell.IsOccupied)
+            {
+                return false;
+            }
+
+            // WHY: the entry values are captured at validation time, so the write phase cannot observe a shared or
+            // mutated entry instance.
+            scratch.Resolved.Add(new GridPlacementResolvedEntry(cell, entry.ContentId, entry.OccupiesCell));
+            return true;
+        }
+
+        private PlacementScratch AcquirePlacementScratch()
+        {
+            PlacementScratch scratch = _placementScratch;
+            if (scratch == null)
+            {
+                scratch = new PlacementScratch();
+                _placementScratch = scratch;
+            }
+            else if (scratch.InUse)
+            {
+                scratch = new PlacementScratch();
+            }
+
+            scratch.InUse = true;
+            return scratch;
+        }
+
+        private static void ReleasePlacementScratch(PlacementScratch scratch)
+        {
+            scratch.Positions.Clear();
+            scratch.Resolved.Clear();
+            scratch.InUse = false;
         }
 
         private void DrawFieldGizmos()
@@ -938,6 +1179,7 @@ namespace Neo.GridSystem
                 Vector3 fillSize = UnityGrid.cellSize * Mathf.Clamp01(settings.CellFillScale);
 #if UNITY_EDITOR
                 GUIStyle coordinateStyle = null;
+                string[] labels = null;
                 if (settings.DrawCoordinates)
                 {
                     coordinateStyle = new GUIStyle
@@ -946,12 +1188,15 @@ namespace Neo.GridSystem
                         fontSize = settings.TextFontSize
                     };
                     coordinateStyle.normal.textColor = settings.TextColor;
+                    labels = GetGizmoLabels();
                 }
 #endif
+                int labelIndex = -1;
                 for (int x = 0; x < size.x; x++)
                 for (int y = 0; y < size.y; y++)
                 for (int z = 0; z < size.z; z++)
                 {
+                    labelIndex++;
                     FieldCell cell = Cells[x, y, z];
                     if (cell == null)
                     {
@@ -963,9 +1208,9 @@ namespace Neo.GridSystem
                     Gizmos.DrawCube(pos, fillSize);
 
 #if UNITY_EDITOR
-                    if (settings.DrawCoordinates)
+                    if (labels != null)
                     {
-                        Handles.Label(pos, $"x:{cell.Position.x} y:{cell.Position.y} z:{cell.Position.z}", coordinateStyle);
+                        Handles.Label(pos, labels[labelIndex], coordinateStyle);
                     }
 #endif
                 }
@@ -982,6 +1227,35 @@ namespace Neo.GridSystem
                 }
             }
         }
+
+#if UNITY_EDITOR
+        // WHY: building one coordinate string per cell on every Scene repaint allocated thousands of strings per frame on
+        // large boards; labels only change when the field is regenerated.
+        private string[] GetGizmoLabels()
+        {
+            FieldCell[,,] cells = Cells;
+            if (_gizmoLabels != null && ReferenceEquals(_gizmoLabelCells, cells))
+            {
+                return _gizmoLabels;
+            }
+
+            Vector3Int size = GeneratedSize;
+            string[] labels = new string[cells.Length];
+            int index = 0;
+            for (int x = 0; x < size.x; x++)
+            for (int y = 0; y < size.y; y++)
+            for (int z = 0; z < size.z; z++)
+            {
+                FieldCell cell = cells[x, y, z];
+                Vector3Int position = cell != null ? cell.Position : new Vector3Int(x, y, z);
+                labels[index++] = $"x:{position.x} y:{position.y} z:{position.z}";
+            }
+
+            _gizmoLabels = labels;
+            _gizmoLabelCells = cells;
+            return labels;
+        }
+#endif
 
         private static Color ResolveGizmoCellColor(FieldCell cell, FieldGizmoSettings settings)
         {
@@ -1239,14 +1513,23 @@ namespace Neo.GridSystem
 
         private readonly struct GridPlacementResolvedEntry
         {
-            public readonly GridPlacementEntry Entry;
             public readonly FieldCell Cell;
+            public readonly int ContentId;
+            public readonly bool OccupiesCell;
 
-            public GridPlacementResolvedEntry(GridPlacementEntry entry, FieldCell cell)
+            public GridPlacementResolvedEntry(FieldCell cell, int contentId, bool occupiesCell)
             {
-                Entry = entry;
                 Cell = cell;
+                ContentId = contentId;
+                OccupiesCell = occupiesCell;
             }
+        }
+
+        private sealed class PlacementScratch
+        {
+            public readonly HashSet<Vector3Int> Positions = new HashSet<Vector3Int>();
+            public readonly List<GridPlacementResolvedEntry> Resolved = new List<GridPlacementResolvedEntry>();
+            public bool InUse;
         }
     }
 }

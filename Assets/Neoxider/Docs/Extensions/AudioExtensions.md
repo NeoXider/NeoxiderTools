@@ -1,6 +1,8 @@
 ﻿# AudioExtensions
 
-**Purpose:** Extension methods for `AudioSource` providing smooth volume fade effects (fade in, fade out, fade to target).
+**What it is:** extension methods for `AudioSource` providing smooth volume fades (fade in, fade out, fade to target) on the global coroutine helper. File: `Scripts/Extensions/AudioExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** add `using Neo.Extensions;`, call `source.FadeOut(1f)` and keep the returned handle if the fade may need to be stopped.
 
 ## API
 

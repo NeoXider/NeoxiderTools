@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 using Neo.Extensions;
 using TMPro;
@@ -18,11 +19,20 @@ namespace Neo.Tools
         Assert = 1 << 4
     }
 
+    /// <summary>
+    ///     Shows filtered Unity log messages (severity, message, optional script path and stack trace) in a
+    ///     <see cref="TextMeshProUGUI" /> label. History is bounded by <see cref="MaxEntries" /> and optionally by
+    ///     <see cref="MaxCharacters" />.
+    /// </summary>
     [NeoDoc("Tools/Debug/ErrorLogger.md")]
     [CreateFromMenu("Neoxider/Tools/Debug/ErrorLogger", "Prefabs/Tools/ErrorLogger.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {
+        // WHY: not RegexOptions.Compiled - IL2CPP has no Reflection.Emit, so it only adds startup cost.
+        private static readonly Regex AtPathPattern = new(@"\(at\s+(.+?\.cs):(\d+)\)");
+        private static readonly Regex MethodPathPattern = new(@"at\s+[^\s]+\s+\((.+?\.cs):(\d+)\)");
+
         [Header("Log Type Filters")] [Tooltip("Select log types to display")]
         public LogTypeFilter logTypeFilter = LogTypeFilter.Error | LogTypeFilter.Exception;
 
@@ -35,10 +45,67 @@ namespace Neo.Tools
         [Tooltip("Include script path where log was called")]
         public bool showScriptPath;
 
+        [Tooltip(
+            "Maximum captured entries kept in history and on screen; the oldest are dropped first. 0 = unlimited " +
+            "(memory and label size then grow with every new message).")]
+        [Min(0)]
+        [SerializeField]
+        private int _maxEntries = 50;
+
+        [Tooltip(
+            "Maximum characters (stack traces and color tags included) kept in history and on screen; the oldest " +
+            "entries are dropped first, the newest entry always stays. 0 = unlimited. A huge TMP label is slow to " +
+            "rebuild and can exceed the mesh vertex limit.")]
+        [Min(0)]
+        [SerializeField]
+        private int _maxCharacters;
+
         public string errorText;
         [Header("Main Settings")] public TextMeshProUGUI textMesh;
 
         private readonly List<string> errorList = new();
+        private readonly Dictionary<string, int> _entryCounts = new(StringComparer.Ordinal);
+        private readonly StringBuilder _textBuilder = new();
+        private int _historyCharacters;
+
+        /// <summary>Captured entries, oldest first (formatted exactly as displayed).</summary>
+        public IReadOnlyList<string> Entries => errorList;
+
+        /// <summary>Total characters of <see cref="Entries" />.</summary>
+        public int HistoryCharacterCount => _historyCharacters;
+
+        /// <summary>
+        ///     Maximum entries kept in history and on screen (0 = unlimited). Lowering it drops the oldest entries now.
+        /// </summary>
+        public int MaxEntries
+        {
+            get => _maxEntries;
+            set
+            {
+                _maxEntries = Mathf.Max(0, value);
+                if (TrimHistory() && addText)
+                {
+                    RebuildText();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Character budget of the history and label (0 = unlimited): the oldest entries are dropped until the
+        ///     rest fits, but the newest entry always stays. Lowering it trims now.
+        /// </summary>
+        public int MaxCharacters
+        {
+            get => _maxCharacters;
+            set
+            {
+                _maxCharacters = Mathf.Max(0, value);
+                if (TrimHistory() && addText)
+                {
+                    RebuildText();
+                }
+            }
+        }
 
         private void OnEnable()
         {
@@ -52,6 +119,17 @@ namespace Neo.Tools
         private void OnDisable()
         {
             Application.logMessageReceived -= HandleLog;
+        }
+
+        private void OnValidate()
+        {
+            _maxEntries = Mathf.Max(0, _maxEntries);
+            _maxCharacters = Mathf.Max(0, _maxCharacters);
+            // WHY: lowering a limit in the Inspector during Play applies at once, like the property setters.
+            if (TrimHistory() && addText)
+            {
+                RebuildText();
+            }
         }
 
         private void HandleLog(string logString, string stackTrace, LogType type)
@@ -74,21 +152,101 @@ namespace Neo.Tools
             string errorText = GetColor(type) + "\n -- " + logString.SetColor(Color.green) + scriptPath +
                                "\n -- " + stackTrace + "\n\n";
 
-            if (checkExistingErrors && errorList.Contains(errorText))
+            if (checkExistingErrors && _entryCounts.ContainsKey(errorText))
             {
                 return;
             }
 
-            errorList.Add(errorText);
+            AddEntry(errorText);
+            bool trimmed = TrimHistory();
 
             if (addText)
             {
-                AppendText(errorText);
+                if (trimmed)
+                {
+                    RebuildText();
+                }
+                else
+                {
+                    AppendText(errorText);
+                }
             }
             else
             {
                 UpdateText(errorText);
             }
+        }
+
+        /// <summary>
+        ///     Clears the captured history (including the duplicate filter) and the label.
+        /// </summary>
+        public void Clear()
+        {
+            errorList.Clear();
+            _entryCounts.Clear();
+            _historyCharacters = 0;
+            UpdateText(string.Empty);
+        }
+
+        private void AddEntry(string entry)
+        {
+            errorList.Add(entry);
+            _historyCharacters += entry.Length;
+            _entryCounts.TryGetValue(entry, out int count);
+            _entryCounts[entry] = count + 1;
+        }
+
+        private bool TrimHistory()
+        {
+            int removeCount = _maxEntries > 0 && errorList.Count > _maxEntries ? errorList.Count - _maxEntries : 0;
+            int keptCharacters = _historyCharacters;
+            for (int i = 0; i < removeCount; i++)
+            {
+                keptCharacters -= errorList[i].Length;
+            }
+
+            if (_maxCharacters > 0)
+            {
+                // WHY: the newest entry always stays, even when it alone is over the budget.
+                while (keptCharacters > _maxCharacters && removeCount < errorList.Count - 1)
+                {
+                    keptCharacters -= errorList[removeCount].Length;
+                    removeCount++;
+                }
+            }
+
+            if (removeCount == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < removeCount; i++)
+            {
+                string removed = errorList[i];
+                if (_entryCounts.TryGetValue(removed, out int count) && count > 1)
+                {
+                    _entryCounts[removed] = count - 1;
+                }
+                else
+                {
+                    _entryCounts.Remove(removed);
+                }
+            }
+
+            errorList.RemoveRange(0, removeCount);
+            _historyCharacters = keptCharacters;
+            return true;
+        }
+
+        private void RebuildText()
+        {
+            _textBuilder.Clear();
+            for (int i = 0; i < errorList.Count; i++)
+            {
+                _textBuilder.Append(errorList[i]);
+            }
+
+            UpdateText(_textBuilder.ToString());
         }
 
         private bool ShouldDisplayLog(LogType type)
@@ -115,7 +273,7 @@ namespace Neo.Tools
 
             // WHY: Pattern: (at Assets/Path/To/Script.cs:line)
             // Or: (at Packages/com.package/Script.cs:line)
-            Match match = Regex.Match(stackTrace, @"\(at\s+(.+?\.cs):(\d+)\)");
+            Match match = AtPathPattern.Match(stackTrace);
 
             if (match.Success)
             {
@@ -125,7 +283,7 @@ namespace Neo.Tools
             }
 
             // WHY: Alternate pattern without outer parens
-            match = Regex.Match(stackTrace, @"at\s+[^\s]+\s+\((.+?\.cs):(\d+)\)");
+            match = MethodPathPattern.Match(stackTrace);
             if (match.Success)
             {
                 string filePath = match.Groups[1].Value;

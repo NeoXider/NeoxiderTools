@@ -18,6 +18,12 @@ namespace Neo.Abilities
         /// <summary>Exhausted shield currently delivering its break receipt; reapplication must create a replacement.</summary>
         internal bool IsShieldBreaking;
 
+        /// <summary>Tick executions so far; salts each tick's RNG seed so chance/crit rolls differ per tick.</summary>
+        internal uint TickRollIndex;
+
+        /// <summary>Event reactions executed so far; salts each reaction's RNG seed.</summary>
+        internal uint ReactionRollIndex;
+
         internal ModifierInstance(int instanceId, ModifierBlueprint blueprint, UnitId caster, UnitId owner,
             string sourceAbilityId, int abilityLevel = 1)
         {

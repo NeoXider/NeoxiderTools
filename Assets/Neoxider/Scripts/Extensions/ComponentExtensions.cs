@@ -15,8 +15,8 @@ namespace Neo.Extensions
         /// <returns>Existing or new component of type T</returns>
         public static T GetOrAdd<T>(this Component component) where T : Component
         {
-            T comp = component.GetComponent<T>();
-            if (comp == null)
+            // WHY: TryGetComponent does not allocate the editor-only "missing component" placeholder on a miss.
+            if (!component.TryGetComponent(out T comp))
             {
                 comp = component.gameObject.AddComponent<T>();
             }

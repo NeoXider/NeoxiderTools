@@ -1,6 +1,8 @@
 # DictionaryExtensions
 
-**Purpose:** Extension methods for `IDictionary<TKey, TValue>` covering the most-repeated get-or-create and counter patterns. (`GetValueOrDefault` already ships with the standard library — this adds the missing `GetOrCreate` and `Increment`.)
+**What it is:** extension methods for `IDictionary<TKey, TValue>` covering the most-repeated get-or-create and counter patterns. (`GetValueOrDefault` already ships with the standard library — this adds the missing `GetOrCreate` and `Increment`.) File: `Scripts/Extensions/DictionaryExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** add `using Neo.Extensions;` and call `buckets.GetOrCreate(key).Add(item)` or `kills.Increment(enemyId)`.
 
 ---
 

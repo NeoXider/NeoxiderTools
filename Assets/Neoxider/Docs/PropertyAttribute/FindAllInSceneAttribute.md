@@ -1,8 +1,14 @@
 ﻿# FindAllInSceneAttribute
 
-**Namespace:** Global. **Assembly:** `Neo.PropertyAttribute`.
+**What it is:** `[FindAllInScene]` (`Scripts/PropertyAttribute/InjectAttribute/FindAllInSceneAttribute.cs`, global
+namespace, assembly `Neo.PropertyAttribute`) marks an array/list for editor scene lookup by its element type.
+Supported scene elements are Components and GameObjects.
 
-`[FindAllInScene]` marks an array/list for scene lookup by its element type. Supported scene elements are Components and GameObjects.
+**How to use:**
+1. Put `[FindAllInScene]` on a serialized array or list field.
+2. Select the component with attribute search enabled; an empty collection is filled from the open scene.
+
+---
 
 ```csharp
 [FindAllInScene(UnityEngine.FindObjectsSortMode.None)]

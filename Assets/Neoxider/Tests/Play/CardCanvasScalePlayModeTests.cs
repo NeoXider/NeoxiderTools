@@ -193,7 +193,7 @@ namespace Neo.Tests.Play
                 CollectionAssert.AreEqual(replacementCards, scene.Deck.Model.Cards);
                 Assert.That(drawnEvents + builtEvents + visualEvents + placements, Is.Zero);
 
-                // Positive control: the one-shot observer must not reject later ordinary admission.
+                // WHY: positive control; the one-shot observer must not reject later ordinary admission.
                 scene.Deck.Model.Initialize(new[] { CardData.CreateCustom("accepted-after-reentry") }, false);
                 CardComponent accepted = scene.Deck.DrawCard(false);
                 Assert.That(accepted != null, Is.True);
@@ -353,7 +353,7 @@ namespace Neo.Tests.Play
                 await UniTask.Yield();
             }
 
-            // A following layout must capture the settled rest scale, not a near-target
+            // WHY: a following layout must capture the settled rest scale, not a near-target
             // value from an exit tween that is still running in this player-loop turn.
             await NativeFrames(1);
             Assert.That(card != null, Is.True);
@@ -480,7 +480,7 @@ namespace Neo.Tests.Play
                     SetField(Deck, "_shuffleOnStart", false);
                     SetField(Deck, "_spawnVisualOnInitialize", false);
                     SetField(Deck, "_setAnimationConfigAsGlobal", false);
-                    // Geometry is compared at the same local rotation: decorative stack jitter
+                    // WHY: geometry is compared at the same local rotation: decorative stack jitter
                     // legitimately changes world edge lengths under a nonuniform ancestor.
                     SetField(Deck, "_stackRotationJitter", Vector3.zero);
                     SetField(Deck, "_stackPositionJitter", Vector3.zero);

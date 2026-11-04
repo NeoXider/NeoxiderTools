@@ -1,6 +1,13 @@
 ﻿# PropertyAttribute drawers and documentation metadata
 
-The attributes are available in players. The three drawers below compile only with `UNITY_EDITOR`; guard custom-inspector calls accordingly.
+**What it is:** the supporting drawer types and the `[NeoDoc]` metadata attribute of the PropertyAttribute module
+(`Scripts/PropertyAttribute/`). The attributes are available in players. The three drawers below compile only with
+`UNITY_EDITOR`; guard custom-inspector calls accordingly.
+
+**How to use:** call the drawer helpers from a custom inspector that replaces the Neo fallback, and put
+`[NeoDoc("Module/Page.md")]` on a component to link its documentation page.
+
+---
 
 | Type | Public helpers / responsibility |
 |------|---------------------------------|

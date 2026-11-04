@@ -18,10 +18,14 @@ namespace Neo.Bonus
             [SerializeField] private float timeRoll = 3;
             [SerializeField] private float slowDownTime = 0.5f;
 
+            [Tooltip("Roll with unscaled time so the roulette still finishes while the game is paused (Time.timeScale = 0).")]
+            [SerializeField]
+            private bool _useUnscaledTime;
+
             [SerializeField] private float space;
             [SerializeField] private float resetX;
 
-            [Space] public UnityEvent<int> OnWin;
+            [Space] public UnityEvent<int> OnWin = new();
 
             [Space] [Header("Update Visual for all images")]
             public bool updateSetting;
@@ -80,7 +84,7 @@ namespace Neo.Bonus
 
             private void OnDisable()
             {
-                // Disabling a MonoBehaviour does not stop its coroutines.
+                // WHY: Disabling a MonoBehaviour does not stop its coroutines.
                 if (rollCoroutine != null)
                 {
                     StopCoroutine(rollCoroutine);
@@ -106,6 +110,15 @@ namespace Neo.Bonus
                 rollCoroutine = StartCoroutine(Roll());
             }
 
+            /// <summary>Roll with unscaled time so a paused game (Time.timeScale = 0) still finishes the roulette.</summary>
+            public bool UseUnscaledTime
+            {
+                get => _useUnscaledTime;
+                set => _useUnscaledTime = value;
+            }
+
+            private float DeltaTime => _useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+
             private Sprite GetRandomSprite()
             {
                 return sprites[Random.Range(0, sprites.Length)];
@@ -119,11 +132,11 @@ namespace Neo.Bonus
                 {
                     Move(speed);
 
-                    timer += Time.deltaTime;
+                    timer += DeltaTime;
                     yield return null;
                 }
 
-                // Keep deceleration inside the same coroutine so cancellation owns both phases.
+                // WHY: Keep deceleration inside the same coroutine so cancellation owns both phases.
                 yield return SlowDown();
             }
 
@@ -131,7 +144,7 @@ namespace Neo.Bonus
             {
                 for (int i = 0; i < images.Length; i++)
                 {
-                    images[i].transform.position += speed * Time.deltaTime * Vector3.left;
+                    images[i].transform.position += speed * DeltaTime * Vector3.left;
 
                     if (images[i].transform.position.x < resetX)
                     {
@@ -155,7 +168,7 @@ namespace Neo.Bonus
                     // frame-rate-dependent pace, changing where the reel lands across machines.
                     Move(Mathf.Lerp(startSpeed, 0, t));
 
-                    elapsedTime += Time.deltaTime;
+                    elapsedTime += DeltaTime;
                     yield return null;
                 }
 

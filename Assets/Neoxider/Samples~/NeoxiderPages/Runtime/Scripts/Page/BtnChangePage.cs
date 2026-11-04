@@ -7,19 +7,17 @@ using UnityEngine.EventSystems;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Neo.Pages
 {
+    /// <summary>
+    ///     UI button to change pages via <see cref="PM" />.
+    ///     Supports press animation and optional <see cref="GameState.State" /> before switching. Reacts to the
+    ///     primary pointer button only (left mouse button, touch, pen).
+    /// </summary>
     [MovedFrom("")]
     [NeoDoc("NeoxiderPages/BtnChangePage.md")]
     [AddComponentMenu("Neoxider/Pages/" + nameof(BtnChangePage))]
-    /// <summary>
-    /// UI button to change pages via <see cref="PM"/>.
-    /// Supports press animation and optional <see cref="GameState.State"/> before switching.
-    /// </summary>
     public class BtnChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
     {
         public enum Action
@@ -60,26 +58,66 @@ namespace Neo.Pages
 
         public UnityEvent OnClick;
         private Coroutine _scaleRoutine;
+        private bool _legacyActionWarned;
         private LayoutGroup _layoutGroup;
         private RectTransform rect;
 
         private Vector3 startScale;
 
+        /// <summary>When false, clicks and the press animation are ignored (serialized as <c>intecactable</c>).</summary>
+        public bool Interactable
+        {
+            get => intecactable;
+            set => intecactable = value;
+        }
+
+        /// <summary>What a click does: open <see cref="TargetPageId" />, go back, or close the current page.</summary>
+        public Action ButtonAction
+        {
+            get => action;
+            set => action = value;
+        }
+
+        /// <summary>
+        ///     True when the serialized action is not an <see cref="Action" /> value: a leftover of the retired
+        ///     <c>UIKit.Page</c> enum. Such a button opens <see cref="TargetPageId" />, as it always did.
+        /// </summary>
+        public bool HasLegacyAction => IsLegacyAction(action);
+
+        /// <summary>True for values outside <see cref="Action" /> (old <c>UIKit.Page</c> values such as 12 = Pause).</summary>
+        public static bool IsLegacyAction(Action value)
+        {
+            return value < Action.OpenPage || value > Action.CloseCurrent;
+        }
+
+        /// <summary>Page opened by <see cref="Action.OpenPage" />.</summary>
+        public PageId TargetPageId
+        {
+            get => targetPageId;
+            set => targetPageId = value;
+        }
 
         private void Awake()
         {
             startScale = transform.localScale;
-            rect = transform.GetComponent<RectTransform>();
-            _layoutGroup = transform.parent.GetComponent<LayoutGroup>();
+            rect = transform as RectTransform;
+            Transform parent = transform.parent;
+            _layoutGroup = parent != null ? parent.GetComponent<LayoutGroup>() : null;
         }
 
         private void OnEnable()
         {
             transform.localScale = startScale;
-            if (_layoutGroup != null)
+            if (_layoutGroup != null && rect != null)
             {
                 rect.pivot = Vector2.one * 0.5f;
             }
+        }
+
+        private void OnDisable()
+        {
+            // WHY: disabling stops the coroutine without clearing the handle; the next press must start fresh.
+            _scaleRoutine = null;
         }
 
         private void OnValidate()
@@ -107,7 +145,10 @@ namespace Neo.Pages
                 }
             }
 
-            _imageTarget ??= GetComponent<Image>();
+            if (_imageTarget == null)
+            {
+                _imageTarget = GetComponent<Image>();
+            }
         }
 
         /// <summary>
@@ -115,7 +156,7 @@ namespace Neo.Pages
         /// </summary>
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (!intecactable)
+            if (!intecactable || !IsPrimaryButton(eventData))
             {
                 return;
             }
@@ -135,10 +176,9 @@ namespace Neo.Pages
         /// </summary>
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (intecactable && _useAnimImage)
+            if (intecactable && _useAnimImage && IsPrimaryButton(eventData))
             {
-                float scale = startScale.x * (1f + _scaleAnim);
-                AnimateScale(Vector3.one * scale);
+                AnimateScale(startScale * (1f + _scaleAnim));
             }
         }
 
@@ -147,10 +187,15 @@ namespace Neo.Pages
         /// </summary>
         public void OnPointerUp(PointerEventData eventData)
         {
-            if (intecactable && _useAnimImage)
+            if (intecactable && _useAnimImage && IsPrimaryButton(eventData))
             {
                 AnimateScale(startScale);
             }
+        }
+
+        private static bool IsPrimaryButton(PointerEventData eventData)
+        {
+            return eventData == null || eventData.button == PointerEventData.InputButton.Left;
         }
 
         private void AnimateScale(Vector3 targetScale)
@@ -158,6 +203,13 @@ namespace Neo.Pages
             if (_scaleRoutine != null)
             {
                 StopCoroutine(_scaleRoutine);
+                _scaleRoutine = null;
+            }
+
+            if (!isActiveAndEnabled)
+            {
+                transform.localScale = targetScale;
+                return;
             }
 
             _scaleRoutine = StartCoroutine(AnimateScaleRoutine(targetScale));
@@ -189,109 +241,76 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Runs the action (open page / back / close current).
+        ///     Runs the action (open page / back / close current) on the scene's <see cref="PM" />. Without a page
+        ///     manager the click is ignored. A legacy action value (<see cref="HasLegacyAction" />) opens
+        ///     <see cref="TargetPageId" /> and warns once per button.
         /// </summary>
         public void ChangePage()
         {
-            if (action == Action.Cancel)
+            PM pm = PM.I;
+            if (pm == null)
             {
-                PM.I.SwitchToPreviousPage();
+                NeoDiagnostics.LogWarning("[BtnChangePage] No PM in the scene; the page action is skipped.", this);
+                return;
             }
-            else if (action == Action.CloseCurrent)
+
+            switch (action)
             {
-                PM.I.CloseCurrentPage();
+                case Action.OpenPage:
+                    if (targetPageId != null)
+                    {
+                        pm.ChangePage(targetPageId);
+                    }
+                    else
+                    {
+                        NeoDiagnostics.LogWarning("[BtnChangePage] Target PageId is null.", this);
+                    }
+
+                    break;
+                case Action.Cancel:
+                    pm.SwitchToPreviousPage();
+                    break;
+                case Action.CloseCurrent:
+                    pm.CloseCurrentPage();
+                    break;
+                default:
+                    // WHY: values outside Action are leftovers of the retired UIKit.Page enum, kept through the
+                    // FormerlySerializedAs chain. Such buttons always opened their target page; dropping that
+                    // silently broke old scenes and prefabs.
+                    WarnLegacyActionOnce();
+                    if (targetPageId != null)
+                    {
+                        pm.ChangePage(targetPageId);
+                    }
+
+                    break;
             }
-            else
+        }
+
+        private void WarnLegacyActionOnce()
+        {
+            if (_legacyActionWarned)
             {
-                if (targetPageId != null)
-                {
-                    PM.I.ChangePage(targetPageId);
-                }
-                else
-                {
-                    Debug.LogWarning("[BtnChangePage] Target PageId is null.", this);
-                }
+                return;
             }
+
+            // WHY: forced, but once per button: the author must learn about the stale value even with
+            // NeoDiagnostics warnings off, without a warning on every click.
+            _legacyActionWarned = true;
+            string outcome = targetPageId != null
+                ? "; it opens its Target PageId."
+                : " and no Target PageId; the click does nothing.";
+            NeoDiagnostics.LogWarning(
+                "[BtnChangePage] '" + name + "' has the legacy action value " + ((int)action).ToString() + outcome +
+                " Pick an Action in the Inspector.", this, true);
         }
 
 #if UNITY_EDITOR
-        private const string DefaultPageIdFolder = "Assets/NeoxiderPages/Pages";
-        private const string DefaultPageOpenAssetName = "PageOpen";
-
         private void Reset()
         {
+            // WHY: Reset used to create and assign a placeholder "PageOpen" asset that no page uses; adding the
+            // component (also from scripts and tests) must not write assets. Pick the target in the Inspector.
             action = Action.OpenPage;
-
-            if (targetPageId == null)
-            {
-                targetPageId = GetOrCreateDefaultPageOpen();
-            }
-        }
-
-        private static string GetPreferredPageIdFolder()
-        {
-            if (AssetDatabase.IsValidFolder(DefaultPageIdFolder))
-            {
-                return DefaultPageIdFolder;
-            }
-
-            string[] guids = AssetDatabase.FindAssets("t:PageId", new[] { "Assets" });
-            foreach (string guid in guids)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                string dir = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    return dir;
-                }
-            }
-
-            return DefaultPageIdFolder;
-        }
-
-        private static PageId GetOrCreateDefaultPageOpen()
-        {
-            string folder = GetPreferredPageIdFolder();
-            EnsureFolder(folder);
-
-            string assetPath = $"{folder}/{DefaultPageOpenAssetName}.asset";
-            PageId existing = AssetDatabase.LoadAssetAtPath<PageId>(assetPath);
-            if (existing != null)
-            {
-                return existing;
-            }
-
-            PageId instance = ScriptableObject.CreateInstance<PageId>();
-            AssetDatabase.CreateAsset(instance, assetPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            return instance;
-        }
-
-        private static void EnsureFolder(string folder)
-        {
-            if (AssetDatabase.IsValidFolder(folder))
-            {
-                return;
-            }
-
-            string[] parts = folder.Split('/');
-            if (parts.Length < 2 || parts[0] != "Assets")
-            {
-                return;
-            }
-
-            string current = "Assets";
-            for (int i = 1; i < parts.Length; i++)
-            {
-                string next = $"{current}/{parts[i]}";
-                if (!AssetDatabase.IsValidFolder(next))
-                {
-                    AssetDatabase.CreateFolder(current, parts[i]);
-                }
-
-                current = next;
-            }
         }
 #endif
     }

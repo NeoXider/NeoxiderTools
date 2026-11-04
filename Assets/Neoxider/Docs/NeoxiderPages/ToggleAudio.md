@@ -1,19 +1,24 @@
 # ToggleAudio (NeoxiderPages)
 
-**What it is:** Links a UI toggle (VisualToggle) to audio: music or effects (on/off) through the central **AM**.
+**What it is:** links a UI toggle (`VisualToggle`) to the music or sound-effects switch of `AMSettings`. Script `Samples~/NeoxiderPages/Runtime/Scripts/Core/ToggleAudio.cs`, namespace `Neo.Pages`.
 
-**How to use:** see the sections below.
+**How to use:**
+1. Keep `AM` and [AMSettings](../Audio/AMSettings.md) in the scene (for example through the system prefab).
+2. **Add Component → Neoxider → Pages → ToggleAudio** next to a `VisualToggle` (the field fills itself in the editor).
+3. Tick **Is Music** for the music switch; leave it off for sound effects.
 
 ---
 
-
-Links a UI toggle (VisualToggle) to audio: music or effects (on/off) through the central **AM**.
-
-**Add:** Neoxider → Pages → ToggleAudio.
-
 ## Fields
 
-- **UI Toggle View** — reference to the VisualToggle.
-- **Is Music** — control music (true) or master/effects (false).
+- **UI Toggle View** — reference to the `VisualToggle`.
+- **Is Music** — control music (`true`) or sound effects (`false`).
 
-Updates the AM state when the toggle changes and synchronizes the toggle when the volume is changed from code.
+## Behaviour
+
+From `Start` on (no `GM` needed), a toggle change calls `AMSettings.SetMusic(bool)` or `SetEfx(bool)` through the `UIKit` `Audio` facade. The toggle is synced from the settings before the listener is attached, so its initial state never overwrites the saved choice. Every later enable refreshes the toggle from `AMSettings`; without `AMSettings` in the scene the toggle is left as it is. With **Persist Mute** on in `AMSettings` (the default), the player's choice is saved and restored on the next launch.
+
+## See also
+
+- [AMSettings](../Audio/AMSettings.md)
+- [NeoxiderPages README](./README.md)

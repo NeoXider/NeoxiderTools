@@ -29,7 +29,7 @@ out SessionProbeMessage  0.4 KB/s  2 msg/s
 |-------|-------------|
 | **Capture Traffic** | Subscribe to Mirror's diagnostics events. Mirror boxes every message while anyone is subscribed, so this is a debugging cost: leave it off (or the component disabled) in a shipped build unless you want the numbers. RTT does not need it. |
 | **Window Seconds** | Averaging window of the per-second rates (default 1 s). |
-| **Show Overlay**, **Overlay Position** | The on-screen readout. |
+| **Show Overlay**, **Overlay Position** | The on-screen readout. The text is rebuilt four times a second and measured only when the rebuilt text differs from the shown one, and the component skips the IMGUI layout pass, so drawing it no longer creates a `GUIContent` or re-measures the text every frame. Use it as a debug readout, not as game UI. |
 
 ## Members
 

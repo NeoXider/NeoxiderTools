@@ -240,7 +240,7 @@ namespace Neo.Network.Realtime
                 _interval += (clampedStep - _interval) * _settings.Smoothing;
             }
 
-            // arrival spacing is compared with the spacing the authority's own clock implies at the measured rate
+            // WHY: arrival spacing is compared with the spacing the authority's own clock implies at the measured rate
             double expectedArrival = _rate > MinRate ? serverStep / _rate : serverStep;
             double deviation = Math.Abs(arrivalStep - expectedArrival);
             _jitter += (deviation - _jitter) * _settings.Smoothing;

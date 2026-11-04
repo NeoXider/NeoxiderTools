@@ -10,14 +10,6 @@ namespace Neo.Extensions
     /// </summary>
     public static class RandomExtensions
     {
-        private static readonly Dictionary<Type, Array> EnumValuesCache = new();
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
-        {
-            EnumValuesCache.Clear();
-        }
-
         #region Private Helper Methods
 
         private static void ValidateCollection<T>(ICollection<T> collection)
@@ -32,6 +24,89 @@ namespace Neo.Extensions
             {
                 throw new ArgumentException("Collection cannot be empty", nameof(collection));
             }
+        }
+
+        private static void ShuffleInPlace<T>(IList<T> list, System.Random random)
+        {
+            for (int n = list.Count - 1; n > 0; n--)
+            {
+                int k = random.Next(n + 1);
+                (list[k], list[n]) = (list[n], list[k]);
+            }
+        }
+
+        private static void ShuffleInPlace<T>(IList<T> list, Func<int, int> nextIndex)
+        {
+            for (int n = list.Count - 1; n > 0; n--)
+            {
+                int k = nextIndex(n + 1);
+                if (k < 0 || k > n)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(nextIndex),
+                        $"The random source returned {k}; expected a value in [0, {n}].");
+                }
+
+                (list[k], list[n]) = (list[n], list[k]);
+            }
+        }
+
+        private static int SelectWeightedIndex(IList<float> weights, double unitSample)
+        {
+            int count = weights.Count;
+            double totalWeight = 0d;
+            // WHY: an indexed loop; foreach over IList<float> boxes the enumerator on every call.
+            for (int i = 0; i < count; i++)
+            {
+                float weight = weights[i];
+                if (float.IsNaN(weight) || float.IsInfinity(weight))
+                {
+                    NeoDiagnostics.LogError("[RandomExtensions] Weights must be finite values.");
+                    return -1;
+                }
+
+                if (weight < 0f)
+                {
+                    NeoDiagnostics.LogError("[RandomExtensions] Weights cannot contain negative values.");
+                    return -1;
+                }
+
+                totalWeight += weight;
+            }
+
+            if (totalWeight <= 0f)
+            {
+                NeoDiagnostics.LogWarning("[RandomExtensions] Total weight must be greater than zero.");
+                return -1;
+            }
+
+            double randomPoint = unitSample * totalWeight;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (randomPoint < weights[i])
+                {
+                    return i;
+                }
+
+                randomPoint -= weights[i];
+            }
+
+            // WHY: Random.value includes 1.0, so the walk can pass every bucket; fall back to the
+            // last positive-weight index so a zero-weight (disabled) entry is never returned.
+            for (int i = count - 1; i >= 0; i--)
+            {
+                if (weights[i] > 0f)
+                {
+                    return i;
+                }
+            }
+
+            return count - 1;
+        }
+
+        private static class EnumValues<T> where T : Enum
+        {
+            public static readonly T[] Values = (T[])Enum.GetValues(typeof(T));
         }
 
         #endregion
@@ -69,6 +144,54 @@ namespace Neo.Extensions
         }
 
         /// <summary>
+        ///     Shuffles the elements of a list or array with an injected <see cref="System.Random" />, so a seeded
+        ///     source produces the same order every run (deterministic tests, replays, daily seeds).
+        /// </summary>
+        /// <param name="collection">List or array to shuffle; must not be null or empty.</param>
+        /// <param name="random">Random source; must not be null.</param>
+        /// <param name="inplace">If true, modifies the original collection; if false, shuffles a copy.</param>
+        /// <returns>The shuffled list (the original when <paramref name="inplace" /> is true).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random" /> is null.</exception>
+        public static IList<T> Shuffle<T>(this IList<T> collection, System.Random random, bool inplace = true)
+        {
+            ValidateCollection(collection);
+            if (random == null)
+            {
+                throw new ArgumentNullException(nameof(random));
+            }
+
+            IList<T> listToShuffle = inplace ? collection : new List<T>(collection);
+            ShuffleInPlace(listToShuffle, random);
+            return listToShuffle;
+        }
+
+        /// <summary>
+        ///     Shuffles the elements of a list or array with an injected index source, for random generators that are
+        ///     not a <see cref="System.Random" /> (a seeded game RNG, a scripted sequence in a test).
+        /// </summary>
+        /// <param name="collection">List or array to shuffle; must not be null or empty.</param>
+        /// <param name="nextIndex">
+        ///     Receives an exclusive upper bound <c>n</c> and returns an index in <c>[0, n)</c>, e.g.
+        ///     <c>max =&gt; rng.Next(max)</c>.
+        /// </param>
+        /// <param name="inplace">If true, modifies the original collection; if false, shuffles a copy.</param>
+        /// <returns>The shuffled list (the original when <paramref name="inplace" /> is true).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="nextIndex" /> is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The index source returned a value outside the requested range.</exception>
+        public static IList<T> Shuffle<T>(this IList<T> collection, Func<int, int> nextIndex, bool inplace = true)
+        {
+            ValidateCollection(collection);
+            if (nextIndex == null)
+            {
+                throw new ArgumentNullException(nameof(nextIndex));
+            }
+
+            IList<T> listToShuffle = inplace ? collection : new List<T>(collection);
+            ShuffleInPlace(listToShuffle, nextIndex);
+            return listToShuffle;
+        }
+
+        /// <summary>
         ///     Gets a specified number of random elements from a list or array.
         /// </summary>
         public static IEnumerable<T> GetRandomElements<T>(this IList<T> collection, int count)
@@ -97,6 +220,30 @@ namespace Neo.Extensions
         {
             ValidateCollection(collection);
             return UnityEngine.Random.Range(0, collection.Count);
+        }
+
+        /// <summary>
+        ///     Gets a random valid index using an injected <see cref="System.Random" />.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="random" /> is null.</exception>
+        public static int GetRandomIndex<T>(this ICollection<T> collection, System.Random random)
+        {
+            ValidateCollection(collection);
+            if (random == null)
+            {
+                throw new ArgumentNullException(nameof(random));
+            }
+
+            return random.Next(collection.Count);
+        }
+
+        /// <summary>
+        ///     Gets a random element from a list or array using an injected <see cref="System.Random" />.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="random" /> is null.</exception>
+        public static T GetRandomElement<T>(this IList<T> collection, System.Random random)
+        {
+            return collection[collection.GetRandomIndex(random)];
         }
 
         /// <summary>
@@ -204,16 +351,17 @@ namespace Neo.Extensions
         /// <summary>
         ///     Gets a random value from any enum.
         /// </summary>
+        /// <exception cref="InvalidOperationException">The enum declares no values.</exception>
         public static T GetRandomEnumValue<T>() where T : Enum
         {
-            Type enumType = typeof(T);
-            if (!EnumValuesCache.TryGetValue(enumType, out Array values))
+            // WHY: a typed per-enum cache avoids the dictionary lookup and the boxing of Array.GetValue.
+            T[] values = EnumValues<T>.Values;
+            if (values.Length == 0)
             {
-                values = Enum.GetValues(enumType);
-                EnumValuesCache[enumType] = values;
+                throw new InvalidOperationException($"Enum {typeof(T).Name} declares no values.");
             }
 
-            return (T)values.GetValue(UnityEngine.Random.Range(0, values.Length));
+            return values[UnityEngine.Random.Range(0, values.Length)];
         }
 
         /// <summary>
@@ -227,53 +375,27 @@ namespace Neo.Extensions
                 return -1;
             }
 
-            double totalWeight = 0d;
-            foreach (float weight in weights)
+            return SelectWeightedIndex(weights, UnityEngine.Random.value);
+        }
+
+        /// <summary>
+        ///     Returns an index from a list of weights using an injected <see cref="System.Random" />.
+        ///     Weights must be finite and non-negative, with a positive total; otherwise returns -1.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="random" /> is null.</exception>
+        public static int GetRandomWeightedIndex(this IList<float> weights, System.Random random)
+        {
+            if (random == null)
             {
-                if (float.IsNaN(weight) || float.IsInfinity(weight))
-                {
-                    NeoDiagnostics.LogError("[RandomExtensions] Weights must be finite values.");
-                    return -1;
-                }
-
-                if (weight < 0f)
-                {
-                    NeoDiagnostics.LogError("[RandomExtensions] Weights cannot contain negative values.");
-                    return -1;
-                }
-
-                totalWeight += weight;
+                throw new ArgumentNullException(nameof(random));
             }
 
-            if (totalWeight <= 0f)
+            if (weights == null || weights.Count == 0)
             {
-                NeoDiagnostics.LogWarning("[RandomExtensions] Total weight must be greater than zero.");
                 return -1;
             }
 
-            double randomPoint = UnityEngine.Random.value * totalWeight;
-
-            for (int i = 0; i < weights.Count; i++)
-            {
-                if (randomPoint < weights[i])
-                {
-                    return i;
-                }
-
-                randomPoint -= weights[i];
-            }
-
-            // WHY: Random.value includes 1.0, so the walk can pass every bucket; fall back to the
-            // last positive-weight index so a zero-weight (disabled) entry is never returned.
-            for (int i = weights.Count - 1; i >= 0; i--)
-            {
-                if (weights[i] > 0f)
-                {
-                    return i;
-                }
-            }
-
-            return weights.Count - 1;
+            return SelectWeightedIndex(weights, random.NextDouble());
         }
 
         #endregion
@@ -296,7 +418,7 @@ namespace Neo.Extensions
         {
             if (value == int.MinValue)
             {
-                // The positive magnitude cannot fit in int. Sample a half-range, then choose
+                // WHY: The positive magnitude cannot fit in int. Sample a half-range, then choose
                 // its sign half so both endpoints remain reachable without negation overflow.
                 int sample = UnityEngine.Random.Range(int.MinValue, 0);
                 return UnityEngine.Random.Range(0, 2) == 0 ? sample : sample - int.MinValue;

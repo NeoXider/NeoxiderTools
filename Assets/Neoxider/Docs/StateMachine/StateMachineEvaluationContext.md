@@ -1,6 +1,8 @@
 ﻿# StateMachineEvaluationContext
 
-**Purpose:** `internal static` context for `StateMachine` predicates. NoCode predicates resolve the owning `GameObject` and slot-based overrides supplied by the scene wrapper. A separate timing stack supplies machine-owned duration entry/evaluation times. Thread-static stacks support nested calls and are restored by their callers in `finally`; subsystem reset clears both kinds of context. This is internal implementation, not a public extension API.
+**What it is:** the `internal static` evaluation context for `StateMachine` predicates and actions (`Scripts/StateMachine/StateMachineEvaluationContext.cs`). NoCode predicates resolve the owning `GameObject` and slot-based overrides supplied by the scene wrapper. A separate timing stack supplies machine-owned duration entry/evaluation times. Thread-static stacks support nested calls and are restored by their callers in `finally`; subsystem reset clears both kinds of context. This is internal implementation, not a public extension API.
+
+**How to use:** you do not call it directly. `StateMachineBehaviourBase` / `StateMachineBehaviour<TState>` push their Owner and Context Overrides around every tick, evaluation, change and stop (without per-frame allocations); custom predicates/actions read the result through `ConditionEntryPredicate` slots or `StateAction.Execute(GameObject contextObject)`.
 
 ## API
 

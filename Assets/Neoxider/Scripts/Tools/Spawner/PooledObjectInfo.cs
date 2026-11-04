@@ -15,10 +15,15 @@ namespace Neo.Tools
         private NeoObjectPool _cleanupOwner;
         private int _cleanupGeneration;
 
+        /// <summary>Pool that created this instance; null for objects that were never pooled.</summary>
         public NeoObjectPool OwnerPool { get; set; }
 
         /// <summary>True while the instance sits inactive inside its owner pool.</summary>
         public bool IsInPool { get; internal set; }
+
+        // WHY: Per-instance IPoolable cache lives on the instance itself, so it dies with it and the pool needs
+        // no GameObject-keyed dictionary (and no pruning of destroyed keys) on its Get/Return hot path.
+        internal IPoolable[] CachedPoolables { get; set; }
 
         /// <summary>
         ///     Incremented every time the pool hands this instance out.
@@ -57,7 +62,7 @@ namespace Neo.Tools
             Action<GameObject> cleanup = _releaseCleanup;
             NeoObjectPool owner = _cleanupOwner;
             int generation = _cleanupGeneration;
-            // Detach first: return, eviction and Unity OnDestroy must not replay this generation's work.
+            // WHY: Detach first: return, eviction and Unity OnDestroy must not replay this generation's work.
             _releaseCleanup = null;
             _cleanupOwner = null;
 

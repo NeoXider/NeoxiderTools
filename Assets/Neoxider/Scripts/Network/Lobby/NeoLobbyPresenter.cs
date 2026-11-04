@@ -22,24 +22,34 @@ namespace Neo.Network
         private int _lastCount = -1;
         private bool? _lastReady;
         private ulong _publicationRevision;
+        private NetworkIdentity _cachedLocalIdentity;
+        private NeoLobbyPlayer _cachedLocalPlayer;
 
+        /// <summary>Lobby manager to drive; resolved from <c>NetworkManager.singleton</c> when empty.</summary>
         public NeoLobbyManager Manager
         {
             get => _manager;
             set => _manager = value;
         }
 
+        /// <summary>Address used by <see cref="JoinLobby"/>.</summary>
         public string Address => _address;
+        /// <summary>Status text (Connecting..., Connected, All players ready, ...), raised on change.</summary>
         public UnityEvent<string> OnStatusChanged => _onStatusChanged;
+        /// <summary>Room player count, raised on change.</summary>
         public UnityEvent<int> OnPlayerCountChanged => _onPlayerCountChanged;
+        /// <summary>Room player count as <c>Players: n</c>, raised on change.</summary>
         public UnityEvent<string> OnPlayerCountTextChanged => _onPlayerCountTextChanged;
+        /// <summary>Local player ready state, raised on change.</summary>
         public UnityEvent<bool> OnReadyChanged => _onReadyChanged;
 
+        /// <summary>Sets the join address; empty or whitespace falls back to localhost.</summary>
         public void SetAddress(string address)
         {
             _address = string.IsNullOrWhiteSpace(address) ? "localhost" : address.Trim();
         }
 
+        /// <summary>Starts hosting a lobby.</summary>
         public void HostLobby()
         {
             if (ResolveManager())
@@ -49,6 +59,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Joins the lobby at <see cref="Address"/>.</summary>
         public void JoinLobby()
         {
             if (ResolveManager())
@@ -58,6 +69,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Leaves the lobby or stops hosting; also cancels a pending connect.</summary>
         public void LeaveLobby()
         {
             if (ResolveManager())
@@ -67,6 +79,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Toggles the ready state of the current local lobby player.</summary>
         public void ToggleReady()
         {
             NeoLobbyPlayer player = LocalPlayer();
@@ -76,6 +89,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Sets the ready state of the current local lobby player.</summary>
         public void SetReady(bool ready)
         {
             NeoLobbyPlayer player = LocalPlayer();
@@ -103,6 +117,7 @@ namespace Neo.Network
             }
         }
 
+        /// <summary>Publishes changed outputs now instead of waiting for the 0.1 s poll.</summary>
         public void RefreshView()
         {
             if (_manager == null)
@@ -126,7 +141,7 @@ namespace Neo.Network
                 return;
             }
 
-            // Only a changed snapshot supersedes an in-flight publication; unchanged reentry is harmless.
+            // WHY: only a changed snapshot supersedes an in-flight publication; unchanged reentry is harmless.
             _lastCount = count;
             _lastReady = ready;
             _lastStatus = status;
@@ -174,10 +189,24 @@ namespace Neo.Network
             return false;
         }
 
-        private static NeoLobbyPlayer LocalPlayer()
+        // WHY: resolved per poll (10 Hz) and per click; the component lookup reruns only when the local player changes.
+        private NeoLobbyPlayer LocalPlayer()
         {
-            return NetworkClient.localPlayer != null
-                ? NetworkClient.localPlayer.GetComponent<NeoLobbyPlayer>() : null;
+            NetworkIdentity identity = NetworkClient.localPlayer;
+            if (identity == null)
+            {
+                _cachedLocalIdentity = null;
+                _cachedLocalPlayer = null;
+                return null;
+            }
+
+            if (!ReferenceEquals(identity, _cachedLocalIdentity))
+            {
+                _cachedLocalIdentity = identity;
+                _cachedLocalPlayer = identity.GetComponent<NeoLobbyPlayer>();
+            }
+
+            return _cachedLocalPlayer;
         }
     }
 }

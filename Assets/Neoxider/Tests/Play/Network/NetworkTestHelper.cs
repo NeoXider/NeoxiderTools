@@ -250,7 +250,7 @@ namespace Neo.Tests.Play
 
                 yield return NetworkTestHelper.WaitUntil(() => !NetworkServer.active && !NetworkClient.active,
                     description: "owned network shutdown");
-                // Allow Mirror's deferred destruction before releasing the original templates.
+                // WHY: Allow Mirror's deferred destruction before releasing the original templates.
                 yield return null;
             }
             finally
@@ -258,7 +258,7 @@ namespace Neo.Tests.Play
                 foreignSession |= HasForeignSession();
                 try
                 {
-                    // A timed-out graceful stop must still release this fixture's session before
+                    // WHY: A timed-out graceful stop must still release this fixture's session before
                     // destroying its manager. Otherwise its remaining active flags resemble a foreign host.
                     if (!foreignSession)
                     {

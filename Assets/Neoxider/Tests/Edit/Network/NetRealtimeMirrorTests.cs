@@ -36,8 +36,6 @@ namespace Neo.Editor.Tests
             NetworkServer.Shutdown();
         }
 
-        // ---- NetFrameFraming -----------------------------------------------------------------------
-
         private static ArraySegment<byte> WriteFrame(byte version, int[] values, out NetworkWriter writer)
         {
             writer = new NetworkWriter();
@@ -121,8 +119,6 @@ namespace Neo.Editor.Tests
             Assert.That(NetFrameFraming.ClampByte(77), Is.EqualTo((byte)77));
         }
 
-        // ---- connection state ------------------------------------------------------------------------
-
         [Test]
         public void IsConnectionSpawned_IsFalseForNullAndForUnreadyConnections()
         {
@@ -146,8 +142,6 @@ namespace Neo.Editor.Tests
             Assert.That(NetReadyBroadcast.CountReady(), Is.EqualTo(0));
             Assert.That(NetReadyBroadcast.SendTo(null, new ProbeMessageA()), Is.False);
         }
-
-        // ---- handler registries ------------------------------------------------------------------------
 
         [Test]
         public void ClientHandlers_RegisterOnceAndDropOnRequest()
@@ -185,10 +179,10 @@ namespace Neo.Editor.Tests
             handlers.Add<ProbeMessageA>(_ => { });
             handlers.RegisterNow();
 
-            NetworkClient.Shutdown(); // what StopClient does: every handler is cleared
+            NetworkClient.Shutdown(); // WHY: what StopClient does: every handler is cleared
             Assert.That(NetworkClient.UnregisterHandler<ProbeMessageA>(), Is.False);
 
-            handlers.UnregisterAll(); // bookkeeping only: Mirror already forgot them
+            handlers.UnregisterAll(); // WHY: bookkeeping only: Mirror already forgot them
             handlers.RegisterNow();
             Assert.That(NetworkClient.UnregisterHandler<ProbeMessageA>(), Is.True);
         }
@@ -236,8 +230,6 @@ namespace Neo.Editor.Tests
             Assert.Throws<ArgumentNullException>(() => new NetEventChannel<ProbeMessageA>(null));
             Assert.That(handlers.Count, Is.EqualTo(1), "the channel added its handler to the registry");
         }
-
-        // ---- fragment transport ---------------------------------------------------------------------------
 
         [Test]
         public void FrameSender_PlansChunksFromAnExplicitSizeAndRejectsOversizeFrames()

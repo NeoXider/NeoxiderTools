@@ -103,6 +103,17 @@ namespace Neo.Parallax
         private int tilesX = 1;
         private int tilesY = 1;
 
+        // WHY cached: Component.transform is a native call and LateUpdate needs the layer and camera transforms
+        // every frame. The camera is re-resolved by reference, so a swapped camera is picked up at once.
+        private Transform layerTransform;
+        private Camera cachedCamera;
+        private Transform cachedCameraTransform;
+
+        // WHY: tiles only move through the layer or through RecycleTiles itself, so with the camera at the position
+        // of the last tile pass and the layer not moved, that pass would shift nothing and is skipped.
+        private bool hasRecyclePass;
+        private Vector3 lastRecycleCameraPosition;
+
 #if UNITY_EDITOR
         private bool editorPreviewRefreshQueued;
 #endif
@@ -138,8 +149,41 @@ namespace Neo.Parallax
                 return;
             }
 
-            UpdateParallaxOffset();
-            RecycleTiles();
+            Vector3 camPos = CameraTransform().position;
+            bool layerMoved = UpdateParallaxOffset(camPos);
+            if (!layerMoved && hasRecyclePass && camPos.x.Equals(lastRecycleCameraPosition.x) &&
+                camPos.y.Equals(lastRecycleCameraPosition.y))
+            {
+                return;
+            }
+
+            RecycleTiles(camPos);
+            lastRecycleCameraPosition = camPos;
+            hasRecyclePass = true;
+        }
+
+        private Transform LayerTransform
+        {
+            get
+            {
+                if (ReferenceEquals(layerTransform, null))
+                {
+                    layerTransform = transform;
+                }
+
+                return layerTransform;
+            }
+        }
+
+        private Transform CameraTransform()
+        {
+            if (!ReferenceEquals(cachedCamera, targetCamera))
+            {
+                cachedCamera = targetCamera;
+                cachedCameraTransform = targetCamera.transform;
+            }
+
+            return cachedCameraTransform;
         }
 
         private void OnEnable()
@@ -649,6 +693,7 @@ namespace Neo.Parallax
             RemoveExistingTiles();
             tiles.Clear();
             isInitialised = false;
+            hasRecyclePass = false;
             accumulatedScroll = Vector2.zero;
 
             if (templateSnapshotRenderer != null && hasTemplateSnapshot)
@@ -667,22 +712,32 @@ namespace Neo.Parallax
             templateSnapshotRenderer = null;
         }
 
-        private void UpdateParallaxOffset()
+        /// <summary>Moves the layer to its parallax position; returns whether the layer transform was written.</summary>
+        private bool UpdateParallaxOffset(Vector3 camPos)
         {
-            Vector3 camPos = targetCamera.transform.position;
             Vector3 delta = camPos - initialCameraPosition;
             accumulatedScroll += scrollSpeed * Time.deltaTime;
             Vector3 offset = new(
                 delta.x * -parallaxMultiplier.x + accumulatedScroll.x,
                 delta.y * -parallaxMultiplier.y + accumulatedScroll.y,
                 0f);
-            transform.position = initialLayerPosition + offset;
+            Vector3 target = initialLayerPosition + offset;
+            Transform layer = LayerTransform;
+            Vector3 current = layer.position;
+
+            // WHY exact comparison before the write: a set marks the layer and every tile under it as changed
+            // even when nothing moved, which a resting camera otherwise paid for every frame.
+            if (!current.x.Equals(target.x) || !current.y.Equals(target.y) || !current.z.Equals(target.z))
+            {
+                layer.position = target;
+                return true;
+            }
+
+            return false;
         }
 
-        private void RecycleTiles()
+        private void RecycleTiles(Vector3 camPos)
         {
-            Vector3 camPos = targetCamera.transform.position;
-
             for (int i = 0; i < tiles.Count; i++)
             {
                 Tile tile = tiles[i];

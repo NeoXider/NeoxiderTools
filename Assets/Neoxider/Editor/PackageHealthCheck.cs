@@ -102,7 +102,7 @@ namespace Neo.Editor
         /// </summary>
         public static List<string> FindVersionParityProblems()
         {
-            var problems = new List<string>();
+            List<string> problems = new List<string>();
 
             string packageJsonPath = Path.Combine(Root, "package.json");
             if (!File.Exists(packageJsonPath))
@@ -164,7 +164,7 @@ namespace Neo.Editor
                 return 1;
             }
 
-            var missing = new SortedDictionary<string, string>();
+            SortedDictionary<string, string> missing = new SortedDictionary<string, string>();
             foreach (string file in Directory.GetFiles(Root, "*.cs", SearchOption.AllDirectories))
             {
                 foreach (Match m in NeoDocPattern.Matches(File.ReadAllText(file)))
@@ -196,7 +196,7 @@ namespace Neo.Editor
         // ScriptableObject compiled into a Neo.* runtime assembly that carries no [NeoDoc].
         private static int CheckComponentsCarryNeoDoc()
         {
-            var offenders = new SortedSet<string>();
+            SortedSet<string> offenders = new SortedSet<string>();
             CollectUndocumented(TypeCache.GetTypesDerivedFrom<MonoBehaviour>(), offenders);
             CollectUndocumented(TypeCache.GetTypesDerivedFrom<ScriptableObject>(), offenders);
 

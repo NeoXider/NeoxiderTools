@@ -1,19 +1,27 @@
 ﻿# Selector
 
-**Purpose:** Select a single item, a fill prefix, or additive random items with optional unique cycles,
-exclusions, persistence and networking. Namespace: `Neo.Tools`; assembly: `Neo.Tools.View`.
-Use [SelectorModel](./SelectorModel.md) for selection rules without scene objects.
+**What it is:** a component that selects a single item, a fill prefix, or additive random items, with
+optional unique cycles, exclusions, persistence and networking. Script: `Scripts/Tools/View/Selector.cs`,
+namespace `Neo.Tools`, assembly `Neo.Tools.View`. Use [SelectorModel](./SelectorModel.md) for the same
+selection rules without scene objects.
 
-## Setup
+**How to use:**
+1. Add the component to a parent with item children. Child synchronization is on by default, including
+   inactive children. For manually maintained `Items`, disable `_autoUpdateFromChildren`.
+2. Use `Count > 0` for virtual items without GameObjects/children. Methods, indices and events still work.
+3. `startOnAwake` applies the start selection on enable and initial synchronization. Disable it to retain
+   authored states until an explicit `Set`, `Next`, `SetRandom` or `RefreshItems` call.
+4. For event-driven items, enable `NotifySelectorItemsOnly` and attach [SelectorItem](./SelectorItem.md).
+   Matching entries receive typed state changes; entries without that component still use GameObject
+   activation. `_controlGameObjectActive = false` suppresses both kinds of activation.
+5. To keep indices out of the random pool from the start, fill **Excluded Indices Inspector** in the
+   Inspector. The list is applied in `Awake`, before the start selection runs, in the Editor and in player
+   builds alike. With saving of excluded indices enabled, the authored list stays the starting pool until
+   a set has been saved; from then on `Start` loads the saved set instead, also when it was emptied (an
+   empty set is saved as an empty value, not by deleting the key). Saves written by versions before 12.0
+   deleted the key for an empty set, so such a save starts from the authored list again.
 
-- Add the component to a parent with item children. Child synchronization is on by default, including
-  inactive children. For manually maintained `Items`, disable `_autoUpdateFromChildren`.
-- Use `Count > 0` for virtual items without GameObjects/children. Methods, indices and events still work.
-- `startOnAwake` applies the start selection on enable and initial synchronization. Disable it to retain
-  authored states until an explicit `Set`, `Next`, `SetRandom` or `RefreshItems` call.
-- For event-driven items, enable `NotifySelectorItemsOnly` and attach [SelectorItem](./SelectorItem.md).
-  Matching entries receive typed state changes; entries without that component still use GameObject
-  activation. `_controlGameObjectActive = false` suppresses both kinds of activation.
+---
 
 ## C# API and index rules
 
@@ -45,6 +53,16 @@ wiring or C#. `OnSelectionChanged`, `OnSelectionChangedGameObject` and `OnCountA
 indices, selected objects and active counts. With real items, `CountActive` inspects actual GameObject
 or SelectorItem state; virtual count uses the logical single/prefix count.
 
+`IsAtStart`, `IsAtEnd` and `CountActive` read the live serialized fields directly and do not allocate, so
+they are safe to poll every frame. With saving and networking off, warm `Set`, `Next`, `Previous`,
+`SetFirst`, `SetLast` and `SetRandom` calls reuse the selector's index sets and do not allocate either.
+With `_saveEnabled`, every command writes its save keys, which builds the key and value strings; in network
+mode the selection and exclusion payloads are serialized on every command. Their cost also grows with the
+pool: every command re-reads the serialized fields into the internal model and rebuilds the
+`ExcludedIndices`, `UsedIndicesForUnique` and `IncludedIndices` snapshots, which stay sorted ascending.
+`SetRandom` counts the eligible indices and walks to the picked one instead of building a candidate list.
+A command always re-applies the selection and raises its events, even when the index does not change.
+
 Unique random selection tracks every included index, even when only one remains. After exhaustion,
 the next request emits `OnUniqueCycleComplete`; automatic reset also emits `OnUniqueReset`. With reset
 disabled it does not select again until `ResetUnique()`. `CreateModelSnapshot()` returns an independent
@@ -53,7 +71,8 @@ plain C# snapshot, suitable for inspection without mutating scene state.
 ## Save and network lifecycle
 
 Enable `_saveEnabled`, give each independent selector a unique `_saveKey`, and choose `SelectorSaveMode`.
-Keys use `_Index` and `_Excluded` suffixes. Initial runtime selection/child synchronization cannot write
+Keys use `_Index` and `_Excluded` suffixes; an empty excluded set is stored as an empty `_Excluded` value.
+Initial runtime selection/child synchronization cannot write
 over stored values before `Start` loads them. Writes, including explicit calls made before the first
 `Start`, are deferred until initialization; later `Set` and exclusion changes save immediately. Re-enable
 continues the existing start-index behavior. Unique history and additive active sets are not persisted.

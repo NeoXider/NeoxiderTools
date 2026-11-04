@@ -125,5 +125,5 @@ def.SetLinear(100);
 
 - [Level curve evaluation boundaries](./Level/Data/CurveEvaluation.md) — Curve domain, integer XP and 11.0.0 endpoint behavior.
 - [Level.md](./Level.md) — LevelComponent, ILevelProvider, using the curve.
-- [HealthComponent.md](./HealthComponent.md) — HP/Mana pools.
+- [HealthComponent.md](./Resources/Components/HealthComponent.md) — HP/Mana pools.
 - [Progression/README.md](../Progression/README.md) — level rewards, perks (Progression uses its own LevelCurveDefinition for the progression tree).

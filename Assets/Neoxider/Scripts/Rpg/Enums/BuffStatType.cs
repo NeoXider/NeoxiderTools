@@ -52,7 +52,10 @@ namespace Neo.Rpg
         /// <summary>+value% to move speed.</summary>
         MoveSpeedPercent = 310,
 
-        /// <summary>Reserved serialized value. No runtime consumer; does not modify cooldown or cast timing.</summary>
+        /// <summary>
+        ///     +value% attack speed, read through <c>RpgCharacter.GetAttackSpeedMultiplier()</c>. Cooldowns change only
+        ///     where a consumer opts in (<c>RpgAttackController.ScaleCooldownByAttackSpeed</c>); cast delay is unaffected.
+        /// </summary>
         AttackSpeedPercent = 311
     }
 }

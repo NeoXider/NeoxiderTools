@@ -1,5 +1,17 @@
 # RPG networking
 
+**What it is:** the optional Mirror transport for `RpgCharacter` (`RpgCharacterNetworkAdapter`, replicated
+profile snapshots and server commands) and `RpgAttackController` (`RpgAttackNetworkAdapter`, input authority
+and projectile spawning), assembly `Neo.Rpg.Network`.
+
+**How to use:**
+1. Add `RpgCharacterNetworkAdapter` beside a networked `RpgCharacter` and enable **RpgCharacter → isNetworked**.
+2. Add `RpgAttackNetworkAdapter` beside an `RpgAttackController` whose projectiles must spawn on the server.
+3. Run gameplay on the server; clients receive one complete snapshot per changed step. Group several mutations
+   with `RpgCharacter.DeferSnapshotPublication()` (see [Snapshot publication](#snapshot-publication)).
+
+---
+
 `Neo.Rpg.Network` is the optional Mirror transport for the local [RpgCharacter](RpgCharacter.md)
 runtime and [RpgAttackController](RpgAttackController.md). Local RPG gameplay needs no adapter.
 The transport-neutral interfaces remain in `Neo.Rpg`; gameplay assemblies need a reference to
@@ -48,6 +60,12 @@ sent through the client transport, rather than executed locally. It is not an ac
 the server accepted the mutation. The server applies the character's opt-in/authority policy and the
 inherited per-sender rate limit. Host, server, and offline calls execute locally once.
 
+The command type travels as a raw integer. The server drops a value that is not a named
+`RpgCharacterNetworkCommandType` (`RpgCharacterNetworkCommand.IsKnownType`) after the rate-limit and
+authority checks, so it neither executes nor publishes a snapshot. Numeric payloads go through the same
+character validation as local calls: NaN or infinite damage, healing, costs, Max values, XP and stat bases
+are rejected (see [RpgCharacter](RpgCharacter.md#non-finite-values)).
+
 `RpgCharacter.ApplyLevelGrowth()` explicitly applies the current level's configured growth. Its
 `RpgCharacterNetworkCommandType.ApplyLevelGrowth` command uses the additive value **23**, after
 `SetInvulnerable = 22`. The adapter dispatches it through the same character opt-in, authority and
@@ -57,7 +75,8 @@ or acknowledge that growth was applied. Peers must support this additive command
 negotiation or acknowledgment was added.
 
 `NotifyStateChanged()` publishes a serialized `RpgCharacterProfileData` on the server when character
-networking is enabled. `SuppressLocalSimulation` suppresses client regeneration and effect simulation
+networking is enabled. The character calls it once per completed step (see
+[Snapshot publication](#snapshot-publication)); an executed adapter command publishes exactly once. `SuppressLocalSimulation` suppresses client regeneration and effect simulation
 for networked characters; authoritative state comes from snapshots. Offline calls use the local API,
 including when Mirror is installed but no network session is active.
 
@@ -74,6 +93,42 @@ restoration. The final notification follows derived-state resolution and configu
 the adapter captures the completed profile. `RuntimeRebuilt` still occurs **before** optional auto-load:
 use it for rebinding runtime sources, and use the loaded/final state for persistence-dependent UI.
 This publication boundary does not make individual resource reactive callbacks transactional.
+
+### Snapshot publication
+
+Every publication captures the whole profile and serializes it to JSON on the server, so the character
+publishes once per completed step instead of once per changed value:
+
+| Step | Publications |
+|------|--------------|
+| One frame of regeneration, buff/status expiry and status damage ticks | 1 (only when something changed) |
+| `ApplyDamage` / `Damage` (a lethal hit changes HP and death) | 1 |
+| `Heal` (including a revive), `Restore()` (every resource), `SetLevel`, `UpgradeStat`, `RefreshAllDerived` | 1 |
+| One executed adapter command (`Net*` on the host/server, a remote `CmdExecute`) | 1, also for a no-op command |
+| Initialization, `RebuildRuntime`, `ApplyProfile` / auto-load | 1 |
+
+Before 12.0.0 a regenerating character serialized its profile once **per regenerating resource per frame**
+(a per-tick regen after a long frame even once per delivered tick), and a lethal remote hit three times.
+
+To group your own mutations, open a scope. Nested scopes, including the ones the character opens itself,
+publish one complete snapshot when the outermost scope ends, and nothing when nothing changed:
+
+```csharp
+using Neo.Rpg.Components;
+
+using (character.DeferSnapshotPublication())
+{
+    character.Damage(25f);
+    character.AddXp(10f);
+    character.ApplyBuffById("Rage");
+}
+// One snapshot with the final HP, XP and buff is published here.
+```
+
+Only the transport publication is deferred: UnityEvents, reactive states and `DamageApplied` still fire in
+place, so UI on the server reacts immediately. Dispose each scope exactly once (prefer `using`); a second
+`Dispose` of the same scope and a `default` scope do nothing. Custom `IRpgCharacterNetworkAdapter`
+implementations get the same batching: `NotifyStateChanged()` runs once per scope.
 
 ### Version 2 resource and effect restoration
 
@@ -136,3 +191,12 @@ operation, through the same typed API. The version 2 growth-restoration policy a
 
 For a purely local character, omit the adapters or leave the character networking switch disabled.
 Mirror scene identities also follow the package's [optional networking lifecycle](../Network/README.md).
+
+## Demo
+
+The Network demo scene (`Samples~/Demo/Scenes/Network/NetworkDemo.unity`) has a server-authoritative
+`Shared Boss`: `RpgCharacter` (template asset `Data/Network/NetworkDemoBoss.asset`, **isNetworked** on,
+client state commands off) with `NetworkIdentity` and `RpgCharacterNetworkAdapter`. Its Hit and Revive
+buttons trigger ServerOnly channels of a `NetworkActionRelay`; on the server those channels call
+`RpgCharacterNetworkAdapter.NetDamage` and `RpgCharacter.Restore`, and every peer's HP bar follows the
+replicated snapshot. See [Network demo scene](../Network/README.md#demo-scene).

@@ -35,11 +35,21 @@ namespace Neo.GridSystem
         private FieldGenerator generator;
         private Grid unityGrid;
 
+#if UNITY_EDITOR
+        [System.NonSerialized] private GUIStyle _labelStyle;
+        [System.NonSerialized] private string[] _labels;
+        [System.NonSerialized] private FieldCell[,,] _labelCells;
+#endif
+
         private void OnDrawGizmos()
         {
             if (generator == null)
             {
                 generator = GetComponent<FieldGenerator>();
+                if (generator == null)
+                {
+                    return;
+                }
             }
 
             if (unityGrid == null)
@@ -51,6 +61,16 @@ namespace Neo.GridSystem
             {
                 return;
             }
+
+#if UNITY_EDITOR
+            GUIStyle labelStyle = null;
+            string[] labels = null;
+            if (DrawCoordinates)
+            {
+                labelStyle = GetLabelStyle();
+                labels = GetLabels(generator.Cells);
+            }
+#endif
 
             Vector3Int size = generator.GeneratedSize;
             Gizmos.color = GridColor;
@@ -68,10 +88,12 @@ namespace Neo.GridSystem
                 Gizmos.DrawLine(from, to);
             }
 
+            int labelIndex = -1;
             for (int x = 0; x < size.x; x++)
             for (int y = 0; y < size.y; y++)
             for (int z = 0; z < size.z; z++)
             {
+                labelIndex++;
                 FieldCell cell = generator.Cells[x, y, z];
                 if (cell == null)
                 {
@@ -94,19 +116,14 @@ namespace Neo.GridSystem
 
                 Gizmos.DrawCube(pos, unityGrid.cellSize * 0.9f);
 #if UNITY_EDITOR
-                if (DrawCoordinates)
+                if (labels != null)
                 {
-                    GUIStyle style = new();
-                    style.normal.textColor = TextColor;
-                    style.fontSize = TextFontSize;
-                    style.alignment = TextAnchor.MiddleCenter;
-                    Vector3 labelPos = pos;
-                    Handles.Label(labelPos, $"x:{cell.Position.x} y:{cell.Position.y} z:{cell.Position.z}", style);
+                    Handles.Label(pos, labels[labelIndex], labelStyle);
                 }
 #endif
             }
 
-            if (DrawPath && DebugPath.Count > 1)
+            if (DrawPath && DebugPath != null && DebugPath.Count > 1)
             {
                 Gizmos.color = PathColor;
                 for (int i = 1; i < DebugPath.Count; i++)
@@ -119,6 +136,39 @@ namespace Neo.GridSystem
         }
 
 #if UNITY_EDITOR
+        // WHY: one GUIStyle and one coordinate string per cell on every repaint allocated thousands of objects per
+        // frame on large boards; the style is refreshed from the fields and labels only change on regeneration.
+        private GUIStyle GetLabelStyle()
+        {
+            _labelStyle ??= new GUIStyle { alignment = TextAnchor.MiddleCenter };
+            _labelStyle.normal.textColor = TextColor;
+            _labelStyle.fontSize = TextFontSize;
+            return _labelStyle;
+        }
+
+        private string[] GetLabels(FieldCell[,,] cells)
+        {
+            if (_labels != null && ReferenceEquals(_labelCells, cells))
+            {
+                return _labels;
+            }
+
+            string[] labels = new string[cells.Length];
+            int index = 0;
+            for (int x = 0; x < cells.GetLength(0); x++)
+            for (int y = 0; y < cells.GetLength(1); y++)
+            for (int z = 0; z < cells.GetLength(2); z++)
+            {
+                FieldCell cell = cells[x, y, z];
+                Vector3Int position = cell != null ? cell.Position : new Vector3Int(x, y, z);
+                labels[index++] = $"x:{position.x} y:{position.y} z:{position.z}";
+            }
+
+            _labels = labels;
+            _labelCells = cells;
+            return labels;
+        }
+
         private void OnValidate()
         {
             SceneView.RepaintAll();

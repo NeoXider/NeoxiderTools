@@ -44,7 +44,7 @@ namespace Neo.Editor.Tests
 
         private SlotSymbolWeightOverrides CreateSynced()
         {
-            var overrides = new SlotSymbolWeightOverrides();
+            SlotSymbolWeightOverrides overrides = new SlotSymbolWeightOverrides();
             overrides.SyncWith(_economy);
             return overrides;
         }
@@ -141,7 +141,7 @@ namespace Neo.Editor.Tests
         public void MissingEntry_FallsBackToDefinitionWeight()
         {
             Configure(Symbol("Cherry", 1, 4f));
-            var overrides = new SlotSymbolWeightOverrides { Enabled = true }; // WHY: never synced, no entries
+            SlotSymbolWeightOverrides overrides = new SlotSymbolWeightOverrides { Enabled = true }; // WHY: never synced, no entries
 
             Assert.AreEqual(1, overrides.PickWeightedId(_economy, 0.5f),
                 "Symbols without a local entry keep their definition weight even when enabled.");

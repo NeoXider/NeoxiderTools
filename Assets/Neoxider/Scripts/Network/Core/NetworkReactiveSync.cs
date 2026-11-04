@@ -193,7 +193,7 @@ namespace Neo.Network
 
             bool changed = !_syncFloat.Equals(v);
             _syncFloat = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnFloatSynced(default, v);
@@ -211,7 +211,7 @@ namespace Neo.Network
 
             bool changed = !_syncInt.Equals(v);
             _syncInt = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnIntSynced(default, v);
@@ -229,7 +229,7 @@ namespace Neo.Network
 
             bool changed = !_syncBool.Equals(v);
             _syncBool = v;
-            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            // WHY: Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
             if (changed && !NetworkServer.activeHost)
             {
                 OnBoolSynced(default, v);
@@ -331,7 +331,7 @@ namespace Neo.Network
 
             try
             {
-                // Metadata is stable; a valid but temporarily null instance remains retryable.
+                // WHY: metadata is stable; a valid but temporarily null instance remains retryable.
                 _reactiveInstance = NetworkSyncMember.Read(_cachedMember, _targetComponent);
             }
             catch (Exception exception)

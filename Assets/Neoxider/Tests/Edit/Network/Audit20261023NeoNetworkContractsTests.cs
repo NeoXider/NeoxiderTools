@@ -19,7 +19,7 @@ namespace Neo.Editor.Tests
             public int authorityMode;
         }
 
-        // These fixtures represent previously saved settings, independently of enum declaration order.
+        // WHY: These fixtures represent previously saved settings, independently of enum declaration order.
         [TestCase("{\"authorityMode\":0}", NetworkAuthorityMode.None)]
         [TestCase("{\"authorityMode\":1}", NetworkAuthorityMode.OwnerOnly)]
         [TestCase("{\"authorityMode\":2}", NetworkAuthorityMode.ServerOnly)]

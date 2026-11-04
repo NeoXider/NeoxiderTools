@@ -1,6 +1,8 @@
 ﻿# ISettingsLocalization
 
-**Purpose:** Interface for localizing strings in the settings UI. Implemented outside the `Neo.Settings` module.
+**What it is:** Interface for localizing strings in the settings UI. Implemented outside the `Neo.Settings` module.
+
+**How to use:** Implement `Get(key)` and pass the instance to `GameSettings.SetLocalizationProvider(localization)` before opening a `SettingsView`.
 
 ## API
 

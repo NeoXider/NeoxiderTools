@@ -1,10 +1,12 @@
 ﻿# ItemCollectionInfo
 
-**Purpose:** See Inspector fields below for configuration.
+**What it is:** a details panel for one collection item (`MonoBehaviour`, `Scripts/Bonus/Collection/ItemCollectionInfo.cs`): name, description (with a default text) and icon.
 
-## Setup
+**How to use:**
+1. Add it to a details panel and assign the name/description texts and the icon image.
+2. Wire `CollectionVisualManager.OnSetItem(int)` to `SetItemId(int)`, or call `SetData(itemData)` from code.
 
-- Add the component via the Unity menu.
+---
 
 ## Key Fields (Inspector)
 

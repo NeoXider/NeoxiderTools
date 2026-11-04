@@ -77,7 +77,7 @@ If the card is always face up or always face down — implement **ICardDisplayMo
 
 ## Step 3. Optional: ICardViewAnimations
 
-Implement **ICardViewAnimations**: PlayOneShotAsync, PlayLooped, StopLooped, StopAllLooped. Inside, call [CardViewAnimationTemplates](CardViewUniversal.md#переиспользование-шаблонов) for your `transform`:
+Implement **ICardViewAnimations**: PlayOneShotAsync, PlayLooped, StopLooped, StopAllLooped. Inside, call [CardViewAnimationTemplates](CardViewUniversal.md#reusing-animation-templates) for your `transform`:
 
 ```csharp
 public async UniTask PlayOneShotAsync(CardViewAnimationType type, float? duration = null, CancellationToken cancellation = default)
@@ -132,7 +132,7 @@ If you have your own card model (id, name, cost, art):
 
 - Create **your own view interface** (e.g. IMyGameCardView) with **SetData(MyCardData)** and your own events if needed.
 - Implement visuals and zone logic yourself; for animations and layouts **reuse**:
-  - [CardViewAnimationTemplates](CardViewUniversal.md#переиспользование-шаблонов) — Bounce, Pulse, Shake, Highlight, FlyIn, Idle;
+  - [CardViewAnimationTemplates](CardViewUniversal.md#reusing-animation-templates) — Bounce, Pulse, Shake, Highlight, FlyIn, Idle;
   - **CardLayoutCalculator** and **CardLayoutSettings** (Config, Utils) for card positions in a hand/zone.
 
 This way you are not tied to CardData, but still reuse the common animations and layouts.

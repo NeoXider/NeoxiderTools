@@ -1,8 +1,14 @@
 # GUIColorAttribute
 
-**Namespace:** `Neo`. **Assembly:** `Neo.PropertyAttribute`.
+**What it is:** `[GUIColor]` (`Scripts/PropertyAttribute/GUIColorAttribute.cs`, namespace `Neo`, assembly
+`Neo.PropertyAttribute`) tints a serialized field's Inspector controls through `GUI.color`. The existing page
+filename is retained for documentation links.
 
-`[GUIColor]` tints a serialized field's Inspector controls through `GUI.color`. The existing page filename is retained for documentation links.
+**How to use:**
+1. Add `using Neo;` and put `[GUIColor(r, g, b)]` or `[GUIColor(r, g, b, a)]` on a serialized field.
+2. Select the object; the field and its expanded children draw with that tint.
+
+---
 
 ## Scene workflow
 

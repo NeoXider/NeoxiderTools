@@ -129,6 +129,7 @@ namespace Neo.Editor.Tests
         private sealed class DiscoveryState
         {
             public string output;
+            public string expectedPackageVersion;
             public double deadlineEditorSeconds;
             public int domainReloadRestarts;
             [NonSerialized] public int nextMode;
@@ -143,9 +144,12 @@ namespace Neo.Editor.Tests
             try
             {
                 output = RequireDiscoveryHost();
+                receipt.expectedPackageVersion = RequireExpectedPackageVersion(Argument(ExpectedPackageVersionArgument));
                 if (_discoveryPending != null)
                 {
                     if (_discoveryPending.output != output) throw new InvalidOperationException("Pending discovery output changed.");
+                    if (_discoveryPending.expectedPackageVersion != receipt.expectedPackageVersion)
+                        throw new InvalidOperationException("Pending discovery expected package version changed or is absent.");
                     HookDiscoveryUpdate();
                     return;
                 }
@@ -155,6 +159,7 @@ namespace Neo.Editor.Tests
                 _discoveryPending = new DiscoveryState
                 {
                     output = output, deadlineEditorSeconds = EditorApplication.timeSinceStartup + 600d,
+                    expectedPackageVersion = receipt.expectedPackageVersion,
                     receipt = receipt
                 };
                 PersistDiscovery();
@@ -205,11 +210,14 @@ namespace Neo.Editor.Tests
                     _discoveryPending.deadlineEditorSeconds <= 0d ||
                     double.IsNaN(_discoveryPending.deadlineEditorSeconds) || double.IsInfinity(_discoveryPending.deadlineEditorSeconds))
                     throw new InvalidDataException("Invalid pending discovery state.");
+                if (RequireExpectedPackageVersion(Argument(ExpectedPackageVersionArgument)) != _discoveryPending.expectedPackageVersion)
+                    throw new InvalidDataException("Pending discovery expected package version changed or is absent.");
                 _discoveryPending.domainReloadRestarts++;
                 // A reloaded domain needs new trees AND a new graph. Never combine trees from different domains.
                 _discoveryPending.receipt = new Receipt
                 {
                     action = "compiled-editor-test-discovery", status = "discovering", environment = ReadDiscoveryEnvironment(),
+                    expectedPackageVersion = _discoveryPending.expectedPackageVersion,
                     discovery = new DiscoveryRecord { domainReloadRestarts = _discoveryPending.domainReloadRestarts }
                 };
                 _discoveryPending.nextMode = 0;
@@ -229,6 +237,8 @@ namespace Neo.Editor.Tests
         {
             DiscoveryState state = _discoveryPending;
             if (RequireDiscoveryHost() != state.output) throw new InvalidOperationException("Pending discovery output changed.");
+            if (RequireExpectedPackageVersion(Argument(ExpectedPackageVersionArgument)) != state.expectedPackageVersion)
+                throw new InvalidOperationException("Pending discovery expected package version changed or is absent.");
             state.receipt.utc = DateTime.UtcNow.ToString("O");
             SessionState.SetString(DiscoveryPendingKey, JsonUtility.ToJson(state));
             WriteReceipt(state.output, JsonUtility.ToJson(state.receipt, true));
@@ -345,7 +355,7 @@ namespace Neo.Editor.Tests
             // Preserve the observed registered-package list; ProjectAssets is provenance, not a fabricated UPM entry.
             record.packages = packages.ToArray();
             DiscoveryPackageProvenance provenance = SelectDiscoveryPackageProvenance(packages,
-                Path.GetFullPath(Path.Combine(Application.dataPath, "..")));
+                Path.GetFullPath(Path.Combine(Application.dataPath, "..")), state.expectedPackageVersion);
             record.neoPackage = provenance;
             state.receipt.packageName = provenance.name;
             state.receipt.packageVersion = provenance.version;
@@ -355,14 +365,16 @@ namespace Neo.Editor.Tests
 
         /// <summary>Selects observed package provenance only; it neither registers a package nor discovers tests.</summary>
         internal static DiscoveryPackageProvenance SelectDiscoveryPackageProvenance(
-            IReadOnlyList<PackageIdentityRecord> registeredPackages, string projectRoot)
+            IReadOnlyList<PackageIdentityRecord> registeredPackages, string projectRoot, string expectedVersion)
         {
             if (registeredPackages == null) throw new ArgumentNullException(nameof(registeredPackages));
+            expectedVersion = RequireExpectedPackageVersion(expectedVersion);
             foreach (PackageIdentityRecord package in registeredPackages)
             {
                 if (package.name != Audit20261023NeoEditorTestsPaths.PackageName) continue;
-                if (package.version != "11.0.0")
-                    throw new InvalidDataException("Discovery requires registered Neo version 11.0.0; Assets cannot override " + package.version + ".");
+                if (package.version != expectedVersion)
+                    throw new InvalidDataException("Discovery requires registered Neo version " + expectedVersion +
+                        "; Assets cannot override " + package.version + ".");
                 if (string.IsNullOrEmpty(package.resolvedPath) || string.IsNullOrEmpty(package.source))
                     throw new InvalidDataException("The registered Neo source/path identity is incomplete.");
                 return new DiscoveryPackageProvenance
@@ -384,8 +396,9 @@ namespace Neo.Editor.Tests
             {
                 throw new InvalidDataException("Malformed ProjectAssets manifest: " + manifestPath, exception);
             }
-            if (manifest == null || manifest.name != Audit20261023NeoEditorTestsPaths.PackageName || manifest.version != "11.0.0")
-                throw new InvalidDataException("ProjectAssets requires exact com.neoxider.tools version 11.0.0: " + manifestPath);
+            if (manifest == null || manifest.name != Audit20261023NeoEditorTestsPaths.PackageName || manifest.version != expectedVersion)
+                throw new InvalidDataException("ProjectAssets requires exact com.neoxider.tools version " +
+                    expectedVersion + ": " + manifestPath);
             return new DiscoveryPackageProvenance
             {
                 name = manifest.name, version = manifest.version, kind = "ProjectAssets", source = "ProjectAssets",

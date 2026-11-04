@@ -1,7 +1,12 @@
 ﻿# Tools / InteractableObject
 
-Click/hover interactions and 2D/3D physics events. Scripts live in
+**What it is:** Click/hover interactions and 2D/3D physics events. Scripts live in
 `Scripts/Tools/InteractableObject/`. Use this page as the English module entry.
+
+**Contents:** the [per-component pages](#docs-per-component), [C# and scene workflows](#c-and-scene-workflows)
+and the [interaction core](Core/README.md).
+
+**Navigation:** [← Tools](../README.md)
 
 The reusable contracts, hit-order math, and camera resolver are isolated in the leaf assembly
 `Neo.Tools.InteractableObject.Core` (`Scripts/Tools/InteractableObject/Core/`). It has no package

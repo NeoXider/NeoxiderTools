@@ -1,5 +1,16 @@
 # RPG condition bridge
 
+**What it is:** `RpgConditionAdapter`, an optional component (assembly `Neo.Rpg.ConditionBridge`) that turns
+`RpgCharacter`, `RpgEvadeController` and `RpgAttackController` state into an `IConditionEvaluator` predicate
+with result UnityEvents.
+
+**How to use:**
+1. Add **Neoxider > RPG > RpgConditionAdapter**, assign the character (or put it under one) and pick a mode.
+2. Evaluate from C# (`Evaluate(actor)`, `EvaluateCurrent()`) or from any UnityEvent through `Refresh()`.
+3. React through `On Evaluated` / `On True` / `On False`, or read `LastResult`.
+
+---
+
 `RpgConditionAdapter` exposes RPG predicates through `Neo.Condition.IConditionEvaluator` and Inspector events. This is the integration guide for the optional `Neo.Rpg.ConditionBridge` assembly. See the [RPG overview](README.md) for the character and combat APIs.
 
 ## C# API
@@ -15,8 +26,12 @@ using Neo.Rpg;
 IConditionEvaluator condition = adapter;
 bool passes = condition.Evaluate(actor);
 bool localPasses = adapter.EvaluateCurrent();
+adapter.Refresh(); // void entry point for UnityEvents; reports through the result events
 bool latestResult = adapter.LastResult;
 ```
+
+`Refresh()` evaluates exactly like `EvaluateCurrent()` but returns nothing, because persistent UnityEvent
+listeners need a void method.
 
 `Evaluate(actor)` resolves the character in this order:
 
@@ -73,6 +88,7 @@ Events fire on every call, including repeated equal results. A listener may star
 2. Assign `Character` or arrange a character on the evaluation context or a parent.
 3. Select the mode and configure its threshold, resource/stat selector or effect ID. For a controller mode, assign an enabled controller on an active GameObject; for `AttackReady`, also set an attack ID registered with that controller.
 4. Wire `On Evaluated`, `On True`, and `On False` to scene responses as needed. Calling `EvaluateCurrent()` from its Inspector button or C# evaluates the adapter object's context.
-5. To use it through `NeoCondition`, select the adapter as the component source, read its parameterless `EvaluateCurrent()` boolean method, and compare it with `true`. This evaluates the adapter's own context; custom C# consumers can pass another context to `IConditionEvaluator.Evaluate`.
+5. To evaluate without code, wire any UnityEvent to `RpgConditionAdapter.Refresh()`: a button's `OnClick`, a `Timer` tick, or the character's `OnDamaged` / `OnResourceChanged` events (re-check after every HP change). The result arrives through the result events and `LastResult`.
+6. `NeoCondition` reads properties, fields and methods with one int/float/string argument, so it cannot call `EvaluateCurrent()` or `Evaluate(GameObject)`. For a pure NoCode check, let `NeoCondition` read the character directly (for example `RpgCharacter.HpPercentValue` `<=` `0.35`, as the `Condition - Low HP` row of the RPG quick demo does), or read the adapter's `LastResult` after `Refresh()`, C#, its Inspector button or another `IConditionEvaluator` consumer evaluated it. Custom C# consumers pass any context to `IConditionEvaluator.Evaluate`.
 
 Keep scene references on the component. ScriptableObject assets used by the character and controllers contain reusable configuration and do not need references back to this adapter.

@@ -116,7 +116,7 @@ namespace Neo
                 return;
             }
 
-            var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
             if (instance == null)
             {
                 Debug.LogError($"[Neoxider] Failed to instantiate preset prefab '{prefab.name}'.");

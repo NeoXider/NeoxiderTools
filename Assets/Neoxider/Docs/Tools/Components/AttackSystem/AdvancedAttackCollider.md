@@ -1,45 +1,19 @@
-﻿# AdvancedAttackCollider
+﻿# AdvancedAttackCollider (legacy)
 
-**Purpose:** See Inspector fields below for configuration.
+**What it is:** a legacy hitbox `MonoBehaviour` that, while activated, damages (or heals) `IDamageable` / `IHealable` objects it touches, with layer filters, repeat-hit suppression, knockback and effects. Kept for existing scenes and C# callers; source: `Scripts/Rpg/Combat/AdvancedAttackCollider.cs`, optional assembly `Neo.Rpg.Combat`.
 
-## Setup
+**How to use:**
+1. Add **Neoxider / Tools / Components / AdvancedAttackCollider (Legacy)** to a hitbox or projectile with a trigger collider.
+2. Set the attack damage and filters, then call `ActivateTrigger()` for each swing.
+3. Give targets an `IDamageable` (for example `Health` or [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md)).
 
-- Add the component via the Unity menu.
+---
 
-## Key Fields (Inspector)
+The complete contract (C# API, events, limits, scene setup) is the canonical
+[RPG / Combat compatibility page](../../../Rpg/Combat/README.md#advancedattackcollider), which is also the component's
+Inspector help target. For new projects use [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgProjectile](../../../Rpg/RpgProjectile.md).
 
-| Field | Description |
-|-------|-------------|
-| `AttackDamage` | Attack Damage. |
-| `AttackType` | Attack Type. |
-| `OnAttackTriggerEnter2D` | On Attack Trigger Enter2D. |
-| `OnAttackTriggerEnter3D` | On Attack Trigger Enter3D. |
-| `OnDeactivateTrigger` | On Deactivate Trigger. |
-| `OnHit` | On Hit. |
-| `_gizmoColor` | Gizmo Color. |
-| `applyForceOnHit` | Apply Force On Hit. |
-| `attackEffectPrefab` | Attack Effect Prefab. |
-| `attackType` | Attack Type. |
-| `autoManageColliders` | Auto Manage Colliders. |
-| `collider2D` | Collider2D. |
-| `collider3D` | Collider3D. |
-| `destroySelfOnHit` | Destroy Self On Hit. |
-| `destroyTargetOnHit` | Destroy Target On Hit. |
-| `forceDuration` | Force Duration. |
-| `forceMagnitude` | Force Magnitude. |
-| `forceMode2D` | Force Mode2D. |
-| `forceMode3D` | Force Mode3D. |
-| `hittableLayers` | Hittable Layers. |
-| `ignoreObjects` | Ignore Objects. |
-| `preventRepeatHits` | Prevent Repeat Hits. |
-| `scaleForceByMass` | Scale Force By Mass. |
-| `triggerDuration` | Trigger Duration. |
-| `use2D` | Use2D. |
-| `use3D` | Use3D. |
-| `useAdvancedForceApplier` | Use Advanced Force Applier. |
-| `useCollision` | Use Collision. |
-| `useTrigger` | Use Trigger. |
+## See also
 
-## See Also
-
-- [Module Root](../README.md)
+- [AttackSystem](./README.md)
+- [RPG / Combat compatibility](../../../Rpg/Combat/README.md)

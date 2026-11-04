@@ -136,7 +136,7 @@ namespace Neo.Editor.Tests.Edit
             RecordEvents(first, firstEvents);
             RecordEvents(second, secondEvents);
             Assert.That(first.SetCurrentStateEnterTime(Time.time - 10f), Is.True);
-            // A future anchor keeps the negative control pending while real PlayerLoop frames advance.
+            // WHY: a future anchor keeps the negative control pending while real PlayerLoop frames advance.
             Assert.That(second.SetCurrentStateEnterTime(Time.time + 60f), Is.True);
             frame = Time.frameCount;
             deadline = Time.realtimeSinceStartupAsDouble + 5d;
@@ -263,7 +263,7 @@ namespace Neo.Editor.Tests.Edit
         [TestCase(2)]
         public void MissingOverride_DoesNotEvaluateAgainstOwner(int missingKind)
         {
-            // EditMode public API contract; this does not claim native lifecycle execution.
+            // WHY: EditMode public API contract; this does not claim native lifecycle execution.
             GameObject owner = new("AuditStateMachineConditionOwner");
             GameObject destroyed = missingKind == 2 ? new GameObject("AuditDestroyedOverride") : null;
             StateData initial = ScriptableObject.CreateInstance<StateData>();
@@ -305,7 +305,7 @@ namespace Neo.Editor.Tests.Edit
         [TestCase((ConditionContextSlot)(-1), true)]
         public void ConditionSlot_UsesOnlySelectedContext(ConditionContextSlot slot, bool targetActive)
         {
-            // EditMode public API contract; this does not claim native lifecycle execution.
+            // WHY: EditMode public API contract; this does not claim native lifecycle execution.
             GameObject owner = new("AuditStateMachineSlotOwner");
             GameObject target = new("AuditStateMachineSlotTarget");
             StateData initial = ScriptableObject.CreateInstance<StateData>();
@@ -392,7 +392,7 @@ namespace Neo.Editor.Tests.Edit
         private static bool AwaitingNativeFrame(int previousFrame, double deadline)
         {
             Assert.That(Application.isPlaying, Is.True);
-            // Leave a complete PlayerLoop frame before asserting Update or deferred destruction effects.
+            // WHY: leave a complete PlayerLoop frame before asserting Update or deferred destruction effects.
             if ((long)Time.frameCount - previousFrame >= 2L) return false;
             Assert.That(Time.realtimeSinceStartupAsDouble, Is.LessThan(deadline),
                 "The real PlayerLoop did not advance within the five-second fixture deadline.");
@@ -415,7 +415,7 @@ namespace Neo.Editor.Tests.Edit
         [UnityTearDown]
         public IEnumerator CleanupNativeObjectsAndExitPlayMode()
         {
-            // Cleanup only: main assertions observe deferred native destruction through a real frame above.
+            // WHY: cleanup only; main assertions observe deferred native destruction through a real frame above.
             // Owners leave their states while their StateData/actions and context overrides are still alive.
             for (int i = 0; i < nativeObjects.Count; i++)
             {

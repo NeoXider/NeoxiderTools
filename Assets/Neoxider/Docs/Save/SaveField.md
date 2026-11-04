@@ -1,6 +1,8 @@
 ﻿# SaveField
 
-**Purpose:** Attribute for marking fields to be saved by `SaveManager`. The key is passed in the constructor; optionally `autoSaveOnQuit` and `autoLoadOnAwake`. Namespace: `Neo.Save`.
+**What it is:** Attribute for marking fields to be saved by `SaveManager`. The key is passed in the constructor; optionally `autoSaveOnQuit` and `autoLoadOnAwake`. Namespace: `Neo.Save`.
+
+**How to use:** Put `[SaveField("unique-key")]` on a field of an `ISaveableComponent`; `SaveManager` saves and loads it.
 
 ## Constructor
 

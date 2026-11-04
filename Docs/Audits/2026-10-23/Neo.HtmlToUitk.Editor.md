@@ -127,7 +127,7 @@ Context read: full worker contract and exact manifest entry; editor/test asmdefs
 
 ## Documentation
 
-Created the exact assigned topic, [HtmlToUitkEditor.md](../../../Assets/Neoxider/Docs/UI/HtmlToUitkEditor.md), because it did not exist. It explains C# submission/refresh, snapshots, paths, JSON errors, imported versus editable jobs, window/Inspector authoring, bridge setup, watcher ownership, texture proof and the runtime scene handoff. It links the canonical module guide. Coordinator should add the reciprocal link from the other owner's `HtmlToUitk.md`.
+Created the exact assigned topic, [HtmlToUitkEditor.md](https://github.com/NeoXider/HtmlToUitk), because it did not exist. It explains C# submission/refresh, snapshots, paths, JSON errors, imported versus editable jobs, window/Inspector authoring, bridge setup, watcher ownership, texture proof and the runtime scene handoff. It links the canonical module guide. Coordinator should add the reciprocal link from the other owner's `HtmlToUitk.md`.
 
 New tests under the existing `Neo.HtmlToUitk.Tests.Editor` asmdef:
 

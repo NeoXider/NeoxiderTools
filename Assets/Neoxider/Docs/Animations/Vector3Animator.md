@@ -1,11 +1,17 @@
 ﻿# Vector3Animator
 
-**Namespace:** `Neo.Animations`  
-**File:** `Assets/Neoxider/Scripts/Animations/Vector3Animator.cs`
+**What it is:** a MonoBehaviour that animates a Vector3 between `startVector` and `endVector` with an
+[AnimationType](AnimationType.md) and reports it through `CurrentVector` and `OnVectorChanged`; the receiver
+decides whether it is a position, scale or Euler angles. Script: `Scripts/Animations/Vector3Animator.cs`,
+namespace `Neo.Animations`.
 
-## Purpose
+**How to use:**
+1. Add the component, set the two vectors, `animationType` and `animationSpeed`.
+2. Connect **On Vector Changed** to a dynamic `Vector3` receiver, or poll `CurrentVector`.
+3. Leave **playOnStart** on, or call `Play()`.
+4. For a custom clock set `ManualUpdate = true` and call `Tick(deltaTime)` yourself.
 
-Universal animator for Vector3 values. Animates position, scale, rotation, or any other Vector3 parameter using configurable animation types. The component updates the animated vector each frame and exposes it via `CurrentVector` and `OnVectorChanged`.
+---
 
 ## Fields (Inspector)
 
@@ -20,6 +26,8 @@ Universal animator for Vector3 values. Animates position, scale, rotation, or an
 | **noiseOffset** | Vector2 | Additional noise offset. |
 | **customCurve** | AnimationCurve | Curve for CustomCurve type. |
 | **playOnStart** | bool | Auto-start on Start. |
+| **_randomizeStartTime** (`RandomizeStartTime`) | bool | Default on: randomize the clock and noise offset in `Start`. Off: deterministic start at time 0, or at the time set by `ResetTime()` before `Start`. |
+| **_useUnscaledTime** (`UseUnscaledTime`) | bool | Advance on `Time.unscaledDeltaTime`. |
 | **OnVectorChanged** | UnityEvent&lt;Vector3&gt; | Invoked when distance from the last notified vector exceeds 0.001. |
 | **OnAnimationStarted** | UnityEvent | Invoked when animation starts. |
 | **OnAnimationStopped** | UnityEvent | Invoked when animation stops. |
@@ -32,10 +40,12 @@ Universal animator for Vector3 values. Animates position, scale, rotation, or an
 - **CurrentVector** — Current animated vector
 - **IsPlaying** — Whether animation is playing
 - **IsPaused** — Whether animation is paused
+- **AnimationTime** — Current clock in seconds
 
 ### Writable properties
 
 - **StartVector**, **EndVector**, **AnimationSpeed**, **AnimationType**
+- **ManualUpdate** (not serialized) — when true, `Update` does nothing and the owner calls `Tick`
 
 ### Methods
 
@@ -45,6 +55,7 @@ Universal animator for Vector3 values. Animates position, scale, rotation, or an
 - **Resume()** — Resume from pause
 - **ResetTime()** — Reset animation time to zero
 - **RandomizeTime()** — Set random initial time
+- **Tick(float deltaTime)** — Advance and sample; ignored while stopped, paused or disabled; bad deltas do not move the clock
 
 `Play()`, `Stop()`, `Pause()`, and `Resume()` are also available as Play Mode-only Inspector buttons for
 runtime preview and lifecycle testing.
@@ -84,8 +95,9 @@ dynamic Vector3 receiver that applies world position, local position, local scal
 Author or apply the receiver's initial value explicitly. Enable **playOnStart**, or wire `Play()` from
 another UnityEvent; `Pause()`, `Resume()` and `Stop()` use the same public methods.
 
-`animationSpeed <= 0` selects `startVector` without stopping playback. Startup randomizes the clock
-even when auto-play is disabled; resetting before Start is overwritten. Stop retains output/time and
+`animationSpeed <= 0` selects `startVector` without stopping playback. With **Randomize Start Time** on,
+startup randomizes the clock even when auto-play is disabled and a reset before Start is overwritten;
+turn it off to keep the caller's clock. Stop retains output/time and
 disable suspends Update without resetting flags. See the
 [shared lifecycle table](README.md#playback-and-pooling-contracts).
 

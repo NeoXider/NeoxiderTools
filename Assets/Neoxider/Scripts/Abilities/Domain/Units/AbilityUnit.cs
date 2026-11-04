@@ -13,12 +13,12 @@ namespace Neo.Abilities
     public sealed class AbilityUnit
     {
         private readonly Dictionary<string, float> _baseProperties =
-            new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+            new Dictionary<string, float>(AbilityIdComparer.Instance);
 
-        private readonly HashSet<string> _permanentStates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _permanentStates = new HashSet<string>(AbilityIdComparer.Instance);
 
         private readonly Dictionary<string, CachedProperty> _propertyCache =
-            new Dictionary<string, CachedProperty>(StringComparer.OrdinalIgnoreCase);
+            new Dictionary<string, CachedProperty>(AbilityIdComparer.Instance);
 
         private readonly List<ResolvedContribution> _contributionScratch = new List<ResolvedContribution>(8);
 
@@ -73,8 +73,8 @@ namespace Neo.Abilities
 
             _baseProperties[propertyId] = value;
             _baseVersion++;
-            if (string.Equals(propertyId, AbilityProperties.MaxHealthBonus, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(propertyId, AbilityProperties.MaxManaBonus, StringComparison.OrdinalIgnoreCase))
+            if (AbilityIdComparer.Same(propertyId, AbilityProperties.MaxHealthBonus) ||
+                AbilityIdComparer.Same(propertyId, AbilityProperties.MaxManaBonus))
             {
                 SyncResourceMaxBonuses();
             }

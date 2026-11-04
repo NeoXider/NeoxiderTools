@@ -17,7 +17,7 @@ namespace Neo.Editor.Tests
         [SetUp]
         public void SetUp()
         {
-            var esObj = new GameObject("EventSystem");
+            GameObject esObj = new GameObject("EventSystem");
             _eventSystem = esObj.AddComponent<EventSystem>();
 
             _testObj = new GameObject("TestInteractive");
@@ -87,7 +87,7 @@ namespace Neo.Editor.Tests
             _interactiveObject.onHoverEnter.AddListener(() => hovered = true);
 
             _interactiveObject.interactable = true;
-            var pointerData = new PointerEventData(_eventSystem);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
 
             _interactiveObject.OnPointerEnter(pointerData);
 
@@ -102,7 +102,7 @@ namespace Neo.Editor.Tests
             _interactiveObject.onHoverEnter.AddListener(() => hovered = true);
 
             _interactiveObject.interactable = false;
-            var pointerData = new PointerEventData(_eventSystem);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
 
             _interactiveObject.OnPointerEnter(pointerData);
 
@@ -116,7 +116,7 @@ namespace Neo.Editor.Tests
             bool exitFired = false;
             _interactiveObject.onHoverExit.AddListener(() => exitFired = true);
 
-            var pointerData = new PointerEventData(_eventSystem);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
             _interactiveObject.OnPointerEnter(pointerData);
             _interactiveObject.OnPointerExit(pointerData);
 
@@ -135,7 +135,7 @@ namespace Neo.Editor.Tests
                 BindingFlags.NonPublic | BindingFlags.Instance);
             hasMouseHitField?.SetValue(_interactiveObject, true);
 
-            var pointerData = new PointerEventData(_eventSystem);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
             pointerData.button = PointerEventData.InputButton.Left;
 
             _interactiveObject.OnPointerClick(pointerData);
@@ -154,7 +154,7 @@ namespace Neo.Editor.Tests
                 BindingFlags.NonPublic | BindingFlags.Instance);
             hasMouseHitField?.SetValue(_interactiveObject, true);
 
-            var pointerData = new PointerEventData(_eventSystem);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
             pointerData.button = PointerEventData.InputButton.Right;
 
             _interactiveObject.OnPointerClick(pointerData);

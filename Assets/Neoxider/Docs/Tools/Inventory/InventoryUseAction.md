@@ -1,8 +1,11 @@
 # InventoryUseAction
 
-Optional scene/Inspector adapter over [exact item selection](InventorySelection.md).
-Namespace `Neo.Tools`, assembly `Neo.Tools.Inventory`. The storage and consumption APIs also work
-directly from C# without this component.
+**What it is:** Optional scene/Inspector adapter over [exact item selection](InventorySelection.md) that uses
+(and optionally consumes) the hand's selected item and raises `OnUsed` with its record.
+`Scripts/Tools/Inventory/Runtime/InventoryUseAction.cs`, namespace `Neo.Tools`. The storage and consumption
+APIs also work directly from C# without this component (`TryUse(inventory, selection)`).
+
+**How to use:**
 
 1. Assign **Hand**. Keep **Listen To Hand** enabled to subscribe while this adapter is enabled.
 2. Set **Item Id** to a specific type, or `-1` to accept every type.
@@ -32,5 +35,7 @@ destination inventory rather than consume it and recreate a different item.
 зря тратить предмет. Для размещения уникальной вещи используйте `TransferSelection`, сохраняя UID.
 
 Sample: `Demo/Scenes/Inventory/InventoryUseDemo.unity` uses this adapter for CELL consumption/healing.
-The sample view owns the healing effect and goal feedback; library runtime contains no specimen or
-game-specific healing rules. See [Inventory entry point](README.md).
+Select `Inventory demo - select and use`: the hand's `OnUseSelectionRequested` calls `UseSelection` as a
+saved persistent listener (**Listen To Hand** off, Item Id 202, Consume Amount 1), and `OnUsed` calls
+`InventoryDemoController.OnCellUsed`. The sample controller owns the healing effect and goal feedback;
+library runtime contains no specimen or game-specific healing rules. See [Inventory entry point](README.md).

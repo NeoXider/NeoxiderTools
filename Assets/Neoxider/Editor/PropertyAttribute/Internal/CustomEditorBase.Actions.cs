@@ -10,10 +10,8 @@ namespace Neo.Editor
     public abstract partial class CustomEditorBase
     {
         private static readonly Color ActionCardAccent = new(0.46f, 0.58f, 0.96f, 1f);
-        private static readonly Color ActionButtonAccent = new(0.46f, 0.58f, 0.96f, 1f);
-        private static readonly Color ActionSecondaryAccent = new(0.58f, 0.62f, 0.74f, 1f);
+        private static readonly Color ActionsSectionAccent = new(0.66f, 0.46f, 1f, 1f);
 
-        private static Color ActionMetaColor => NeoInspectorTheme.MutedText;
         private static Color ActionTypeColor => NeoInspectorTheme.MutedText;
 
         private void DrawActionsFoldout()
@@ -29,32 +27,27 @@ namespace Neo.Editor
                 return;
             }
 
-            string key = $"{target.GetType().FullName}.NeoFoldout.Actions";
+            string key = GetTypeFoldoutKeys(target.GetType()).Actions;
             bool current = _neoFoldouts.TryGetValue(key, out bool value) && value;
-
-            using (new EditorGUILayout.VerticalScope())
-            {
-                Color accentBase = new(0.75f, 0.35f, 1f, 1f);
-                var accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
-                Color accent = current ? accentDark : accentBase;
-
-                current = DrawNeoSectionHeader(current, "Actions", methods.Length, accent, "d_PlayButton",
-                    current ? Color.white : accentBase);
-
-                if (current)
-                {
-                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                    {
-                        DrawMethodButtons(methods);
-                    }
-                }
-            }
-
+            float amount = GetFoldAmount(key, current);
+            current = DrawNeoSectionHeader(current, amount, "Actions", methods.Length, ActionsSectionAccent,
+                "PlayButton", false);
             _neoFoldouts[key] = current;
+            amount = GetFoldAmount(key, current);
+
+            if (BeginSectionBody(amount, ActionsSectionAccent, out bool fading))
+            {
+                DrawMethodButtons(methods);
+                EndSectionBody(fading);
+            }
         }
 
         private static readonly Dictionary<MethodInfo, ButtonInfo?> s_buttonInfoCache = new();
 
+        /// <summary>
+        ///     Button metadata of <paramref name="method" /> from <see cref="ButtonAttribute" /> or Odin's
+        ///     <c>ButtonAttribute</c>; null when the method is not an action. Resolved once per method.
+        /// </summary>
         protected ButtonInfo? FindButtonAttribute(MethodInfo method)
         {
             if (method == null)
@@ -163,6 +156,7 @@ namespace Neo.Editor
             return null;
         }
 
+        /// <summary>Draws an action button for every [Button] method of the inspected type.</summary>
         protected virtual void DrawMethodButtons()
         {
             if (target == null)
@@ -170,9 +164,19 @@ namespace Neo.Editor
                 return;
             }
 
-            DrawMethodButtons(GetCachedMethods(target.GetType()));
+            // WHY: the fallback editor calls this on every IMGUI event of every non-Neo MonoBehaviour; the cached
+            // [Button] list spares a walk over every inherited Component/Object method per event.
+            DrawMethodButtons(GetButtonMethods());
         }
 
+        private const float ActionButtonHeight = 22f;
+        private const float ParamsChipWidth = 74f;
+
+        /// <summary>
+        ///     Draws one action row for each method of <paramref name="methods" /> that carries a button attribute;
+        ///     other methods are skipped. A method without parameters is a single button (its signature in the
+        ///     tooltip); a method with parameters adds a chip that unfolds editable parameter rows.
+        /// </summary>
         protected virtual void DrawMethodButtons(MethodInfo[] methods)
         {
             if (target == null || methods == null)
@@ -180,6 +184,8 @@ namespace Neo.Editor
                 return;
             }
 
+            bool isPlaying = EditorApplication.isPlaying;
+            int drawn = 0;
             foreach (MethodInfo method in methods)
             {
                 if (method == null)
@@ -193,165 +199,255 @@ namespace Neo.Editor
                     continue;
                 }
 
-                ButtonInfo buttonAttribute = buttonInfo.Value;
-
-                ParameterInfo[] parameters = method.GetParameters();
-                string buttonText = string.IsNullOrEmpty(buttonAttribute.ButtonName)
-                    ? method.Name
-                    : buttonAttribute.ButtonName;
-
-                if (buttonText.Length > CustomEditorSettings.ButtonTextMaxLength)
+                if (drawn > 0)
                 {
-                    buttonText = buttonText.Substring(0, CustomEditorSettings.ButtonTextMaxLength - 2) + "...";
+                    NeoInspectorStyles.Space(4f);
                 }
 
-                string title = ObjectNames.NicifyVariableName(buttonText);
+                drawn++;
+                ButtonInfo buttonAttribute = buttonInfo.Value;
+                ActionMethodView view = GetActionMethodView(method, buttonAttribute);
+                ParameterInfo[] parameters = view.Parameters;
+                bool enabled = IsButtonEnabled(buttonAttribute.PlayModeOnly, isPlaying);
 
-                Rect cardRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                DrawActionCardChrome(cardRect,
-                    parameters.Length > 0 ? ActionCardAccent : new Color(0.46f, 0.46f, 0.52f, 1f));
-                using (new EditorGUILayout.VerticalScope())
+                if (parameters.Length == 0)
                 {
-                    using (new EditorGUILayout.HorizontalScope())
+                    bool pressedPlain;
+                    using (new EditorGUI.DisabledScope(!enabled))
                     {
-                        GUIStyle titleStyle = new(EditorStyles.boldLabel)
-                        {
-                            fontSize = 13,
-                            normal = { textColor = NeoInspectorTheme.TitleText }
-                        };
-                        GUIStyle metaStyle = new(EditorStyles.miniBoldLabel)
-                        {
-                            alignment = TextAnchor.MiddleRight,
-                            normal = { textColor = ActionMetaColor }
-                        };
-
-                        EditorGUILayout.LabelField(title, titleStyle);
-                        GUILayout.FlexibleSpace();
-
-                        string meta = parameters.Length > 0 ? $"{parameters.Length} params" : "No params";
-                        if (method.IsStatic)
-                        {
-                            meta += " • static";
-                        }
-
-                        GUILayout.Label(meta, metaStyle, GUILayout.Width(110f));
+                        pressedPlain = DrawGradientButton(view.ButtonContent, 0f, ActionButtonHeight);
                     }
 
-                    NeoxiderEditorGUI.DrawCaption($"Method `{method.Name}`");
-
-                    if (parameters.Length > 0)
-                    {
-                        string foldoutKey = $"{method}_foldout";
-                        if (!_buttonFoldouts.ContainsKey(foldoutKey))
-                        {
-                            _buttonFoldouts[foldoutKey] = false;
-                        }
-
-                        using (new EditorGUILayout.HorizontalScope())
-                        {
-                            string toggleLabel = _buttonFoldouts[foldoutKey]
-                                ? $"▼ Parameters ({parameters.Length})"
-                                : $"▶ Parameters ({parameters.Length})";
-
-                            if (DrawInlineActionButton(toggleLabel, ActionButtonAccent, 18f, true))
-                            {
-                                _buttonFoldouts[foldoutKey] = !_buttonFoldouts[foldoutKey];
-                            }
-
-                            if (_buttonFoldouts[foldoutKey] &&
-                                DrawInlineActionButton("Reset", ActionSecondaryAccent, 18f, false, 60f))
-                            {
-                                ResetStoredButtonParameters(method, parameters);
-                            }
-                        }
-
-                        if (_buttonFoldouts[foldoutKey])
-                        {
-                            Rect paramsRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                            DrawActionCardChrome(paramsRect,
-                                new Color(ActionCardAccent.r, ActionCardAccent.g, ActionCardAccent.b, 0.65f), 2f, 2f);
-                            using (new EditorGUILayout.VerticalScope())
-                            {
-                                NeoxiderEditorGUI.DrawCaption(
-                                    "Parameters keep the last entered value for the current inspector session.");
-
-                                for (int i = 0; i < parameters.Length; i++)
-                                {
-                                    ParameterInfo param = parameters[i];
-                                    if (param == null)
-                                    {
-                                        continue;
-                                    }
-
-                                    string key = $"{method}_{param.Name}";
-                                    object value = GetStoredButtonParameterValue(method, param, key);
-
-                                    EditorGUI.BeginChangeCheck();
-                                    object newValue = DrawParameterField(param.Name, value, param.ParameterType);
-                                    if (EditorGUI.EndChangeCheck())
-                                    {
-                                        _buttonParameterValues[key] = newValue;
-                                        _isFirstRun[key] = false;
-                                    }
-                                }
-                            }
-
-                            EditorGUILayout.EndVertical();
-                        }
-                    }
-
-                    EditorGUILayout.Space(3f);
-
-                    bool buttonPressed;
-                    using (new EditorGUI.DisabledScope(!IsButtonEnabled(buttonAttribute.PlayModeOnly,
-                               EditorApplication.isPlaying)))
-                    {
-                        buttonPressed = DrawGradientButton(title, 0f, 22f);
-                    }
-
-                    if (buttonPressed)
+                    if (pressedPlain)
                     {
                         InvokeButtonMethod(method, parameters);
+                    }
+
+                    continue;
+                }
+
+                string foldoutKey = view.FoldoutKey;
+                bool open = _buttonFoldouts.TryGetValue(foldoutKey, out bool storedOpen) && storedOpen;
+
+                Rect cardRect = EditorGUILayout.BeginVertical(NeoInspectorStyles.ActionsPanel);
+                DrawActionCardChrome(cardRect, ActionCardAccent);
+
+                bool buttonPressed;
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    using (new EditorGUI.DisabledScope(!enabled))
+                    {
+                        buttonPressed = DrawGradientButton(view.ButtonContent, 0f, ActionButtonHeight);
+                    }
+
+                    NeoInspectorStyles.HorizontalSpace(4f);
+                    if (DrawParamsChip(open ? view.ExpandedToggleLabel : view.CollapsedToggleLabel, open))
+                    {
+                        open = !open;
+                        _buttonFoldouts[foldoutKey] = open;
+                        GUI.FocusControl(null);
+                    }
+                }
+
+                if (open)
+                {
+                    NeoInspectorStyles.Space(3f);
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        ParameterInfo param = parameters[i];
+                        if (param == null)
+                        {
+                            continue;
+                        }
+
+                        string key = view.ParameterKeys[i];
+                        object value = GetStoredButtonParameterValue(method, param, key);
+
+                        EditorGUI.BeginChangeCheck();
+                        object newValue = DrawParameterFieldCore(view.ParameterLabels[i],
+                            view.ParameterTypeNames[i], value, param.ParameterType, param.Name);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            _buttonParameterValues[key] = newValue;
+                            _isFirstRun[key] = false;
+                        }
+                    }
+
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        NeoxiderEditorGUI.DrawCaption("Values are kept for this inspector session.");
+                        if (DrawInlineActionButton("Reset", ActionCardAccent, 18f, false, 56f))
+                        {
+                            ResetStoredButtonParameters(method, parameters);
+                            GUI.FocusControl(null);
+                        }
                     }
                 }
 
                 EditorGUILayout.EndVertical();
 
-                GUILayout.Space(6f);
+                if (buttonPressed)
+                {
+                    InvokeButtonMethod(method, parameters);
+                }
             }
         }
 
+        /// <summary>Everything an action row shows for one [Button] method that never changes between events.</summary>
+        private sealed class ActionMethodView
+        {
+            public ParameterInfo[] Parameters;
+            public string Title;
+            public GUIContent ButtonContent;
+            public string FoldoutKey;
+            public string CollapsedToggleLabel;
+            public string ExpandedToggleLabel;
+            public string[] ParameterKeys;
+            public string[] ParameterLabels;
+            public string[] ParameterTypeNames;
+            public int TitleMaxLength;
+            public string ButtonName;
+            public bool PlayModeOnly;
+        }
+
+        // WHY: the row used to call GetParameters (a fresh array), MethodInfo.ToString (a signature string),
+        // NicifyVariableName and string interpolation for every [Button] method on every IMGUI event.
+        private static readonly Dictionary<MethodInfo, ActionMethodView> s_actionViews = new();
+
+        private static ActionMethodView GetActionMethodView(MethodInfo method, ButtonInfo buttonInfo)
+        {
+            int maxLength = CustomEditorSettings.ButtonTextMaxLength;
+            if (s_actionViews.TryGetValue(method, out ActionMethodView view) && view.TitleMaxLength == maxLength &&
+                view.PlayModeOnly == buttonInfo.PlayModeOnly &&
+                string.Equals(view.ButtonName, buttonInfo.ButtonName, StringComparison.Ordinal))
+            {
+                return view;
+            }
+
+            ParameterInfo[] parameters = method.GetParameters();
+            string title = BuildActionTitle(method.Name, buttonInfo.ButtonName, maxLength);
+            view = new ActionMethodView
+            {
+                Parameters = parameters,
+                Title = title,
+                ButtonContent = new GUIContent(title, BuildActionTooltip(method, parameters, buttonInfo.PlayModeOnly)),
+                FoldoutKey = $"{method}_foldout",
+                CollapsedToggleLabel = parameters.Length == 1 ? "1 param" : $"{parameters.Length} params",
+                ExpandedToggleLabel = parameters.Length == 1 ? "1 param" : $"{parameters.Length} params",
+                ParameterKeys = new string[parameters.Length],
+                ParameterLabels = new string[parameters.Length],
+                ParameterTypeNames = new string[parameters.Length],
+                TitleMaxLength = maxLength,
+                ButtonName = buttonInfo.ButtonName,
+                PlayModeOnly = buttonInfo.PlayModeOnly
+            };
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                ParameterInfo param = parameters[i];
+                if (param == null)
+                {
+                    continue;
+                }
+
+                view.ParameterKeys[i] = GetParameterKey(method, param);
+                view.ParameterLabels[i] = ObjectNames.NicifyVariableName(param.Name);
+                view.ParameterTypeNames[i] = param.ParameterType.Name;
+            }
+
+            s_actionViews[method] = view;
+            return view;
+        }
+
+        /// <summary>Hover text of an action button: the C# signature plus when the button is available.</summary>
+        internal static string BuildActionTooltip(MethodInfo method, ParameterInfo[] parameters, bool playModeOnly)
+        {
+            System.Text.StringBuilder builder = new();
+            if (method.IsStatic)
+            {
+                builder.Append("static ");
+            }
+
+            builder.Append(method.Name).Append('(');
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(parameters[i].ParameterType.Name).Append(' ').Append(parameters[i].Name);
+            }
+
+            builder.Append(')');
+            if (playModeOnly)
+            {
+                builder.Append("\nAvailable in Play Mode only.");
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>Button caption: the explicit name or the method name, shortened to the configured length.</summary>
+        internal static string BuildActionTitle(string methodName, string buttonName, int maxLength)
+        {
+            string buttonText = string.IsNullOrEmpty(buttonName) ? methodName : buttonName;
+            if (maxLength > 0 && buttonText.Length > maxLength)
+            {
+                // WHY: a max length below the ellipsis width used to pass a negative length to Substring.
+                buttonText = buttonText.Substring(0, Math.Max(0, maxLength - 2)) + "...";
+            }
+
+            return ObjectNames.NicifyVariableName(buttonText);
+        }
+
+        // WHY: the signature string keeps overloads apart; its format is the persisted session key, keep it stable.
+        private static string GetParameterKey(MethodInfo method, ParameterInfo param)
+        {
+            return $"{method}_{param.Name}";
+        }
+
+        /// <summary>
+        ///     Draws one editable action parameter row and returns the edited value. Supports int, float, string,
+        ///     bool, enums, Vector2, Vector3, Color and UnityEngine.Object types; others show "Unsupported".
+        /// </summary>
+        /// <param name="label">Parameter name; nicified for display.</param>
+        /// <param name="value">Current value.</param>
+        /// <param name="type">Declared parameter type.</param>
         protected object DrawParameterField(string label, object value, Type type)
+        {
+            return DrawParameterFieldCore(ObjectNames.NicifyVariableName(label), type.Name, value, type, label);
+        }
+
+        private object DrawParameterFieldCore(string displayLabel, string typeName, object value, Type type,
+            string rawLabel)
         {
             try
             {
-                Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight + 4f);
+                Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight + 2f);
                 if (Event.current.type == EventType.Repaint)
                 {
                     NeoInspectorTheme.DrawRoundedRect(rowRect, NeoInspectorTheme.RowTint, NeoInspectorTheme.RadiusRow);
-                    NeoInspectorTheme.DrawAccentRail(rowRect, ActionCardAccent, 2f, 3f);
                 }
 
-                Rect contentRect = new(rowRect.x + 8f, rowRect.y + 2f, rowRect.width - 14f,
+                Rect contentRect = new(rowRect.x + 6f, rowRect.y + 1f, rowRect.width - 10f,
                     EditorGUIUtility.singleLineHeight);
-                Rect labelRect = new(contentRect.x, contentRect.y, 126f, contentRect.height);
-                Rect typeRect = new(contentRect.xMax - 70f, contentRect.y, 70f, contentRect.height);
-                Rect fieldRect = new(labelRect.xMax + 8f, contentRect.y, typeRect.x - labelRect.xMax - 14f,
-                    contentRect.height);
+                // WHY: at narrow inspector widths the type hint goes first, so the label and the field keep room.
+                bool showType = contentRect.width >= 260f;
+                float labelWidth = Mathf.Clamp(contentRect.width * 0.36f, 56f, 150f);
+                Rect labelRect = new(contentRect.x, contentRect.y, labelWidth, contentRect.height);
+                Rect typeRect = showType
+                    ? new Rect(contentRect.xMax - 64f, contentRect.y, 64f, contentRect.height)
+                    : new Rect(contentRect.xMax, contentRect.y, 0f, contentRect.height);
+                float fieldX = labelRect.xMax + 6f;
+                Rect fieldRect = new(fieldX, contentRect.y,
+                    Mathf.Max(20f, (showType ? typeRect.x - 6f : contentRect.xMax) - fieldX), contentRect.height);
 
-                GUIStyle titleStyle = new(EditorStyles.miniBoldLabel)
+                GUI.Label(labelRect, displayLabel, NeoInspectorStyles.ParameterLabel(NeoInspectorTheme.TitleText));
+                if (showType)
                 {
-                    alignment = TextAnchor.MiddleLeft,
-                    normal = { textColor = NeoInspectorTheme.TitleText }
-                };
-                GUIStyle typeStyle = new(EditorStyles.miniLabel)
-                {
-                    alignment = TextAnchor.MiddleRight,
-                    normal = { textColor = ActionTypeColor }
-                };
-
-                GUI.Label(labelRect, ObjectNames.NicifyVariableName(label), titleStyle);
-                GUI.Label(typeRect, type.Name, typeStyle);
+                    GUI.Label(typeRect, typeName, NeoInspectorStyles.ParameterType(ActionTypeColor));
+                }
 
                 object result;
                 if (type == typeof(int))
@@ -368,7 +464,9 @@ namespace Neo.Editor
                 }
                 else if (type == typeof(bool))
                 {
-                    result = EditorGUI.Toggle(fieldRect, value is bool boolValue && boolValue);
+                    result = NeoxiderEditorGUI.DrawPillToggle(
+                        new Rect(fieldRect.x, fieldRect.y, NeoxiderEditorGUI.PillToggleWidth, fieldRect.height),
+                        value is bool boolValue && boolValue);
                 }
                 else if (typeof(Object).IsAssignableFrom(type))
                 {
@@ -408,7 +506,7 @@ namespace Neo.Editor
             }
             catch (InvalidCastException)
             {
-                Debug.LogError($"Invalid cast for parameter {label} of type {type.Name}. Resetting to default value.");
+                Debug.LogError($"Invalid cast for parameter {rawLabel} of type {type.Name}. Resetting to default value.");
                 return GetDefaultValue(type);
             }
         }
@@ -418,42 +516,66 @@ namespace Neo.Editor
             return !playModeOnly || isPlaying;
         }
 
-        private static void DrawActionCardChrome(Rect rect, Color accent, float topStripeHeight = 3f,
-            float leftStripeWidth = 3f)
+        private static void DrawActionCardChrome(Rect rect, Color accent)
         {
             if (Event.current.type != EventType.Repaint)
             {
                 return;
             }
 
-            NeoInspectorTheme.DrawRoundedRect(rect, NeoInspectorTheme.PanelBackground,
-                new Color(accent.r, accent.g, accent.b, 0.28f), NeoInspectorTheme.RadiusCard, 1f);
-            NeoInspectorTheme.DrawAccentRail(rect, accent, leftStripeWidth, 5f);
+            NeoInspectorTheme.DrawRoundedRect(NeoInspectorTheme.Snap(rect), NeoInspectorTheme.SectionBackground,
+                Color.Lerp(NeoInspectorTheme.Separator, new Color(accent.r, accent.g, accent.b, 0.30f), 0.5f),
+                NeoInspectorTheme.RadiusCard, 1f);
+        }
+
+        /// <summary>
+        ///     The chip beside a parameterised action: "N params" plus a chevron that turns when the parameter rows
+        ///     unfold. Returns true when clicked.
+        /// </summary>
+        private static bool DrawParamsChip(string label, bool open)
+        {
+            Rect rect = GUILayoutUtility.GetRect(ParamsChipWidth, ActionButtonHeight,
+                NeoInspectorStyles.Width(ParamsChipWidth));
+            if (Event.current.type == EventType.Repaint)
+            {
+                Rect r = NeoInspectorTheme.Snap(rect);
+                bool enabled = GUI.enabled;
+                float hover = enabled
+                    ? NeoInspectorAnimation.Hover(NeoInspectorAnimation.ControlKey(r),
+                        r.Contains(Event.current.mousePosition))
+                    : 0f;
+                NeoInspectorTheme.DrawRoundedRect(r, NeoInspectorTheme.AccentFill(ActionCardAccent, 0.8f + 0.6f * hover),
+                    new Color(ActionCardAccent.r, ActionCardAccent.g, ActionCardAccent.b, 0.30f + 0.25f * hover),
+                    NeoInspectorTheme.RadiusButton - 1f, 1f);
+                Color text = NeoInspectorTheme.AccentText(ActionCardAccent);
+                GUI.Label(new Rect(r.x, r.y, r.width - 14f, r.height), label, NeoInspectorStyles.MiniChipText(text));
+                NeoInspectorTheme.DrawChevron(new Rect(r.xMax - 18f, r.y, 12f, r.height), open ? 1f : 0f, text, 6f,
+                    1.6f);
+            }
+
+            return GUI.Button(rect, NeoInspectorStyles.TempContent(null,
+                "Show or hide the parameters this action is called with."), GUIStyle.none);
         }
 
         private static bool DrawInlineActionButton(string text, Color accent, float height, bool expandWidth,
             float fixedWidth = 0f)
         {
-            GUIContent content = new(text);
             Rect rect = fixedWidth > 0f
-                ? GUILayoutUtility.GetRect(content, EditorStyles.miniButton, GUILayout.Width(fixedWidth),
-                    GUILayout.Height(height))
-                : GUILayoutUtility.GetRect(content, EditorStyles.miniButton, GUILayout.Height(height),
-                    expandWidth ? GUILayout.ExpandWidth(true) : GUILayout.MinWidth(90f));
+                ? GUILayoutUtility.GetRect(fixedWidth, height, NeoInspectorStyles.Width(fixedWidth))
+                : GUILayoutUtility.GetRect(90f, height, expandWidth
+                    ? NeoInspectorStyles.ExpandWidth
+                    : NeoInspectorStyles.MinWidth(90f));
 
-            bool isHover = rect.Contains(Event.current.mousePosition);
             if (Event.current.type == EventType.Repaint)
             {
-                var bg = new Color(accent.r, accent.g, accent.b, isHover ? 0.30f : 0.20f);
-                NeoInspectorTheme.DrawRoundedRect(rect, bg,
-                    new Color(accent.r, accent.g, accent.b, isHover ? 0.55f : 0.35f), NeoInspectorTheme.RadiusRow, 1f);
-
-                GUIStyle style = new(EditorStyles.miniBoldLabel)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    normal = { textColor = NeoInspectorTheme.IsDark ? Color.Lerp(Color.white, accent, 0.10f) : Color.Lerp(accent, Color.black, 0.35f) }
-                };
-                style.Draw(rect, content, false, false, false, false);
+                Rect r = NeoInspectorTheme.Snap(rect);
+                float hover = GUI.enabled
+                    ? NeoInspectorAnimation.Hover(NeoInspectorAnimation.ControlKey(r),
+                        r.Contains(Event.current.mousePosition))
+                    : 0f;
+                NeoInspectorTheme.DrawRoundedRect(r, NeoInspectorTheme.AccentFill(accent, 0.7f + 0.6f * hover),
+                    new Color(accent.r, accent.g, accent.b, 0.28f + 0.25f * hover), NeoInspectorTheme.RadiusRow, 1f);
+                GUI.Label(r, text, NeoInspectorStyles.MiniChipText(NeoInspectorTheme.AccentText(accent)));
             }
 
             return GUI.Button(rect, GUIContent.none, GUIStyle.none);
@@ -507,18 +629,25 @@ namespace Neo.Editor
                     continue;
                 }
 
-                string key = $"{method}_{param.Name}";
+                string key = GetParameterKey(method, param);
                 object value = param.HasDefaultValue ? param.DefaultValue : GetDefaultValue(param.ParameterType);
                 _buttonParameterValues[key] = value;
                 _isFirstRun[key] = false;
             }
         }
 
+        /// <summary>
+        ///     Runs a [Button] method with the stored parameter values. Static methods run once; instance methods run
+        ///     on every inspected object, because the inspector edits multiple objects and a button pressed with
+        ///     several objects selected is expected to act on each of them. Outside Play Mode the call is recorded
+        ///     with Undo, so serialized changes it makes are undoable and mark the object dirty.
+        /// </summary>
         internal void InvokeButtonMethod(MethodInfo method, ParameterInfo[] parameters)
         {
+            object[] paramValues;
             try
             {
-                object[] paramValues = new object[parameters.Length];
+                paramValues = new object[parameters.Length];
                 for (int i = 0; i < parameters.Length; i++)
                 {
                     ParameterInfo param = parameters[i];
@@ -527,26 +656,61 @@ namespace Neo.Editor
                         continue;
                     }
 
-                    string key = $"{method}_{param.Name}";
-                    paramValues[i] = GetStoredButtonParameterValue(method, param, key);
-                }
-
-                if (method.IsStatic)
-                {
-                    method.Invoke(null, paramValues);
-                }
-                else
-                {
-                    method.Invoke(target, paramValues);
+                    paramValues[i] = GetStoredButtonParameterValue(method, param, GetParameterKey(method, param));
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError(
-                    $"Error calling method {method.Name}: {e.InnerException?.Message ?? e.Message}\nStack trace: {e.InnerException?.StackTrace ?? e.StackTrace}");
+                LogButtonFailure(method, e);
+                return;
+            }
+
+            if (method.IsStatic)
+            {
+                InvokeButtonOn(method, null, paramValues);
+                return;
+            }
+
+            Object[] inspected = targets;
+            if (inspected == null || inspected.Length <= 1)
+            {
+                InvokeButtonOn(method, target, paramValues);
+                return;
+            }
+
+            for (int i = 0; i < inspected.Length; i++)
+            {
+                if (inspected[i] != null)
+                {
+                    InvokeButtonOn(method, inspected[i], paramValues);
+                }
             }
         }
 
+        private static void InvokeButtonOn(MethodInfo method, Object instance, object[] paramValues)
+        {
+            try
+            {
+                if (instance != null && !EditorApplication.isPlaying)
+                {
+                    Undo.RecordObject(instance, ObjectNames.NicifyVariableName(method.Name));
+                }
+
+                method.Invoke(instance, paramValues);
+            }
+            catch (Exception e)
+            {
+                LogButtonFailure(method, e);
+            }
+        }
+
+        private static void LogButtonFailure(MethodInfo method, Exception e)
+        {
+            Debug.LogError(
+                $"Error calling method {method.Name}: {e.InnerException?.Message ?? e.Message}\nStack trace: {e.InnerException?.StackTrace ?? e.StackTrace}");
+        }
+
+        /// <summary>Default value used for an action parameter without a declared default.</summary>
         protected object GetDefaultValue(Type type)
         {
             if (type == typeof(int))

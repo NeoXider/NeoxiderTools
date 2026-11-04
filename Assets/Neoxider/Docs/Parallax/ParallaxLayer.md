@@ -1,8 +1,13 @@
 # ParallaxLayer
 
-**Purpose:** seamless 2D parallax tiling. The component builds a small tile pool around a camera, offsets the layer by a configurable multiplier, recycles tiles outside the view, and supports auto-scroll, sprite variants, and editor preview.
+**What it is:** a MonoBehaviour for seamless 2D parallax tiling. It builds a small tile pool around a camera, offsets the layer by a configurable multiplier, recycles tiles outside the view, and supports auto-scroll, sprite variants, and editor preview. Script: `Scripts/Parallax/ParallaxLayer.cs`, namespace `Neo.Parallax`.
 
-File: `Assets/Neoxider/Scripts/Parallax/ParallaxLayer.cs`; namespace: `Neo.Parallax`.
+**How to use:**
+1. Add `ParallaxLayer` to a GameObject with a `SpriteRenderer` (or assign a source renderer on a child).
+2. Assign `targetCamera`, or call `SetTargetCamera(camera)` from code.
+3. Set `parallaxMultiplier`, optional `scrollSpeed`, tiling axes and sprite variants.
+
+---
 
 ## Module Principle
 
@@ -56,6 +61,7 @@ For an Inspector/UnityEvent workflow, wire a camera reference into `SetTargetCam
 - A pool is not created if every configured sprite is null, or an enabled tiling axis has a non-finite stride or a stride of at most `0.0001` world units. Correct the configuration and rebind the camera to retry.
 - Counts are calculated before tile allocation with widened padding/viewport arithmetic. Non-finite or unrepresentable enabled-axis counts, a total tile count above `Int32.MaxValue`, or an enabled-axis world period above the finite `float` range reject the rebuild. The previous pool is released and the source renderer's original enabled state is preserved. Reduce padding, viewport coverage, or spacing as appropriate, then call `SetTargetCamera` to retry; the same checks apply to Inspector-driven rebuilds.
 - Before any tile is created, enabled-axis local pitch, the centered origin and both endpoint coordinates are calculated in `double` and checked against finite `float` position storage. Accepted coordinates stay in `double` through centering and are converted only at the final position assignment, allowing finite endpoints even when an uncentered intermediate would exceed `float` range. Disabled axes retain their source coordinate without evaluating unused spacing. A small layer scale can make local geometry unrepresentable even for a five-tile request with a finite world period; rejection uses the same source-restoration and retry path.
+- Per frame the layer reads the camera position once through a cached camera `Transform` (re-resolved when `targetCamera` changes) and writes its own position only when the target position actually changed, so a resting camera does not mark the layer and every tile as changed each frame. When neither the camera (X/Y) nor the layer moved since the last tile pass, the pass that reads every tile's position is skipped as well, so a resting layer costs the same for 9 or 1024 tiles; the first frame after either moves runs it again. Tiles belong to the layer: a tile moved by other code is only re-aligned on the next frame in which the camera or the layer moves. A warm frame allocates nothing.
 - Missing camera does not spam the console. A warning is possible only when `logMissingCamera` and `NeoDiagnostics` warnings are enabled.
 - Disable/destroy cleanup restores the template's captured transform and original enabled state, including an intentionally disabled source. Rebuilding preserves the current authoring transform. Source sprites are not modified by tile generation.
 

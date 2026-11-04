@@ -30,11 +30,16 @@ namespace Neo.Network
     /// </remarks>
     public static class NeoMirrorSceneReactivator
     {
+        /// <summary>
+        ///     Turns the scene-load safety net on or off. Restored to <see langword="true"/> at every play start (also with
+        ///     domain reload disabled), so set it from startup code each session.
+        /// </summary>
         public static bool Enabled { get; set; } = true;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Init()
         {
+            Enabled = true;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
         }

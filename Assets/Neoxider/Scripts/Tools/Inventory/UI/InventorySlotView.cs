@@ -59,7 +59,11 @@ namespace Neo.Tools
         /// <inheritdoc />
         public void OnPointerClick(PointerEventData eventData)
         {
-            _owner?.HandleSlotClick(_slotIndex);
+            // WHY: Unity null check, not ?. - a destroyed grid must not run a transfer or keep the static selection.
+            if (_owner != null)
+            {
+                _owner.HandleSlotClick(_slotIndex);
+            }
         }
     }
 }

@@ -109,6 +109,11 @@ With **Activate Scene Objects On Start** (on by default) the manager calls `NeoM
 
 Turn it off only when a scene deliberately keeps networked objects disabled for its own reasons.
 
+`NeoMirrorSceneReactivator.Enabled` is a separate switch: it gates only the offline scene-load safety net (no server
+or client running), not the session-start activation above. It is restored to `true` at every play start, also when
+domain reload is disabled, so an opt-out must be set each session from code that runs after `SubsystemRegistration`,
+for example a `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]` method.
+
 ---
 
 ## Fields
@@ -158,6 +163,10 @@ Every client/build must have the same scene with the same `NeoNetworkManager` an
 | `void ApplyTransportQueueLimits()` | Caps the four root Telepathy queues (`serverSendQueueLimitPerConnection`, `serverReceiveQueueLimitPerConnection`, `clientSendQueueLimit`, `clientReceiveQueueLimit`) by public-field reflection on the transport type or its Telepathy subclass. Positive authored limits are never raised; nonpositive authored limits become the cap. Unsupported transports and root `MultiplexTransport` are a no-op. Calling `StartHost()` / `StartServer()` / `StartClient()` through a Mirror base-typed reference bypasses the hidden wrappers, so after swapping the transport call this explicitly before startup. No packet-size or timeout changes. |
 | `bool ActivateSceneObjectsOnStart` | Runtime access to the scene-object switch. |
 | `bool UseScenePlayerTemplate`, `GameObject ScenePlayerTemplate`, `string ScenePlayerTemplateSpawnId`, `bool DisableScenePlayerTemplate` | Scene player template configuration. |
+
+Without Mirror the start/stop methods (including `StartAsClient(address, port)`) only log that solo mode is
+running, `ApplyPort` returns `false` and `IsServer` / `IsClient` / `IsHost` report `true`, so menu code compiles
+and runs unchanged in a single-player build.
 
 ```csharp
 using Neo.Network;

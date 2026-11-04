@@ -1,7 +1,16 @@
 # Counter
 
-`Neo.Tools.Counter` stores an integer-style or floating-point value, exposes reactive output and typed
-UnityEvents, and optionally saves through `SaveProvider` or replicates through Mirror.
+**What it is:** a `MonoBehaviour` (`NeoNetworkComponent`) that stores an integer-style or floating-point value,
+exposes reactive output and typed UnityEvents, and optionally saves through `SaveProvider` or replicates through
+Mirror. Script: `Scripts/Tools/Components/Counter.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Components`.
+
+**How to use:**
+1. Add **Neoxider / Tools / Counter**, select **Value Mode** and enter the initial **Value**.
+2. Change it with `Add` / `Subtract` / `Multiply` / `Divide` / `Set` (C# or UnityEvents).
+3. React through `Value.Subscribe(...)` or the `OnValueChangedInt` / `OnValueChangedFloat` UnityEvents.
+4. Enable **Save** with a unique **Save Key** to persist it.
+
+---
 
 ## C# API
 
@@ -46,7 +55,8 @@ Enabled counters are indexed by save key in `Counter.Registry` for
 [ModifyCounterByKey](ModifyCounterByKey.md). Disabling removes the registration captured at enable
 time, even if the Inspector key was subsequently edited, and removes empty key buckets. Disable and
 re-enable after editing a live key to register under its new name. Treat the public registry as a lookup,
-and let counter lifecycle methods maintain its entries.
+and let counter lifecycle methods maintain its entries. The registry is cleared before each play session, so
+Enter Play Mode Options with domain reload disabled never route to a counter from the previous session.
 
 With Mirror installed, **Is Networked** enables server replication. The host applies each received
 value once; its own RPC must not repeat typed or repeat events. Persistence keys remain a local save

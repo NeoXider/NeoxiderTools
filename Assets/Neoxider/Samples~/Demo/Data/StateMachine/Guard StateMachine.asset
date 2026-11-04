@@ -1,0 +1,138 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae46753a81051c940bc165c71744df99, type: 3}
+  m_Name: Guard StateMachine
+  m_EditorClassIdentifier: Neo.StateMachine::Neo.StateMachine.NoCode.StateMachineData
+  states:
+  - {fileID: 11400000, guid: 9ae6c825af833c14a9aa231c4bbcdd48, type: 2}
+  - {fileID: 11400000, guid: 95fee47e8ab3c9e4abf22b0446a6564c, type: 2}
+  initialState: {fileID: 11400000, guid: 9ae6c825af833c14a9aa231c4bbcdd48, type: 2}
+  initialStateName: 
+  transitions:
+  - fromStateData: {fileID: 11400000, guid: 9ae6c825af833c14a9aa231c4bbcdd48, type: 2}
+    toStateData: {fileID: 11400000, guid: 95fee47e8ab3c9e4abf22b0446a6564c, type: 2}
+    priority: 0
+    isEnabled: 1
+    transitionName: Sleep -> Alert (noise)
+    predicates:
+    - rid: 7396891971670769666
+  - fromStateData: {fileID: 11400000, guid: 95fee47e8ab3c9e4abf22b0446a6564c, type: 2}
+    toStateData: {fileID: 11400000, guid: 9ae6c825af833c14a9aa231c4bbcdd48, type: 2}
+    priority: 0
+    isEnabled: 1
+    transitionName: Alert -> Sleep (quiet, 1.5 s in Alert)
+    predicates:
+    - rid: 7396891971670769667
+    - rid: 7396891971670769668
+  statePositions: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 7396891971670769666
+      type: {class: ConditionEntryPredicate, ns: Neo.StateMachine, asm: Neo.StateMachine}
+      data:
+        predicateName: Noise toggle is on
+        isInverted: 0
+        conditionEntry:
+          _sourceMode: 0
+          _useSceneSearch: 0
+          _searchObjectName: 
+          _waitForObject: 0
+          _findRetryIntervalSeconds: 1
+          _prefabPreview: {fileID: 0}
+          _sourceObject: {fileID: 0}
+          _componentIndex: 0
+          _componentOccurrence: 0
+          _componentTypeName: UnityEngine.UI.Toggle
+          _propertyName: isOn
+          _valueType: 2
+          _compareOp: 0
+          _invert: 0
+          _thresholdSource: 0
+          _thresholdInt: 0
+          _thresholdFloat: 0
+          _thresholdBool: 1
+          _thresholdString: 
+          _otherSourceMode: 0
+          _otherUseSceneSearch: 0
+          _otherSearchObjectName: 
+          _otherWaitForObject: 0
+          _otherFindRetryIntervalSeconds: 1
+          _otherSourceObject: {fileID: 0}
+          _otherComponentIndex: 0
+          _otherComponentOccurrence: 0
+          _otherComponentTypeName: 
+          _otherPropertyName: 
+          _isMethodWithArgument: 0
+          _propertyArgumentKind: 0
+          _propertyArgumentInt: 0
+          _propertyArgumentFloat: 0
+          _propertyArgumentString: 
+          _otherIsMethodWithArgument: 0
+          _otherPropertyArgumentKind: 0
+          _otherPropertyArgumentInt: 0
+          _otherPropertyArgumentFloat: 0
+          _otherPropertyArgumentString: 
+        contextSlot: 1
+    - rid: 7396891971670769667
+      type: {class: ConditionEntryPredicate, ns: Neo.StateMachine, asm: Neo.StateMachine}
+      data:
+        predicateName: Noise toggle is off
+        isInverted: 0
+        conditionEntry:
+          _sourceMode: 0
+          _useSceneSearch: 0
+          _searchObjectName: 
+          _waitForObject: 0
+          _findRetryIntervalSeconds: 1
+          _prefabPreview: {fileID: 0}
+          _sourceObject: {fileID: 0}
+          _componentIndex: 0
+          _componentOccurrence: 0
+          _componentTypeName: UnityEngine.UI.Toggle
+          _propertyName: isOn
+          _valueType: 2
+          _compareOp: 0
+          _invert: 0
+          _thresholdSource: 0
+          _thresholdInt: 0
+          _thresholdFloat: 0
+          _thresholdBool: 0
+          _thresholdString: 
+          _otherSourceMode: 0
+          _otherUseSceneSearch: 0
+          _otherSearchObjectName: 
+          _otherWaitForObject: 0
+          _otherFindRetryIntervalSeconds: 1
+          _otherSourceObject: {fileID: 0}
+          _otherComponentIndex: 0
+          _otherComponentOccurrence: 0
+          _otherComponentTypeName: 
+          _otherPropertyName: 
+          _isMethodWithArgument: 0
+          _propertyArgumentKind: 0
+          _propertyArgumentInt: 0
+          _propertyArgumentFloat: 0
+          _propertyArgumentString: 
+          _otherIsMethodWithArgument: 0
+          _otherPropertyArgumentKind: 0
+          _otherPropertyArgumentInt: 0
+          _otherPropertyArgumentFloat: 0
+          _otherPropertyArgumentString: 
+        contextSlot: 1
+    - rid: 7396891971670769668
+      type: {class: StateDurationPredicate, ns: Neo.StateMachine, asm: Neo.StateMachine}
+      data:
+        predicateName: At least 1.5 s in Alert
+        isInverted: 0
+        requiredDuration: 1.5
+        comparison: 2

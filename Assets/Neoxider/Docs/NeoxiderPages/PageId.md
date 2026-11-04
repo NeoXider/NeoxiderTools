@@ -3,7 +3,7 @@
 **What it is:** a `ScriptableObject` page identifier — lets you select pages without maintaining a hand-written enum. Path: `Samples~/NeoxiderPages/Runtime/Scripts/Page/PageId.cs`, namespace `Neo.Pages`. Asset creation: menu **Create → Neoxider → Pages → Page Id**.
 
 **How to use:**
-1. Create one `PageId` asset per screen, named with the recommended `Page` prefix (e.g. `PageMenu`, `PageShop`, `PageSettings`).
+1. Create one `PageId` asset per screen, named with the recommended `Page` prefix (e.g. `PageMenu`, `PageShop`, `PageSettings`). **Neoxider > Samples > Generate Default PageIds** creates the usual set (`PageMenu`, `PageGame`, `PagePause`, `PageSettings`, `PageShop`, `PageWin`, `PageLose`, `PageEnd`) in one step; the `UIPage` inspector's **Generate & Assign** creates a single one.
 2. Assign the asset to the matching `UIPage`'s `PageId` field.
 3. Reference the asset from `PM`/`BtnChangePage` to open/switch to that page.
 
@@ -18,7 +18,7 @@ None — a `PageId` asset carries no configurable fields; its identity comes fro
 | Member | Description |
 |--------|-------------|
 | `Id` | Stable page key, derived from the asset name (e.g. `PageMenu`). |
-| `DisplayName` | Display name with the `Page` prefix stripped (e.g. `Menu` for an asset named `PageMenu`). |
+| `DisplayName` | Display name with the `Page` prefix stripped (e.g. `Menu` for an asset named `PageMenu`; ordinal, case-sensitive match). |
 
 ## See also
 

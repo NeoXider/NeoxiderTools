@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fe330101706e694eb1019f1579b2a1e, type: 3}
+  m_Name: DemoUnlockTree
+  m_EditorClassIdentifier: Neo.Progression::Neo.Progression.UnlockTreeDefinition
+  _nodes:
+  - _id: arena
+    _displayName: Arena
+    _description: Combat trials. Needs the Forge; unlocking it pays 150 XP.
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredLevel: 4
+    _prerequisiteNodeIds:
+    - forge
+    _conditions: []
+    _rewards:
+    - _rewardType: 1
+      _amount: 150
+      _moneyAmount: 0
+      _moneyTarget: {fileID: 0}
+      _collectionTarget: {fileID: 0}
+      _collectionItem: {fileID: 0}
+      _questManager: {fileID: 0}
+      _quest: {fileID: 0}
+      _description: Arena unlock reward
+      _isPremium: 0
+  - _id: forge
+    _displayName: Forge
+    _description: Crafting station. Unlocking it pays 1 perk point.
+    _icon: {fileID: 0}
+    _unlockedByDefault: 0
+    _requiredLevel: 2
+    _prerequisiteNodeIds: []
+    _conditions: []
+    _rewards:
+    - _rewardType: 2
+      _amount: 1
+      _moneyAmount: 0
+      _moneyTarget: {fileID: 0}
+      _collectionTarget: {fileID: 0}
+      _collectionItem: {fileID: 0}
+      _questManager: {fileID: 0}
+      _quest: {fileID: 0}
+      _description: Forge unlock reward
+      _isPremium: 0

@@ -42,7 +42,6 @@ CANONICAL_TOPICS = {
     "StateMachine/README.md": ("StateMachine/Editor.md",),
     "Tools/InteractableObject/README.md": ("Tools/InteractableObject/Core/README.md",),
     "UI/UIMeshRig.md": ("UI/Editor.md",),
-    "UI/HtmlToUitk.md": ("UI/HtmlToUitkEditor.md", "UI/HtmlToUitkTesting.md"),
     "README.md": ("Migration11.md", "Testing.md", "PlayModeTesting.md"),
 }
 
@@ -232,8 +231,13 @@ def main() -> int:
     except (json.JSONDecodeError, AttributeError, TypeError):
         errors.append("package.json: invalid package manifest")
 
+    # WHY: Unity's YAML serializer writes empty values with a trailing space ("m_Name: "), so every re-saved scene or
+    # asset would fail the whitespace check; it applies to the hand-written files.
+    unity_yaml = [":(exclude)*." + extension for extension in
+                  ("unity", "prefab", "asset", "mat", "controller", "anim", "physicMaterial", "overrideController",
+                   "mask", "renderTexture", "lighting")]
     for arguments in (["git", "diff", "--check"], ["git", "diff", "--cached", "--check"]):
-        diff = subprocess.run(arguments, cwd=REPO_ROOT, capture_output=True, text=True)
+        diff = subprocess.run(arguments + ["--", "."] + unity_yaml, cwd=REPO_ROOT, capture_output=True, text=True)
         if diff.returncode:
             errors.append(diff.stdout.strip() or diff.stderr.strip() or "git diff whitespace check failed")
 

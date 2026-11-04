@@ -358,7 +358,7 @@ namespace Neo.Editor.Tests
 
         private static Type GetEditorType(string typeName)
         {
-            // The shared test asmdef has no Neo.StateMachine.Editor reference. Keep it unchanged.
+            // WHY: the shared test asmdef has no Neo.StateMachine.Editor reference; keep it unchanged.
             return Type.GetType(EditorNamespace + typeName + ", Neo.StateMachine.Editor", true);
         }
 

@@ -1,17 +1,17 @@
 ﻿# GM
 
-## Overview
-`GM` is the global game state manager. It stores the current and previous game state, controls pause behavior through `Time.timeScale`, sets the target FPS, and notifies other systems through `EM`.
+**What it is:** the `Singleton<GM>` game state manager. It stores the current and previous `GameState`, owns the
+optional `Time.timeScale` pause, sets the target FPS and publishes every transition through [EM](./EM.md). Script:
+`Scripts/Tools/Managers/GM.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Managers`.
 
-- **Namespace**: `Neo.Tools`
-- **Path**: `Assets/Neoxider/Scripts/Tools/Managers/GM.cs`
-
-## How to use
-1. Add `GM` to the scene.
+**How to use:**
+1. Add **Neoxider / Tools / GM** to the scene (usually next to `EM`).
 2. Configure the startup state and `Start On Awake`.
-3. Enable or disable `Use Time Scale Pause` depending on your pause model.
+3. Enable or disable `Use Time Scale Pause` depending on your pause model; set `fps` (-1 keeps the platform default).
 4. Call `Menu()`, `Preparing()`, `StartGame()`, `Pause()`, `Resume()`, `Win()`, `Lose()`, and related methods from gameplay flow code or scene UnityEvents.
 5. Use the Inspector action buttons in Play Mode. They are disabled in Edit Mode because these actions change runtime state and invoke scene listeners.
+
+---
 
 ## Game states
 `GM.GameState` includes:

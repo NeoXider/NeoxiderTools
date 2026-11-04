@@ -137,7 +137,7 @@ namespace Neo.Tests.Play
             Assert.That(NetReadyBroadcast.ToReadyClients(
                 new Audit20261023TestPlayNetworkProbeMessage { Sequence = -2 }), Is.EqualTo(0));
 
-            // A same-channel control proves the client processed the queue after the rejection checks.
+            // WHY: A same-channel control proves the client processed the queue after the rejection checks.
             connection.Send(new Audit20261023TestPlayNetworkProbeMessage
                 { Sequence = 0, Text = "ready, no player" });
             yield return NetworkTestHelper.WaitUntil(() => sequences.Contains(0), description: "playerless client control message");

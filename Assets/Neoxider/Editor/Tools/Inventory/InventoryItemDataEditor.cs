@@ -121,13 +121,16 @@ namespace Neo.Editor
                 "Create a Sprite from the World Drop Prefab preview and assign it as this item's icon.",
                 MessageType.None);
 
-            EditorGUI.BeginDisabledGroup(_worldDropPrefabProp.objectReferenceValue == null);
-            if (GUILayout.Button("Create Icon from World Drop Prefab", GUILayout.Height(24)))
+            using (new EditorGUI.DisabledScope(_worldDropPrefabProp.objectReferenceValue == null))
             {
-                CreateIconFromPrefab();
+                if (GUILayout.Button("Create Icon from World Drop Prefab", GUILayout.Height(24)))
+                {
+                    CreateIconFromPrefab();
+                    // WHY: the save panel is modal; once it returns the layout groups of this pass no longer
+                    // match, so the pass is abandoned instead of logging layout errors.
+                    GUIUtility.ExitGUI();
+                }
             }
-
-            EditorGUI.EndDisabledGroup();
 
             if (_worldDropPrefabProp.objectReferenceValue == null)
             {
@@ -137,7 +140,7 @@ namespace Neo.Editor
 
         private void CreateIconFromPrefab()
         {
-            var prefab = _worldDropPrefabProp.objectReferenceValue as GameObject;
+            GameObject prefab = _worldDropPrefabProp.objectReferenceValue as GameObject;
             if (prefab == null)
             {
                 EditorUtility.DisplayDialog("Create Icon", "Assign a World Drop Prefab first.", "OK");

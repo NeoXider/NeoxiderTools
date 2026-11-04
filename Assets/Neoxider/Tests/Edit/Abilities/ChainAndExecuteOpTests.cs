@@ -24,8 +24,6 @@ namespace Neo.Editor.Tests.Abilities
             _world.SetPosition(_caster.Id, Vector3.zero);
         }
 
-        // ---------------------------------------------------------------- chain
-
         [Test]
         public void Chain_BouncesNearestFirstWithFalloff()
         {
@@ -36,7 +34,7 @@ namespace Neo.Editor.Tests.Abilities
             _world.SetPosition(b.Id, new Vector3(2f, 0f, 0f));
             _world.SetPosition(c.Id, new Vector3(3f, 0f, 0f));
 
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Chain,
                 Target = EffectTargetSelector.Target,
@@ -50,7 +48,7 @@ namespace Neo.Editor.Tests.Abilities
             EffectContext ctx = AbilityTestSupport.Context(_system, _caster.Id, targets: a.Id);
             _system.ExecuteEffects(AbilityTestSupport.Nodes(node), ctx);
 
-            // Hop order A -> B -> C, damage 100 / 50 / 25 (each bounce multiplies by falloff 0.5).
+            // WHY: Hop order A -> B -> C, damage 100 / 50 / 25 (each bounce multiplies by falloff 0.5).
             Assert.That(a.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth - 100f).Within(0.001f));
             Assert.That(b.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth - 50f).Within(0.001f));
             Assert.That(c.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth - 25f).Within(0.001f));
@@ -66,7 +64,7 @@ namespace Neo.Editor.Tests.Abilities
             _world.SetPosition(b.Id, new Vector3(2f, 0f, 0f));
             _world.SetPosition(c.Id, new Vector3(3f, 0f, 0f));
 
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Chain,
                 Target = EffectTargetSelector.Target,
@@ -81,18 +79,18 @@ namespace Neo.Editor.Tests.Abilities
 
             Assert.That(a.Health, Is.LessThan(AbilityTestSupport.DefaultHealth));
             Assert.That(b.Health, Is.LessThan(AbilityTestSupport.DefaultHealth));
-            Assert.That(c.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth).Within(0.001f)); // never reached
+            Assert.That(c.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth).Within(0.001f)); // WHY: never reached
         }
 
         [Test]
         public void Chain_SkipsAllies()
         {
             AbilityUnit enemy = AbilityTestSupport.CreateUnit(_system, team: 2);
-            AbilityUnit ally = AbilityTestSupport.CreateUnit(_system, team: 1); // same team as caster
+            AbilityUnit ally = AbilityTestSupport.CreateUnit(_system, team: 1); // WHY: same team as caster
             _world.SetPosition(enemy.Id, new Vector3(1f, 0f, 0f));
             _world.SetPosition(ally.Id, new Vector3(2f, 0f, 0f));
 
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Chain,
                 Target = EffectTargetSelector.Target,
@@ -106,16 +104,14 @@ namespace Neo.Editor.Tests.Abilities
             _system.ExecuteEffects(AbilityTestSupport.Nodes(node), ctx);
 
             Assert.That(enemy.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth - 100f).Within(0.001f));
-            Assert.That(ally.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth).Within(0.001f)); // filtered out
+            Assert.That(ally.Health, Is.EqualTo(AbilityTestSupport.DefaultHealth).Within(0.001f)); // WHY: filtered out
         }
-
-        // ---------------------------------------------------------------- execute
 
         [Test]
         public void Execute_MissingHealthFraction()
         {
             AbilityUnit target = AbilityTestSupport.CreateUnit(_system, team: 2, health: 200f, healthCurrent: 120f);
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Execute,
                 Target = EffectTargetSelector.Target,
@@ -133,7 +129,7 @@ namespace Neo.Editor.Tests.Abilities
         public void Execute_MaxHealthFraction()
         {
             AbilityUnit target = AbilityTestSupport.CreateUnit(_system, team: 2, health: 200f);
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Execute,
                 Target = EffectTargetSelector.Target,
@@ -151,7 +147,7 @@ namespace Neo.Editor.Tests.Abilities
         public void Execute_NoModeIsFlatDamage()
         {
             AbilityUnit target = AbilityTestSupport.CreateUnit(_system, team: 2, health: 200f);
-            var node = new EffectNodeData
+            EffectNodeData node = new EffectNodeData
             {
                 OpId = AbilityEffectOps.Execute,
                 Target = EffectTargetSelector.Target,

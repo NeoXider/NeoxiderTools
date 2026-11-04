@@ -15,6 +15,7 @@ namespace Neo.Quest
         [SerializeField] private List<int> _objectiveProgress = new();
         [SerializeField] private List<bool> _objectiveCompleted = new();
 
+        /// <summary>Creates a NotStarted state with zeroed progress for <paramref name="objectiveCount" /> objectives.</summary>
         public QuestState(string questId, int objectiveCount)
         {
             _questId = questId ?? "";

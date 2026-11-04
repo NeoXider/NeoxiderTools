@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using Neo.Tools;
 using UnityEngine;
@@ -22,6 +20,12 @@ namespace Neo.Save
         private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
             = new();
 
+        // WHY: [SaveField] metadata is per type; resolving it once avoids reflection and attribute allocations on
+        // every registration, save and load of each saveable instance.
+        private static readonly Dictionary<Type, TypeBindings> _bindingsByType = new();
+        private static readonly Dictionary<Type, FieldInfo> _wrapperItemsFields = new();
+        private static readonly List<string> _invalidKeysBuffer = new();
+
         [Header("Diagnostics")] [SerializeField]
         private bool _debugLog;
 
@@ -37,6 +41,8 @@ namespace Neo.Save
         public static void ClearSubsystemCaches()
         {
             _saveableComponents.Clear();
+            _bindingsByType.Clear();
+            _wrapperItemsFields.Clear();
             IsLoad = false;
         }
 
@@ -76,6 +82,9 @@ namespace Neo.Save
         {
             if (!hasFocus)
             {
+                // WHY: not deduplicated against a pause in the same frame; other components' focus and pause
+                // handlers run between the two messages and may stage data that only the later flush persists.
+                // An unchanged second flush costs no disk write with FileSaveProvider.
                 FlushNow("Focus Lost");
             }
         }
@@ -157,6 +166,40 @@ namespace Neo.Save
             public List<T> Items = new();
         }
 
+        /// <summary>One [SaveField] of a component type with its attribute and serialized type name resolved once.</summary>
+        private sealed class SaveFieldBinding
+        {
+            public readonly FieldInfo Field;
+            public readonly SaveField Attribute;
+            public readonly string TypeName;
+
+            public SaveFieldBinding(FieldInfo field, SaveField attribute)
+            {
+                Field = field;
+                Attribute = attribute;
+                TypeName = field.FieldType.AssemblyQualifiedName;
+            }
+        }
+
+        /// <summary>All [SaveField] bindings of one component type, most derived type first.</summary>
+        private sealed class TypeBindings
+        {
+            public readonly SaveFieldBinding[] Bindings;
+
+            // WHY: shared by every registration of the type; the registry only reads it.
+            public readonly List<FieldInfo> Fields;
+
+            public TypeBindings(List<SaveFieldBinding> bindings)
+            {
+                Bindings = bindings.ToArray();
+                Fields = new List<FieldInfo>(Bindings.Length);
+                for (int i = 0; i < Bindings.Length; i++)
+                {
+                    Fields.Add(Bindings[i].Field);
+                }
+            }
+        }
+
         #endregion
 
         #region Registration
@@ -191,20 +234,102 @@ namespace Neo.Save
                 return;
             }
 
-            List<FieldInfo> fieldsToSave = new();
-            for (Type componentType = monoObj.GetType(); componentType != null && componentType != typeof(MonoBehaviour);
-                 componentType = componentType.BaseType)
+            TypeBindings bindings = GetBindings(monoObj.GetType());
+            if (bindings.Fields.Count > 0)
             {
-                fieldsToSave.AddRange(componentType
-                    .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance |
-                               BindingFlags.DeclaredOnly)
-                    .Where(field => field.IsDefined(typeof(SaveField), true)));
+                _saveableComponents[key] = (monoObj, bindings.Fields);
+            }
+        }
+
+        private static TypeBindings GetBindings(Type componentType)
+        {
+            if (_bindingsByType.TryGetValue(componentType, out TypeBindings cached))
+            {
+                return cached;
             }
 
-            if (fieldsToSave.Count > 0)
+            List<SaveFieldBinding> bindings = new();
+            for (Type type = componentType; type != null && type != typeof(MonoBehaviour); type = type.BaseType)
             {
-                _saveableComponents[key] = (monoObj, fieldsToSave);
+                FieldInfo[] declared = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public |
+                                                      BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                for (int i = 0; i < declared.Length; i++)
+                {
+                    SaveField attribute = declared[i].GetCustomAttribute<SaveField>(true);
+                    if (attribute != null)
+                    {
+                        bindings.Add(new SaveFieldBinding(declared[i], attribute));
+                    }
+                }
             }
+
+            TypeBindings result = new(bindings);
+            _bindingsByType[componentType] = result;
+            return result;
+        }
+
+        private static SaveFieldBinding FindBinding(SaveFieldBinding[] bindings, string key)
+        {
+            for (int i = 0; i < bindings.Length; i++)
+            {
+                if (string.Equals(bindings[i].Attribute.Key, key, StringComparison.Ordinal))
+                {
+                    return bindings[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static SavedField FindSavedField(SavedComponent component, string key)
+        {
+            List<SavedField> fields = component?.Fields;
+            if (fields == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < fields.Count; i++)
+            {
+                SavedField field = fields[i];
+                if (field != null && string.Equals(field.Key, key, StringComparison.Ordinal))
+                {
+                    return field;
+                }
+            }
+
+            return null;
+        }
+
+        private static SavedComponent FindSavedComponent(SaveDataContainer container, string componentKey)
+        {
+            List<SavedComponent> components = container.AllSavedComponents;
+            for (int i = 0; i < components.Count; i++)
+            {
+                SavedComponent component = components[i];
+                if (component != null && string.Equals(component.ComponentKey, componentKey, StringComparison.Ordinal))
+                {
+                    return component;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        ///     Resolves the stored type of a field. The common case (type unchanged since the save) reuses the
+        ///     field's own type instead of parsing the assembly-qualified name.
+        /// </summary>
+        private static Type ResolveSavedType(SavedField savedField, SaveFieldBinding binding)
+        {
+            if (string.IsNullOrEmpty(savedField.TypeName))
+            {
+                return null;
+            }
+
+            return string.Equals(savedField.TypeName, binding.TypeName, StringComparison.Ordinal)
+                ? binding.Field.FieldType
+                : Type.GetType(savedField.TypeName);
         }
 
         /// <summary>
@@ -280,33 +405,34 @@ namespace Neo.Save
         {
             CleanupDestroyedRegistrations();
             SaveDataContainer container = ReadAllSaveDataContainer();
-            HashSet<string> currentComponentKeys = _saveableComponents.Keys.ToHashSet();
 
             // WHY: keep the previously stored entries around — fields with AutoSaveOnQuit=false are
             // persisted only via Save(component); rebuilding without them would silently erase them.
             Dictionary<string, SavedComponent> existingByKey = new();
             foreach (SavedComponent component in container.AllSavedComponents)
             {
-                if (component?.ComponentKey != null && currentComponentKeys.Contains(component.ComponentKey))
+                if (component?.ComponentKey != null && _saveableComponents.ContainsKey(component.ComponentKey))
                 {
                     existingByKey[component.ComponentKey] = component;
                 }
             }
 
             container.AllSavedComponents.RemoveAll(component =>
-                component == null || currentComponentKeys.Contains(component.ComponentKey));
+                component == null
+                || (component.ComponentKey != null && _saveableComponents.ContainsKey(component.ComponentKey)));
 
             foreach (KeyValuePair<string, (MonoBehaviour instance, List<FieldInfo> fields)> kvp in _saveableComponents)
             {
                 string componentKey = kvp.Key;
-                (MonoBehaviour instance, List<FieldInfo> fieldsToSave) = kvp.Value;
+                MonoBehaviour instance = kvp.Value.instance;
                 if (instance == null)
                 {
                     continue;
                 }
 
                 existingByKey.TryGetValue(componentKey, out SavedComponent existing);
-                SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, instance, fieldsToSave, existing);
+                SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, instance,
+                    GetBindings(instance.GetType()).Bindings, existing);
 
                 if (savedComponent.Fields.Count > 0)
                 {
@@ -323,32 +449,20 @@ namespace Neo.Save
         ///     previously stored values for fields that opted out of auto-save (AutoSaveOnQuit=false).
         /// </summary>
         private static SavedComponent BuildAutoSaveComponent(string componentKey, MonoBehaviour instance,
-            List<FieldInfo> fieldsToSave, SavedComponent existing)
+            SaveFieldBinding[] bindings, SavedComponent existing)
         {
             SavedComponent savedComponent = new() { ComponentKey = componentKey };
 
-            foreach (FieldInfo field in fieldsToSave)
+            for (int i = 0; i < bindings.Length; i++)
             {
-                SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
-                if (saveAttr == null)
+                SaveFieldBinding binding = bindings[i];
+                if (binding.Attribute.AutoSaveOnQuit)
                 {
-                    continue;
-                }
-
-                if (saveAttr.AutoSaveOnQuit)
-                {
-                    object value = field.GetValue(instance);
-                    SavedField savedField = new()
-                    {
-                        Key = saveAttr.Key,
-                        TypeName = field.FieldType.AssemblyQualifiedName,
-                        Value = ValueToString(value, field.FieldType)
-                    };
-                    savedComponent.Fields.Add(savedField);
+                    savedComponent.Fields.Add(CreateSavedField(binding, instance));
                 }
                 else
                 {
-                    SavedField preserved = existing?.Fields?.FirstOrDefault(f => f != null && f.Key == saveAttr.Key);
+                    SavedField preserved = FindSavedField(existing, binding.Attribute.Key);
                     if (preserved != null)
                     {
                         savedComponent.Fields.Add(preserved);
@@ -357,6 +471,16 @@ namespace Neo.Save
             }
 
             return savedComponent;
+        }
+
+        private static SavedField CreateSavedField(SaveFieldBinding binding, MonoBehaviour instance)
+        {
+            return new SavedField
+            {
+                Key = binding.Attribute.Key,
+                TypeName = binding.TypeName,
+                Value = ValueToString(binding.Field.GetValue(instance), binding.Field.FieldType)
+            };
         }
 
         /// <summary>
@@ -383,9 +507,9 @@ namespace Neo.Save
             }
 
             SaveDataContainer container = ReadAllSaveDataContainer();
-            SavedComponent existing =
-                container.AllSavedComponents.FirstOrDefault(c => c != null && c.ComponentKey == componentKey);
-            SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, monoObj, reg.fields, existing);
+            SavedComponent existing = FindSavedComponent(container, componentKey);
+            SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, monoObj,
+                GetBindings(monoObj.GetType()).Bindings, existing);
 
             container.AllSavedComponents.RemoveAll(c => c == null || c.ComponentKey == componentKey);
             if (savedComponent.Fields.Count > 0)
@@ -454,8 +578,17 @@ namespace Neo.Save
                     }
                 }
 
-                List<MonoBehaviour> targetComponents =
-                    componentsToLoad ?? _saveableComponents.Values.Select(x => x.instance).ToList();
+                List<MonoBehaviour> targetComponents = componentsToLoad;
+                if (targetComponents == null)
+                {
+                    // WHY: OnDataLoaded callbacks may register or unregister components, so iterate a snapshot.
+                    targetComponents = new List<MonoBehaviour>(_saveableComponents.Count);
+                    foreach (KeyValuePair<string, (MonoBehaviour instance, List<FieldInfo> fields)> entry in
+                             _saveableComponents)
+                    {
+                        targetComponents.Add(entry.Value.instance);
+                    }
+                }
 
                 foreach (MonoBehaviour monoObj in targetComponents)
                 {
@@ -471,25 +604,20 @@ namespace Neo.Save
                         && ReferenceEquals(registeredData.instance, monoObj))
                     {
                         MonoBehaviour instance = registeredData.instance;
-                        List<FieldInfo> fields = registeredData.fields;
+                        SaveFieldBinding[] bindings = GetBindings(instance.GetType()).Bindings;
 
                         foreach (SavedField savedField in savedComponent.Fields)
                         {
-                            FieldInfo field = fields.FirstOrDefault(f =>
-                                f.GetCustomAttribute<SaveField>(true)?.Key == savedField.Key);
-                            SaveField saveAttr = field?.GetCustomAttribute<SaveField>(true);
-
-                            if (field != null && saveAttr != null && saveAttr.AutoLoadOnAwake)
+                            SaveFieldBinding binding = FindBinding(bindings, savedField.Key);
+                            if (binding != null && binding.Attribute.AutoLoadOnAwake)
                             {
                                 try
                                 {
-                                    Type fieldType = string.IsNullOrEmpty(savedField.TypeName)
-                                        ? null
-                                        : Type.GetType(savedField.TypeName);
+                                    Type fieldType = ResolveSavedType(savedField, binding);
                                     if (fieldType != null && savedField.Value != null)
                                     {
                                         object value = StringToValue(savedField.Value, fieldType);
-                                        field.SetValue(instance, value);
+                                        binding.Field.SetValue(instance, value);
                                     }
                                 }
                                 catch (Exception ex)
@@ -500,13 +628,36 @@ namespace Neo.Save
                             }
                         }
 
-                        (instance as ISaveableComponent)?.OnDataLoaded();
+                        NotifyDataLoaded(instance);
                     }
                 }
             }
             catch (Exception e)
             {
                 SaveProvider.LogError("Error loading save data: " + e.Message + "\nStackTrace: " + e.StackTrace);
+            }
+        }
+
+        /// <summary>
+        ///     Raises <see cref="ISaveableComponent.OnDataLoaded" />. A throwing callback is logged as an error and does
+        ///     not stop the remaining components of the same load from being restored.
+        /// </summary>
+        private static void NotifyDataLoaded(MonoBehaviour instance)
+        {
+            if (!(instance is ISaveableComponent saveable))
+            {
+                return;
+            }
+
+            try
+            {
+                saveable.OnDataLoaded();
+            }
+            catch (Exception exception)
+            {
+                // WHY: the bulk load's outer handler logs only with save debug logging on, so one throwing callback
+                // used to leave every later component unrestored without any visible error.
+                NeoDiagnostics.LogException(exception, instance);
             }
         }
 
@@ -538,35 +689,41 @@ namespace Neo.Save
                 return (string)value;
             }
 
-            if (type.IsArray)
+            if (IsWrappedCollection(type))
             {
-                Type elemType = type.GetElementType();
-                Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
-                object wrapper = Activator.CreateInstance(wrapperType);
-                wrapperType.GetField("Items").SetValue(wrapper, value);
-                return JsonUtility.ToJson(wrapper);
-            }
-
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-            {
-                Type elemType = type.GetGenericArguments()[0];
-                Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
-                object wrapper = Activator.CreateInstance(wrapperType);
-
-                IEnumerable list = (IEnumerable)value;
-                FieldInfo itemsField = wrapperType.GetField("Items");
-                object targetList = itemsField.GetValue(wrapper); // WHY: runtime type is List<T>
-
-                MethodInfo addMethod = targetList.GetType().GetMethod("Add");
-                foreach (object it in list)
-                {
-                    addMethod.Invoke(targetList, new[] { it });
-                }
-
+                // WHY: the wrapper only gives JsonUtility a root field; it serializes the stored collection itself,
+                // so no copy of the list is needed.
+                FieldInfo itemsField = GetWrapperItemsField(type);
+                object wrapper = Activator.CreateInstance(itemsField.DeclaringType);
+                itemsField.SetValue(wrapper, value);
                 return JsonUtility.ToJson(wrapper);
             }
 
             return JsonUtility.ToJson(value);
+        }
+
+        private static bool IsWrappedCollection(Type type)
+        {
+            return type.IsArray || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>));
+        }
+
+        /// <summary>
+        ///     Resolves the <c>Items</c> field of the JSON wrapper for an array or <c>List&lt;T&gt;</c> type once per
+        ///     type, instead of building the closed generic wrapper type on every save and load.
+        /// </summary>
+        private static FieldInfo GetWrapperItemsField(Type collectionType)
+        {
+            if (_wrapperItemsFields.TryGetValue(collectionType, out FieldInfo cached))
+            {
+                return cached;
+            }
+
+            Type wrapperType = collectionType.IsArray
+                ? typeof(ArrayWrapper<>).MakeGenericType(collectionType.GetElementType())
+                : typeof(ListWrapper<>).MakeGenericType(collectionType.GetGenericArguments()[0]);
+            FieldInfo itemsField = wrapperType.GetField(nameof(ArrayWrapper<int>.Items));
+            _wrapperItemsFields[collectionType] = itemsField;
+            return itemsField;
         }
 
         private static object StringToValue(string s, Type type)
@@ -591,22 +748,11 @@ namespace Neo.Save
                 return s;
             }
 
-            if (type.IsArray)
+            if (IsWrappedCollection(type))
             {
-                Type elemType = type.GetElementType();
-                Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
-                object wrapperObj = JsonUtility.FromJson(s, wrapperType);
-                object items = wrapperType.GetField("Items").GetValue(wrapperObj);
-                return items; // WHY: runtime type is T[]
-            }
-
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-            {
-                Type elemType = type.GetGenericArguments()[0];
-                Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
-                object wrapperObj = JsonUtility.FromJson(s, wrapperType);
-                object items = wrapperType.GetField("Items").GetValue(wrapperObj); // WHY: runtime type is List<T>
-                return items;
+                FieldInfo itemsField = GetWrapperItemsField(type);
+                object wrapperObj = JsonUtility.FromJson(s, itemsField.DeclaringType);
+                return itemsField.GetValue(wrapperObj); // WHY: runtime type is T[] or List<T>
             }
 
             return JsonUtility.FromJson(s, type);
@@ -640,12 +786,12 @@ namespace Neo.Save
                 return;
             }
 
-            (MonoBehaviour instance, List<FieldInfo> fieldsToSave) = reg;
+            MonoBehaviour instance = reg.instance;
+            SaveFieldBinding[] bindings = GetBindings(instance.GetType()).Bindings;
 
             SaveDataContainer container = ReadAllSaveDataContainer();
 
-            SavedComponent savedComponent =
-                container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);
+            SavedComponent savedComponent = FindSavedComponent(container, componentKey);
             if (savedComponent == null)
             {
                 savedComponent = new SavedComponent { ComponentKey = componentKey };
@@ -654,20 +800,9 @@ namespace Neo.Save
 
             savedComponent.Fields.Clear();
 
-            foreach (FieldInfo field in fieldsToSave)
+            for (int i = 0; i < bindings.Length; i++)
             {
-                SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
-                if (saveAttr != null)
-                {
-                    object fieldValue = field.GetValue(instance);
-                    SavedField savedField = new()
-                    {
-                        Key = saveAttr.Key,
-                        TypeName = field.FieldType.AssemblyQualifiedName,
-                        Value = ValueToString(fieldValue, field.FieldType)
-                    };
-                    savedComponent.Fields.Add(savedField);
-                }
+                savedComponent.Fields.Add(CreateSavedField(bindings[i], instance));
             }
 
             string newJsonData = JsonUtility.ToJson(container, true);
@@ -702,33 +837,29 @@ namespace Neo.Save
                 return;
             }
 
-            List<FieldInfo> fields = reg.fields;
+            SaveFieldBinding[] bindings = GetBindings(monoObj.GetType()).Bindings;
 
             try
             {
                 SaveDataContainer container = ReadAllSaveDataContainer();
-                SavedComponent savedComponent =
-                    container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);
+                SavedComponent savedComponent = FindSavedComponent(container, componentKey);
                 if (savedComponent != null)
                 {
                     foreach (SavedField savedField in savedComponent.Fields)
                     {
-                        FieldInfo field = fields.FirstOrDefault(f =>
-                            f.GetCustomAttribute<SaveField>(true)?.Key == savedField.Key);
-                        if (field == null)
+                        SaveFieldBinding binding = FindBinding(bindings, savedField.Key);
+                        if (binding == null)
                         {
                             continue;
                         }
 
                         try
                         {
-                            Type fieldType = string.IsNullOrEmpty(savedField.TypeName)
-                                ? null
-                                : Type.GetType(savedField.TypeName);
+                            Type fieldType = ResolveSavedType(savedField, binding);
                             if (fieldType != null && savedField.Value != null)
                             {
                                 object value = StringToValue(savedField.Value, fieldType);
-                                field.SetValue(monoObj, value);
+                                binding.Field.SetValue(monoObj, value);
                             }
                         }
                         catch (Exception ex)
@@ -738,7 +869,7 @@ namespace Neo.Save
                         }
                     }
 
-                    (monoObj as ISaveableComponent)?.OnDataLoaded();
+                    NotifyDataLoaded(monoObj);
                     if (DebugLogEnabled)
                     {
                         SaveProvider.Log($"[SaveManager] Manually loaded {componentKey}", I);
@@ -758,15 +889,23 @@ namespace Neo.Save
                 return;
             }
 
-            List<string> invalidKeys = _saveableComponents
-                .Where(pair => pair.Value.instance == null)
-                .Select(pair => pair.Key)
-                .ToList();
-
-            for (int i = 0; i < invalidKeys.Count; i++)
+            // WHY: runs on every Register (each SaveableBehaviour.OnEnable); scan without LINQ and allocate nothing
+            // when no registration was destroyed.
+            _invalidKeysBuffer.Clear();
+            foreach (KeyValuePair<string, (MonoBehaviour instance, List<FieldInfo> fields)> pair in _saveableComponents)
             {
-                _saveableComponents.Remove(invalidKeys[i]);
+                if (pair.Value.instance == null)
+                {
+                    _invalidKeysBuffer.Add(pair.Key);
+                }
             }
+
+            for (int i = 0; i < _invalidKeysBuffer.Count; i++)
+            {
+                _saveableComponents.Remove(_invalidKeysBuffer[i]);
+            }
+
+            _invalidKeysBuffer.Clear();
         }
 
         #endregion

@@ -33,7 +33,10 @@ namespace Neo
                 foreach (string guid in guids)
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
-                    if (path.Contains("Neoxider") && path.Contains("Editor/Create"))
+                    // WHY: the name filter also matches LegacyUiCreateMenuObject and the
+                    // Tests/Edit/Editor/CreateMenuObject*Tests scripts, and "Editor/Create" is a substring of the
+                    // latter's path. Only this exact file may anchor the package root.
+                    if (path.EndsWith(PackageScriptSuffix, StringComparison.Ordinal))
                     {
                         scriptPath = path;
                         break;
@@ -42,10 +45,8 @@ namespace Neo
 
                 if (!string.IsNullOrEmpty(scriptPath))
                 {
-                    string basePath = Path.GetDirectoryName(scriptPath);
-                    basePath = Path.GetDirectoryName(basePath);
-                    basePath = Path.GetDirectoryName(basePath);
-                    _startPath = basePath + "/";
+                    // WHY: Path.GetDirectoryName returns backslashes on Windows; asset paths always use '/'.
+                    _startPath = scriptPath.Substring(0, scriptPath.Length - PackageScriptSuffix.Length) + "/";
                 }
                 else
                 {
@@ -84,6 +85,8 @@ namespace Neo
                 return _startPath;
             }
         }
+
+        private const string PackageScriptSuffix = "/Editor/Create/CreateMenuObject.cs";
 
         public static T Create<T>() where T : MonoBehaviour
         {
@@ -128,7 +131,7 @@ namespace Neo
         private static MonoBehaviour CreateEmpty(Type componentType)
         {
             GameObject myObject = new(componentType.Name);
-            var component = myObject.AddComponent(componentType) as MonoBehaviour;
+            MonoBehaviour component = myObject.AddComponent(componentType) as MonoBehaviour;
             PlaceInScene(myObject, Selection.activeGameObject, $"Create {componentType.Name}");
             return component;
         }
@@ -143,7 +146,7 @@ namespace Neo
                 return null;
             }
 
-            var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
             if (instance == null)
             {
                 instance = Object.Instantiate(prefab);
@@ -249,7 +252,7 @@ namespace Neo
 
             // WHY: The menu item is unavailable in headless/test contexts;
             // build the minimal Canvas equivalent directly.
-            var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler),
+            GameObject canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler),
                 typeof(UnityEngine.UI.GraphicRaycaster));
             Undo.RegisterCreatedObjectUndo(canvasGo, "Create Canvas");
             canvasGo.layer = LayerMask.NameToLayer("UI");
@@ -303,7 +306,7 @@ namespace Neo
                 return;
             }
 
-            var eventSystemGo = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem));
+            GameObject eventSystemGo = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem));
             // WHY: InputSystemUIInputModule lives in the optional Input System package; resolve it by name
             // and fall back to the legacy module so UI input works on either backend.
             Type inputModuleType =
@@ -783,6 +786,12 @@ namespace Neo
 
         private static readonly Color PresetsCategoryColor = new(0.2f, 0.5f, 0.35f, 0.9f);
 
+        // WHY: the window repaints on hover, and each pass used to count presets per category with LINQ and
+        // build the "Presets/<category>" keys with string interpolation. Both depend only on the static table.
+        private static readonly Dictionary<string, int> PresetCategoryCounts = CountPresetCategories();
+        private static readonly Dictionary<string, string> PresetCategoryKeys = BuildPresetCategoryKeys();
+        private static readonly GUIContent[] PresetEntryContents = BuildPresetEntryContents();
+
         private readonly Dictionary<string, bool> _expanded = new(StringComparer.OrdinalIgnoreCase);
 
         private readonly Dictionary<string, bool> _presetsExpanded = new(StringComparer.OrdinalIgnoreCase)
@@ -808,20 +817,63 @@ namespace Neo
         private Vector2 _scroll;
         private string _search = "";
 
+        // WHY: visible counts depend only on the tree and the search text, so they are recomputed when one of
+        // those changes instead of walking the whole tree several times per row on every repaint.
+        private string _countedSearch;
+        private MenuNode _countedRoot;
+
+        // WHY: hover feedback needs mouse-move events, but repainting the whole tree on every pixel of mouse
+        // travel is wasted work. The row under the cursor is recorded during the pass and the window only
+        // repaints when that row changes.
+        private Rect _hoverRect;
+        private Rect _lastHoverRect;
+        private bool _stylesProSkin;
+
+        private void OnEnable()
+        {
+            wantsMouseMove = true;
+        }
+
+        /// <summary>
+        ///     Builds the entry list and tree when the window has none yet.
+        /// </summary>
+        private void EnsureEntries()
+        {
+            // WHY: the entry list holds System.Type values, which Unity cannot serialize. After a domain reload
+            // an open window came back empty ("No components with [CreateFromMenu] were found") until Refresh
+            // was pressed. The list is rebuilt on the first draw rather than in OnEnable: ShowWindow hands a
+            // newly created window its list right after OnEnable, so building it there scanned twice per open.
+            if (_root != null)
+            {
+                return;
+            }
+
+            _entries = CreateMenuObject.BuildCreateMenuEntriesForWindow() ??
+                       Array.Empty<CreateMenuObject.CreateMenuEntry>();
+            RebuildTree();
+        }
+
         private void OnGUI()
         {
+            EnsureEntries();
             InitStyles();
-            if (Event.current.type == EventType.MouseMove)
+            Event current = Event.current;
+            if (current.type == EventType.MouseLeaveWindow)
             {
+                _lastHoverRect = default;
                 Repaint();
             }
+
+            _hoverRect = default;
+            string search = _search?.Trim() ?? string.Empty;
+            UpdateVisibleCounts(search);
 
             DrawHeader();
             DrawSearchBar();
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
             EditorGUILayout.Space(2f);
             DrawPresetsSection();
-            int shown = DrawTree(_root, 0, default);
+            int shown = DrawTree(_root, 0, default, search);
             if (shown == 0)
             {
                 DrawEmptyState(string.IsNullOrWhiteSpace(_search)
@@ -831,14 +883,102 @@ namespace Neo
 
             EditorGUILayout.Space(6f);
             EditorGUILayout.EndScrollView();
+
+            if (current.type == EventType.MouseMove && _hoverRect != _lastHoverRect)
+            {
+                _lastHoverRect = _hoverRect;
+                Repaint();
+            }
+        }
+
+        private void TrackHover(Rect rect)
+        {
+            if (rect.Contains(Event.current.mousePosition))
+            {
+                _hoverRect = rect;
+            }
+        }
+
+        private void UpdateVisibleCounts(string search)
+        {
+            if (ReferenceEquals(_countedRoot, _root) && string.Equals(_countedSearch, search, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _countedRoot = _root;
+            _countedSearch = search;
+            if (_root != null)
+            {
+                CountVisibleEntries(_root, search);
+            }
+        }
+
+        private static Dictionary<string, int> CountPresetCategories()
+        {
+            Dictionary<string, int> counts = new(StringComparer.Ordinal);
+            foreach ((string category, string _, string _) in PresetEntries)
+            {
+                counts.TryGetValue(category, out int count);
+                counts[category] = count + 1;
+            }
+
+            return counts;
+        }
+
+        private static Dictionary<string, string> BuildPresetCategoryKeys()
+        {
+            Dictionary<string, string> keys = new(StringComparer.Ordinal);
+            foreach ((string category, string _, string _) in PresetEntries)
+            {
+                keys[category] = "Presets/" + category;
+            }
+
+            return keys;
+        }
+
+        private static GUIContent[] BuildPresetEntryContents()
+        {
+            GUIContent[] contents = new GUIContent[PresetEntries.Length];
+            for (int i = 0; i < PresetEntries.Length; i++)
+            {
+                contents[i] = new GUIContent(PresetEntries[i].Label, PresetEntries[i].Path);
+            }
+
+            return contents;
+        }
+
+        private static Texture2D s_prefabIcon;
+        private static Texture2D s_folderIcon;
+        private static Texture2D s_scriptIcon;
+
+        private static Texture2D PrefabIcon => s_prefabIcon != null
+            ? s_prefabIcon
+            : s_prefabIcon = FindIcon("d_Prefab Icon", "Prefab Icon");
+
+        private static Texture2D FolderIcon => s_folderIcon != null
+            ? s_folderIcon
+            : s_folderIcon = FindIcon("Folder Icon", "d_Folder Icon");
+
+        private static Texture2D ScriptIcon => s_scriptIcon != null
+            ? s_scriptIcon
+            : s_scriptIcon = FindIcon("d_cs Script Icon", "cs Script Icon");
+
+        private static Texture2D FindIcon(string primary, string fallback)
+        {
+            GUIContent content = EditorGUIUtility.IconContent(primary);
+            if (content == null || content.image == null)
+            {
+                content = EditorGUIUtility.IconContent(fallback);
+            }
+
+            return content?.image as Texture2D;
         }
 
         private void DrawPresetsSection()
         {
-            var prefabTex = (EditorGUIUtility.IconContent("d_Prefab Icon") ??
-                             EditorGUIUtility.IconContent("Prefab Icon"))?.image as Texture2D;
-            var folderTex = (EditorGUIUtility.IconContent("Folder Icon") ??
-                             EditorGUIUtility.IconContent("d_Folder Icon"))?.image as Texture2D;
+            Texture2D prefabTex = PrefabIcon;
+            Texture2D folderTex = FolderIcon;
             Color presetsAccent = new(PresetsCategoryColor.r, PresetsCategoryColor.g, PresetsCategoryColor.b, 1f);
 
             bool presetsExpanded = !_presetsExpanded.TryGetValue("Presets", out bool v) || v;
@@ -857,13 +997,16 @@ namespace Neo
 
             string lastCategory = null;
             bool categoryExpanded = true;
-            foreach ((string category, string label, string path) in PresetEntries)
+            for (int i = 0; i < PresetEntries.Length; i++)
             {
+                string category = PresetEntries[i].Category;
+                string path = PresetEntries[i].Path;
                 if (lastCategory != category)
                 {
                     lastCategory = category;
-                    categoryExpanded = _presetsExpanded.TryGetValue($"Presets/{category}", out bool ce) && ce;
-                    int catCount = PresetEntries.Count(p => p.Category == category);
+                    string categoryKey = PresetCategoryKeys[category];
+                    categoryExpanded = _presetsExpanded.TryGetValue(categoryKey, out bool ce) && ce;
+                    int catCount = PresetCategoryCounts[category];
                     Rect catRow = GUILayoutUtility.GetRect(0f, SubFolderHeight, GUILayout.ExpandWidth(true));
                     if (DrawHeaderCard(Inset(catRow, 1), category, folderTex, 1, categoryExpanded, catCount,
                             presetsAccent))
@@ -871,7 +1014,7 @@ namespace Neo
                         categoryExpanded = !categoryExpanded;
                     }
 
-                    _presetsExpanded[$"Presets/{category}"] = categoryExpanded;
+                    _presetsExpanded[categoryKey] = categoryExpanded;
                 }
 
                 if (!categoryExpanded)
@@ -880,7 +1023,7 @@ namespace Neo
                 }
 
                 Rect entryRow = GUILayoutUtility.GetRect(0f, EntryRowHeight, GUILayout.ExpandWidth(true));
-                if (DrawEntryRow(Inset(entryRow, 2), path, label, prefabTex, presetsAccent))
+                if (DrawEntryRow(Inset(entryRow, 2), PresetEntryContents[i], prefabTex, presetsAccent))
                 {
                     NeoxiderPresetCreateMenu.CreatePreset(path);
                 }
@@ -889,7 +1032,7 @@ namespace Neo
             EditorGUILayout.Space(6f);
         }
 
-        private static GUIContent GetFolderContent(string name)
+        private static Texture GetFolderIcon(string name)
         {
             Texture2D icon = null;
             if (CategoryIcons.TryGetValue(name, out string iconName))
@@ -901,14 +1044,7 @@ namespace Neo
                 }
             }
 
-            if (icon == null)
-            {
-                GUIContent folder = EditorGUIUtility.IconContent("Folder Icon") ??
-                                    EditorGUIUtility.IconContent("d_Folder Icon");
-                icon = folder?.image as Texture2D;
-            }
-
-            return new GUIContent(" " + name, icon, name);
+            return icon != null ? icon : FolderIcon;
         }
 
         public static void ShowWindow(CreateMenuObject.CreateMenuEntry[] entries)
@@ -933,11 +1069,14 @@ namespace Neo
 
         private void InitStyles()
         {
-            if (_bannerTitleStyle != null)
+            // WHY: the colours below are baked from the active skin; rebuilding when the skin changes keeps
+            // an open window readable after switching between the light and dark editor themes.
+            if (_bannerTitleStyle != null && _stylesProSkin == EditorGUIUtility.isProSkin)
             {
                 return;
             }
 
+            _stylesProSkin = EditorGUIUtility.isProSkin;
             _bannerTitleStyle = new GUIStyle(EditorStyles.boldLabel)
             {
                 fontSize = 14,
@@ -1028,6 +1167,29 @@ namespace Neo
 
                 current.Entries.Add(entry);
             }
+
+            SortTree(_root);
+            _countedRoot = null;
+        }
+
+        private static void SortTree(MenuNode node)
+        {
+            node.SortedChildren.Clear();
+            node.SortedChildren.AddRange(node.Children.Values);
+            node.SortedChildren.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.CurrentCulture));
+            node.Entries.Sort((a, b) => string.Compare(a.MenuPath, b.MenuPath, StringComparison.CurrentCulture));
+            node.EntryContents.Clear();
+            for (int i = 0; i < node.Entries.Count; i++)
+            {
+                string menuPath = node.Entries[i].MenuPath;
+                node.EntryContents.Add(new GUIContent(GetLeafName(menuPath), menuPath));
+            }
+
+            node.Icon = GetFolderIcon(node.Name);
+            for (int i = 0; i < node.SortedChildren.Count; i++)
+            {
+                SortTree(node.SortedChildren[i]);
+            }
         }
 
         private void DrawHeader()
@@ -1087,7 +1249,7 @@ namespace Neo
             Repaint();
         }
 
-        private int DrawTree(MenuNode node, int depth, Color accent)
+        private int DrawTree(MenuNode node, int depth, Color accent, string search)
         {
             if (node == null)
             {
@@ -1095,11 +1257,11 @@ namespace Neo
             }
 
             int shown = 0;
-            string search = _search?.Trim();
 
-            foreach (MenuNode child in node.Children.Values.OrderBy(c => c.Name))
+            for (int childIndex = 0; childIndex < node.SortedChildren.Count; childIndex++)
             {
-                if (!HasVisibleContent(child, search))
+                MenuNode child = node.SortedChildren[childIndex];
+                if (child.VisibleCount <= 0)
                 {
                     continue;
                 }
@@ -1113,10 +1275,9 @@ namespace Neo
                 Color childAccent = depth == 0 && CategoryColors.TryGetValue(child.Name, out Color c)
                     ? new Color(c.r, c.g, c.b, 1f)
                     : accent;
-                int count = CountVisibleEntries(child, search);
                 Rect row = GUILayoutUtility.GetRect(0f, depth == 0 ? CategoryHeaderHeight : SubFolderHeight,
                     GUILayout.ExpandWidth(true));
-                if (DrawFolderRow(Inset(row, depth), child, depth, expanded, count, childAccent))
+                if (DrawFolderRow(Inset(row, depth), child, depth, expanded, child.VisibleCount, childAccent))
                 {
                     expanded = !expanded;
                 }
@@ -1126,23 +1287,21 @@ namespace Neo
 
                 if (expanded)
                 {
-                    shown += DrawTree(child, depth + 1, childAccent);
+                    shown += DrawTree(child, depth + 1, childAccent, search);
                 }
             }
 
-            GUIContent scriptIconContent = EditorGUIUtility.IconContent("d_cs Script Icon") ??
-                                           EditorGUIUtility.IconContent("cs Script Icon");
-            var scriptIcon = scriptIconContent?.image as Texture2D;
-            foreach (CreateMenuObject.CreateMenuEntry entry in node.Entries.OrderBy(e => e.MenuPath))
+            Texture2D scriptIcon = ScriptIcon;
+            for (int entryIndex = 0; entryIndex < node.Entries.Count; entryIndex++)
             {
+                CreateMenuObject.CreateMenuEntry entry = node.Entries[entryIndex];
                 if (!EntryMatches(entry, search))
                 {
                     continue;
                 }
 
-                string label = GetLeafName(entry.MenuPath);
                 Rect row = GUILayoutUtility.GetRect(0f, EntryRowHeight, GUILayout.ExpandWidth(true));
-                if (DrawEntryRow(Inset(row, depth + 1), entry.MenuPath, label, scriptIcon, accent))
+                if (DrawEntryRow(Inset(row, depth + 1), node.EntryContents[entryIndex], scriptIcon, accent))
                 {
                     CreateMenuObject.Create(entry.ComponentType, entry.PrefabPath);
                 }
@@ -1162,8 +1321,7 @@ namespace Neo
 
         private bool DrawFolderRow(Rect rect, MenuNode node, int depth, bool expanded, int count, Color accent)
         {
-            GUIContent folder = GetFolderContent(node.Name);
-            return DrawHeaderCard(rect, node.Name, folder.image, depth, expanded, count, accent);
+            return DrawHeaderCard(rect, node.Name, node.Icon, depth, expanded, count, accent);
         }
 
         /// <summary>
@@ -1174,6 +1332,7 @@ namespace Neo
             Color accent)
         {
             bool hover = rect.Contains(Event.current.mousePosition);
+            TrackHover(rect);
             bool hasAccent = depth == 0 && accent.a > 0f;
             float radius = depth == 0 ? NeoInspectorTheme.RadiusPill : NeoInspectorTheme.RadiusSection;
             Color baseBg = depth == 0 ? NeoInspectorTheme.HeaderRowBackground : NeoInspectorTheme.SectionBackground;
@@ -1221,9 +1380,10 @@ namespace Neo
             ? new Color(0.166f, 0.178f, 0.208f, 1f)
             : new Color(0.958f, 0.966f, 0.980f, 1f);
 
-        private bool DrawEntryRow(Rect rect, string tooltip, string label, Texture icon, Color accent)
+        private bool DrawEntryRow(Rect rect, GUIContent content, Texture icon, Color accent)
         {
             bool hover = rect.Contains(Event.current.mousePosition);
+            TrackHover(rect);
             NeoInspectorTheme.DrawRoundedRect(rect, EntryRowFill, NeoInspectorTheme.Separator,
                 NeoInspectorTheme.RadiusRow, 1f);
             if (hover)
@@ -1239,8 +1399,7 @@ namespace Neo
                 x += 22f;
             }
 
-            GUI.Label(new Rect(x, rect.y, Mathf.Max(0f, rect.xMax - x - 8f), rect.height),
-                new GUIContent(label, tooltip), _entryLabelStyle);
+            GUI.Label(new Rect(x, rect.y, Mathf.Max(0f, rect.xMax - x - 8f), rect.height), content, _entryLabelStyle);
             return HandleRowClick(rect);
         }
 
@@ -1257,14 +1416,24 @@ namespace Neo
             return false;
         }
 
+        /// <summary>Stores, on every node, how many entries below it match <paramref name="search" />.</summary>
         private static int CountVisibleEntries(MenuNode node, string search)
         {
-            int total = node.Entries.Count(e => EntryMatches(e, search));
-            foreach (MenuNode child in node.Children.Values)
+            int total = 0;
+            for (int i = 0; i < node.Entries.Count; i++)
             {
-                total += CountVisibleEntries(child, search);
+                if (EntryMatches(node.Entries[i], search))
+                {
+                    total++;
+                }
             }
 
+            for (int i = 0; i < node.SortedChildren.Count; i++)
+            {
+                total += CountVisibleEntries(node.SortedChildren[i], search);
+            }
+
+            node.VisibleCount = total;
             return total;
         }
 
@@ -1299,27 +1468,16 @@ namespace Neo
                    entry.MenuPath.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private static bool HasVisibleContent(MenuNode node, string search)
-        {
-            if (node == null)
-            {
-                return false;
-            }
-
-            if (node.Entries.Any(e => EntryMatches(e, search)))
-            {
-                return true;
-            }
-
-            return node.Children.Values.Any(c => HasVisibleContent(c, search));
-        }
-
         private sealed class MenuNode
         {
             public readonly Dictionary<string, MenuNode> Children = new(StringComparer.OrdinalIgnoreCase);
             public readonly List<CreateMenuObject.CreateMenuEntry> Entries = new();
+            public readonly List<GUIContent> EntryContents = new();
+            public readonly List<MenuNode> SortedChildren = new();
             public string FullPath;
             public string Name;
+            public Texture Icon;
+            public int VisibleCount;
         }
     }
 }

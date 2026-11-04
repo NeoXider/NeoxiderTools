@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Neo.Cards
 {
@@ -87,7 +86,7 @@ namespace Neo.Cards
             Add(card, null);
         }
 
-        // Scene adapters can release prior cleanup ownership after commitment, before public observers.
+        // WHY: scene adapters release prior cleanup ownership after commitment, before public observers.
         internal void Add(CardData card, Action onAccepted)
         {
             if (!CanAdd(card))
@@ -260,7 +259,7 @@ namespace Neo.Cards
         /// <returns>True if present.</returns>
         public bool Contains(CardData card)
         {
-            return _cards.Data.Contains(card);
+            return IndexOf(card) >= 0;
         }
 
         /// <summary>
@@ -270,7 +269,17 @@ namespace Neo.Cards
         /// <returns>True if a matching card exists.</returns>
         public bool ContainsRank(Rank rank)
         {
-            return _cards.Data.Any(c => !c.IsJoker && c.Rank == rank);
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                CardData card = cards[i];
+                if (!card.IsJoker && card.Rank == rank)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -280,7 +289,17 @@ namespace Neo.Cards
         /// <returns>True if a matching card exists.</returns>
         public bool ContainsSuit(Suit suit)
         {
-            return _cards.Data.Any(c => !c.IsJoker && c.Suit == suit);
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                CardData card = cards[i];
+                if (!card.IsJoker && card.Suit == suit)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -300,9 +319,10 @@ namespace Neo.Cards
         /// <returns>Index or -1.</returns>
         public int IndexOf(CardData card)
         {
-            for (int i = 0; i < _cards.Count; i++)
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
             {
-                if (_cards.Data[i].Equals(card))
+                if (cards[i].Equals(card))
                 {
                     return i;
                 }
@@ -312,46 +332,53 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Sorts by rank.
+        ///     Sorts by rank. The sort is stable: equal ranks keep their current relative order.
         /// </summary>
         /// <param name="ascending">Ascending if true.</param>
         public void SortByRank(bool ascending = true)
         {
-            if (ascending)
-            {
-                _cards.Mutable.Sort((a, b) => a.Rank.CompareTo(b.Rank));
-            }
-            else
-            {
-                _cards.Mutable.Sort((a, b) => b.Rank.CompareTo(a.Rank));
-            }
-
-            OnHandChanged?.Invoke();
+            Sort(ascending ? CardOrdering.RankAscending : CardOrdering.RankDescending);
         }
 
         /// <summary>
-        ///     Sorts by suit, then rank.
+        ///     Sorts by suit, then rank. The sort is stable.
         /// </summary>
         /// <param name="ascending">Ascending if true.</param>
         public void SortBySuit(bool ascending = true)
         {
-            if (ascending)
+            Sort(ascending ? CardOrdering.SuitThenRankAscending : CardOrdering.SuitThenRankDescending);
+        }
+
+        /// <summary>
+        ///     Sorts the hand with any comparer (for example one of <see cref="CardComparer" />, or a custom
+        ///     comparer for custom card data). The sort is stable and raises <see cref="OnHandChanged" /> once.
+        /// </summary>
+        /// <param name="comparer">Card comparer.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="comparer" /> is null.</exception>
+        public void Sort(IComparer<CardData> comparer)
+        {
+            if (comparer == null)
             {
-                _cards.Mutable.Sort((a, b) =>
-                {
-                    int suitCompare = a.Suit.CompareTo(b.Suit);
-                    return suitCompare != 0 ? suitCompare : a.Rank.CompareTo(b.Rank);
-                });
-            }
-            else
-            {
-                _cards.Mutable.Sort((a, b) =>
-                {
-                    int suitCompare = b.Suit.CompareTo(a.Suit);
-                    return suitCompare != 0 ? suitCompare : b.Rank.CompareTo(a.Rank);
-                });
+                throw new ArgumentNullException(nameof(comparer));
             }
 
+            Sort(comparer.Compare);
+        }
+
+        /// <summary>
+        ///     Sorts the hand with a comparison delegate. The sort is stable and raises
+        ///     <see cref="OnHandChanged" /> once.
+        /// </summary>
+        /// <param name="comparison">Card comparison.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="comparison" /> is null.</exception>
+        public void Sort(Comparison<CardData> comparison)
+        {
+            if (comparison == null)
+            {
+                throw new ArgumentNullException(nameof(comparison));
+            }
+
+            CardOrdering.StableSort(_cards.Mutable, comparison);
             OnHandChanged?.Invoke();
         }
 
@@ -362,7 +389,18 @@ namespace Neo.Cards
         /// <returns>List of cards.</returns>
         public List<CardData> GetCardsBySuit(Suit suit)
         {
-            return _cards.Data.Where(c => !c.IsJoker && c.Suit == suit).ToList();
+            List<CardData> result = new();
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                CardData card = cards[i];
+                if (!card.IsJoker && card.Suit == suit)
+                {
+                    result.Add(card);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -372,7 +410,18 @@ namespace Neo.Cards
         /// <returns>List of cards.</returns>
         public List<CardData> GetCardsByRank(Rank rank)
         {
-            return _cards.Data.Where(c => !c.IsJoker && c.Rank == rank).ToList();
+            List<CardData> result = new();
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                CardData card = cards[i];
+                if (!card.IsJoker && card.Rank == rank)
+                {
+                    result.Add(card);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -383,7 +432,18 @@ namespace Neo.Cards
         /// <returns>Matching cards.</returns>
         public List<CardData> GetCardsThatCanBeat(CardData attackCard, Suit? trump)
         {
-            return _cards.Data.Where(c => c.CanCover(attackCard, trump)).ToList();
+            List<CardData> result = new();
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                CardData card = cards[i];
+                if (card.CanCover(attackCard, trump))
+                {
+                    result.Add(card);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -394,49 +454,69 @@ namespace Neo.Cards
         public List<CardData> GetCardsMatchingRanks(IEnumerable<Rank> ranks)
         {
             HashSet<Rank> rankSet = new(ranks);
-            return _cards.Data.Where(c => !c.IsJoker && rankSet.Contains(c.Rank)).ToList();
+            List<CardData> result = new();
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                CardData card = cards[i];
+                if (!card.IsJoker && rankSet.Contains(card.Rank))
+                {
+                    result.Add(card);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
         ///     Lowest non-joker card (trump considered higher when set).
         /// </summary>
         /// <param name="trump">Optional trump suit.</param>
-        /// <returns>Lowest card or null if empty.</returns>
+        /// <returns>Lowest card, or null when the hand holds no non-joker card.</returns>
         public CardData? GetLowestCard(Suit? trump = null)
         {
-            if (_cards.Count == 0)
+            // WHY: one linear pass instead of OrderBy; the first card wins ties, as the old stable sort did.
+            CardData? best = null;
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
             {
-                return null;
+                CardData card = cards[i];
+                if (!card.IsJoker && (!best.HasValue || CompareTrumpThenRank(card, best.Value, trump) < 0))
+                {
+                    best = card;
+                }
             }
 
-            // WHY: FirstOrDefault on a value type would return a bogus default card for joker-only hands.
-            return _cards.Data
-                .Where(c => !c.IsJoker)
-                .OrderBy(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
-                .ThenBy(c => c.Rank)
-                .Cast<CardData?>()
-                .FirstOrDefault();
+            return best;
         }
 
         /// <summary>
         ///     Highest non-joker card (trump considered higher when set).
         /// </summary>
         /// <param name="trump">Optional trump suit.</param>
-        /// <returns>Highest card or null if empty.</returns>
+        /// <returns>Highest card, or null when the hand holds no non-joker card.</returns>
         public CardData? GetHighestCard(Suit? trump = null)
         {
-            if (_cards.Count == 0)
+            CardData? best = null;
+            List<CardData> cards = _cards.Mutable;
+            for (int i = 0; i < cards.Count; i++)
             {
-                return null;
+                CardData card = cards[i];
+                if (!card.IsJoker && (!best.HasValue || CompareTrumpThenRank(card, best.Value, trump) > 0))
+                {
+                    best = card;
+                }
             }
 
-            // WHY: FirstOrDefault on a value type would return a bogus default card for joker-only hands.
-            return _cards.Data
-                .Where(c => !c.IsJoker)
-                .OrderByDescending(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
-                .ThenByDescending(c => c.Rank)
-                .Cast<CardData?>()
-                .FirstOrDefault();
+            return best;
+        }
+
+        private static int CompareTrumpThenRank(CardData a, CardData b, Suit? trump)
+        {
+            int aTrump = trump.HasValue && a.Suit == trump.Value ? 1 : 0;
+            int bTrump = trump.HasValue && b.Suit == trump.Value ? 1 : 0;
+            int trumpCompare = aTrump.CompareTo(bTrump);
+            return trumpCompare != 0 ? trumpCompare : ((int)a.Rank).CompareTo((int)b.Rank);
         }
 
         #region ICardContainer explicit

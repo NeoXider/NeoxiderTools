@@ -22,7 +22,7 @@ The main goal of the module is to provide a ready-made solution for quickly inte
 - **File path**: `Assets/Neoxider/Scripts/Shop/Money.cs`
 
 **Description**
-`Money` is a singleton class responsible for managing all money operations in the game. It tracks the total balance, money earned per level, and automatically saves data between sessions.
+`Money` is a wallet component responsible for money operations. The first wallet is reachable as the `Money.I` singleton; further wallets with other save keys coexist. It tracks the current balance, money earned per level and all-time income, and saves data between sessions.
 
 **Key features**
 - **Three balance types**: `money` (current), `levelMoney` (for the current level), and `allMoney` (all money ever earned).
@@ -48,7 +48,7 @@ The main goal of the module is to provide a ready-made solution for quickly inte
 
 **Balance change notifications**
 
-`Money` does not expose `UnityEvent`s for balance changes. Subscribe to the reactive properties instead, e.g. `money.CurrentMoney.OnValueChanged += v => ...`. For plain UI text, add a `TextMoney` component and pick the balance mode — it wires itself.
+`Money` does not expose dedicated balance `UnityEvent`s. Subscribe to the reactive properties instead, e.g. `money.CurrentMoney.AddListener(OnBalanceChanged)` (or `CurrentMoney.OnChanged` for Inspector wiring). For plain UI text, add a `TextMoney` component and pick the balance mode — it wires itself, also when the wallet appears after the text.
 
 ---
 
@@ -63,6 +63,7 @@ The main goal of the module is to provide a ready-made solution for quickly inte
 
 **Public methods (canonical, stable string / asset API)**
 - `Buy(ShopItemData item)` / `Buy(string itemId)`: Runs the purchase/equip flow for an item.
+- `TryBuy(...)` / `TryBuyBundle(...)`: Same flows, returning a `ShopPurchaseStatus` (`Purchased`, `AlreadyOwned`, `InsufficientFunds`, `CommitFailed`, ...).
 - `BuyBundle(ShopBundleData bundle)` / `BuyBundle(string bundleId)`: Purchases a bundle and grants all its items.
 - `Select(...)` / `ShowPreview(...)`: Equips or previews an item (asset, id, or — via preview — index).
 - `IsOwned(...)` / `IsBundleOwned(...)` / `CanAfford(...)`: Query ownership and affordability.
@@ -70,7 +71,7 @@ The main goal of the module is to provide a ready-made solution for quickly inte
 - `SetItems(ShopItemData[])` / `SetBundles(ShopBundleData[])`: Replace the runtime catalog.
 - `ResolveCurrencyMoney(itemId)`: Returns the `Money` wallet a purchase of that item would spend from (respects per-item currency overrides).
 
-The integer-indexed methods (`Buy(int)`, `ShowPreview(int)`, `Id`, `Prices`) are `[Obsolete]` proxies kept for legacy scene wiring and slated for removal in v9.
+The integer-indexed methods (`Buy(int)`, `ShowPreview(int)`, `Id`, `Prices`) are `[Obsolete]` proxies kept for legacy scene wiring.
 
 **Unity Events**
 - `OnSelectId` / `OnPurchasedId` / `OnPurchaseFailedId` (`ShopStringEvent`, passes the item id) — the canonical events.
@@ -115,7 +116,7 @@ The integer-indexed methods (`Buy(int)`, `ShowPreview(int)`, `Id`, `Prices`) are
 - **File path**: `Assets/Neoxider/Scripts/Shop/TextMoney.cs`
 
 **Description**
-`TextMoney` is a UI component for displaying a selected balance from `Money`. It supports the `Money`, `LevelMoney`, and `AllMoney` modes, automatically subscribes to the appropriate event, and updates the text field without any extra code.
+`TextMoney` is a UI component for displaying a selected balance from `Money`. It supports the `Money`, `LevelMoney`, and `AllMoney` modes, automatically subscribes to the matching reactive property, and updates the text field without any extra code. When no wallet exists yet it binds as soon as one registers.
 
 ---
 

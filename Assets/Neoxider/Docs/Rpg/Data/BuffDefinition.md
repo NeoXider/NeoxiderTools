@@ -1,11 +1,12 @@
 ﻿# BuffDefinition
 
-**Purpose:** reusable ScriptableObject configuration for temporary stat/resource modifiers.
+**What it is:** reusable ScriptableObject configuration for temporary stat/resource modifiers. Script: `Scripts/Rpg/Data/BuffDefinition.cs`.
 
-## Setup
-
+**How to use:**
 - Create an asset via `Create -> Neoxider -> RPG -> Buff Definition`, author its modifiers, then call
   `RpgCharacter.ApplyBuff(definition)` or configure `ApplyBuffById` through `RpgNoCodeAction`.
+
+---
 
 ## Key Fields (Inspector)
 
@@ -42,9 +43,10 @@ runtime replacement aborts its stale continuation. Exceptions propagate and rele
 stacks/grants are not rolled back or replayed on refresh, including when an observer throws before
 the remaining captured grants are delivered.
 
-`AttackSpeedPercent` remains serialized enum data with **no runtime consumer**. It does not alter
-cooldown, cast delay or a mandatory `IRpgCombatReceiver` contract. Choose an explicit attack timing policy
-in gameplay code; a shared consumer is deferred.
+`AttackSpeedPercent` is read by `RpgCharacter.GetAttackSpeedMultiplier()` (`1 + percent / 100`, clamped at
+0). It changes cooldowns only for an `RpgAttackController` with `ScaleCooldownByAttackSpeed` enabled (off by
+default); cast delay and the `IRpgCombatReceiver` contract are unchanged. Other attack systems can read the
+same multiplier for their own timing policy.
 
 По-русски: `AddResourceCurrentFlat` выдаётся только за новую запись или добавленный эффективный стек,
 после пересчёта лимитов. Загрузка и обновление уже максимального стека не повторяют выдачу.

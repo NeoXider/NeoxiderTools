@@ -9,32 +9,37 @@ using UnityEngine.UI;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Static builder for the shared "module demo" look. Generalized from the Survivor HUD
-    ///     (<see cref="SurvivorUI" /> helpers + <see cref="SurvivorArt" /> procedural sprites) so every
-    ///     module demo gets the same bright, self-contained frame with zero imported assets: an ortho
-    ///     camera on a dark gradient backdrop, a ScaleWithScreenSize overlay canvas + EventSystem, a bold
-    ///     header with an accent underline, a centered rounded content card you add rows into, and a
-    ///     bottom log feed (newest first, auto-trimmed). Call <see cref="Build" /> in Start and add rows
-    ///     through the returned <see cref="Context" />.
+    ///     Deprecated runtime builder for the shared "module demo" look. Demo scenes are now authored in the
+    ///     editor by the Neo.Demo.Editor <c>DemoSceneKit</c> (camera, canvas, header, content rows, log feed and
+    ///     info card saved in the scene with persistent listeners), see dev-docs/DemoSceneBuilders.md. This class
+    ///     stays only as a fallback for controllers that have not been converted yet: <see cref="Build(string, Color, Transform)" />
+    ///     still assembles the same frame at runtime and returns a <see cref="Context" /> for rows and logging.
     /// </summary>
     public static class NeoDemoShell
     {
-        // WHY: mirrors SurvivorUI's palette so demos and the game read as one system.
-        public static readonly Color Ink = SurvivorUI.Ink;
-        public static readonly Color Panel = new Color(0.11f, 0.12f, 0.17f, 0.98f);
-        public static readonly Color Card = new Color(0.14f, 0.15f, 0.21f, 0.98f);
-        public static readonly Color Track = SurvivorUI.Track;
-        public static readonly Color Text = SurvivorUI.Text;
-        public static readonly Color Muted = SurvivorUI.Muted;
+        internal const string DeprecationMessage =
+            "Runtime-built demo frames are deprecated. Author the frame in the scene with the Neo.Demo.Editor " +
+            "DemoSceneKit (dev-docs/DemoSceneBuilders.md).";
+
+        // WHY: aliases DemoPalette so authored scenes and the runtime fallback read as one system.
+        public static readonly Color Ink = DemoPalette.Ink;
+        public static readonly Color Panel = DemoPalette.Panel;
+        public static readonly Color Card = DemoPalette.Card;
+        public static readonly Color Track = DemoPalette.Track;
+        public static readonly Color Text = DemoPalette.Text;
+        public static readonly Color Muted = DemoPalette.Muted;
 
         private const int SortingOrder = 25000;
+        private const int InfoSortingOrder = 30000;
         private const float ContentWidth = 1000f;
+        private const float InfoMargin = 24f;
         private const int LogLines = 5;
 
         /// <summary>
-        ///     Shows the tutorial info card unless the scene already contains a configured
-        ///     <see cref="ModuleDemoSceneInfo" /> (demo scenes ship one; empty scenes get one built here).
+        ///     Shows the tutorial info card unless the scene already contains a
+        ///     <see cref="ModuleDemoSceneInfo" /> (authored demo scenes ship one; empty scenes get one built here).
         /// </summary>
+        [Obsolete(DeprecationMessage)]
         public static void ShowInfoCardOnce(string title, string description, params string[] hints)
         {
             if (UnityEngine.Object.FindFirstObjectByType<ModuleDemoSceneInfo>() == null)
@@ -49,12 +54,14 @@ namespace Neo.Samples
         /// </summary>
         /// <param name="title">Big header title (module name).</param>
         /// <param name="accent">Accent color for underline, buttons, fills and highlights.</param>
+        [Obsolete(DeprecationMessage)]
         public static Context Build(string title, Color accent)
         {
             return Build(title, accent, null);
         }
 
         /// <summary>Builds an owned frame. Dispose the returned context when its controller is removed.</summary>
+        [Obsolete(DeprecationMessage)]
         public static Context Build(string title, Color accent, Transform owner)
         {
             Context ctx = new() { Accent = accent };
@@ -134,11 +141,11 @@ namespace Neo.Samples
             rt.anchoredPosition = new Vector2(0f, 8f);
             rt.sizeDelta = new Vector2(ContentWidth, 0f);
 
-            var shadow = card.gameObject.AddComponent<Shadow>();
+            Shadow shadow = card.gameObject.AddComponent<Shadow>();
             shadow.effectColor = new Color(0f, 0f, 0f, 0.4f);
             shadow.effectDistance = new Vector2(0f, -4f);
 
-            var layout = card.gameObject.AddComponent<VerticalLayoutGroup>();
+            VerticalLayoutGroup layout = card.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(24, 24, 24, 24);
             layout.spacing = 8f;
             layout.childControlWidth = true;
@@ -147,7 +154,7 @@ namespace Neo.Samples
             layout.childForceExpandHeight = false;
             layout.childAlignment = TextAnchor.UpperCenter;
 
-            var fitter = card.gameObject.AddComponent<ContentSizeFitter>();
+            ContentSizeFitter fitter = card.gameObject.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             return rt;
@@ -160,8 +167,8 @@ namespace Neo.Samples
                 return;
             }
 
-            var go = new GameObject("Demo Camera");
-            var cam = go.AddComponent<Camera>();
+            GameObject go = new("Demo Camera");
+            Camera cam = go.AddComponent<Camera>();
             cam.orthographic = true;
             cam.orthographicSize = 5.4f;
             cam.clearFlags = CameraClearFlags.SolidColor;
@@ -179,7 +186,7 @@ namespace Neo.Samples
                 return;
             }
 
-            var go = new GameObject("EventSystem");
+            GameObject go = new("EventSystem");
             go.AddComponent<EventSystem>();
 #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
             Type moduleType = Type.GetType(
@@ -195,6 +202,106 @@ namespace Neo.Samples
 #else
             go.AddComponent<StandaloneInputModule>();
 #endif
+        }
+
+        /// <summary>
+        ///     Deprecated runtime fallback behind <see cref="ModuleDemoSceneInfo.Show" />: builds the info card
+        ///     under the info host (so it is destroyed with it) and binds it to the component.
+        /// </summary>
+        internal static void BuildRuntimeInfoOverlay(ModuleDemoSceneInfo info)
+        {
+            if (info == null)
+            {
+                return;
+            }
+
+            EnsureEventSystem();
+            GameObject canvasGo = new("[ModuleDemoInfo] " + info.ModuleName, typeof(RectTransform));
+            canvasGo.transform.SetParent(info.transform, false);
+            Canvas canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = InfoSortingOrder;
+            CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            canvasGo.AddComponent<GraphicRaycaster>();
+
+            Image panel = SurvivorUI.Image("Panel", canvasGo.transform, info.BackgroundColor);
+            RectTransform panelRect = panel.rectTransform;
+            Vector2 anchor = CornerAnchor(info.OverlayCorner, out Vector2 offset);
+            panelRect.anchorMin = anchor;
+            panelRect.anchorMax = anchor;
+            panelRect.pivot = anchor;
+            panelRect.anchoredPosition = offset;
+            panelRect.sizeDelta = new Vector2(info.PanelWidth, 0f);
+            VerticalLayoutGroup layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(18, 18, 14, 16);
+            layout.spacing = 10f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            ContentSizeFitter fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            RectTransform header = SurvivorUI.Rect("Header", panelRect);
+            HorizontalLayoutGroup row = header.gameObject.AddComponent<HorizontalLayoutGroup>();
+            row.spacing = 10f;
+            row.childControlWidth = true;
+            row.childControlHeight = true;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = false;
+            row.childAlignment = TextAnchor.MiddleLeft;
+            TMP_Text title = SurvivorUI.Label("Title", header, info.ModuleName, 21f, Text,
+                TextAlignmentOptions.Left, FontStyles.Bold);
+            title.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            Button collapse = SurvivorUI.Button("Collapse", header, new Color(1f, 1f, 1f, 0.07f));
+            LayoutElement collapseSize = collapse.gameObject.AddComponent<LayoutElement>();
+            collapseSize.preferredWidth = 30f;
+            collapseSize.preferredHeight = 26f;
+            TMP_Text collapseLabel = SurvivorUI.Label("Label", collapse.transform, "-", 17f, Muted,
+                TextAlignmentOptions.Center, FontStyles.Bold);
+            SurvivorUI.Stretch(collapseLabel.rectTransform);
+            collapse.onClick.AddListener(info.ToggleCollapsed);
+
+            Image divider = SurvivorUI.Image("Divider", panelRect, DemoPalette.WithAlpha(info.AccentColor, 0.9f), false);
+            LayoutElement dividerSize = divider.gameObject.AddComponent<LayoutElement>();
+            dividerSize.minHeight = 2f;
+            dividerSize.preferredHeight = 2f;
+
+            RectTransform body = SurvivorUI.Rect("Body", panelRect);
+            VerticalLayoutGroup bodyLayout = body.gameObject.AddComponent<VerticalLayoutGroup>();
+            bodyLayout.spacing = 7f;
+            bodyLayout.childControlWidth = true;
+            bodyLayout.childControlHeight = true;
+            bodyLayout.childForceExpandWidth = true;
+            bodyLayout.childForceExpandHeight = false;
+            TMP_Text description = SurvivorUI.Label("Description", body, info.Purpose, 15f, Text);
+            TMP_Text hints = SurvivorUI.Label("Hints", body, string.Empty, 13f, Muted);
+            hints.paragraphSpacing = 50f;
+
+            info.AssignOverlay(canvasGo, title, description, hints, collapseLabel, divider.gameObject, body.gameObject);
+            info.ApplyContent();
+        }
+
+        private static Vector2 CornerAnchor(ModuleDemoSceneInfo.Corner corner, out Vector2 offset)
+        {
+            switch (corner)
+            {
+                case ModuleDemoSceneInfo.Corner.TopRight:
+                    offset = new Vector2(-InfoMargin, -InfoMargin);
+                    return new Vector2(1f, 1f);
+                case ModuleDemoSceneInfo.Corner.BottomLeft:
+                    offset = new Vector2(InfoMargin, InfoMargin);
+                    return new Vector2(0f, 0f);
+                case ModuleDemoSceneInfo.Corner.BottomRight:
+                    offset = new Vector2(-InfoMargin, InfoMargin);
+                    return new Vector2(1f, 0f);
+                default:
+                    offset = new Vector2(InfoMargin, -InfoMargin);
+                    return new Vector2(0f, 1f);
+            }
         }
 
         private static Color Tint(Color accent)
@@ -318,7 +425,7 @@ namespace Neo.Samples
 
                 if (_logText != null)
                 {
-                    var sb = new System.Text.StringBuilder();
+                    System.Text.StringBuilder sb = new();
                     for (int i = 0; i < _log.Count; i++)
                     {
                         float a = Mathf.Lerp(1f, 0.35f, i / (float)LogLines);
@@ -339,14 +446,14 @@ namespace Neo.Samples
             public Button[] AddButtonRow(params (string label, Action onClick)[] buttons)
             {
                 RectTransform row = AddRow(52f);
-                var group = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+                HorizontalLayoutGroup group = row.gameObject.AddComponent<HorizontalLayoutGroup>();
                 group.spacing = 8f;
                 group.childControlWidth = true;
                 group.childControlHeight = true;
                 group.childForceExpandWidth = true;
                 group.childForceExpandHeight = true;
 
-                var made = new Button[buttons.Length];
+                Button[] made = new Button[buttons.Length];
                 for (int i = 0; i < buttons.Length; i++)
                 {
                     (string label, Action onClick) = buttons[i];
@@ -410,7 +517,7 @@ namespace Neo.Samples
                 Image check = SurvivorUI.Image("Check", box.transform, Accent);
                 SurvivorUI.Stretch(check.rectTransform, 6f);
 
-                var toggle = box.gameObject.AddComponent<Toggle>();
+                Toggle toggle = box.gameObject.AddComponent<Toggle>();
                 toggle.targetGraphic = box;
                 toggle.graphic = check;
                 toggle.isOn = initial;
@@ -501,7 +608,7 @@ namespace Neo.Samples
             {
                 if (IsDisposed) throw new ObjectDisposedException(nameof(Context));
                 RectTransform row = SurvivorUI.Rect("Row", Content);
-                var element = row.gameObject.AddComponent<LayoutElement>();
+                LayoutElement element = row.gameObject.AddComponent<LayoutElement>();
                 element.minHeight = height;
                 element.preferredHeight = height;
                 element.flexibleWidth = 1f;
@@ -510,10 +617,10 @@ namespace Neo.Samples
 
             private static Slider BuildSlider(Transform parent, float min, float max, float initial, Color accent)
             {
-                var root = new GameObject("Slider", typeof(RectTransform));
-                var rt = (RectTransform)root.transform;
+                GameObject root = new("Slider", typeof(RectTransform));
+                RectTransform rt = (RectTransform)root.transform;
                 rt.SetParent(parent, false);
-                var slider = root.AddComponent<Slider>();
+                Slider slider = root.AddComponent<Slider>();
 
                 Image background = SurvivorUI.Image("Background", root.transform, Track);
                 RectTransform bgRt = background.rectTransform;
@@ -546,7 +653,7 @@ namespace Neo.Samples
                 slider.maxValue = max;
                 slider.SetValueWithoutNotify(initial);
 
-                var colors = slider.colors;
+                ColorBlock colors = slider.colors;
                 colors.highlightedColor = Color.white;
                 slider.colors = colors;
                 return slider;

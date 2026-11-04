@@ -17,7 +17,7 @@ namespace Neo.Tests.Play
         [TearDown]
         public void TearDown()
         {
-            // Destroy the owner first; its visuals may live outside its hierarchy.
+            // WHY: Destroy the owner first; its visuals may live outside its hierarchy.
             foreach (GameObject item in _objects)
             {
                 if (item != null)
@@ -123,7 +123,7 @@ namespace Neo.Tests.Play
             retainedRequest.CompletionMode = AnimationFlyCompletionMode.KeepAlive;
             retainedRequest.OnItemStarted = item => retained = Track(item);
             yield return WaitForCompletion(fly.Play(retainedRequest));
-            // This call reused the pooled visual and transferred it to the caller.
+            // WHY: This call reused the pooled visual and transferred it to the caller.
             Assert.That(retained, Is.SameAs(pooled));
             pooledRequest.OnItemStarted = item => pooled = item;
             yield return WaitForCompletion(fly.Play(pooledRequest));
@@ -137,7 +137,7 @@ namespace Neo.Tests.Play
             pending.OnItemStarted = item => active = item;
             pending.OnReward = () => rewards++;
             AnimationFly.AnimationFlyResult incomplete = fly.Play(pending);
-            // Keep a separate pooled item while the first pending item is in flight.
+            // WHY: Keep a separate pooled item while the first pending item is in flight.
             yield return WaitForCompletion(fly.Play(pooledRequest));
 
             Object.Destroy(fly.gameObject);

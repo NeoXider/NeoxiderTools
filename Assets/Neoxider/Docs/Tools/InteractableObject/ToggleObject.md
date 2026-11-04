@@ -1,14 +1,15 @@
 ﻿# ToggleObject
 
-`ToggleObject` holds reactive boolean state and emits action callbacks from `Set` / `Toggle`. Useful
+**What it is:** `ToggleObject` holds reactive boolean state and emits action callbacks from `Set` / `Toggle`. Useful
 for C# or Inspector wiring such as switching panels, lights, or doors. File:
 `Assets/Neoxider/Scripts/Tools/InteractableObject/ToggleObject.cs`, namespace: `Neo.Tools`.
 
-## Typical use
-
+**How to use:**
 1. Add `ToggleObject` to a scene object.
 2. Wire a button's `onClick` to `Toggle()`.
 3. Subscribe `ON` and `OFF` events to the desired actions (e.g. `GameObject.SetActive`).
+
+---
 
 ## Main field
 

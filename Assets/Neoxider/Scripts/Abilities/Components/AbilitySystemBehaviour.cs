@@ -28,10 +28,20 @@ namespace Neo.Abilities
         [Tooltip("Advance the system every frame with Time.deltaTime. Disable for manual/server ticking.")]
         [SerializeField] private bool _autoTick = true;
 
-        private readonly Dictionary<UnitId, AbilityUnitBehaviour> _behaviours =
-            new Dictionary<UnitId, AbilityUnitBehaviour>();
+        [Header("Performance")]
+        [Tooltip("Cell size (world units) of a per-frame spatial grid for unit radius queries (projectiles, " +
+                 "area effects, auto-casters). 0 = scan every registered unit on each query, always exact. " +
+                 "> 0 = snapshot unit positions once per frame: much faster with hundreds of units; a unit moved " +
+                 "by another script later in the same frame is found at its new position from the next frame. " +
+                 "About the typical hit/area radius (2-5) works well.")]
+        [SerializeField] [Min(0f)] private float _spatialCellSize;
+
+        private readonly Dictionary<UnitId, UnitPresence> _behaviours = new Dictionary<UnitId, UnitPresence>();
 
         private AbilitySystem _system;
+        private AbilitySpatialGrid _grid;
+        private int _gridFrame = -1;
+        private bool _gridDirty = true;
 
         /// <summary>Scene singleton; auto-created when first accessed.</summary>
         public static AbilitySystemBehaviour I
@@ -74,6 +84,29 @@ namespace Neo.Abilities
         ///     callers are unaffected.
         /// </summary>
         public bool Paused { get; set; }
+
+        /// <summary>
+        ///     Cell size of the per-frame spatial grid used by <see cref="QueryUnitsInRadius" />; 0 disables
+        ///     the grid (exact linear scan). Non-finite or negative values are treated as 0.
+        /// </summary>
+        public float SpatialCellSize
+        {
+            get => _spatialCellSize;
+            set
+            {
+                _spatialCellSize = float.IsNaN(value) || float.IsInfinity(value) || value < 0f ? 0f : value;
+                _gridDirty = true;
+            }
+        }
+
+        /// <summary>
+        ///     Makes the next radius query re-read every unit position. Call it after teleporting units by
+        ///     script when same-frame queries must see the new positions (spatial grid enabled only).
+        /// </summary>
+        public void InvalidateSpatialCache()
+        {
+            _gridDirty = true;
+        }
 
         private void Awake()
         {
@@ -149,29 +182,40 @@ namespace Neo.Abilities
         {
             if (behaviour != null && behaviour.UnitId.IsValid)
             {
-                _behaviours[behaviour.UnitId] = behaviour;
+                _behaviours[behaviour.UnitId] = new UnitPresence(behaviour);
+                _gridDirty = true;
             }
         }
 
         internal void UnregisterBehaviour(AbilityUnitBehaviour behaviour)
         {
-            if (behaviour != null && behaviour.UnitId.IsValid)
+            if (behaviour == null || !behaviour.UnitId.IsValid || !_behaviours.Remove(behaviour.UnitId))
             {
-                _behaviours.Remove(behaviour.UnitId);
+                return;
+            }
+
+            // WHY: removing a registry entry keeps the enumeration order of the others, so the current
+            // snapshot can drop the unit in place; kills no longer force a rebuild on the next query.
+            if (!IsSpatialGridCurrent() || !_grid.Remove(behaviour.UnitId))
+            {
+                _gridDirty = true;
             }
         }
+
+        /// <summary>Number of units with a registered scene presence.</summary>
+        public int RegisteredUnitCount => _behaviours.Count;
 
         /// <summary>Scene component of a unit id, when the unit has a scene presence.</summary>
         public AbilityUnitBehaviour GetBehaviour(UnitId id)
         {
-            return _behaviours.TryGetValue(id, out AbilityUnitBehaviour behaviour) ? behaviour : null;
+            return _behaviours.TryGetValue(id, out UnitPresence presence) ? presence.Behaviour : null;
         }
 
         public bool TryGetPosition(UnitId unit, out Vector3 position)
         {
-            if (_behaviours.TryGetValue(unit, out AbilityUnitBehaviour behaviour) && behaviour != null)
+            if (_behaviours.TryGetValue(unit, out UnitPresence presence) && presence.Behaviour != null)
             {
-                position = behaviour.transform.position;
+                position = presence.Transform.position;
                 return true;
             }
 
@@ -179,17 +223,34 @@ namespace Neo.Abilities
             return false;
         }
 
+        /// <summary>
+        ///     Collects registered units within <paramref name="radius" /> of <paramref name="point" />
+        ///     (inclusive, <see cref="AbilitySpatialGrid.IsWithinRadius" />). Uses the per-frame spatial grid when
+        ///     <see cref="SpatialCellSize" /> is positive; both paths return the same ids in the same order (the
+        ///     hub's registry enumeration order) for the same positions. That order matches registration order
+        ///     only until a unit unregisters.
+        /// </summary>
         public void QueryUnitsInRadius(Vector3 point, float radius, List<UnitId> results)
         {
-            float sqrRadius = radius * radius;
-            foreach (KeyValuePair<UnitId, AbilityUnitBehaviour> pair in _behaviours)
+            if (results == null)
             {
-                if (pair.Value == null)
+                return;
+            }
+
+            if (_spatialCellSize > 0f)
+            {
+                EnsureSpatialGrid().Query(point, radius, results);
+                return;
+            }
+
+            foreach (KeyValuePair<UnitId, UnitPresence> pair in _behaviours)
+            {
+                if (pair.Value.Behaviour == null)
                 {
                     continue;
                 }
 
-                if ((pair.Value.transform.position - point).sqrMagnitude <= sqrRadius)
+                if (AbilitySpatialGrid.IsWithinRadius(pair.Value.Transform.position, point, radius))
                 {
                     results.Add(pair.Key);
                 }
@@ -198,9 +259,17 @@ namespace Neo.Abilities
 
         public bool TryMoveUnit(UnitId unit, Vector3 newPosition)
         {
-            if (_behaviours.TryGetValue(unit, out AbilityUnitBehaviour behaviour) && behaviour != null)
+            if (_behaviours.TryGetValue(unit, out UnitPresence presence) && presence.Behaviour != null)
             {
-                behaviour.transform.position = newPosition;
+                presence.Transform.position = newPosition;
+                // WHY: knockback/pull/teleport interleave with hit queries; moving the one entry keeps the
+                // snapshot current instead of rebuilding it on the next query. The transform is read back
+                // so the entry holds exactly what a rebuild would store.
+                if (!IsSpatialGridCurrent() || !_grid.Move(unit, presence.Transform.position))
+                {
+                    _gridDirty = true;
+                }
+
                 return true;
             }
 
@@ -224,8 +293,51 @@ namespace Neo.Abilities
                 return;
             }
 
-            ISpawnedAbilityEntity spawned = instance.GetComponent<ISpawnedAbilityEntity>();
-            spawned?.OnSpawned(request, this);
+            // WHY: TryGetComponent avoids the editor-only allocation GetComponent makes for a missing component.
+            if (instance.TryGetComponent(out ISpawnedAbilityEntity spawned))
+            {
+                spawned.OnSpawned(request, this);
+            }
+        }
+
+        private AbilitySpatialGrid EnsureSpatialGrid()
+        {
+            if (_grid == null)
+            {
+                _grid = new AbilitySpatialGrid(_spatialCellSize);
+                _gridDirty = true;
+            }
+            else if (!_grid.CellSize.Equals(_spatialCellSize))
+            {
+                _grid.CellSize = _spatialCellSize;
+                _gridDirty = true;
+            }
+
+            int frame = Time.frameCount;
+            if (_gridDirty || frame != _gridFrame)
+            {
+                _grid.Clear();
+                foreach (KeyValuePair<UnitId, UnitPresence> pair in _behaviours)
+                {
+                    if (pair.Value.Behaviour != null)
+                    {
+                        _grid.Add(pair.Key, pair.Value.Transform.position);
+                    }
+                }
+
+                _gridFrame = frame;
+                _gridDirty = false;
+            }
+
+            return _grid;
+        }
+
+        // WHY: only a snapshot taken this frame, not invalidated and built with the configured cell size
+        // may be patched in place; anything else is rebuilt by the next query anyway.
+        private bool IsSpatialGridCurrent()
+        {
+            return _spatialCellSize > 0f && _grid != null && !_gridDirty && _gridFrame == Time.frameCount &&
+                   _grid.CellSize.Equals(_spatialCellSize);
         }
 
         private GameObject ResolveArchetype(string id)
@@ -237,13 +349,27 @@ namespace Neo.Abilities
 
             for (int i = 0; i < _archetypes.Count; i++)
             {
-                if (string.Equals(_archetypes[i].Id, id, StringComparison.OrdinalIgnoreCase))
+                if (AbilityIdComparer.Same(_archetypes[i].Id, id))
                 {
                     return _archetypes[i].Prefab;
                 }
             }
 
             return null;
+        }
+
+        // WHY: the Transform is cached with the registration; radius queries read every unit's position
+        // and the transform property is a native call per access.
+        private readonly struct UnitPresence
+        {
+            public readonly AbilityUnitBehaviour Behaviour;
+            public readonly Transform Transform;
+
+            public UnitPresence(AbilityUnitBehaviour behaviour)
+            {
+                Behaviour = behaviour;
+                Transform = behaviour.transform;
+            }
         }
 
         // WHY: with Enter Play Mode Options disabling Domain Reload the static hub survives between

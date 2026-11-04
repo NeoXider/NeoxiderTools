@@ -67,7 +67,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void PositionInsideDenyCollider_IsRejected()
         {
-            var box = _denyGo.AddComponent<BoxCollider>();
+            BoxCollider box = _denyGo.AddComponent<BoxCollider>();
             box.size = new Vector3(2f, 2f, 2f);
             Physics.SyncTransforms();
 
@@ -80,7 +80,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void PositionInsideDenyCollider2D_IsRejected()
         {
-            var box = _denyGo.AddComponent<BoxCollider2D>();
+            BoxCollider2D box = _denyGo.AddComponent<BoxCollider2D>();
             box.size = new Vector2(2f, 2f);
             Physics2D.SyncTransforms();
 

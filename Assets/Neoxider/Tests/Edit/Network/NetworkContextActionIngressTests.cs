@@ -3,11 +3,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Mirror;
 using Neo.Network;
+using Neo.Tests.Performance;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
+using TestTransport = global::Neo.Editor.Tests.Audit20261023FixtureNeoNetworkManagerHardeningUnsupportedTransport;
 using NetworkDiagnostics = Neo.Network.NetworkDiagnostics;
 using ManagerProbe = global::Neo.Editor.Tests.Audit20261023FixtureNetworkContextActionIngressManagerProbe;
 using CooldownRelay = global::Neo.Editor.Tests.Audit20261023FixtureNetworkContextActionIngressCooldownRelay;
@@ -338,6 +342,138 @@ namespace Neo.Editor.Tests
             }
         }
 
+        [Test]
+        public void ServerListenerException_IsLogged_AndDoesNotReachMirrorsDisconnectPath()
+        {
+            NetworkConnectionToClient peer = NewPeer(20, 100);
+            NetworkContextActionRelay relay = NewRelay(10);
+            relay.OnNetworkTriggered.AddListener(() => throw new InvalidOperationException("server relay listener bug"));
+            LogAssert.Expect(LogType.Exception, new Regex("server relay listener bug"));
+
+            Assert.DoesNotThrow(() => Receive(peer, Message(relay, 100)),
+                "an exception escaping the handler makes Mirror disconnect the innocent sender");
+            Assert.That(_applied, Is.EqualTo(1), "listeners before the failing one still ran");
+        }
+
+        [Test]
+        public void ClientListenerException_IsLogged_AndDoesNotReachMirrorsDisconnectPath()
+        {
+            SetClientActive(true);
+            NetworkContextActionRelay relay = NewRelay(10);
+            NetworkIdentity context = NewIdentity(100);
+            NetworkClient.spawned[10] = relay.GetComponent<NetworkIdentity>();
+            NetworkClient.spawned[100] = context;
+            relay.OnNetworkTriggered.AddListener(() => throw new InvalidOperationException("client relay listener bug"));
+            LogAssert.Expect(LogType.Exception, new Regex("client relay listener bug"));
+
+            Assert.DoesNotThrow(() => CallStatic("OnClientMessage", Message(relay, 100)));
+            Assert.That(_applied, Is.EqualTo(1));
+        }
+
+        [TestCase(NetworkActionScope.AllClients)]
+        [TestCase(NetworkActionScope.OthersOnly)]
+        public void Broadcast_ReachesTheRelayObserversOnly(NetworkActionScope scope)
+        {
+            Transport savedTransport = UseCountingTransport(out Func<int> broadcasts, out Action stopCounting);
+            try
+            {
+                NetworkConnectionToClient sender = NewPeer(20, 100);
+                NetworkConnectionToClient other = NewPeer(21, 101);
+                NewPeer(24, 102);
+                NetworkServer.connections[22] = new NetworkConnectionToClient(22)
+                    { isReady = false, isAuthenticated = true };
+                NetworkConnectionToClient spectator = new NetworkConnectionToClient(23)
+                    { isReady = true, isAuthenticated = true };
+                NetworkServer.connections[23] = spectator;
+                NetworkContextActionRelay relay = NewRelay(10);
+                relay.Scope = scope;
+                Observe(relay, sender, other, spectator);
+
+                Receive(sender, Message(relay, 100));
+
+                // WHY: peer 24 is spawned but does not observe the relay (hidden by interest management), so it has
+                // no relay and possibly no handler: a message would disconnect it. The unready peer 22 is still
+                // loading. The playerless spectator observes the relay's object, so it holds the relay and is served.
+                Assert.That(broadcasts(), Is.EqualTo(scope == NetworkActionScope.AllClients ? 3 : 2));
+            }
+            finally
+            {
+                stopCounting();
+                Transport.active = savedTransport;
+            }
+        }
+
+        [Test]
+        public void HostListenerException_DoesNotSkipTheRemoteObservers()
+        {
+            PropertyInfo local = typeof(NetworkServer).GetProperty("localConnection", Static);
+            object savedLocal = local.GetValue(null);
+            Transport savedTransport = UseCountingTransport(out Func<int> broadcasts, out Action stopCounting);
+            try
+            {
+                SetClientActive(true);
+                LocalConnectionToClient host = new LocalConnectionToClient();
+                local.SetValue(null, host);
+                NetworkConnectionToClient sender = NewPeer(20, 100);
+                NetworkConnectionToClient other = NewPeer(21, 101);
+                NetworkContextActionRelay relay = NewRelay(10);
+                relay.Scope = NetworkActionScope.AllClients;
+                Observe(relay, host, sender, other);
+                relay.OnNetworkTriggered.AddListener(() => throw new InvalidOperationException("host relay listener bug"));
+                LogAssert.Expect(LogType.Exception, new Regex("host relay listener bug"));
+
+                Receive(sender, Message(relay, 100));
+
+                Assert.That(broadcasts(), Is.EqualTo(2),
+                    "remote observers are served before the host applies, so a host listener bug cannot desync them");
+                Assert.That(_applied, Is.EqualTo(1), "the host still applied the action locally");
+            }
+            finally
+            {
+                stopCounting();
+                Transport.active = savedTransport;
+                local.SetValue(null, savedLocal);
+            }
+        }
+
+        [Test]
+        public void ResolveType_RetriesAMissOnlyAfterAnotherAssemblyLoads()
+        {
+            const string Unknown = "Neo.Network.Tests.TypeLoadedLater";
+            IDictionary misses = (IDictionary)typeof(NetworkContextActionRelay)
+                .GetField("s_unresolvedTypes", Static).GetValue(null);
+
+            Assert.That(NetworkContextActionRelay.ResolveType(Unknown), Is.Null);
+            object firstScan = misses[Unknown];
+            Assert.That(NetworkContextActionRelay.ResolveType(Unknown), Is.Null);
+            Assert.That(misses[Unknown], Is.EqualTo(firstScan), "without a new assembly the cached miss is reused");
+
+            CallStatic("OnAssemblyLoaded", null, null);
+
+            Assert.That(NetworkContextActionRelay.ResolveType(Unknown), Is.Null);
+            Assert.That(misses[Unknown], Is.Not.EqualTo(firstScan),
+                "a DLL loaded at runtime (a mod or hot update) may define the type, so the miss is scanned again");
+        }
+
+        [Test]
+        public void ResolveType_RepeatsWithoutRescanningOrAllocating()
+        {
+            string known = typeof(NetworkContextActionRelay).FullName;
+            const string Unknown = "Neo.Network.Tests.TypeThatDoesNotExist";
+            Assert.That(NetworkContextActionRelay.ResolveType(known), Is.SameAs(typeof(NetworkContextActionRelay)));
+            Assert.That(NetworkContextActionRelay.ResolveType(Unknown), Is.Null);
+
+            using GcAllocCounter allocationCounter = GcAllocCounter.CreateOrIgnore();
+            allocationCounter.Begin();
+            Type knownAgain = NetworkContextActionRelay.ResolveType(known);
+            Type unknownAgain = NetworkContextActionRelay.ResolveType(Unknown);
+            long allocated = allocationCounter.End();
+
+            Assert.That(knownAgain, Is.SameAs(typeof(NetworkContextActionRelay)));
+            Assert.That(unknownAgain, Is.Null);
+            Assert.That(allocated, Is.Zero, "a repeated lookup must not walk AppDomain assemblies again");
+        }
+
         private NetworkIdentity NewIdentity(uint id)
         {
             GameObject go = new GameObject("Ingress " + id, typeof(NetworkIdentity));
@@ -372,6 +508,35 @@ namespace Neo.Editor.Tests
             NetworkServer.spawned[playerId] = identity;
             NetworkServer.connections[connectionId] = peer;
             return peer;
+        }
+
+        private Transport UseCountingTransport(out Func<int> sentRelayMessages, out Action stopCounting)
+        {
+            GameObject transportObject = new GameObject("Ingress test transport");
+            _objects.Add(transportObject);
+            Transport saved = Transport.active;
+            Transport.active = transportObject.AddComponent<TestTransport>();
+            int count = 0;
+            Action<Mirror.NetworkDiagnostics.MessageInfo> countRelayMessages = info =>
+            {
+                if (info.message is NetworkContextActionMessage)
+                {
+                    count += info.count;
+                }
+            };
+            Mirror.NetworkDiagnostics.OutMessageEvent += countRelayMessages;
+            sentRelayMessages = () => count;
+            stopCounting = () => Mirror.NetworkDiagnostics.OutMessageEvent -= countRelayMessages;
+            return saved;
+        }
+
+        private static void Observe(NetworkContextActionRelay relay, params NetworkConnectionToClient[] connections)
+        {
+            NetworkIdentity identity = relay.GetComponent<NetworkIdentity>();
+            foreach (NetworkConnectionToClient connection in connections)
+            {
+                identity.observers[connection.connectionId] = connection;
+            }
         }
 
         private static NetworkContextActionMessage Message(NetworkContextActionRelay relay, uint contextId) =>

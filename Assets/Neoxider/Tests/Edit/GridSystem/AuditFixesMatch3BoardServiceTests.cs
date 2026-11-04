@@ -73,7 +73,8 @@ namespace Neo.Editor.Tests.GridSystem
                 Assert.That(phases, Is.EqualTo(1), "Positive control: a real Clear phase ran before its delay.");
                 Assert.That(changed, Is.EqualTo(1));
                 Assert.That(GetResolveRoutineField().GetValue(service), Is.Not.Null);
-                service.enabled = false; // Real Unity OnDisable delivery; component disable alone does not stop coroutines.
+                // WHY: real Unity OnDisable delivery; disabling only the component does not stop its coroutines.
+                service.enabled = false;
                 Assert.That(GetResolveRoutineField().GetValue(service), Is.Null);
                 yield return new WaitForSecondsRealtime(0.15f);
                 Assert.That(phases, Is.EqualTo(1), "No Collapse/Refill/Completed work may follow disable.");

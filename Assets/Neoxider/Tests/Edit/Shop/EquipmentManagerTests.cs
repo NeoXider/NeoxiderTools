@@ -27,18 +27,18 @@ namespace Neo.Editor.Tests
             _go = new GameObject("EquipmentManagerTests");
             _manager = _go.AddComponent<EquipmentManager>();
 
-            var imageGo = new GameObject("HairImage", typeof(Image));
+            GameObject imageGo = new GameObject("HairImage", typeof(Image));
             imageGo.transform.SetParent(_go.transform);
             _hairImage = imageGo.GetComponent<Image>();
 
-            var texture = new Texture2D(4, 4);
+            Texture2D texture = new Texture2D(4, 4);
             _sprite = Sprite.Create(texture, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
             _cleanup.Add(texture);
             _cleanup.Add(_sprite);
 
             _hairItem = CreateItem("hair_red", "Hair", _sprite);
 
-            var slot = new EquipmentManager.CategorySlot
+            EquipmentManager.CategorySlot slot = new EquipmentManager.CategorySlot
             {
                 CategoryId = "Hair",
                 ImageTarget = _hairImage,
@@ -67,7 +67,7 @@ namespace Neo.Editor.Tests
 
         private EquipItemDefinition CreateItem(string id, string categoryId, Sprite sprite)
         {
-            var item = ScriptableObject.CreateInstance<EquipItemDefinition>();
+            EquipItemDefinition item = ScriptableObject.CreateInstance<EquipItemDefinition>();
             _cleanup.Add(item);
 
             typeof(EquipItemDefinition).GetField("_id", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -166,7 +166,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Equip_ReplacesItemInSameCategory()
         {
-            var texture = new Texture2D(4, 4);
+            Texture2D texture = new Texture2D(4, 4);
             Sprite otherSprite = Sprite.Create(texture, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
             _cleanup.Add(texture);
             _cleanup.Add(otherSprite);

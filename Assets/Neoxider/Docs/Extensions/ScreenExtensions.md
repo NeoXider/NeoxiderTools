@@ -1,5 +1,11 @@
 ﻿# ScreenExtensions
 
+**What it is:** extension methods for point visibility, viewport bounds and world placement at screen edges. File: `Scripts/Extensions/ScreenExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** add `using Neo.Extensions;` and call `position.IsOnScreen(camera)` or `camera.GetWorldPositionAtScreenEdge(ScreenEdge.Top)`. A null **or destroyed** camera argument falls back to `Camera.main`.
+
+---
+
 Use `using Neo.Extensions;` for point visibility, viewport bounds and world placement at screen edges. Supply the camera explicitly for split-screen or multiple-camera scenes. A null camera uses Camera.main; no camera returns the documented fallback for each operation.
 
 ## Coordinate contracts

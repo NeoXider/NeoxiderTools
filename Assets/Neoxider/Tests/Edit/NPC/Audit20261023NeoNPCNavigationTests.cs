@@ -1,6 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Neo.NPC.Combat;
 using Neo.NPC.Navigation;
+using Neo.Rpg;
+using Neo.Rpg.Components;
+using Neo.Tests.Performance;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -23,7 +27,7 @@ namespace Neo.NPC.Tests
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            // Native agent registration requires Play Mode, even though this is an Edit assembly.
+            // WHY: native agent registration requires Play Mode, even though this is an Edit assembly.
             yield return new EnterPlayMode();
             Assert.That(Application.isPlaying, Is.True);
             yield return WaitForNativeFrame();
@@ -109,7 +113,7 @@ namespace Neo.NPC.Tests
 
             if (Application.isPlaying)
             {
-                // Runner-supported top-level transition, including after an assertion failure.
+                // WHY: runner-supported top-level transition, including after an assertion failure.
                 yield return new ExitPlayMode();
             }
         }
@@ -145,6 +149,34 @@ namespace Neo.NPC.Tests
 
             Assert.That(core.Target, Is.SameAs(target));
             Assert.That(updates, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Follow_PathUpdatePhase_AdvancesOnlyTheFirstPeriodicUpdate()
+        {
+            NavMeshAgent agent = CreateAgent(Vector3.zero);
+            NpcFollowTargetCore core = new(agent.transform, agent);
+            core.Configure(0f, true, 1f, 1f);
+            core.PathUpdatePhase = 0.5f;
+            Transform target = CreateObject("Phased target", new Vector3(3f, 0f, 0f)).transform;
+            int updates = 0;
+            core.PathUpdated += _ => updates++;
+            core.SetTarget(target);
+
+            core.Tick(10f, null);
+            Assert.That(updates, Is.EqualTo(1), "A new target is still requested immediately.");
+
+            target.position = new Vector3(-3f, 0f, 0f);
+            core.Tick(10.4f, null);
+            Assert.That(updates, Is.EqualTo(1));
+            core.Tick(10.5f, null);
+            Assert.That(updates, Is.EqualTo(2), "The first period is shortened by half an interval.");
+
+            target.position = new Vector3(3f, 0f, 0f);
+            core.Tick(11.4f, null);
+            Assert.That(updates, Is.EqualTo(2), "Later periods keep the full interval.");
+            core.Tick(11.5f, null);
+            Assert.That(updates, Is.EqualTo(3));
         }
 
         [Test]
@@ -208,6 +240,144 @@ namespace Neo.NPC.Tests
             Assert.That(reached, Is.Zero);
         }
 
+        [UnityTest]
+        public IEnumerator Follow_PartialPath_ReportsBlockedOncePerPathRequest()
+        {
+            NavMeshAgent agent = CreateAgent(Vector3.zero);
+            Vector3 destination = new(20f, 0f, 0f);
+            NavMeshPath path = new();
+            Assert.That(agent.CalculatePath(destination, path), Is.True);
+            Assert.That(path.status, Is.EqualTo(NavMeshPathStatus.PathPartial));
+            Assert.That(agent.SetPath(path), Is.True);
+            agent.isStopped = true;
+            yield return WaitForSettledPath(agent);
+            Assert.That(agent.pathStatus, Is.EqualTo(NavMeshPathStatus.PathPartial));
+            NpcFollowTargetCore core = new(agent.transform, agent);
+            core.Configure(0f, false, 0.1f, 1f);
+            core.SetDestination(destination);
+            int blocked = 0;
+            core.PathBlocked += _ => blocked++;
+
+            for (int frame = 0; frame < 5; frame++)
+            {
+                core.Tick(10f + frame, null);
+            }
+
+            Assert.That(blocked, Is.EqualTo(1), "A blocked path is reported once, not on every Tick.");
+
+            core.SetDestination(destination);
+            core.Tick(20f, null);
+            core.Tick(21f, null);
+
+            Assert.That(blocked, Is.EqualTo(2), "A new destination request re-arms the report.");
+        }
+
+        [UnityTest]
+        public IEnumerator Follow_PartialPath_ForcedRepathToTheSameDestinationReportsBlockedAgain()
+        {
+            NavMeshAgent agent = CreateAgent(Vector3.zero);
+            Vector3 destination = new(20f, 0f, 0f);
+            yield return InstallPath(agent, destination, NavMeshPathStatus.PathPartial);
+            NpcFollowTargetCore core = new(agent.transform, agent);
+            core.Configure(0f, false, 0.1f, 1f);
+            core.SetDestination(destination);
+            int blocked = 0;
+            core.PathBlocked += _ => blocked++;
+            core.Tick(10f, null);
+            core.Tick(11f, null);
+            Assert.That(blocked, Is.EqualTo(1));
+
+            // WHY: TryForceUpdatePath goes through the same UpdatePath as the periodic re-path and RefreshPath.
+            Assert.That(core.TryForceUpdatePath(null), Is.True);
+            agent.isStopped = true;
+            yield return WaitForSettledPath(agent);
+            Assert.That(agent.pathStatus, Is.EqualTo(NavMeshPathStatus.PathPartial));
+            core.Tick(12f, null);
+            core.Tick(13f, null);
+
+            Assert.That(blocked, Is.EqualTo(2), "A new path request to the same unreachable point is reported once more.");
+        }
+
+        [UnityTest]
+        public IEnumerator Follow_PathCompleteInBetween_RearmsTheBlockedReport()
+        {
+            NavMeshAgent agent = CreateAgent(Vector3.zero);
+            Vector3 destination = new(20f, 0f, 0f);
+            yield return InstallPath(agent, destination, NavMeshPathStatus.PathPartial);
+            NpcFollowTargetCore core = new(agent.transform, agent);
+            core.Configure(0f, false, 0.1f, 1f);
+            core.SetDestination(destination);
+            int blocked = 0;
+            core.PathBlocked += _ => blocked++;
+            core.Tick(10f, null);
+            Assert.That(blocked, Is.EqualTo(1));
+
+            yield return InstallPath(agent, new Vector3(3f, 0f, 0f), NavMeshPathStatus.PathComplete);
+            core.Tick(11f, null);
+            Assert.That(blocked, Is.EqualTo(1), "A complete path is not blocked.");
+
+            yield return InstallPath(agent, destination, NavMeshPathStatus.PathPartial);
+            core.Tick(12f, null);
+            core.Tick(13f, null);
+
+            Assert.That(blocked, Is.EqualTo(2), "A path that turns partial again after a complete one is reported again.");
+        }
+
+        [UnityTest]
+        public IEnumerator Follow_NativeSettledAndRepathTicks_DoNotAllocate()
+        {
+            NavMeshAgent agent = CreateAgent(Vector3.zero);
+            Vector3 destination = new(20f, 0f, 0f);
+            yield return InstallPath(agent, destination, NavMeshPathStatus.PathPartial);
+            NpcFollowTargetCore core = new(agent.transform, agent);
+            // WHY: the long interval keeps the periodic re-path out of the first window, so it measures the branch most
+            // frames take on a real agent: trigger distance, desired destination, the constrain delegate, the latched
+            // PathBlocked check and the arrival check.
+            core.Configure(0f, true, 1000f, 1f);
+            core.SetDestination(destination);
+            int blocked = 0;
+            int updates = 0;
+            core.PathBlocked += _ => blocked++;
+            core.PathUpdated += _ => updates++;
+            System.Func<Vector3, Vector3> constrain = position => position;
+            core.Tick(0f, constrain);
+            Assert.That(updates, Is.EqualTo(1), "The first tick submits the path.");
+            agent.isStopped = true;
+            yield return WaitForSettledPath(agent);
+            Assert.That(agent.pathStatus, Is.EqualTo(NavMeshPathStatus.PathPartial));
+            for (int i = 1; i <= 8; i++)
+            {
+                core.Tick(i, constrain);
+            }
+
+            Assert.That(blocked, Is.EqualTo(1), "The warm-up reports the blocked path once.");
+            float time = 10f;
+            System.Action settledTicks = () =>
+            {
+                for (int i = 0; i < 200; i++)
+                {
+                    time += 0.01f;
+                    core.Tick(time, constrain);
+                }
+            };
+            System.Action repathTick = () => core.Tick(time + 1f, constrain);
+
+            using GcAllocCounter allocationCounter = GcAllocCounter.CreateOrIgnore();
+            long settledAllocations = allocationCounter.Count(settledTicks);
+
+            Assert.That(agent.pathPending, Is.False, "The first window ran on the settled native path.");
+            Assert.That(updates, Is.EqualTo(1), "No re-path ran inside the settled window.");
+            Assert.That(blocked, Is.EqualTo(1));
+            Assert.That(settledAllocations, Is.Zero, "A tick on a settled, blocked native path must not allocate.");
+
+            core.SetDestination(new Vector3(3f, 0f, 0f));
+            long repathAllocations = allocationCounter.Count(repathTick);
+
+            Assert.That(updates, Is.EqualTo(2), "The second window submitted one new path.");
+            Assert.That(repathAllocations, Is.Zero,
+                "A tick that resolves and submits a native path must not allocate.");
+        }
+
         [TestCase(true)]
         [TestCase(false)]
         public void Patrol_AllWaypointsMissing_StopsWithoutReportingStarted(bool loop)
@@ -257,7 +427,7 @@ namespace Neo.NPC.Tests
 
             try
             {
-                // Hold one explicit native path; automatic replanning is outside this Tick contract.
+                // WHY: hold one explicit native path; automatic replanning is outside this Tick contract.
                 agent.autoRepath = false;
                 Assert.That(agent.autoRepath, Is.False);
                 core.StartPatrol(true);
@@ -265,7 +435,7 @@ namespace Neo.NPC.Tests
                 Assert.That(core.IsPatrolling, Is.True);
                 Assert.That(started, Is.EqualTo(1));
 
-                // StartPatrol queues SetDestination. Drain it before installing the calculated path.
+                // WHY: StartPatrol queues SetDestination. Drain it before installing the calculated path.
                 yield return WaitForSettledPath(agent);
                 Assert.That(agent.pathPending, Is.False);
                 agent.ResetPath();
@@ -397,6 +567,62 @@ namespace Neo.NPC.Tests
         }
 
         [UnityTest]
+        public IEnumerator Combat_ManualPathUpdates_ChaseTracksAMovingTarget()
+        {
+            NavMeshAgent agent = CreateAgent(Vector3.zero);
+            GameObject host = agent.gameObject;
+            NpcNavigation navigation = host.AddComponent<NpcNavigation>();
+            navigation.AutoUpdatePath = false;
+            RpgTargetSelector selector = host.AddComponent<RpgTargetSelector>();
+            using (SerializedObject settings = new(selector))
+            {
+                settings.FindProperty("_query._targetLayers").intValue = 1 << 31;
+                settings.FindProperty("_query._use2D").boolValue = false;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            host.AddComponent<RpgAttackController>();
+            NpcRpgCombatBrain brain = host.AddComponent<NpcRpgCombatBrain>();
+            // WHY: the test drives every decision itself, so a scheduled decision cannot re-path in between.
+            brain.IsActive = false;
+            NpcCombatPreset preset = ScriptableObject.CreateInstance<NpcCombatPreset>();
+            GameObject target = CreateObject("Moving chase target", new Vector3(4f, 0f, 0f));
+            target.layer = 31;
+            target.AddComponent<RpgCharacter>();
+            target.AddComponent<BoxCollider>();
+            Physics.SyncTransforms();
+
+            try
+            {
+                brain.Preset = preset;
+                brain.EvaluateNow();
+                Assert.That(navigation.FollowTarget, Is.SameAs(target.transform), "The brain must start a chase.");
+                yield return WaitUntilNative(() => Vector3.Distance(agent.destination, target.transform.position) < 0.2f,
+                    "The chase start must submit the target's position.");
+
+                target.transform.position = new Vector3(-4f, 0f, 4f);
+                brain.EvaluateNow();
+                yield return WaitUntilNative(() => Vector3.Distance(agent.destination, target.transform.position) < 0.2f,
+                    "With Auto Update Path off, a continuing chase must still re-path to the moved target.");
+
+                target.transform.position = agent.transform.position + Vector3.right;
+                brain.EvaluateNow();
+                Assert.That(brain.CurrentDecision, Is.EqualTo(NpcCombatDecisionCore.Decision.HoldPosition));
+                Assert.That(navigation.IsActive, Is.False, "Inside attack range without a usable attack the NPC holds.");
+
+                target.transform.position = new Vector3(3f, 0f, -4f);
+                brain.EvaluateNow();
+                Assert.That(navigation.IsActive, Is.True);
+                yield return WaitUntilNative(() => Vector3.Distance(agent.destination, target.transform.position) < 0.2f,
+                    "A chase resumed after a hold must path to where the target is now.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(preset);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator Combined_UnreachableTarget_CanStartFollowingAgain()
         {
             NavMeshAgent agent = CreateAgent(Vector3.zero);
@@ -414,7 +640,7 @@ namespace Neo.NPC.Tests
             int starts = 0;
             navigation.onStartFollowing.AddListener(() => starts++);
             navigation.onStopFollowing = new UnityEvent();
-            // Pause only after the failed native attempt completes, so exact attempt counts are observable.
+            // WHY: pause only after the failed native attempt completes, so exact attempt counts are observable.
             navigation.onStopFollowing.AddListener(navigation.Stop);
 
             yield return WaitUntilNative(() => starts > 0 && !navigation.IsActive,
@@ -430,6 +656,39 @@ namespace Neo.NPC.Tests
             Assert.That(starts, Is.EqualTo(2));
             Assert.That(navigation.IsChasing, Is.True);
             Assert.That(Vector3.Distance(agent.destination, target.position), Is.LessThan(0.2f));
+        }
+
+        [UnityTest]
+        public IEnumerator Combined_UnreachableTarget_DoesNotRestartTheChaseEveryFrame()
+        {
+            NavMeshAgent agent = CreateAgent(Vector3.zero);
+            NpcNavigation navigation = agent.gameObject.AddComponent<NpcNavigation>();
+            using (SerializedObject settings = new(navigation))
+            {
+                settings.FindProperty("maxSampleDistance").floatValue = 1f;
+                settings.FindProperty("pathUpdateInterval").floatValue = 30f;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            Transform target = CreateObject("Unreachable aggro target", new Vector3(0f, 4f, 0f)).transform;
+            navigation.onStartFollowing = new UnityEvent();
+            navigation.onStopFollowing = new UnityEvent();
+            int starts = 0;
+            int stops = 0;
+            navigation.onStartFollowing.AddListener(() => starts++);
+            navigation.onStopFollowing.AddListener(() => stops++);
+            navigation.SetCombinedTarget(target);
+            navigation.SetMode(NpcNavigation.NavigationMode.Combined);
+
+            yield return WaitUntilNative(() => starts > 0, "The first real follow attempt must run.");
+            for (int i = 0; i < 10; i++)
+            {
+                yield return WaitForNativeFrame();
+            }
+
+            Assert.That(starts, Is.EqualTo(1), "A failed chase waits one path interval before retrying.");
+            Assert.That(stops, Is.EqualTo(1));
+            Assert.That(navigation.IsChasing, Is.False);
         }
 
         [UnityTest]
@@ -560,7 +819,7 @@ namespace Neo.NPC.Tests
 
         private NavMeshAgent CreateAgent(Vector3 position)
         {
-            // Every case receives its own agent from UnitySetUp after real activation/registration.
+            // WHY: every case receives its own agent from UnitySetUp after real activation/registration.
             NavMeshAgent agent = _preparedAgent;
             Assert.That(Application.isPlaying, Is.True);
             Assert.That(agent, Is.Not.Null);
@@ -581,6 +840,18 @@ namespace Neo.NPC.Tests
             result.transform.position = position;
             _objects.Add(result);
             return result;
+        }
+
+        /// <summary>Installs a calculated native path with the expected status and holds the agent on it.</summary>
+        private static IEnumerator InstallPath(NavMeshAgent agent, Vector3 destination, NavMeshPathStatus expected)
+        {
+            NavMeshPath path = new();
+            Assert.That(agent.CalculatePath(destination, path), Is.True);
+            Assert.That(path.status, Is.EqualTo(expected));
+            Assert.That(agent.SetPath(path), Is.True);
+            agent.isStopped = true;
+            yield return WaitForSettledPath(agent);
+            Assert.That(agent.pathStatus, Is.EqualTo(expected));
         }
 
         private static IEnumerator WaitForSettledPath(NavMeshAgent agent)

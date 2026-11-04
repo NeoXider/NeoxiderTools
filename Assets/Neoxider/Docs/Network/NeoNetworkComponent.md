@@ -93,3 +93,7 @@ window per component; channels on that component share their sender's window. In
 ingress should be rejected before budget consumption. The parameterless overload intentionally
 retains one shared local/server window. This limiter does not authorize a caller: use a named
 [authority policy](Contracts.md) and retain game-specific validation separately.
+
+The per-sender table stays bounded on long-running servers: once it holds 32 connections, entries whose window
+has already passed are dropped before a new sender is added. An expired entry rejects nothing, so pruning never
+changes which command is accepted; a sender inside its window keeps it.

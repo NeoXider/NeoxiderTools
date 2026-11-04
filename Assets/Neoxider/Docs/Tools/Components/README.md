@@ -1,9 +1,14 @@
 ﻿# Tools / Components
 
-Reusable components: counters, Animator driver, score, typewriter, loot, lifecycle events, and Interface.
-Scripts live in `Scripts/Tools/Components/`. Legacy AttackSystem documentation remains indexed here for
-discoverability, but its compatibility sources now live in `Scripts/Rpg/Combat/` and compile in the
-optional `Neo.Rpg.Combat` assembly.
+**What it is:** reusable gameplay components: counters, score, random values, Animator driver, typewriter, loot,
+lifecycle events and the damage/heal interfaces. Scripts live in `Scripts/Tools/Components/` (assembly
+`Neo.Tools.Components`, namespace `Neo.Tools`). Legacy AttackSystem documentation remains indexed here for
+discoverability; its compatibility sources live in `Scripts/Rpg/Combat/` (optional `Neo.Rpg.Combat` assembly).
+
+**Contents:** the tables below. Every component has a typed C# API; the UnityEvents and Inspector buttons are the
+NoCode layer on top of it.
+
+---
 
 ## Main components (docs)
 
@@ -29,7 +34,7 @@ optional `Neo.Rpg.Combat` assembly.
 ## Runtime API and scene setup
 
 Use `Counter.Set/Add/Subtract/Multiply/Divide` for counter changes, `ScoreManager.Set/Add` for score,
-and `TypewriterEffect.PlayAsync` for reusable text playback. Subscribe to reactive properties with
+and `TypewriterEffect.PlayAsync` / `PlayRevealAsync` for reusable text playback. Subscribe to reactive properties with
 `Subscribe` and dispose the returned handle when the consumer is disabled or destroyed. Directly
 writing a component's public reactive output bypasses its arithmetic, persistence, and typed event path.
 
@@ -44,7 +49,8 @@ For camera render textures, the scaler uses the texture dimensions and `FitBoth`
 to keep the reference view visible. [Unity ignores camera viewport rectangles for render textures](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Camera-targetTexture.html),
 so this path does not create viewport bars. Changing texture dimensions or projection mode invalidates
 the runtime cache. Disable **Update In Editor** to suppress automatic edit-mode previews, including
-`Start` and disable cleanup; the explicit **Apply Camera Scale** button remains available.
+`Start` and disable cleanup; the explicit **Apply Camera Scale** button remains available. The reference
+size/FOV is serialized on the scaler, so an edit-mode preview never compounds into the next reference.
 
 ## See also
 

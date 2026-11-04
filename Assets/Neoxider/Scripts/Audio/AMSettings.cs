@@ -6,6 +6,11 @@ using UnityEngine.Audio;
 
 namespace Neo.Audio
 {
+    /// <summary>
+    ///     Player-facing audio settings on top of <see cref="AM" />: Master/Music/Efx volume and mute, optional
+    ///     <see cref="AudioMixer" /> exposed parameters, reactive mute state for UI, and persistence of volumes and
+    ///     mutes through <see cref="SaveProvider" />. Binds to AM in <c>Start</c> or through <see cref="Initialize" />.
+    /// </summary>
     [NeoDoc("Audio/AMSettings.md")]
     [CreateFromMenu("Neoxider/Audio/AMSettings")]
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AMSettings))]
@@ -54,19 +59,62 @@ namespace Neo.Audio
         [Tooltip("SaveProvider key for Efx/SFX (float 0..1).")] [SerializeField]
         private string saveKeyEfx = "Neo.Audio.AMSettings.EfxVolume";
 
+        [Tooltip(
+            "Enabled by default. Also persists the Music/Efx/Master mute and the UI-channel mute set by Toggle All Audio, " +
+            "so a player's 'sound off' survives a restart. Has no effect while Persist Volume is off.")]
+        [SerializeField]
+        private bool persistMute = true;
+
+        [Tooltip("SaveProvider key for the mute state (int bit mask: 1 = Music, 2 = Efx, 4 = Master, 8 = UI channel).")]
+        [SerializeField]
+        private string saveKeyMute = "Neo.Audio.AMSettings.Mute";
+
         public float startEfxVolume = 1f;
         public float startMusicVolume = 0.5f;
+
+        private const int MuteFlagMusic = 1;
+        private const int MuteFlagEfx = 2;
+        private const int MuteFlagMaster = 4;
+        private const int MuteFlagUi = 8;
+
         private AM _am;
         private bool _masterMuted;
         private float _savedMasterVolume = 1f;
         private float? _pendingMasterFromSave;
         private bool _hadSavedMusic;
         private bool _hadSavedEfx;
+        private bool _hadSavedMute;
+        private int _savedMuteFlags;
+        private bool? _requestedMusicActive;
+        private bool? _requestedEfxActive;
+        private bool _uiMuted;
         private bool _suppressVolumePersist;
         private bool _started;
         private bool _initializing;
         private AM _initializedAm;
         private bool _volumesLoaded;
+
+        /// <summary>
+        ///     Whether Master/Music/Efx volumes are written to and read from <see cref="SaveProvider" />.
+        ///     Turning it off also turns mute persistence off.
+        /// </summary>
+        public bool PersistVolume
+        {
+            get => persistVolume;
+            set => persistVolume = value;
+        }
+
+        /// <summary>
+        ///     Whether the Music/Efx/Master/UI mute state is persisted. Effective only while
+        ///     <see cref="PersistVolume" /> is on.
+        /// </summary>
+        public bool PersistMute
+        {
+            get => persistMute;
+            set => persistMute = value;
+        }
+
+        private bool MutePersistenceEnabled => persistVolume && persistMute && !string.IsNullOrEmpty(saveKeyMute);
 
         /// <summary>Current mute state (for NeoCondition and reflection).</summary>
         public bool MuteEfxValue => MuteEfx.CurrentValue;
@@ -120,6 +168,12 @@ namespace Neo.Audio
                 _pendingMasterFromSave = m;
                 _savedMasterVolume = m;
             }
+
+            if (MutePersistenceEnabled && SaveProvider.HasKey(saveKeyMute))
+            {
+                _savedMuteFlags = SaveProvider.GetInt(saveKeyMute, 0);
+                _hadSavedMute = true;
+            }
         }
 
         private void Start()
@@ -155,6 +209,12 @@ namespace Neo.Audio
         ///     Binds an explicit manager, including one created after Start. Startup values are applied once
         ///     per manager; re-enabling or initializing the same live binding does not reset playback settings.
         ///     A null manager or nested initialization leaves the current binding unchanged.
+        ///     <para>
+        ///         Mute on the first binding: a <see cref="SetMusic" /> / <see cref="SetEfx" /> call made before
+        ///         any manager was bound (for example from a consumer's <c>Awake</c>) wins, then the persisted mute
+        ///         (see <see cref="PersistMute" />), then the state the manager's sources already have. A later
+        ///         binding to a replacement manager carries the current Music, Efx and UI-channel mute over.
+        ///     </para>
         /// </summary>
         public void Initialize(AM manager)
         {
@@ -170,6 +230,14 @@ namespace Neo.Audio
             try
             {
                 LoadPersistedVolumesFromSave();
+                bool firstBinding = ReferenceEquals(_initializedAm, null);
+                if (!firstBinding && _am != null)
+                {
+                    // WHY: the UI channel lives on the manager itself; while the previous one still exists it is
+                    // the truth, and a destroyed one leaves the last state recorded in _uiMuted.
+                    _uiMuted = _am.IsChannelMuted(SoundChannel.Ui);
+                }
+
                 _am = manager;
                 manager.StartVolumeEfx = startEfxVolume;
                 manager.StartVolumeMusic = startMusicVolume;
@@ -177,12 +245,11 @@ namespace Neo.Audio
 
                 efx = manager.Efx;
                 music = manager.Music;
-                SetEfx(true);
-                SetMusic(true);
+                ApplyBindingMuteState(manager, firstBinding);
 
                 if (audioMixer != null)
                 {
-                    // Mixer reads must receive saved levels as well as the newly bound sources.
+                    // WHY: mixer reads must receive saved levels as well as the newly bound sources.
                     if (_hadSavedMusic)
                     {
                         SetMixerVolume(audioMixer, MusicVolume, Mathf.Clamp01(startMusicVolume));
@@ -197,6 +264,11 @@ namespace Neo.Audio
                     {
                         SetMasterVolume(_pendingMasterFromSave.Value);
                     }
+
+                    if (firstBinding && SavedMuteFlag(MuteFlagMaster) && !_masterMuted)
+                    {
+                        MuteMasterOnMixer();
+                    }
                 }
 
                 _pendingMasterFromSave = null;
@@ -207,6 +279,91 @@ namespace Neo.Audio
                 _suppressVolumePersist = previousSuppress;
                 _initializing = false;
             }
+        }
+
+        /// <summary>
+        ///     WHY not a plain unmute: forcing both channels on at startup overwrote a mute the player had chosen
+        ///     (persisted) or a consumer had applied in Awake, so "sound off" came back on every launch.
+        /// </summary>
+        private void ApplyBindingMuteState(AM manager, bool firstBinding)
+        {
+            bool musicMuted;
+            bool efxMuted;
+            if (firstBinding)
+            {
+                musicMuted = _requestedMusicActive.HasValue ? !_requestedMusicActive.Value
+                    : _hadSavedMute ? SavedMuteFlag(MuteFlagMusic)
+                    : music != null && music.mute;
+                efxMuted = _requestedEfxActive.HasValue ? !_requestedEfxActive.Value
+                    : _hadSavedMute ? SavedMuteFlag(MuteFlagEfx)
+                    : manager.IsChannelMuted(SoundChannel.Sfx);
+            }
+            else
+            {
+                musicMuted = _requestedMusicActive.HasValue ? !_requestedMusicActive.Value : MuteMusic.CurrentValue;
+                efxMuted = _requestedEfxActive.HasValue ? !_requestedEfxActive.Value : MuteEfx.CurrentValue;
+            }
+
+            _requestedMusicActive = null;
+            _requestedEfxActive = null;
+            SetEfx(!efxMuted);
+            SetMusic(!musicMuted);
+
+            if (firstBinding)
+            {
+                _uiMuted = SavedMuteFlag(MuteFlagUi) || manager.IsChannelMuted(SoundChannel.Ui);
+            }
+
+            // WHY on every binding: a replacement manager starts with its UI channel on, so "all audio off"
+            // would bring interface clicks back and the next mute change would drop the saved UI bit.
+            if (manager.IsChannelMuted(SoundChannel.Ui) != _uiMuted)
+            {
+                manager.SetChannelMute(SoundChannel.Ui, _uiMuted);
+            }
+        }
+
+        private bool SavedMuteFlag(int flag)
+        {
+            return _hadSavedMute && (_savedMuteFlags & flag) != 0;
+        }
+
+        private void PersistMuteState()
+        {
+            // WHY not before the first binding: until a manager is bound the other channels' real state is
+            // unknown, and writing them would overwrite the mute the player saved last session.
+            if (!MutePersistenceEnabled || _suppressVolumePersist || ReferenceEquals(_initializedAm, null))
+            {
+                return;
+            }
+
+            int flags = 0;
+            bool musicMuted = music != null ? music.mute : SavedMuteFlag(MuteFlagMusic);
+            bool efxMuted = _am != null || efx != null ? ReadEfxMute() : SavedMuteFlag(MuteFlagEfx);
+            bool uiMuted = _am != null ? _am.IsChannelMuted(SoundChannel.Ui) : _uiMuted;
+            _uiMuted = uiMuted;
+            if (musicMuted)
+            {
+                flags |= MuteFlagMusic;
+            }
+
+            if (efxMuted)
+            {
+                flags |= MuteFlagEfx;
+            }
+
+            if (_masterMuted)
+            {
+                flags |= MuteFlagMaster;
+            }
+
+            if (uiMuted)
+            {
+                flags |= MuteFlagUi;
+            }
+
+            SaveProvider.SetInt(saveKeyMute, flags);
+            _savedMuteFlags = flags;
+            _hadSavedMute = true;
         }
 
         private void PersistVolumeState()
@@ -234,31 +391,45 @@ namespace Neo.Audio
             }
         }
 
-        [Button]
+        /// <summary>
+        ///     Turns the effects channel on or off. Called before a manager is bound (for example from a consumer's
+        ///     <c>Awake</c>), the request is kept and applied by <see cref="Initialize" /> instead of being lost.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
         public void SetEfx(bool active)
         {
             if (efx == null)
             {
+                _requestedEfxActive = active;
+                MuteEfx.Value = !active;
                 return;
             }
 
             ApplyEfxMute(!active);
             MuteEfx.Value = ReadEfxMute();
+            PersistMuteState();
         }
 
-        [Button]
+        /// <summary>
+        ///     Turns the music channel on or off. Called before a manager is bound, the request is kept and applied
+        ///     by <see cref="Initialize" /> instead of being lost.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
         public void SetMusic(bool active)
         {
             if (music == null)
             {
+                _requestedMusicActive = active;
+                MuteMusic.Value = !active;
                 return;
             }
 
             music.mute = !active;
             MuteMusic.Value = music.mute;
+            PersistMuteState();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void SetMusicAndEfx(bool active)
         {
             SetEfx(active);
@@ -334,13 +505,23 @@ namespace Neo.Audio
             PersistVolumeState();
         }
 
+        /// <summary>
+        ///     Sets the Master mixer volume (0..1). While Master is muted the value becomes the level that
+        ///     <see cref="ToggleMaster" /> restores, and the mixer stays silent.
+        /// </summary>
         [Button]
         public void SetMasterVolume(float percent)
         {
             float volume = Mathf.Clamp01(percent);
-            SetMixerVolume(audioMixer, MasterVolume, volume);
-            if (!_masterMuted)
+            // WHY: writing the mixer while muted made Master audible while MuteMaster still read true, and the
+            // next unmute then restored the stale pre-mute level instead of this one.
+            if (_masterMuted)
             {
+                _savedMasterVolume = volume;
+            }
+            else
+            {
+                SetMixerVolume(audioMixer, MasterVolume, volume);
                 _savedMasterVolume = volume;
             }
 
@@ -459,38 +640,27 @@ namespace Neo.Audio
             return Mathf.Clamp01(Mathf.Pow(10f, db / 20f));
         }
 
-        [Button]
+        /// <summary>Flips the music mute. Before a manager is bound it flips the pending request instead.</summary>
+        [Button(PlayModeOnly = true)]
         public void ToggleMusic()
         {
-            if (music == null)
-            {
-                return;
-            }
-
-            SetMusic(music.mute);
+            SetMusic(music != null ? music.mute : MuteMusic.CurrentValue);
         }
 
-        [Button]
+        /// <summary>Flips the effects mute. Before a manager is bound it flips the pending request instead.</summary>
+        [Button(PlayModeOnly = true)]
         public void ToggleEfx()
         {
-            if (efx == null)
-            {
-                return;
-            }
-
-            SetEfx(efx.mute);
+            SetEfx(efx != null ? ReadEfxMute() : MuteEfx.CurrentValue);
         }
 
-        [Button]
+        /// <summary>Sets music and effects to the opposite of the current music mute.</summary>
+        [Button(PlayModeOnly = true)]
         public void ToggleMusicAndEfx()
         {
-            if (music == null)
-            {
-                return;
-            }
-
-            SetEfx(music.mute);
-            SetMusic(music.mute);
+            bool turnOn = music != null ? music.mute : MuteMusic.CurrentValue;
+            SetEfx(turnOn);
+            SetMusic(turnOn);
         }
 
         /// <summary>
@@ -512,23 +682,29 @@ namespace Neo.Audio
             }
             else
             {
-                if (audioMixer.GetFloat(MasterVolume, out float db))
-                {
-                    _savedMasterVolume = db > -80f ? Mathf.Pow(10f, db / 20f) : 1f;
-                }
-
-                audioMixer.SetFloat(MasterVolume, -80f);
-                _masterMuted = true;
-                MuteMaster.Value = true;
+                MuteMasterOnMixer();
             }
 
             PersistVolumeState();
+            PersistMuteState();
+        }
+
+        private void MuteMasterOnMixer()
+        {
+            if (audioMixer.GetFloat(MasterVolume, out float db))
+            {
+                _savedMasterVolume = db > -80f ? Mathf.Pow(10f, db / 20f) : 1f;
+            }
+
+            audioMixer.SetFloat(MasterVolume, -80f);
+            _masterMuted = true;
+            MuteMaster.Value = true;
         }
 
         /// <summary>
         ///     Toggles mute by group: 0 = Master, 1 = Music, 2 = Sfx. For NeoCondition and code (single int).
         /// </summary>
-        [Button("Toggle Audio (0=Master, 1=Music, 2=Sfx)", 180)]
+        [Button("Toggle Audio (0=Master, 1=Music, 2=Sfx)", 180, PlayModeOnly = true)]
         public void ToggleAudio(int group)
         {
             switch (group)
@@ -556,7 +732,7 @@ namespace Neo.Audio
         public void ToggleAllAudio()
         {
             bool anyMuted = _masterMuted || (music != null && music.mute) || ReadEfxMute() ||
-                            (_am != null && _am.IsChannelMuted(SoundChannel.Ui));
+                            (_am != null ? _am.IsChannelMuted(SoundChannel.Ui) : _uiMuted);
             bool turnOn = anyMuted;
 
             if (!turnOn && audioMixer != null && !_masterMuted && audioMixer.GetFloat(MasterVolume, out float db))
@@ -585,12 +761,14 @@ namespace Neo.Audio
 
             // WHY: "all audio" includes the UI sound channel. Without a mixer - always the case on WebGL - nothing
             // else would silence it, and interface clicks would keep sounding with everything "off".
+            _uiMuted = !turnOn;
             if (_am != null)
             {
                 _am.SetChannelMute(SoundChannel.Ui, !turnOn);
             }
 
             PersistVolumeState();
+            PersistMuteState();
         }
 
         /// <summary>

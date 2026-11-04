@@ -1,6 +1,8 @@
 ﻿# LevelButton
 
-**Purpose:** UI button for the level map. Automatically changes its visual state (Locked, Available, Passed) based on player progression, and notifies the `LevelManager` when clicked.
+**What it is:** UI button for the level map. Automatically changes its visual state (Locked, Available, Passed) based on player progression, and notifies the `LevelManager` when clicked.
+
+**How to use:** Place buttons under the `_parentLevel` of `LevelManager`; the manager assigns itself and sets visual states (see Setup below).
 
 ## Setup
 

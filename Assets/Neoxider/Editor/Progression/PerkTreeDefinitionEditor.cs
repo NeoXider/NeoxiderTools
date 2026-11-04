@@ -9,6 +9,8 @@ namespace Neo.Editor.Progression
     [CanEditMultipleObjects]
     public sealed class PerkTreeDefinitionEditor : CustomEditorBase
     {
+        private readonly DefinitionValidationCache _validation = new();
+
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
         protected override void ProcessAttributeAssignments()
@@ -19,9 +21,16 @@ namespace Neo.Editor.Progression
         {
             serializedObject.Update();
 
-            var definition = (PerkTreeDefinition)target;
+            PerkTreeDefinition definition = (PerkTreeDefinition)target;
             SerializedProperty perksProperty = serializedObject.FindProperty("_perks");
-            IReadOnlyList<string> issues = definition.ValidateDefinition();
+            // WHY: validation walks every entry and builds its messages; it is re-run only when the asset
+            // changes instead of on every inspector event.
+            if (_validation.NeedsRefresh(definition))
+            {
+                _validation.Store(definition, definition.ValidateDefinition());
+            }
+
+            IReadOnlyList<string> issues = _validation.Issues;
             int perkCount = perksProperty != null ? perksProperty.arraySize : 0;
 
             List<NeoxiderEditorGUI.Badge> badges = new()

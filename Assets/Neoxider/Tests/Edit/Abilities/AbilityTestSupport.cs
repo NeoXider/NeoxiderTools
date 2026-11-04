@@ -95,7 +95,7 @@ namespace Neo.Editor.Tests.Abilities
         public static EffectContext Context(AbilitySystem system, UnitId caster, uint seed = 1,
             params UnitId[] targets)
         {
-            var ctx = new EffectContext(system, caster, "test_ability", new XorShiftRandom(seed));
+            EffectContext ctx = new EffectContext(system, caster, "test_ability", new XorShiftRandom(seed));
             for (int i = 0; i < targets.Length; i++)
             {
                 ctx.PrimaryTargets.Add(targets[i]);
@@ -106,7 +106,7 @@ namespace Neo.Editor.Tests.Abilities
 
         public static List<ModifierInstance> ActiveModifiers(AbilitySystem system, UnitId owner)
         {
-            var list = new List<ModifierInstance>();
+            List<ModifierInstance> list = new List<ModifierInstance>();
             system.Modifiers.GetModifiers(owner, list);
             return list;
         }
@@ -157,6 +157,43 @@ namespace Neo.Editor.Tests.Abilities
     }
 
     /// <summary>
+    ///     World seam decorator: forwards everything to an inner adapter (typically the scene hub) and records
+    ///     every spawn request, so scene tests can inspect projectile spawns without a pool or prefab.
+    /// </summary>
+    internal sealed class RecordingWorldAdapter : IAbilityWorldAdapter
+    {
+        private readonly IAbilityWorldAdapter _inner;
+
+        public readonly List<SpawnRequest> Spawns = new List<SpawnRequest>();
+
+        public RecordingWorldAdapter(IAbilityWorldAdapter inner)
+        {
+            _inner = inner;
+        }
+
+        public bool TryGetPosition(UnitId unit, out Vector3 position)
+        {
+            return _inner.TryGetPosition(unit, out position);
+        }
+
+        public void QueryUnitsInRadius(Vector3 point, float radius, List<UnitId> results)
+        {
+            _inner.QueryUnitsInRadius(point, radius, results);
+        }
+
+        public bool TryMoveUnit(UnitId unit, Vector3 newPosition)
+        {
+            return _inner.TryMoveUnit(unit, newPosition);
+        }
+
+        public void RequestSpawn(SpawnRequest request)
+        {
+            Spawns.Add(request);
+            _inner.RequestSpawn(request);
+        }
+    }
+
+    /// <summary>
     ///     Scene-side rig for behaviour tests: owns a hub and unit GameObjects, drives the EditMode
     ///     lifecycle manually (OnEnable/OnDisable via reflection — EditMode has no lifecycle), and
     ///     tears everything down deterministically.
@@ -192,7 +229,7 @@ namespace Neo.Editor.Tests.Abilities
         {
             GameObject go = Own(new GameObject(name));
             go.transform.position = position;
-            var behaviour = go.AddComponent<AbilityUnitBehaviour>();
+            AbilityUnitBehaviour behaviour = go.AddComponent<AbilityUnitBehaviour>();
             behaviour.SetTeamOverride(team);
             CallPrivate(behaviour, "OnEnable");
             if (behaviour.Unit != null && health > 0f)
@@ -201,6 +238,15 @@ namespace Neo.Editor.Tests.Abilities
             }
 
             return behaviour;
+        }
+
+        /// <summary>
+        ///     Points the hub singleton at <paramref name="hub" /> (null clears it), as if that hub had become the
+        ///     scene's current one. Restore <see cref="Hub" /> before the rig is disposed.
+        /// </summary>
+        public static void SetCurrentHub(AbilitySystemBehaviour hub)
+        {
+            InstanceField?.SetValue(null, hub);
         }
 
         public static void CallPrivate(Component target, string methodName)
@@ -220,7 +266,7 @@ namespace Neo.Editor.Tests.Abilities
                     continue;
                 }
 
-                var unitBehaviour = go.GetComponent<AbilityUnitBehaviour>();
+                AbilityUnitBehaviour unitBehaviour = go.GetComponent<AbilityUnitBehaviour>();
                 if (unitBehaviour != null && unitBehaviour.Unit != null)
                 {
                     CallPrivate(unitBehaviour, "OnDisable");

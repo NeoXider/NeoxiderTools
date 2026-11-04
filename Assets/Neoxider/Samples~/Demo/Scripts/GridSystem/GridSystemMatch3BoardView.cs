@@ -1,12 +1,19 @@
 using System.Collections.Generic;
 using Neo.GridSystem;
 using Neo.GridSystem.Match3;
+using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace Neo.Demo.GridSystem
 {
+    /// <summary>
+    ///     Replaceable demo view of a <see cref="Match3BoardService" /> board: one tile per
+    ///     <see cref="FieldGenerator" /> cell, colored by tile id and cell state, rebuilt when the field is
+    ///     regenerated. Click two neighbouring tiles to swap them. Cell objects are created at runtime from the
+    ///     live field; the scene only holds this component and its references.
+    /// </summary>
     [AddComponentMenu("Neoxider/Demo/GridSystem/GridSystemMatch3BoardView")]
     public class GridSystemMatch3BoardView : MonoBehaviour
     {
@@ -15,13 +22,33 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private Camera _camera;
         [SerializeField] private TMP_Text _statusText;
         [SerializeField] private Vector2 _cellSize = new(0.9f, 0.9f);
+
+        [Tooltip("Optional tile art (a 9-sliced sprite is drawn sliced). Empty = a plain square owned by this view.")]
+        [SerializeField] private Sprite _tileSprite;
+
+        [Tooltip("Tile color of a cell that is not walkable (FieldGenerator.SetWalkable false).")]
         [SerializeField] private Color _blockedColor = new(0.35f, 0.18f, 0.18f, 1f);
+
+        [Tooltip("Tile color of a disabled cell (outside the shape or FieldGenerator.SetEnabled false).")]
+        [SerializeField] private Color _disabledColor = new(1f, 1f, 1f, 0.05f);
+
+        [Tooltip("Tile color of an occupied cell (FieldGenerator.SetOccupied true).")]
+        [SerializeField] private Color _occupiedColor = new(0.42f, 0.36f, 0.22f, 1f);
+
         [SerializeField] private Color _selectedOutlineColor = new(1f, 1f, 1f, 1f);
+
+        [Tooltip("Outline of highlighted cells (path or reachable area set through SetHighlightedCells).")]
+        [SerializeField] private Color _highlightColor = new(0.25f, 0.85f, 1f, 1f);
+
         [SerializeField] private float _outlineThickness = 0.06f;
 
         private readonly Dictionary<Vector3Int, CellView> _views = new();
+        private readonly HashSet<Vector3Int> _highlighted = new();
         private Vector3Int? _selected;
         private Sprite _cellSprite;
+
+        /// <summary>Number of cells currently highlighted by <see cref="SetHighlightedCells" />.</summary>
+        public int HighlightedCount => _highlighted.Count;
 
         public void Configure(
             FieldGenerator generator,
@@ -101,7 +128,7 @@ namespace Neo.Demo.GridSystem
 
         private void Update()
         {
-            if (_boardUnavailable() || !Input.GetMouseButtonDown(0))
+            if (_boardUnavailable() || !MouseInputCompat.TryGetButtonDown(0, out bool pressed) || !pressed)
             {
                 return;
             }
@@ -111,7 +138,12 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
+            if (!MouseInputCompat.TryGetPosition(out Vector3 pointer))
+            {
+                return;
+            }
+
+            Ray ray = _camera.ScreenPointToRay(pointer);
             if (!Physics.Raycast(ray, out RaycastHit hit))
             {
                 return;
@@ -129,6 +161,7 @@ namespace Neo.Demo.GridSystem
         public void Rebuild()
         {
             ClearAll();
+            _highlighted.Clear();
             if (_generator == null)
             {
                 return;
@@ -155,6 +188,36 @@ namespace Neo.Demo.GridSystem
                 RefreshCell(cell);
             }
 
+            RefreshSelectionVisual();
+        }
+
+        /// <summary>
+        ///     Outlines the given cells with the highlight color (for example a path from
+        ///     <see cref="GridPathfinder.TryFindPath" />); replaces the previous highlight.
+        /// </summary>
+        public void SetHighlightedCells(IEnumerable<Vector3Int> cells)
+        {
+            _highlighted.Clear();
+            if (cells != null)
+            {
+                foreach (Vector3Int cell in cells)
+                {
+                    _highlighted.Add(cell);
+                }
+            }
+
+            RefreshSelectionVisual();
+        }
+
+        /// <summary>Removes every highlight outline.</summary>
+        public void ClearHighlight()
+        {
+            if (_highlighted.Count == 0)
+            {
+                return;
+            }
+
+            _highlighted.Clear();
             RefreshSelectionVisual();
         }
 
@@ -217,18 +280,18 @@ namespace Neo.Demo.GridSystem
             root.transform.SetParent(transform, false);
             root.transform.position = center;
 
+            Sprite sprite = ResolveTileSprite();
             GameObject tileGo = new("Tile");
             tileGo.transform.SetParent(root.transform, false);
             SpriteRenderer tile = tileGo.AddComponent<SpriteRenderer>();
-            tile.sprite = CreateSolidSprite();
-            tile.transform.localScale = new Vector3(_cellSize.x, _cellSize.y, 1f);
+            tile.sprite = sprite;
+            ApplySize(tile, _cellSize);
 
             GameObject outlineGo = new("Outline");
             outlineGo.transform.SetParent(root.transform, false);
             SpriteRenderer outline = outlineGo.AddComponent<SpriteRenderer>();
-            outline.sprite = tile.sprite;
-            outline.transform.localScale =
-                new Vector3(_cellSize.x + _outlineThickness, _cellSize.y + _outlineThickness, 1f);
+            outline.sprite = sprite;
+            ApplySize(outline, new Vector2(_cellSize.x + _outlineThickness, _cellSize.y + _outlineThickness));
             outline.color = new Color(0, 0, 0, 0);
             outline.sortingOrder = tile.sortingOrder - 1;
 
@@ -250,9 +313,21 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            if (!cell.IsEnabled || !cell.IsWalkable || cell.IsOccupied)
+            if (!cell.IsEnabled)
+            {
+                view.Tile.color = _disabledColor;
+                return;
+            }
+
+            if (!cell.IsWalkable)
             {
                 view.Tile.color = _blockedColor;
+                return;
+            }
+
+            if (cell.IsOccupied)
+            {
+                view.Tile.color = _occupiedColor;
                 return;
             }
 
@@ -261,10 +336,15 @@ namespace Neo.Demo.GridSystem
 
         private void RefreshSelectionVisual()
         {
+            Color hidden = new(0, 0, 0, 0);
             foreach (KeyValuePair<Vector3Int, CellView> pair in _views)
             {
                 bool selected = _selected.HasValue && pair.Key == _selected.Value;
-                pair.Value.Outline.color = selected ? _selectedOutlineColor : new Color(0, 0, 0, 0);
+                pair.Value.Outline.color = selected
+                    ? _selectedOutlineColor
+                    : _highlighted.Contains(pair.Key)
+                        ? _highlightColor
+                        : hidden;
             }
         }
 
@@ -305,6 +385,31 @@ namespace Neo.Demo.GridSystem
         {
             Vector3Int delta = a - b;
             return Mathf.Abs(delta.x) + Mathf.Abs(delta.y) + Mathf.Abs(delta.z) == 1;
+        }
+
+        private Sprite ResolveTileSprite()
+        {
+            return _tileSprite != null ? _tileSprite : CreateSolidSprite();
+        }
+
+        // WHY: a 9-sliced sprite keeps its rounded corners at any cell size; plain sprites are scaled to the cell.
+        private static void ApplySize(SpriteRenderer renderer, Vector2 size)
+        {
+            Sprite sprite = renderer.sprite;
+            if (sprite != null && sprite.border != Vector4.zero)
+            {
+                renderer.drawMode = SpriteDrawMode.Sliced;
+                renderer.size = size;
+                renderer.transform.localScale = Vector3.one;
+                return;
+            }
+
+            Vector2 bounds = sprite != null ? (Vector2)sprite.bounds.size : Vector2.one;
+            renderer.drawMode = SpriteDrawMode.Simple;
+            renderer.transform.localScale = new Vector3(
+                size.x / Mathf.Max(bounds.x, 0.0001f),
+                size.y / Mathf.Max(bounds.y, 0.0001f),
+                1f);
         }
 
         private Sprite CreateSolidSprite()

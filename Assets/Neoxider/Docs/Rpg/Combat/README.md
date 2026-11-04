@@ -1,13 +1,21 @@
 # Legacy combat compatibility (`Neo.Rpg.Combat`)
 
-This optional assembly preserves `Neo.Tools.Health`, `AttackExecution`, `Evade`,
+**What it is:** This optional assembly preserves `Neo.Tools.Health`, `AttackExecution`, `Evade`,
 `AdvancedAttackCollider`, and `RpgStatsDamageableBridge` for existing scenes and C# callers.
 Reference `Neo.Rpg.Combat` from your own assembly. For new combat, see
 [Abilities](../../Abilities/README.md). Existing RPG actors can use the
-[RPG module](../README.md) and the bridge described below.
+[RPG module](../README.md) and the bridge described below. Scripts live in `Scripts/Rpg/Combat/`.
 
 The older [AttackSystem pages](../../Tools/Components/AttackSystem/README.md) remain available
 for existing links. This page is the compatibility assembly's canonical contract and Inspector help target.
+
+**Contents:** [Health](#health), [AttackExecution](#attackexecution),
+[AdvancedAttackCollider](#advancedattackcollider), [Evade](#evade),
+[RpgStatsDamageableBridge](#rpgstatsdamageablebridge), [scene and UnityEvent setup](#scene-and-unityevent-setup).
+
+**Navigation:** [← RPG](../README.md)
+
+---
 
 ## C# API
 
@@ -78,7 +86,8 @@ The ignore list uses exact GameObjects; it does not implicitly ignore their chil
 Repeat-hit suppression is per collider, rather than per actor.
 
 The hit object must carry `IDamageable` or `IHealable` directly. Put a bridge on a child hitbox
-when its actor component lives on a parent. Accepted contacts can still invoke `OnHit`, forces,
+when its actor component lives on a parent. Collision callbacks read the first contact in place
+(`GetContact`), without allocating the contact array. Accepted contacts can still invoke `OnHit`, forces,
 and effects even when the object has no damage/heal interface. Trigger-specific events fire
 only after accepted trigger contacts; collision callbacks do not emit trigger events.
 
@@ -116,6 +125,21 @@ or a child hitbox. The fallback resolves and caches a parent character when firs
 `TakeDamage(int)` and `Heal(int)` ignore nonpositive amounts, multiply positive requests by
 `DamageMultiplier`/`HealMultiplier`, and forward them to `RpgCharacter.Damage`/`Heal`.
 Multiplier setters clamp negative values to zero. Missing characters are ignored safely.
+
+`Initialize(IRpgCombatReceiver)` routes hits to any receiver - another `RpgCharacter`, a custom component
+or a plain C# object - ahead of the serialized/parent character; `ClearReceiver()` returns to that path.
+The override is not serialized and is never destroyed by the bridge; `Initialize(null)` throws. A destroyed
+Unity receiver makes the bridge reject hits until it is cleared or re-initialized, so damage is never
+redirected to a different actor. `TryTakeDamage(int, out float applied)` / `TryHeal(int, out float applied)`
+return whether a positive request reached a live receiver; `applied` is the receiver's synchronous answer and
+may be 0 (invulnerable, dead, routed to the server). The void `TakeDamage`/`Heal` call the same path once.
+
+```csharp
+RpgStatsDamageableBridge bridge = pooledHitbox.GetComponent<RpgStatsDamageableBridge>();
+bridge.Initialize(spawnedEnemy);           // pool reuse: point the hitbox at the new owner
+if (bridge.TryTakeDamage(12, out float removed)) { ShowDamageNumber(removed); }
+bridge.ClearReceiver();                     // back to the serialized/parent RpgCharacter
+```
 
 The bridge does not add network authority. Networked RPG actors require their existing
 `Neo.Rpg.Network` adapter. Serialized references, legacy component menus, and interfaces are retained.

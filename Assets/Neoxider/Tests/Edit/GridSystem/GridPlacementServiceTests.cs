@@ -31,7 +31,7 @@ namespace Neo.Editor.Tests.GridSystem
 
         private FieldGenerator CreateField(int width, int height)
         {
-            var owner = new GameObject("GridPlacementServiceTests");
+            GameObject owner = new GameObject("GridPlacementServiceTests");
             _createdObjects.Add(owner);
             owner.AddComponent<Grid>();
             FieldGenerator generator = owner.AddComponent<FieldGenerator>();
@@ -54,7 +54,7 @@ namespace Neo.Editor.Tests.GridSystem
         public void Place_SingleCell_WritesContentAndOccupancy()
         {
             FieldGenerator field = CreateField(3, 3);
-            var service = new GridPlacementService(field);
+            GridPlacementService service = new GridPlacementService(field);
 
             GridPlacementResult result = service.Place(GridPlacementRequest.Single(new Vector3Int(1, 1, 0), 7));
 
@@ -68,7 +68,7 @@ namespace Neo.Editor.Tests.GridSystem
         public void Place_OutOfBounds_FailsWithReason()
         {
             FieldGenerator field = CreateField(2, 2);
-            var service = new GridPlacementService(field);
+            GridPlacementService service = new GridPlacementService(field);
 
             GridPlacementResult result = service.Place(GridPlacementRequest.Single(new Vector3Int(5, 0, 0), 1));
 
@@ -80,8 +80,8 @@ namespace Neo.Editor.Tests.GridSystem
         public void Requirements_CanBeRelaxedIndividually()
         {
             FieldGenerator field = CreateField(3, 3);
-            var service = new GridPlacementService(field);
-            var pos = new Vector3Int(0, 0, 0);
+            GridPlacementService service = new GridPlacementService(field);
+            Vector3Int pos = new Vector3Int(0, 0, 0);
             field.SetWalkable(pos, false);
 
             GridPlacementRequest strict = GridPlacementRequest.Single(pos, 1);
@@ -104,8 +104,8 @@ namespace Neo.Editor.Tests.GridSystem
         public void OccupiedCell_RejectedByDefault_OverwritePolicyAllows()
         {
             FieldGenerator field = CreateField(3, 3);
-            var service = new GridPlacementService(field);
-            var pos = new Vector3Int(1, 0, 0);
+            GridPlacementService service = new GridPlacementService(field);
+            Vector3Int pos = new Vector3Int(1, 0, 0);
 
             Assert.IsTrue(service.Place(GridPlacementRequest.Single(pos, 1)).Placed);
 
@@ -124,7 +124,7 @@ namespace Neo.Editor.Tests.GridSystem
         public void CustomPredicate_RejectsCells()
         {
             FieldGenerator field = CreateField(3, 3);
-            var service = new GridPlacementService(field);
+            GridPlacementService service = new GridPlacementService(field);
             field.GetCell(new Vector3Int(2, 2, 0)).Type = 9;
 
             GridPlacementRequest request = GridPlacementRequest.Single(new Vector3Int(2, 2, 0), 1);
@@ -141,10 +141,10 @@ namespace Neo.Editor.Tests.GridSystem
         public void MultiCellFootprint_IsAtomic()
         {
             FieldGenerator field = CreateField(3, 3);
-            var service = new GridPlacementService(field);
+            GridPlacementService service = new GridPlacementService(field);
             field.SetOccupied(new Vector3Int(1, 1, 0), true);
 
-            var request = new GridPlacementRequest
+            GridPlacementRequest request = new GridPlacementRequest
             {
                 Anchor = new Vector3Int(0, 1, 0),
                 Entries = new[]
@@ -166,7 +166,7 @@ namespace Neo.Editor.Tests.GridSystem
         public void Place_NotifiesCellStateChanged_UnlessDisabled()
         {
             FieldGenerator field = CreateField(3, 3);
-            var service = new GridPlacementService(field);
+            GridPlacementService service = new GridPlacementService(field);
             int notifications = 0;
             field.OnCellStateChanged.AddListener(_ => notifications++);
 
@@ -183,12 +183,12 @@ namespace Neo.Editor.Tests.GridSystem
         public void EmptyOrNullRequest_FailsGracefully()
         {
             FieldGenerator field = CreateField(2, 2);
-            var service = new GridPlacementService(field);
+            GridPlacementService service = new GridPlacementService(field);
 
             Assert.IsFalse(service.CanPlace(null, out string nullReason));
             StringAssert.Contains("null", nullReason);
 
-            var empty = new GridPlacementRequest { Anchor = Vector3Int.zero, Entries = new GridPlacementEntry[0] };
+            GridPlacementRequest empty = new GridPlacementRequest { Anchor = Vector3Int.zero, Entries = new GridPlacementEntry[0] };
             Assert.IsFalse(service.CanPlace(empty, out string emptyReason));
             StringAssert.Contains("entries", emptyReason);
         }

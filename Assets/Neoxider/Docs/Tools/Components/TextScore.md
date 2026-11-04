@@ -1,7 +1,15 @@
 # TextScore
 
-`Neo.Tools.TextScore` extends [SetText](../Text/SetText.md) and displays current or best score from a
-[ScoreManager](ScoreManager.md), preserving the base component's formatting and animation settings.
+**What it is:** a `MonoBehaviour` extending [SetText](../Text/SetText.md) that displays the current or best score
+of a [ScoreManager](ScoreManager.md), keeping the base component's formatting and animation settings. Script:
+`Scripts/Tools/Components/TextScore.cs`, namespace `Neo.Tools`, assembly `Neo.Tools.Components`.
+
+**How to use:**
+1. Add **Neoxider / Tools / TextScore** to a TMP label.
+2. Choose **Display Mode** (`Current` or `Best`).
+3. Assign **Score Source** when several score managers exist; otherwise `ScoreManager.I` is used.
+
+---
 
 ## Scene setup
 

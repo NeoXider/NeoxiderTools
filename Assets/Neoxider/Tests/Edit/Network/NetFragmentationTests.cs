@@ -175,7 +175,7 @@ namespace Neo.Editor.Tests
             Assert.That(Copy(assembled), Is.EqualTo(newer));
             Assert.That(assembler.DroppedFrames, Is.EqualTo(1), "the half-received older frame is worthless now");
 
-            // the missing tail of the older frame arrives late: ignored
+            // WHY: the missing tail of the older frame arrives late: ignored
             Assert.That(assembler.TryAdd(10, olderParts[1].index, olderParts[1].count, Chunk, olderParts[1].payload, out _), Is.False);
             Assert.That(assembler.StaleFragments, Is.EqualTo(1));
         }
@@ -298,7 +298,7 @@ namespace Neo.Editor.Tests
                 assembler.TryAdd(900, parts[i].index, parts[i].count, Chunk, parts[i].payload, out _);
             }
 
-            // a restarted server counts frames from 0 again: without Reset these would be "older" than 900
+            // WHY: a restarted server counts frames from 0 again: without Reset these would be "older" than 900
             assembler.Reset();
             ArraySegment<byte> assembled = default;
             bool done = false;
@@ -314,7 +314,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void AFourAndAHalfKilobyteFrame_TravelsInFourDatagrams()
         {
-            // the sizing that motivated the feature: a 10-player arena frame over a ~1.2 KB datagram budget
+            // WHY: the sizing that motivated the feature: a 10-player arena frame over a ~1.2 KB datagram budget
             int chunk = NetFragmentation.ChunkSizeForThreshold(1200);
             byte[] frame = MakeFrame(4500);
             Assert.That(NetFragmentation.FragmentCount(frame.Length, chunk), Is.EqualTo(4));

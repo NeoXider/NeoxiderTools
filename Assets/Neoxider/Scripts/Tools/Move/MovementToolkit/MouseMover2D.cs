@@ -337,6 +337,12 @@ namespace Neo.Tools
 
         private Vector2 ScreenToWorld(Vector3 scr)
         {
+            // WHY: re-resolve after the cached main camera was destroyed (scene reload, camera swap).
+            if (cam == null)
+            {
+                cam = Camera.main;
+            }
+
             if (cam == null)
             {
                 return scr;

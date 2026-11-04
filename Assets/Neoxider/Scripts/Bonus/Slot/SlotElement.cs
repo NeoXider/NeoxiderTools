@@ -1,4 +1,4 @@
-using System.Linq;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,7 +55,7 @@ namespace Neo.Bonus
 
         [Tooltip("Gizmo marker dot size")] public float gizmoIconSize = 0.15f;
 
-        [Tooltip("Label text color")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f); // brighter (near yellow)
+        [Tooltip("Label text color")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f);
 
         [Tooltip("Label font size")] public int gizmoFontSize = 22;
 
@@ -196,7 +196,13 @@ namespace Neo.Bonus
             if (textDescription != null)
             {
                 bool hasDescription = !string.IsNullOrEmpty(data.description);
-                textDescription.gameObject.SetActive(hasDescription);
+                GameObject descriptionObject = textDescription.gameObject;
+                if (descriptionObject.activeSelf != hasDescription)
+                {
+                    // WHY: reels swap symbols on every wrap; skipping no-op SetActive avoids hierarchy churn.
+                    descriptionObject.SetActive(hasDescription);
+                }
+
                 if (hasDescription)
                 {
                     textDescription.text = data.description;
@@ -243,6 +249,8 @@ namespace Neo.Bonus
         }
 
 #if UNITY_EDITOR
+        private static readonly Vector3[] GizmoCorners = new Vector3[4];
+
         private void OnDrawGizmos()
         {
             if (!gizmoEnabled)
@@ -293,7 +301,7 @@ namespace Neo.Bonus
 
                 GUIContent content = new(label);
                 Vector2 size = style.CalcSize(content);
-                var rect = new Rect(
+                Rect rect = new(
                     Mathf.Round(gui.x - size.x * 0.5f),
                     Mathf.Round(gui.y - size.y),
                     size.x,
@@ -346,7 +354,7 @@ namespace Neo.Bonus
         /// </summary>
         private Vector3 GetVisualAnchorWorld()
         {
-            var rt = transform as RectTransform;
+            RectTransform rt = transform as RectTransform;
             if (rt == null && image != null)
             {
                 rt = image.rectTransform;
@@ -354,7 +362,7 @@ namespace Neo.Bonus
 
             if (rt != null)
             {
-                var wc = new Vector3[4];
+                Vector3[] wc = GizmoCorners;
                 rt.GetWorldCorners(wc);
                 Vector3 center = (wc[0] + wc[1] + wc[2] + wc[3]) * 0.25f;
                 return center + gizmoLabelOffset;
@@ -381,36 +389,74 @@ namespace Neo.Bonus
             }
             else if (rowComp != null && rowComp.SlotElements != null && rowComp.SlotElements.Length > 0)
             {
-                SlotElement[] sortedByY = rowComp.SlotElements
-                    .OrderBy(se => se.transform.position.y)
-                    .ToArray();
-
-                for (int i = 0; i < sortedByY.Length; i++)
-                {
-                    if (sortedByY[i] == this)
-                    {
-                        rowIndex = i;
-                        break;
-                    }
-                }
+                rowIndex = RankByY(rowComp.SlotElements, this);
             }
 
             if (rowComp != null && rowComp.transform.parent != null)
             {
                 Row[] allRows = rowComp.transform.parent.GetComponentsInChildren<Row>(true);
-                Row[] sortedByX = allRows.OrderBy(r => r.transform.position.x).ToArray();
-
-                for (int i = 0; i < sortedByX.Length; i++)
-                {
-                    if (sortedByX[i] == rowComp)
-                    {
-                        colIndex = i;
-                        break;
-                    }
-                }
+                colIndex = RankByX(allRows, rowComp);
             }
 
             return (colIndex, rowIndex);
+        }
+
+        /// <summary>Position of <paramref name="target"/> in a stable ascending-Y order, without sorting a copy.</summary>
+        private static int RankByY(SlotElement[] elements, SlotElement target)
+        {
+            int targetIndex = Array.IndexOf(elements, target);
+            if (targetIndex < 0)
+            {
+                return -1;
+            }
+
+            float targetY = target.transform.position.y;
+            int rank = 0;
+            for (int i = 0; i < elements.Length; i++)
+            {
+                SlotElement other = elements[i];
+                if (other == null || i == targetIndex)
+                {
+                    continue;
+                }
+
+                float y = other.transform.position.y;
+                if (y < targetY || (y == targetY && i < targetIndex))
+                {
+                    rank++;
+                }
+            }
+
+            return rank;
+        }
+
+        /// <summary>Position of <paramref name="target"/> in a stable ascending-X order, without sorting a copy.</summary>
+        private static int RankByX(Row[] rows, Row target)
+        {
+            int targetIndex = Array.IndexOf(rows, target);
+            if (targetIndex < 0)
+            {
+                return -1;
+            }
+
+            float targetX = target.transform.position.x;
+            int rank = 0;
+            for (int i = 0; i < rows.Length; i++)
+            {
+                Row other = rows[i];
+                if (other == null || i == targetIndex)
+                {
+                    continue;
+                }
+
+                float x = other.transform.position.x;
+                if (x < targetX || (x == targetX && i < targetIndex))
+                {
+                    rank++;
+                }
+            }
+
+            return rank;
         }
 #endif
     }

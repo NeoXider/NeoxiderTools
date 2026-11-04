@@ -1,5 +1,13 @@
 # Shop bridges
 
+**What it is:** the optional `Neo.Shop.Bridges` assembly (`Scripts/Shop/Bridges/ShopInventoryGrantBridge.cs`) with
+the `ShopInventoryGrantBridge` component that grants inventory items for shop purchases.
+
+**How to use:** add the bridge next to the Shop, assign the Shop and Inventory, and fill the mappings
+(shop item id → `InventoryItemData` + amount); see the sections below.
+
+---
+
 `Neo.Shop.Bridges` provides the optional `Neo.Tools.ShopInventoryGrantBridge` component. It connects
 [Shop](Shop.md) purchase events to [InventoryComponent](../Tools/Inventory/InventoryComponent.md)
 without making the two base modules depend on each other. Reference `Neo.Shop.Bridges` in a custom

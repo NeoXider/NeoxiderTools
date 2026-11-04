@@ -2,7 +2,14 @@
 
 > **Legacy since 10.3.0.** Superseded by the [CharacterController module](./CharacterController/README.md) (CMF motor + `NeoCharacterInput`), which adds slope limits with slide-off, stairs, moving platforms, momentum and camera collision. This component is tagged `[LegacyComponent]` and its menu entries moved to `Neoxider/Tools/Legacy/` — nothing is removed, existing scenes keep working, and the [migration table](./CharacterController/README.md#migrating-from-playercontroller3dphysics) covers the switch.
 
-**Purpose:** A robust, Rigidbody-based 3D first-person (or third-person) character controller. Features walking, sprinting, jumping (with coyote time and input buffering), mouse-look with sensitivity settings, and built-in integration with `CursorLockController` and game pause states. Supports both Legacy Input Manager and the New Input System out of the box.
+**What it is:** a `MonoBehaviour` (a Mirror `NetworkBehaviour` when Mirror is installed) in `Scripts/Tools/Move/PlayerController3DPhysics.cs`, namespace `Neo.Tools`: a Rigidbody-based 3D first-person (or third-person) character controller with walking, sprinting, jumping (coyote time and input buffering), mouse look, `CursorLockController` integration and pause handling. Supports both the Legacy Input Manager and the New Input System.
+
+**How to use:**
+1. Add the component (menu **Neoxider > Tools > Legacy > PlayerController3DPhysics**) to a capsule; a `Rigidbody` is required and set to interpolate.
+2. Assign **Camera Pivot** (defaults to `Camera.main`), **Ground Check** and **Ground Mask**.
+3. Drive it from code with `SetMoveInput`, `SetLookInput`, `SetJumpInput`, `SetMovementEnabled` and `SetLookEnabled`, or let it read keyboard/mouse input.
+
+---
 
 ## Fields (Inspector)
 
@@ -30,11 +37,27 @@ overlapping self/child colliders cannot hide a valid floor behind a truncated pr
 capacity of 16 is not a result limit. Growth allocates only when the previous capacity is insufficient;
 different players still probe their own ground positions.
 
+### Update timing
+
+Input and look deltas are read in `Update`. The camera pivot (pitch, plus yaw in `RotateCameraPivot` mode) is
+written every rendered frame, so looking stays smooth at frame rates above the physics rate. Body yaw goes
+through `Rigidbody.MoveRotation`, and walking, jumping and extra gravity run in `FixedUpdate`; the body is
+interpolated. The legacy-input availability probe is cached, so an Input System-only project does not pay an
+exception per input read.
+
+`OnEnable` remembers exactly which events it subscribed to (`GameSettings.OnSettingsChanged`, and `EM.OnPause` /
+`EM.OnResume` of the `EM` instance present at that moment), and `OnDisable` removes exactly those, even if the
+Inspector flags changed in between.
+
 ### Cursor ownership
 
 **Esc owner = `CursorLockController`; this controller defers automatically.** When an active `CursorLockController` owns the cursor (`HasExternalCursorControl()` is true), the player skips **all** of its own cursor paths: no lock-on-start, no Escape handling, and `SetCursorLocked` forwards the request to the owner instead of writing `Cursor` directly. The owner suspends look (and optionally movement) while the cursor is visible and restores them on lock. Scenes **without** a `CursorLockController` are unaffected — the standalone controller keeps its full current behaviour.
 
-> `HasExternalCursorControl()` only checks that the controller exists, is `enabled` and has `ControllerEnabled` — it does **not** look at **Manage Cursor** or the global `GlobalCursorManagement` kill-switch. So if you keep a `CursorLockController` in the scene but turn **Manage Cursor** off, neither component locks the cursor on start or handles Escape: the player defers to an owner that has opted out. That is the intended setup only when you run your own cursor system (scenario (c) in the [CursorLockController matrix](./CursorLockController.md#choosing-a-cursor-setup)) — otherwise remove the controller instead of disabling its management.
+`HasExternalCursorControl()` is also false while the owner is being disabled, deactivated or destroyed and this player stays in play (its scene stays loaded and its GameObject stays active). Look that the owner hands back during that cleanup therefore auto-locks the cursor like a standalone player, unless another `CursorLockController` still holds the cursor. A player that leaves play together with its owner keeps deferring, so nothing is re-locked: during a scene change (the player's own scene unloading) and when the player's own GameObject is deactivated or destroyed, for example with a `CursorLockController` on the player root.
+
+An owner whose GameObject is inactive counts as absent, the same as one with `enabled = false`: the player keeps the binding (`ExternalCursorLockController`), but it handles Escape and lock-on-start itself and `SetCursorLocked` writes `Cursor` directly instead of forwarding to a controller that cannot run. Once the owner is active again the player defers to it again. Before 12.0 the player kept deferring to an inactive owner, so nothing handled Escape and a forwarded `SetCursorLocked` pushed the inactive owner onto the cursor stack.
+
+> `HasExternalCursorControl()` checks that the controller exists, is `enabled`, has `ControllerEnabled` and sits on an active GameObject (during the controller's own disable/destroy cleanup it is true only for a player that leaves play with it) — it does **not** look at **Manage Cursor** or the global `GlobalCursorManagement` kill-switch. So if you keep a `CursorLockController` in the scene but turn **Manage Cursor** off, neither component locks the cursor on start or handles Escape: the player defers to an owner that has opted out. That is the intended setup only when you run your own cursor system (scenario (c) in the [CursorLockController matrix](./CursorLockController.md#choosing-a-cursor-setup)) — otherwise remove the controller instead of disabling its management.
 
 ### Cursor and startup order
 
@@ -49,10 +72,10 @@ Cursor locking when **Lock Cursor On Start** is enabled happens in **`Start()`**
 | `void SetLookEnabled(bool enabled)` | Enables/disables mouse-look input processing. |
 | `void SetCursorLocked(bool locked)` | Locks or unlocks the cursor. **No-op** when **Enable Cursor Control** is off; **forwards to the owning `CursorLockController`** when one is active. |
 | `bool CursorControlEnabled { get; set; }` | Enable/disable all cursor changes from this component (default `true`). |
-| `bool HasExternalCursorControl()` | True when an active `CursorLockController` owns the cursor and this component defers to it. |
+| `bool HasExternalCursorControl()` | True when an enabled `CursorLockController` on an active GameObject owns the cursor and this component defers to it. |
 | `CursorLockController ExternalCursorLockController { get; }` | The cursor controller this player defers to, if any. |
 | `void SetExternalCursorLockController(CursorLockController controller)` | Assigns (or clears with `null`) the authoritative cursor controller. |
-| `void Teleport(Vector3 worldPosition)` | Instantly moves the character and kills any current velocity/momentum. |
+| `void Teleport(Vector3 worldPosition)` | Instantly moves the transform and the Rigidbody (so interpolation does not blend from the old pose) and kills any current velocity/momentum. |
 | `void SetMoveInput(Vector2? input)` | Override input for on-screen joysticks. Magnitude is clamped to 1 and preserved: quarter input targets quarter walk/run speed. Pass `null` to revert to hardware input. |
 | `void SetJumpInput()` | Queues a one-shot external jump command; also exposed as **Jump** in the Play Mode Inspector. |
 | `bool IsGrounded { get; }` | Returns whether the character is currently on the ground. |
@@ -78,7 +101,6 @@ Create a Capsule with a `Rigidbody`. Attach `PlayerController3DPhysics`. Make a 
 
 public void ImmobilizePlayerForCutscene()
 {
-    // Prevent the player from walking or looking around during a cutscene
     _player.SetMovementEnabled(false);
     _player.SetLookEnabled(false);
 }
@@ -87,4 +109,4 @@ public void ImmobilizePlayerForCutscene()
 ## See Also
 - [CursorLockController](CursorLockController.md)
 - [KeyboardMover](MovementToolkit/KeyboardMover.md)
-- <- [Tools/Move](../README.md)
+- <- [Tools/Move](./README.md)

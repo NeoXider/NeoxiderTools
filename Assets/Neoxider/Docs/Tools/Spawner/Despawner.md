@@ -1,6 +1,13 @@
 ﻿# Despawner
 
-**Purpose:** A utility to remove objects from the scene safely. It automatically detects if an object belongs to a pool (and returns it) or if it should be destroyed via `Destroy`. It can also spawn another prefab just before disappearing (e.g., an explosion effect).
+**What it is:** `MonoBehaviour` that removes its GameObject safely: a pooled rental returns to its pool, anything else is destroyed. It can spawn an effect prefab first. `Scripts/Tools/Spawner/Despawner.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add `Despawner` to a prefab (enemy, projectile, pickup).
+2. Optionally assign **Spawn Prefab On Despawn** (explosion, puff) and **Despawn On Disable**.
+3. Call `Despawn()` from a UnityEvent (death, timer, animation event), or `Despawner.DespawnObject(target)` from C#.
+
+---
 
 ## Fields (Inspector)
 
