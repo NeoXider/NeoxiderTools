@@ -22,8 +22,15 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
+        "UNITY_INCLUDE_TESTS",
+        "NEO_DEMO_TEST_FRAMEWORK"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.test-framework",
+            "expression": "",
+            "define": "NEO_DEMO_TEST_FRAMEWORK"
+        }
+    ],
     "noEngineReferences": false
 }

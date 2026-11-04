@@ -643,6 +643,9 @@ machine and Unity version.
   lines are plain ASCII (`->`, `<-`, `1.`), so TMP no longer adds them to the dynamic fallback font asset during
   Play. VampireSurvivorMCP assigns its health bars to the controller and turns the bars' scene search off in the
   saved scene.
+- **Demo sample in projects without the Test Framework**: the sample's builder tests (`Neo.Demo.Editor.Tests`)
+  compile only when `com.unity.test-framework` is installed; before, importing the Demo sample (UPM or the
+  Complete `.unitypackage`) into such a project failed with 888 missing-NUnit errors.
 - **Mirror scene ids in demo scenes**: with Mirror installed, entering Play Mode in ClickerExample or Shooter2D
   stopped at once ("needs to be opened and resaved"): the `--System--` prefab's `Money` carries a `NetworkIdentity`
   whose sceneId Mirror assigns only in memory. A rebuild now gives every scene `NetworkIdentity` without an id a
