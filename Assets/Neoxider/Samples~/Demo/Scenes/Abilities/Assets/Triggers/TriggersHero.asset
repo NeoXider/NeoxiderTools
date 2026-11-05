@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dfd31ca7c8a28a4d8036ed9f8390c82, type: 3}
+  m_Name: TriggersHero
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.UnitTemplate
+  _displayName: Hero
+  _team: 1
+  _startLevel: 1
+  _resources:
+  - ResourceId: health
+    Max: 300
+    RegenPerSecond: 0
+  _baseProperties:
+  - PropertyId: armor
+    Value: 0
+  _abilities:
+  - {fileID: 11400000, guid: 59fd631bd30469847a717712a751e1b7, type: 2}
+  - {fileID: 11400000, guid: 2e1b54a503d992c429bf23cee997840c, type: 2}
+  - {fileID: 11400000, guid: 38b347b76f66c444a9e20c2906f9e089, type: 2}
+  - {fileID: 11400000, guid: 86c35873330948b46a70ddc2138c1cc3, type: 2}
+  - {fileID: 11400000, guid: 2eb3fe4833a5929488d369f30f3c4768, type: 2}
+  _innateModifiers:
+  - {fileID: 11400000, guid: 52521a23ae0a46b4f8560b048d3fa5c7, type: 2}

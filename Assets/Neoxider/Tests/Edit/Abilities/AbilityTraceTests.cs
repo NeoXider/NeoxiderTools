@@ -40,6 +40,13 @@ namespace Neo.Editor.Tests.Abilities
             StringAssert.Contains("effect damage", why);
             StringAssert.Contains("cast 'strike'", why);
 
+            AbilityUnit heroUnit = hero;
+            string named = system.Trace.Explain(reaction.Sequence, 12,
+                id => id == heroUnit.Id ? "Hero" : "Enemy");
+            StringAssert.StartsWith("#" + reaction.Sequence + " reaction 'marked'[0] on Enemy: event", named,
+                "a single-stack reaction prints no stack count");
+            StringAssert.Contains("cast 'strike' by Hero", named);
+
             List<AbilityTraceEntry> entries = new List<AbilityTraceEntry>();
             system.Trace.CopyTo(entries);
             Assert.That(entries[0].Kind, Is.EqualTo(AbilityTraceKind.Cast), "the cast is the root");

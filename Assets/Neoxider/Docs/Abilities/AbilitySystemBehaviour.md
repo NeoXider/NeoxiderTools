@@ -26,7 +26,7 @@
 
 ### Zone visuals
 
-Domain zones (`zone` op, `AbilitySystem.SpawnZone`) with an `ArchetypeId` ask the hub to spawn that prefab with `SpawnRequest.ZoneId`, `Duration`, `Magnitude` = radius and `TargetUnit` = the followed anchor. Put an **AbilityZoneView** (`Neoxider/Abilities/Ability Zone View`) on the prefab: it scales X/Z to the radius (**Mesh Radius** = the mesh radius at scale 1, 0.5 for Unity's cylinder), follows the anchor, applies **Offset**, and returns to the pool on `zone_expired` or when its lifetime ends. Gameplay stays in the domain zone; the view is presentation only.
+Domain zones (`zone` op, `AbilitySystem.SpawnZone`) with an `ArchetypeId` ask the hub to spawn that prefab with `SpawnRequest.ZoneId`, `Duration`, `Magnitude` = radius and `TargetUnit` = the followed anchor. Put an **AbilityZoneView** (`Neoxider/Abilities/Ability Zone View`) on the prefab: it scales the visual to the radius (**Plane**: `GroundXZ` scales X/Z for a 3D floor disc, `ScreenXY` scales X/Y for a 2D sprite; **Mesh Radius** = the mesh radius at scale 1, 0.5 for Unity's cylinder), follows the anchor, applies **Offset**, and returns to the pool on `zone_expired` or when its lifetime ends. Gameplay stays in the domain zone; the view is presentation only.
 
 ## Key API
 

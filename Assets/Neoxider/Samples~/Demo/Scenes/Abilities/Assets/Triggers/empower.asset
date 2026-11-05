@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cdd383bc04e06b4c89c69b048cae7e5, type: 3}
+  m_Name: empower
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.ModifierDefinition
+  _blueprint:
+    Id: empower
+    DisplayName: Empower
+    Duration: 10
+    DurationByLevel: []
+    StackPolicy: 1
+    MaxStacks: 1
+    Properties: []
+    States: []
+    TickInterval: 0
+    TickOnApply: 0
+    TickEffects: []
+    EventReactions:
+    - EventId: before_deal_damage
+      Effects:
+      - OpId: modify_damage
+        Target: 0
+        TeamFilter: 1
+        Radius: 0
+        RadiusByLevel: []
+        MaxTargets: 0
+        Amount: 1.5
+        AmountByLevel: []
+        AmountKey: 
+        AmountScaleProperty: 
+        AmountScalePerPoint: 0
+        AmountScaleSource: 0
+        AmountLevelSource: 0
+        DamageType: magical
+        ModifierId: 
+        ResourceId: 
+        ArchetypeId: 
+        CustomParam: multiply
+        Chance: 1
+        AbilityId: 
+        Angle: 0
+        Duration: 0
+        Interval: 0
+        AmountPerStack: 0
+      TargetEventSource: 0
+      Trigger: 0
+      EveryN: 1
+      Threshold: 0.3
+      StateId: 
+      TagFilter: 
+      AbilityFilter: 
+      HitsOnly: 1
+      MaxTriggers: 3
+      RemoveWhenSpent: 1
+      Cooldown: 0
+      Priority: 0
+    IsDebuff: 0
+    Dispellable: 1
+    PresentationCue: 

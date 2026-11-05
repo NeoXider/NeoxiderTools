@@ -50,6 +50,12 @@ Proposed version: **12.1.0** (additive; existing float content and APIs behave a
   Q8.8 rounding, the seeded xorshift generator) and `AbilityStateHasher.Compute(system)` (allocation-free FNV-1a over
   clock, units, pools, modifiers with trigger counters, slots, zones and pending projectiles). The design note
   `Docs/Abilities/DeterministicMode.md` describes the open decision on an engine-free integer core.
+- **Abilities — demo and authoring helpers.** Demo scene `Scenes/Abilities/AbilitiesTriggersDemo.unity` (six
+  lessons: thorns, attack enhancer, mark, stacking poison, formation zone, auto-defense shield, plus a "why did this
+  fire" panel), authored by `AbilitiesTriggersDemoBuilder` and verified by `AbilitiesTriggersDemoPlayTests`.
+  `UnitTemplate` **Innate Modifiers** (passives applied on registration), `AbilityZoneView` **Plane** (3D ground or
+  2D screen), `DamageService.RemainingShield(instance)`, `AbilityTrace.Explain(sequence, maxDepth, unitName)` and
+  `AbilityTraceEntry.ToString(unitName)` with unit names.
 - **Abilities — tests and benchmarks.** EditMode suites for hooks, triggers, payload ops, zones, stack policies,
   rules, aggregation layering, templates, validator and trace; zero-allocation guards for hooked hits, triggers,
   zone pulses, fixed-step time, Q8 numerics and an enabled trace; `AbilityTickCostBenchmarks` (N units ×

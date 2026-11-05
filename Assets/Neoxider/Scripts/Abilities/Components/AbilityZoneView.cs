@@ -13,13 +13,16 @@ namespace Neo.Abilities
     [AddComponentMenu("Neoxider/Abilities/Ability Zone View")]
     public sealed class AbilityZoneView : MonoBehaviour, ISpawnedAbilityEntity
     {
-        [Tooltip("Scale X and Z so the mesh matches the zone radius.")]
+        [Tooltip("Scale the object so the mesh matches the zone radius.")]
         [SerializeField] private bool _scaleToRadius = true;
+
+        [Tooltip("Ground XZ: a 3D floor disc (scales X and Z). Screen XY: 2D sprites facing the camera (scales X and Y).")]
+        [SerializeField] private AbilityZonePlane _plane = AbilityZonePlane.GroundXZ;
 
         [Tooltip("Radius of the mesh at scale 1 (0.5 for Unity's cylinder and quad primitives).")]
         [SerializeField] [Min(0.001f)] private float _meshRadius = 0.5f;
 
-        [Tooltip("Local Y scale kept while scaling to the radius.")]
+        [Tooltip("Scale of the axis that is not scaled to the radius (Y on the ground, Z on screen).")]
         [SerializeField] private float _heightScale = 1f;
 
         [Tooltip("Offset from the zone centre (e.g. a little above the ground).")]
@@ -47,7 +50,9 @@ namespace Neo.Abilities
             if (_scaleToRadius && request.Magnitude > 0f)
             {
                 float scale = request.Magnitude / Mathf.Max(0.001f, _meshRadius);
-                transform.localScale = new Vector3(scale, _heightScale, scale);
+                transform.localScale = _plane == AbilityZonePlane.ScreenXY
+                    ? new Vector3(scale, scale, _heightScale)
+                    : new Vector3(scale, _heightScale, scale);
             }
 
             if (_zoneId != 0 && hub != null)
@@ -110,5 +115,15 @@ namespace Neo.Abilities
 
             _hub = null;
         }
+    }
+
+    /// <summary>Plane a zone visual lies in.</summary>
+    public enum AbilityZonePlane
+    {
+        /// <summary>3D ground: the visual scales on X and Z.</summary>
+        GroundXZ = 0,
+
+        /// <summary>2D screen plane: the visual scales on X and Y.</summary>
+        ScreenXY = 1
     }
 }

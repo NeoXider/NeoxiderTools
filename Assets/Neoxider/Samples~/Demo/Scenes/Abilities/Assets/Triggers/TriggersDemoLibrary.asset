@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec6aed6a02459d4986569b0d23946d5, type: 3}
+  m_Name: TriggersDemoLibrary
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityLibrary
+  _abilities:
+  - {fileID: 11400000, guid: 59fd631bd30469847a717712a751e1b7, type: 2}
+  - {fileID: 11400000, guid: d098c782d5f88ab449fa09bdfa6e453f, type: 2}
+  - {fileID: 11400000, guid: 2e1b54a503d992c429bf23cee997840c, type: 2}
+  - {fileID: 11400000, guid: 38b347b76f66c444a9e20c2906f9e089, type: 2}
+  - {fileID: 11400000, guid: 86c35873330948b46a70ddc2138c1cc3, type: 2}
+  - {fileID: 11400000, guid: 2eb3fe4833a5929488d369f30f3c4768, type: 2}
+  - {fileID: 11400000, guid: 09990706698b8ab4e872fa1be364b979, type: 2}
+  _modifiers:
+  - {fileID: 11400000, guid: 2993f013eb83c504cba1218c23677f8c, type: 2}
+  - {fileID: 11400000, guid: a37b04bb85b59f745943c2e4ac5ce1ff, type: 2}
+  - {fileID: 11400000, guid: 2fcd00b6c0219cc4489534993ca4f67f, type: 2}
+  - {fileID: 11400000, guid: a921b8f55d632404bbf36957be29ed7c, type: 2}
+  - {fileID: 11400000, guid: 0830670ff8c561c42ac5611800fc2782, type: 2}
+  - {fileID: 11400000, guid: 52521a23ae0a46b4f8560b048d3fa5c7, type: 2}
+  - {fileID: 11400000, guid: 03878e7992d77e24e85f4541170157da, type: 2}

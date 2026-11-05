@@ -168,6 +168,8 @@ if (system.Trace.TryFindLatest(AbilityTraceKind.Reaction, "hunter_mark_mark", ou
 }
 ```
 
+`Explain(sequence, maxDepth, unitName)` takes a `Func<UnitId, string>` for readable names ("cast 'strike' by Hero"); `AbilityTraceEntry.ToString(unitName)` formats a single entry the same way. `DamageService.RemainingShield(instance)` returns the shield HP a modifier can still absorb (capacity minus consumed), e.g. for a shield bar.
+
 Recording is allocation-free (references to existing ids, no formatting); `Explain`, `Dump` and `ToString` build text on demand.
 
 ## Performance
@@ -192,3 +194,5 @@ Units whose modifiers react to `take_damage` pay for the trigger bookkeeping (ch
 Новые операции: `projectile` (снаряд с полезной нагрузкой — эффектами попадания другой способности), `area_apply` (модификатор и нагрузка по области или конусу), `zone` (зона: аура за кастером или формация в точке, импульс при появлении и далее с интервалом, время жизни, визуал через `AbilityZoneView`), `cast_ability` (каст выданной способности через обычный конвейер). Селектор `ConeFromCaster`, `AmountPerStack` для урона за стак, политики стаков `Unique`, `Prolong`, `IndependentCapped`. Готовые шаблоны (`AbilityTemplates` и кнопка **+ Template** в Ability Designer): автокаст техники, усилитель атак, автощит, метка на N ударов, стакающийся яд, шипы, аура, зона-формация. `AbilityContentValidator` проверяет данные, а журнал `system.Trace` объясняет, почему сработала реакция (`Explain`). Горячие пути не выделяют память; цифры производительности — в таблице выше.
 
 Демо-сцена `Scenes/Abilities/AbilitiesTriggersDemo.unity` — шесть уроков на 2D-арене (герой, голем с шипами, бес): удар и отражение, усилитель атак, метка на три удара, стакающийся яд, зона-формация и автощит ниже 40% HP. Панель внизу слева показывает `Trace.Explain` последней реакции, кнопка **Reset demo** возвращает исходное состояние. Сцену собирает `AbilitiesTriggersDemoBuilder`, вся связка сохранена в сцене и видна без Play Mode.
+
+Помощники: **Innate Modifiers** в `UnitTemplate` (пассивки вроде шипов и автощита накладываются при регистрации, кастер — сам юнит), **Plane** у `AbilityZoneView` (`GroundXZ` для 3D-пола, `ScreenXY` для 2D-спрайта), `DamageService.RemainingShield(instance)` для полоски щита и `Trace.Explain(sequence, maxDepth, unitName)` с именами юнитов вместо `Unit(id)`.

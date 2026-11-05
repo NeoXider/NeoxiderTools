@@ -137,7 +137,10 @@ Read `Docs/Abilities/TriggersAndHooks.md` and `Docs/Abilities/Rules.md` before h
   (FixedStepTimeSource + system.Advance / StepTicks) / Numeric (FixedPointNumeric.Q8) / Random
   (IRandomSourceFactory)`. Implementations must not allocate per call; `null` restores the default.
 - **Debug "why did this fire":** `system.Trace.Enabled = true;` then
-  `system.Trace.Explain(entry.Sequence)` (find entries with `TryFindLatest(AbilityTraceKind.Reaction, id, ...)`).
+  `system.Trace.Explain(entry.Sequence)` (find entries with `TryFindLatest(AbilityTraceKind.Reaction, id, ...)`;
+  `Explain(seq, 12, id => name)` prints unit names). Shield bar: `DamageService.RemainingShield(instance)`.
+- **Passives on a template:** `UnitTemplate` **Innate Modifiers** (thorns, auto-defense) are applied on
+  registration with the unit as caster. 2D zone visuals: `AbilityZoneView` **Plane = ScreenXY**.
   `AbilityContentValidator.Validate(abilities, modifiers, system.Ops)` lists data mistakes.
 
 ## NoCode trio (designer wiring — see avoid-nocode.md)

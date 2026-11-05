@@ -8,8 +8,9 @@
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SurvivorDemo.jpg" alt="SurvivorDemo: a survivor arena with waves, upgrades and auto-cast abilities" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AbilitiesNoCodeDemo.jpg" alt="AbilitiesNoCodeDemo: NoCode ability buttons, HP and cooldown bars, auto caster" width="49%" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AbilitiesTriggersDemo.jpg" alt="AbilitiesTriggersDemo: thorns, attack enhancer, mark, stacking poison, formation zone and auto-defense shield with a why-did-this-fire panel" width="98%" /></p>
 
-*Demo scenes: `Scenes/SurvivorDemo.unity`, `Scenes/Abilities/AbilitiesNoCodeDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/SurvivorDemo.unity`, `Scenes/Abilities/AbilitiesNoCodeDemo.unity`, `Scenes/Abilities/AbilitiesTriggersDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 - **Abilities** resolve, per cast, into a list of effect operations (damage, heal, apply modifier, spawn, …) through a validated cast pipeline (states, costs, cooldown/charges, target, range).

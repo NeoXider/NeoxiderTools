@@ -28,6 +28,18 @@ namespace Neo.Abilities
                 : system.Damage.Apply(source, target, amount, damageType, abilityId, castId, random, flags);
         }
 
+        /// <summary>Shield HP an instance can still absorb (capacity minus what hits already consumed); 0 for none.</summary>
+        public static float RemainingShield(ModifierInstance instance)
+        {
+            if (instance == null || !instance.IsActive)
+            {
+                return 0f;
+            }
+
+            float remaining = ShieldCapacity(instance) - instance.ShieldConsumed;
+            return remaining > 0f ? remaining : 0f;
+        }
+
         /// <summary>Total shield HP a modifier instance grants (shield_hp contributions, stack-scaled).</summary>
         public static float ShieldCapacity(ModifierInstance instance)
         {

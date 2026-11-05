@@ -81,40 +81,46 @@ namespace Neo.Abilities
 
         public bool IsValid => Sequence > 0;
 
-        /// <summary>One readable line, e.g. "#12 reaction 'mark'[0] on Unit(2): every 3rd attack_landed".</summary>
+        /// <summary>One readable line, e.g. "#12 reaction 'mark'[0] on Unit(2): every Nth event".</summary>
         public override string ToString()
+        {
+            return ToString(null);
+        }
+
+        /// <summary>One readable line with unit names from <paramref name="unitName" /> (null = "Unit(id)").</summary>
+        public string ToString(Func<UnitId, string> unitName)
         {
             StringBuilder builder = new StringBuilder(96);
             builder.Append('#').Append(Sequence.ToString(CultureInfo.InvariantCulture)).Append(' ');
             switch (Kind)
             {
                 case AbilityTraceKind.Event:
-                    builder.Append("event ").Append(Id).Append(" on ").Append(Unit);
+                    builder.Append("event ").Append(Id).Append(" on ").Append(Name(Unit, unitName));
                     if (Other.IsValid)
                     {
-                        builder.Append(" from ").Append(Other);
+                        builder.Append(" from ").Append(Name(Other, unitName));
                     }
 
                     break;
                 case AbilityTraceKind.Reaction:
                     builder.Append("reaction '").Append(Id).Append("'[").Append(Index.ToString(CultureInfo.InvariantCulture))
-                        .Append("] on ").Append(Unit);
+                        .Append("] on ").Append(Name(Unit, unitName));
                     break;
                 case AbilityTraceKind.Effect:
                     builder.Append("effect ").Append(Id).Append(" x").Append(Index.ToString(CultureInfo.InvariantCulture))
-                        .Append(" by ").Append(Unit);
+                        .Append(" by ").Append(Name(Unit, unitName));
                     break;
                 case AbilityTraceKind.Cast:
-                    builder.Append("cast '").Append(Id).Append("' by ").Append(Unit);
+                    builder.Append("cast '").Append(Id).Append("' by ").Append(Name(Unit, unitName));
                     break;
                 case AbilityTraceKind.CastFailed:
-                    builder.Append("cast '").Append(Id).Append("' by ").Append(Unit).Append(" rejected");
+                    builder.Append("cast '").Append(Id).Append("' by ").Append(Name(Unit, unitName)).Append(" rejected");
                     break;
                 case AbilityTraceKind.ProjectileHit:
-                    builder.Append("projectile of '").Append(Id).Append("' hit ").Append(Other);
+                    builder.Append("projectile of '").Append(Id).Append("' hit ").Append(Name(Other, unitName));
                     break;
                 case AbilityTraceKind.ModifierTick:
-                    builder.Append("tick of '").Append(Id).Append("' on ").Append(Unit);
+                    builder.Append("tick of '").Append(Id).Append("' on ").Append(Name(Unit, unitName));
                     break;
                 case AbilityTraceKind.Zone:
                     builder.Append("zone #").Append(Index.ToString(CultureInfo.InvariantCulture));
@@ -125,11 +131,18 @@ namespace Neo.Abilities
 
                     break;
                 default:
-                    builder.Append(Kind.ToString()).Append(' ').Append(Id).Append(" on ").Append(Unit);
+                    builder.Append(Kind.ToString()).Append(' ').Append(Id).Append(" on ").Append(Name(Unit, unitName));
                     break;
             }
 
-            if (Amount != 0f)
+            if (Kind == AbilityTraceKind.Reaction)
+            {
+                if (Amount > 1f)
+                {
+                    builder.Append(" x").Append(Amount.ToString("0", CultureInfo.InvariantCulture)).Append(" stacks");
+                }
+            }
+            else if (Amount != 0f)
             {
                 builder.Append(" amount=").Append(Amount.ToString("0.###", CultureInfo.InvariantCulture));
             }
@@ -140,6 +153,12 @@ namespace Neo.Abilities
             }
 
             return builder.ToString();
+        }
+
+        private static string Name(UnitId unit, Func<UnitId, string> unitName)
+        {
+            string name = unitName != null && unit.IsValid ? unitName(unit) : null;
+            return string.IsNullOrEmpty(name) ? unit.ToString() : name;
         }
     }
 
@@ -246,13 +265,22 @@ namespace Neo.Abilities
         /// </summary>
         public string Explain(long sequence, int maxDepth = 12)
         {
+            return Explain(sequence, maxDepth, null);
+        }
+
+        /// <summary>
+        ///     <see cref="Explain(long, int)" /> with unit names from <paramref name="unitName" /> (for example the
+        ///     display names of a scene's units).
+        /// </summary>
+        public string Explain(long sequence, int maxDepth, Func<UnitId, string> unitName)
+        {
             if (!TryGet(sequence, out AbilityTraceEntry entry))
             {
                 return "#" + sequence.ToString(CultureInfo.InvariantCulture) + " is no longer in the trace buffer.";
             }
 
             StringBuilder builder = new StringBuilder(256);
-            builder.Append(entry.ToString());
+            builder.Append(entry.ToString(unitName));
             int depth = 0;
             while (entry.Parent > 0 && depth++ < maxDepth)
             {
@@ -264,7 +292,7 @@ namespace Neo.Abilities
                     break;
                 }
 
-                builder.Append("\n  because ").Append(entry.ToString());
+                builder.Append("\n  because ").Append(entry.ToString(unitName));
             }
 
             return builder.ToString();

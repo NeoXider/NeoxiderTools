@@ -2,6 +2,7 @@
     "name": "Neo.Tests.Play",
     "rootNamespace": "Neo.Tests.Play",
     "references": [
+        "Neo.Abilities",
         "Neo.Save",
         "Neo.Tools.Inventory",
         "Neo.Core",

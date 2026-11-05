@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42ed834e73743f48ba73071f9eb8b21, type: 3}
+  m_Name: thunder_formation
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
+  _blueprint:
+    Id: thunder_formation
+    DisplayName: Thunder Formation
+    Description: Places a damaging formation.
+    Targeting: 3
+    TeamFilter: 1
+    Range: 14
+    Costs: []
+    Cooldown: 8
+    MaxCharges: 1
+    ChargeRestoreTime: 0
+    Delivery: 0
+    ProjectileArchetypeId: 
+    ProjectileSpeed: 20
+    CastEffects:
+    - OpId: zone
+      Target: 0
+      TeamFilter: 1
+      Radius: 2.4
+      RadiusByLevel: []
+      MaxTargets: 0
+      Amount: 0
+      AmountByLevel: []
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 0
+      DamageType: magical
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: thunder_formation_zone
+      CustomParam: 
+      Chance: 1
+      AbilityId: thunder_formation_pulse
+      Angle: 0
+      Duration: 6
+      Interval: 1
+      AmountPerStack: 0
+    ImpactEffects: []
+    Specials: []
+    CastCue: 
+    ImpactCue: 

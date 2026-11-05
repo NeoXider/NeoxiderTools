@@ -37,14 +37,19 @@ namespace Neo.Abilities
         [Tooltip("Abilities granted on registration.")]
         [SerializeField] private List<AbilityDefinition> _abilities = new List<AbilityDefinition>();
 
+        [Tooltip("Modifiers the unit carries from registration (passives such as thorns or an auto-defense " +
+                 "shield). Registered into the catalog and applied with the unit as caster.")]
+        [SerializeField] private List<ModifierDefinition> _innateModifiers = new List<ModifierDefinition>();
+
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
         public TeamId Team => new TeamId(_team);
         public int StartLevel => _startLevel < 1 ? 1 : _startLevel;
         public IReadOnlyList<UnitResourceConfig> Resources => _resources;
         public IReadOnlyList<UnitPropertyDefault> BaseProperties => _baseProperties;
         public IReadOnlyList<AbilityDefinition> Abilities => _abilities;
+        public IReadOnlyList<ModifierDefinition> InnateModifiers => _innateModifiers;
 
-        /// <summary>Applies pools, base properties and abilities to a freshly created unit.</summary>
+        /// <summary>Applies pools, base properties, abilities and innate modifiers to a freshly created unit.</summary>
         public void ApplyTo(AbilityUnit unit)
         {
             if (unit == null)
@@ -92,6 +97,16 @@ namespace Neo.Abilities
                 {
                     unit.System.RegisterAbility(ability.Blueprint);
                     unit.System.GrantAbility(unit.Id, ability.Id);
+                }
+            }
+
+            for (int i = 0; i < _innateModifiers.Count; i++)
+            {
+                ModifierDefinition modifier = _innateModifiers[i];
+                if (modifier != null && !string.IsNullOrEmpty(modifier.Id))
+                {
+                    unit.System.RegisterModifier(modifier.Blueprint);
+                    unit.System.Modifiers.Apply(modifier.Blueprint, unit.Id, unit.Id);
                 }
             }
         }

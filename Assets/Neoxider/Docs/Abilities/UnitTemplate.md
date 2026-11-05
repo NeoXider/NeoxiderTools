@@ -17,6 +17,7 @@
 | **Resources** | `List<UnitResourceConfig>` | Resource pools. Include a `health` pool for damageable units. Each pool starts full. |
 | **Base Properties** | `List<UnitPropertyDefault>` | Base property values before modifiers (id + value). |
 | **Abilities** | `List<AbilityDefinition>` | Abilities registered and granted on application. |
+| **Innate Modifiers** | `List<ModifierDefinition>` | Modifiers registered and applied on application with the unit as caster: passives such as thorns or an auto-defense shield ([templates](./TriggersAndHooks.md#templates)). Make them permanent (Duration 0). |
 
 **UnitResourceConfig** — `{ ResourceId, Max, RegenPerSecond }`. **UnitPropertyDefault** — `{ PropertyId, Value }`.
 

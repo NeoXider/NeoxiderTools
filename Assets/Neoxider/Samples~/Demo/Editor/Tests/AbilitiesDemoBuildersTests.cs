@@ -161,6 +161,35 @@ SceneRoots:
         }
 
         [Test]
+        public void AbilitiesTriggersBuilder_AuthorsTheLessonsIdempotently()
+        {
+            DemoSceneBuilderInfo builder = Builder("AbilitiesTriggersDemoBuilder.Build");
+            OpenTempScene();
+
+            DemoSceneResult first = DemoSceneRunner.BuildOpenScene(_scene, new[] { builder });
+            Assert.That(first.Success, Is.True, first.Summary());
+            AbilitiesTriggersDemoGuide guide = Single<AbilitiesTriggersDemoGuide>();
+            Assert.That(guide.IsSceneBuilt, Is.True);
+            Assert.That(DemoWiring.Describe(FindButton("Btn_Strike golem (20)").onClick),
+                Is.EqualTo("AbilitiesTriggersDemoGuide.Strike"));
+            Assert.That(DemoWiring.Describe(FindButton("Btn_Empower").onClick), Is.EqualTo("AbilitiesTriggersDemoGuide.Empower"));
+            Assert.That(DemoWiring.Describe(FindButton("Btn_Mark golem").onClick), Is.EqualTo("AbilitiesTriggersDemoGuide.Mark"));
+            Assert.That(DemoWiring.Describe(FindButton("Btn_Venom dart").onClick),
+                Is.EqualTo("AbilitiesTriggersDemoGuide.PoisonDart"));
+            Assert.That(DemoWiring.Describe(FindButton("Btn_Place formation").onClick),
+                Is.EqualTo("AbilitiesTriggersDemoGuide.Formation"));
+            Assert.That(DemoWiring.Describe(FindButton("Btn_Golem smashes hero (70)").onClick),
+                Is.EqualTo("AbilitiesTriggersDemoGuide.GolemSmash"));
+            Assert.That(DemoWiring.Describe(FindButton("Btn_Reset demo").onClick),
+                Is.EqualTo("AbilitiesTriggersDemoGuide.ResetDemo"));
+            Assert.That(Single<ModuleDemoSceneInfo>().HasAuthoredOverlay, Is.True);
+            Assert.That(FindObject("Shield Bubble").activeSelf, Is.False, "Indicators are saved hidden.");
+
+            DemoSceneResult second = DemoSceneRunner.BuildOpenScene(_scene, new[] { builder });
+            AssertIdempotent(first, second);
+        }
+
+        [Test]
         public void SurvivorBuilder_AuthorsAPlayableSceneIdempotently()
         {
             DemoSceneBuilderInfo builder = Builder("SurvivorDemoBuilder.Build");
