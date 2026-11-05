@@ -43,6 +43,10 @@ namespace Neo.Abilities
         [Tooltip("If true, the first tick fires immediately on application.")]
         public bool TickOnApply;
 
+        [Tooltip("If true, a re-application that refreshes, stacks or prolongs this modifier restarts the tick phase: " +
+                 "the next tick comes a full Tick Interval after the re-application. Default: the phase continues.")]
+        public bool RestartTicksOnRefresh;
+
         [Tooltip("Effect nodes executed on every tick (e.g. periodic damage for a DoT).")]
         public List<EffectNodeData> TickEffects = new List<EffectNodeData>();
 

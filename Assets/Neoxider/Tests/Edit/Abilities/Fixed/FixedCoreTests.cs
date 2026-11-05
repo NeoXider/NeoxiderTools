@@ -156,6 +156,33 @@ namespace Neo.Editor.Tests.Abilities.Fixed
             Assert.That(system.Modifiers.CountActive(golem.Id, "burn"), Is.Zero);
         }
 
+        [TestCase(FixedStackPolicy.Refresh, false)]
+        [TestCase(FixedStackPolicy.Refresh, true)]
+        [TestCase(FixedStackPolicy.Stack, true)]
+        [TestCase(FixedStackPolicy.Prolong, true)]
+        [TestCase(FixedStackPolicy.Unique, true)]
+        public void Modifiers_RestartTheTickPhaseOnRefreshOnlyWhenAsked(FixedStackPolicy policy, bool restart)
+        {
+            FixedAbilitySystem system = NewSystem();
+            FixedUnit hero = Unit(system, 1);
+            FixedUnit golem = Unit(system, 2, 100d);
+            FixedModifierBlueprint burn = Modifier("burn", 90, policy);
+            burn.TickIntervalTicks = 30;
+            burn.RestartTicksOnRefresh = restart;
+            burn.TickEffects.Add(Node(FixedOps.Damage, 1d));
+            bool restarts = restart && policy != FixedStackPolicy.Unique;
+
+            system.Modifiers.Apply(burn, hero.Id, golem.Id);
+            system.Step(20);
+            system.Modifiers.Apply(burn, hero.Id, golem.Id);
+            system.Step(10);
+            Assert.That(golem.HealthRaw, Is.EqualTo(Q(restarts ? 100d : 99d)), "tick 30 belongs to the old phase");
+            system.Step(20);
+            Assert.That(golem.HealthRaw, Is.EqualTo(Q(99d)), "a restarted phase ticks 30 steps after the refresh");
+            system.Step(10);
+            Assert.That(golem.HealthRaw, Is.EqualTo(Q(restarts ? 99d : 98d)));
+        }
+
         [Test]
         public void Triggers_EveryNthChargesCooldownAndRemoveWhenSpent()
         {

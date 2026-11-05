@@ -249,6 +249,11 @@ namespace Neo.Abilities.Fixed
                         existing.RefreshDuration();
                     }
 
+                    if (blueprint.RestartTicksOnRefresh)
+                    {
+                        existing.TickAccumulator = 0;
+                    }
+
                     Bump(state);
                     Applied?.Invoke(existing, false);
                     return new FixedModifierApplyResult(existing, false);

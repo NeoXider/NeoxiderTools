@@ -106,6 +106,35 @@ namespace Neo.Editor.Tests.Abilities.Fixed
         }
 
         [Test]
+        public void RestartingRefreshes_AllocateNothingWhenWarm()
+        {
+            FixedAbilitySystem system = NewSystem();
+            FixedUnit hero = Unit(system, 1);
+            FixedUnit golem = Unit(system, 2, 1000000d);
+            FixedModifierBlueprint burn = Modifier("burn", 90, FixedStackPolicy.Stack);
+            burn.MaxStacks = 3;
+            burn.TickIntervalTicks = 2;
+            burn.RestartTicksOnRefresh = true;
+            burn.TickEffects.Add(Node(FixedOps.Damage, 1d));
+            for (int i = 0; i < 4; i++)
+            {
+                system.Modifiers.Apply(burn, hero.Id, golem.Id);
+                system.Step(3);
+            }
+
+            using GcAllocCounter counter = GcAllocCounter.CreateOrIgnore();
+            counter.Begin();
+            for (int i = 0; i < Iterations; i++)
+            {
+                system.Modifiers.Apply(burn, hero.Id, golem.Id);
+                system.Step(3);
+            }
+
+            Assert.That(counter.End(), Is.EqualTo(0L));
+            Assert.That(golem.HealthRaw, Is.LessThan(Q(1000000d)));
+        }
+
+        [Test]
         public void ZonePulsesAndTheStateHash_AllocateNothingWhenWarm()
         {
             FixedAbilitySystem system = NewSystem();

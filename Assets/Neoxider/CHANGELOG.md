@@ -71,6 +71,10 @@ Proposed version: **12.1.0** (additive; existing float content and APIs behave a
   `UnitTemplate` **Innate Modifiers** (passives applied on registration), `AbilityZoneView` **Plane** (3D ground or
   2D screen), `DamageService.RemainingShield(instance)`, `AbilityTrace.Explain(sequence, maxDepth, unitName)` and
   `AbilityTraceEntry.ToString(unitName)` with unit names.
+- **Abilities — tick phase on refresh.** `ModifierBlueprint.RestartTicksOnRefresh` and
+  `FixedModifierBlueprint.RestartTicksOnRefresh` (default false, behaviour unchanged): a re-application that
+  refreshes, stacks or prolongs restarts the tick phase, so the next tick comes a full interval after it.
+  `FixedContentConverter` carries it; a conformance scenario, tests on both cores and zero-allocation guards.
 - **Abilities — tests and benchmarks.** EditMode suites for hooks, triggers, payload ops, zones, stack policies,
   rules, aggregation layering, templates, validator and trace; zero-allocation guards for hooked hits, triggers,
   zone pulses, fixed-step time, Q8 numerics and an enabled trace; `AbilityTickCostBenchmarks` (N units ×

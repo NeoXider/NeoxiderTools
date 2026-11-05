@@ -37,7 +37,8 @@ namespace Neo.Editor.Tests.Abilities.Fixed
             ModifierBlueprint source = new ModifierBlueprint
             {
                 Id = "burn", Duration = 0.25f, TickInterval = 0.1f, StackPolicy = ModifierStackPolicy.Stack, MaxStacks = 4,
-                TickOnApply = true, IsDebuff = true, Dispellable = false, DurationByLevel = new[] { 1f, 2f }
+                TickOnApply = true, IsDebuff = true, Dispellable = false, DurationByLevel = new[] { 1f, 2f },
+                RestartTicksOnRefresh = true
             };
             source.Properties.Add(new PropertyContribution(AbilityProperties.MoveSpeed, PropertyOp.Mul, 1.1f, 0.05f));
             source.Properties.Add(new PropertyContribution(AbilityProperties.Armor, PropertyOp.Add, 2.5f));
@@ -60,7 +61,7 @@ namespace Neo.Editor.Tests.Abilities.Fixed
             Assert.That(result.DurationByLevelTicks, Is.EqualTo(new[] { 30, 60 }));
             Assert.That(result.StackPolicy, Is.EqualTo(FixedStackPolicy.Stack));
             Assert.That(result.MaxStacks, Is.EqualTo(4));
-            Assert.That(result.TickOnApply && result.IsDebuff && !result.Dispellable, Is.True);
+            Assert.That(result.TickOnApply && result.IsDebuff && !result.Dispellable && result.RestartTicksOnRefresh, Is.True);
             Assert.That(result.Properties[0].ValueRaw, Is.EqualTo(110), "an off-grid whole percent stays exact");
             Assert.That(result.Properties[0].PerStackRaw, Is.EqualTo(5));
             Assert.That(result.Properties[0].Denominator, Is.EqualTo(100));

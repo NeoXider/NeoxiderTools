@@ -125,6 +125,8 @@ A **payload ability** is an ability used as a reusable bundle of impact effects:
 
 `Independent`, `Refresh`, `Stack` as before, plus `Unique` (re-application while active does nothing), `Prolong` (adds the full duration to the remaining time) and `IndependentCapped` (independent instances up to Max Stacks; one more replaces the oldest). The decision is a replaceable rule, see [Rules](./Rules.md#modifier-stacking).
 
+`ModifierBlueprint.RestartTicksOnRefresh` (Restart Ticks On Refresh): a re-application that refreshes, stacks or prolongs restarts the tick phase, so the next tick comes a full interval after it; by default the phase continues. The fixed core has the same flag (`FixedModifierBlueprint.RestartTicksOnRefresh`).
+
 ## Templates
 
 `AbilityTemplates` builds ready content from the public data model; `AbilityTemplates.Catalog` lists them and each returns an `AbilityTemplateBundle` (abilities, modifiers, abilities to grant, innate modifiers) with `RegisterInto(system)` and `SetUp(system, unit)`.
@@ -196,3 +198,5 @@ Units whose modifiers react to `take_damage` pay for the trigger bookkeeping (ch
 Демо-сцена `Scenes/Abilities/AbilitiesTriggersDemo.unity` — шесть уроков на 2D-арене (герой, голем с шипами, бес): удар и отражение, усилитель атак, метка на три удара, стакающийся яд, зона-формация и автощит ниже 40% HP. Панель внизу слева показывает `Trace.Explain` последней реакции, кнопка **Reset demo** возвращает исходное состояние. Сцену собирает `AbilitiesTriggersDemoBuilder`, вся связка сохранена в сцене и видна без Play Mode.
 
 Помощники: **Innate Modifiers** в `UnitTemplate` (пассивки вроде шипов и автощита накладываются при регистрации, кастер — сам юнит), **Plane** у `AbilityZoneView` (`GroundXZ` для 3D-пола, `ScreenXY` для 2D-спрайта), `DamageService.RemainingShield(instance)` для полоски щита и `Trace.Explain(sequence, maxDepth, unitName)` с именами юнитов вместо `Unit(id)`.
+
+Флаг `RestartTicksOnRefresh` у модификатора: обновление, новый стак или продление перезапускает фазу тиков — следующий тик через полный интервал после повторного наложения; по умолчанию фаза продолжается. Тот же флаг есть в целочисленном ядре.

@@ -38,7 +38,8 @@ namespace Neo.Editor.Tests.Abilities.Fixed
                 { "projectiles", Projectiles },
                 { "chain_execute_heal_lifesteal_regen", ChainExecuteHealLifestealRegen },
                 { "off_grid_fraction_known_difference", OffGridFraction },
-                { "timer_boundary_known_difference", TimerBoundary }
+                { "timer_boundary_known_difference", TimerBoundary },
+                { "restart_ticks_on_refresh", RestartTicksOnRefresh }
             };
 
         public static IEnumerable<string> Scenarios => All.Keys;
@@ -544,6 +545,55 @@ namespace Neo.Editor.Tests.Abilities.Fixed
             }
 
             o.Value("hero", d.Health(hero), 5 * 4 * Raw);
+        }
+
+        private static void RestartTicksOnRefresh(IAbilityScenarioDriver d, Observations o)
+        {
+            int hero = d.Unit(1, 300d);
+            int continued = d.Unit(2, 100d, x: 1d);
+            int restarted = d.Unit(2, 100d, x: 2d);
+            int stacked = d.Unit(2, 100d, x: 3d);
+            d.Register(Array.Empty<AbilityBlueprint>(), new[]
+            {
+                TickingBurn("cf_burn_continue", ModifierStackPolicy.Refresh, false),
+                TickingBurn("cf_burn_restart", ModifierStackPolicy.Refresh, true),
+                TickingBurn("cf_burn_stack", ModifierStackPolicy.Stack, true)
+            });
+            d.Apply("cf_burn_continue", hero, continued);
+            d.Apply("cf_burn_restart", hero, restarted);
+            d.Apply("cf_burn_stack", hero, stacked);
+            d.Step(20);
+            d.Apply("cf_burn_continue", hero, continued);
+            d.Apply("cf_burn_restart", hero, restarted);
+            d.Apply("cf_burn_stack", hero, stacked);
+            int[] checkpoints = { 5, 10, 10, 10, 10, 10, 20 };
+            for (int i = 0; i < checkpoints.Length; i++)
+            {
+                d.Step(checkpoints[i]);
+                o.Value("continued " + i, d.Health(continued), 0d);
+                o.Value("restarted " + i, d.Health(restarted), 0d);
+                o.Value("stacked " + i, d.Health(stacked), 0d);
+            }
+
+            d.Step(40);
+            o.Value("continued end", d.Health(continued), 0d);
+            o.Value("restarted end", d.Health(restarted), 0d);
+            o.Value("stacked end", d.Health(stacked), 0d);
+        }
+
+        private static ModifierBlueprint TickingBurn(string id, ModifierStackPolicy policy, bool restart)
+        {
+            ModifierBlueprint burn = new ModifierBlueprint
+            {
+                Id = id, Duration = 3f, TickInterval = 1f, StackPolicy = policy, MaxStacks = 3,
+                RestartTicksOnRefresh = restart
+            };
+            burn.TickEffects.Add(new EffectNodeData
+            {
+                OpId = AbilityEffectOps.Damage, Target = EffectTargetSelector.Target, Amount = 1f, AmountPerStack = 1f,
+                DamageType = AbilityDamageTypes.Pure
+            });
+            return burn;
         }
 
         private static void TimerBoundary(IAbilityScenarioDriver d, Observations o)

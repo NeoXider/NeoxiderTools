@@ -130,6 +130,7 @@ Read `Docs/Abilities/TriggersAndHooks.md` and `Docs/Abilities/Rules.md` before h
   follows) and formations (point): `Radius`, `Duration`, `Interval`, `ModifierId`, `ArchetypeId` visual with
   `AbilityZoneView`. Code: `system.SpawnZone(new AbilityZoneSpec { ... })`.
 - **Stack policies:** + `Unique`, `Prolong`, `IndependentCapped`. `AmountPerStack` scales tick/reaction amounts.
+  `RestartTicksOnRefresh` = a refresh / stack / prolong restarts the tick phase (both cores).
 - **Templates first:** `AbilityTemplates.AutoCastTechnique/AttackEnhancer/AutoDefenseShield/Mark/StackingPoison/
   Thorns/Aura/FormationZone(...).SetUp(system, unitId)` — tune the returned blueprints instead of writing ops.
 - **Rules (never fork the package):** `system.Rules.DamageFormula / Mitigation / CriticalHit / Evasion /

@@ -178,6 +178,12 @@ namespace Neo.Abilities.Fixed
         public List<string> States = new List<string>();
         public int TickIntervalTicks;
         public bool TickOnApply;
+
+        /// <summary>
+        ///     A re-application that refreshes, stacks or prolongs the modifier restarts the tick phase: the next tick
+        ///     comes <see cref="TickIntervalTicks" /> after it. False (default): the phase continues.
+        /// </summary>
+        public bool RestartTicksOnRefresh;
         public List<FixedEffectNode> TickEffects = new List<FixedEffectNode>();
         public List<FixedModifierReaction> EventReactions = new List<FixedModifierReaction>();
         public bool IsDebuff;

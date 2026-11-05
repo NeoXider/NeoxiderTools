@@ -150,6 +150,11 @@ namespace Neo.Abilities
                         existing.RefreshDuration();
                     }
 
+                    if (blueprint.RestartTicksOnRefresh)
+                    {
+                        existing.TickAccumulator = 0f;
+                    }
+
                     BumpVersion(owner);
                     Applied?.Invoke(existing, false);
                     return new ModifierApplyResult(existing, false);

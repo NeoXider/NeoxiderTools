@@ -264,6 +264,7 @@ namespace Neo.Abilities
                 MaxStacks = source.MaxStacks,
                 TickIntervalTicks = c.Ticks(source.TickInterval, "TickInterval"),
                 TickOnApply = source.TickOnApply,
+                RestartTicksOnRefresh = source.RestartTicksOnRefresh,
                 IsDebuff = source.IsDebuff,
                 Dispellable = source.Dispellable
             };

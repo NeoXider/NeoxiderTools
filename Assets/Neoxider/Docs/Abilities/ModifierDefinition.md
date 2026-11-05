@@ -24,6 +24,7 @@ All fields live under the nested **Blueprint** foldout. A blank **Id** is filled
 | **States** | `List<string>` | Boolean states granted while active (any-true-wins), e.g. `stunned`, `frozen`. |
 | **Tick Interval** | float | Seconds between effect ticks. `0` or negative = no ticking. |
 | **Tick On Apply** | bool | If true, the first tick fires on the next positive `AbilitySystem.Tick`, without waiting a full interval. |
+| **Restart Ticks On Refresh** | bool | If true, a re-application that refreshes, stacks or prolongs the modifier restarts the tick phase: the next tick comes a full **Tick Interval** after it ("a refresh resets the think timer"). Default false: the phase continues. A re-application the policy ignores (`Unique`) changes nothing. |
 | **Tick Effects** | `List<EffectNodeData>` | Nodes run every tick (e.g. periodic damage for a DoT). |
 | **Event Reactions** | `List<ModifierEventReaction>` | Declarative reactions: on an event id, run an effect node list. |
 | **Is Debuff** | bool | Marks the modifier negative for UI and dispel logic. |
