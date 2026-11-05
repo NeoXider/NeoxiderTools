@@ -66,7 +66,14 @@ Neo.Network bridge (inside existing Neo.Network, #if MIRROR)
 Tests: Assets/Neoxider/Tests/Edit/Abilities (domain, deterministic), Play (scene wrappers)
 Demo:  Samples/Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity (NoCode caster/auto-cast/cooldown showcase)
        + Samples/Demo/Scenes/SurvivorDemo.unity (full playable game on the system)
+       + Samples/Demo/Scenes/Abilities/AbilitiesTriggersDemo.unity (12.1 triggers, hooks, zones, trace)
 ```
+
+12.1 reactive layer (see Docs/Abilities/TriggersAndHooks.md, Rules.md, DeterministicMode.md):
+`DamagePipeline` per system with before_deal/before_take hooks, trigger kinds on `ModifierEventReaction`,
+payload ops (projectile/area_apply/zone/cast_ability), domain zones (`AbilitySystem.Zones.cs`), `AbilityRules`
+(12 replaceable strategies), `AbilityTrace`, `AbilityTemplates`, `AbilityContentValidator`, the deterministic
+profile and `AbilityStateHasher`. The engine-free integer core is an open decision (DeterministicMode.md).
 
 ## 3. Core model decisions (Dota-derived, improved)
 

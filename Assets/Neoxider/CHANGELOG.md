@@ -46,6 +46,10 @@ Proposed version: **12.1.0** (additive; existing float content and APIs behave a
   effects, events, reactions with their trigger, skipped triggers, ticks, zones and cancellations linked to their
   cause; `Explain(sequence)` answers "why did this fire". `AbilitySystemBehaviour` **Trace Enabled** /
   **Trace Capacity**.
+- **Abilities — deterministic profile and desync check.** `DeterministicAbilityProfile.Apply(rules)` (fixed ticks,
+  Q8.8 rounding, the seeded xorshift generator) and `AbilityStateHasher.Compute(system)` (allocation-free FNV-1a over
+  clock, units, pools, modifiers with trigger counters, slots, zones and pending projectiles). The design note
+  `Docs/Abilities/DeterministicMode.md` describes the open decision on an engine-free integer core.
 - **Abilities — tests and benchmarks.** EditMode suites for hooks, triggers, payload ops, zones, stack policies,
   rules, aggregation layering, templates, validator and trace; zero-allocation guards for hooked hits, triggers,
   zone pulses, fixed-step time, Q8 numerics and an enabled trace; `AbilityTickCostBenchmarks` (N units ×
