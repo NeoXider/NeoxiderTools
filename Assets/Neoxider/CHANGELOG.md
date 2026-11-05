@@ -86,6 +86,13 @@ Proposed version: **12.1.0** (additive; existing float content and APIs behave a
 - **Abilities:** reactions of one unit to one event are ordered by `Priority` when any is set; without
   priorities the order is unchanged.
 
+### Fixed
+
+- **Demo kit:** `DemoSceneKit.WorldLabel` (and the GridSystem stage label) now writes the saved anchored position of a
+  world label under a plain Transform (`DemoSceneKit.SyncAnchoredPosition`). Before, an editor or batch build without
+  a frame saved a created or reused label at its old place, so a builder could not move it; rebuilt
+  `AnimatorsDemo` (its three binding captions now sit at the authored -2.45 instead of -2.2).
+
 ## [12.0.0] - 2026-11-04
 
 A library-wide quality pass: bug fixes and behaviour corrections in every module, allocation-free hot paths, typed

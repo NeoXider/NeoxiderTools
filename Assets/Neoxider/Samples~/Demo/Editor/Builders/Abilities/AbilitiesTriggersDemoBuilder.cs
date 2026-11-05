@@ -354,14 +354,8 @@ namespace Neo.Demo.Editor.Builders
         private static TMP_Text Label(DemoSceneBuildContext ctx, Transform unit, string name, float height, Color color)
         {
             Transform world = unit.parent;
-            Vector3 position = unit.localPosition + new Vector3(0f, height, 0f);
-            TMP_Text label = DemoSceneKit.WorldLabel(ctx, world, name, unit.name, position, 3.2f, color,
-                new Vector2(5f, 2.4f), 8);
-            // WHY: a reused RectTransform under a plain Transform saves m_AnchoredPosition, which a batch rebuild does
-            // not refresh from localPosition; setting it directly moves an existing label too.
-            label.rectTransform.anchoredPosition = new Vector2(position.x, position.y);
-            ctx.MarkModified(label.rectTransform);
-            return label;
+            return DemoSceneKit.WorldLabel(ctx, world, name, unit.name, unit.localPosition + new Vector3(0f, height, 0f),
+                3.2f, color, new Vector2(5f, 2.4f), 8);
         }
 
         private static GameObject Indicator(DemoSceneBuildContext ctx, Transform unit, string name, Sprite sprite,

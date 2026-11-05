@@ -270,6 +270,34 @@ SceneRoots:
         }
 
         [Test]
+        public void WorldLabel_RebuildWithAnotherPositionMovesTheSavedLabel()
+        {
+            OpenTempScene();
+            string path = _scene.path;
+            Build(ctx => ProbeLabel(ctx, new Vector3(1f, 2f, -0.5f)));
+            Assert.That(EditorSceneManager.SaveScene(_scene), Is.True);
+            ReopenTempScene(path);
+
+            Build(ctx => ProbeLabel(ctx, new Vector3(-3f, -4f, -0.25f)));
+            Assert.That(EditorSceneManager.SaveScene(_scene), Is.True);
+            ReopenTempScene(path);
+
+            RectTransform label = null;
+            foreach (GameObject root in _scene.GetRootGameObjects())
+            {
+                foreach (RectTransform node in root.GetComponentsInChildren<RectTransform>(true))
+                {
+                    label = node.name == "Probe Label" ? node : label;
+                }
+            }
+
+            Assert.That(label, Is.Not.Null);
+            Assert.That(label.localPosition, Is.EqualTo(new Vector3(-3f, -4f, -0.25f)), "the saved label moved");
+            Assert.That(label.anchoredPosition, Is.EqualTo(new Vector2(-3f, -4f)));
+            StringAssert.Contains("m_AnchoredPosition: {x: -3, y: -4}", File.ReadAllText(path));
+        }
+
+        [Test]
         public void SettingsBuilder_AuthorsAWiredSceneIdempotently()
         {
             DemoSceneBuilderInfo builder = DemoSceneRunner.DiscoverBuilders()
@@ -329,6 +357,20 @@ SceneRoots:
             build(context);
             context.Finish();
             return context;
+        }
+
+        private static void ProbeLabel(DemoSceneBuildContext ctx, Vector3 position)
+        {
+            DemoSceneKit.WorldLabel(ctx, ctx.Root("World").transform, "Probe Label", "probe", position, 3f, Color.white,
+                new Vector2(4f, 1f));
+        }
+
+        private void ReopenTempScene(string path)
+        {
+            EditorSceneManager.CloseScene(_scene, true);
+            _scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+            Assert.That(_scene.IsValid() && _scene.isLoaded, Is.True, "Temporary scene did not reopen: " + path);
+            SceneManager.SetActiveScene(_scene);
         }
 
         private void OpenTempScene()

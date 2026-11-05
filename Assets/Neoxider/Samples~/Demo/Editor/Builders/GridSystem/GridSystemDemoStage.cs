@@ -221,7 +221,9 @@ namespace Neo.Demo.Editor.Builders
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.sizeDelta = size;
             rect.SetPositionAndRotation(worldPosition, Quaternion.identity);
+            DemoSceneKit.SyncAnchoredPosition(rect);
             rect.localScale = Vector3.one;
+            ctx.MarkModified(rect);
             TextMeshPro label = ctx.Ensure<TextMeshPro>(rect.gameObject);
             DemoSceneKit.StyleText(label, text, fontSize, color, TextAlignmentOptions.Center, FontStyles.Bold);
             label.sortingOrder = sortingOrder;

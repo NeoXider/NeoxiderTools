@@ -662,8 +662,10 @@ namespace Neo.Demo.Editor
             label.textWrappingMode = TextWrappingModes.NoWrap;
             rect.sizeDelta = size;
             rect.localPosition = localPosition;
+            SyncAnchoredPosition(rect);
             rect.localRotation = Quaternion.identity;
             rect.localScale = Vector3.one;
+            ctx.MarkModified(rect);
             MeshRenderer renderer = label.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
@@ -671,6 +673,20 @@ namespace Neo.Demo.Editor
             }
 
             return label;
+        }
+
+        /// <summary>
+        ///     Writes the anchored position of a RectTransform under a plain Transform from its local position. Such a
+        ///     RectTransform saves m_AnchoredPosition, which setting localPosition in an editor build without a frame does
+        ///     not refresh, so a created or rebuilt world label would be saved at its old (or zero) place.
+        /// </summary>
+        public static void SyncAnchoredPosition(RectTransform rect)
+        {
+            if (rect != null && !(rect.parent is RectTransform))
+            {
+                Vector3 local = rect.localPosition;
+                rect.anchoredPosition = new Vector2(local.x, local.y);
+            }
         }
 
         /// <summary>
