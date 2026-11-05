@@ -25,7 +25,8 @@ namespace Neo.Abilities
         public const int MaxDepth = 3;
 
         // WHY: a pooled context owns one reseedable RNG so recycling it allocates nothing.
-        private XorShiftRandom _ownedRandom;
+        private IReseedableRandomSource _ownedRandom;
+        private IRandomSourceFactory _ownedRandomFactory;
 
         // WHY: a pooled context bumps _lease every time it is recycled. Contexts derived from one lease
         // (the pooled context itself and its CreateNested children) remember the lease they belong to,
@@ -95,6 +96,30 @@ namespace Neo.Abilities
         /// <summary>Current nesting depth (0 = direct cast). Incremented for reactions.</summary>
         public int Depth { get; set; }
 
+        /// <summary>What started this execution: a cast, a projectile hit, a modifier tick, a reaction, a zone pulse.</summary>
+        public EffectOrigin Origin { get; set; }
+
+        /// <summary>
+        ///     True for cast and projectile-hit executions: their damage is a direct hit (<see cref="DamageFlags.Hit" />)
+        ///     and publishes attack_landed / attack_received.
+        /// </summary>
+        public bool IsDirectHit => Origin == EffectOrigin.Cast || Origin == EffectOrigin.ProjectileHit;
+
+        /// <summary>Damage flags the built-in damage ops pass for this context.</summary>
+        public DamageFlags HitFlags => IsDirectHit ? DamageFlags.Hit : DamageFlags.None;
+
+        /// <summary>
+        ///     Stacks of the modifier instance running these effects (ticks and reactions); 1 otherwise. Drives
+        ///     <see cref="EffectNodeData.AmountPerStack" />.
+        /// </summary>
+        public int SourceStacks { get; set; } = 1;
+
+        /// <summary>
+        ///     The damage application in flight while a before_deal_damage / before_take_damage reaction runs, else null.
+        ///     modify_damage and reflect adjust it.
+        /// </summary>
+        public DamageContext Damage { get; set; }
+
         /// <summary>
         ///     True when the system-created context this one belongs to has finished its effects: a pooled
         ///     context while it waits in the pool for its next use, a <see cref="CreateNested" /> child of it
@@ -117,7 +142,10 @@ namespace Neo.Abilities
                 TargetPoint = TargetPoint,
                 HasTargetPoint = HasTargetPoint,
                 AbilityLevel = AbilityLevel,
-                Specials = Specials
+                Specials = Specials,
+                Origin = Origin,
+                SourceStacks = SourceStacks,
+                Damage = Damage
             };
             nested._leaseOwner = _leaseOwner;
             nested._ownerLease = _ownerLease;
@@ -140,9 +168,12 @@ namespace Neo.Abilities
         /// <summary>Prepares a pooled context exactly like a fresh one seeded with <paramref name="seed" />.</summary>
         internal void ResetPooled(AbilitySystem system, UnitId caster, string abilityId, uint seed)
         {
-            if (_ownedRandom == null)
+            IRandomSourceFactory factory = system.Rules.Random;
+            if (_ownedRandom == null || !ReferenceEquals(_ownedRandomFactory, factory))
             {
-                _ownedRandom = new XorShiftRandom(seed);
+                // WHY: a swapped random rule takes effect on the next use of every pooled context.
+                _ownedRandom = factory.Create(seed) ?? new XorShiftRandom(seed);
+                _ownedRandomFactory = factory;
             }
             else
             {
@@ -159,6 +190,9 @@ namespace Neo.Abilities
             TargetPoint = default;
             HasTargetPoint = false;
             Depth = 0;
+            Origin = EffectOrigin.Direct;
+            SourceStacks = 1;
+            Damage = null;
             PrimaryTargets.Clear();
             _leaseOwner = this;
             _ownerLease = _lease;
@@ -177,7 +211,30 @@ namespace Neo.Abilities
 
             AbilityId = null;
             Specials = null;
+            Damage = null;
             PrimaryTargets.Clear();
         }
+    }
+
+    /// <summary>What started an effect execution.</summary>
+    public enum EffectOrigin
+    {
+        /// <summary>A host or custom op called <see cref="AbilitySystem.ExecuteEffects" /> directly.</summary>
+        Direct = 0,
+
+        /// <summary>Cast or instant impact effects of an accepted cast.</summary>
+        Cast = 1,
+
+        /// <summary>Impact effects of a reported projectile hit.</summary>
+        ProjectileHit = 2,
+
+        /// <summary>Interval tick effects of a modifier.</summary>
+        ModifierTick = 3,
+
+        /// <summary>A modifier reaction or trigger.</summary>
+        Reaction = 4,
+
+        /// <summary>A zone pulse.</summary>
+        Zone = 5
     }
 }

@@ -21,6 +21,14 @@ Vendored essentially as shipped. Deviations, all marked in-place or listed here:
 - Two folders renamed for path hygiene: `Animation & Audio` -> `AnimationAudio`, `Core scripts` -> `Core`. No script GUIDs changed.
 - `Showcase/` demo-only scripts moved to the sample folder; runtime code does not depend on them.
 
+## Design references
+
+No code of these projects is included; they inspired the design of a module and are credited here.
+
+| Project | Inspired | License of the project |
+|---------|----------|------------------------|
+| [GenshinGamePlay](https://github.com/526077247/GenshinGamePlay) by 大大的奥斯卡 | `Neo.Abilities` 12.1: the before-attack / before-be-attacked hooks, trigger kinds (attack landed, health threshold, state, animation moment, applied / removed), stack policies and gadget-style zones were re-implemented from its Ability → Modifier → Mixin → Action model | MIT |
+
 ## Referenced, not bundled
 
 NeoxiderTools does **not** bundle any of the packages below — none of their code ships inside this package. They are optional or required *dependencies* you install yourself (via Package Manager / Asset Store) because specific NeoxiderTools modules call into their public API. This file lists what's referenced, why, and where to get the license terms for each.

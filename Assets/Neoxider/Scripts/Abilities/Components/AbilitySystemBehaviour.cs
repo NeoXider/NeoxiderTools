@@ -28,6 +28,20 @@ namespace Neo.Abilities
         [Tooltip("Advance the system every frame with Time.deltaTime. Disable for manual/server ticking.")]
         [SerializeField] private bool _autoTick = true;
 
+        [Tooltip("Variable: one domain step per frame (Time.deltaTime). Fixed Ticks: whole ticks of 1 / Ticks Per " +
+                 "Second, the same step every time (replays, lockstep, deterministic tests).")]
+        [SerializeField] private AbilityTimeMode _timeMode = AbilityTimeMode.Variable;
+
+        [Tooltip("Ticks per second of the Fixed Ticks time mode.")]
+        [SerializeField] [Min(1)] private int _ticksPerSecond = 30;
+
+        [Header("Diagnostics")]
+        [Tooltip("Record the runtime trace (AbilitySystem.Trace) from the start: why reactions and effects fired.")]
+        [SerializeField] private bool _traceEnabled;
+
+        [Tooltip("Entries kept by the trace ring buffer.")]
+        [SerializeField] [Min(8)] private int _traceCapacity = 256;
+
         [Header("Performance")]
         [Tooltip("Cell size (world units) of a per-frame spatial grid for unit radius queries (projectiles, " +
                  "area effects, auto-casters). 0 = scan every registered unit on each query, always exact. " +
@@ -124,7 +138,7 @@ namespace Neo.Abilities
         {
             if (_autoTick && !Paused && _system != null)
             {
-                _system.Tick(Time.deltaTime);
+                _system.Advance(Time.deltaTime);
             }
         }
 
@@ -144,6 +158,17 @@ namespace Neo.Abilities
             }
 
             _system = new AbilitySystem { World = this };
+            if (_timeMode == AbilityTimeMode.FixedTicks)
+            {
+                _system.Rules.Time = new FixedStepTimeSource(_ticksPerSecond);
+            }
+
+            if (_traceCapacity != _system.Trace.Capacity)
+            {
+                _system.Trace.SetCapacity(_traceCapacity);
+            }
+
+            _system.Trace.Enabled = _traceEnabled;
             for (int i = 0; i < _libraries.Count; i++)
             {
                 if (_libraries[i] != null)

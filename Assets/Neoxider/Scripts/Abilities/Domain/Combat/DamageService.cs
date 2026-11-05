@@ -1,268 +1,31 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Neo.Abilities
 {
     /// <summary>
-    ///     The damage pipeline: outgoing multipliers → armor/resist by damage type → incoming multipliers
-    ///     → shield absorption (modifier shield_hp pools) → health pool → death/kill events.
-    ///     Every path in the system (effect ops, basic attacks, projectiles, contact damage) applies
-    ///     damage through here so events and receipts stay consistent.
+    ///     Static entry of the damage pipeline: forwards to the <see cref="DamagePipeline" /> of the given system
+    ///     (<see cref="AbilitySystem.Damage" />). Every path in the system (effect ops, basic attacks, projectiles,
+    ///     contact damage) applies damage through it so hooks, events and receipts stay consistent.
     /// </summary>
-    public static partial class DamageService
+    public static class DamageService
     {
-        // WHY: shield events run modifier reactions synchronously, which can re-enter ApplyDamage →
-        // ConsumeShields; scratch lists are pooled per nesting level so the outer iteration survives.
-        private static readonly List<List<ModifierInstance>> ModifierScratchPool =
-            new List<List<ModifierInstance>>(4);
-
-        private static int _shieldDepth;
-
         public static DamageResult ApplyDamage(AbilitySystem system, UnitId source, UnitId target,
             float amount, string damageType, string abilityId = null, uint castId = 0,
             IRandomSource random = null)
         {
-            if (system == null || amount <= 0f)
-            {
-                return DamageResult.None(amount);
-            }
-
-            AbilityUnit targetUnit = system.GetUnit(target);
-            if (targetUnit == null || !targetUnit.IsAlive)
-            {
-                return DamageResult.None(amount);
-            }
-
-            if (targetUnit.MaxHealth <= 0f && targetUnit.Health <= 0f)
-            {
-                // WHY: utility units without a health pool are not damageable. Reading an absent
-                // pool as zero must not turn an otherwise ineffective hit into a death/kill receipt.
-                return DamageResult.None(amount);
-            }
-
-            if (targetUnit.HasState(AbilityStates.Invulnerable))
-            {
-                return DamageResult.None(amount);
-            }
-
-            bool isMagical = AbilityIdComparer.Same(damageType, AbilityDamageTypes.Magical);
-            bool isPhysical = AbilityIdComparer.Same(damageType, AbilityDamageTypes.Physical);
-            bool isPure = AbilityIdComparer.Same(damageType, AbilityDamageTypes.Pure);
-
-            if (isMagical && targetUnit.HasState(AbilityStates.MagicImmune))
-            {
-                return DamageResult.None(amount);
-            }
-
-            // WHY: evasion is rolled pre-mitigation on the victim, physical only (Dota-style), and only when
-            // an RNG is supplied — direct/legacy callers pass none and never evade (keeps existing math stable).
-            // evasion_chance is a fraction in [0..1].
-            if (isPhysical && random != null)
-            {
-                float evasion = targetUnit.GetProperty(AbilityProperties.EvasionChance);
-                if (evasion > 0f && random.NextFloat() < evasion)
-                {
-                    system.Events.Publish(new AbilityEventArgs(AbilityEvents.Evaded, target, source,
-                        amount, abilityId, damageType: damageType, castId: castId));
-                    return DamageResult.Evade(amount);
-                }
-            }
-
-            AbilityUnit sourceUnit = system.GetUnit(source);
-
-            float damage = amount;
-            if (sourceUnit != null)
-            {
-                damage *= MathF.Max(0f, sourceUnit.GetProperty(AbilityProperties.OutgoingDamageMul, 1f));
-            }
-
-            // WHY: one crit roll per application, pre-mitigation, on the attacker. crit_chance is a
-            // fraction in [0..1]; crit_multiplier is the full multiplier (2 = double), floored at 1.
-            bool crit = false;
-            if (sourceUnit != null && random != null)
-            {
-                float critChance = sourceUnit.GetProperty(AbilityProperties.CritChance);
-                if (critChance > 0f && random.NextFloat() < critChance)
-                {
-                    crit = true;
-                    damage *= MathF.Max(1f, sourceUnit.GetProperty(AbilityProperties.CritMultiplier));
-                }
-            }
-
-            if (isPhysical)
-            {
-                float armor = targetUnit.GetProperty(AbilityProperties.Armor);
-                float reduction = 0.06f * armor / (1f + 0.06f * MathF.Abs(armor));
-                damage *= 1f - reduction;
-            }
-            else if (isMagical)
-            {
-                float resist = targetUnit.GetProperty(AbilityProperties.MagicResistPercent);
-                damage *= 1f - Math.Clamp(resist, -100f, 100f) / 100f;
-            }
-            // WHY: pure and custom types intentionally skip built-in mitigation above.
-            damage *= MathF.Max(0f, targetUnit.GetProperty(AbilityProperties.IncomingDamageMul, 1f));
-
-            if (damage <= 0f)
-            {
-                return DamageResult.None(amount);
-            }
-
-            float mitigated = damage;
-
-            // WHY: shield absorption from modifier shield_hp contributions (per-instance mutable pools).
-            float absorbed = 0f;
-            if (!isPure)
-            {
-                absorbed = ConsumeShields(system, targetUnit, ref damage);
-            }
-
-            float healthDamage = 0f;
-            if (damage > 0f)
-            {
-                // WHY: The accepted operation delta stays valid when a resource callback changes health again.
-                healthDamage = targetUnit.Resources.Decrease(AbilityResourceIds.Health, damage);
-            }
-
-            bool killed = targetUnit.IsAlive && targetUnit.Health <= 0f;
-            if (killed)
-            {
-                system.MarkDead(targetUnit, source, abilityId, castId);
-            }
-
-            DamageResult result = new DamageResult(amount, mitigated, absorbed, healthDamage, killed, false, false, crit);
-
-            if (healthDamage > 0f || absorbed > 0f)
-            {
-                system.Events.Publish(new AbilityEventArgs(AbilityEvents.TakeDamage, target, source,
-                    healthDamage, abilityId, damageType: damageType, castId: castId));
-                if (source.IsValid)
-                {
-                    system.Events.Publish(new AbilityEventArgs(AbilityEvents.DealDamage, source, target,
-                        healthDamage, abilityId, damageType: damageType, castId: castId));
-                }
-
-                if (crit && source.IsValid)
-                {
-                    system.Events.Publish(new AbilityEventArgs(AbilityEvents.CriticalHit, source, target,
-                        healthDamage, abilityId, damageType: damageType, castId: castId));
-                }
-            }
-
-            if (killed && source.IsValid)
-            {
-                system.Events.Publish(new AbilityEventArgs(AbilityEvents.Kill, source, target, healthDamage,
-                    abilityId, damageType: damageType, castId: castId));
-            }
-
-            // WHY: the attacker recovers a percentage of the health damage dealt. lifesteal_percent
-            // is 0..100 (50 = half). Only applied when the attacker is a distinct, living unit.
-            if (healthDamage > 0f && sourceUnit != null && sourceUnit.IsAlive && source != target)
-            {
-                float lifestealPercent = sourceUnit.GetProperty(AbilityProperties.LifestealPercent);
-                if (lifestealPercent > 0f)
-                {
-                    float heal = lifestealPercent / 100f * healthDamage;
-                    if (heal > 0f)
-                    {
-                        float healed = sourceUnit.Resources.Increase(AbilityResourceIds.Health, heal);
-                        if (healed > 0f)
-                        {
-                            system.Events.Publish(new AbilityEventArgs(AbilityEvents.HealReceived, source,
-                                target, healed, abilityId, castId: castId));
-                        }
-                    }
-                }
-            }
-
-            return result;
+            return system == null
+                ? DamageResult.None(amount)
+                : system.Damage.Apply(source, target, amount, damageType, abilityId, castId, random);
         }
 
-        private static float ConsumeShields(AbilitySystem system, AbilityUnit target, ref float damage)
+        /// <summary>Applies damage with explicit <see cref="DamageFlags" /> (a direct <see cref="DamageFlags.Hit" />...).</summary>
+        public static DamageResult ApplyDamage(AbilitySystem system, UnitId source, UnitId target,
+            float amount, string damageType, DamageFlags flags, string abilityId = null, uint castId = 0,
+            IRandomSource random = null)
         {
-            if (damage <= 0f)
-            {
-                return 0f;
-            }
-
-            while (ModifierScratchPool.Count <= _shieldDepth)
-            {
-                ModifierScratchPool.Add(new List<ModifierInstance>(8));
-            }
-
-            List<ModifierInstance> scratch = ModifierScratchPool[_shieldDepth];
-            _shieldDepth++;
-            try
-            {
-                system.Modifiers.GetModifiers(target.Id, scratch);
-
-                float totalAbsorbed = 0f;
-                for (int i = 0; i < scratch.Count && damage > 0f; i++)
-                {
-                    ModifierInstance m = scratch[i];
-                    if (!m.IsActive || m.IsShieldBreaking)
-                    {
-                        // WHY: an earlier shield's receipt can synchronously dispel another shield.
-                        continue;
-                    }
-
-                    float capacity = ShieldCapacity(m);
-                    if (capacity <= 0f)
-                    {
-                        continue;
-                    }
-
-                    float available = capacity - m.ShieldConsumed;
-                    if (available <= 0f)
-                    {
-                        continue;
-                    }
-
-                    float take = MathF.Min(available, damage);
-                    m.ShieldConsumed += take;
-                    damage -= take;
-                    totalAbsorbed += take;
-
-                    system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldAbsorbed, target.Id, m.Caster,
-                        take, m.SourceAbilityId, m.Blueprint.Id));
-
-                    if (!m.IsActive || m.IsShieldBreaking)
-                    {
-                        // WHY: this receipt may dispel the current instance or recursively consume
-                        // and break it. Do not publish another break for an already removed shield.
-                        continue;
-                    }
-
-                    // WHY: a receipt can stack the same instance and increase its remaining shield.
-                    // Exhaustion must use its current capacity, not the value before the callback.
-                    capacity = ShieldCapacity(m);
-                    if (m.ShieldConsumed >= capacity)
-                    {
-                        // WHY: preserve the active instance while its declarative break reaction runs,
-                        // but keep refresh/stack application from reusing this exhausted instance.
-                        m.IsShieldBreaking = true;
-                        try
-                        {
-                            system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldBroken, target.Id, m.Caster,
-                                capacity, m.SourceAbilityId, m.Blueprint.Id));
-                        }
-                        finally
-                        {
-                            system.Modifiers.Remove(m);
-                        }
-                    }
-                }
-
-                return totalAbsorbed;
-            }
-            finally
-            {
-                // WHY: the pool is static; a filled scratch would keep the last victim's modifier graph
-                // (blueprints, owners) alive until the next shielded hit.
-                scratch.Clear();
-                _shieldDepth--;
-            }
+            return system == null
+                ? DamageResult.None(amount)
+                : system.Damage.Apply(source, target, amount, damageType, abilityId, castId, random, flags);
         }
 
         /// <summary>Total shield HP a modifier instance grants (shield_hp contributions, stack-scaled).</summary>
@@ -290,24 +53,6 @@ namespace Neo.Abilities
             }
 
             return capacity;
-        }
-
-        // WHY: with Enter Play Mode Options disabling Domain Reload the static pool and nesting depth
-        // survive between sessions; a depth left non-zero by an aborted session would misalign the
-        // per-level scratch lists.
-        // The lifecycle attribute is source-generated, so the containing class must stay partial.
-#if UNITY_6000_5_OR_NEWER
-        [OnExitingPlayMode]
-#endif
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
-        {
-            for (int i = 0; i < ModifierScratchPool.Count; i++)
-            {
-                ModifierScratchPool[i].Clear();
-            }
-
-            _shieldDepth = 0;
         }
     }
 }

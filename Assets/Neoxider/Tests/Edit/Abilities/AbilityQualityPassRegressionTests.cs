@@ -914,7 +914,7 @@ namespace Neo.Editor.Tests.Abilities
         }
 
         [Test]
-        public void ShieldedHits_LeaveTheStaticModifierScratchPoolEmpty()
+        public void ShieldedHits_LeaveThePipelineShieldScratchEmpty()
         {
             AbilitySystem system = new AbilitySystem();
             AbilityUnit first = AbilityTestSupport.CreateUnit(system, team: 2, health: 100f);
@@ -938,10 +938,10 @@ namespace Neo.Editor.Tests.Abilities
 
             Assert.That(nested, Is.True, "a nested shielded hit ran inside the outer shield loop");
             Assert.That(result.Absorbed, Is.EqualTo(5f).Within(0.001f));
-            FieldInfo poolField = typeof(DamageService).GetField("ModifierScratchPool",
-                BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo poolField = typeof(DamagePipeline).GetField("_shieldScratch",
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(poolField, Is.Not.Null);
-            System.Collections.IList levels = (System.Collections.IList)poolField.GetValue(null);
+            System.Collections.IList levels = (System.Collections.IList)poolField.GetValue(system.Damage);
             Assert.That(levels.Count, Is.GreaterThanOrEqualTo(2), "both nesting levels rented a scratch list");
             for (int i = 0; i < levels.Count; i++)
             {

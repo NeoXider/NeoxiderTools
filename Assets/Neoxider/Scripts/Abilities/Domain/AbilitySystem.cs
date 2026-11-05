@@ -11,7 +11,7 @@ namespace Neo.Abilities
     ///     Everything observable flows through <see cref="Events" /> (receipt stream for UI,
     ///     presentation and network replication).
     /// </summary>
-    public sealed class AbilitySystem
+    public sealed partial class AbilitySystem : IAbilityEventInterceptor
     {
         private readonly Dictionary<UnitId, AbilityUnit> _units = new Dictionary<UnitId, AbilityUnit>();
 
@@ -47,14 +47,13 @@ namespace Neo.Abilities
         // records keeps projectile casts as garbage-free as instant ones.
         private readonly List<PendingProjectileCast> _pendingPool = new List<PendingProjectileCast>(16);
 
-        private readonly List<UnitId> _unitScratch = new List<UnitId>(16);
         private readonly List<UnitId> _tickUnitScratch = new List<UnitId>(16);
-        private readonly List<AreaHit> _areaScratch = new List<AreaHit>(16);
         private readonly List<uint> _pendingPruneScratch = new List<uint>(8);
 
-        private static readonly Comparison<AreaHit> AreaHitComparison = CompareAreaHits;
-
         private const string ReleasedContextWarningKey = "Neo.Abilities.ReleasedEffectContext";
+
+        /// <summary>Maximum nesting of casts started from effects (cast_ability inside a cast...).</summary>
+        public const int MaxCastDepth = 4;
 
         /// <summary>
         ///     Minimum reach in world units of a <see cref="TargetingMode.Direction" /> cast whose ability Range is
@@ -70,12 +69,19 @@ namespace Neo.Abilities
         private int _executionDepth;
         private int _reactionDepth;
         private int _costDepth;
+        private int _castDepth;
         private float _time;
+
+        // WHY: sequence of the trace record whose effects are running; new records name it as their cause.
+        private long _traceCause;
 
         public AbilitySystem()
         {
-            Modifiers = new ModifierEngine();
-            Events = new AbilityEventBus(HandleModifierReactions);
+            Rules = new AbilityRules();
+            Trace = new AbilityTrace();
+            Modifiers = new ModifierEngine { Rules = Rules };
+            Damage = new DamagePipeline(this);
+            Events = new AbilityEventBus(this);
             Ops = new EffectOpRegistry();
 
             Modifiers.Applied += OnModifierApplied;
@@ -87,6 +93,27 @@ namespace Neo.Abilities
 
         /// <summary>Live modifiers of every unit: apply, remove, dispel, tick and aggregation feeds.</summary>
         public ModifierEngine Modifiers { get; }
+
+        /// <summary>Replaceable rules of this system: formulas, stacking, aggregation, targeting, time, numbers, random.</summary>
+        public AbilityRules Rules { get; }
+
+        /// <summary>Ring buffer answering "why did this fire" (disabled by default: set <c>Trace.Enabled</c>).</summary>
+        public AbilityTrace Trace { get; }
+
+        /// <summary>The damage pipeline of this system (hooks, formula, shields, receipts, reflection).</summary>
+        public DamagePipeline Damage { get; }
+
+        /// <summary>
+        ///     The damage application whose before_deal_damage / before_take_damage hooks are running, else null.
+        ///     Event handlers of those hooks adjust it; never keep it.
+        /// </summary>
+        public DamageContext ActiveDamage => Damage.Active;
+
+        /// <summary>Domain clock in seconds: the sum of every accepted <see cref="Tick" /> step.</summary>
+        public float ElapsedTime => _time;
+
+        /// <summary>Number of accepted <see cref="Tick" /> steps.</summary>
+        public long TickCount { get; private set; }
 
         /// <summary>Receipt stream of this system (damage, heals, casts, modifiers, deaths).</summary>
         public AbilityEventBus Events { get; }
@@ -336,6 +363,34 @@ namespace Neo.Abilities
         /// </summary>
         public CastResult Cast(CastRequest request)
         {
+            if (_castDepth >= MaxCastDepth)
+            {
+                TraceNote(AbilityTraceKind.CastFailed, request.Caster, request.TargetUnit, 0f, request.AbilityId, null,
+                    CastFailureReasonNames.Of(CastFailureReason.NestingLimit), (int)CastFailureReason.NestingLimit);
+                return CastResult.Fail(CastFailureReason.NestingLimit);
+            }
+
+            _castDepth++;
+            try
+            {
+                CastResult result = CastInternal(request);
+                if (!result.Success && Trace.Enabled)
+                {
+                    Trace.Record(_traceCause, AbilityTraceKind.CastFailed, _time, TickCount, request.Caster,
+                        request.TargetUnit, request.AbilityId, null, (int)result.Failure, 0f,
+                        CastFailureReasonNames.Of(result.Failure));
+                }
+
+                return result;
+            }
+            finally
+            {
+                _castDepth--;
+            }
+        }
+
+        private CastResult CastInternal(CastRequest request)
+        {
             AbilityUnit caster = GetUnit(request.Caster);
             if (caster == null)
             {
@@ -433,26 +488,47 @@ namespace Neo.Abilities
                 return CastResult.Fail(CastFailureReason.NotEnoughResources);
             }
 
-            float cdr = Mathf.Clamp(caster.GetProperty(AbilityProperties.CooldownReductionPercent), 0f, 90f);
+            ICooldownRule cooldowns = Rules.Cooldowns;
             if (ability.UsesCharges)
             {
                 slot.Charges--;
                 if (slot.CooldownRemaining <= 0f)
                 {
                     float restore = ability.ChargeRestoreTime > 0f ? ability.ChargeRestoreTime : ability.Cooldown;
-                    slot.StartCooldown(restore * (1f - cdr / 100f));
+                    slot.StartCooldown(cooldowns.ResolveCooldown(caster, ability, restore));
                 }
             }
             else
             {
                 slot.Charges = 0;
-                slot.StartCooldown(ability.Cooldown * (1f - cdr / 100f));
+                slot.StartCooldown(cooldowns.ResolveCooldown(caster, ability, ability.Cooldown));
             }
 
             uint castId = _nextCastId++;
-            Events.Publish(new AbilityEventArgs(AbilityEvents.AbilityCast, caster.Id,
-                targetUnit?.Id ?? UnitId.None, 0f, ability.Id, castId: castId));
+            long previousCause = _traceCause;
+            if (Trace.Enabled)
+            {
+                _traceCause = Trace.Record(previousCause, AbilityTraceKind.Cast, _time, TickCount, caster.Id,
+                    targetUnit?.Id ?? UnitId.None, ability.Id, null, (int)castId, 0f, null);
+            }
 
+            try
+            {
+                Events.Publish(new AbilityEventArgs(AbilityEvents.AbilityCast, caster.Id,
+                    targetUnit?.Id ?? UnitId.None, 0f, ability.Id, castId: castId));
+                ExecuteAcceptedCast(request, caster, ability, slot, targetUnit, castId);
+            }
+            finally
+            {
+                _traceCause = previousCause;
+            }
+
+            return CastResult.Ok(castId);
+        }
+
+        private void ExecuteAcceptedCast(CastRequest request, AbilityUnit caster, AbilityBlueprint ability,
+            AbilitySlot slot, AbilityUnit targetUnit, uint castId)
+        {
             uint seed = request.Seed != 0 ? request.Seed : castId * 2654435761u ^ caster.Id.Value;
             // WHY: evaluated once, before cast effects can change cast_range_bonus, so the cast's target point
             // and its projectile's spawn aim always end at the same place.
@@ -466,6 +542,7 @@ namespace Neo.Abilities
                 context.CastId = castId;
                 context.AbilityLevel = slot.Level;
                 context.Specials = ability.Specials;
+                context.Origin = EffectOrigin.Cast;
 
                 // WHY: cast-phase effects run immediately, ahead of delivery, regardless of delivery type.
                 if (ability.CastEffects.Count > 0)
@@ -508,8 +585,6 @@ namespace Neo.Abilities
             {
                 ReturnContext(context);
             }
-
-            return CastResult.Ok(castId);
         }
 
         /// <summary>
@@ -533,7 +608,7 @@ namespace Neo.Abilities
                 for (int i = 0; i < costCount; i++)
                 {
                     AbilityCost cost = ability.Costs[i];
-                    float amount = EffectiveCost(caster, cost);
+                    float amount = Rules.Costs.ResolveCost(caster, ability, cost);
                     if (float.IsNaN(amount) || float.IsInfinity(amount))
                     {
                         // WHY: a NaN entry poisons cumulative costs and makes affordability comparisons
@@ -650,6 +725,13 @@ namespace Neo.Abilities
             // listener despawning the projectile; read everything needed before they run.
             AbilityBlueprint ability = pending.Ability;
             EffectContext context = RentContext(pending.Caster, ability.Id, hitSeed);
+            long previousCause = _traceCause;
+            if (Trace.Enabled)
+            {
+                _traceCause = Trace.Record(previousCause, AbilityTraceKind.ProjectileHit, _time, TickCount,
+                    pending.Caster, hitUnit, ability.Id, null, (int)castId, 0f, null);
+            }
+
             try
             {
                 context.TargetPoint = hitPoint;
@@ -657,6 +739,7 @@ namespace Neo.Abilities
                 context.CastId = castId;
                 context.AbilityLevel = pending.Level;
                 context.Specials = ability.Specials;
+                context.Origin = EffectOrigin.ProjectileHit;
                 AbilityUnit hit = GetUnit(hitUnit);
                 if (hit != null && hit.IsAlive)
                 {
@@ -668,6 +751,7 @@ namespace Neo.Abilities
             finally
             {
                 ReturnContext(context);
+                _traceCause = previousCause;
             }
 
             return true;
@@ -735,6 +819,7 @@ namespace Neo.Abilities
                 // WHY: op.Execute may re-enter ExecuteEffects via event reactions; the per-depth
                 // scratch keeps the list an outer op is still iterating intact.
                 List<UnitId> targetScratch = RentScratch(_targetScratchPool, _executionDepth - 1);
+                IEffectTargetResolver targeting = Rules.Targeting;
                 for (int i = 0; i < nodes.Count; i++)
                 {
                     EffectNodeData node = nodes[i];
@@ -754,8 +839,26 @@ namespace Neo.Abilities
                     }
 
                     targetScratch.Clear();
-                    ResolveTargets(node, context, targetScratch);
-                    op.Execute(context, node, targetScratch);
+                    targeting.Resolve(node, context, targetScratch);
+                    if (Trace.Enabled)
+                    {
+                        long previousCause = _traceCause;
+                        _traceCause = Trace.Record(previousCause, AbilityTraceKind.Effect, _time, TickCount,
+                            context.Caster, targetScratch.Count > 0 ? targetScratch[0] : UnitId.None, op.Id,
+                            context.AbilityId, targetScratch.Count, 0f, null);
+                        try
+                        {
+                            op.Execute(context, node, targetScratch);
+                        }
+                        finally
+                        {
+                            _traceCause = previousCause;
+                        }
+                    }
+                    else
+                    {
+                        op.Execute(context, node, targetScratch);
+                    }
                 }
             }
             finally
@@ -804,9 +907,11 @@ namespace Neo.Abilities
             }
 
             _time = nextTime;
+            TickCount++;
             PrunePendingProjectiles();
 
             Modifiers.Tick(deltaTime);
+            TickZones(deltaTime);
 
             foreach (KeyValuePair<UnitId, Dictionary<string, AbilitySlot>> pair in _slots)
             {
@@ -816,8 +921,8 @@ namespace Neo.Abilities
                 }
             }
 
-            // WHY: resource callbacks may execute area effects, which reuse _unitScratch. Keep the
-            // tick snapshot separate so those effects cannot skip or repeat the remaining units.
+            // WHY: resource callbacks may execute area effects that query units. Keep the tick
+            // snapshot separate so those effects cannot skip or repeat the remaining units.
             _tickUnitScratch.Clear();
             foreach (KeyValuePair<UnitId, AbilityUnit> pair in _units)
             {
@@ -865,23 +970,6 @@ namespace Neo.Abilities
                 default:
                     return true;
             }
-        }
-
-        private static float EffectiveCost(AbilityUnit caster, AbilityCost cost)
-        {
-            float amount = cost.Amount;
-            if (AbilityIdComparer.Same(cost.ResourceId, AbilityResourceIds.Mana))
-            {
-                float multiplier = caster.GetProperty(AbilityProperties.ManaCostMul, 1f);
-                if (float.IsNaN(multiplier) || float.IsInfinity(multiplier))
-                {
-                    return float.NaN;
-                }
-
-                amount *= MathF.Max(0f, multiplier);
-            }
-
-            return amount;
         }
 
         private void FillCastTargets(EffectContext context, AbilityUnit caster, AbilityBlueprint ability,
@@ -952,124 +1040,6 @@ namespace Neo.Abilities
             return aim * MathF.Max(0f, reach);
         }
 
-        private void ResolveTargets(EffectNodeData node, EffectContext context, List<UnitId> results)
-        {
-            switch (node.Target)
-            {
-                case EffectTargetSelector.Caster:
-                    results.Add(context.Caster);
-                    break;
-
-                case EffectTargetSelector.Target:
-                    results.AddRange(context.PrimaryTargets);
-                    break;
-
-                case EffectTargetSelector.AreaAroundTarget:
-                {
-                    Vector3 center;
-                    if (context.PrimaryTargets.Count > 0 &&
-                        _world.TryGetPosition(context.PrimaryTargets[0], out Vector3 targetPos))
-                    {
-                        center = targetPos;
-                    }
-                    else if (context.HasTargetPoint)
-                    {
-                        center = context.TargetPoint;
-                    }
-                    else
-                    {
-                        return;
-                    }
-
-                    CollectArea(center, node, context, results);
-                    break;
-                }
-
-                case EffectTargetSelector.AreaAroundCaster:
-                {
-                    if (_world.TryGetPosition(context.Caster, out Vector3 casterPos))
-                    {
-                        CollectArea(casterPos, node, context, results);
-                    }
-
-                    break;
-                }
-            }
-        }
-
-        private void CollectArea(Vector3 center, EffectNodeData node, EffectContext context, List<UnitId> results)
-        {
-            float radius = LeveledValueResolver.SampleByLevel(node.RadiusByLevel, context.AbilityLevel, node.Radius);
-            if (radius <= 0f)
-            {
-                return;
-            }
-
-            _unitScratch.Clear();
-            _world.QueryUnitsInRadius(center, radius, _unitScratch);
-
-            AbilityUnit caster = GetUnit(context.Caster);
-
-            // WHY: unlimited case preserves the historical query order and stays zero-allocation.
-            if (node.MaxTargets <= 0)
-            {
-                for (int i = 0; i < _unitScratch.Count; i++)
-                {
-                    AbilityUnit unit = GetUnit(_unitScratch[i]);
-                    if (unit == null || !unit.IsAlive)
-                    {
-                        continue;
-                    }
-
-                    if (caster != null && !MatchesTeamFilter(caster, unit, node.TeamFilter))
-                    {
-                        continue;
-                    }
-
-                    results.Add(unit.Id);
-                }
-
-                return;
-            }
-
-            // WHY: capped case keeps the nearest N, sorted deterministically by distance then unit id.
-            _areaScratch.Clear();
-            for (int i = 0; i < _unitScratch.Count; i++)
-            {
-                UnitId id = _unitScratch[i];
-                AbilityUnit unit = GetUnit(id);
-                if (unit == null || !unit.IsAlive)
-                {
-                    continue;
-                }
-
-                if (caster != null && !MatchesTeamFilter(caster, unit, node.TeamFilter))
-                {
-                    continue;
-                }
-
-                // WHY: double ranking; a float square overflows to infinity for far units the exact radius
-                // query admitted, and they would then tie and fall back to unit-id order.
-                double distSq = _world.TryGetPosition(id, out Vector3 pos)
-                    ? AbilitySpatialGrid.SqrDistance(pos, center)
-                    : double.PositiveInfinity;
-                _areaScratch.Add(new AreaHit(id, distSq));
-            }
-
-            _areaScratch.Sort(AreaHitComparison);
-            int keep = node.MaxTargets < _areaScratch.Count ? node.MaxTargets : _areaScratch.Count;
-            for (int i = 0; i < keep; i++)
-            {
-                results.Add(_areaScratch[i].Unit);
-            }
-        }
-
-        private static int CompareAreaHits(AreaHit a, AreaHit b)
-        {
-            int byDistance = a.DistanceSq.CompareTo(b.DistanceSq);
-            return byDistance != 0 ? byDistance : a.Unit.Value.CompareTo(b.Unit.Value);
-        }
-
         private void OnModifierApplied(ModifierInstance instance, bool createdNew)
         {
             // WHY: max_health_bonus / max_mana_bonus feed resource pool maxima eagerly here —
@@ -1077,6 +1047,13 @@ namespace Neo.Abilities
             SyncResourceMaxBonuses(instance.Owner);
             Events.Publish(new AbilityEventArgs(AbilityEvents.ModifierApplied, instance.Owner, instance.Caster,
                 instance.Stacks, instance.SourceAbilityId, instance.Blueprint.Id));
+            if (createdNew && instance.TriggerFlags != 0)
+            {
+                InitializeStateWatch(instance);
+                FireLifecycleTriggers(instance, ModifierTrigger.Applied);
+            }
+
+            EvaluateStateWatchers(instance.Owner);
         }
 
         private void OnModifierRemoved(ModifierInstance instance, bool expired)
@@ -1084,6 +1061,12 @@ namespace Neo.Abilities
             SyncResourceMaxBonuses(instance.Owner);
             Events.Publish(new AbilityEventArgs(AbilityEvents.ModifierRemoved, instance.Owner, instance.Caster,
                 expired ? 1f : 0f, instance.SourceAbilityId, instance.Blueprint.Id));
+            if (instance.TriggerFlags != 0)
+            {
+                FireLifecycleTriggers(instance, ModifierTrigger.Removed);
+            }
+
+            EvaluateStateWatchers(instance.Owner);
         }
 
         private void SyncResourceMaxBonuses(UnitId owner)
@@ -1108,6 +1091,14 @@ namespace Neo.Abilities
             uint seed = RollSeed(instance.Owner.Value * 747796405u + (uint)instance.InstanceId,
                 instance.TickRollIndex++);
             EffectContext context = RentContext(instance.Caster, instance.SourceAbilityId, seed);
+            long previousCause = _traceCause;
+            if (Trace.Enabled)
+            {
+                _traceCause = Trace.Record(previousCause, AbilityTraceKind.ModifierTick, _time, TickCount,
+                    instance.Owner, instance.Caster, instance.Blueprint.Id, instance.SourceAbilityId, instance.Stacks,
+                    0f, null);
+            }
+
             try
             {
                 context.AbilityLevel = instance.AbilityLevel;
@@ -1116,85 +1107,15 @@ namespace Neo.Abilities
                     context.Specials = ability.Specials;
                 }
 
+                context.Origin = EffectOrigin.ModifierTick;
+                context.SourceStacks = instance.Stacks;
                 context.PrimaryTargets.Add(instance.Owner);
                 ExecuteEffects(tickEffects, context);
             }
             finally
             {
                 ReturnContext(context);
-            }
-        }
-
-        private void HandleModifierReactions(AbilityEventArgs args)
-        {
-            if (_executionDepth >= EffectContext.MaxDepth || !args.Target.IsValid)
-            {
-                return;
-            }
-
-            // WHY: modifier lifecycle events would recurse through their own reactions; skip them.
-            if (args.EventId == AbilityEvents.ModifierApplied || args.EventId == AbilityEvents.ModifierRemoved)
-            {
-                return;
-            }
-
-            // WHY: reaction effects can publish new events that re-enter this handler; the per-depth
-            // scratch keeps the modifier list of the outer event intact.
-            List<ModifierInstance> reactionScratch = RentScratch(_reactionScratchPool, _reactionDepth);
-            _reactionDepth++;
-            try
-            {
-                Modifiers.GetModifiers(args.Target, reactionScratch);
-                for (int i = 0; i < reactionScratch.Count; i++)
-                {
-                    ModifierInstance m = reactionScratch[i];
-                    if (!m.IsActive)
-                    {
-                        continue;
-                    }
-
-                    List<ModifierEventReaction> reactions = m.Blueprint.EventReactions;
-                    if (reactions == null)
-                    {
-                        continue;
-                    }
-
-                    for (int r = 0; r < reactions.Count; r++)
-                    {
-                        ModifierEventReaction reaction = reactions[r];
-                        if (reaction == null || reaction.Effects == null || reaction.Effects.Count == 0 ||
-                            !AbilityIdComparer.Same(reaction.EventId, args.EventId))
-                        {
-                            continue;
-                        }
-
-                        uint seed = RollSeed(args.Target.Value * 2891336453u + (uint)m.InstanceId,
-                            m.ReactionRollIndex++);
-                        EffectContext context = RentContext(m.Caster, m.SourceAbilityId, seed);
-                        try
-                        {
-                            context.Depth = _executionDepth;
-                            context.CastId = args.CastId;
-                            context.AbilityLevel = m.AbilityLevel;
-                            if (TryGetAbility(m.SourceAbilityId, out AbilityBlueprint reactionAbility))
-                            {
-                                context.Specials = reactionAbility.Specials;
-                            }
-
-                            UnitId target = reaction.TargetEventSource && args.Source.IsValid ? args.Source : m.Owner;
-                            context.PrimaryTargets.Add(target);
-                            ExecuteEffects(reaction.Effects, context);
-                        }
-                        finally
-                        {
-                            ReturnContext(context);
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                _reactionDepth--;
+                _traceCause = previousCause;
             }
         }
 
@@ -1249,18 +1170,6 @@ namespace Neo.Abilities
             for (int i = 0; i < _pendingPruneScratch.Count; i++)
             {
                 RemovePending(_pendingPruneScratch[i]);
-            }
-        }
-
-        private readonly struct AreaHit
-        {
-            public readonly UnitId Unit;
-            public readonly double DistanceSq;
-
-            public AreaHit(UnitId unit, double distanceSq)
-            {
-                Unit = unit;
-                DistanceSq = distanceSq;
             }
         }
 

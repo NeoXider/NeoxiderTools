@@ -15,6 +15,17 @@ namespace Neo.Abilities
             new Dictionary<UnitId, List<ModifierInstance>>();
 
         private readonly Dictionary<UnitId, int> _versions = new Dictionary<UnitId, int>();
+
+        // WHY: per-owner counts of reacting / state-watching instances let every publication skip owners whose
+        // modifiers cannot react, without copying their modifier list.
+        private readonly Dictionary<UnitId, TriggerCounts> _triggerCounts = new Dictionary<UnitId, TriggerCounts>();
+        private int _beforeDealTotal;
+        private int _beforeTakeTotal;
+        private int _attackLandedTotal;
+        private int _attackReceivedTotal;
+        private int _prioritizedTotal;
+        private const byte ReactiveFlag = ModifierInstance.ReactiveTriggerFlag;
+        private const byte StateWatcherFlag = ModifierInstance.StateWatcherTriggerFlag;
         private readonly List<ModifierInstance> _tickScratch = new List<ModifierInstance>(32);
         private readonly List<List<ModifierInstance>> _removalScratchPool = new List<List<ModifierInstance>>(2);
 
@@ -28,6 +39,12 @@ namespace Neo.Abilities
         // WHY: versions come from one engine-wide counter, so a value is never handed out twice and
         // a forgotten owner can restart at 0 without matching a stale property cache entry.
         private int _versionCounter;
+
+        /// <summary>
+        ///     Rules this engine reads its stacking decision from; set by the owning <see cref="AbilitySystem" />.
+        ///     Null (a standalone engine) uses <see cref="StandardModifierStackingRule" />.
+        /// </summary>
+        public AbilityRules Rules { get; set; }
 
         /// <summary>Fired after an instance is applied (new) or re-applied (refresh/stack).</summary>
         public event Action<ModifierInstance, bool> Applied;
@@ -64,6 +81,11 @@ namespace Neo.Abilities
         /// <summary>Number of owners whose version is currently tracked (diagnostics and leak tests).</summary>
         public int TrackedOwnerCount => _versions.Count;
 
+        /// <summary>
+        ///     Applies a modifier to <paramref name="owner" />. What a re-application does is decided by
+        ///     <see cref="AbilityRules.Stacking" /> (default: the blueprint's <see cref="ModifierStackPolicy" />).
+        ///     An ignored re-application returns the existing instance with <c>CreatedNew = false</c> and fires nothing.
+        /// </summary>
         public ModifierApplyResult Apply(ModifierBlueprint blueprint, UnitId caster, UnitId owner,
             string sourceAbilityId = null, int abilityLevel = 1)
         {
@@ -73,13 +95,39 @@ namespace Neo.Abilities
             }
 
             List<ModifierInstance> list = GetOrCreateList(owner);
-
-            if (blueprint.StackPolicy != ModifierStackPolicy.Independent)
+            ModifierInstance existing = null;
+            int activeInstances = 0;
+            for (int i = 0; i < list.Count; i++)
             {
-                ModifierInstance existing = FindActive(list, blueprint.Id);
-                if (existing != null)
+                ModifierInstance m = list[i];
+                if (m.IsActiveInternal && !m.IsShieldBreaking && AbilityIdComparer.Same(m.Blueprint.Id, blueprint.Id))
                 {
-                    if (blueprint.StackPolicy == ModifierStackPolicy.Stack)
+                    activeInstances++;
+                    existing ??= m;
+                }
+            }
+
+            IModifierStackingRule rule = Rules != null ? Rules.Stacking : StandardModifierStackingRule.Instance;
+            ModifierStackAction action = rule.Decide(blueprint, existing, activeInstances);
+            if (existing == null && action != ModifierStackAction.Ignore)
+            {
+                action = ModifierStackAction.CreateNew;
+            }
+
+            switch (action)
+            {
+                case ModifierStackAction.Ignore:
+                    if (list.Count == 0)
+                    {
+                        ReleaseEmptyList(owner, list);
+                    }
+
+                    return new ModifierApplyResult(existing, false);
+
+                case ModifierStackAction.Refresh:
+                case ModifierStackAction.AddStack:
+                case ModifierStackAction.Prolong:
+                    if (action == ModifierStackAction.AddStack)
                     {
                         int max = blueprint.MaxStacks > 0 ? blueprint.MaxStacks : int.MaxValue;
                         if (existing.Stacks < max)
@@ -88,13 +136,28 @@ namespace Neo.Abilities
                         }
                     }
 
-                    // WHY: a re-application re-captures the applying ability level (and its leveled duration).
-                    existing.RecaptureLevel(abilityLevel);
-                    existing.RefreshDuration();
+                    if (action == ModifierStackAction.Prolong)
+                    {
+                        float remaining = existing.RemainingDuration;
+                        existing.RecaptureLevel(abilityLevel);
+                        existing.RemainingDuration = remaining;
+                        existing.Prolong(existing.InitialDuration);
+                    }
+                    else
+                    {
+                        // WHY: a re-application re-captures the applying ability level (and its leveled duration).
+                        existing.RecaptureLevel(abilityLevel);
+                        existing.RefreshDuration();
+                    }
+
                     BumpVersion(owner);
                     Applied?.Invoke(existing, false);
                     return new ModifierApplyResult(existing, false);
-                }
+
+                case ModifierStackAction.ReplaceOldest:
+                    RemoveInternal(existing, false);
+                    list = GetOrCreateList(owner);
+                    break;
             }
 
             ModifierInstance instance = new ModifierInstance(_nextInstanceId++, blueprint, caster, owner, sourceAbilityId,
@@ -105,10 +168,299 @@ namespace Neo.Abilities
                 instance.TickAccumulator = blueprint.TickInterval;
             }
 
+            instance.TriggerFlags = ComputeTriggerFlags(blueprint, out bool needsState);
+            if (needsState)
+            {
+                instance.ReactionStates = new ReactionState[blueprint.EventReactions.Count];
+            }
+
             list.Add(instance);
+            CountTriggers(owner, instance.TriggerFlags, 1);
             BumpVersion(owner);
             Applied?.Invoke(instance, true);
             return new ModifierApplyResult(instance, true);
+        }
+
+        /// <summary>True when an active modifier of <paramref name="owner" /> has event reactions or triggers.</summary>
+        public bool HasReactions(UnitId owner)
+        {
+            return _triggerCounts.TryGetValue(owner, out TriggerCounts counts) && counts.Reactive > 0;
+        }
+
+        /// <summary>
+        ///     True when an active modifier of <paramref name="owner" /> has an event-bound reaction (Event, EveryNth,
+        ///     HealthBelow) to <paramref name="eventId" />. Scans the owner's modifiers without copying them.
+        /// </summary>
+        public bool ReactsTo(UnitId owner, string eventId)
+        {
+            // WHY: the damage pipeline asks for these on every hit; engine-wide totals answer without a lookup
+            // while no modifier anywhere listens, per-owner counts without a scan otherwise.
+            byte hook = HookFlag(eventId);
+            if (hook != 0 && TotalFor(hook) == 0)
+            {
+                return false;
+            }
+
+            if (!_triggerCounts.TryGetValue(owner, out TriggerCounts counts) || counts.Reactive <= 0)
+            {
+                return false;
+            }
+
+            switch (hook)
+            {
+                case ModifierInstance.BeforeDealTriggerFlag:
+                    return counts.BeforeDeal > 0;
+                case ModifierInstance.BeforeTakeTriggerFlag:
+                    return counts.BeforeTake > 0;
+                case ModifierInstance.AttackLandedTriggerFlag:
+                    return counts.AttackLanded > 0;
+                case ModifierInstance.AttackReceivedTriggerFlag:
+                    return counts.AttackReceived > 0;
+            }
+
+            if (!_byOwner.TryGetValue(owner, out List<ModifierInstance> list))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                ModifierInstance m = list[i];
+                List<ModifierEventReaction> reactions = m.Blueprint.EventReactions;
+                if (!m.IsActiveInternal || reactions == null)
+                {
+                    continue;
+                }
+
+                for (int r = 0; r < reactions.Count; r++)
+                {
+                    ModifierEventReaction reaction = reactions[r];
+                    if (reaction != null && reaction.IsEventBound && AbilityIdComparer.Same(reaction.EventId, eventId))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>True when an active modifier of <paramref name="owner" /> has a reaction with a non-zero priority.</summary>
+        internal bool HasPrioritizedReactions(UnitId owner)
+        {
+            return _prioritizedTotal > 0 && _triggerCounts.TryGetValue(owner, out TriggerCounts counts) &&
+                   counts.Prioritized > 0;
+        }
+
+        private int TotalFor(byte hook)
+        {
+            switch (hook)
+            {
+                case ModifierInstance.BeforeDealTriggerFlag:
+                    return _beforeDealTotal;
+                case ModifierInstance.BeforeTakeTriggerFlag:
+                    return _beforeTakeTotal;
+                case ModifierInstance.AttackLandedTriggerFlag:
+                    return _attackLandedTotal;
+                default:
+                    return _attackReceivedTotal;
+            }
+        }
+
+        /// <summary>True when an active modifier of <paramref name="owner" /> watches a state (StateEnter / StateExit).</summary>
+        public bool HasStateWatchers(UnitId owner)
+        {
+            return _triggerCounts.TryGetValue(owner, out TriggerCounts counts) && counts.StateWatchers > 0;
+        }
+
+        /// <summary>The oldest active instance of <paramref name="modifierId" /> on the owner (case-insensitive).</summary>
+        public bool TryGetActive(UnitId owner, string modifierId, out ModifierInstance instance)
+        {
+            instance = null;
+            if (string.IsNullOrEmpty(modifierId) || !_byOwner.TryGetValue(owner, out List<ModifierInstance> list))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                ModifierInstance m = list[i];
+                if (m.IsActiveInternal && AbilityIdComparer.Same(m.Blueprint.Id, modifierId))
+                {
+                    instance = m;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Active instances of <paramref name="modifierId" /> on the owner.</summary>
+        public int CountActive(UnitId owner, string modifierId)
+        {
+            int count = 0;
+            if (!string.IsNullOrEmpty(modifierId) && _byOwner.TryGetValue(owner, out List<ModifierInstance> list))
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].IsActiveInternal && AbilityIdComparer.Same(list[i].Blueprint.Id, modifierId))
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            return count;
+        }
+
+        private static byte ComputeTriggerFlags(ModifierBlueprint blueprint, out bool needsState)
+        {
+            needsState = false;
+            List<ModifierEventReaction> reactions = blueprint.EventReactions;
+            if (reactions == null || reactions.Count == 0)
+            {
+                return 0;
+            }
+
+            byte flags = 0;
+            for (int i = 0; i < reactions.Count; i++)
+            {
+                ModifierEventReaction reaction = reactions[i];
+                if (reaction == null)
+                {
+                    continue;
+                }
+
+                flags |= ReactiveFlag;
+                if (reaction.Trigger == ModifierTrigger.StateEnter || reaction.Trigger == ModifierTrigger.StateExit)
+                {
+                    flags |= StateWatcherFlag;
+                }
+
+                if (reaction.IsEventBound)
+                {
+                    flags |= HookFlag(reaction.EventId);
+                }
+
+                if (reaction.Priority != 0)
+                {
+                    flags |= ModifierInstance.PrioritizedTriggerFlag;
+                }
+
+                needsState |= reaction.NeedsState;
+            }
+
+            return flags;
+        }
+
+        private static byte HookFlag(string eventId)
+        {
+            // WHY: producers pass the constants; reference checks avoid comparing equal-length ids char by char.
+            if (ReferenceEquals(eventId, AbilityEvents.BeforeDealDamage))
+            {
+                return ModifierInstance.BeforeDealTriggerFlag;
+            }
+
+            if (ReferenceEquals(eventId, AbilityEvents.BeforeTakeDamage))
+            {
+                return ModifierInstance.BeforeTakeTriggerFlag;
+            }
+
+            if (ReferenceEquals(eventId, AbilityEvents.AttackLanded))
+            {
+                return ModifierInstance.AttackLandedTriggerFlag;
+            }
+
+            if (ReferenceEquals(eventId, AbilityEvents.AttackReceived))
+            {
+                return ModifierInstance.AttackReceivedTriggerFlag;
+            }
+
+            if (AbilityIdComparer.Same(eventId, AbilityEvents.BeforeDealDamage))
+            {
+                return ModifierInstance.BeforeDealTriggerFlag;
+            }
+
+            if (AbilityIdComparer.Same(eventId, AbilityEvents.BeforeTakeDamage))
+            {
+                return ModifierInstance.BeforeTakeTriggerFlag;
+            }
+
+            if (AbilityIdComparer.Same(eventId, AbilityEvents.AttackLanded))
+            {
+                return ModifierInstance.AttackLandedTriggerFlag;
+            }
+
+            return AbilityIdComparer.Same(eventId, AbilityEvents.AttackReceived)
+                ? ModifierInstance.AttackReceivedTriggerFlag
+                : (byte)0;
+        }
+
+        private void CountTriggers(UnitId owner, byte flags, int delta)
+        {
+            if (flags == 0)
+            {
+                return;
+            }
+
+            _triggerCounts.TryGetValue(owner, out TriggerCounts counts);
+            if ((flags & ReactiveFlag) != 0)
+            {
+                counts.Reactive += delta;
+            }
+
+            if ((flags & StateWatcherFlag) != 0)
+            {
+                counts.StateWatchers += delta;
+            }
+
+            if ((flags & ModifierInstance.BeforeDealTriggerFlag) != 0)
+            {
+                counts.BeforeDeal += delta;
+                _beforeDealTotal += delta;
+            }
+
+            if ((flags & ModifierInstance.BeforeTakeTriggerFlag) != 0)
+            {
+                counts.BeforeTake += delta;
+                _beforeTakeTotal += delta;
+            }
+
+            if ((flags & ModifierInstance.AttackLandedTriggerFlag) != 0)
+            {
+                counts.AttackLanded += delta;
+                _attackLandedTotal += delta;
+            }
+
+            if ((flags & ModifierInstance.AttackReceivedTriggerFlag) != 0)
+            {
+                counts.AttackReceived += delta;
+                _attackReceivedTotal += delta;
+            }
+
+            if ((flags & ModifierInstance.PrioritizedTriggerFlag) != 0)
+            {
+                counts.Prioritized += delta;
+                _prioritizedTotal += delta;
+            }
+
+            if (counts.Reactive <= 0 && counts.StateWatchers <= 0)
+            {
+                _triggerCounts.Remove(owner);
+            }
+            else
+            {
+                _triggerCounts[owner] = counts;
+            }
+        }
+
+        private void ReleaseEmptyList(UnitId owner, List<ModifierInstance> list)
+        {
+            _byOwner.Remove(owner);
+            if (_ownerListPool.Count < MaxPooledOwnerLists)
+            {
+                _ownerListPool.Add(list);
+            }
         }
 
         public bool Remove(ModifierInstance instance)
@@ -314,21 +666,6 @@ namespace Neo.Abilities
             return false;
         }
 
-        private static ModifierInstance FindActive(List<ModifierInstance> list, string blueprintId)
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                ModifierInstance m = list[i];
-                if (m.IsActiveInternal && !m.IsShieldBreaking &&
-                    AbilityIdComparer.Same(m.Blueprint.Id, blueprintId))
-                {
-                    return m;
-                }
-            }
-
-            return null;
-        }
-
         private bool RemoveInternal(ModifierInstance instance, bool expired)
         {
             if (instance == null || !instance.IsActiveInternal ||
@@ -340,13 +677,10 @@ namespace Neo.Abilities
             instance.IsActiveInternal = false;
             if (list.Count == 0)
             {
-                _byOwner.Remove(instance.Owner);
-                if (_ownerListPool.Count < MaxPooledOwnerLists)
-                {
-                    _ownerListPool.Add(list);
-                }
+                ReleaseEmptyList(instance.Owner, list);
             }
 
+            CountTriggers(instance.Owner, instance.TriggerFlags, -1);
             BumpVersion(instance.Owner);
             Removed?.Invoke(instance, expired);
             return true;
@@ -376,6 +710,17 @@ namespace Neo.Abilities
         private void BumpVersion(UnitId owner)
         {
             _versions[owner] = ++_versionCounter;
+        }
+
+        private struct TriggerCounts
+        {
+            public int Reactive;
+            public int StateWatchers;
+            public int BeforeDeal;
+            public int BeforeTake;
+            public int AttackLanded;
+            public int AttackReceived;
+            public int Prioritized;
         }
     }
 }

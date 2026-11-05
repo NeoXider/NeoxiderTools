@@ -111,6 +111,35 @@ direct clamped setter for loads/revives that bypasses the heal gate).
   they read 0 after `DestroyUnit` (which now forgets the unit's bookkeeping).
 - `AbilityEventBus.Publish` ignores an event without an id (it used to throw).
 
+## Reactive layer and replaceable rules (12.1)
+
+Read `Docs/Abilities/TriggersAndHooks.md` and `Docs/Abilities/Rules.md` before hand-rolling any of this.
+
+- **Damage hooks:** every hit runs `before_deal_damage` (attacker) then `before_take_damage` (victim). In a handler
+  read/adjust `system.ActiveDamage` (`Multiplier`, `FlatAdd`, `Absorb`, `ReflectFraction`, `Cancel()`,
+  `DamageType`); in data use reactions with ops `modify_damage` (`CustomParam` multiply/add/absorb/cancel) and
+  `reflect`. Optional receipts (hooks, `attack_landed`/`attack_received`) are only produced for a handler of that
+  exact event id, a reacting modifier or the trace — `SubscribeAny`/`SubscribeTarget` alone do not request them.
+- **Triggers on `ModifierEventReaction`:** `Trigger` = Event / EveryNth (`EveryN`) / HealthBelow (`Threshold`,
+  edge on `take_damage`) / StateEnter / StateExit (`StateId`) / Applied / Removed; filters `TagFilter`,
+  `AbilityFilter`, `HitsOnly`; `MaxTriggers` + `RemoveWhenSpent` (charges, "next N hits"), `Cooldown` (internal
+  cooldown), `Priority`. `attack_landed` = direct hit of a cast/projectile (DoT ticks do not count).
+  Animation moments: `system.RaiseAnimationEvent(unit, "hit_frame")` → reactions on `animation_event` + TagFilter.
+- **Payload ops:** `projectile` / `area_apply` / `zone` / `cast_ability` take `EffectNodeData.AbilityId` (a
+  payload ability; its Impact effects run). Selector `ConeFromCaster` + `Angle`. Zones = auras (selector Caster,
+  follows) and formations (point): `Radius`, `Duration`, `Interval`, `ModifierId`, `ArchetypeId` visual with
+  `AbilityZoneView`. Code: `system.SpawnZone(new AbilityZoneSpec { ... })`.
+- **Stack policies:** + `Unique`, `Prolong`, `IndependentCapped`. `AmountPerStack` scales tick/reaction amounts.
+- **Templates first:** `AbilityTemplates.AutoCastTechnique/AttackEnhancer/AutoDefenseShield/Mark/StackingPoison/
+  Thorns/Aura/FormationZone(...).SetUp(system, unitId)` — tune the returned blueprints instead of writing ops.
+- **Rules (never fork the package):** `system.Rules.DamageFormula / Mitigation / CriticalHit / Evasion /
+  Stacking / Aggregator (AdditivePercentPropertyAggregator) / Targeting / Cooldowns / Costs / Time
+  (FixedStepTimeSource + system.Advance / StepTicks) / Numeric (FixedPointNumeric.Q8) / Random
+  (IRandomSourceFactory)`. Implementations must not allocate per call; `null` restores the default.
+- **Debug "why did this fire":** `system.Trace.Enabled = true;` then
+  `system.Trace.Explain(entry.Sequence)` (find entries with `TryFindLatest(AbilityTraceKind.Reaction, id, ...)`).
+  `AbilityContentValidator.Validate(abilities, modifiers, system.Ops)` lists data mistakes.
+
 ## NoCode trio (designer wiring — see avoid-nocode.md)
 
 `AbilityNoCodeAction` (enum-driven `Execute()` bridge: cast/grant/revoke/level/modifier/damage/heal from

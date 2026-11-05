@@ -71,6 +71,24 @@ namespace Neo.Abilities
         [Range(0f, 1f)]
         public float Chance = 1f;
 
+        [Header("Payload, cone, zone and stacks (optional)")]
+        [Tooltip("Payload ability id for projectile / area_apply / zone (its Impact effects run) and the ability " +
+                 "cast_ability casts. Resolved through the system's ability catalog.")]
+        public string AbilityId;
+
+        [Tooltip("Full cone angle in degrees for the ConeFromCaster selector (0..360).")]
+        public float Angle;
+
+        [Tooltip("Zone lifetime in seconds for the zone op. 0 = until its anchor unit dies or it is removed.")]
+        public float Duration;
+
+        [Tooltip("Seconds between zone pulses for the zone op. 0 = a single pulse on spawn.")]
+        public float Interval;
+
+        [Tooltip("Added to the resolved amount per stack beyond the first of the modifier running this node " +
+                 "(tick or reaction): amount += AmountPerStack * (stacks - 1).")]
+        public float AmountPerStack;
+
         /// <summary>
         ///     Maps the inline leveled-amount fields to a <see cref="LeveledValue" />. When every leveled
         ///     field is default this is <c>LeveledValue.Flat(Amount)</c>, so resolution returns

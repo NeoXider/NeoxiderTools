@@ -68,18 +68,30 @@ namespace Neo.Abilities
         /// <summary>
         ///     Resolves the amount an effect node deals to <paramref name="target" />. Uses the node's named
         ///     special (<see cref="EffectNodeData.AmountKey" />) when set and found on the context, otherwise
-        ///     the node's inline leveled fields. All-default ⇒ <see cref="EffectNodeData.Amount" />.
+        ///     the node's inline leveled fields, plus <see cref="EffectNodeData.AmountPerStack" /> per extra stack of the
+        ///     modifier running the node. All-default ⇒ <see cref="EffectNodeData.Amount" />.
         /// </summary>
         public static float ResolveAmount(EffectNodeData node, EffectContext context, UnitId target)
         {
+            float amount;
             if (!string.IsNullOrEmpty(node.AmountKey) &&
                 context.TryGetSpecial(node.AmountKey, out LeveledValue special))
             {
-                return Resolve(in special, context, target);
+                amount = Resolve(in special, context, target);
+            }
+            else
+            {
+                LeveledValue inline = node.ToLeveledValue();
+                amount = Resolve(in inline, context, target);
             }
 
-            LeveledValue inline = node.ToLeveledValue();
-            return Resolve(in inline, context, target);
+            // WHY: per-stack scaling of tick / reaction amounts (stacking poison); 0 keeps every existing node unchanged.
+            if (node.AmountPerStack != 0f && context.SourceStacks > 1)
+            {
+                amount += node.AmountPerStack * (context.SourceStacks - 1);
+            }
+
+            return amount;
         }
 
         private static int LevelFor(LevelSource source, EffectContext context, UnitId target)

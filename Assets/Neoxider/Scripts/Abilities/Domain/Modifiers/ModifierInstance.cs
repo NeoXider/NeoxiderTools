@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Neo.Abilities
 {
@@ -23,6 +24,22 @@ namespace Neo.Abilities
 
         /// <summary>Event reactions executed so far; salts each reaction's RNG seed.</summary>
         internal uint ReactionRollIndex;
+
+        /// <summary>Per-reaction trigger state (counters, charges, cooldowns, state edges); null when none is needed.</summary>
+        internal ReactionState[] ReactionStates;
+
+        internal const byte ReactiveTriggerFlag = 1;
+        internal const byte StateWatcherTriggerFlag = 2;
+        internal const byte BeforeDealTriggerFlag = 4;
+        internal const byte BeforeTakeTriggerFlag = 8;
+        internal const byte AttackLandedTriggerFlag = 16;
+        internal const byte AttackReceivedTriggerFlag = 32;
+        internal const byte PrioritizedTriggerFlag = 64;
+
+        /// <summary>Reaction kinds of the blueprint captured at creation (engine bookkeeping).</summary>
+        internal byte TriggerFlags;
+
+        internal bool WatchesStates => (TriggerFlags & StateWatcherTriggerFlag) != 0;
 
         internal ModifierInstance(int instanceId, ModifierBlueprint blueprint, UnitId caster, UnitId owner,
             string sourceAbilityId, int abilityLevel = 1)
@@ -67,11 +84,86 @@ namespace Neo.Abilities
             RemainingDuration = InitialDuration;
         }
 
+        /// <summary>Adds time to a finite instance; the initial duration grows with it so NormalizedRemaining stays &lt;= 1.</summary>
+        internal void Prolong(float seconds)
+        {
+            if (IsPermanent || !(seconds > 0f))
+            {
+                return;
+            }
+
+            RemainingDuration += seconds;
+            if (RemainingDuration > InitialDuration)
+            {
+                InitialDuration = RemainingDuration;
+            }
+        }
+
+        /// <summary>
+        ///     Times reaction <paramref name="reactionIndex" /> has fired on this instance (charges consumed). 0 when the
+        ///     reaction keeps no state.
+        /// </summary>
+        public int GetReactionFireCount(int reactionIndex)
+        {
+            return ReactionStates != null && reactionIndex >= 0 && reactionIndex < ReactionStates.Length
+                ? ReactionStates[reactionIndex].Fired
+                : 0;
+        }
+
+        /// <summary>Matching events counted by reaction <paramref name="reactionIndex" /> (EveryNth counter).</summary>
+        public int GetReactionCounter(int reactionIndex)
+        {
+            return ReactionStates != null && reactionIndex >= 0 && reactionIndex < ReactionStates.Length
+                ? ReactionStates[reactionIndex].Counter
+                : 0;
+        }
+
+        /// <summary>Charges left on reaction <paramref name="reactionIndex" />, or -1 when it is unlimited.</summary>
+        public int GetRemainingCharges(int reactionIndex)
+        {
+            List<ModifierEventReaction> reactions = Blueprint.EventReactions;
+            if (reactions == null || reactionIndex < 0 || reactionIndex >= reactions.Count ||
+                reactions[reactionIndex] == null || reactions[reactionIndex].MaxTriggers <= 0)
+            {
+                return -1;
+            }
+
+            int left = reactions[reactionIndex].MaxTriggers - GetReactionFireCount(reactionIndex);
+            return left > 0 ? left : 0;
+        }
+
+        /// <summary>The state slot of a reaction, growing the array when the blueprint gained reactions.</summary>
+        internal ref ReactionState StateFor(int reactionIndex)
+        {
+            if (ReactionStates == null || reactionIndex >= ReactionStates.Length)
+            {
+                int count = Blueprint.EventReactions != null ? Blueprint.EventReactions.Count : 0;
+                ReactionState[] grown = new ReactionState[count > reactionIndex ? count : reactionIndex + 1];
+                if (ReactionStates != null)
+                {
+                    Array.Copy(ReactionStates, grown, ReactionStates.Length);
+                }
+
+                ReactionStates = grown;
+            }
+
+            return ref ReactionStates[reactionIndex];
+        }
+
         /// <summary>Re-captures the ability level (and re-resolves the leveled duration) on re-application.</summary>
         internal void RecaptureLevel(int abilityLevel)
         {
             AbilityLevel = abilityLevel < 1 ? 1 : abilityLevel;
             InitialDuration = Blueprint.ResolveDuration(AbilityLevel);
         }
+    }
+
+    /// <summary>Mutable trigger bookkeeping of one reaction on one modifier instance.</summary>
+    internal struct ReactionState
+    {
+        public int Counter;
+        public int Fired;
+        public float ReadyAt;
+        public bool StateValue;
     }
 }

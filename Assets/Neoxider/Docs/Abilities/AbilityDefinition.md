@@ -31,7 +31,7 @@ All fields live under the nested **Blueprint** foldout. If **Id** is left blank,
 | Effects | **Impact Effects** | `List<EffectNodeData>` | Nodes run on impact — instantly for `Instant`, on hit for `Projectile`. |
 | Presentation | **Cast Cue** / **Impact Cue** | string | Optional presentation-cue ids for VFX/SFX listeners. |
 
-Effect node fields (`OpId`, `Target`, `TeamFilter`, `Radius`, `MaxTargets`, `Amount`, `DamageType`, `ModifierId`, `ResourceId`, `ArchetypeId`, `CustomParam`, `Chance`) plus the optional leveled-value fields (below) are described in the [module README](./README.md#effect-nodes).
+Effect node fields (`OpId`, `Target`, `TeamFilter`, `Radius`, `MaxTargets`, `Amount`, `DamageType`, `ModifierId`, `ResourceId`, `ArchetypeId`, `CustomParam`, `Chance`) plus the optional leveled-value fields (below) are described in the [module README](./README.md#effect-nodes). The payload, cone, zone and stack fields (`AbilityId`, `Angle`, `Duration`, `Interval`, `AmountPerStack`) and the `ConeFromCaster` selector are described in [Triggers, damage hooks, zones and templates](./TriggersAndHooks.md#payload-ops-cone-selector-and-zones).
 
 ## Key API
 

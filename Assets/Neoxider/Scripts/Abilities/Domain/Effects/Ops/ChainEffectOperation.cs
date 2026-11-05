@@ -57,8 +57,8 @@ namespace Neo.Abilities
                     float amount = LeveledValueResolver.ResolveAmount(node, context, current) * multiplier;
                     if (amount > 0f)
                     {
-                        DamageService.ApplyDamage(context.System, context.Caster, current, amount,
-                            node.DamageType, context.AbilityId, context.CastId, context.Random);
+                        context.System.Damage.Apply(context.Caster, current, amount, node.DamageType,
+                            context.AbilityId, context.CastId, context.Random, context.HitFlags);
                     }
 
                     visited.Add(current);

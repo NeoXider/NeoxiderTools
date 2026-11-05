@@ -27,12 +27,23 @@ namespace Neo.Abilities
         /// <summary>Damage type for damage events (see <see cref="AbilityDamageTypes" />).</summary>
         public readonly string DamageType;
 
-        /// <summary>Cast id this event belongs to (0 when outside a cast). Correlates receipts per cast.</summary>
+        /// <summary>
+        ///     Cast id this event belongs to (0 when outside a cast). Correlates receipts per cast. Zone receipts
+        ///     (zone_spawned / zone_expired) carry the zone id here.
+        /// </summary>
         public readonly uint CastId;
 
+        /// <summary>
+        ///     Secondary id: the animation moment of animation_event, the state of state_entered / state_exited, the
+        ///     archetype of zone receipts. Null for most events.
+        /// </summary>
+        public readonly string Tag;
+
         public AbilityEventArgs(string eventId, UnitId target, UnitId source, float amount = 0f,
-            string abilityId = null, string modifierId = null, string damageType = null, uint castId = 0)
+            string abilityId = null, string modifierId = null, string damageType = null, uint castId = 0,
+            string tag = null)
         {
+            Tag = tag;
             EventId = eventId;
             Target = target;
             Source = source;

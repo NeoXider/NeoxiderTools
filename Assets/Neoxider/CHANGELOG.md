@@ -1,6 +1,65 @@
 
 ## [Unreleased]
 
+Proposed version: **12.1.0** (additive; existing float content and APIs behave as before).
+
+### Added
+
+- **Abilities — damage pre-hooks.** Every damage application now runs through a per-system `DamagePipeline`
+  (`AbilitySystem.Damage`): `before_deal_damage` on the attacker, then `before_take_damage` on the victim, with a
+  mutable `DamageContext` (`Multiplier`, `FlatAdd`, `Absorb`, `ReflectFraction` / `ReflectDamageType`, `Cancel()`,
+  convertible `DamageType`) exposed as `AbilitySystem.ActiveDamage`. New ops `modify_damage` (`multiply` / `add` /
+  `absorb` / `cancel`) and `reflect` let modifier reactions use them. Deterministic order (handlers, then reactions
+  by priority, application order and list order) and caps (`EffectContext.MaxDepth` 3, `DamagePipeline.MaxDepth` 8,
+  `AbilitySystem.MaxCastDepth` 4; reflected damage is never reflected again). `DamageFlags` (`Hit`, `Reflected`,
+  `NoHooks`, `NoCrit`, `NoEvasion`, `NoLifesteal`, `NoReflect`) on new `DamageService.ApplyDamage` /
+  `Damage.Apply` overloads; `DamageResult.Cancelled` and `Reflected`.
+- **Abilities — triggers.** `ModifierEventReaction` gains `Trigger` (`Event`, `EveryNth`, `HealthBelow`,
+  `StateEnter`, `StateExit`, `Applied`, `Removed`), `EveryN`, `Threshold`, `StateId`, `TagFilter`,
+  `AbilityFilter`, `HitsOnly`, `MaxTriggers` with `RemoveWhenSpent`, `Cooldown` and `Priority` (defaults keep the
+  classic behaviour). New events `attack_landed` / `attack_received` (direct hits of casts and projectiles, apart
+  from `deal_damage`), `damage_reflected`, `animation_event` (`AbilitySystem.RaiseAnimationEvent`,
+  `AbilityUnitBehaviour.RaiseAnimationEvent`, `AbilityAnimationEventRelay`), `state_entered` / `state_exited`,
+  `zone_spawned` / `zone_expired`; `AbilityEventArgs.Tag`. `ModifierInstance.GetReactionFireCount`,
+  `GetReactionCounter`, `GetRemainingCharges`.
+- **Abilities — payload ops and zones.** `projectile` (a projectile carrying a payload ability's impact effects,
+  hit reported through the world adapter), `area_apply` (modifier and payload on an area or cone), `zone` (auras
+  following the caster and formations at a point: spawn pulse, interval pulses, lifetime, anchor death, visual
+  spawn request with `SpawnRequest.ZoneId` / `Duration`), `cast_ability` (cast a granted ability from an effect).
+  Selector `ConeFromCaster` (`EffectNodeData.Angle`), `EffectNodeData.AbilityId`, `Duration`, `Interval`,
+  `AmountPerStack`. Zone API: `SpawnZone(AbilityZoneSpec)`, `RemoveZone`, `RemoveZonesOf`, `GetZones`,
+  `TryGetZone`, `ZoneCount`; scene `AbilityZoneView`.
+- **Abilities — stack policies** `Unique`, `Prolong`, `IndependentCapped`; `ModifierEngine.TryGetActive`,
+  `CountActive`, `HasReactions`, `ReactsTo`.
+- **Abilities — replaceable rules.** `AbilitySystem.Rules` (`AbilityRules`) holds the damage formula, mitigation,
+  critical hit, evasion, stacking, property aggregation (`LayeredPropertyAggregator`,
+  `AdditivePercentPropertyAggregator`), effect targeting, cooldown, cost, time source (`VariableStepTimeSource`,
+  `FixedStepTimeSource`, `AbilitySystem.Advance` / `StepTicks` / `TickCount` / `ElapsedTime`), numeric backend
+  (`FloatNumeric`, `FixedPointNumeric` Q-format) and random source (`IRandomSourceFactory`,
+  `IReseedableRandomSource`) as strategies with the classic defaults. `AbilitySystemBehaviour` **Time Mode**
+  (Variable / Fixed Ticks).
+- **Abilities — authoring.** `AbilityTemplates` (auto-cast technique, attack enhancer, auto-defense shield, mark
+  for the next N hits, stacking poison, thorns, aura, formation zone) with `AbilityTemplateBundle.SetUp`; Ability
+  Designer **+ Template** writes them as assets; `AbilityContentValidator` (trigger, hook, payload, zone, cone and
+  cast-cycle checks) feeds the Designer status bar.
+- **Abilities — runtime trace.** `AbilitySystem.Trace` (`AbilityTrace`): an allocation-free ring buffer of casts,
+  effects, events, reactions with their trigger, skipped triggers, ticks, zones and cancellations linked to their
+  cause; `Explain(sequence)` answers "why did this fire". `AbilitySystemBehaviour` **Trace Enabled** /
+  **Trace Capacity**.
+- **Abilities — tests and benchmarks.** EditMode suites for hooks, triggers, payload ops, zones, stack policies,
+  rules, aggregation layering, templates, validator and trace; zero-allocation guards for hooked hits, triggers,
+  zone pulses, fixed-step time, Q8 numerics and an enabled trace; `AbilityTickCostBenchmarks` (N units ×
+  M modifiers).
+
+### Changed
+
+- **Abilities:** damage, execute and chain ops pass `DamageFlags.Hit` for cast and projectile hits; healing,
+  lifesteal, shield absorption and resource changes go through `AbilityRules.Numeric` (identity by default).
+  `DamageService` keeps no static state (the shield scratch moved into each system's pipeline); NaN damage
+  amounts are now rejected as negated instead of reaching the health pool.
+- **Abilities:** reactions of one unit to one event are ordered by `Priority` when any is set; without
+  priorities the order is unchanged.
+
 ## [12.0.0] - 2026-11-04
 
 A library-wide quality pass: bug fixes and behaviour corrections in every module, allocation-free hot paths, typed

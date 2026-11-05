@@ -36,8 +36,8 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                DamageService.ApplyDamage(context.System, context.Caster, targets[i], amount,
-                    node.DamageType, context.AbilityId, context.CastId, context.Random);
+                context.System.Damage.Apply(context.Caster, targets[i], amount, node.DamageType, context.AbilityId,
+                    context.CastId, context.Random, context.HitFlags);
             }
         }
     }

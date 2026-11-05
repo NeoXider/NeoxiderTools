@@ -28,7 +28,7 @@ namespace Neo.Abilities
                 }
 
                 float mul = Mathf.Max(0f, target.GetProperty(AbilityProperties.HealingReceivedMul, 1f));
-                float amount = resolved * mul;
+                float amount = context.System.Rules.Numeric.Quantize(resolved * mul);
                 if (amount <= 0f)
                 {
                     continue;

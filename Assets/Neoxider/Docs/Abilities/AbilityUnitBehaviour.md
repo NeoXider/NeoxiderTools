@@ -50,6 +50,7 @@ Death decisions still use live state; this does not make callbacks transactional
 | `bool IsAlive` | Alive flag. |
 | `void ApplyDamage(float amount)` | Convenience entry that applies `pure` damage from no source, through the full pipeline. |
 | `void ApplyHeal(float amount)` | Honors `healing_received_mul`, never revives, and emits `heal_received` for effective healing. |
+| `void RaiseAnimationEvent(string moment)` | Publishes `animation_event` with `Tag = moment` on this unit (call it from an Animation Event or Timeline signal). Reactions with `EventId = animation_event` and a matching **Tag Filter** fire. An Animator on a child object can forward through **AbilityAnimationEventRelay** (`Raise(moment)`). |
 | `void SetTemplate(UnitTemplate)` / `SetTeamOverride(int)` | Configure the next registration; set them before enabling a pooled unit. |
 | `void SetLevel(int)` | Set the registered domain unit's level (minimum 1). A bound level source can update it again. |
 | `void SetLevelSource(LevelComponent)` | Configure the source used on the next enable. The currently subscribed source stays active until disable and is correctly detached then, even after this setting changes. |

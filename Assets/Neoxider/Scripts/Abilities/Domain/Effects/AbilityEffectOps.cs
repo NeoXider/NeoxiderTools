@@ -21,5 +21,15 @@ namespace Neo.Abilities
 
         public const string Execute = "execute";
         public const string Chain = "chain";
+
+        // WHY: damage hooks; they adjust the in-flight DamageContext of before_deal_damage / before_take_damage.
+        public const string ModifyDamage = "modify_damage";
+        public const string Reflect = "reflect";
+
+        // WHY: payload family; each runs the impact effects of the ability named by EffectNodeData.AbilityId.
+        public const string Projectile = "projectile";
+        public const string AreaApply = "area_apply";
+        public const string Zone = "zone";
+        public const string CastAbility = "cast_ability";
     }
 }

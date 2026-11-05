@@ -15,10 +15,18 @@
 |-------|------|-------------|
 | **Libraries** | `List<AbilityLibrary>` | Ability/modifier catalogs registered on Awake. |
 | **Archetypes** | `List<SpawnArchetypeEntry>` | Archetype id -> prefab bindings for projectiles, zones, and summons. |
-| **Auto Tick** | bool | Advance the system every frame with `Time.deltaTime`. Disable for manual or server-driven ticking. |
+| **Auto Tick** | bool | Advance the system every frame with `Time.deltaTime` (through `AbilitySystem.Advance`). Disable for manual or server-driven ticking. |
+| **Time Mode** | `AbilityTimeMode` | `Variable` (default): one domain step of `Time.deltaTime` per frame. `Fixed Ticks`: whole ticks of 1 / **Ticks Per Second** (`FixedStepTimeSource`), the same step every time, for replays, lockstep and deterministic tests. |
+| **Ticks Per Second** | int | Tick rate of `Fixed Ticks`. |
+| **Trace Enabled** (Diagnostics) | bool | Records `AbilitySystem.Trace` from the start: why reactions and effects fired ([trace](./TriggersAndHooks.md#trace-why-did-this-fire)). |
+| **Trace Capacity** (Diagnostics) | int | Entries kept by the trace ring buffer (default 256). |
 | **Spatial Cell Size** (Performance) | float | `0` (default) = every radius query scans all registered units, always exact. `> 0` = a per-frame spatial grid of unit positions with this cell size (world units) serves radius queries. Use it with hundreds of units/projectiles; about the typical hit/area radius (2-5) works well. |
 
-**SpawnArchetypeEntry** — `{ Id, Prefab }`. The id must match an ability's `ProjectileArchetypeId` or a `spawn` op's `ArchetypeId`.
+**SpawnArchetypeEntry** — `{ Id, Prefab }`. The id must match an ability's `ProjectileArchetypeId`, a `spawn` op's `ArchetypeId` or a `zone` / `projectile` op's `ArchetypeId`.
+
+### Zone visuals
+
+Domain zones (`zone` op, `AbilitySystem.SpawnZone`) with an `ArchetypeId` ask the hub to spawn that prefab with `SpawnRequest.ZoneId`, `Duration`, `Magnitude` = radius and `TargetUnit` = the followed anchor. Put an **AbilityZoneView** (`Neoxider/Abilities/Ability Zone View`) on the prefab: it scales X/Z to the radius (**Mesh Radius** = the mesh radius at scale 1, 0.5 for Unity's cylinder), follows the anchor, applies **Offset**, and returns to the pool on `zone_expired` or when its lifetime ends. Gameplay stays in the domain zone; the view is presentation only.
 
 ## Key API
 

@@ -18,8 +18,8 @@ All fields live under the nested **Blueprint** foldout. A blank **Id** is filled
 | **Display Name** | string | Name for UI. |
 | **Duration** | float | Seconds until expiry. `0` or negative = permanent until removed. |
 | **Duration By Level** | `float[]` | Optional durations sampled by the ability level captured at application. Empty = use Duration. |
-| **Stack Policy** | `ModifierStackPolicy` | Re-application behavior: `Independent`, `Refresh`, `Stack`. See below. |
-| **Max Stacks** | int | Cap for the `Stack` policy. Ignored otherwise. |
+| **Stack Policy** | `ModifierStackPolicy` | Re-application behavior: `Independent`, `Refresh`, `Stack`, `Unique`, `Prolong`, `IndependentCapped`. See below. |
+| **Max Stacks** | int | Cap for the `Stack` policy and the instance cap of `IndependentCapped`. Ignored otherwise. |
 | **Properties** | `List<PropertyContribution>` | Property contributions while active (per-stack scaling supported). |
 | **States** | `List<string>` | Boolean states granted while active (any-true-wins), e.g. `stunned`, `frozen`. |
 | **Tick Interval** | float | Seconds between effect ticks. `0` or negative = no ticking. |
@@ -36,7 +36,12 @@ All fields live under the nested **Blueprint** foldout. A blank **Id** is filled
 |--------|----------|
 | `Independent` | Every application creates a separate instance with its own duration. |
 | `Refresh` (default) | One instance per unit; re-applying refreshes its duration. |
-| `Stack` | One instance per unit; re-applying adds a stack (up to **Max Stacks**) and refreshes duration. Per-stack property scaling uses `PropertyContribution.PerStackValue`. |
+| `Stack` | One instance per unit; re-applying adds a stack (up to **Max Stacks**) and refreshes duration. Per-stack property scaling uses `PropertyContribution.PerStackValue`; tick and reaction amounts scale with `EffectNodeData.AmountPerStack`. |
+| `Unique` | One instance per unit; re-applying while it is active does nothing (no refresh, no receipt). |
+| `Prolong` | One instance per unit; re-applying adds the full (leveled) duration to the remaining time. |
+| `IndependentCapped` | Independent instances up to **Max Stacks** at once; one more replaces the oldest. |
+
+The decision is made by `AbilityRules.Stacking`, so a game can replace it ([Rules](./Rules.md#modifier-stacking)).
 
 ### Property contributions
 
@@ -53,6 +58,8 @@ Well-known property ids are in `AbilityProperties` (`move_speed`, `attack_damage
 ### Event reactions
 
 `{ EventId, Effects, TargetEventSource }`. When `EventId` (e.g. `take_damage`, from `AbilityEvents`) fires on the owning unit, `Effects` run through the normal pipeline. Reaction caster = the modifier's caster; target = the modifier owner, or the **event source** (e.g. the attacker) when `Target Event Source` is set. Nested reactions are depth-capped at 3 to prevent loops.
+
+Optional trigger fields turn a reaction into a trigger: **Trigger** (`Event`, `EveryNth`, `HealthBelow`, `StateEnter`, `StateExit`, `Applied`, `Removed`), **Every N**, **Threshold**, **State Id**, **Tag Filter**, **Ability Filter**, **Hits Only**, **Max Triggers** with **Remove When Spent**, **Cooldown** and **Priority**. Reactions on `before_deal_damage` / `before_take_damage` can adjust the hit in flight with `modify_damage` and `reflect`. Defaults keep the classic behaviour; see [Triggers, damage hooks, zones and templates](./TriggersAndHooks.md#triggers).
 
 Shield events are synchronous. A `shield_absorbed` callback may stack or dispel the current shield; the break decision then uses its live activity and capacity. An exhausted instance emits `shield_broken` at most once, stays active while its own declarative break reaction runs, and is removed afterwards, including when a break handler throws. Reapplying the same `Refresh` / `Stack` id during the break creates a new instance that survives removal of the exhausted one. The new shield participates in subsequent hits; the current hit keeps its starting shield snapshot.
 

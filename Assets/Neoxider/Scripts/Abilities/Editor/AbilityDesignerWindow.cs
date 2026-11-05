@@ -220,8 +220,54 @@ namespace Neo.Abilities.Editor
                 text = "+ Modifier"
             };
             newModifier.AddToClassList("nad-create-btn");
-            newModifier.AddToClassList("nad-create-btn--last");
             createRow.Add(newModifier);
+
+            Button newFromTemplate = new Button(ShowTemplateMenu)
+            {
+                text = "+ Template",
+                tooltip = "Create ready assets: auto-cast technique, attack enhancer, auto-defense shield, mark, " +
+                          "stacking poison, thorns, aura, formation zone."
+            };
+            newFromTemplate.AddToClassList("nad-create-btn");
+            newFromTemplate.AddToClassList("nad-create-btn--last");
+            createRow.Add(newFromTemplate);
+        }
+
+        private void ShowTemplateMenu()
+        {
+            GenericMenu menu = new GenericMenu();
+            IReadOnlyList<AbilityTemplateInfo> catalog = AbilityTemplates.Catalog;
+            for (int i = 0; i < catalog.Count; i++)
+            {
+                AbilityTemplateInfo info = catalog[i];
+                menu.AddItem(new GUIContent(info.DisplayName), false, () => CreateFromTemplate(info));
+            }
+
+            menu.ShowAsContext();
+        }
+
+        private void CreateFromTemplate(AbilityTemplateInfo info)
+        {
+            string folder = EditorUtility.SaveFolderPanel("Folder for the '" + info.DisplayName + "' assets",
+                "Assets", string.Empty);
+            if (string.IsNullOrEmpty(folder))
+            {
+                return;
+            }
+
+            string projectFolder = AbilityTemplateAssets.ToProjectPath(folder);
+            if (projectFolder == null)
+            {
+                EditorUtility.DisplayDialog("Ability Designer", "Choose a folder inside this project's Assets.", "OK");
+                return;
+            }
+
+            List<ScriptableObject> created = AbilityTemplateAssets.CreateAssets(info.Create(), projectFolder);
+            RefreshLibrary();
+            if (created.Count > 0)
+            {
+                SelectAsset(created[0]);
+            }
         }
 
         private void CreateAsset<T>(string baseName) where T : ScriptableObject
@@ -583,21 +629,30 @@ namespace Neo.Abilities.Editor
         private void ShowAddNodeMenu(string listPath)
         {
             GenericMenu menu = new GenericMenu();
-            string[] ops =
-            {
-                AbilityEffectOps.Damage, AbilityEffectOps.Heal, AbilityEffectOps.ApplyModifier,
-                AbilityEffectOps.RemoveModifier, AbilityEffectOps.Dispel,
-                AbilityEffectOps.ResourceChange, AbilityEffectOps.Spawn,
-                AbilityEffectOps.Knockback, AbilityEffectOps.Pull, AbilityEffectOps.Teleport,
-                AbilityEffectOps.Execute, AbilityEffectOps.Chain
-            };
-            foreach (string op in ops)
+            foreach (string op in AbilityDesignerUI.BuiltinOps)
             {
                 string captured = op;
-                menu.AddItem(new GUIContent(captured), false, () => AddNode(listPath, captured));
+                menu.AddItem(new GUIContent(AddNodeMenuPath(captured)), false, () => AddNode(listPath, captured));
             }
 
             menu.ShowAsContext();
+        }
+
+        private static string AddNodeMenuPath(string opId)
+        {
+            switch (opId)
+            {
+                case AbilityEffectOps.ModifyDamage:
+                case AbilityEffectOps.Reflect:
+                    return "Damage hooks/" + opId;
+                case AbilityEffectOps.Projectile:
+                case AbilityEffectOps.AreaApply:
+                case AbilityEffectOps.Zone:
+                case AbilityEffectOps.CastAbility:
+                    return "Payload/" + opId;
+                default:
+                    return opId;
+            }
         }
 
         private void AddNode(string listPath, string opId)

@@ -12,12 +12,12 @@
 
 | Pane | Contents |
 |------|----------|
-| **Left — library** | Every `AbilityDefinition` and `ModifierDefinition` in the project, searchable by asset name or id, with buff/debuff/ability chips and a `!` marker on assets that have validation issues. `+ Ability` / `+ Modifier` create new assets. |
+| **Left — library** | Every `AbilityDefinition` and `ModifierDefinition` in the project, searchable by asset name or id, with buff/debuff/ability chips and a `!` marker on assets that have validation issues. `+ Ability` / `+ Modifier` create new assets; `+ Template` writes a ready bundle (auto-cast technique, attack enhancer, auto-defense shield, mark, stacking poison, thorns, aura, formation zone) as assets plus an `AbilityLibrary` into a folder you pick. |
 | **Center — board** | For an ability: the **Cast** and **Impact** phase columns as effect-node cards (colored by op kind) with add / reorder / delete and an inline **Edit** foldout. For a modifier: a live summary board — property contributions, states, tick effects, event reactions. |
 | **Right — inspector** | The full default inspector of the selected asset. |
 | **Bottom — status bar** | Live cross-asset validation; click an issue row to jump to the offending asset. |
 
-The **+ Add effect** menu lists every built-in op (`damage`, `heal`, `apply_modifier`, `remove_modifier`, `dispel`, `resource_change`, `spawn`, `knockback`, `pull`, `teleport`, `execute`, `chain`); custom op ids are typed into the node's `OpId` field.
+The **+ Add effect** menu lists every built-in op (`damage`, `heal`, `apply_modifier`, `remove_modifier`, `dispel`, `resource_change`, `spawn`, `knockback`, `pull`, `teleport`, `execute`, `chain`, and under **Damage hooks** `modify_damage` / `reflect`, under **Payload** `projectile` / `area_apply` / `zone` / `cast_ability`); custom op ids are typed into the node's `OpId` field. See [Triggers, damage hooks, zones and templates](./TriggersAndHooks.md).
 
 ## Validation
 
@@ -28,7 +28,12 @@ The status bar re-scans on every edit and undo/redo. Checks:
 - `apply_modifier` / `remove_modifier` nodes with a blank or dangling `ModifierId`;
 - `Chance` outside `[0..1]`;
 - area selectors and `chain` nodes without a positive radius at **every authored level**: a nonempty `RadiusByLevel` overrides the flat `Radius`, so every array entry must be positive; with an empty array the flat radius must be positive;
-- modifiers with a tick interval but no tick effects; `Stack` policy with `MaxStacks < 1`.
+- modifiers with a tick interval but no tick effects; `Stack` policy with `MaxStacks < 1`;
+- the findings of the runtime `AbilityContentValidator`: trigger settings (`HealthBelow` threshold and event,
+  state triggers without a state, charges, cooldowns, `HitsOnly`, tag filters), `modify_damage` / `reflect` outside
+  before hooks and unknown modes, payload / cast abilities that do not exist, zones without a radius or payload,
+  cones without an angle, take_damage reactions that damage their own owner and `cast_ability` cycles. Unknown op
+  ids are not flagged here because games register custom ops at runtime.
 
 For example, `Radius = 6` and `RadiusByLevel = [0, 3]` warns because level one uses zero; the flat six
 does not rescue an overriding level. `Radius = 0` with `RadiusByLevel = [2, 3]` passes this radius check.

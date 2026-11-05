@@ -29,9 +29,18 @@ namespace Neo.Abilities
         /// <summary>True when this application rolled a critical hit (crit_chance / crit_multiplier).</summary>
         public readonly bool Crit;
 
+        /// <summary>True when a before_deal_damage / before_take_damage hook cancelled the application.</summary>
+        public readonly bool Cancelled;
+
+        /// <summary>Damage the victim's reflect hooks sent back to the attacker (before the attacker's mitigation).</summary>
+        public readonly float Reflected;
+
         public DamageResult(float rawAmount, float mitigatedAmount, float absorbed, float healthDamage,
-            bool killed, bool negated, bool evaded = false, bool crit = false)
+            bool killed, bool negated, bool evaded = false, bool crit = false, bool cancelled = false,
+            float reflected = 0f)
         {
+            Cancelled = cancelled;
+            Reflected = reflected;
             RawAmount = rawAmount;
             MitigatedAmount = mitigatedAmount;
             Absorbed = absorbed;
@@ -45,6 +54,12 @@ namespace Neo.Abilities
         public static DamageResult None(float raw)
         {
             return new DamageResult(raw, 0f, 0f, 0f, false, true);
+        }
+
+        /// <summary>A hit cancelled by a before hook: no damage and no receipts.</summary>
+        public static DamageResult Cancel(float raw)
+        {
+            return new DamageResult(raw, 0f, 0f, 0f, false, true, false, false, true);
         }
 
         /// <summary>An evaded physical hit: no damage, flagged so callers can present a dodge.</summary>

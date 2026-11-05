@@ -184,6 +184,16 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>
+        ///     Raises an animation moment of this unit (event animation_event, Tag = <paramref name="moment" />) for
+        ///     modifier reactions with a matching TagFilter. Call it from an Animation Event, a Timeline signal or
+        ///     <see cref="AbilityAnimationEventRelay" />.
+        /// </summary>
+        public void RaiseAnimationEvent(string moment)
+        {
+            Unit?.System.RaiseAnimationEvent(Unit.Id, moment);
+        }
+
         [Button(PlayModeOnly = true)]
         public void DebugDamage25()
         {

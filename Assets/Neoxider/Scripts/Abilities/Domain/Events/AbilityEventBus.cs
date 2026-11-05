@@ -27,7 +27,7 @@ namespace Neo.Abilities
         private readonly List<List<ObserverRegistration>> _observerSnapshots =
             new List<List<ObserverRegistration>>(4);
 
-        private readonly Action<AbilityEventArgs> _internalHandler;
+        private readonly IAbilityEventInterceptor _interceptor;
         private ulong _nextObserverOrder;
         private int _publishDepth;
 
@@ -44,9 +44,20 @@ namespace Neo.Abilities
         {
         }
 
-        internal AbilityEventBus(Action<AbilityEventArgs> internalHandler)
+        internal AbilityEventBus(IAbilityEventInterceptor interceptor)
         {
-            _internalHandler = internalHandler;
+            _interceptor = interceptor;
+        }
+
+        /// <summary>
+        ///     True when a handler is subscribed to exactly <paramref name="eventId" /> (global and Target observers do
+        ///     not count). Optional receipts (damage hooks, attack events) are only produced for such handlers, a
+        ///     reacting modifier or an enabled trace.
+        /// </summary>
+        public bool HasHandlers(string eventId)
+        {
+            return _handlers.Count > 0 && !string.IsNullOrEmpty(eventId) &&
+                   _handlers.TryGetValue(eventId, out List<Action<AbilityEventArgs>> list) && list.Count > 0;
         }
 
         public void Subscribe(string eventId, Action<AbilityEventArgs> handler)
@@ -140,6 +151,7 @@ namespace Neo.Abilities
             int depth = _publishDepth++;
             List<Action<AbilityEventArgs>> handlerSnapshot = RentSnapshot(_handlerSnapshots, depth);
             List<ObserverRegistration> observerSnapshot = RentSnapshot(_observerSnapshots, depth);
+            long cookie = _interceptor != null ? _interceptor.BeginPublish(in args) : 0L;
             try
             {
                 if (_handlers.TryGetValue(args.EventId, out List<Action<AbilityEventArgs>> list) && list.Count > 0)
@@ -159,7 +171,7 @@ namespace Neo.Abilities
                 // WHY: specific callbacks affect this batch; internal reactions cannot alter the captured batch.
                 // Only global and matching-Target registrations are copied, in their common registration order.
                 CaptureObservers(args.Target, observerSnapshot);
-                _internalHandler?.Invoke(args);
+                _interceptor?.React(in args);
 
                 for (int i = 0; i < observerSnapshot.Count; i++)
                 {
@@ -173,6 +185,7 @@ namespace Neo.Abilities
                 handlerSnapshot.Clear();
                 observerSnapshot.Clear();
                 _publishDepth--;
+                _interceptor?.EndPublish(cookie);
             }
         }
 
@@ -246,5 +259,15 @@ namespace Neo.Abilities
                 Order = order;
             }
         }
+    }
+
+    /// <summary>System-side hooks of a bus: trace bracketing and modifier reactions of every publication.</summary>
+    internal interface IAbilityEventInterceptor
+    {
+        long BeginPublish(in AbilityEventArgs args);
+
+        void React(in AbilityEventArgs args);
+
+        void EndPublish(long cookie);
     }
 }

@@ -27,9 +27,27 @@ namespace Neo.Abilities
         /// <summary>Cast id for projectile spawns — the host reports hits back with it.</summary>
         public readonly uint CastId;
 
+        /// <summary>
+        ///     Zone id for zone visuals (0 otherwise). The zone ends with a zone_expired receipt carrying this id in
+        ///     <see cref="AbilityEventArgs.CastId" />; a following zone sets <see cref="TargetUnit" /> to its anchor and
+        ///     <see cref="Magnitude" /> to its radius.
+        /// </summary>
+        public readonly int ZoneId;
+
+        /// <summary>Lifetime in seconds the host should give the spawned entity (0 = until told otherwise).</summary>
+        public readonly float Duration;
+
         public SpawnRequest(string archetypeId, UnitId owner, Vector3 position, Vector3 direction,
             UnitId targetUnit, string abilityId, float magnitude, uint castId = 0)
+            : this(archetypeId, owner, position, direction, targetUnit, abilityId, magnitude, castId, 0, 0f)
         {
+        }
+
+        public SpawnRequest(string archetypeId, UnitId owner, Vector3 position, Vector3 direction,
+            UnitId targetUnit, string abilityId, float magnitude, uint castId, int zoneId, float duration)
+        {
+            ZoneId = zoneId;
+            Duration = duration;
             ArchetypeId = archetypeId;
             Owner = owner;
             Position = position;

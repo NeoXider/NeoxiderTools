@@ -15,6 +15,12 @@ namespace Neo.Abilities
         AreaAroundTarget = 2,
 
         /// <summary>Units in Radius around the caster, filtered by TeamFilter.</summary>
-        AreaAroundCaster = 3
+        AreaAroundCaster = 3,
+
+        /// <summary>
+        ///     Units in a cone of Angle degrees and Radius length from the caster, aimed at the target point (or the first
+        ///     primary target), filtered by TeamFilter.
+        /// </summary>
+        ConeFromCaster = 4
     }
 }

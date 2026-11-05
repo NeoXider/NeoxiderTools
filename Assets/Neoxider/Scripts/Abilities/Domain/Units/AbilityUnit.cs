@@ -23,6 +23,7 @@ namespace Neo.Abilities
         private readonly List<ResolvedContribution> _contributionScratch = new List<ResolvedContribution>(8);
 
         private int _baseVersion;
+        private int _rulesVersionSeen;
         private float _appliedMaxHealthBonus;
         private float _appliedMaxManaBonus;
 
@@ -86,8 +87,9 @@ namespace Neo.Abilities
         }
 
         /// <summary>
-        ///     Final property value: (base + sum Add) * product Mul, raised to Max floors.
-        ///     Cached until modifiers or base values change.
+        ///     Final property value through <see cref="AbilityRules.Aggregator" /> (default: (base + sum Add) * product
+        ///     Mul, raised to Max floors), rounded by <see cref="AbilityRules.Numeric" />. Cached until modifiers, base
+        ///     values or the rules change.
         /// </summary>
         public float GetProperty(string propertyId, float defaultBase = 0f)
         {
@@ -97,6 +99,15 @@ namespace Neo.Abilities
             }
 
             int modVersion = System.Modifiers.VersionOf(Id);
+            AbilityRules rules = System.Rules;
+            if (rules.Version != _rulesVersionSeen)
+            {
+                // WHY: a rule swap invalidates through the base version, so the cache entry keeps four fields
+                // (the JIT promotes structs of at most four fields; a fifth made every cached read slower).
+                _rulesVersionSeen = rules.Version;
+                _baseVersion++;
+            }
+
             if (_propertyCache.TryGetValue(propertyId, out CachedProperty cached) &&
                 cached.ModifierVersion == modVersion && cached.BaseVersion == _baseVersion &&
                 cached.DefaultBase.Equals(defaultBase))
@@ -107,7 +118,7 @@ namespace Neo.Abilities
             float baseValue = GetBaseProperty(propertyId, defaultBase);
             _contributionScratch.Clear();
             System.Modifiers.CollectContributions(Id, propertyId, _contributionScratch);
-            float value = PropertyAggregator.Compute(baseValue, _contributionScratch);
+            float value = rules.Numeric.Quantize(rules.Aggregator.Compute(propertyId, baseValue, _contributionScratch));
             _propertyCache[propertyId] = new CachedProperty(modVersion, _baseVersion, defaultBase, value);
             return value;
         }
@@ -157,13 +168,10 @@ namespace Neo.Abilities
                 return;
             }
 
-            if (enabled)
+            bool changed = enabled ? _permanentStates.Add(stateId) : _permanentStates.Remove(stateId);
+            if (changed)
             {
-                _permanentStates.Add(stateId);
-            }
-            else
-            {
-                _permanentStates.Remove(stateId);
+                System.OnPermanentStateChanged(Id);
             }
         }
 

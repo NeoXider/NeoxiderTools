@@ -22,8 +22,13 @@ namespace Neo.Abilities.Editor
             AbilityEffectOps.Damage, AbilityEffectOps.Heal, AbilityEffectOps.ApplyModifier,
             AbilityEffectOps.RemoveModifier, AbilityEffectOps.Dispel, AbilityEffectOps.ResourceChange,
             AbilityEffectOps.Spawn, AbilityEffectOps.Knockback, AbilityEffectOps.Pull,
-            AbilityEffectOps.Teleport, AbilityEffectOps.Execute, AbilityEffectOps.Chain
+            AbilityEffectOps.Teleport, AbilityEffectOps.Execute, AbilityEffectOps.Chain,
+            AbilityEffectOps.ModifyDamage, AbilityEffectOps.Reflect, AbilityEffectOps.Projectile,
+            AbilityEffectOps.AreaApply, AbilityEffectOps.Zone, AbilityEffectOps.CastAbility
         };
+
+        /// <summary>Every built-in op id, in menu order (the Add node menu groups them).</summary>
+        internal static IReadOnlyList<string> BuiltinOps => BuiltinOpIds;
 
         private static StyleSheet _sheet;
 
@@ -136,8 +141,14 @@ namespace Neo.Abilities.Editor
                 case AbilityEffectOps.Pull:
                 case AbilityEffectOps.Teleport: return "nad-card--utility";
                 case AbilityEffectOps.Execute:
-                case AbilityEffectOps.Chain: return "nad-card--damage";
-                case AbilityEffectOps.Spawn: return "nad-card--spawn";
+                case AbilityEffectOps.Chain:
+                case AbilityEffectOps.ModifyDamage:
+                case AbilityEffectOps.Reflect: return "nad-card--damage";
+                case AbilityEffectOps.Spawn:
+                case AbilityEffectOps.Projectile:
+                case AbilityEffectOps.Zone: return "nad-card--spawn";
+                case AbilityEffectOps.AreaApply: return "nad-card--modifier";
+                case AbilityEffectOps.CastAbility: return "nad-card--utility";
                 default: return "nad-card--custom";
             }
         }
@@ -195,6 +206,26 @@ namespace Neo.Abilities.Editor
                     core = string.Format("chain {0:0.##} dmg × {1} hits", node.Amount,
                         node.MaxTargets > 0 ? node.MaxTargets : 4);
                     break;
+                case AbilityEffectOps.ModifyDamage:
+                    core = ModifyDamageSummary(node);
+                    break;
+                case AbilityEffectOps.Reflect:
+                    core = string.Format("reflect {0:0.##}% as {1}", node.Amount * 100f,
+                        string.IsNullOrEmpty(node.DamageType) ? "pure" : node.DamageType);
+                    break;
+                case AbilityEffectOps.Projectile:
+                    core = string.Format("projectile of '{0}'", OrUnknown(node.AbilityId));
+                    break;
+                case AbilityEffectOps.AreaApply:
+                    core = string.Format("area apply {0}", PayloadSummary(node));
+                    break;
+                case AbilityEffectOps.Zone:
+                    core = string.Format("zone r{0:0.##} {1}s every {2}s {3}", node.Radius, node.Duration,
+                        node.Interval, PayloadSummary(node));
+                    break;
+                case AbilityEffectOps.CastAbility:
+                    core = string.Format("cast '{0}'", OrUnknown(node.AbilityId));
+                    break;
                 default:
                     core = string.IsNullOrEmpty(node.CustomParam) ? "custom op" : node.CustomParam;
                     break;
@@ -214,6 +245,10 @@ namespace Neo.Abilities.Editor
                     target = string.Format("→ r{0:0.##} area at caster · {1}", node.Radius,
                         node.TeamFilter.ToString().ToLowerInvariant());
                     break;
+                case EffectTargetSelector.ConeFromCaster:
+                    target = string.Format("→ {0:0.##}° cone r{1:0.##} · {2}", node.Angle, node.Radius,
+                        node.TeamFilter.ToString().ToLowerInvariant());
+                    break;
                 default:
                     target = "→ target";
                     break;
@@ -224,6 +259,39 @@ namespace Neo.Abilities.Editor
                 : string.Empty;
 
             return core + "  " + target + chance;
+        }
+
+        private static string ModifyDamageSummary(EffectNodeData node)
+        {
+            string mode = string.IsNullOrEmpty(node.CustomParam) ? "multiply" : node.CustomParam.ToLowerInvariant();
+            switch (mode)
+            {
+                case "add":
+                    return string.Format("damage +{0:0.##}", node.Amount);
+                case "absorb":
+                    return string.Format("absorb {0:0.##}", node.Amount);
+                case "cancel":
+                    return "cancel damage";
+                default:
+                    return string.Format("damage ×{0:0.##}", node.Amount);
+            }
+        }
+
+        private static string PayloadSummary(EffectNodeData node)
+        {
+            bool hasModifier = !string.IsNullOrEmpty(node.ModifierId);
+            bool hasPayload = !string.IsNullOrEmpty(node.AbilityId);
+            if (hasModifier && hasPayload)
+            {
+                return string.Format("'{0}' + '{1}'", node.ModifierId, node.AbilityId);
+            }
+
+            return hasModifier ? "'" + node.ModifierId + "'" : hasPayload ? "'" + node.AbilityId + "'" : "'?'";
+        }
+
+        private static string OrUnknown(string id)
+        {
+            return string.IsNullOrEmpty(id) ? "?" : id;
         }
 
         /// <summary>
@@ -558,7 +626,60 @@ namespace Neo.Abilities.Editor
                 }
             }
 
+            AddRuntimeIssues(abilities, modifiers, issues);
             return issues;
+        }
+
+        /// <summary>
+        ///     Appends the findings of the runtime <see cref="AbilityContentValidator" /> (triggers, payload references,
+        ///     damage hooks, zones, cones, cast cycles) to the asset issues. Duplicate-id and dangling-modifier checks
+        ///     stay with the asset scan above.
+        /// </summary>
+        private static void AddRuntimeIssues(IReadOnlyList<AbilityDefinition> abilities,
+            IReadOnlyList<ModifierDefinition> modifiers, List<AbilityIssue> issues)
+        {
+            List<AbilityBlueprint> abilityBlueprints = new List<AbilityBlueprint>();
+            Dictionary<string, ScriptableObject> owners = new Dictionary<string, ScriptableObject>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < abilities.Count; i++)
+            {
+                if (abilities[i] != null && abilities[i].Blueprint != null)
+                {
+                    abilityBlueprints.Add(abilities[i].Blueprint);
+                    if (!string.IsNullOrEmpty(abilities[i].Id) && !owners.ContainsKey("a:" + abilities[i].Id))
+                    {
+                        owners.Add("a:" + abilities[i].Id, abilities[i]);
+                    }
+                }
+            }
+
+            List<ModifierBlueprint> modifierBlueprints = new List<ModifierBlueprint>();
+            for (int i = 0; i < modifiers.Count; i++)
+            {
+                if (modifiers[i] != null && modifiers[i].Blueprint != null)
+                {
+                    modifierBlueprints.Add(modifiers[i].Blueprint);
+                    if (!string.IsNullOrEmpty(modifiers[i].Id) && !owners.ContainsKey("m:" + modifiers[i].Id))
+                    {
+                        owners.Add("m:" + modifiers[i].Id, modifiers[i]);
+                    }
+                }
+            }
+
+            // WHY: no op registry here; games register custom ops at runtime, so unknown ids are not flagged.
+            List<AbilityContentIssue> runtime = new List<AbilityContentIssue>();
+            AbilityContentValidator.Validate(abilityBlueprints, modifierBlueprints, null, runtime);
+            for (int i = 0; i < runtime.Count; i++)
+            {
+                AbilityContentIssue issue = runtime[i];
+                if (issue.Message.Contains("does not match any modifier"))
+                {
+                    continue;
+                }
+
+                string key = (issue.IsModifier ? "m:" : "a:") + issue.OwnerId;
+                owners.TryGetValue(key, out ScriptableObject owner);
+                issues.Add(new AbilityIssue(owner, issue.Message));
+            }
         }
 
         /// <summary>Every authored level needs a positive radius; a nonempty array overrides the flat value.</summary>

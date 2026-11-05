@@ -26,7 +26,8 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                float amount = LeveledValueResolver.ResolveAmount(node, context, target.Id);
+                float amount = context.System.Rules.Numeric.Quantize(
+                    LeveledValueResolver.ResolveAmount(node, context, target.Id));
                 if (amount > 0f)
                 {
                     target.Resources.Increase(node.ResourceId, amount);

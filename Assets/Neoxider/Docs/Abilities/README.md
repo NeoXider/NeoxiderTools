@@ -15,8 +15,10 @@
 - **Abilities** resolve, per cast, into a list of effect operations (damage, heal, apply modifier, spawn, …) through a validated cast pipeline (states, costs, cooldown/charges, target, range).
 - **Modifiers** attach to a unit and, while active: contribute **properties** (`{ Add | Mul | Max }`, aggregated in a fixed `add -> mul -> max` order), declare **states** (boolean, any-true-wins), run **tick effects** on an interval, and run **declarative event reactions** (on an event id -> an effect list). Expiry is guaranteed.
 - The runtime logic uses ordinary C# objects, injected time and a seeded PRNG. It runs without GameObjects, but still depends on Unity value types/math and `Neo.Core.Resources`. Gameplay receipts flow through the **event stream** for UI, presentation, and network integration.
+- **Reactive layer (12.1):** damage pre-hooks (`before_deal_damage` / `before_take_damage` with a mutable damage context: multiplier, flat add, absorb, reflect, cancel), triggers (hit landed, health threshold, every Nth event, state enter / exit, animation moments, applied / removed, charges, internal cooldowns, priorities), payload ops (projectile, area apply, zone, cast ability), auras and formations as domain zones, ready templates, a content validator and a "why did this fire" trace — see [Triggers, damage hooks, zones and templates](./TriggersAndHooks.md).
+- **Replaceable rules:** damage formula, mitigation, crit, evasion, stacking, Add / Mul / Max aggregation, targeting, cooldowns, costs, time source, numeric backend and random source are strategies in `AbilitySystem.Rules` — see [Rules and extension points](./Rules.md).
 
-**По-русски:** основной C# API — `AbilitySystem`, `AbilityUnit`, `ModifierEngine` и `IEffectOperation`. Компоненты сцены и NoCode вызывают тот же runtime API. Сначала зарегистрируйте определения, затем создайте юнитов, добавьте ресурсы и выдайте способности. Продвигайте время через `Tick(dt)`; для области действия, движения и снарядов нужен `IAbilityWorldAdapter`. Ограничения времени, callbacks и доставки описаны ниже и на страницах компонентов. Касты (мгновенные и снарядами), попадания снарядов, тики модификаторов, реакции и публикация событий в домене не выделяют память после прогрева; создание объекта снаряда в сцене идёт через `PoolManager` и в эту гарантию не входит. Для сотен юнитов включите **Spatial Cell Size** на `AbilitySystemBehaviour` (см. [Performance for many units](#performance-for-many-units)); перемещения через `TryMoveUnit` (отбрасывание, притягивание, телепорт) и снятие убитых юнитов с регистрации обновляют сетку на месте, без полной перестройки перед следующим запросом. Радиус проверяется точно (`AbilitySpatialGrid.IsWithinRadius`, расстояние в double), поэтому сетка и линейный перебор дают одинаковый результат на любой платформе. Снаряд способности с наведением `Direction` летит на эффективную дальность (**Range** + `cast_range_bonus`). При Range 0 (без ограничения) он летит на длину переданного вектора направления, но не меньше 10 единиц: `transform.forward` не обрывает выстрел через одну единицу, а вектор к цели или курсору долетает до неё.
+**По-русски:** в 12.1 добавлены хуки урона «перед нанесением / получением» с изменяемым контекстом, триггеры (попадание, порог HP, каждое N-е событие, вход и выход из состояния, моменты анимации, наложение и снятие, заряды, внутренний кулдаун, приоритет), операции снаряда, области, зоны и каста, ауры и формации, шаблоны, валидатор и журнал срабатываний ([TriggersAndHooks](./TriggersAndHooks.md)), а формулы и системы заменяются через `AbilitySystem.Rules` ([Rules](./Rules.md)). Основной C# API — `AbilitySystem`, `AbilityUnit`, `ModifierEngine` и `IEffectOperation`. Компоненты сцены и NoCode вызывают тот же runtime API. Сначала зарегистрируйте определения, затем создайте юнитов, добавьте ресурсы и выдайте способности. Продвигайте время через `Tick(dt)`; для области действия, движения и снарядов нужен `IAbilityWorldAdapter`. Ограничения времени, callbacks и доставки описаны ниже и на страницах компонентов. Касты (мгновенные и снарядами), попадания снарядов, тики модификаторов, реакции и публикация событий в домене не выделяют память после прогрева; создание объекта снаряда в сцене идёт через `PoolManager` и в эту гарантию не входит. Для сотен юнитов включите **Spatial Cell Size** на `AbilitySystemBehaviour` (см. [Performance for many units](#performance-for-many-units)); перемещения через `TryMoveUnit` (отбрасывание, притягивание, телепорт) и снятие убитых юнитов с регистрации обновляют сетку на месте, без полной перестройки перед следующим запросом. Радиус проверяется точно (`AbilitySpatialGrid.IsWithinRadius`, расстояние в double), поэтому сетка и линейный перебор дают одинаковый результат на любой платформе. Снаряд способности с наведением `Direction` летит на эффективную дальность (**Range** + `cast_range_bonus`). При Range 0 (без ограничения) он летит на длину переданного вектора направления, но не меньше 10 единиц: `transform.forward` не обрывает выстрел через одну единицу, а вектор к цели или курсору долетает до неё.
 
 ## Contents
 
@@ -47,6 +49,8 @@
 
 **Guides**
 
+- [Triggers, damage hooks, zones and templates](./TriggersAndHooks.md) — hooks, triggers, payload ops, zones, templates, validator, trace
+- [Rules and extension points](./Rules.md) — replace formulas and systems without forking the package
 - [Survivor Demo](./SurvivorDemo.md) — a complete auto-fire survivor game built on this module
 - [Building a Vampire Survivors game](../VampireSurvivor_Guide.md) — step-by-step scene assembly and the performance checklist
 - [Performance for many units](#performance-for-many-units) — allocation-free hot paths and the spatial query grid
@@ -117,7 +121,7 @@ An `EffectNodeData` is one authored step, shared by abilities (cast/impact) and 
 | Field | Purpose |
 |-------|---------|
 | `OpId` | Operation id — see the ops table below. Default `damage`. |
-| `Target` | `Target` (context primary), `Caster`, `AreaAroundTarget`, `AreaAroundCaster`. |
+| `Target` | `Target` (context primary), `Caster`, `AreaAroundTarget`, `AreaAroundCaster`, `ConeFromCaster` (uses `Angle`). |
 | `TeamFilter` | For area selectors: `Any` / `Enemies` / `Allies`, relative to the caster. |
 | `Radius` | Area radius (world units) for the area selectors. |
 | `MaxTargets` | Cap on affected units: area selectors keep the nearest N; `chain` hops up to N targets. `0` = unlimited (`chain` treats 0 as 4). |
@@ -128,6 +132,9 @@ An `EffectNodeData` is one authored step, shared by abilities (cast/impact) and 
 | `ArchetypeId` | For `spawn` (host maps id -> prefab). |
 | `CustomParam` | Free-form string for custom ops (and `dispel` uses `"buffs"`). |
 | `Chance` | `[0..1]` probability the node runs, rolled on the cast's deterministic RNG. |
+| `AbilityId` | Payload ability of `projectile` / `area_apply` / `zone`, the ability `cast_ability` casts. |
+| `Angle`, `Duration`, `Interval` | Cone angle (degrees); zone lifetime and pulse interval (seconds). |
+| `AmountPerStack` | Added per extra stack of the modifier running the node (ticks, reactions). |
 
 Built-in ops (`AbilityEffectOps`, registered by `DefaultEffectOps`):
 
@@ -145,6 +152,12 @@ Built-in ops (`AbilityEffectOps`, registered by `DefaultEffectOps`):
 | `teleport` | `Target = Caster` ⇒ blink the caster to the target point / first target; `Target = Target` ⇒ pull targets to the caster; `CustomParam = "swap"` ⇒ caster and first target trade positions. |
 | `execute` | Health-derived damage: `Amount` is a fraction (0.1 = 10%) of the target's `"missing"` / `"max"` / `"current"` health per `CustomParam`, or a flat amount otherwise. Full damage pipeline, node's `DamageType`. |
 | `chain` | Chain lightning: damages the first target, then hops to the nearest not-yet-hit unit within `Radius` (team-filtered), up to `MaxTargets` hits (0 ⇒ 4). Each bounce multiplies damage by the falloff parsed from `CustomParam` (e.g. `"0.85"`, default 1). Deterministic hop order. |
+| `modify_damage` | In a `before_deal_damage` / `before_take_damage` reaction: `CustomParam` `multiply` (default) / `add` / `absorb` / `cancel` with `Amount`. |
+| `reflect` | In a `before_take_damage` reaction: reflects `Amount` (fraction) of the mitigated damage to the attacker as `DamageType`. |
+| `projectile` | Launches a projectile per target carrying the impact effects of payload `AbilityId`; the host reports the hit. |
+| `area_apply` | Applies `ModifierId` to every resolved unit (area or cone selector) and runs payload `AbilityId` once on them. |
+| `zone` | Spawns a domain zone (aura following the caster, or a formation at a point) pulsing `ModifierId` / payload `AbilityId` for `Duration`. |
+| `cast_ability` | The caster casts its granted `AbilityId` through the normal cast pipeline (auto-cast passives, "on hit, cast X"). |
 
 The motion family (`knockback` / `pull` / `teleport`) displaces units through the world adapter's `TryMoveUnit` seam — units with the `unmovable` or `invulnerable` state (or without a world presence) stay put. All op amounts, including motion distances and the `execute` fraction, resolve through the leveled-value fields below.
 
@@ -308,6 +321,8 @@ nothing.
 ## Extensibility
 
 The property, state, event, and effect-op registries are all **open** — any string is valid, and the constants (`AbilityProperties`, `AbilityStates`, `AbilityEvents`, `AbilityEffectOps`, `AbilityDamageTypes`) only standardize the names the built-ins read.
+
+**Rules.** Formulas and systems (damage, mitigation, crit, evasion, stacking, aggregation, targeting, cooldowns, costs, time, numbers, random) are swapped through `AbilitySystem.Rules`; see [Rules and extension points](./Rules.md) for each extension point with an example.
 
 **Custom effect op.** Implement `IEffectOperation` and register it once at startup; designers then compose it in data forever:
 

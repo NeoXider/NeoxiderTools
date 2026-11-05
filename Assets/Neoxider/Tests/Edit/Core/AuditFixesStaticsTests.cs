@@ -42,7 +42,6 @@ namespace Neo.Tools.Tests
             TryInvokeStaticReset(typeof(GlobalSave));
             TryInvokeStaticReset(typeof(UIManager));
             TryInvokeStaticReset(typeof(AbilitySystemBehaviour));
-            TryInvokeStaticReset(typeof(DamageService));
             TryInvokeStaticReset(typeof(PrefabPreviewExtensions));
             TryInvokeStaticReset(StateMachineEvaluationContextType());
         }
@@ -159,25 +158,15 @@ namespace Neo.Tools.Tests
         }
 
         [Test]
-        public void DamageServiceReset_ClearsScratchListsAndShieldDepth()
+        public void DamageService_KeepsNoStaticState_ThePipelineOwnsItsScratchPerSystem()
         {
-            List<List<ModifierInstance>> pool =
-                (List<List<ModifierInstance>>)GetPrivateStatic(typeof(DamageService), "ModifierScratchPool");
-            List<ModifierInstance> scratch = new List<ModifierInstance> { null };
-            pool.Add(scratch);
-            SetPrivateStatic(typeof(DamageService), "_shieldDepth", 2);
-
-            try
-            {
-                InvokeStaticReset(typeof(DamageService));
-
-                Assert.That(scratch.Count, Is.Zero);
-                Assert.That(GetPrivateStatic(typeof(DamageService), "_shieldDepth"), Is.EqualTo(0));
-            }
-            finally
-            {
-                pool.Remove(scratch);
-            }
+            // WHY: the shield scratch and nesting depth moved into each system's DamagePipeline, so nothing
+            // survives a disabled domain reload and two systems never share a scratch list.
+            FieldInfo[] fields = typeof(DamageService).GetFields(BindingFlags.Static | BindingFlags.Public |
+                                                                 BindingFlags.NonPublic);
+            Assert.That(fields, Is.Empty);
+            Assert.That(typeof(DamageService).GetMethod("ResetStaticState",
+                BindingFlags.NonPublic | BindingFlags.Static), Is.Null);
         }
 
         [Test]

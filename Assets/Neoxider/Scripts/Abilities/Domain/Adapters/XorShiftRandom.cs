@@ -3,7 +3,7 @@ namespace Neo.Abilities
     /// <summary>
     ///     Small deterministic PRNG (xorshift32). Same seed → same sequence on every platform.
     /// </summary>
-    public sealed class XorShiftRandom : IRandomSource
+    public sealed class XorShiftRandom : IReseedableRandomSource
     {
         private uint _state;
 

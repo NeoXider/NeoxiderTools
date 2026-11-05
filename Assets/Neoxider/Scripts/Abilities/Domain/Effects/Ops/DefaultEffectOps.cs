@@ -25,6 +25,12 @@ namespace Neo.Abilities
             registry.Register(new TeleportEffectOperation());
             registry.Register(new ExecuteEffectOperation());
             registry.Register(new ChainEffectOperation());
+            registry.Register(new ModifyDamageEffectOperation());
+            registry.Register(new ReflectEffectOperation());
+            registry.Register(new ProjectileEffectOperation());
+            registry.Register(new AreaApplyEffectOperation());
+            registry.Register(new ZoneEffectOperation());
+            registry.Register(new CastAbilityEffectOperation());
         }
     }
 }

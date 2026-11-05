@@ -19,6 +19,9 @@ namespace Neo.Abilities
         TargetDead = 11,
         TargetUntargetable = 12,
         WrongTeam = 13,
-        OutOfRange = 14
+        OutOfRange = 14,
+
+        /// <summary>A cast_ability effect tried to cast deeper than <see cref="AbilitySystem.MaxCastDepth" />.</summary>
+        NestingLimit = 15
     }
 }
