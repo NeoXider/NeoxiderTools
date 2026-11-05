@@ -293,7 +293,9 @@ namespace Neo.Demo.Editor.Builders
             arena.GolemCaster = Caster(ctx, arena.Golem, content.GolemTemplate);
             arena.HeroLabel = Label(ctx, arena.Hero.transform, "Hero Label", 1.75f, HeroColor);
             arena.GolemLabel = Label(ctx, arena.Golem.transform, "Golem Label", 1.7f, GolemColor);
-            arena.ImpLabel = Label(ctx, arena.Imp.transform, "Imp Label", 1.0f, ImpColor);
+            // WHY: the imp stands inside the golem's formation ring; its label goes below it so the ring and the golem
+            // label stay readable.
+            arena.ImpLabel = Label(ctx, arena.Imp.transform, "Imp Label", -1.3f, ImpColor);
             Indicator(ctx, arena.Hero.transform, "Outline", DemoSceneAssets.Ring, Outline(HeroColor), Vector3.zero, 1.6f,
                 3).SetActive(true);
             Indicator(ctx, arena.Golem.transform, "Outline", DemoSceneAssets.Ring, Outline(GolemColor), Vector3.zero,
@@ -352,8 +354,14 @@ namespace Neo.Demo.Editor.Builders
         private static TMP_Text Label(DemoSceneBuildContext ctx, Transform unit, string name, float height, Color color)
         {
             Transform world = unit.parent;
-            return DemoSceneKit.WorldLabel(ctx, world, name, unit.name, unit.localPosition + new Vector3(0f, height, 0f),
-                3.2f, color, new Vector2(5f, 2.4f), 8);
+            Vector3 position = unit.localPosition + new Vector3(0f, height, 0f);
+            TMP_Text label = DemoSceneKit.WorldLabel(ctx, world, name, unit.name, position, 3.2f, color,
+                new Vector2(5f, 2.4f), 8);
+            // WHY: a reused RectTransform under a plain Transform saves m_AnchoredPosition, which a batch rebuild does
+            // not refresh from localPosition; setting it directly moves an existing label too.
+            label.rectTransform.anchoredPosition = new Vector2(position.x, position.y);
+            ctx.MarkModified(label.rectTransform);
+            return label;
         }
 
         private static GameObject Indicator(DemoSceneBuildContext ctx, Transform unit, string name, Sprite sprite,

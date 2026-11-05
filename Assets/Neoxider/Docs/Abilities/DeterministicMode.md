@@ -2,10 +2,10 @@
 
 **What it is:** the plan and the current state of running `Neo.Abilities` inside a deterministic, server-authoritative or lockstep simulation, such as VampireDota's: Q8.8 fixed-point raw integers (1.0 = 256), integer ticks, no floats and no `UnityEngine` in the domain. It covers the numeric abstraction, tick-based time, the seeded random source, state hashing for desync checks and migration notes.
 
-**How to use today:** apply `DeterministicAbilityProfile` to a system (fixed ticks, Q8.8 rounding, the seeded generator) and compare `AbilityStateHasher.Compute(system)` between peers. That makes float simulations replayable and desync-checkable on one runtime; it does not make the domain integer-only. The integer core is a proposal awaiting a decision (below).
+**How to use today:** for a float game, apply `DeterministicAbilityProfile` to a system (fixed ticks, Q8.8 rounding, the seeded generator) and compare `AbilityStateHasher.Compute(system)` between peers: replayable and desync-checkable on one runtime, not integer-only. For a domain without floats and without UnityEngine, use the engine-free integer core `Neo.Abilities.Fixed` (option B below, implemented): see [Fixed core](./FixedCore.md).
 
 - Namespace: `Neo.Abilities`
-- Related: [Rules and extension points](./Rules.md)
+- Related: [Fixed core](./FixedCore.md), [Rules and extension points](./Rules.md)
 
 ## Requirements of a deterministic host
 
@@ -26,7 +26,7 @@
 | Fixed-point values | `AbilityRules.Numeric = FixedPointNumeric.Q8`: computed amounts and property values are rounded to the 1/256 grid before they are stored or published | done (rounding, not integer arithmetic) |
 | Desync check | `AbilityStateHasher.Compute(system)`: FNV-1a over the sorted simulation state | done |
 | One switch | `DeterministicAbilityProfile.Apply(rules, ticksPerSecond)` | done |
-| Engine-free integer domain | — | **open, see options** |
+| Engine-free integer domain | `Neo.Abilities.Fixed`: [Fixed core](./FixedCore.md) | done (option B) |
 
 ### Why rounding floats is not enough
 
@@ -39,19 +39,21 @@ IEEE single-precision `+ − × ÷ sqrt` are deterministic for the same operatio
 | Shape | 12.1 as above | New engine-free assembly `Neo.Abilities.Fixed` (no references, `noEngineReferences`) with Q-format raw ints (`FixedValue` int, configurable fraction bits), integer ticks, integer vectors and the same concepts: units, pools, base properties, Add / Mul / Max layering, modifiers with stack policies, triggers, damage hooks, ops, zones, events, rules interfaces typed on raw ints. `Neo.Abilities` stays as it is and can reference the core to convert `AbilityDefinition` / `ModifierDefinition` assets into integer blueprints at registration | One engine-free generic domain (`AbilitySystem<TNumber, TOps>` with a struct numeric-ops strategy); the float `Neo.Abilities` becomes a specialization / facade |
 | Meets VampireDota policy | no | yes | yes |
 | Breaking for float users | no | no (additive) | yes: types move to another assembly, `ModifierInstance`, `EffectContext`, `AbilityEventArgs`, `IEffectOperation` and rule signatures change; asmdef references must be updated |
-| Version | 12.1 | 12.2.0 | 13.0.0 |
+| Version | 12.1 | 12.1.0 (chosen, additive) | 13.0.0 |
 | Cost | none | a second implementation of the domain (about 5–6 k lines with tests) and two code paths to keep in sync; content written once (assets) and converted | the largest refactor; one code path afterwards; every existing test and sample touched |
 | Risk | lockstep across platforms not guaranteed | drift between the two cores (mitigated by a shared conformance test suite that runs the same scenarios on both and compares results within the Q8.8 grid) | regressions for current users, release coordination |
 
-**Recommendation:** B for the VampireDota migration timeline — it does not break anyone and lets the game keep its Q8.8 / tick model — with a shared conformance suite from day one, and C as a 13.0 consolidation once both cores are proven. The choice changes the public surface of the package, so it waits for root and the owner; nothing of B or C is implemented yet.
+**Decision:** B, implemented in 12.1 as `Neo.Abilities.Fixed` with a shared conformance suite (`FixedConformanceTests`) from day one; C stays a 13.0 consolidation once both cores are proven.
 
-## Design of the integer core (option B, if chosen)
+## Design of the integer core (option B, implemented)
+
+The implementation follows this design; the usage, the API and the measured differences are in [Fixed core](./FixedCore.md).
 
 - **Numbers:** `FixedValue` = `int` raw with `FixedMath` helpers (saturating add, `MulDiv` with 64-bit intermediates, round half away from zero, the same as VampireDota's `DeterministicMath`). Fraction bits configurable per system (default 8).
 - **Time:** every duration, cooldown, tick interval, zone interval and lifetime is an `int` tick count; the system advances by `Step()` / `Step(n)`; catch-up caps stay as today (8 per call).
 - **Space:** `FixedVec3` raw ints; the world adapter interface is the same shape typed on `FixedVec3`; radius tests compare squared raw distances in 64-bit.
 - **Random:** `IRandomSourceFactory` returns integer draws (`NextRaw(oneRaw)` in `[0, one)`, `NextInt`); chance and crit compare raw values.
-- **Rules:** the same twelve extension points, typed on raw ints: VampireDota plugs its `CombatResolver` (armor `amount·100/(100+armor)`, resistance, crit with structure immunity flags) as `IDamageFormula`, its `StatBlock` rational multipliers as `IPropertyAggregator`, its stacking (`DenyNew`, `RefreshDuration`, `StackUpTo3`) as `IModifierStackingRule`.
+- **Rules:** the same extension points typed on raw ints (formula, mitigation, crit, evasion, stacking, aggregation, targeting, cooldowns, costs, random; time is ticks and the format is `FixedRules.Format`): VampireDota plugs its `CombatResolver` (armor `amount·100/(100+armor)`, resistance, crit with structure immunity flags) as `IDamageFormula`, its `StatBlock` rational multipliers as `IPropertyAggregator`, its stacking (`DenyNew`, `RefreshDuration`, `StackUpTo3`) as `IModifierStackingRule`.
 - **State hash:** the same field order as `AbilityStateHasher`, over raw ints only.
 - **Content:** blueprints with raw-int fields; `FixedContentConverter` (in `Neo.Abilities`) converts float assets with explicit rounding and reports every value that changes by more than half a raw unit.
 
@@ -70,4 +72,4 @@ Not hashed: event subscriptions, the trace, the rules objects, presentation stat
 
 ## По-русски
 
-Записка о детерминированном режиме для сетевых и lockstep-игр (как VampireDota: Q8.8, целые тики, без float и без UnityEngine в домене). В 12.1 уже есть: сиды на каст, тик, реакцию, попадание и импульс зоны; заменяемый генератор (`AbilityRules.Random`, по умолчанию целочисленный xorshift32); фиксированные тики (`FixedStepTimeSource`, `StepTicks`); округление значений к сетке Q8.8 (`FixedPointNumeric.Q8`); хэш состояния `AbilityStateHasher` для поиска рассинхронизации и профиль `DeterministicAbilityProfile`, включающий всё это одним вызовом. Этого хватает для серверной авторитетной игры и повторов на одной сборке, но не для бит-в-бит lockstep между платформами: float-арифметика в IL2CPP на ARM может сливать умножение и сложение. Для политики «в домене нет float» нужен целочисленный домен. Варианты: B — отдельная сборка `Neo.Abilities.Fixed` без UnityEngine, на целых Q-числах и тиках, с теми же точками расширения (без поломок, 12.2.0, но вторая реализация и общий набор проверок соответствия); C — один обобщённый домен (ломающее изменение, 13.0.0). Рекомендация — B сейчас и C позже; решение за root и владельцем, B и C пока не реализованы.
+Записка о детерминированном режиме для сетевых и lockstep-игр (как VampireDota: Q8.8, целые тики, без float и без UnityEngine в домене). В 12.1 уже есть: сиды на каст, тик, реакцию, попадание и импульс зоны; заменяемый генератор (`AbilityRules.Random`, по умолчанию целочисленный xorshift32); фиксированные тики (`FixedStepTimeSource`, `StepTicks`); округление значений к сетке Q8.8 (`FixedPointNumeric.Q8`); хэш состояния `AbilityStateHasher` для поиска рассинхронизации и профиль `DeterministicAbilityProfile`, включающий всё это одним вызовом. Этого хватает для серверной авторитетной игры и повторов на одной сборке, но не для бит-в-бит lockstep между платформами: float-арифметика в IL2CPP на ARM может сливать умножение и сложение. Для политики «в домене нет float» выбран и реализован вариант B: отдельная сборка `Neo.Abilities.Fixed` без UnityEngine, на целых Q-числах и тиках, с теми же точками расширения и общим набором проверок соответствия (`FixedConformanceTests`), добавочно в 12.1.0. Вариант C (один обобщённый домен, 13.0.0) остаётся на потом, когда оба ядра будут проверены. Подробности и измеренные расхождения — [Fixed core](./FixedCore.md).

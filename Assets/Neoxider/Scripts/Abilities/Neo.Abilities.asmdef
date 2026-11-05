@@ -8,7 +8,8 @@
         "Neo.PropertyAttribute",
         "Neo.Tools.Spawner",
         "Neo.Tools.Managers",
-        "Neo.Extensions"
+        "Neo.Extensions",
+        "Neo.Abilities.Fixed"
     ],
     "includePlatforms": [
     ],

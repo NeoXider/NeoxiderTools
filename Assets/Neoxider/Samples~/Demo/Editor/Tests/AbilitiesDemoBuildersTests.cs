@@ -184,6 +184,9 @@ SceneRoots:
                 Is.EqualTo("AbilitiesTriggersDemoGuide.ResetDemo"));
             Assert.That(Single<ModuleDemoSceneInfo>().HasAuthoredOverlay, Is.True);
             Assert.That(FindObject("Shield Bubble").activeSelf, Is.False, "Indicators are saved hidden.");
+            Assert.That(FindObject("Imp Label").transform.localPosition.y,
+                Is.LessThan(FindObject("Imp").transform.localPosition.y - 1f),
+                "the imp label sits below the imp, clear of the formation ring");
 
             DemoSceneResult second = DemoSceneRunner.BuildOpenScene(_scene, new[] { builder });
             AssertIdempotent(first, second);

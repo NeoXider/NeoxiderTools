@@ -143,6 +143,22 @@ Read `Docs/Abilities/TriggersAndHooks.md` and `Docs/Abilities/Rules.md` before h
   registration with the unit as caster. 2D zone visuals: `AbilityZoneView` **Plane = ScreenXY**.
   `AbilityContentValidator.Validate(abilities, modifiers, system.Ops)` lists data mistakes.
 
+## Deterministic games: the fixed core (12.1)
+
+- **Float game, replays / server authority:** `DeterministicAbilityProfile.Apply(system.Rules, 30)` + compare
+  `AbilityStateHasher.Compute(system)`; same runtime only.
+- **No floats / no UnityEngine in the domain (lockstep):** assembly `Neo.Abilities.Fixed` (namespace
+  `Neo.Abilities.Fixed`, engine-free). `FixedAbilitySystem` with raw Q8.8 ints (`FixedFormat.Q8`, one = 256) and
+  ticks: `CreateUnitWithId(entityId, team)`, `unit.AddPool(FixedResources.Health, raw)`, `unit.Position = FixedVec3`,
+  `Cast(FixedCastRequest.AtUnit(...))`, `Step()` per tick, `FixedStateHasher.Compute(system)` for desync checks.
+- **Content once:** author float assets/templates, convert with
+  `FixedContentConverter.Convert(library | blueprints, new FixedConversionSettings { TicksPerSecond = 30 }, issues)
+  .RegisterInto(system)`; fix every Warning in `issues` (times off the tick grid, fractional angles, motion ops).
+- **Game rules:** `FixedRules` (`Mitigation`, `Aggregator`, `Stacking`, `CriticalHit`, `Evasion`, `DamageFormula`,
+  `Targeting`, `Cooldowns`, `Costs`, `Random`); exact ratio multipliers via
+  `FixedPropertyContribution.Denominator`; `FixedModifierBlueprint.StackingKind` for custom stacking.
+  Math: `FixedMath.MulDiv` (128-bit, half away from zero), never `float` in that layer.
+
 ## NoCode trio (designer wiring — see avoid-nocode.md)
 
 `AbilityNoCodeAction` (enum-driven `Execute()` bridge: cast/grant/revoke/level/modifier/damage/heal from

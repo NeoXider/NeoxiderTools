@@ -73,7 +73,16 @@ Demo:  Samples/Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity (NoCode caster/au
 `DamagePipeline` per system with before_deal/before_take hooks, trigger kinds on `ModifierEventReaction`,
 payload ops (projectile/area_apply/zone/cast_ability), domain zones (`AbilitySystem.Zones.cs`), `AbilityRules`
 (12 replaceable strategies), `AbilityTrace`, `AbilityTemplates`, `AbilityContentValidator`, the deterministic
-profile and `AbilityStateHasher`. The engine-free integer core is an open decision (DeterministicMode.md).
+profile and `AbilityStateHasher`.
+
+Engine-free integer core `Neo.Abilities.Fixed` (Scripts/Abilities/Fixed, own asmdef with no references and
+`noEngineReferences`, option B of DeterministicMode.md, see Docs/Abilities/FixedCore.md): a parallel domain on
+Q-format raw ints and ticks (`FixedAbilitySystem` partials: core + casts, Triggers, Zones, Hashing; `FixedModifierEngine`,
+`FixedDamagePipeline`, `FixedRules` with 10 strategies, `FixedEventBus`, ops in FixedOperations.cs). Same content
+model, ids, seeds and orders as the float core; `FixedContentConverter` (in Neo.Abilities) converts float content.
+Keeping both cores in step: every behaviour change of the float domain needs the matching fixed change and a
+scenario in `Tests/Edit/Abilities/Fixed/FixedConformanceTests.cs`; `FixedBoundaryTests` forbid Unity references
+and any float in the fixed assembly (signatures and IL). Known differences are listed in FixedCore.md.
 
 ## 3. Core model decisions (Dota-derived, improved)
 

@@ -49,7 +49,22 @@ Proposed version: **12.1.0** (additive; existing float content and APIs behave a
 - **Abilities — deterministic profile and desync check.** `DeterministicAbilityProfile.Apply(rules)` (fixed ticks,
   Q8.8 rounding, the seeded xorshift generator) and `AbilityStateHasher.Compute(system)` (allocation-free FNV-1a over
   clock, units, pools, modifiers with trigger counters, slots, zones and pending projectiles). The design note
-  `Docs/Abilities/DeterministicMode.md` describes the open decision on an engine-free integer core.
+  `Docs/Abilities/DeterministicMode.md` records the options for an integer core and the chosen one.
+- **Abilities — engine-free integer core `Neo.Abilities.Fixed`.** A new assembly without references,
+  `noEngineReferences` and no floating point anywhere (a test checks every signature and IL instruction):
+  `FixedAbilitySystem` with Q-format raw ints (`FixedFormat`, default Q8.8; `FixedValue`; `FixedMath` with
+  saturating arithmetic, round half away from zero and a 128-bit `MulDiv`), whole ticks (`Step()`, `Advance`),
+  `FixedVec3`, units with raw pools and properties, modifiers with every stack policy and trigger, damage hooks,
+  shields, the effect operations except motion, zones, projectiles, casts, events and `FixedStateHasher` (raw ints,
+  the field order of `AbilityStateHasher`). Rules in one place, `FixedRules`: damage formula, mitigation, crit,
+  evasion, stacking (`FixedModifierBlueprint.StackingKind` for a game's own kinds), aggregation (exact ratio
+  multipliers through `FixedPropertyContribution.Denominator`), targeting, cooldowns, costs, random. Same seeds and
+  orders as the float core. `FixedContentConverter` (in `Neo.Abilities`) converts assets, blueprints and templates
+  and reports every value that moves by more than half a raw unit (times off the tick grid, fractional angles,
+  saturation, operations the fixed core lacks). `FixedConformanceTests` play the same scenarios on the float core
+  with the deterministic profile and on the fixed core; known differences are listed in
+  `Docs/Abilities/FixedCore.md`. Allocation-free steps, hooks, triggers, zone pulses and hashing; 1.6-2.3x faster
+  than the float core on the same benchmarks. Additive: the float domain is unchanged.
 - **Abilities — demo and authoring helpers.** Demo scene `Scenes/Abilities/AbilitiesTriggersDemo.unity` (six
   lessons: thorns, attack enhancer, mark, stacking poison, formation zone, auto-defense shield, plus a "why did this
   fire" panel), authored by `AbilitiesTriggersDemoBuilder` and verified by `AbilitiesTriggersDemoPlayTests`.
@@ -59,7 +74,8 @@ Proposed version: **12.1.0** (additive; existing float content and APIs behave a
 - **Abilities — tests and benchmarks.** EditMode suites for hooks, triggers, payload ops, zones, stack policies,
   rules, aggregation layering, templates, validator and trace; zero-allocation guards for hooked hits, triggers,
   zone pulses, fixed-step time, Q8 numerics and an enabled trace; `AbilityTickCostBenchmarks` (N units ×
-  M modifiers).
+  M modifiers). Fixed core: math, core contracts, conformance, converter, a VampireDota-style rules example,
+  allocation guards, boundary checks and `FixedTickCostBenchmarks` measured like the float benchmarks.
 
 ### Changed
 
