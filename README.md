@@ -6,7 +6,7 @@
 
 A modular construction library: use runtime APIs directly, then add scene components and optional Inspector / NoCode workflows.
 
-[![Version](https://img.shields.io/badge/version-12.0.0-blue)](Assets/Neoxider/package.json)
+[![Version](https://img.shields.io/badge/version-12.1.0-blue)](Assets/Neoxider/package.json)
 [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](Assets/Neoxider/LICENSE.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](Assets/Neoxider/Docs/PackageCompatibility.md)
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](Assets/Neoxider/Docs/README.md#namespace-policy)
@@ -124,7 +124,7 @@ Install **NeoxiderTools** plus the required third-party packages below. In Unity
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-This URL follows the remote default branch; append a release tag (for example `#v12.0.0`) to pin a version. For source development, use the [local-package route](Assets/Neoxider/Docs/GettingStarted.md#option-b--local-path-for-development).
+This URL follows the remote default branch; append a release tag (for example `#v12.1.0`) to pin a version. For source development, use the [local-package route](Assets/Neoxider/Docs/GettingStarted.md#option-b--local-path-for-development).
 
 ### DOTween (required)
 

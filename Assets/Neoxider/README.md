@@ -2,7 +2,7 @@
 
 # NeoxiderTools — a gameplay-systems framework for Unity
 
-[![Version](https://img.shields.io/badge/version-12.0.0-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](./LICENSE.md) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
+[![Version](https://img.shields.io/badge/version-12.1.0-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](./LICENSE.md) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
 
 **A modular Unity C# construction library: abilities, shops, saving, quests, cards, grids, NPC AI, UI motion. 26 module areas plus 17 Tools submodules, 200+ ready components, 200+ extension methods and more than 5,000 tests help you assemble reusable game systems from ready parts. Use runtime APIs directly, add scene components, or combine both.**
 
@@ -88,10 +88,10 @@ DOTween, UniTask, and the optional integrations above are installed separately. 
 **Package Manager → `+` → Add package from git URL:**
 
 ```text
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v12.0.0
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v12.1.0
 ```
 
-This URL pins version `12.0.0`. Use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development) for source development. UPM retains its hidden `Samples~` layout.
+This URL pins version `12.1.0`. Use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development) for source development. UPM retains its hidden `Samples~` layout.
 
 Then install DOTween (Asset Store, run `Tools > Demigiant > DOTween Utility Panel`) and UniTask:
 

@@ -89,7 +89,7 @@ actions. Zap explicitly reads caster unit level from its authored effect configu
 Вся связка сохранена в сцене: кнопки несут свой `AbilityNoCodeAction`, полосы HP и кулдауна — это
 `SetProgress`, переключатель Auto Zap включает `AbilityAutoCaster.enabled`; всё видно в инспекторе без Play Mode.
 Release source is `Assets/Neoxider/Samples~`, developer layout is `Assets/Neoxider/Samples`; imported
-UPM samples are under `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` (`12.0.0` for this release).
+UPM samples are under `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` (`12.1.0` for this release).
 
 1. Create a [UnitTemplate](./UnitTemplate.md) with a `health` pool (and `mana` if it casts).
 2. Create [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets, add them to an [AbilityLibrary](./AbilityLibrary.md).

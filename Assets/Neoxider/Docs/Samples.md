@@ -5,7 +5,7 @@
 **How to use:**
 1. Prepare the host project: [prerequisites](#host-and-sample-prerequisites) (TMP Essential Resources, 2D Sprite).
 2. Open **Package Manager → NeoxiderTools → Samples** and import **Demo Scenes**. Import **NeoxiderPages** and **Character Movement Fundamentals** too if you want the example games.
-3. Open a scene, for example `Assets/Samples/NeoxiderTools/12.0.0/Demo Scenes/Scenes/Audio/AudioDemo.unity`. The UI, the configured components and every button's UnityEvent are already in the scene: inspect them in Edit Mode, then press Play.
+3. Open a scene, for example `Assets/Samples/NeoxiderTools/12.1.0/Demo Scenes/Scenes/Audio/AudioDemo.unity`. The UI, the configured components and every button's UnityEvent are already in the scene: inspect them in Edit Mode, then press Play.
 4. To restore a demo scene after editing it, use **Neoxider > Demo > Rebuild Active Demo Scene** ([how demo scenes are made](#how-demo-scenes-are-made)).
 
 **Navigation:** [← Docs](./README.md) · [Getting Started](./GettingStarted.md) · [Upgrading to 12](./Migration12.md)

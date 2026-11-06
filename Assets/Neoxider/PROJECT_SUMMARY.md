@@ -9,7 +9,7 @@
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json` (`com.neoxider.tools`)
-- **Current version**: `12.0.0`
+- **Current version**: `12.1.0`
 - **Upgrade guides**: [`Docs/Migration12.md`](./Docs/Migration12.md) (from 11.x), [`Docs/Migration11.md`](./Docs/Migration11.md) (from 10.x)
 - **Validation**: the 11.0.0 Windows record is [`Verification11.md`](./Verification11.md); release verification of the 12.0.0 source is pending and is not implied by any audit receipt.
 - **Unity**: `6000.0+`

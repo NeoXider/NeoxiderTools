@@ -1,7 +1,9 @@
 
 ## [Unreleased]
 
-Proposed version: **12.1.0** (additive; existing float content and APIs behave as before).
+## [12.1.0] - 2026-11-06
+
+Additive release: existing float content and APIs behave as before.
 
 ### Added
 
