@@ -10,71 +10,60 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a42ed834e73743f48ba73071f9eb8b21, type: 3}
-  m_Name: ab_nova
+  m_Name: ab_spit
   m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
   _blueprint:
-    Id: nova
-    DisplayName: Arcane Nova
-    Description: A shockwave that damages everything nearby.
-    Targeting: 0
+    Id: spit
+    DisplayName: Spit
+    Description: A slow glob aimed at the hero.
+    Targeting: 4
     TeamFilter: 1
-    Range: 0
+    Range: 9
+    RangeByLevel: []
     Costs: []
-    Cooldown: 2.6
+    Cooldown: 2.4
+    CooldownByLevel: []
     MaxCharges: 1
+    MaxChargesByLevel: 
     ChargeRestoreTime: 0
-    Delivery: 0
-    ProjectileArchetypeId: 
-    ProjectileSpeed: 20
-    CastEffects:
-    - OpId: spawn
-      Target: 1
-      TeamFilter: 0
+    ChargeRestoreTimeByLevel: []
+    Delivery: 1
+    ProjectileArchetypeId: spit
+    ProjectileSpeed: 6
+    ProjectileSpeedByLevel: []
+    CastEffects: []
+    ImpactEffects:
+    - OpId: damage
+      Target: 0
+      TeamFilter: 1
       Radius: 0
       RadiusByLevel: []
       MaxTargets: 0
-      Amount: 0
+      MaxTargetsByLevel: 
+      Amount: 7
       AmountByLevel: []
       AmountKey: 
       AmountScaleProperty: 
       AmountScalePerPoint: 0
       AmountScaleSource: 0
       AmountLevelSource: 0
-      DamageType: 
-      ModifierId: 
-      ResourceId: 
-      ArchetypeId: fx_nova
-      CustomParam: 
-      Chance: 1
-      AbilityId: 
-      Angle: 0
-      Duration: 0
-      Interval: 0
-      AmountPerStack: 0
-    ImpactEffects:
-    - OpId: damage
-      Target: 3
-      TeamFilter: 1
-      Radius: 3.4
-      RadiusByLevel: []
-      MaxTargets: 0
-      Amount: 14
-      AmountByLevel: []
-      AmountKey: 
-      AmountScaleProperty: 
-      AmountScalePerPoint: 0
-      AmountScaleSource: 0
-      AmountLevelSource: 0
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
       DamageType: magical
       ModifierId: 
       ResourceId: 
       ArchetypeId: 
       CustomParam: 
       Chance: 1
+      ChanceByLevel: []
       AbilityId: 
       Angle: 0
       Duration: 0
       Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
       AmountPerStack: 0
     Specials: []
     CastCue: 

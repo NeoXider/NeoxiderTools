@@ -1,16 +1,16 @@
 # Getting Started — NeoxiderTools
 
-**What it is:** the quick start: get from "package installed" to a working C# runtime model or a first audio scene in about five minutes.
+**What it is:** the installation guide and quick start. It takes you from an empty Unity 6 project to a working C# runtime model or a first audio scene in about five minutes.
 
-**How to use:** check the [requirements](#requirements), [install](#installation) the package and its two
-dependencies, then follow either [Start with a C# runtime model](#start-with-a-c-runtime-model) or
-[Your first scene in 5 minutes](#your-first-scene-in-5-minutes-audio-manager-am).
+**How to use:**
+1. Check the [requirements](#requirements).
+2. [Install](#installation) NeoxiderTools, UniTask and DOTween.
+3. Pick a [starting point](#choose-your-starting-point): a [C# runtime model](#start-with-a-c-runtime-model), a [first scene](#your-first-scene-in-5-minutes-audio-manager-am) or [NoCode](./NoCode/GettingStarted.md).
+4. Optionally import a demo: [Demo scenes](./Samples.md).
 
-For recorded test environments, results and limits, see the [verification record](../Verification11.md).
+**Navigation:** [← To Docs](./README.md) · [Upgrading from 11.x](./Migration12.md) · [Migration from 10.x](./Migration11.md)
 
-**Navigation:** [← To Docs](./README.md) · [Upgrading from 11.x](./Migration12.md) · [Migration from 10.x](./Migration11.md) · [Testing and isolation](./Testing.md)
-
-**По-русски:** [C# без сцены](#start-with-a-c-runtime-model), [первый аудиокомпонент](#your-first-scene-in-5-minutes-audio-manager-am) или [NoCode](./NoCode/GettingStarted.md). Существующий проект сначала сверьте с [обновлением до 12](./Migration12.md) (с 11.x) или [миграцией на 11](./Migration11.md) (с 10.x).
+**По-русски:** установите пакет, UniTask и DOTween по разделу [Installation](#installation), затем выберите [C# без сцены](#start-with-a-c-runtime-model), [первый аудиокомпонент](#your-first-scene-in-5-minutes-audio-manager-am) или [NoCode](./NoCode/GettingStarted.md). Существующий проект сначала сверьте с [обновлением до 12](./Migration12.md) (с 11.x) или [миграцией на 11](./Migration11.md) (с 10.x).
 
 ---
 
@@ -18,15 +18,15 @@ For recorded test environments, results and limits, see the [verification record
 
 | Requirement | Version |
 |-------------|---------|
-| Unity | **6000.0** (Unity 6) or newer — see [PackageCompatibility](./PackageCompatibility.md) |
-| uGUI / TextMeshPro | `com.unity.ugui` 2.0.0+ (UPM dependency); TextMeshPro ships inside it on Unity 6 |
-| AI Navigation | `com.unity.ai.navigation` 2.0.16+ (UPM dependency) |
-| Input System | `com.unity.inputsystem` 1.20.1+ (UPM dependency) |
-| UniTask | **required** — install manually (see below) |
-| DOTween | **required** by tween-based runtime assemblies in the installed package; install separately |
-| TMP Essential Resources | needed by the text-based samples; **Window → Text Mesh Pro → Import TMP Essential Resources** |
+| Unity | **6000.0** (Unity 6) or newer; see [PackageCompatibility](./PackageCompatibility.md) |
+| uGUI / TextMeshPro | `com.unity.ugui` 2.0.0+, installed by UPM. TextMeshPro ships inside it on Unity 6. |
+| AI Navigation | `com.unity.ai.navigation` 2.0.16+, installed by UPM |
+| Input System | `com.unity.inputsystem` 1.20.1+, installed by UPM |
+| UniTask | **Required.** Install it yourself, see below. |
+| DOTween | **Required** by the tween-based assemblies. Install it yourself, see below. |
+| TMP Essential Resources | For the text-based demos: **Window → Text Mesh Pro → Import TMP Essential Resources** |
 
-> UniTask and DOTween are not listed in `package.json` dependencies and must be installed into the host project separately.
+UniTask and DOTween are not in the `package.json` dependencies. Optional integrations (Mirror, DOTween Pro, the haptics backend, URP) are listed in [Package compatibility](./PackageCompatibility.md#package-dependencies).
 
 ---
 
@@ -42,14 +42,16 @@ For recorded test environments, results and limits, see the [verification record
    ```
 4. Click **Add** and wait for the import to finish.
 
-The `upm` branch holds only the package, so Unity downloads a few megabytes instead of the whole repository (the older `?path=Assets/Neoxider` URL still works but fetches every file of the repository). To pin a version, replace `upm` with the commit listed in the release notes. For local development, use the local route below.
+The `upm` branch holds only the package, so Unity downloads a few megabytes. The older `?path=Assets/Neoxider` URL still works, but it fetches every file of the repository. To pin a version, replace `upm` with the commit listed in the release notes.
 
 ### Option B — Local path (for development)
 
-Copy the `Assets/Neoxider` folder into your project or reference it as a local package in `manifest.json`:
+Copy the `Assets/Neoxider` folder into your project, or reference it as a local package in `manifest.json`:
 ```json
 "com.neoxider.tools": "file:../path/to/Assets/Neoxider"
 ```
+
+You can also import `NeoxiderTools.v<ver>.unitypackage` from the [releases page](https://github.com/NeoXider/NeoxiderTools/releases). It holds the same files as the `upm` branch ([release archives](./Samples.md#release-archives)).
 
 ### Install UniTask (required)
 
@@ -58,27 +60,26 @@ Open `Packages/manifest.json` and add to `dependencies`:
 "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.11"
 ```
 
-`2.5.11` is the version the package is validated with; see [Dependencies](./Dependencies.md).
-Or download the `.unitypackage` from [UniTask releases](https://github.com/Cysharp/UniTask/releases).
+The package is validated with `2.5.11`; see [Dependencies](./Dependencies.md). You can also download the `.unitypackage` from [UniTask releases](https://github.com/Cysharp/UniTask/releases).
 
 ### Install DOTween (required)
 
-Install [DOTween (HOTween v2)](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) from the Asset Store, then run **Tools → Demigiant → DOTween Utility Panel** to complete its setup. DOTween Pro is optional.
+Install [DOTween (HOTween v2)](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) from the Asset Store. Then run **Tools → Demigiant → DOTween Utility Panel** to finish its setup. DOTween Pro is optional.
 
 ## Choose your starting point
 
 | Workflow | Start with |
 |----------|------------|
-| **C# runtime API** | The resource model below, then [Merge](./Merge/README.md) or [StateMachine](./StateMachine/README.md) for more runtime contracts. Your code owns these objects. |
+| **C# runtime API** | The resource model below, then [Merge](./Merge/README.md) or [StateMachine](./StateMachine/README.md). Your code owns these objects. |
 | **Scene components** | The [AM audio scene](#your-first-scene-in-5-minutes-audio-manager-am) below. Add the component and assign its dependencies. |
-| **Inspector / NoCode** | [NoCode Getting Started](./NoCode/GettingStarted.md), [Condition](./Condition/README.md), and a module sample. Scene wrappers expose the corresponding C# API. |
-| **Interaction** | [Interaction contracts and components](./Tools/InteractableObject/README.md) for custom C# input or scene hover/click and physics events. |
+| **Inspector / NoCode** | [NoCode Getting Started](./NoCode/GettingStarted.md), [Condition](./Condition/README.md) and a module demo. Scene wrappers expose the matching C# API. |
+| **Interaction** | [Interaction contracts and components](./Tools/InteractableObject/README.md) for custom C# input, scene hover/click and physics events. |
 
-The package's `Prefabs/-System--.prefab` is available for the existing manager bootstrap. Add only the managers your chosen scene workflow needs. Runtime models can be used without this prefab or a scene singleton.
+The package's `Prefabs/-System--.prefab` holds the existing manager bootstrap. Add only the managers your scene needs. Runtime models work without this prefab and without a scene singleton.
 
 ## Start with a C# runtime model
 
-`ResourcePoolModel` and `ResourcePoolEntry` in `Neo.Core.Resources` are ordinary C# objects with no `UnityEngine` dependency. This complete example creates a mana pool and spends 25; the expected remaining value is 75:
+`ResourcePoolModel` and `ResourcePoolEntry` in `Neo.Core.Resources` are plain C# objects with no `UnityEngine` dependency. This example creates a mana pool and spends 25; the method returns 75:
 
 ```csharp
 using System;
@@ -108,39 +109,27 @@ public static class ManaExample
 }
 ```
 
-The two `Max*Amount` values are per-operation limits; `-1` removes the limit. Keep the model in your owning service for persistent runtime state. Call `Tick(deltaTime)` from that owner if you configure regeneration, and subscribe to `OnResourceChanged` to update a view. For a scene wrapper, see [HealthComponent](./Core/Resources/Components/HealthComponent.md).
+- The two `Max*Amount` values are per-operation limits; `-1` removes the limit.
+- `TrySpend` checks both the balance and the decrease limit. A cost above the limit fails without a partial payment.
+- Keep the model in the service that owns the state. Call `Tick(deltaTime)` from that owner if you configure regeneration, and subscribe to `OnResourceChanged` to update a view.
 
-`TrySpend` checks both the available balance and the decrease limit. A cost above that limit fails without a partial payment. See the [Core entry](./Core/README.md) and [migration guide](./Migration11.md) for resource-cost integration details.
+For a scene wrapper, see [HealthComponent](./Core/Resources/Components/HealthComponent.md). Resource-cost integration is described in the [Core entry](./Core/README.md) and the [migration guide](./Migration11.md).
 
 ---
 
 ## Demo scenes
 
-Demos are not part of the package. Download the ones you want from the [releases page](https://github.com/NeoXider/NeoxiderTools/releases) and import them after the package (**Assets → Import Package → Custom Package…**):
-
-| Download | What it contains |
-|----------|-----------------|
-| `NeoxiderTools.Demo.v<ver>.unitypackage` | A demo scene per module (`AM`, `GridSystem`, `Shop`, `NoCode`, `Condition`, `StateMachine`, `Abilities`, and more), example games and `SurvivorDemo` |
-| `NeoxiderPages.v<ver>.unitypackage` | Optional UI page-navigation module (`PM`, `UIPage`, `BtnChangePage`) |
-| `NeoxiderTools.CharacterMovementDemo.v<ver>.unitypackage` | Character-controller demos for slopes, stairs, moving platforms, gravity, and a top-down arena |
-
-They import into `Assets/NeoxiderDemos/<name>/`. For example, the audio scene is `Assets/NeoxiderDemos/Demo/Scenes/Audio/AudioDemo.unity`.
-
-Each demo scene is saved with its UI, configured components and UnityEvent wiring. Open it, select a button and look at its **On Click** list to see which module API it calls, then press Play. The collapsible info card in the scene names the components to inspect and the equivalent C# calls. If you change a demo scene and want it back, re-import it from the Demo download ([how demo scenes are made](./Samples.md#how-demo-scenes-are-made)).
-
-Samples imported from 12.1 and earlier stay in `Assets/Samples/NeoxiderTools/<version>/`. Delete that copy before importing a demo download: both carry the same asset GUIDs. See [Demo scenes](./Samples.md) for the scene index.
+Demos are separate downloads, imported after the package into `Assets/NeoxiderDemos/<name>/`. [Demo scenes](./Samples.md) lists the downloads, their prerequisites and every scene.
 
 ---
 
 ## Your first scene in 5 minutes: Audio Manager (AM)
 
-For a small scene example, add **AM** and play a sound. AM creates its music/effects AudioSources during initialization. Use either the C# or NoCode playback step below after creating the manager.
+Add **AM** to a scene and play a sound from C# or without code. AM creates its music and effects AudioSources during initialization.
 
 ### Step 1 — Create a GameObject with the AM component
 
 Create an empty GameObject and use **Add Component → Neoxider → Audio → AM**. You can also use **Neoxider → Windows → Create Neoxider Object** and select AM.
-
-This creates an `AM` object in the scene with the component already attached. AudioSources for effects and music are created automatically.
 
 ### Step 2 — Assign an audio clip
 
@@ -173,22 +162,20 @@ public sealed class SoundTest : MonoBehaviour
 }
 ```
 
-Attach this script to a GameObject and drag the scene's AM into its **Audio** field. `PlaySound()` can also be called from your own code or a UI event. For projects deliberately using the singleton entry point, `AM.I.Play("ui_click")` is available after AM initialization.
+Attach the script to a GameObject and drag the scene's AM into its **Audio** field. `PlaySound()` can also be called from your code or a UI event. If you use the singleton entry point, `AM.I.Play("ui_click")` works after AM initialization.
 
 ### Step 4 — Play a sound without code (No-Code)
 
-If you prefer not to write a script, use the **PlayAudio** component:
-
 1. Select any GameObject.
 2. **Add Component → Neoxider → Audio → PlayAudio**.
-3. Set **Sound Id** to `ui_click`, using the entry created on AM.
+3. Set **Sound Id** to `ui_click`, the entry created on AM.
 4. Enable **Play On Awake** to play the sound on scene start. Keep the AM object in the scene.
 
-Alternatively, wire the `AudioPlay()` method of the `PlayAudio` component to any `UnityEvent` in the Inspector — zero lines of code.
+You can also wire the `AudioPlay()` method of `PlayAudio` to any `UnityEvent` in the Inspector.
 
 ### Step 5 — Press Play
 
-Run the scene. Your selected C# or NoCode playback component plays the sound automatically.
+Run the scene. The C# or NoCode component you added plays the sound.
 
 > **Tip:** named sound IDs survive reordering the entry list. Index-based calls such as `AM.I.Play(0)` remain available for existing setups.
 
@@ -208,11 +195,8 @@ Run the scene. Your selected C# or NoCode playback component plays the sound aut
 | Movement and input | [Tools](./Tools/README.md) |
 | Interaction contracts, hover/click and physics events | [Interaction](./Tools/InteractableObject/README.md) |
 | RPG characters and combat | [Rpg](./Rpg/README.md) |
-| Ready-to-run example scenes | [Sample scenes](./Samples.md) |
+| Ready-to-run example scenes | [Demo scenes](./Samples.md) |
 | Injectable time and exact odds for testable rules | [Clocks](./Tools/Time/Clocks.md), [IntegerChanceTable](./Tools/Random/IntegerChanceTable.md) |
 | Package compatibility | [PackageCompatibility](./PackageCompatibility.md) |
-| Upgrading an 11.x project | [Upgrading to 12](./Migration12.md) |
-| Upgrading a 10.x project | [Migration to 11](./Migration11.md) |
-| EditMode contracts and isolated test hosts | [Testing](./Testing.md) |
-| PlayMode lifecycle and integration checks | [PlayMode testing](./PlayModeTesting.md) |
+| Running and writing tests | [Testing](./Testing.md) |
 | Full module index | [README](./README.md) |

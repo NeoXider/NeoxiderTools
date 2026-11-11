@@ -4,7 +4,12 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/parallax.jpg" alt="Concept art for the Parallax module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** parallax layers for 2D scrolling (`Neo.Parallax`, scripts in `Scripts/Parallax/`). Use this page as the English module entry.
+**What it is:** parallax layers for 2D scrolling (`Neo.Parallax`, scripts in `Scripts/Parallax/`).
+
+**How to work with it:** add `ParallaxLayer` to each background band, assign `targetCamera` and set
+`parallaxMultiplier.x` (`-1` follows the camera, `0` stays in the world, positive values race past in front).
+
+**Navigation:** [← Docs](../README.md)
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/ParallaxDemo.jpg" alt="ParallaxDemo: seven camera-bound parallax bands with auto-scrolling clouds" width="100%" /></p>
@@ -16,9 +21,9 @@
 
 ---
 
-Demo: `Assets/NeoxiderDemos/Demo/Scenes/Parallax/ParallaxDemo.unity`, controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/ParallaxDemoController.cs`. It is part of the Demo download.
+## Demo scene
 
-The scene is saved with its UI and wiring, so every layer is visible and configurable without Play Mode. `[Demo] World` holds seven bands, each a `ParallaxLayer` bound to the scene camera through `targetCamera`:
+`Assets/NeoxiderDemos/Demo/Scenes/Parallax/ParallaxDemo.unity` (Demo download). Everything is saved in the scene. `[Demo] World` holds seven bands, each a `ParallaxLayer` bound to the scene camera through `targetCamera`:
 
 | Band | `parallaxMultiplier.x` | Shows |
 |---|---|---|

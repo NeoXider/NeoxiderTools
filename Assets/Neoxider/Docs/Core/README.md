@@ -4,10 +4,15 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/core.jpg" alt="Concept art for the Core module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** core gameplay runtime primitives: levels, XP, and health-style resources. Reference assembly `Neo.Core`
-for the plain C# models and interfaces. Domain logic has no UnityEngine dependency; serializable profile
-DTOs and `UnityEventFloatFloat` use Unity types. Scene components, curve assets, and NoCode bridges live
-in separate assemblies and are optional.
+**What it is:** core gameplay runtime primitives: levels, XP and health-style resources. Assembly `Neo.Core` holds
+the plain C# models and interfaces (`LevelModel`, `ResourcePoolModel`); scene components, curve assets and NoCode
+bridges live in separate, optional assemblies.
+
+**How to work with it:**
+1. In code, create a `LevelModel` or `ResourcePoolModel` and call it from your own component or service.
+2. In a scene, use [LevelComponent](./Level/Components/LevelComponent.md) or
+   [HealthComponent](./Resources/Components/HealthComponent.md) and wire their events.
+3. Save the `LevelProfileData` / `ResourceProfileData` DTOs through your save service.
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/LevelFlowDemo.jpg" alt="LevelFlowDemo: LevelComponent XP curve next to the LevelManager map flow" width="100%" /></p>
@@ -142,13 +147,8 @@ Every successful `AddPool` call creates a fresh registration and resets both tim
 the same mutable entry is registered again with the same id or different id casing. `Tick` checks
 the captured registration before regen and before heal, so a callback's new registration receives
 no elapsed time from the old snapshot. Its timers begin advancing on the next `Tick`.
-A warm `Tick` does not allocate (an EditMode test counts `GC.Alloc` calls with regenerating and full pools).
-Each registration owns its regen/heal remainders. The tick reuses its registration snapshot until the next
-`AddPool`/`RemovePool` (a stale snapshot is dropped at once, so it never keeps a removed entry alive), the
-registration check only does a dictionary lookup after such a call during the tick, and a timer that
-completes no cycle this frame costs one addition and one comparison, with the same remainders as the full
-division path. The common case is therefore O(pools) arithmetic without a dictionary walk.
-Full pools still complete their cycles but publish nothing.
+A warm `Tick` does not allocate and costs O(pools) arithmetic; each registration owns its regen and heal
+remainders. Full pools still complete their cycles but publish nothing.
 `Decrease` and `TrySpend` capture their own positive-to-zero transition before notifying listeners,
 then deliver Changed before Depleted. Nested operations cannot duplicate or erase that operation's
 depletion event; a listener may already have revived the pool when its depletion notification arrives.

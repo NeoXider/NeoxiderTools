@@ -12,6 +12,11 @@
 *Demo scenes: `Scenes/Bonuses/SlotExample.unity`, `Scenes/Bonuses/BonusRewardsDemo.unity`, `Scenes/Bonuses/WheelFortuneExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**Navigation:** [← Docs](../README.md)
+
+**How to work with it:** use a plain C# core from code and tests, or add its scene wrapper and wire it in the
+Inspector. Assign wallets, views and save keys explicitly.
+
 **Contents:** the submodule table below; links point to the per-component documentation.
 
 ---
@@ -58,10 +63,9 @@ for persistence keys, cancellation, numeric limits, and the equivalent C# calls.
 
 - `Scenes/Bonuses/SlotExample.unity`: slot machine with a wallet, bets, five paylines and a paytable; see [Slot](./Slot/README.md).
 - `Scenes/Bonuses/WheelFortuneExample.unity`: wheel of fortune that pays each sector into a wallet; see [WheelFortune](./WheelFortune/README.md).
-- `Scenes/Bonuses/BonusRewardsDemo.unity`: `Collection` with `CollectionVisualManager` slots and an `ItemCollectionInfo` details row, a `Box` chest filled by a `CooldownReward` gift, the legacy `TimeReward` paying into a session-only `Money` wallet; every save key holds `NeoDemo.`; see [Collection](./Collection/README.md) and [TimeReward](./TimeReward/README.md).
+- `Scenes/Bonuses/BonusRewardsDemo.unity`: a `Collection` with visual slots, a `Box` chest filled by a `CooldownReward` gift and the legacy `TimeReward` paying into a session-only `Money` wallet; save keys start with `NeoDemo.`; see [Collection](./Collection/README.md) and [TimeReward](./TimeReward/README.md).
 
-All three scenes save every listener in the scene (the slot and wheel keep the package prefab on its own Canvas),
-so the wiring is readable in the Inspector without entering Play Mode.
+Everything is saved in the scenes.
 
 ## See also
 

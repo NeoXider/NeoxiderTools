@@ -4,6 +4,8 @@
 Canvas, layouts and scroll lists. There are no scripts in this module; the prefabs use Unity UI components and
 can host the [UI module](../UI/README.md) components.
 
+**Navigation:** [← Docs](../README.md)
+
 **Contents:**
 
 | Prefab | Use |

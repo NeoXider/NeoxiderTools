@@ -12,7 +12,7 @@
 *Demo scene: `Scenes/Settings/SettingsDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
-Demo: `Assets/NeoxiderDemos/Demo/Scenes/Settings/SettingsDemo.unity` (every control, label and persistent UnityEvent is saved in the scene), controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/SettingsDemoController.cs` (Demo download). The slider calls `GameSettingsComponent.SetMouseSensitivityForMenu` directly (NoCode, Deferred save); the **Deferred save** row follows `GameSettingsComponent.HasPendingDeferredSave` while a drag is collected into one write, and **Stored in SaveProvider** shows the value that landed. The demo service saves under the key prefix `Neo.Demo.Settings.`, so it never overwrites a game's settings.
+**Navigation:** [← Docs](../README.md)
 
 **Contents:**
 
@@ -51,3 +51,7 @@ Quality dropdown and named preset changes preserve the separate VSync selection.
 Persistence flags control **writes**, while loading still reads existing saved values. `SaveState` writes every enabled group into the current `SaveProvider`; backend durability is controlled by that provider. See [GameSettings.md](./GameSettings.md) for input validation, display mode consistency and save boundaries.
 
 **Requirements:** this module uses **`QualitySettings`** and does not require URP. If your project needs URP-specific settings, add `com.unity.render-pipelines.universal` to the project separately.
+
+## Demo scene
+
+`Assets/NeoxiderDemos/Demo/Scenes/Settings/SettingsDemo.unity` (Demo download). The slider calls `GameSettingsComponent.SetMouseSensitivityForMenu` directly (Deferred save); the **Deferred save** row follows `HasPendingDeferredSave` while a drag is collected into one write. The demo saves under the key prefix `Neo.Demo.Settings.`, so it never overwrites your game's settings. Everything is saved in the scene.

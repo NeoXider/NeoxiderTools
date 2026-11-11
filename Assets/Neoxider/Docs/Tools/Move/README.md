@@ -49,8 +49,8 @@ for plane coordinates, physics choices, small movement steps, and pointer input 
 
 ## Demo scenes
 
-Both scenes are in the Demo sample and saved with all their wiring (rebuild them with **Neoxider > Demo > Rebuild
-Active Demo Scene**):
+Both scenes are in the Demo download. Everything is saved in the scenes; re-import the download to get the originals
+back.
 
 | Scene | Shows |
 |-------|-------|
@@ -59,19 +59,17 @@ Active Demo Scene**):
 
 ## Compatibility notes
 
-11.0 keeps existing component APIs and serialized settings. Overlapping
-[cursor controllers](./CursorLockController.md) retain each player's first gate values until the last
-owner releases them; [camera drag](./CameraRotationController.md) balances active transitions and
-keeps its legacy sensitivity. Review the [ScreenPositioner depth migration](./ScreenPositioner.md#110-depth-migration)
-when preserving existing orthographic or perspective placements; scene values are not rewritten.
-
-12.0 keeps the same APIs and serialized settings, with these behaviour fixes: `Follow` rotation limits and
-`UniversalRotator` `limitRange` share one sector rule (nearer edge, sectors past 180, a range of a full turn or
-more disables limits, an inverted range wraps through 180); a `CameraConstraint` whose bounds source disappears
-at runtime pauses instead of disabling itself (check `HasValidBounds`); and a `CursorLockController` that is
-deactivated or destroyed hands look back like `DisableController()`, so a standalone player re-locks the cursor
-unless it leaves play together with that owner; an owner on an inactive GameObject then counts as absent, like a
-disabled one, so the player handles Escape itself until the owner is active again.
+- Overlapping [cursor controllers](./CursorLockController.md) keep each player's first gate values until the last
+  owner releases them. A `CursorLockController` that is deactivated or destroyed hands look back like
+  `DisableController()`; an owner on an inactive GameObject counts as absent, so the player handles Escape itself
+  until the owner is active again.
+- [Camera drag](./CameraRotationController.md) balances active transitions and keeps its legacy sensitivity.
+- `Follow` rotation limits and `UniversalRotator` `limitRange` share one sector rule: nearer edge, sectors past 180,
+  a range of a full turn or more disables limits, an inverted range wraps through 180.
+- A `CameraConstraint` whose bounds source disappears at runtime pauses instead of disabling itself (check
+  `HasValidBounds`).
+- When preserving existing orthographic or perspective placements, review the
+  [ScreenPositioner depth migration](./ScreenPositioner.md#110-depth-migration); scene values are not rewritten.
 
 Character controller pages: [NeoCharacterInput](./CharacterController/NeoCharacterInput.md), [NeoCameraInput](./CharacterController/NeoCameraInput.md), [NeoCharacterSprint](./CharacterController/NeoCharacterSprint.md), [NeoCharacterCameraBridge](./CharacterController/NeoCharacterCameraBridge.md), [NeoCharacterNetworkBinding](./CharacterController/NeoCharacterNetworkBinding.md).
 
@@ -80,8 +78,7 @@ Character controller pages: [NeoCharacterInput](./CharacterController/NeoCharact
 Movement components run every frame for many objects, so the per-frame paths avoid managed allocations.
 The legacy-input availability probe is cached for all controllers (no exception per read in Input System-only
 projects), `Follow`, `ScreenPositioner` and `CameraConstraint` write their transform only when it changes, and the
-animator drivers write parameters by cached hash. EditMode allocation guards (`GcAlloc`) cover the warm paths
-of `Follow`, `ScreenPositioner`, `CameraConstraint` and both animator drivers.
+animator drivers write parameters by cached hash.
 
 ## Free-Fly Camera
 

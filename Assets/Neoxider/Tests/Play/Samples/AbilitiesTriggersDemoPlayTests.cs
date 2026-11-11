@@ -24,11 +24,22 @@ namespace Neo.Tests.Play
         private const string ScenePath = "Scenes/Abilities/AbilitiesTriggersDemo.unity";
         private const string GuideType = "Neo.Samples.AbilitiesTriggersDemoGuide";
 
+        // WHY: a demo scene leaves DontDestroyOnLoad singletons behind (pool manager, audio manager); the next
+        // test class must start without them.
+        private readonly SamplePlaySceneIsolation _isolation = new SamplePlaySceneIsolation();
+
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            yield return _isolation.End();
+        }
+
         [UnityTest]
         public IEnumerator TriggersDemo_EveryLessonWorksLive()
         {
             LogAssert.ignoreFailingMessages = false;
             string scene = SamplePlayScenes.RequireDemoScene(ScenePath);
+            _isolation.Begin();
             yield return SamplePlayScenes.Load(scene);
             yield return SamplePlayScenes.WaitFrames(10);
 

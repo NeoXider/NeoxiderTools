@@ -4,6 +4,8 @@
 inversion, legacy NavMesh AI and the optional Spine controller. Each component exposes a C# API and can also be
 called from Inspector UnityEvents.
 
+**Navigation:** [← Tools](../README.md)
+
 **Contents:** the per-component table below.
 
 ---

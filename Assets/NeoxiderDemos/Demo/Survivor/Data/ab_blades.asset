@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42ed834e73743f48ba73071f9eb8b21, type: 3}
+  m_Name: ab_blades
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
+  _blueprint:
+    Id: blades
+    DisplayName: Spinning Blades
+    Description: Three blades orbit you and cut what they touch.
+    Targeting: 0
+    TeamFilter: 1
+    Range: 0
+    RangeByLevel: []
+    Costs: []
+    Cooldown: 6
+    CooldownByLevel:
+    - 6
+    - 5.6
+    - 5.2
+    - 4.8
+    - 4.4
+    MaxCharges: 1
+    MaxChargesByLevel: 
+    ChargeRestoreTime: 0
+    ChargeRestoreTimeByLevel: []
+    Delivery: 1
+    ProjectileArchetypeId: blades
+    ProjectileSpeed: 20
+    ProjectileSpeedByLevel: []
+    CastEffects: []
+    ImpactEffects:
+    - OpId: damage
+      Target: 0
+      TeamFilter: 1
+      Radius: 0
+      RadiusByLevel: []
+      MaxTargets: 0
+      MaxTargetsByLevel: 
+      Amount: 8
+      AmountByLevel:
+      - 8
+      - 10
+      - 12
+      - 15
+      - 18
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 1
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
+      DamageType: physical
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: 
+      CustomParam: 
+      Chance: 1
+      ChanceByLevel: []
+      AbilityId: 
+      Angle: 0
+      Duration: 0
+      Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
+      AmountPerStack: 0
+    Specials: []
+    CastCue: 
+    ImpactCue: hit

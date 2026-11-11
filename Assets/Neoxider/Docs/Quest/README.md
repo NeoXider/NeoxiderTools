@@ -27,12 +27,10 @@
 | [Quest flow](./QuestFlowConfig.md) | Optional sequence and availability checks |
 | [Saving](./Saving.md) | SaveProvider storage and objective list migration |
 
-Demo: `Assets/NeoxiderDemos/Demo/Scenes/Quests/QuestDemo.unity` (Demo download). Everything is saved in the scene, so the wiring is visible without entering Play Mode:
+**Navigation:** [← Docs](../README.md)
 
-- `[Demo] Services/Quest Manager` — `QuestManager` with the three quest assets from `Demo/Data/Quest` in **Known Quests**; its **On Quest Completed** event calls `Money.Add(25)` on `[Demo] Services/Gold Wallet (Money)` (a reward without code).
-- Left column (C# path) — buttons call `QuestDemoController` (`Demo/Scripts/Shell/QuestDemoController.cs`), which uses `TryAcceptQuest`, `AddObjectiveProgress`, `FailQuest`, `RestartQuest`, `ResetAllQuests` and refreshes from the C# events.
-- Right column (NoCode path) — each world button calls `Execute()` on a pre-configured `QuestNoCodeAction` under `[Demo] Services/Quest NoCode Actions` (`NotifyKill wolf ×1/×3`, `NotifyCollect herb ×1/×2`, `NotifyTalk healer`, `NotifyReachPoint ruins_gate`).
-- The scene is saved with its UI and wiring.
+**How to work with it:** see [Typical flow](#typical-flow): create `QuestConfig` assets, register them on a
+`QuestManager`, then accept quests and credit objectives from code or `QuestNoCodeAction`.
 
 ---
 
@@ -103,6 +101,10 @@ Target notifications and `EvaluateObjectiveConditions` iterate pooled snapshots 
 `QuestManager` persists quest states through `SaveProvider` under `Save Key` (default `Settings_Quests`). `Auto Save` saves after accept/progress/fail/reset (once per top-level operation), `Auto Load` restores on initialization; `Save()` / `Load()` are public for manual control. See [Saving](./Saving.md).
 
 Configs registered after loading reconcile saved objective lists and completed binary progress exactly as known-at-load configs do, without replaying gameplay events. Unregistering a config preserves saved states for later registration.
+
+## Demo scene
+
+`Assets/NeoxiderDemos/Demo/Scenes/Quests/QuestDemo.unity` (Demo download). `[Demo] Services/Quest Manager` holds three quest assets in **Known Quests**, and its **On Quest Completed** event calls `Money.Add(25)`. The left column of buttons is the C# path (`QuestDemoController`: `TryAcceptQuest`, `AddObjectiveProgress`, ...); the right column calls `Execute()` on pre-configured `QuestNoCodeAction`s under `[Demo] Services/Quest NoCode Actions`. Everything is saved in the scene.
 
 ## See also
 

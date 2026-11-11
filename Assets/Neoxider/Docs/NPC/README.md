@@ -13,6 +13,11 @@ modular RPG combat brain. Scripts are in `Scripts/NPC/` (`Neo.NPC`, `Neo.NPC.Nav
 *Demo scene: `Scenes/Ai/AiMoveExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**How to work with it:**
+1. Add `NpcNavigation` to an object with a `NavMeshAgent` on a baked NavMesh.
+2. Pick a mode (FollowTarget, Patrol, Combined) and assign the target or route, or add `NpcTargetFinder`.
+3. For combat NPCs add the [recommended stack](#recommended-composition).
+
 **Contents:** the per-component table below.
 
 **Navigation:** [← Docs](../README.md)
@@ -69,8 +74,7 @@ and [navigation](./Navigation/NPCNavigation.md) for path/failure semantics.
 
 ## Crowds and per-frame cost
 
-- A navigation tick does not allocate, on a settled path and on a tick that submits a new path (measured on a
-  real NavMesh agent with the GC.Alloc counter); periodic re-paths are spread over `Path Update Interval` across NPCs
+- A navigation tick does not allocate, on a settled path and on a tick that submits a new path; periodic re-paths are spread over `Path Update Interval` across NPCs
   (`Stagger Path Updates`, on by default) instead of all running in the same frame.
 - A Combined chase toward an unreachable target is retried once per path interval, not every frame.
 - `NpcRpgCombatBrain` re-applies navigation only when the chase target, mode or activity actually changed, so a
@@ -93,9 +97,7 @@ four NPCs on a baked NavMesh, each driven by one `NpcNavigation`:
 | `[Demo] World/NPC Patroller` (green) | Patrol | Walks `Patrol Route/Point 1..4`; `onPatrolPointReached` writes to the card's log. |
 | `[Demo] World/NPC Sentry` (orange) | Combined | Patrols `Sentry Zone` and chases the target within 6 m; `onStartFollowing` / `onStopFollowing` toggle its red `Alert` with `GameObject.SetActive`. |
 
-Everything, including the control card, the event wiring and the info card, is saved in the scene and visible in the
-Inspector without entering Play Mode. The two original agents
-were migrated from the deprecated `AiNavigation` to `NpcNavigation`.
+Everything is saved in the scene.
 
 ## See also
 

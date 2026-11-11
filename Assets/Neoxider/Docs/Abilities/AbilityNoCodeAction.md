@@ -19,6 +19,7 @@
 | `GrantAbility` | Grants the ability to the acting unit. With an **Ability** asset it registers the blueprint first, so the ability does not need to be in a library. | Unit, Ability/Ability Id |
 | `RevokeAbility` | Removes the granted ability. | Unit, Ability/Ability Id |
 | `SetAbilityLevel` | Sets a granted ability's level (leveled values scale). | Unit, Ability/Ability Id, Level |
+| `LevelUpAbility` | Grants the ability when the unit lacks it, otherwise raises its level by one; fails at **Max Level**. One button for "pick the weapon card again to level it up". | Unit, Ability/Ability Id, Max Level |
 | `SetUnitLevel` | Sets the domain unit level. | Unit, Level |
 | `ApplyModifier` | Applies the modifier to **Target Unit** (or the acting unit). With a **Modifier** asset it registers the blueprint first. | Unit (as source), Modifier/Modifier Id, Target Unit |
 | `RemoveModifier` | Removes every active instance of the modifier from the target. | Modifier/Modifier Id, Target Unit |
@@ -38,6 +39,7 @@
 | **Modifier** | `ModifierDefinition` | Optional asset; overrides **Modifier Id**. `ApplyModifier` registers its blueprint. |
 | **Modifier Id** | `string` | Modifier id used when no asset is assigned. |
 | **Level** | `int` | For `SetAbilityLevel` / `SetUnitLevel`. |
+| **Max Level** | `int` | For `LevelUpAbility`: the highest level the action raises the ability to. `0` = no cap. |
 | **Amount** | `float` | For `ApplyDamage` / `Heal`. |
 
 ### Unity Events

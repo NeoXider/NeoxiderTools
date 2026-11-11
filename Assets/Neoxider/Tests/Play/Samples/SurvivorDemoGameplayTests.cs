@@ -23,13 +23,15 @@ namespace Neo.Tests.Play.Samples
     ///     cards apply abilities and modifiers, and the survival timer wins the run. A second test reads the saved
     ///     scene: the wiring is persistent UnityEvents between library components, with no game script.
     ///     With <c>-neoSurvivorFrames &lt;dir&gt;</c> on the command line it also writes a JPEG per captured frame
-    ///     (HUD included) and the mixed audio (<c>audio.f32</c>, format in <c>audio.txt</c>) for a gameplay video; <c>-neoSurvivorCards "Frost,Ember,..."</c> changes the card order.
+    ///     (HUD included) and the mixed audio (<c>audio.f32</c>, format in <c>audio.txt</c>) for a gameplay video; <c>-neoSurvivorCards "Frost,Blades,..."</c> changes the card order
+    ///     and <c>-neoSurvivorGrant "blades,lightning,..."</c> grants weapons at the start for a showcase run.
     /// </summary>
     public sealed class SurvivorDemoGameplayTests
     {
         private const string ScenePath = "Scenes/SurvivorDemo.unity";
         private const string FramesArgument = "-neoSurvivorFrames";
         private const string CardsArgument = "-neoSurvivorCards";
+        private const string GrantArgument = "-neoSurvivorGrant";
         private const int SimulatedFps = 30;
         private const int CaptureEvery = 1;
         private const int CaptureWidth = 1280;
@@ -37,13 +39,25 @@ namespace Neo.Tests.Play.Samples
 
         private static readonly string[] DefaultCardPriority =
         {
-            "Nova", "Ember", "Frost", "Might", "Haste", "Vitality", "Swift", "Regen", "Ward"
+            "Blades", "Aura", "Lightning", "Burning", "Spear", "Frost", "Bolt", "Might", "Haste", "Vitality", "Swift",
+            "Regen", "Ward"
         };
+
+        // WHY: a demo scene leaves DontDestroyOnLoad singletons behind (pool manager, audio manager); the next
+        // test class must start without them.
+        private readonly SamplePlaySceneIsolation _isolation = new SamplePlaySceneIsolation();
+
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            yield return _isolation.End();
+        }
 
         [UnityTest]
         public IEnumerator SavedScene_IsWiredFromLibraryComponentsWithoutGameScripts()
         {
             string scene = SamplePlayScenes.RequireDemoScene(ScenePath);
+            _isolation.Begin();
             yield return SamplePlayScenes.Load(scene);
             LogAssert.ignoreFailingMessages = false;
 
@@ -57,10 +71,17 @@ namespace Neo.Tests.Play.Samples
             Assert.That(magnet.Motion, Is.EqualTo(MagneticField.MoveMethod.Kinematic));
             Assert.That(Describe(magnet.OnObjectReached), Is.EqualTo("LevelComponent.AddXp; Despawner.DespawnOther"));
 
-            Spawner spawner = Object.FindFirstObjectByType<Spawner>();
+            Spawner spawner = FindByName<Spawner>("Enemy Spawner");
             Assert.That(spawner.AroundTarget, Is.SameAs(player.transform));
             Assert.That(spawner.MaxActive, Is.GreaterThan(0));
-            Assert.That(spawner.prefabs.Length, Is.EqualTo(3), "one inactive template per enemy unit template");
+            Assert.That(spawner.prefabs.Length, Is.EqualTo(4), "one inactive template per enemy unit template");
+            Assert.That(FindByName<Spawner>("Boss Spawner").prefabs.Length, Is.EqualTo(1), "the boss arrives once");
+            Assert.That(player.GetComponentsInChildren<AbilityAutoCaster>(true).Length, Is.EqualTo(2),
+                "one auto-caster aims at the nearest foe, one at a random foe");
+            Assert.That(Object.FindFirstObjectByType<AbilityCuePlayer>(), Is.Not.Null,
+                "ability cues play the weapon effects");
+            Assert.That(FindInactive("Loadout").GetComponentsInChildren<AbilityCooldownSource>(true).Length,
+                Is.EqualTo(7), "one loadout slot per weapon");
             foreach (GameObject template in spawner.prefabs)
             {
                 AbilityUnitBehaviour enemy = template.GetComponent<AbilityUnitBehaviour>();
@@ -75,7 +96,7 @@ namespace Neo.Tests.Play.Samples
             Assert.That(Describe(level.OnLevelUp), Does.StartWith(
                 "GameObject.SetActive; SceneFlowController.Pause; ChanceSystemBehaviour.GenerateUniqueVoid"));
             ChanceSystemBehaviour draft = Object.FindFirstObjectByType<ChanceSystemBehaviour>();
-            Assert.That(draft.Manager.Count, Is.EqualTo(9), "one draft entry per upgrade card");
+            Assert.That(draft.Manager.Count, Is.EqualTo(13), "one draft entry per upgrade card");
             Assert.That(draft.DrawCount, Is.EqualTo(3));
             for (int i = 0; i < draft.Manager.Count; i++)
             {
@@ -117,6 +138,7 @@ namespace Neo.Tests.Play.Samples
         public IEnumerator Autopilot_KillsLevelsUpTakesCardsAndWinsTheRun()
         {
             string scene = SamplePlayScenes.RequireDemoScene(ScenePath);
+            _isolation.Begin();
             yield return SamplePlayScenes.Load(scene);
             LogAssert.ignoreFailingMessages = false;
 
@@ -141,7 +163,18 @@ namespace Neo.Tests.Play.Samples
                 GameObject defeat = FindInactive("DefeatOverlay");
                 Assert.That(mover != null && level != null && kills != null && draft != null && timer != null);
 
+                string grant = Argument(GrantArgument);
+                if (!string.IsNullOrEmpty(grant))
+                {
+                    foreach (string id in grant.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        player.Unit.System.GrantAbility(player.UnitId, id.Trim());
+                    }
+                }
+
                 capture?.Attach();
+                bool bossSeen = false;
+                bool spitterSeen = false;
                 int picks = 0;
                 int frames = 0;
                 int maxFrames = Mathf.CeilToInt((timer.duration + 20f) * SimulatedFps);
@@ -174,6 +207,21 @@ namespace Neo.Tests.Play.Samples
                         capture?.Shoot();
                     }
 
+                    if (frames % 15 == 0)
+                    {
+                        for (int i = 0; i < actors.childCount; i++)
+                        {
+                            Transform actor = actors.GetChild(i);
+                            if (!actor.gameObject.activeInHierarchy)
+                            {
+                                continue;
+                            }
+
+                            bossSeen |= actor.name.StartsWith("Enemy_unit_boss", StringComparison.Ordinal);
+                            spitterSeen |= actor.name.StartsWith("Enemy_unit_spitter", StringComparison.Ordinal);
+                        }
+                    }
+
                     frames++;
                     yield return null;
                 }
@@ -184,12 +232,26 @@ namespace Neo.Tests.Play.Samples
                     yield return null;
                 }
 
-                string summary = "kills " + kills.ValueInt + ", level " + level.Level + ", cards " +
-                                 string.Join(", ", taken) + ", time " + timer.CurrentTime.ToString("0") + " s";
+                List<string> owned = new();
+                foreach (AbilityCooldownSource slot in FindInactive("Loadout")
+                             .GetComponentsInChildren<AbilityCooldownSource>(true))
+                {
+                    if (slot.Level > 0)
+                    {
+                        owned.Add(slot.AbilityId + " " + slot.Level);
+                    }
+                }
+
+                string summary = "kills " + kills.ValueInt + ", level " + level.Level + ", weapons " +
+                                 string.Join(", ", owned) + ", cards " + string.Join(", ", taken) + ", time " +
+                                 timer.CurrentTime.ToString("0") + " s, spitter " + spitterSeen + ", boss " + bossSeen;
                 Debug.Log("[SurvivorDemoGameplay] " + (victory.activeSelf ? "VICTORY" : "DEFEAT") + ": " + summary);
                 Assert.That(kills.ValueInt, Is.GreaterThan(20), summary);
                 Assert.That(level.Level, Is.GreaterThan(3), summary);
                 Assert.That(picks, Is.GreaterThan(2), summary);
+                Assert.That(owned.Count, Is.GreaterThan(2), "several different weapons are in play: " + summary);
+                Assert.That(spitterSeen, Is.True, "the ranged enemy joins the waves: " + summary);
+                Assert.That(bossSeen, Is.True, "the boss arrives at two minutes: " + summary);
                 Assert.That(victory.activeSelf, Is.True, "the autopilot should survive the timer: " + summary);
             }
             finally

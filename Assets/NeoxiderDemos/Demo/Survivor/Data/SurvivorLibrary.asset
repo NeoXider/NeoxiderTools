@@ -13,18 +13,26 @@ MonoBehaviour:
   m_Name: SurvivorLibrary
   m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityLibrary
   _abilities:
-  - {fileID: 11400000, guid: 44560f1399d29df419691cedc23531bd, type: 2}
-  - {fileID: 11400000, guid: 92119a586226f0b4eae1890d8835d8d1, type: 2}
-  - {fileID: 11400000, guid: b3e734b7cb43bf24c9d80ffcf5d7ee34, type: 2}
-  - {fileID: 11400000, guid: 7bb6dd3372ac4c94db6802dcc06b3dc8, type: 2}
-  - {fileID: 11400000, guid: c47d79213afc46ee9e851166be255c08, type: 2}
+  - {fileID: 11400000, guid: 0a9a9b7333fcc1d49ae177fe022f9393, type: 2}
+  - {fileID: 11400000, guid: 9637481af47858548bbe7dee275abc4e, type: 2}
+  - {fileID: 11400000, guid: 27f77aa098d225c4e92b34288905ca95, type: 2}
   - {fileID: 11400000, guid: c762d26a91dd415cb4b0186c20d5edd6, type: 2}
+  - {fileID: 11400000, guid: c47d79213afc46ee9e851166be255c08, type: 2}
   - {fileID: 11400000, guid: 8e89c71f843e417184e568ba66211ed3, type: 2}
+  - {fileID: 11400000, guid: ee65597b0e2c81c49aebb2139f2563ee, type: 2}
+  - {fileID: 11400000, guid: e9a2fb4d7402cb94c810985fb5d35d59, type: 2}
+  - {fileID: 11400000, guid: 647a3acd154eb1f479858356f75605d5, type: 2}
+  - {fileID: 11400000, guid: dad5556600a5be141a25be63dfa3fea3, type: 2}
+  - {fileID: 11400000, guid: b3e734b7cb43bf24c9d80ffcf5d7ee34, type: 2}
+  - {fileID: 11400000, guid: 465bec665bc9c504b8c800b362aa7bc9, type: 2}
+  - {fileID: 11400000, guid: 44560f1399d29df419691cedc23531bd, type: 2}
+  - {fileID: 11400000, guid: 881db263202eea24991c3b1673198f73, type: 2}
+  - {fileID: 11400000, guid: 766dcfdad455df348ac3fc2d7c1fc664, type: 2}
   _modifiers:
-  - {fileID: 11400000, guid: a01746560c019424b889894b790065c8, type: 2}
-  - {fileID: 11400000, guid: 947bd54ed0ccd124f8ae61c5344bbef7, type: 2}
-  - {fileID: 11400000, guid: 686e5829af57ca24b8b9713f8caf43f0, type: 2}
-  - {fileID: 11400000, guid: 8b57ee5d7a8f1834c9513cdd1857acb6, type: 2}
+  - {fileID: 11400000, guid: cc5ba64ecd6d54d4097988e4934c052d, type: 2}
   - {fileID: 11400000, guid: 091b81e12bd694547ad259e45d2f4449, type: 2}
+  - {fileID: 11400000, guid: 686e5829af57ca24b8b9713f8caf43f0, type: 2}
   - {fileID: 11400000, guid: 46a3b86cc90d325429b0eb53327683de, type: 2}
+  - {fileID: 11400000, guid: 8b57ee5d7a8f1834c9513cdd1857acb6, type: 2}
+  - {fileID: 11400000, guid: becdc3aab4d5470cb7056f008b49a14b, type: 2}
   - {fileID: 11400000, guid: a25e7a7eab736ee4786cf22ec5050e27, type: 2}

@@ -1,197 +1,84 @@
 # Play Mode testing
 
-**What it is:** `Neo.Tests.Play` verifies Unity lifecycle behavior and integration between the package's runtime APIs,
-scene components and UnityEvents. Its sources live in `Assets/Neoxider/Tests/Play`.
+**What it is:** the guide to `Neo.Tests.Play`, the Play Mode suite in `Assets/Neoxider/Tests/Play`. It verifies Unity lifecycle behaviour and the integration of runtime APIs, scene components and UnityEvents.
 
-**How to use:** run `Neo.Tests.Play` from the Test Runner's PlayMode tab (see
-[running and interpreting coverage](#running-and-interpreting-coverage)), and follow the API, allocation and scene
-sections when you add tests.
+**How to use:**
+1. Run the suite as described in [Testing — running tests](Testing.md#running-tests): PlayMode tab, `Neo.Tests.Play` or a fixture filter.
+2. Check the [Mirror and solo scope](#running-and-interpreting-coverage) before reading results.
+3. When you add tests, follow the [C# API](#testing-public-c-apis), [allocation](#allocation-guards-and-benchmarks) and [scene](#scene-and-nocode-workflows) sections.
+4. Record passed, failed and skipped tests separately: a missing demo, a host-only test and a source check are different evidence, and none is a remote-client or scene-interaction run.
+
+**Navigation:** [← Testing](Testing.md) · [Network Play Mode](Testing/NetworkPlayMode.md) · [Docs](./README.md)
 
 ---
 
 ## Running and interpreting coverage
 
-Use Unity Test Runner's PlayMode tab and select `Neo.Tests.Play`, or filter by the fixture under
-investigation. The assembly is gated by `UNITY_INCLUDE_TESTS`. Mirror imports, integration-only fixtures,
-attributes and setup are guarded by `MIRROR`. Mixed fixtures keep their solo cases compiled: dispatcher
-offline fallback, local InteractiveObject, local PhysicsEvents3D and the generic reactive-property bridge.
-These four cases do not acquire a host when run directly. Personal Money and the Everyone filter also
-remain compiled without Mirror; their Mirror-enabled variants retain the existing host/spawn preconditions
-and assertions. Money keeps its isolated save provider through owned-object destruction in either mode.
-The dispatcher offline positive remains outside
-the integration prerequisite and checks exact void/int/float/string callbacks with no active session.
-The current asmdef still lists Mirror and the RPG network adapter; these source guards do not establish
-a Mirror-absent import/compile result. Record actual dependency resolution and discovery separately.
+The assembly needs `UNITY_INCLUDE_TESTS`. It covers audio teardown, combined transform animation, slots and wheel completion, dialogue, inventory, shop purchases and grants, RPG combat, interaction queries and pointer events, AnimationFly, UI mesh rigs, network host behaviour and selected demo scenes.
 
-The suite covers audio teardown, combined transform animation, slots and wheel completion, dialogue,
-inventory, shop purchasing and inventory grants, RPG combat, interaction queries and pointer events,
-AnimationFly, UI mesh rigs, network host behavior and selected demo scenes. Legacy network fixtures use
-an in-process host and DummyTransport, which opens no sockets. They exercise host authority, handshake,
-serialized loopback messages and restart behavior. Names containing `Cmd` or `Globally` do not establish
-remote Command admission or synchronization. The separate-peer harness belongs to the network testing
-topic; report its actual execution independently.
+**Mirror and solo cases.** Mirror imports, integration-only fixtures and their setup are guarded by `MIRROR`. Four solo cases stay compiled and start no host: the dispatcher offline fallback (exact void, int, float and string callbacks without a session), local InteractiveObject, local PhysicsEvents3D and the generic reactive-property bridge. Personal Money and the Everyone filter also compile without Mirror; their Mirror variants keep the host and spawn preconditions, and Money keeps its isolated provider until owned objects are destroyed. The asmdef still lists Mirror and the RPG network adapter, so these guards do not prove a Mirror-absent compile.
 
-Both legacy networked dispatcher cases explicitly enable `isNetworked`, configure identity/behaviours
-while inactive, require a client spawn and host observer, and check four outgoing/received RPC envelopes
-plus exact void/int/float/string callbacks. A local fallback cannot satisfy those assertions. The offline
-case remains separate. Relay rejection cases check unchanged valid-channel state, then deliver positive
-controls on the same channel. A serialized reliable control drains preceding host-to-client traffic.
+**What the network fixtures prove.** Legacy fixtures use an in-process host and `DummyTransport`, which opens no sockets: host authority, handshake, serialized loopback and restarts. Names with `Cmd` or `Globally` do not prove remote Command admission or sync; real peers are the [separate matrix](Testing/NetworkPlayMode.md).
 
-`EventChannel_NeverDeliversToTheHostItself` checks the public channel's complete host exclusion:
-Publish skips loopback, PublishTo rejects that connection, and even direct serialized ingress produces
-zero channel callbacks/ReceivedCount. A direct `99` payload is observed through Mirror's read-only
-send/receive diagnostics, followed by the separate reliable barrier, while the real channel handler
-remains installed. Exact envelope/payload counts and live ready connection/player state establish the
-host admission positive. A channel Received callback on a pure client needs the separate real-peer path;
-the host test does not establish remote delivery.
+- Networked dispatcher cases enable `isNetworked`, configure identity and behaviours while inactive, require a client spawn and a host observer, and count four RPC envelopes plus exact callbacks, so a local fallback cannot pass.
+- Relay rejection cases check the valid channel's state is unchanged, then deliver positive controls on that channel; a reliable control drains earlier host-to-client traffic.
+- `EventChannel_NeverDeliversToTheHostItself`: Publish skips loopback, PublishTo rejects the host connection, and direct serialized ingress gives zero callbacks and `ReceivedCount`. A direct `99` payload is seen through Mirror's read-only diagnostics, then a reliable barrier, with the real handler installed.
+- `PhysicsEventsNetworkTests` moves a Rigidbody through a trigger in a dedicated local PhysicsScene with native collision steps: exactly one enter and one exit with the actor's collider, plus RPC envelopes when networked. No private callbacks, no remote physics.
+- `InteractiveObjectPlayTests` covers raycasts and obstacles. Scene-player pickup tests prove clone isolation through their helper. RPG snapshot replay proves the codec seam, not a real late join.
 
-`PhysicsEventsNetworkTests` moves a Rigidbody through a trigger in a dedicated local PhysicsScene and
-steps native collision detection. It asserts exactly one enter/exit with the actor's collider and checks
-RPC envelopes in the networked case. It does not invoke private physics callbacks or test remote physics.
-`InteractiveObjectPlayTests` covers raycasts/obstacles separately. Scene-player pickup tests call their
-helper directly and prove clone isolation; RPG snapshot replay proves a codec/apply seam, not a real late join.
+**Isolation regressions.** `Audit20261023NeoTestsPlay*` protect fixture isolation, save-provider lifetime and culture handling, demo discovery, native cleanup and bounded network waits. Compile and run them before claiming runtime validation.
 
-`Audit20261023NeoTestsPlay*` regressions protect fixture isolation, save-provider lifetime and culture
-handling, imported sample discovery, native object cleanup and bounded network waits. They remain
-ordinary NUnit/Unity tests and must be compiled and executed before claiming runtime validation.
-The network isolation file adds paused versions of the seven affected fixture groups, exact borrowed
-global restoration across two hosts, foreign-session rejection and cleanup after interrupted pickup/copy,
-duplicate-bootstrap and Mult scene loads. The Mult cases interrupt both a pending load and a load after
-Awake moved the manager into DDOL; they check owned-object release and borrowed-scene/DDOL-root survival.
-A further case registers an earlier exact-scene native callback that creates an external DDOL root during
-the load. It requires that root and its child never enter the ownership ledger and survive yielded host
-cleanup with their exact scene, parent and position, while the actual owned manager and scene are released.
-Three further cases exercise native EventSystem registration: restore a live registered original,
-leave a disabled original disabled, and leave a destroyed original unselected. All use actual native
-component activation/disable/destruction, with no private lifecycle calls or expected-error whitelist.
-These are authored regression sources; no implementation-phase execution result is implied.
+- The network isolation file adds paused versions of seven fixture groups, exact restoration of borrowed globals across two hosts, foreign-session rejection, and cleanup after interrupted pickup and copy, duplicate bootstrap and Mult loads (pending, and after Awake moved the manager into DDOL).
+- An external DDOL root created during the load by an earlier exact-scene callback never enters the ownership ledger and survives cleanup with its scene, parent and position.
+- Three cases restore a live registered EventSystem, leave a disabled one disabled and leave a destroyed one unselected, through native activation and destruction only.
 
 ## Testing public C# APIs
 
-Create the smallest object graph needed for the contract. Subscribe to public events, call the typed
-API, then assert observable state and event counts. For example, inventory tests call
-`InventoryComponent.AddItemByIdAmount` and `RemoveItemByIdAmount` and check `GetCount`,
-`TotalItemCount` and `OnInventoryChanged`. Shop tests call `Buy`/`BuyBundle` and observe ownership,
-equipment, inventory grants and spending through `IMoneySpend`.
+Build the smallest object graph, subscribe to public events, call the typed API and assert state and event counts. Inventory tests call `InventoryComponent.AddItemByIdAmount` / `RemoveItemByIdAmount` and check `GetCount`, `TotalItemCount` and `OnInventoryChanged`; Shop tests call `Buy` / `BuyBundle` and observe ownership, equipment, grants and spending through `IMoneySpend`.
 
-Install a nonpersisting `ISaveProvider` through `SaveProvider.SetProvider` **before** adding a component
-that can load or save in Awake/OnEnable. Keep `SaveProvider.CurrentProvider`, destroy the test's objects
-while its isolated provider is still active, then restore that exact provider instance in `finally`.
-Do not clear the host project's saves or replace its configured provider with a newly constructed
-PlayerPrefs provider. Inventory, shop, money-network and bonus fixtures use an isolated in-memory
-provider. Float serialization in this test provider uses invariant culture in both directions.
+- **Save providers.** Install a nonpersisting `ISaveProvider` with `SaveProvider.SetProvider` **before** adding a component that loads or saves in Awake or OnEnable. Keep `SaveProvider.CurrentProvider`, destroy your objects while the isolated provider is active, then restore that exact instance in `finally`. Never clear the host's saves or swap in a new PlayerPrefs provider. The in-memory test provider serializes floats in the invariant culture.
+- **Ownership.** Track every GameObject and native asset (AudioClip, ScriptableObject, Sprite, Texture2D) and release them after failures too. Stopping a host does not destroy the runtime-created player template; destroy it yourself. Leave unrelated scene objects and EventSystems alone.
+- **Pointer input.** Call `OnPointerEnter`, `OnPointerExit` and `OnPointerClick` directly, without an input module; device input needs a backend-specific test. `InteractiveObjectPlayTests` installs its own main camera and ray provider and restores borrowed cameras. Cursor-only exit cases use `InteractionRayProvider.RayMode.Mouse`, turn off the screen-center override and put the target behind the camera; a `Both`-mode case keeps hover until native Update sees the aim leave; the hover-disabled case proves a center hit still clicks. Public pointer calls do not prove hardware input.
+- **Waits.** Use real-time deadlines; a paused game's `Time.deltaTime` cannot bound a stall. Network waits fail after five real-time seconds, scene loads after ten. A timeout fails the test instead of reaching an assertion that might pass uninitialized. Restore time scale and other globals you changed.
 
-Track every created GameObject and native asset, including AudioClip, ScriptableObject, Sprite and
-Texture2D instances. Release owned objects even after an assertion fails. Stopping a host destroys
-spawned players but does not transfer ownership of the original runtime-created player template;
-the fixture must also destroy that template. Preserve unrelated scene objects and EventSystems.
-Pointer-handler tests can invoke `OnPointerEnter`, `OnPointerExit` and `OnPointerClick` directly without
-installing an input module. Device-input behavior needs a separate backend-specific test.
+### NetworkTestSession
 
-`InteractiveObjectPlayTests` installs its own sole active main camera and explicit ray provider,
-temporarily suspending and later restoring borrowed main cameras. Cursor-only exit cases select
-`InteractionRayProvider.RayMode.Mouse`, disable the object's screen-center override and put their target
-behind the camera, then prove enter before asserting exactly one exit. A separate `Both`-mode positive
-uses a real center ray: pointer exit retains hover until native Update observes that aim left the target.
-The hover-disabled case proves a real center hit still clicks and checks the mouse-interaction gate on
-a later frame. Those cases yield actual frames; public pointer calls do not establish hardware input.
+`NetworkTestSession` is the internal ownership helper of the legacy network fixtures:
 
-Wait for observable completion with a real-time deadline. A paused game's `Time.deltaTime` cannot
-bound a stalled test. Network waits fail after five real-time seconds, including while paused; scene
-loads use ten seconds. A timeout must fail the test rather than silently continue to an assertion
-that might also pass in the uninitialized state. Restore time scale and other global settings owned
-by a fixture during teardown.
+1. Create it before changing globals or constructing objects.
+2. Register the exact manager with `OwnManager` and every created object with `Own`.
+3. Keep the isolated save provider installed and **yield** `Cleanup()` from UnityTearDown.
 
-Within `Neo.Tests.Play`, `NetworkTestSession` is an internal ownership helper for the legacy fixtures.
-Create it before modifying globals or constructing objects, register the exact manager with `OwnManager`
-and every fixture-created object with `Own`, then **yield** `Cleanup()` from UnityTearDown. Keep an isolated
-save provider installed until this cleanup finishes. The helper restores the exact prior `Transport.active`,
-background flag, frame cap, VSync, time scale and Unity random state. It rejects an existing session,
-manager (including inactive managers) or scene identity before taking ownership. It never selects and
-stops discovered managers as generic teardown. A replacement session is left untouched.
+It restores the exact `Transport.active`, background flag, frame cap, VSync, time scale and Unity random state. It refuses an existing session, manager (inactive included) or scene identity, never stops discovered managers and leaves a replacement session untouched.
 
-Construct the whole network object while inactive before activating/spawning it. Use
-`NetworkTestHelper.WaitForSpawn(identity)` for host/client/observer readiness, `WaitUntil` for the actual
-state/event, and `ReliableBarrier()` before final count or negative assertions. A barrier alone is not
-proof that a gameplay message was sent; dispatcher tests also count RPC envelopes. Do not replace sleeps
-with larger sleeps, use scaled cooldowns as deadlines, or exhaust a nested cleanup IEnumerator manually.
-The regression harness yields nested cleanup through UnityTearDown even after an assertion interrupts
-the body. These internal APIs do not change the package's gameplay or serialized APIs.
-
-Русский: сетевые legacy fixtures запускаются только в изолированном мире. Cleanup восстанавливает точные
-заимствованные globals и уничтожает собственные объекты после остановки своей сессии. Ожидания используют
-реальное время и наблюдаемый результат; host loopback, native physics, codec/clone и remote-peer результаты
-нужно учитывать отдельно. Standalone dispatcher/interaction/physics/reactive проверки не требуют host;
-personal Money и Everyone filter также сохраняются без Mirror, с прежним host-путём при `MIRROR`.
-Mult загружается аддитивно: учитываются точная сцена и manager с подтверждённой scene/template-ссылкой,
-затем проверяется готовность manager. Само появление чужого DDOL root во время загрузки не даёт ownership.
-Cursor-only exit и положительный center-hover проверяются отдельно. Новые регрессии требуют последующего
-централизованного запуска.
+Build network objects while inactive, then activate or spawn them. Use `NetworkTestHelper.WaitForSpawn(identity)` for readiness, `WaitUntil` for the state or event, and `ReliableBarrier()` before final count or negative assertions; a barrier alone does not prove a message was sent. Do not lengthen sleeps, use scaled cooldowns as deadlines or drain a nested cleanup IEnumerator by hand. These helpers change no gameplay or serialized API.
 
 ## Allocation guards and benchmarks
 
-Play Mode allocation guards and benchmarks use the shared `Neo.Tests.Performance` assembly described in
-[Performance and allocation tests](Testing.md#performance-and-allocation-tests). Do not measure with
-`System.GC.GetAllocatedBytesForCurrentThread()`: it reads 0 in the Unity 6 Editor and IL2CPP. Use
-`GcAlloc.AssertNone`/`GcAlloc.TryCount` or a `GcAllocCounter` from `GcAllocCounter.CreateOrIgnore()`; a player
-without profiler support reports such cases as Ignored (`NotSupported`), never as passed.
+Play Mode uses the shared `Neo.Tests.Performance` assembly ([Performance and allocation tests](Testing.md#performance-and-allocation-tests)).
 
-A counting window must open and close inside one frame: yield to reach the state under test, warm the path,
-then measure synchronous calls between `Begin()` and `End()`. A window across `yield return` throws.
-PlayerLoop costs use `NeoPerfUpdateWindowBegin`/`NeoPerfUpdateWindowEnd` with `NeoPerfUpdateWindow.Start(frames)`,
-which records each Update phase separately, and `NeoPerf.EstimateBytesPerOperation` estimates bytes from the
-frame-scoped `GC Allocated In Frame` counter. Benchmarks carry `[Category(NeoPerf.Category)]` and
-`[Explicit(NeoPerf.ExplicitReason)]`, print one `NEO_PERF <case> key=value ...` line per case and run with
-`-testPlatform PlayMode -testCategory Performance -testFilter "<fixture or test>"`; the self-test
-`GcAllocCounterPlayTests` checks the counter on the real PlayerLoop.
-
-По-русски: в Play Mode окно подсчёта аллокаций должно открываться и закрываться в одном кадре; бенчмарки
-явные (`Explicit`), категория `Performance`, результат — строки `NEO_PERF` в логе.
+- `System.GC.GetAllocatedBytesForCurrentThread()` reads 0 in the Unity 6 Editor and IL2CPP. Use `GcAlloc.AssertNone`, `GcAlloc.TryCount` or `GcAllocCounter.CreateOrIgnore()`; a player without profiler support reports Ignored (`NotSupported`), never passed.
+- A window opens and closes in one frame: yield to the state, warm the path, then measure synchronous calls between `Begin()` and `End()`. A window across `yield return` throws.
+- PlayerLoop costs use `NeoPerfUpdateWindowBegin` / `NeoPerfUpdateWindowEnd` with `NeoPerfUpdateWindow.Start(frames)`; `NeoPerf.EstimateBytesPerOperation` estimates bytes from `GC Allocated In Frame`.
+- Benchmarks carry `[Category(NeoPerf.Category)]` and `[Explicit(NeoPerf.ExplicitReason)]`, print one `NEO_PERF` line per case and run with `-testPlatform PlayMode -testCategory Performance -testFilter "<fixture or test>"`. `GcAllocCounterPlayTests` checks the counter on the real PlayerLoop.
 
 ## Scene and NoCode workflows
 
-Component tests construct scene adapters in code and exercise the same typed methods and UnityEvents
-that Inspector bindings call. Reflection is used for serialized authoring fields and selected
-integration seams; this does not replace runtime output assertions or validate persistent Inspector
-bindings. Demo scene smoke tests provide additional scene-level coverage where their samples exist.
+Component tests build scene adapters in code and call the typed methods and UnityEvents that Inspector bindings use. Reflection sets serialized authoring fields and some seams; it does not replace runtime assertions or validate persistent bindings.
 
-Supported demo roots are:
+**Demo roots.** Discovery reads `Assets/NeoxiderDemos/<name>`, the same folder in the repository and after importing the downloads; the older imported layouts `Assets/Samples/NeoxiderTools` and `Assets/Samples/Neoxider Tools` are still recognized. A missing tree causes an explicit skip. With several imported versions, keep the one you test: automatic version selection is not guaranteed. `SampleScenePlaySmokeTests` and `AudioDemoScenePlayTests` are described in the [test inventory](Testing.md#sample-demo-and-packaging-tests).
 
-- Development: `Assets/NeoxiderDemos/Demo`.
-- Release package: `Assets/NeoxiderDemos/Demo`.
-- Imported sample: `Assets/NeoxiderDemos/Demo` (the legacy package folder
-  `Neoxider Tools` and sample folder `Demo` are also recognized).
+### Mult scene tests
 
-Discovery reads `Assets/NeoxiderDemos`; a missing demo tree causes an explicit skip.
-`SampleScenePlaySmokeTests` loads every scene of the demo trees (one case per scene: 12
-frames, no error/assert/exception logs, Filled Images with sprites, no demo scene with missing references, the authored info card on
-Demo scenes) and `AudioDemoScenePlayTests` drives the authored AudioDemo buttons; see
-[sample, demo and packaging tests](Testing.md#sample-demo-and-packaging-tests). If several imported versions exist, retain the version intended for testing;
-automatic version selection is not guaranteed. The optional multiplayer tests in
-`MultSceneNetworkTests` need the development project's `Assets/Scenes/Mult.unity` and skip if absent.
-That fixture refuses an already loaded Mult scene and existing network managers/sessions. It loads
-its own scene additively, waits for actual scene load/Awake and manager publication, and records exact
-loaded-scene hierarchies before readiness assertions. A manager moved to DDOL must be anchored to that
-scene, its known-owned hierarchy or its serialized scene-player template; only that manager's hierarchy
-is then adopted, never an external parent. Foreign replacement managers are refused. A root appearing
-during the load is not evidence of ownership: the fixture does not infer ownership from names or a global
-before/after root difference. Independent DDOL roots, including those created by earlier sceneLoaded
-observers, remain borrowed unless exact scene/hierarchy/reference provenance establishes ownership.
-On an interrupted pending load, teardown waits for the owned load before stopping the owned session,
-releasing ledgered objects and unloading that exact scene. A load that never completes fails after a
-real-time deadline and still needs native failure-path evidence. Teardown preserves borrowed scenes
-and both pre-existing and during-load borrowed DDOL roots, and restores the exact prior save provider,
-active scene and cursor state. EventSystem.current is restored only when the exact captured original
-is still live and active/enabled: native OnEnable/OnDisable maintains uGUI registration, and its setter
-rejects null/unregistered instances. An absent, disabled or destroyed original is left to native registry
-selection; cleanup does not enable, disable or register foreign EventSystems. Keep the isolated provider
-installed until owned-object destruction finishes.
+`MultSceneNetworkTests` needs the development project's `Assets/Scenes/Mult.unity` and skips without it; the skip is not a multiplayer pass.
 
-Русский: при cleanup восстанавливается только живой active/enabled EventSystem, захваченный из native
-registry. Null, выключенный или уничтоженный оригинал не назначается обратно. Event channel на host
-отбрасывает и прямой входящий payload; положительный контроль проверяет реальный serialized ingress
-через diagnostics и отдельный barrier, без подмены handler и без утверждений о pure-client доставке.
+- It refuses an already loaded Mult scene and existing managers or sessions, loads its own scene additively, waits for load, Awake and manager publication, and records the exact hierarchies first.
+- A manager moved to DDOL must be anchored to that scene, its owned hierarchy or its serialized scene-player template; only that hierarchy is adopted and foreign managers are refused.
+- Ownership is never inferred from names or a before/after root difference. DDOL roots created during the load, including by earlier `sceneLoaded` observers, stay borrowed without exact provenance.
+- After an interrupted pending load, teardown waits for it, stops the owned session, releases ledgered objects and unloads that exact scene. A load that never completes fails after a real-time deadline.
+- Teardown keeps borrowed scenes and DDOL roots and restores the prior save provider, active scene and cursor state.
+- `EventSystem.current` is restored only when the captured original is still live and active, because native OnEnable and OnDisable maintain uGUI registration and the setter rejects null or unregistered instances. Cleanup never enables, disables or registers foreign EventSystems.
 
-Record passed, failed and skipped tests separately. A missing sample, a host-only test and a static
-source check each provide different evidence; none should be reported as an executed remote-client
-or scene interaction check.
+## По-русски
+
+Legacy-тесты сети работают в изолированном мире: in-process host и `DummyTransport` без сокетов; имя с `Cmd` или `Globally` не доказывает доставку на клиент, удалённые пиры проверяет отдельная матрица. Без Mirror компилируются автономные проверки dispatcher, interaction, physics, reactive, а также personal Money и фильтр Everyone. Изолированный провайдер сохранений ставится до создания компонентов и восстанавливается в `finally`; ожидания используют реальное время. Cleanup восстанавливает точные заимствованные globals и уничтожает только свои объекты; чужой DDOL root, появившийся при загрузке Mult, не становится своим. Окно подсчёта аллокаций открывается и закрывается в одном кадре.

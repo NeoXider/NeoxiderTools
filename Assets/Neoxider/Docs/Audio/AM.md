@@ -1,16 +1,18 @@
 # AM (Audio Manager)
 
-**What it is:** Central manager for sound effects and music. Singleton (`AM.I`), with separate `AudioSource`
-channels for music and effects, and two sound channels — **Sfx** and **UI** — with their own volume,
-mute and mixer group (see [Sound channels](#sound-channels-sfx--ui); since 10.13.11 on the 10.13 line and
-the first `main` release after 10.19.0).
+**What it is:** the central manager for sound effects and music (`Scripts/Audio/AudioSimple/AM.cs`, namespace
+`Neo.Audio`), a singleton reached through `AM.I`. Sounds and music share one entry format; music entries are
+pools that crossfade by default. Sounds play on two channels, **Sfx** and **UI**, each with its own volume, mute
+and mixer group.
 
-Sounds and music share **one record contract**, so there is one thing to learn rather than two. Music
-records are additionally **pools**, and every music change **crossfades** by default.
-
-**How to use:** add `AM` to a global object and fill its sound and music entries ([Setup](#setup)), then
-call `AM.I.Play("id")` and `AM.I.PlayMusicPool("id")` from code ([Code Usage](#code-usage)), or use
-[PlayAudio](PlayAudio.md), [PlayAudioBtn](PlayAudioBtn.md) and [MusicControl](MusicControl.md) without code.
+**How to use:**
+1. `Add Component > Neoxider > Audio > AM` on a global object.
+2. Drop clips onto **Sound Entries** to get one entry per clip, named after it. Drop them onto an existing entry's
+   row to make them variations of that cue.
+3. Do the same on **Music Entries**. Give each pool an id (`menu`, `gameplay`, `boss`) and pick its Mode.
+4. Optionally set **Startup Music Id**; empty starts the first pool.
+5. Call `AM.I.Play("id")` and `AM.I.PlayMusicPool("id")` ([Code usage](#code-usage)), or use [PlayAudio](PlayAudio.md),
+   [PlayAudioBtn](PlayAudioBtn.md) and [MusicControl](MusicControl.md) without code.
 
 ---
 
@@ -20,71 +22,63 @@ One entry in either list holds:
 
 | Part | Meaning |
 |------|---------|
-| **id** | Optional. Play by index as always; give it an id and `AM.I.Play("hit")` works too - and survives reordering the list. |
-| **clips** | A **set**, not one clip. A random clip plays each time, never the same one twice in a row. Put every variation of a cue in one entry. |
-| **volume** | A **multiplier** of the channel, `0..2`, default `1`. What you hear is `channel volume x entry volume`. Above `1` lifts a clip that was mastered too quietly. |
-| **clip trim** | A per-clip multiplier, `0..2`, drawn next to each clip. Takes are rarely matched in level; this evens them out without re-exporting the file. Untouched clips read as `1`. |
-| **pitch** | Optional detune with a min/max range. Defaults to **on** for sounds, **off** for music. |
-| **channel** | Sounds only. `Sfx` (default) or `Ui` — which volume / mute / mixer group the entry plays on. |
-| **spatial blend** | Sounds only. Used by `PlayAt`: `0` = 2D, `1` = fully 3D (default). Ordinary `Play` ignores it. |
-| **placeholder** | The entry is empty on purpose (its sound is not delivered yet): playing it while it has no clip does nothing and logs nothing. |
+| **id** | Optional. Entries play by index; with an id, `AM.I.Play("hit")` works too and survives reordering. |
+| **clips** | A set. A random clip plays each time, never the same one twice in a row. Put every variation of a cue in one entry. |
+| **volume** | Multiplier of the channel, `0..2`, default `1`. Above `1` lifts a clip mastered too quietly. |
+| **clip trim** | Per-clip multiplier, `0..2`, next to each clip. Evens out takes without re-exporting. Untouched clips read as `1`. |
+| **pitch** | Optional detune with a min/max range. On by default for sounds, off for music. |
+| **channel** | Sounds only. `Sfx` (default) or `Ui`: which volume, mute and mixer group the entry uses. |
+| **spatial blend** | Sounds only, used by `PlayAt`: `0` = 2D, `1` = fully 3D (default). `Play` ignores it. |
+| **placeholder** | The entry is empty on purpose; playing it without a clip does nothing and logs nothing. |
 
-> **Volume multiplies.** A music channel at `0.3` playing an entry at `1` comes out at `0.3`. This is what
-> keeps the player's own volume slider working: `SetMusicVolume` / `SetEfxVolume` set the *channel*, and
-> every entry and every per-call override sits underneath it.
->
-> The full product is `channel x entry x clip trim`. Entry, trim and per-call override each go up to `2`,
-> because they are multipliers and a ceiling of `1` could only ever make a clip *quieter* than the channel.
-> The audible music level is still capped at `1` - `AudioSource.volume` genuinely is `0..1` - so the
-> headroom pays off against a channel the player has turned down.
+The collapsed row shows the id and, for a one-clip entry, the clip field, so a new entry is filled with one drag.
+Expanding it lists every clip with its trim slider, plus volume, pitch and, for music, mode and fade override.
 
-Two independent ways to stop a repeated cue sounding like one sample on a loop - several clips, or a pitch
-spread. They compose; use either or both.
+**Volume multiplies.** The audible level is `channel x entry x clip trim`. A music channel at `0.3` playing an
+entry at `1` is heard at `0.3`, so the player's slider keeps working: `SetMusicVolume` and `SetEfxVolume` set the
+channel, and entries and per-call overrides sit under it. Entry, trim and override go up to `2` so they can lift a
+clip; the result is still capped at `1` because `AudioSource.volume` is `0..1`.
 
 ## Music pools
 
-A music entry with several clips **is a pool**. It starts on a random track; what happens at the end of
-that track is the pool's **Mode**:
+A music entry with several clips is a pool. It starts on a random track; the pool's **Mode** decides what happens
+when the track ends:
 
 | Mode | Behaviour |
 |------|-----------|
-| `Loop` (default) | The track repeats. Only the game changes it - `NextMusicTrack()` or another pool. A track change usually belongs to a game beat (a wave boundary, a boss entrance), not to wherever the audio file happened to end. |
-| `Shuffle` | When the track ends, another random track of the same pool crossfades in, never repeating the one that just played. This is what the legacy `EnableRandomMusic()` did. |
+| `Loop` (default) | The track repeats. Only the game changes it, with `NextMusicTrack()` or another pool, usually at a game beat such as a wave boundary or a boss entrance. |
+| `Shuffle` | Another random track of the pool crossfades in, never the one that just played. This replaces the legacy `EnableRandomMusic()`. |
 
-A menu / gameplay / boss soundtrack is therefore **three entries with three ids**, configured in the
-inspector. Game code only ever says "play pool X" or "next track".
+A menu, gameplay and boss soundtrack is three entries with three ids. Game code only says "play pool X" or
+"next track".
 
-## Setup
-
-1. `Add Component > Neoxider > Audio > AM` on a global object.
-2. Drop clips onto the **Sound Entries** list to get one entry per clip, named after it. Drop them onto an
-   existing entry's row instead to make them variations of that one cue.
-3. Same for music, on the **Music Entries** list. Give each pool an id (`menu`, `gameplay`, `boss`) and
-   pick its Mode.
-4. Optionally set **Startup Music Id**; leave it empty to start with the first pool.
-
-The collapsed row of an entry shows its id and, for a one-clip entry, the clip field itself - so a fresh
-entry is filled by one drag with nothing to expand. Expanding it lists every clip with its own trim
-slider, plus volume, pitch and (for music) mode and fade override.
-
-## Key Fields (Inspector)
+## Inspector fields
 
 | Field | Description |
 |-------|-------------|
 | `_efx` / `_music` | The two channel `AudioSource`s. Created automatically if null. |
-| `_soundEntries` | Sound-effect entries (the record contract above). |
-| `_musicEntries` | Music entries - the pools. |
-| `_playMusicOnStart` | Start music when the manager starts. Skipped if something already asked for a pool. |
-| `_startupMusicId` | Which pool to start with. Empty = the first entry. |
-| `_crossfadeMusic` | Crossfade music changes. Off makes every change a hard cut unless a call says otherwise. |
-| `_musicFadeDuration` | Default crossfade length in seconds (`0.8`). A pool can override it. |
-| `_randomizePitch`, `_pitchMin`, `_pitchMax` | Pitch for one-shots played from the **legacy** `_sounds` array or straight from an `AudioClip`. Entries carry their own pitch settings. |
-| `_pitchVoices` | Size of the `AudioSource` pool used for pitched one-shots (`8`). |
-| `_uiVolume` | Volume of the UI channel, `0..1` (`1`). The Sfx channel volume is the `_efx` source volume. |
+| `_ambience` | Optional looping source under the music. Created on first use when empty. |
+| `_ambienceVolume` | Ambience level relative to the music channel, `0..1` (`0.3`). |
+| `_ambienceFadeDuration` | Ambience fade in and out, seconds (`1.5`). |
+| `_soundEntries` | Sound-effect entries. |
+| `_musicEntries` | Music entries, the pools. |
+| `_playMusicOnStart` | Start music when the manager starts (`true`). Skipped if something already asked for a pool. |
+| `_startupMusicId` | Pool to start with. Empty = the first entry. |
+| `_crossfadeMusic` | Crossfade music changes (`true`). Off makes every change a hard cut unless a call passes `MusicTransition.Fade`. |
+| `_musicFadeDuration` | Default crossfade length, seconds (`0.8`). A pool can override it. |
+| `_randomizePitch`, `_pitchMin`, `_pitchMax` | Pitch for one-shots from the legacy `_sounds` array or a direct `AudioClip` (`off`, `0.94`, `1.06`). Entries carry their own pitch. |
+| `_pitchVoices` | `AudioSource` pool size for pitched one-shots, `1..32` (`8`). |
+| `_uiVolume` | UI channel volume, `0..1` (`1`). The Sfx channel volume is the `_efx` source volume. |
 | `_uiMixerGroup` | Optional mixer group for the UI channel. Empty = the `_efx` source's group. |
-| `_positionalVoices` | Size of the `AudioSource` pool used by `PlayAt` (`8`). |
+| `_positionalVoices` | `AudioSource` pool size for `PlayAt`, `1..32` (`8`). |
 
-## Code Usage
+**Helper sources.** The UI source, the pitch and positional voices, the crossfade source and a created ambience
+source appear on first use, also in Edit Mode from an inspector button. They are `DontSave`, so opening a scene or
+prefab adds no children and does not mark it dirty. AM destroys them in `OnDestroy` in Play Mode and builds; an
+authored ambience source is left alone. In Edit Mode, where `OnDestroy` is not sent, helpers made by an inspector
+button stay until the scene reloads and are never saved.
+
+## Code usage
 
 ```csharp
 using Neo.Audio;
@@ -106,30 +100,25 @@ AM.I.StopMusic(MusicTransition.Instant);
 
 AM.I.PlayMusicByClip(myTrack, 0.8f);   // a clip directly
 
-// --- channels (the player's volume sliders)
+// --- the player's volume sliders
 AM.I.SetMusicVolume(0.6f);
 AM.I.SetEfxVolume(0.9f);                              // = SetChannelVolume(SoundChannel.Sfx, 0.9f)
-AM.I.SetChannelVolume(SoundChannel.Ui, 0.5f);
-
-// --- optional cues, positional one-shots
-bool played = AM.I.TryPlay("door_creak");             // false, silently, when there is nothing to play
-AM.I.PlayAt("explosion", hitPoint);                   // 3D one-shot at a world position
 ```
 
-Calling `PlayMusicPool` for the pool that is already playing does **nothing** - no restart, no fade into
-itself - so a screen is free to re-assert its music every frame.
+Channels, `TryPlay` and `PlayAt` have their own sections below.
 
-A request without a usable track keeps the current clip, pool identity and volume multiplier, and does
-not raise `OnMusicStarted`. This also applies when `MusicOptions.Track(index)` selects a null slot.
-`TryNextMusicTrack` returns `false` for that selection and keeps the previous multiplier, even if the
-rejected options included a volume override. Missing entries still use the existing diagnostic policy;
-empty placeholder pools stay silent.
+- `PlayMusicPool` for the pool already playing does nothing: no restart, no fade into itself. A screen can
+  re-assert its music every frame.
+- A request without a usable track keeps the current clip, pool and volume multiplier, and does not raise
+  `OnMusicStarted`. This includes `MusicOptions.Track(index)` on a null slot.
+- `TryNextMusicTrack` returns `false` in that case and keeps the previous multiplier, even if the rejected options
+  carried a volume override.
+- Missing entries follow the usual diagnostic policy; empty placeholder pools stay silent.
 
 ### Per-call overrides
 
-The entry supplies the defaults; `SoundOptions` / `MusicOptions` replace them **for one call only** and
-never write back into the entry. No `SetVolume` / play / `SetVolume` dance, which leaks state the moment
-anything throws in between.
+The entry supplies the defaults. `SoundOptions` and `MusicOptions` replace them for one call only and never write
+back into the entry.
 
 ```csharp
 AM.I.Play("ui", SoundOptions.Volume(0.6f).WithoutPitch());
@@ -140,12 +129,12 @@ AM.I.PlayMusicPool("boss", MusicOptions.Volume(0.5f).WithFade(2f));
 AM.I.PlayMusicPool("menu", MusicOptions.Track(0));
 ```
 
-A volume override replaces the **entry** volume, not the channel - `0.5` against an effects channel at
-`0.8` is heard at `0.4`, so the player's slider keeps working.
+A volume override replaces the entry volume, not the channel: `0.5` on an effects channel at `0.8` is heard at
+`0.4`.
 
 ### Wave-driven soundtrack
 
-The pattern the pools were built for: `Loop` pools, and the game decides when to move.
+Use `Loop` pools and let the game decide when to move:
 
 ```csharp
 void OnWaveStarted(bool isBoss)
@@ -158,13 +147,12 @@ void OnWaveCleared() => AM.I.NextMusicTrack();          // new track, same pool
 
 ## Sound channels (Sfx / UI)
 
-Every sound entry has a **Channel**. A channel is a volume, a mute flag and an optional `AudioMixerGroup`;
-the audible level of a cue is `channel volume x entry volume x clip trim`.
+Every sound entry has a **Channel**: a volume, a mute flag and an optional `AudioMixerGroup`.
 
-| Channel | Volume / mute / mixer group live on | Notes |
-|---------|-------------------------------------|-------|
-| `SoundChannel.Sfx` (default) | the `_efx` `AudioSource` | The channel every entry used before channels existed. `EfxVolume`, `SetEfxVolume` and `AMSettings` (Efx slider and mute) keep driving it. |
-| `SoundChannel.Ui` | AM: `_uiVolume` (`1`), `_uiMixerGroup` (empty = the Efx group), a runtime mute | A 2D source AM creates on first use (also in edit mode, from an inspector button) and never saves into the scene. Projects that never use it never get it. |
+| Channel | Settings live on | Notes |
+|---------|------------------|-------|
+| `SoundChannel.Sfx` (default) | the `_efx` `AudioSource` | `EfxVolume`, `SetEfxVolume` and `AMSettings` (Efx slider and mute) drive it. |
+| `SoundChannel.Ui` | AM: `_uiVolume` (`1`), `_uiMixerGroup` (empty = the Efx group), a runtime mute | A 2D helper source created on first use; projects that never use it never get it. |
 
 ```csharp
 AM.I.SetChannelVolume(SoundChannel.Sfx, 0.5f);       // the settings menu's "Effects" slider
@@ -178,31 +166,25 @@ AudioMixerGroup g = AM.I.GetChannelMixerGroup(SoundChannel.Ui); // what was conf
 AM.I.Play("coin", SoundOptions.Channel(SoundChannel.Ui));  // route one play elsewhere
 ```
 
-- Pick the channel per entry in the inspector (expand the entry: **Channel**). Plain one-shots play on the
-  channel's source; pitched one-shots take a voice from **that channel's own** pitch-voice rotation, which
-  copies the channel's volume, mute and group. The rotations are separate on purpose: a voice may still be
-  ringing an explosion tail when its turn comes round again, and a UI click must not drag that tail to the UI
-  level.
-- A channel change re-levels voices that are already ringing on that channel, so a slider being dragged moves
-  the sound you are hearing. `AMSettings` goes through the same calls (`SetEfxVolume`, `SetChannelMute`), so its
-  effects slider and toggle move ringing voices too.
-- Volumes are plain `AudioSource.volume`, never the mixer, so channels work on every platform, including
-  WebGL, where the Audio Mixer is not available. The mixer group is optional routing on top.
-- `AMSettings` and `AudioControl` offer only Master / Music / Efx controls; the UI channel volume is set from
-  code (or from a slider's UnityEvent via `SetUiVolume`). `AMSettings.ToggleAllAudio()` does mute and restore
-  the UI channel as well - without a mixer (WebGL) nothing else would.
+- Pick the channel per entry in the inspector. Plain one-shots play on the channel's source. Pitched one-shots
+  take a voice from that channel's own rotation, so a UI click never drags a ringing explosion tail to the UI level.
+- A channel change re-levels voices already ringing on it, so a dragged slider moves the sound you hear.
+  `AMSettings` uses the same calls (`SetEfxVolume`, `SetChannelMute`), so its effects slider and toggle do too.
+- Volumes are plain `AudioSource.volume`, never the mixer, so channels work on every platform, WebGL included,
+  where the Audio Mixer is not available. The mixer group is optional routing on top.
+- `AMSettings` and `AudioControl` offer only Master, Music and Efx controls. Set the UI channel from code or from a
+  slider's UnityEvent via `SetUiVolume`. `AMSettings.ToggleAllAudio()` mutes and restores the UI channel too.
 
 ## Optional cues: TryPlay and placeholders
 
-Two tools for "there may be nothing to play here", both silent even with `NeoDiagnostics` warnings on:
+Both stay silent even with `NeoDiagnostics` warnings on:
 
-- **`TryPlay(id)`** (also `TryPlay(id, volume)`, `TryPlay(id, options)`) plays the entry and returns `true`
-  when a clip started. An empty id, an unknown id or an entry without a usable clip return `false` with no
-  warning. `Play(id)` keeps warning about those - they are usually typos.
-- **Placeholder** (entry flag, `AudioEntry.IsPlaceholder`) marks an entry created ahead of its sound. While
-  it has no clip, *every* path is a silent no-op: `Play` by id or index, `PlayAt`, `TryPlay`, and for music
-  `PlayMusicPool` (the current music keeps playing). The inspector stops flagging it as empty. When the clip
-  arrives it plays normally - there is nothing to untick.
+- **`TryPlay(id)`** (also `TryPlay(id, volume)`, `TryPlay(id, options)`) returns `true` when a clip started. An
+  empty id, an unknown id or an entry without a usable clip return `false` without a warning. `Play(id)` keeps
+  warning about those, since they are usually typos.
+- **Placeholder** (`AudioEntry.IsPlaceholder`) marks an entry created before its sound exists. While it has no
+  clip, every path is a silent no-op: `Play` by id or index, `PlayAt`, `TryPlay`, and `PlayMusicPool` (the current
+  music keeps playing). The inspector does not flag it as empty. Once a clip is added it plays normally.
 
 ```csharp
 if (!AM.I.TryPlay("combo_" + level)) AM.I.Play("combo_max");
@@ -217,43 +199,52 @@ AM.I.PlayAt("explosion", hitPoint, SoundOptions.Spatial(0.5f));     // half 2D, 
 AM.I.PlayAt(debrisClip, hitPoint, 1f, 1f, SoundChannel.Sfx);        // a clip directly
 ```
 
-- Same clip pick, pitch randomisation, per-call overrides and channel as `Play`. The level is
-  `channel x entry x clip trim`, capped at `1` because it is set on the voice's `AudioSource.volume`
-  (`PlayOneShot` has a per-shot scale, `Play` does not). It follows later channel changes while it rings.
-- Voices come from a pool of `_positionalVoices` (`8`) `AudioSource`s parented to AM, created on first use
-  (also in edit mode, from an inspector button) and never saved into the scene: a free voice when there is one, otherwise the next one in rotation is stopped and reused. A voice
-  carries one sound, so reusing it never drags an older sound to the new point. Nothing is allocated per call
-  once the pool is warm.
-- Rolloff, min / max distance and spread come from the `_efx` source on every channel - tune them there; the
-  channel decides only volume, mute and mixer group. Doppler is off on positional voices: a voice is moved to
-  the point and started in the same frame, and that jump would read as a huge velocity.
-- The call returns the voice that took the sound (or `null`). The pool reuses it, so read it right away and
-  do not keep the reference.
-- AM's own transform is the voices' parent: keep AM on a static manager object, not on something that moves.
+- Same clip pick, pitch, per-call overrides and channel as `Play`. The level is `channel x entry x clip trim`,
+  capped at `1`, and follows later channel changes while it rings.
+- Voices come from a pool of `_positionalVoices` (`8`) sources parented to AM. A free voice is used when there is
+  one, otherwise the next one in rotation is stopped and reused. Nothing is allocated per call once the pool is warm.
+- Rolloff, min and max distance and spread come from the `_efx` source on every channel; tune them there. Doppler
+  is off on positional voices.
+- The call returns the voice that took the sound, or `null`. The pool reuses it, so read it at once and do not keep
+  the reference.
+- Keep AM on a static manager object: its transform is the voices' parent.
 
 ## Crossfade
 
-Every music change fades across `_musicFadeDuration`. A crossfade needs two sources, so the outgoing track
-is handed to a hidden second `AudioSource` at its exact playback position while the primary `_music`
-source takes the incoming one.
+Every music change fades across `_musicFadeDuration`. The outgoing track moves to a hidden second `AudioSource`
+at its exact position, and the primary `_music` source takes the incoming one. `Music`, `GetCurrentMusicClip()`
+and volume tweaks on `_music` therefore always describe the track you hear.
 
-> **Why the primary source carries the *incoming* track:** `Music`, `GetCurrentMusicClip()` and every
-> existing volume tweak point at `_music`. Keeping the new track there means all of them go on describing
-> the track you can actually hear, instead of the one fading away.
+- Fades run on `Time.unscaledDeltaTime`, so `Time.timeScale = 0` does not freeze a transition.
+- Changing the music channel volume scales the incoming and outgoing tracks at once, during a stop fade too,
+  without restarting their fades. Volume zero silences all music voices; raising it restores their fade levels.
+- The music source's `mute` is copied to outgoing voices in `LateUpdate`, so `AMSettings.SetMusic(false)` also
+  silences tracks fading away.
+- Stopping during a crossfade fades each voice from its own level.
+- Outside Play Mode (EditMode tests, inspector buttons) every transition is a clean cut.
 
-Fades run on `Time.unscaledDeltaTime`, so `Time.timeScale = 0` does not freeze a transition. Each live
-voice keeps its entry/clip gain and fade progress separately. Changing the music channel volume scales
-both incoming and outgoing tracks immediately, including during a stop fade, without restarting their
-envelopes. Volume zero silences all music voices; raising it restores their current fade levels.
+## Ambience
 
-The music source's `mute` is copied to outgoing crossfade voices in `LateUpdate`, so muting through
-`AMSettings.SetMusic(false)` also silences tracks fading away. Stopping during a crossfade fades each
-voice from its own current level, preserving their relative levels. Outside Play Mode - EditMode tests,
-inspector buttons - every transition degrades to a clean cut.
+A second loop under the music, such as a night lake, rain or a crowd. It has its own source (`_ambience`), so it
+keeps running while music pools crossfade over it.
+
+```csharp
+AM.I.PlayAmbience(nightLakeClip);   // fades in over _ambienceFadeDuration (1.5 s)
+AM.I.AmbienceVolume = 0.3f;         // relative to the music channel
+AM.I.StopAmbience();                // fades out, then stops
+```
+
+- Audible level = music channel volume × `AmbienceVolume` × fade, so a music slider moves both.
+  `AM.SetMusicVolume`, `AMSettings.SetMusicVolume` / `SetMusicAndEfxVolume` (called by an `AudioControl` Music or
+  Master slider) and `ApplyStartVolumes` (run by `AMSettings.Start`) all set the music channel.
+- It uses the music source's mixer group and copies its `mute` every frame, so `AMSettings.SetMusic(false)`
+  silences it too.
+- Asking for the clip already playing is a no-op; `PlayAmbience(null)` stops it. Fades run on unscaled time and
+  are instant outside Play Mode.
 
 ## Releasing caller-owned runtime clips
 
-Use `ReleaseClips(params AudioClip[] clips)` before destroying clips you generated or otherwise own:
+Call `ReleaseClips(params AudioClip[] clips)` before destroying clips you generated or otherwise own:
 
 ```csharp
 // PlayAt also supports 2D effects on a separately controllable pooled voice.
@@ -265,48 +256,24 @@ am.ReleaseClips(generatedEffect, generatedMusic);
 // The caller then destroys its clips.
 ```
 
-Release compares exact clip references. It stops/clears matching primary music, outgoing crossfade,
-ambience and positional voices, and detaches matching legacy random-track references without changing
-their remaining indices. Other current/outgoing tracks keep playing; source GameObjects, channel
-settings and the authored entry catalogs remain intact. If primary music was active, `OnMusicStopped`
-fires once after cleanup. Outgoing-only release does not announce an unrelated current track as stopped.
-Repeated release is harmless; release neither creates sources nor destroys clips.
-
-Use the existing `PlayAt(..., spatialBlend: 0f)` path for independently releasable 2D effects. Unity cannot
-selectively stop overlapping `PlayOneShot` calls on one shared source, so shared `Play(...)` effects are
-outside this release API. Owners must also remove their own runtime catalog registrations, if any,
-before destroying registered clips. This API does not infer ownership from a source name or hierarchy.
-
-## Ambience
-
-A second, independent loop under the music — a night lake, rain, a crowd. It has its own `AudioSource`
-(`_ambience`, created on first use and never saved into the scene, like the pitch voices and the
-crossfade source), so it keeps running while music pools crossfade over it.
-
-```csharp
-AM.I.PlayAmbience(nightLakeClip);   // fades in over _ambienceFadeDuration (1.5 s)
-AM.I.AmbienceVolume = 0.3f;         // relative to the music channel
-AM.I.StopAmbience();                // fades out, then stops
-```
-
-- Audible level = music channel volume × `AmbienceVolume` × fade, so the bed always stays under the music
-  and a music slider moves both. `AM.SetMusicVolume`, `AMSettings.SetMusicVolume` /
-  `SetMusicAndEfxVolume` (what an `AudioControl` Music or Master slider calls) and `ApplyStartVolumes`
-  (run by `AMSettings.Start`) all set the music channel, so an ambience that is already running follows them.
-- It uses the music source's mixer group and copies its `mute` every frame, so `AMSettings.SetMusic(false)`
-  silences the ambience too.
-- Asking for the clip already playing is a no-op; `PlayAmbience(null)` stops it. Fades run on unscaled time
-  and become instant outside Play Mode.
+- It compares exact clip references. It stops and clears matching primary music, outgoing crossfade, ambience and
+  positional voices, and detaches matching legacy random-track references without shifting the other indices.
+- Other tracks keep playing. Sources, channel settings and the entry lists stay intact.
+- If primary music was active, `OnMusicStopped` fires once after cleanup. Releasing only an outgoing track does not
+  report the current track as stopped.
+- Repeated release is harmless. Release neither creates sources nor destroys clips.
+- Shared `Play(...)` effects are outside this API: Unity cannot stop one `PlayOneShot` among several on a shared
+  source. Use `PlayAt(..., spatialBlend: 0f)` for releasable 2D effects.
+- Remove your own runtime catalog registrations, if any, before destroying registered clips. Ownership is never
+  inferred from a source name or hierarchy.
 
 ## Pausing in the background and during ads
 
-`AM` does not pause itself when the app is minimised. On mobile, music and effects must stop when the
-app goes to the background (home button, screen lock, an incoming call) and while a rewarded video is
-on screen, and resume **where they stopped**. `AudioListener.pause = true` does exactly that for every
-source, including `AM`'s music, ambience and pooled effects, without losing their playback positions.
+`AM` does not pause itself when the app is minimised. On mobile, audio must stop in the background (home button,
+screen lock, a call) and during a rewarded video, then resume where it stopped. `AudioListener.pause = true` does
+that for every source, including AM's music, ambience and pooled effects, and keeps their playback positions.
 
-Give `AudioListener.pause` a single owner in the game that combines every reason, so two scripts
-cannot unpause each other:
+Give `AudioListener.pause` one owner that combines every reason, so two scripts cannot unpause each other:
 
 ```csharp
 public sealed class AppAudioPause : MonoBehaviour
@@ -329,81 +296,51 @@ public sealed class AppAudioPause : MonoBehaviour
 }
 ```
 
-Sources that must keep playing while the listener is paused (rare: a UI click during an ad overlay)
-set `AudioSource.ignoreListenerPause = true`.
+A source that must keep playing while the listener is paused, such as a UI click during an ad overlay, sets
+`AudioSource.ignoreListenerPause = true`.
 
-## Random Pitch
+## Random pitch
 
 ```csharp
 AM.I.RandomizePitch = true;        // legacy / direct-clip one-shots only
 AM.I.SetPitchRange(0.9f, 1.1f);    // the order is normalised for you
 ```
 
-> **Why the voice pool.** `AudioSource.pitch` applies to the whole source, so setting it before
-> `PlayOneShot` also retunes every one-shot still ringing on that source - and overlapping shots are
-> exactly the case this feature exists for. Each pitched shot therefore takes a voice from a small
-> round-robin pool of its own channel (parented to `_efx` for Sfx, to the UI source for Ui). The voices
-> re-copy their channel's routing, mute and volume on **every** shot, not once at creation: `SetEfxVolume`
-> writes `_efx.volume`, and a voice that mirrored it once would keep playing at whatever the volume was when
-> it happened to be created. With the toggle off nothing is allocated and playback goes straight through the
-> channel's source.
+`AudioSource.pitch` retunes everything ringing on a source, so each pitched shot takes a voice from a small
+round-robin pool of its channel (parented to `_efx` for Sfx, to the UI source for Ui). A voice re-copies its
+channel's routing, mute and volume on every shot. With the toggle off nothing is allocated and playback goes
+straight through the channel's source.
 
 ## No-code use
 
-`AM` is fully usable without writing anything:
-
-- Configure everything in the inspector, including the pools and their modes.
-- [PlayAudio](PlayAudio.md) / [PlayAudioBtn](PlayAudioBtn.md) play a sound by **id**, picked from a
-  dropdown of the ids configured on `AM` so a typo is impossible.
+- Configure everything in the inspector, pools and modes included.
+- [PlayAudio](PlayAudio.md) and [PlayAudioBtn](PlayAudioBtn.md) play a sound by id, picked from a dropdown of the
+  ids configured on `AM`.
 - [MusicControl](MusicControl.md) starts a pool, moves to the next track or stops the music.
-- `Play(string)`, `PlayMusicPool(string)`, `NextMusicTrack()`, `StopMusic()` and `SetUiVolume(float)` take
-  zero or one argument on purpose, so a **UnityEvent** can call them directly.
+- `Play(string)`, `PlayMusicPool(string)`, `NextMusicTrack()`, `StopMusic()` and `SetUiVolume(float)` take zero or
+  one argument, so a UnityEvent can call them directly.
 
-## Migration to sound channels, placeholders and PlayAt (10.13.11 / first release after 10.19.0)
+## Older scenes
 
-Nothing to do; everything sounds as it did.
+Old scenes need no changes:
 
-- The new entry fields load with `Channel = Sfx`, `Spatial Blend = 1`, `Placeholder = off`. `Sfx` is the
-  `_efx` source, so `EfxVolume`, `SetEfxVolume`, `AMSettings` and every existing entry behave exactly as before.
-- The UI source and the voices are created on first use (also in edit mode, from an inspector button) with
-  `DontSave` and are never saved, so opening an existing scene or prefab does not add children or mark it
-  dirty. AM destroys them in `OnDestroy` in Play Mode and in builds (with the Ambience source, when AM created that one
-  itself - an authored ambience source is left alone). In edit mode Unity does not send `OnDestroy` (AM is not
-  `[ExecuteAlways]`), so helpers created there by an inspector button stay as `DontSave` children until the
-  scene reloads - harmless, and never saved. `_uiVolume`, `_uiMixerGroup` and `_positionalVoices` take their
-  defaults (`1`, empty, `8`).
-- Changed: a change of the Sfx volume or mute through AM (`SetEfxVolume`, `SetChannelVolume`,
-  `SetChannelMute`, `ApplyStartVolumes`) - and through `AMSettings`, which now calls AM instead of writing the
-  Efx source - re-levels pitched voices that are still ringing, instead of only the next shot.
-  `AMSettings.ToggleAllAudio()` also mutes and restores the UI channel.
-- `AudioFocusMute` (it uses `AudioListener.volume`) and the `0..2` entry / clip trims are untouched.
+- Entries without channel data load as `Channel = Sfx`, `Spatial Blend = 1`, `Placeholder = off`; `_uiVolume`,
+  `_uiMixerGroup` and `_positionalVoices` take `1`, empty and `8`.
+- The legacy `_sounds`, `_musicClips`, `_randomMusicTracks` and `_useRandomMusic` stay serialized and migrate into
+  the entry lists once, on first load.
+- Each legacy `Sound` becomes one entry in the same order, so `Play(int)` is unchanged. A legacy `volume == 0`
+  meant full and becomes `1`. Migrated entries inherit the old global pitch switch.
+- Each legacy music clip becomes one entry in order, so `PlayMusic(int)` is unchanged. The random list is appended
+  after them as a `Shuffle` pool with the id `Random`.
+- `EnableRandomMusic()` and `SetRandomMusicTracks(...)` still work and are `[Obsolete]` in favour of pools.
+- `PlayMusic(int)` and `PlayMusicByClip` follow `channel x entry` instead of writing the `AudioSource` volume. With
+  the channel at `1` the result is the same.
+- The music `AudioSource` volume authored in the inspector is adopted once as the music channel, so a source you
+  turned down stays down.
 
-## Migration from before 10.13
+## See also
 
-Nothing to do. `_sounds`, `_musicClips`, `_randomMusicTracks` and `_useRandomMusic` are still serialized
-and are migrated into the new lists on first load, once:
-
-- each legacy `Sound` becomes one entry, in the same order, so `Play(int)` resolves to the same sound. A
-  legacy `volume == 0` meant "full" and is migrated as `1`; in the new contract zero means zero.
-- migrated sound entries inherit the manager's old global pitch switch, so a project sounds exactly as it
-  did rather than picking up the new "pitch on by default".
-- each legacy music clip becomes one entry, in order, so `PlayMusic(int)` is unchanged. The random list is
-  appended **after** them as a `Shuffle` pool with the id `Random`, so it cannot shift any index.
-
-`EnableRandomMusic()` and `SetRandomMusicTracks(...)` still work and are marked `[Obsolete]` pointing at
-pools. Nothing is removed in this release.
-
-Two deliberate behaviour changes:
-
-- `PlayMusic(int)` and `PlayMusicByClip` used to write their volume straight onto the `AudioSource`,
-  ignoring `SetMusicVolume`. They now follow the `channel x entry` contract like everything else. With
-  the channel at its default `1` the result is identical.
-- The music `AudioSource` volume authored in the inspector **is** the music channel now: it is adopted
-  once at runtime init, so a source you turned down stays down instead of being overwritten by the first
-  `PlayMusic` call.
-
-## See Also
-- [MusicControl](MusicControl.md) - no-code music pool control.
-- [AMSettings](AMSettings.md) - audio settings and saving.
-- [PlayAudioBtn](PlayAudioBtn.md) - component for buttons.
-- [Module Root](../README.md)
+- [MusicControl](MusicControl.md) — no-code music pool control.
+- [AMSettings](AMSettings.md) — audio settings and saving.
+- [PlayAudioBtn](PlayAudioBtn.md) — component for buttons.
+- [Module root](README.md)

@@ -19,8 +19,6 @@
 - [Level Reward Track](./Data/LevelCurveDefinition.md), [Unlock Tree](./Data/UnlockTreeDefinition.md), and [Perk Tree](./Data/PerkTreeDefinition.md) — reusable definition assets.
 - [Runtime types](./InternalTypes.md) and [Scenarios](./Scenarios.md).
 
-**Demo:** `Assets/NeoxiderDemos/Demo/Scenes/Progression_Demo.unity` (Demo download). The hand-authored `ProgressionDemoManager` holds `LevelComponent` + `ProgressionManager` with the reward track, unlock tree and perk tree from `Demo/Data/Progression`. XP buttons call `ProgressionDemoUI.AddXp` (C# path), the perk/unlock/premium buttons call `ProgressionNoCodeAction.Execute` on the objects under `[Demo] Services/Progression NoCode Actions` (NoCode path), and the perk point / XP labels use `NoCodeBindText`. Everything is saved in the scene; nothing is built at Play.
-
 **Navigation:** [← Docs](../README.md)
 
 ---
@@ -173,3 +171,7 @@ public class QuestUnlockExample : MonoBehaviour
 2. Set `Action Type = AddXp`.
 3. Set `XP Amount = 100`.
 4. Bind `Execute()` to a `Button`, quest event, or any UnityEvent source.
+
+## Demo scene
+
+`Assets/NeoxiderDemos/Demo/Scenes/Progression_Demo.unity` (Demo download). `ProgressionDemoManager` holds `LevelComponent` + `ProgressionManager` with the assets from `Demo/Data/Progression`. XP buttons call `ProgressionDemoUI.AddXp` (C# path); the perk, unlock and premium buttons call `ProgressionNoCodeAction.Execute` under `[Demo] Services/Progression NoCode Actions` (NoCode path). Everything is saved in the scene.

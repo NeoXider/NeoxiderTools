@@ -16,6 +16,9 @@ namespace Neo.Abilities
         ApplyModifier,
         RemoveModifier,
         ApplyDamage,
-        Heal
+        Heal,
+
+        /// <summary>Grants the ability when the unit lacks it, otherwise raises its level by one (up to Max Level).</summary>
+        LevelUpAbility
     }
 }

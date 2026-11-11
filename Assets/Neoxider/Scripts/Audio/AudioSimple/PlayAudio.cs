@@ -25,6 +25,10 @@ namespace Neo.Audio
 
             [SerializeField] private bool _playOnAwake;
 
+            [Tooltip("Play every time the object is enabled: pooled effects, projectiles and pop-ups, which are " +
+                     "enabled again on each reuse. Replaces Play On Awake when both are set.")]
+            [SerializeField] private bool _playOnEnable;
+
             // WHY the default is negative and not 1: this value REPLACES the entry's own volume multiplier.
             // Defaulting it to 1 meant that pointing a fresh component at a sound entry authored at 0.5
             // silently played it at full - the entry's slider had no effect and nothing said so. Negative
@@ -60,9 +64,24 @@ namespace Neo.Audio
             /// </summary>
             public float LastPlayTime => _lastPlayTime;
 
+            /// <summary>Play every time the object is enabled (pooled effects and projectiles).</summary>
+            public bool PlayOnEnable
+            {
+                get => _playOnEnable;
+                set => _playOnEnable = value;
+            }
+
+            private void OnEnable()
+            {
+                if (_playOnEnable)
+                {
+                    AudioPlay();
+                }
+            }
+
             private void Start()
             {
-                if (_playOnAwake)
+                if (_playOnAwake && !_playOnEnable)
                 {
                     AudioPlay();
                 }

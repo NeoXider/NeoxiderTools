@@ -14,13 +14,18 @@ optional Inventory bridge. Scripts live in `Scripts/Shop/` (`Neo.Shop`; the brid
 *Demo scene: `Scenes/Shop/Shop.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**How to work with it:**
+1. Create `ShopItemData` assets (stable string ids, category, currency) and assign them to a `Shop`.
+2. Add a `Money` wallet and assign it as the spend source.
+3. Call `TryBuy(item)` from code, or bind `ButtonPrice` / `ShopPurchaseButtonView` buttons in the Inspector.
+
 **Contents:** the table below; start with [Shop](./Shop.md) and [Money](./Money.md).
 
 **Navigation:** [← Docs](../README.md)
 
 ---
 
-Since version **8.5.0**: stable string-ids for items, JSON profile save (`ShopProfileData`), bundles, categories, multi-currency, and an optional [Inventory](../Tools/Inventory/README.md) link via the [ShopInventoryGrantBridge](Bridges.md) component.
+The shop supports a JSON profile save (`ShopProfileData`), bundles, categories, multi-currency and an optional [Inventory](../Tools/Inventory/README.md) link via the [ShopInventoryGrantBridge](Bridges.md) component.
 
 ## Entry pages
 
@@ -72,43 +77,24 @@ Recommended setup for category stores: keep one `Shop` for catalog, save, curren
 
 For scene/NoCode setup, assign the catalog and wallet to `Shop`, assign a row prefab to `ShopListView`, and add `ShopPurchaseButtonView` to the row for affordability. Use category buttons/selectors to filter the list and `ShopVariantsPanel` for equipment variants. Rows notify dependent views when rebound; runtime wallet replacement updates affordability immediately. Disabled views reconnect on enable.
 
-In **11.0.0**, free/paid profile mutation and persistence share rollback. A failed profile save restores `Money` spending above its cap without increasing lifetime income. Successful saves commit before view and purchase notifications: observer errors are reported through `OnNotificationFault` / `LastNotificationFault` and leave the purchase committed. Bundle notifications continue with later item ids. Nested `Buy` / `BuyBundle` calls are ignored until the current call settles; call again after it returns. [Shop](./Shop.md#purchase-failure-and-profile-data) explains this event-contract migration and best-effort Inventory delivery.
+Free and paid profile mutation and persistence share rollback. A failed profile save restores `Money` spending above its cap without increasing lifetime income. Successful saves commit before view and purchase notifications: observer errors are reported through `OnNotificationFault` / `LastNotificationFault` and leave the purchase committed. Bundle notifications continue with later item ids. Nested `Buy` / `BuyBundle` calls are ignored until the current call settles; call again after it returns. [Shop](./Shop.md#purchase-failure-and-profile-data) explains this event-contract migration and best-effort Inventory delivery.
 
-Networked Money now defaults to server-only client mutation authority. Choose cooperative `None` or wallet `OwnerOnly` explicitly when needed; see [Money](Money.md#client-mutation-authority-1100).
+Networked Money defaults to server-only client mutation authority. Choose cooperative `None` or wallet `OwnerOnly` explicitly when needed; see [Money](Money.md#client-mutation-authority-1100).
 
 ## Demo scene
 
-`Assets/NeoxiderDemos/Demo/Scenes/Shop/Shop.unity` is a storefront
-made only of the module's components, all saved in the scene:
+`Assets/NeoxiderDemos/Demo/Scenes/Shop/Shop.unity` is a storefront made only of the module's components.
 
-- `Shop` keeps the catalog (`Resources/Shop/*.asset`) and its **Shop Items** are the authored cards under
-  `[Demo] Frame/Content/Storefront Cards`; **Auto Spawn Items** is off and **Auto Subscribe** binds each card's price
+- `Shop` keeps the catalog (`Resources/Shop/*.asset`); its **Shop Items** are the cards under
+  `[Demo] Frame/Content/Storefront Cards`, **Auto Spawn Items** is off and **Auto Subscribe** binds each card's price
   button to `Buy`.
-- Each card is a `ShopItem` + `ShopPurchaseButtonView` with a `ButtonPrice` price button (Buy / Equip / Equipped /
-  Unaffordable). `ShopItem.OnSelectItem` / `OnDeselectItem` toggle the card's `Equipped Glow` (NoCode).
-- `Money` is the wallet; the balance label is a `TextMoney`, and the +25 / +100 / Empty buttons call `Money.Add` and
-  `Money.SetCurrentMoney` directly.
-- The control card shows the typed C# path: `shop.TryBuy(item)` and the returned `ShopPurchaseStatus`,
-  `SetRuntimePrice` / `ClearRuntimePrice`, and a reset of the `SaveProvider` keys. `Shop.OnPurchasedId`,
-  `OnPurchaseFailedId`, `OnSelectId` and `OnShopChanged` are wired to `Demo Controller` (`ShopDemoController`).
+- Each card is a `ShopItem` + `ShopPurchaseButtonView` with a `ButtonPrice` button (Buy / Equip / Equipped /
+  Unaffordable).
+- `Money` is the wallet, shown by a `TextMoney`; the +25 / +100 / Empty buttons call `Money` directly.
+- The control card shows the C# path: `shop.TryBuy(item)` and the returned `ShopPurchaseStatus`, `SetRuntimePrice`
+  / `ClearRuntimePrice` and a reset of the save keys.
 
-The scene is saved with its UI and wiring.
-
-## Tests
-
-Shop has both EditMode and PlayMode coverage:
-
-- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` — purchases, bundles, runtime prices, `Browse` / `EquipOnly` flows, inventory integration, multi-currency, and `ShopListView`.
-- `Assets/Neoxider/Tests/Edit/Shop/ShopTypedPurchaseAndRefreshTests.cs` — typed purchase statuses, one list rebuild per purchase, allocation-free row rebinding, runtime catalog growth, event-driven `TextMoney` binding, indexed allocation-free id lookups.
-- `Assets/Neoxider/Tests/Edit/Bonus/CodeBuiltComponentEventsTests.cs` — every Shop and Shop.Bridges component (with Bonus and NPC) added from code has each UnityEvent it declares.
-- `Assets/Neoxider/Tests/Edit/Shop/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe (allocation-free when warm), runtime price overrides, and clone.
-- `Assets/Neoxider/Tests/Edit/Shop/ShopVariantsPanelTests.cs` — unowned/owned/equipped rendering, buy-then-equip, the EquipmentManager bridge, Unequip, one push per changed slot for every listener order with a subscribed `ShopListView` (selection, forwarded selection, purchase that equips), the full-push `RefreshStates`, and the follow-up pass for a slot callback that equips.
-- `Assets/Neoxider/Tests/Edit/Shop/Audit20261023NeoShopRegressionTests.cs` — failed/free purchases, capped refunds, invalid numbers/profile collections, equipment restore, row rebinding, and view lifecycle/source changes.
-- `Assets/Neoxider/Tests/Edit/Shop/Audit20261023NeoShopMoneyAuthorityTests.cs` — authority/default serialization and local admission-unit coverage.
-- `Assets/Neoxider/Tests/Play/Audit20261023NeoShopCommitPlayModeTests.cs` — post-delivery observer faults, wallet/profile/inventory conservation, native TextMoney lifecycle and paused limiter cadence.
-- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` — legacy Shop/Save coverage.
-
-Run them through Unity Test Runner → EditMode / PlayMode.
+Everything is saved in the scene.
 
 Currency contracts are documented in [InterfaceMoney](./InterfaceMoney.md).
 

@@ -26,8 +26,8 @@ The collapsed info card in the top-left corner (`[Demo] Info Card`, press `+` in
 to select and the equivalent C# calls (`UIMeshRigLayoutBuilder.Apply`, `UIMeshRigPointMotion.ApplyPreset`,
 `SetSource`).
 
-The `[Demo] ...` objects are authored by the editor builder `UIMeshRigDemoBuilder`
-(`Neoxider/Demo/Rebuild Active Demo Scene`); everything else in the scene is hand-authored and left untouched.
+Everything is saved in the scene, the `[Demo] ...` objects included: edit it like any other scene and
+re-import the Demo download to get the original back.
 
 The UI Toolkit host binds to `PanelRenderer` on Unity 6.5+ and falls back to the `UIDocument` this scene
 carries on older editors, so the example keeps working either way.
@@ -37,5 +37,5 @@ authoring tools — including the Scene overlay with the Setup / Pose switch and
 readability toggles. UI Toolkit exposes the custom element in UI Builder under
 `Library > Custom Controls > Neoxider > UI Mesh Rig`.
 
-The sample intentionally keeps each workflow independent so it can be copied without demo-only builder
-logic. `UIMeshRigDemoPanelSettings.asset` belongs to the UI Toolkit example.
+Each workflow is independent, so a card can be copied into your own scene as is.
+`UIMeshRigDemoPanelSettings.asset` belongs to the UI Toolkit example.

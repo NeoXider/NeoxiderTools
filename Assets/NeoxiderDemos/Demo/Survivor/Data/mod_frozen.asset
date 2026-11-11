@@ -10,30 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2cdd383bc04e06b4c89c69b048cae7e5, type: 3}
-  m_Name: mod_burn
+  m_Name: mod_frozen
   m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.ModifierDefinition
   _blueprint:
-    Id: burn
-    DisplayName: Burning
-    Duration: 3
+    Id: frozen
+    DisplayName: Frozen
+    Duration: 1
+    DurationByLevel:
+    - 1
+    - 1.2
+    - 1.4
+    - 1.6
+    - 2
     StackPolicy: 1
     MaxStacks: 1
     Properties: []
-    States: []
-    TickInterval: 0.5
-    TickOnApply: 1
-    TickEffects:
-    - OpId: damage
-      Target: 0
-      TeamFilter: 1
-      Radius: 0
-      Amount: 4
-      DamageType: magical
-      ModifierId: 
-      ResourceId: 
-      ArchetypeId: 
-      CustomParam: 
-      Chance: 1
+    States:
+    - stunned
+    TickInterval: 0
+    TickOnApply: 0
+    RestartTicksOnRefresh: 0
+    TickEffects: []
     EventReactions: []
     IsDebuff: 1
     Dispellable: 1

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dfd31ca7c8a28a4d8036ed9f8390c82, type: 3}
+  m_Name: unit_spitter
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.UnitTemplate
+  _displayName: Spitter
+  _team: 2
+  _startLevel: 1
+  _resources:
+  - ResourceId: health
+    Max: 16
+    RegenPerSecond: 0
+  _baseProperties:
+  - PropertyId: move_speed
+    Value: 1.9
+  - PropertyId: attack_damage
+    Value: 0
+  _abilities:
+  - {fileID: 11400000, guid: 766dcfdad455df348ac3fc2d7c1fc664, type: 2}
+  _innateModifiers: []

@@ -16,7 +16,7 @@
 | [Demo sample scripts](#demo-sample-scripts) | Which runtime APIs each sample controller uses. |
 | [C# configuration](#c-configuration) | Driving sample controllers from code. |
 | [Owned resources](#owned-resources) | What the sample code creates and releases. |
-| [Verification](#verification) | Tests that cover the sample scripts and scenes. |
+| [Verification](#verification) | Demo tests and input requirements. |
 
 **Navigation:** [← Docs](../README.md) · [Sample scenes](../Samples.md)
 
@@ -99,15 +99,7 @@ usable. New demos should save their UI in the scene instead.
 
 ## Verification
 
-After importing the sample, run `Audit20261023NeoRpgDemoTests` in Edit Mode and
-`Audit20261023NeoRpgDemoLifecycleTests`, `Audit20261023NeoRpgDemoSessionTests`, `SampleRuntimeSceneSmokeTests`,
-`SampleScenePlaySmokeTests` and `AudioDemoScenePlayTests` in Play Mode. `SampleScenePlaySmokeTests` loads every
-visible sample scene for 12 frames and fails on runtime errors, a demo scene with missing references (`IsSceneBuilt == false` or a
-"not authored" warning), Filled Images without a sprite and a Demo scene without its info card.
-`AudioDemoScenePlayTests` presses the authored AudioDemo buttons and removes the controller mid-crossfade.
-`SurvivorDemoGameplayTests` checks the saved Survivor wiring and wins a run with an autopilot.
-These tests discover the optional assemblies at runtime and skip when the sample has not been imported; no test
-asmdef references the hidden release sample. Exercise imported scenes separately to check input, presentation and
-optional dependencies. The grid demos read the pointer through `MouseInputCompat` and the Survivor player reads
-movement through `MoveInputCompat`, so both work with the Input System only; the Character Movement Fundamentals
-example scenes need an Active Input Handling setting of **Both**.
+The package's demo tests find the demo assemblies at runtime and skip when the Demo download is not imported; the list is in
+[Testing](../Testing.md#sample-demo-and-packaging-tests). The grid demos read the pointer through `MouseInputCompat` and the Survivor player reads
+movement through `MoveInputCompat`, so both work with the Input System only. The Character Movement Fundamentals
+example scenes need **Active Input Handling** set to **Both**.

@@ -10,95 +10,97 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a42ed834e73743f48ba73071f9eb8b21, type: 3}
-  m_Name: ab_ember
+  m_Name: ab_aura_tick
   m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
   _blueprint:
-    Id: ember
-    DisplayName: Ember Burst
-    Description: Ignites nearby foes, dealing damage over time.
+    Id: aura_tick
+    DisplayName: Holy Aura pulse
+    Description: One pulse of the aura.
     Targeting: 0
     TeamFilter: 1
     Range: 0
+    RangeByLevel: []
     Costs: []
-    Cooldown: 3.2
+    Cooldown: 0
+    CooldownByLevel: []
     MaxCharges: 1
+    MaxChargesByLevel: 
     ChargeRestoreTime: 0
+    ChargeRestoreTimeByLevel: []
     Delivery: 0
     ProjectileArchetypeId: 
     ProjectileSpeed: 20
-    CastEffects:
-    - OpId: spawn
-      Target: 1
-      TeamFilter: 0
+    ProjectileSpeedByLevel: []
+    CastEffects: []
+    ImpactEffects:
+    - OpId: damage
+      Target: 0
+      TeamFilter: 1
       Radius: 0
       RadiusByLevel: []
       MaxTargets: 0
-      Amount: 0
-      AmountByLevel: []
+      MaxTargetsByLevel: 
+      Amount: 3
+      AmountByLevel:
+      - 3
+      - 4
+      - 5
+      - 6
+      - 8
       AmountKey: 
       AmountScaleProperty: 
       AmountScalePerPoint: 0
       AmountScaleSource: 0
-      AmountLevelSource: 0
-      DamageType: 
-      ModifierId: 
-      ResourceId: 
-      ArchetypeId: fx_ember
-      CustomParam: 
-      Chance: 1
-      AbilityId: 
-      Angle: 0
-      Duration: 0
-      Interval: 0
-      AmountPerStack: 0
-    ImpactEffects:
-    - OpId: damage
-      Target: 3
-      TeamFilter: 1
-      Radius: 3.2
-      RadiusByLevel: []
-      MaxTargets: 0
-      Amount: 5
-      AmountByLevel: []
-      AmountKey: 
-      AmountScaleProperty: 
-      AmountScalePerPoint: 0
-      AmountScaleSource: 0
-      AmountLevelSource: 0
+      AmountLevelSource: 1
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
       DamageType: magical
       ModifierId: 
       ResourceId: 
       ArchetypeId: 
       CustomParam: 
       Chance: 1
+      ChanceByLevel: []
       AbilityId: 
       Angle: 0
       Duration: 0
       Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
       AmountPerStack: 0
-    - OpId: apply_modifier
-      Target: 3
+    - OpId: knockback
+      Target: 0
       TeamFilter: 1
-      Radius: 3.2
+      Radius: 0
       RadiusByLevel: []
       MaxTargets: 0
-      Amount: 0
+      MaxTargetsByLevel: 
+      Amount: 0.3
       AmountByLevel: []
       AmountKey: 
       AmountScaleProperty: 
       AmountScalePerPoint: 0
       AmountScaleSource: 0
       AmountLevelSource: 0
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
       DamageType: magical
-      ModifierId: burn
+      ModifierId: 
       ResourceId: 
       ArchetypeId: 
       CustomParam: 
       Chance: 1
+      ChanceByLevel: []
       AbilityId: 
       Angle: 0
       Duration: 0
       Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
       AmountPerStack: 0
     Specials: []
     CastCue: 

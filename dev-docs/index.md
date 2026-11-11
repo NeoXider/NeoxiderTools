@@ -54,6 +54,7 @@ Working documents for package developers and agents. They are not shipped in the
 - [Documentation style](DocumentationStyle.md) and the [component page template](TEMPLATE.md).
 - [Summary](summary.md) — compact navigation for agents.
 - [Abilities architecture](ABILITIES_ARCHITECTURE.md), [Dota ability architecture reference](DOTA_ABILITY_ARCHITECTURE.md), [Abilities atom gap analysis](ABILITIES_ATOMS_GAP.md) — design references for `Neo.Abilities`.
+- [NeoCondition editor roadmap](NeoCondition_Editor_Roadmap.md) — planned editor and data-model steps for `NeoCondition`; design notes, not shipped API.
 - [Rpg removal map](RPG_REMOVAL_MAP.md) — historical, superseded plan (Neo.Rpg was not removed).
 - [Audit 2026-09-02](AUDIT_2026-09-02.md) — historical improvement audit (Russian).
 - Audit reports by date: [2026-10-23](../Docs/Audits/2026-10-23/README.md), [2026-11-01](../Docs/Audits/2026-11-01/README.md), [2026-11-02](../Docs/Audits/2026-11-02/) (evidence reports behind the 12.0.0 quality pass).

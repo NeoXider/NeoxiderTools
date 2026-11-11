@@ -50,4 +50,5 @@ See [Editor API and authoring contracts](./Editor.md) for case-insensitive built
 
 - [AbilityDefinition](./AbilityDefinition.md) / [ModifierDefinition](./ModifierDefinition.md) — the assets it authors
 - [Editor API and authoring contracts](./Editor.md) — integration and exact validation boundaries
-- [Abilities module](./README.md) — effect nodes and ops reference
+- [Effect nodes](./AbilityDefinition.md#effect-nodes) — effect nodes and ops reference
+- Back: [Abilities module](./README.md)

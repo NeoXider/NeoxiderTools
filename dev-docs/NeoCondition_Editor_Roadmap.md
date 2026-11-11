@@ -2,7 +2,7 @@
 
 **What it is:** design notes for the next steps of the `NeoCondition` editor and data model (attributes, member registry, robust member serialization, provider mode). Nothing on this page is shipped API unless the status below says so.
 
-**How to use:** read it before changing `NeoConditionEditor`, `ConditionEntryDrawer` or the `ConditionEntry` data model; the current behavior is documented in [NeoCondition](NeoCondition.md).
+**How to use:** read it before changing `NeoConditionEditor`, `ConditionEntryDrawer` or the `ConditionEntry` data model; the current behavior is documented in [NeoCondition](../Assets/Neoxider/Docs/Condition/NeoCondition.md).
 
 ---
 

@@ -467,7 +467,9 @@ namespace Neo.Tools
             {
                 while (IsCurrentProduction(generation) && (spawnLimit == 0 || _spawnedCount < spawnLimit))
                 {
-                    if (IsAtCap())
+                    // WHY: a table that is still locked must not consume Spawn Limit. A boss with a limit of 1 and
+                    // an unlock time was counted as spawned at second zero and never arrived.
+                    if (IsAtCap() || !HasAvailablePrefab())
                     {
                         yield return _spawnDelayWait.Get(NextSpawnDelay());
                         continue;
@@ -872,6 +874,21 @@ namespace Neo.Tools
         private bool IsAtCap()
         {
             return _maxActive > 0 && GetActiveObjectCount() >= _maxActive;
+        }
+
+        private bool HasAvailablePrefab()
+        {
+            int count = _prefabs != null ? _prefabs.Length : 0;
+            float elapsed = ElapsedSpawnSeconds;
+            for (int i = 0; i < count; i++)
+            {
+                if (SpawnPlanner.AvailableWeight(i, _prefabWeights, _prefabUnlockSeconds, elapsed) > 0f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // WHY: Same deny-zone re-roll as the areas; the last candidate is used when every try was denied.

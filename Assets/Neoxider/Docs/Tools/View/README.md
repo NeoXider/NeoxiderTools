@@ -10,6 +10,8 @@ entry point: `SelectorModel`.
 *Demo scenes: `Scenes/Tools/View/Light.unity`, `Scenes/Tools/View/Selector.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**Navigation:** [← Tools](../README.md)
+
 **Contents:** the table below links one page per component.
 
 ---
@@ -26,19 +28,14 @@ entry point: `SelectorModel`.
 
 ## Demo scenes
 
-Both scenes live in `Assets/NeoxiderDemos/Demo/Scenes/Tools/View/` and are
-saved with their UI, so the wiring is visible without
-Play Mode:
+Both scenes are in `Assets/NeoxiderDemos/Demo/Scenes/Tools/View/` (Demo download). Everything is saved in the scenes.
 
-- **Light.unity** - five hand-authored point lights, one `LightAnimator` each (RandomFlicker, Pulsing,
-  SmoothTransition, PerlinNoise, SinWave) with a `MeshEmission` sphere that follows its light. The card
-  (`LightDemoController`) plays, pauses and stops all lights, changes speed and range, switches the manual
-  clock (`ManualUpdate` + `Tick`) and unscaled time, and drives `Time.timeScale`. The PerlinNoise light's
-  `Intensity.OnChanged` is wired to the card label in the Inspector (a reactive binding without code).
-- **Selector.unity** - three `Selector` components with their items: a skin picker (index mode, random),
-  a level bar (fill mode) and hearts (fill mode, index offset -1, loop off). Buttons call
-  `Next` / `Previous` / `SetRandom` / `SetFirst` / `SetLast` directly; every `OnSelectionChanged` drives
-  an index label, and `SelectorDemoController` names the skin and logs the changes.
+- **Light.unity** — five point lights, one `LightAnimator` each (RandomFlicker, Pulsing, SmoothTransition,
+  PerlinNoise, SinWave), each with a `MeshEmission` sphere. The card plays, pauses and stops the lights and
+  switches the manual clock (`ManualUpdate` + `Tick`) and unscaled time.
+- **Selector.unity** — three `Selector` components: a skin picker (index mode, random), a level bar (fill mode)
+  and hearts (fill mode, index offset -1, loop off). Buttons call `Next` / `Previous` / `SetRandom` / `SetFirst` /
+  `SetLast` directly.
 
 ## C# and Inspector workflows
 
@@ -63,8 +60,8 @@ Selection persistence initializes in `Start` before runtime writes are allowed. 
 component delegates authority to the existing Neo network layer; the pure model has no network or save
 dependencies. See each component page for lifecycle details and callable APIs.
 
-In 11.0, selection bounds are checked instead of silently overflowing, deferred index replacements
-preserve their previous set on enumeration failure, and received selection events see complete snapshots.
+Selection bounds are checked instead of silently overflowing, deferred index replacements keep their previous
+set on enumeration failure, and received selection events see complete snapshots.
 Network admission uses per-caller budgets; see [Selector](./Selector.md) for authority and matching-peer
 version requirements, and [SelectorModel](./SelectorModel.md) for the exact integer/input contracts.
 

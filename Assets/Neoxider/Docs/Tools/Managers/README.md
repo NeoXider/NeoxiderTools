@@ -4,6 +4,8 @@
 ordered `Bootstrap` initialization and the `Singleton<T>` / `SingletonById<T>` bases. Scripts live in
 `Scripts/Tools/Managers/`; namespace `Neo.Tools`, assembly `Neo.Tools.Managers`.
 
+**Navigation:** [← Tools](../README.md)
+
 **Contents:** the table below. All singletons reset their statics before each Editor play session, so they work with
 Enter Play Mode Options (domain reload disabled).
 

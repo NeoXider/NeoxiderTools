@@ -4,7 +4,7 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/merge.jpg" alt="Concept art for the Merge module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** `Neo.Merge` (`Scripts/Merge/`, assembly `Neo.Merge`, no Unity engine dependency) is a generic pure C# merge engine for connected groups. It is not tied to Unity scenes, grids, inventory slots, or any specific game. Use it when a mechanic needs to find equivalent connected items, choose the result item, compute a new value, clear the rest, and optionally continue cascading from the result.
+**What it is:** `Neo.Merge` (`Scripts/Merge/`, assembly `Neo.Merge`, no Unity engine dependency) is a generic pure C# merge engine for connected groups, not tied to scenes, grids or inventories. It finds equivalent connected items, chooses the result item, computes the new value, clears the rest and can cascade from the result.
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemDiceMergeDemo.jpg" alt="GridSystemDiceMergeDemo: connected dice groups merged by the merge engine" width="100%" /></p>
@@ -18,7 +18,7 @@
 3. Read `MergeResult.Groups` / `ChangedItems` to update views. For `FieldGenerator` boards use `GridMergeResolver` instead of writing the adapter yourself.
 
 **Contents:** [runtime API](#runtime-api) (request and graph contracts, dry runs and cascades, performance,
-[C# example](#c-example)), [11.0 compatibility](#110-compatibility),
+[C# example](#c-example)), [null result items](#null-result-items),
 [scene and NoCode workflow](#scene-and-nocode-workflow) and [examples](#examples).
 
 **Navigation:** [← Docs](../README.md)
@@ -97,9 +97,9 @@ MergeResult<string, int> applied = MergeResolver.Resolve(request);
 
 The second call recomputes the merge against the current source; it does not commit the earlier preview. Use a separate request for each concurrent resolution.
 
-## 11.0 compatibility
+## Null result items
 
-A `SelectResultItem` callback returning null now throws `InvalidOperationException`, preserving the request's deferred write boundary. Earlier successful groups and cascade iterations in the same call are not applied either. Previously this invalid selection silently cleared the source group without storing its merged value. A null callback still selects the seed, and valid value-type items such as integer `0` remain supported. Existing valid requests need no field or asset migration.
+A `SelectResultItem` callback that returns null throws `InvalidOperationException`, and nothing in that call is written, including earlier successful groups and cascade iterations. A null callback (not a null result) still selects the seed, and value-type items such as integer `0` are valid.
 
 ## Scene and NoCode workflow
 

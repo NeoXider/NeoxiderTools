@@ -12,6 +12,12 @@
 *Demo scenes: `Scenes/NoCode/NoCodeActionsDemo.unity`, `Scenes/NoCode/NoCodeBindingDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**Navigation:** [← Docs](../README.md)
+
+**How to work with it:** add `NoCodeBindText`, `NoCodeFormattedText` or `SetProgress` to a UI object, pick the
+source object, component and member, then the target UI component ([Source flow](#source-flow)). From code, set the
+same binding through its typed API ([C# API](#c-api)).
+
 **Contents:**
 
 | Page | Topic |
@@ -24,7 +30,7 @@
 
 ## Demos
 
-Both scenes are fully authored in the `.unity` file (no runtime UI construction, no controller): select any label, bar or button to see its NoCode component or persistent UnityEvent in the Inspector without entering Play Mode.
+Everything is saved in the scenes, with no controller script: select any label, bar or button to see its NoCode component or persistent UnityEvent.
 
 | Scene | What it shows | Where to look |
 |---|---|---|
@@ -33,11 +39,11 @@ Both scenes are fully authored in the `.unity` file (no runtime UI construction,
 
 C# equivalent of the binding demo: `counter.Add(10)`, `bindText.RefreshBinding()`, `formattedText.SetValues(sources, "{0:0} / 100")`, `setProgress.SetRange(0f, 100f)`.
 
-The scenes are saved with their UI and wiring. Paths are relative to `Assets/NeoxiderDemos/Demo` (Demo download).
+Paths are relative to `Assets/NeoxiderDemos/Demo` (Demo download).
 
 ## UX Discipline And C# Contract
 
-NoCode is a data-binding layer for UI, not hidden gameplay logic in the Inspector. New behavior must expose a testable C# contract and have EditMode or PlayMode coverage before adding Inspector convenience around it.
+NoCode is a data-binding layer for UI, not hidden gameplay logic in the Inspector.
 
 NoCode runs on scene components. ScriptableObject assets must not store scene object references; if a setup lives in an SO, store only data, keys, or context slots, and assign concrete `GameObject` references on the scene component.
 

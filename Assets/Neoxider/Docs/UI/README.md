@@ -15,6 +15,11 @@ workflow.
 *Demo scenes: `Scenes/UI/UIComponentsDemo.unity`, `Scenes/UI/AnimationFlyDemo.unity`, `UI Mesh Rig/UIMeshRigDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**How to work with it:** add the component you need from `Neoxider > UI`, wire it in the Inspector, or call its
+typed API from code. Start with the [entry pages](#entry-pages).
+
+**Navigation:** [← Docs](../README.md)
+
 **Contents:** the tables below link every component page.
 
 ---
@@ -58,7 +63,7 @@ For active pause screens with shared time/GM/cursor ownership, use [PausePage](.
 | [CategoryBar](./CategoryBar.md) | Generic category/tab bar with selection state and marker |
 | [PausePage](./PausePage.md), [FakeLoad](./FakeLoad.md) | UI flow helpers |
 | [ButtonChangePage](./ButtonChangePage.md) | Button that switches pages through `UI.I` |
-| [UI Mesh Rig](./UIMeshRig.md) | Editable uGUI mesh deformation, setup/pose tools, Animator workflow |
+| [UI Mesh Rig](./UIMeshRig.md), [UI Mesh Rig editor tools](./Editor.md) | Sprite deformation for uGUI, UI Toolkit, world mesh and SpriteRenderer; setup/pose tools, Animator workflow |
 
 ## See also
 

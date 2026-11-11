@@ -2,6 +2,11 @@
 
 **What it is:** `NeoxiderPages` is a sample module for screen/page navigation on top of Unity UI (namespace `Neo.Pages`, sample source `Assets/NeoxiderDemos/NeoxiderPages`). It imports and runs on its own, without **DOTween**, **DOTween Pro** or the Demo Scenes sample.
 
+**How to work with it:**
+1. Import `NeoxiderPages.v<ver>.unitypackage` and the project's **TMP Essential Resources**.
+2. Put every `UIPage` under the GameObject with `PM`, and give each page a `PageId`.
+3. Switch pages with `BtnChangePage` buttons, `PM.ChangePage(pageId)` or the `UIKit` static API.
+
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UI.jpg" alt="NeoxiderPages UI scene: PM page navigation with the info card" width="45%" /></p>
 
@@ -39,18 +44,16 @@ Assets/NeoxiderDemos/NeoxiderPages/
 
 ### Updating an imported copy
 
-The imported copy is part of the game, not of the package: updating the package does **not**
-update it. When a release fixes something in NeoxiderPages (for example 10.16.1, where the `PM` editor
-page preview stopped switching pages during Play Mode), import the new `NeoxiderPages` download or copy the changed files.
-Copies imported up to 12.1 live in `Assets/Samples/NeoxiderTools/<version at import>/NeoxiderPages/` and keep the
-version they were first imported with; delete such a copy before importing the download, because both carry the same GUIDs.
+The imported copy is part of the game, not of the package: updating the package does **not** update it. To get a
+fix, import the new `NeoxiderPages` download or copy the changed files. A copy imported earlier as a package sample
+lives in `Assets/Samples/NeoxiderTools/<version at import>/NeoxiderPages/`; delete it before importing the download,
+because both carry the same GUIDs.
 
 ## Demo scene
 
-`NeoxiderPages/Demo/Scenes/UI.unity` is a portrait scene (pages on a 1080x1920 canvas that matches the screen
-width) with a `PM`, its `UIPage` pages, audio and system prefabs. The scene builds nothing at runtime. The
-**[Demo] Pages Info** card under the pages' top bar scales like the pages, explains the scene and lets you try the
-page API:
+`NeoxiderPages/Demo/Scenes/UI.unity` is a portrait scene (1080x1920 canvas) with a `PM`, its `UIPage` pages, audio
+and system prefabs. Everything is saved in the scene. The **[Demo] Pages Info** card explains the scene and lets you
+try the page API:
 
 | Card button | What it calls |
 |-------------|---------------|
@@ -66,9 +69,8 @@ gear button opens the `PagePause` popup with the music and sound toggles. Outsid
 save under demo-only keys (`NeoDemo.Pages.Money`, `NeoDemo.Pages.BestScore`, `NeoDemo.Pages.Level`), so the demo
 never touches the balance, best score or level progress of your own game.
 
-The card is plain uGUI + TextMeshPro with built-in UI sprites, so the scene still opens when only this sample is
-imported. The
-CardGame example in Demo Scenes uses the PM prefab and `UIPage` from this sample.
+The card uses only uGUI, TextMeshPro and built-in UI sprites, so the scene opens when only this sample is imported.
+The CardGame example in Demo Scenes uses the PM prefab and `UIPage` from this sample.
 
 ## Main concepts
 

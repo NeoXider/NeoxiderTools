@@ -1,75 +1,83 @@
-# Deterministic mode (design note)
+# Deterministic mode
 
-**What it is:** the plan and the current state of running `Neo.Abilities` inside a deterministic, server-authoritative or lockstep simulation, such as VampireDota's: Q8.8 fixed-point raw integers (1.0 = 256), integer ticks, no floats and no `UnityEngine` in the domain. It covers the numeric abstraction, tick-based time, the seeded random source, state hashing for desync checks and migration notes.
+**What it is:** how to run `Neo.Abilities` reproducibly: for replays, server-authoritative simulation or lockstep. The float domain is seeded and ordered, and `DeterministicAbilityProfile` adds fixed ticks and Q8.8 rounding. For integer-only simulation that is bit-exact across platforms, use the [Fixed core](./FixedCore.md).
 
-**How to use today:** for a float game, apply `DeterministicAbilityProfile` to a system (fixed ticks, Q8.8 rounding, the seeded generator) and compare `AbilityStateHasher.Compute(system)` between peers: replayable and desync-checkable on one runtime, not integer-only. For a domain without floats and without UnityEngine, use the engine-free integer core `Neo.Abilities.Fixed` (option B below, implemented): see [Fixed core](./FixedCore.md).
+**How to use:**
+1. Choose the float profile or the fixed core ([table below](#choosing-a-mode)).
+2. For the float profile, call `DeterministicAbilityProfile.Apply(system.Rules)` once after creating the system.
+3. Drive the simulation with `system.StepTicks(n)` or `Advance(hostDelta)`, with the same inputs on every peer.
+4. Compare `AbilityStateHasher.Compute(system)` between peers every N ticks.
+5. On a mismatch, dump `system.Trace` around that tick on both sides.
 
 - Namespace: `Neo.Abilities`
+- Sources: `Scripts/Abilities/Domain/Rules/DeterministicAbilityProfile.cs`, `Scripts/Abilities/Domain/AbilitySystem.Hashing.cs`
 - Related: [Fixed core](./FixedCore.md), [Rules and extension points](./Rules.md)
 
-## Requirements of a deterministic host
+---
 
-1. The same inputs (content, unit creation order, casts with seeds, tick sequence, world adapter answers) produce bit-identical state on every peer and platform.
-2. Integer time: durations, cooldowns and intervals are whole ticks; no accumulation of float seconds.
-3. Integer numbers: amounts, pools and properties are Q-format raw integers with defined rounding.
-4. A seeded, portable random source owned by the simulation.
-5. A cheap state hash to detect desyncs, and replays that reproduce a recorded match.
-6. An engine-free domain assembly (`noEngineReferences`), compilable outside Unity.
+## Choosing a mode
 
-## What 12.1 provides (float domain)
+| | Float profile | Fixed core |
+|--|--|--|
+| Setup | `DeterministicAbilityProfile.Apply(rules)` on an `AbilitySystem` | a `FixedAbilitySystem` with converted content |
+| Numbers | float arithmetic, results rounded to Q8.8 | Q-format raw ints, integer arithmetic |
+| Time | fixed float steps | whole ticks |
+| Bit-exact across platforms | no | yes |
+| Scene and NoCode components | yes | no; the host drives the system |
+| Use for | server-authoritative play where only the server simulates; replays on the same build | lockstep across platforms; a "no floats in the domain" policy |
 
-| Requirement | Mechanism | Status |
-|-------------|-----------|--------|
-| Ordered, seeded execution | Per-cast seeds (`CastRequest.Seed`), derived seeds per tick, reaction, projectile hit and zone pulse; deterministic ordering rules (adapter query order, nearest-N by distance then unit id, reaction priority / application / list order, zone spawn order) | done |
-| Replaceable random | `AbilityRules.Random` (`IRandomSourceFactory`, `IReseedableRandomSource`); default `XorShiftRandom` (integer xorshift32, identical on every platform) | done |
-| Integer-style time | `FixedStepTimeSource` + `AbilitySystem.StepTicks(n)` / `TickCount`: every step has the same length; `FixedStepTimeSource.ToTicks` converts authored seconds | done (time is still a float step) |
-| Fixed-point values | `AbilityRules.Numeric = FixedPointNumeric.Q8`: computed amounts and property values are rounded to the 1/256 grid before they are stored or published | done (rounding, not integer arithmetic) |
-| Desync check | `AbilityStateHasher.Compute(system)`: FNV-1a over the sorted simulation state | done |
-| One switch | `DeterministicAbilityProfile.Apply(rules, ticksPerSecond)` | done |
-| Engine-free integer domain | `Neo.Abilities.Fixed`: [Fixed core](./FixedCore.md) | done (option B) |
+The fixed core is additive: `Neo.Abilities` is unchanged, and a shared conformance suite keeps both cores in step ([known differences](./FixedCore.md#conformance-with-the-float-core)). A future major version may merge both into one generic domain.
 
 ### Why rounding floats is not enough
 
-IEEE single-precision `+ − × ÷ sqrt` are deterministic for the same operation order, and Mono / CoreCLR on x64 and ARM64 evaluate float expressions in single precision. Two risks remain across a server and IL2CPP clients: the C++ compiler may contract `a * b + c` into a fused multiply-add on ARM64, and different compilers may reorder or keep wider intermediates. Rounding to Q8.8 after each step hides most 1-ulp differences, but a value lying on a rounding boundary still flips. So the float profile is suitable for server-authoritative play where only the server simulates and clients predict or replay on the same build, and for single-runtime replays. It is not bit-exact lockstep across platforms, and it does not meet a policy of "no floats in the domain".
+IEEE single-precision `+ − × ÷ sqrt` are deterministic for the same operation order, and Mono and CoreCLR on x64 and ARM64 evaluate float expressions in single precision. Two risks remain between a server and IL2CPP clients: the C++ compiler may contract `a * b + c` into a fused multiply-add on ARM64, and different compilers may reorder operations or keep wider intermediates. Rounding to Q8.8 after each step hides most 1-ulp differences, but a value that lies on a rounding boundary still flips.
 
-## Options for the integer core
+## The float profile
 
-| | A. Float profile only | B. Parallel integer core | C. Generic numeric core |
-|--|--|--|--|
-| Shape | 12.1 as above | New engine-free assembly `Neo.Abilities.Fixed` (no references, `noEngineReferences`) with Q-format raw ints (`FixedValue` int, configurable fraction bits), integer ticks, integer vectors and the same concepts: units, pools, base properties, Add / Mul / Max layering, modifiers with stack policies, triggers, damage hooks, ops, zones, events, rules interfaces typed on raw ints. `Neo.Abilities` stays as it is and can reference the core to convert `AbilityDefinition` / `ModifierDefinition` assets into integer blueprints at registration | One engine-free generic domain (`AbilitySystem<TNumber, TOps>` with a struct numeric-ops strategy); the float `Neo.Abilities` becomes a specialization / facade |
-| Meets VampireDota policy | no | yes | yes |
-| Breaking for float users | no | no (additive) | yes: types move to another assembly, `ModifierInstance`, `EffectContext`, `AbilityEventArgs`, `IEffectOperation` and rule signatures change; asmdef references must be updated |
-| Version | 12.1 | 12.1.0 (chosen, additive) | 13.0.0 |
-| Cost | none | a second implementation of the domain (about 5–6 k lines with tests) and two code paths to keep in sync; content written once (assets) and converted | the largest refactor; one code path afterwards; every existing test and sample touched |
-| Risk | lockstep across platforms not guaranteed | drift between the two cores (mitigated by a shared conformance test suite that runs the same scenarios on both and compares results within the Q8.8 grid) | regressions for current users, release coordination |
+`DeterministicAbilityProfile.Apply(AbilityRules rules, int ticksPerSecond = 30, int fractionBits = 8, int maxStepsPerCall = 8)` sets three rules and leaves the others, such as formulas and stacking, as they are:
 
-**Decision:** B, implemented in 12.1 as `Neo.Abilities.Fixed` with a shared conformance suite (`FixedConformanceTests`) from day one; C stays a 13.0 consolidation once both cores are proven.
+| Rule | Set to | Effect |
+|------|--------|--------|
+| `Time` | `FixedStepTimeSource(ticksPerSecond, maxStepsPerCall)` | Every step has the same length. `StepTicks(n)` and `TickCount` work in ticks; `FixedStepTimeSource.ToTicks` converts authored seconds. |
+| `Numeric` | `FixedPointNumeric.Q8`, or `new FixedPointNumeric(fractionBits)` | Computed amounts and property values are rounded to the grid before they are stored or published. |
+| `Random` | `XorShiftRandomFactory.Instance` | Integer xorshift32, identical on every platform. |
 
-## Design of the integer core (option B, implemented)
+`DeterministicAbilityProfile.IsApplied(rules)` is true when the time source is fixed-step and the numeric backend is fixed-point. Each rule is described in [Rules](./Rules.md).
 
-The implementation follows this design; the usage, the API and the measured differences are in [Fixed core](./FixedCore.md).
+## Seeds and order
 
-- **Numbers:** `FixedValue` = `int` raw with `FixedMath` helpers (saturating add, `MulDiv` with 64-bit intermediates, round half away from zero, the same as VampireDota's `DeterministicMath`). Fraction bits configurable per system (default 8).
-- **Time:** every duration, cooldown, tick interval, zone interval and lifetime is an `int` tick count; the system advances by `Step()` / `Step(n)`; catch-up caps stay as today (8 per call).
-- **Space:** `FixedVec3` raw ints; the world adapter interface is the same shape typed on `FixedVec3`; radius tests compare squared raw distances in 64-bit.
-- **Random:** `IRandomSourceFactory` returns integer draws (`NextRaw(oneRaw)` in `[0, one)`, `NextInt`); chance and crit compare raw values.
-- **Rules:** the same extension points typed on raw ints (formula, mitigation, crit, evasion, stacking, aggregation, targeting, cooldowns, costs, random; time is ticks and the format is `FixedRules.Format`): VampireDota plugs its `CombatResolver` (armor `amount·100/(100+armor)`, resistance, crit with structure immunity flags) as `IDamageFormula`, its `StatBlock` rational multipliers as `IPropertyAggregator`, its stacking (`DenyNew`, `RefreshDuration`, `StackUpTo3`) as `IModifierStackingRule`.
-- **State hash:** the same field order as `AbilityStateHasher`, over raw ints only.
-- **Content:** blueprints with raw-int fields; `FixedContentConverter` (in `Neo.Abilities`) converts float assets with explicit rounding and reports every value that changes by more than half a raw unit.
+- **Cast seeds.** Every cast carries a seed: `CastRequest.Seed` when non-zero, otherwise one derived from the cast id and the caster. Chance rolls (`EffectNodeData.Chance`) and combat randomness use `XorShiftRandom` (`IRandomSource`). The domain never reads `UnityEngine.Random` or `Time`.
+- **Reseeding.** `XorShiftRandom.Reseed(seed)` restarts an instance exactly like `new XorShiftRandom(seed)`, so pooled contexts and your own reusable generators need no new object per cast.
+- **Derived seeds.** Each modifier tick and reaction rolls with its own seed: the instance seed for the first roll, then the instance seed mixed with the tick or reaction count. A 50% tick node therefore fires on about half the ticks, and the same sequence of ticks and events rolls the same way. Projectile hits and zone pulses also get derived seeds.
+- **Order.** Unlimited area selectors keep the adapter's order. Capped areas and chain bounces sort by distance, then by unit id. Reactions run by priority, then application, then list order; zones in spawn order.
+
+To reproduce a run, repeat the seeds and also the initial content, the unit and cast creation order, the tick-step sequence and the world adapter's answers (positions, radius queries, projectile hits) in the same order and on the same tick. The eight-tick catch-up cap per modifier means one large step can differ from many small ones. This is a replay-friendly runtime seam, not a complete cross-platform lockstep or snapshot protocol.
 
 ## State hashing
 
-`AbilityStateHasher.Compute(system)` folds, in a fixed order: the hash version, `TickCount`, the domain clock, then every unit sorted by id (id, team, alive, level, health and mana current / max, every modifier in list order: blueprint id, caster, stacks, remaining time, ability level, consumed shield, reaction counters and charges), every granted slot sorted by ability id (level, charges, cooldown), zones in spawn order (id, centre, radius, remaining time, pulse count) and pending projectile cast ids sorted. Floats are hashed by their raw IEEE bits, or by their Q-format raw value when `FixedPointNumeric` is active. Strings are hashed upper-cased (the comparer of the domain), so the hash does not depend on culture. Compare hashes every N ticks; on mismatch, dump `system.Trace` around the tick on both sides.
+`AbilityStateHasher.Compute(system)` is an FNV-1a hash that folds, in a fixed order:
 
-Not hashed: event subscriptions, the trace, the rules objects, presentation state, base properties set outside units (the property cache is derived). A host that keeps additional authoritative state hashes it next to this value.
+- the hash version, `TickCount` and the domain clock;
+- every unit sorted by id: id, team, alive, level, health and mana current and max, and every modifier in list order (blueprint id, caster, stacks, remaining time, ability level, consumed shield, reaction counters and charges);
+- every granted slot sorted by ability id: level, charges, cooldown;
+- zones in spawn order: id, centre, radius, remaining time, pulse count;
+- pending projectile cast ids, sorted.
 
-## Migration notes
+Floats are hashed by their raw IEEE bits, or by their Q-format raw value when `FixedPointNumeric` is active. Strings are hashed upper-cased, like the domain's comparer, so the hash does not depend on culture.
 
-- Replays recorded before 12.1 keep their outcomes: the default rules reproduce the classic formulas and the seed derivation did not change.
-- Turning on `DeterministicAbilityProfile` changes results by rounding: re-record replays and re-tune content that relied on fractional amounts.
-- With `FixedStepTimeSource`, author durations as multiples of the tick (`ToTicks` reports the rounding); a 0.1 s interval at 30 ticks per second becomes 3 ticks.
-- Hosts must report adapter answers (positions, radius queries, projectile hits) deterministically: same order, same tick.
+Not hashed: event subscriptions, the trace, the rules objects, presentation state and the derived property cache. A host that keeps more authoritative state hashes it next to this value.
+
+## Authoring for the profile
+
+- Turning the profile on changes results by rounding. Record replays again and re-tune content that relied on fractional amounts.
+- With `FixedStepTimeSource`, author durations as multiples of the tick; `ToTicks` reports the rounding. A 0.1 s interval at 30 ticks per second becomes 3 ticks.
+- Replays recorded with an older package version: see [Migration to 12](../Migration12.md).
 
 ## По-русски
 
-Записка о детерминированном режиме для сетевых и lockstep-игр (как VampireDota: Q8.8, целые тики, без float и без UnityEngine в домене). В 12.1 уже есть: сиды на каст, тик, реакцию, попадание и импульс зоны; заменяемый генератор (`AbilityRules.Random`, по умолчанию целочисленный xorshift32); фиксированные тики (`FixedStepTimeSource`, `StepTicks`); округление значений к сетке Q8.8 (`FixedPointNumeric.Q8`); хэш состояния `AbilityStateHasher` для поиска рассинхронизации и профиль `DeterministicAbilityProfile`, включающий всё это одним вызовом. Этого хватает для серверной авторитетной игры и повторов на одной сборке, но не для бит-в-бит lockstep между платформами: float-арифметика в IL2CPP на ARM может сливать умножение и сложение. Для политики «в домене нет float» выбран и реализован вариант B: отдельная сборка `Neo.Abilities.Fixed` без UnityEngine, на целых Q-числах и тиках, с теми же точками расширения и общим набором проверок соответствия (`FixedConformanceTests`), добавочно в 12.1.0. Вариант C (один обобщённый домен, 13.0.0) остаётся на потом, когда оба ядра будут проверены. Подробности и измеренные расхождения — [Fixed core](./FixedCore.md).
+Детерминированный запуск нужен для повторов, серверной авторитетной игры и lockstep. Профиль
+`DeterministicAbilityProfile.Apply(system.Rules)` включает фиксированные тики, округление к сетке Q8.8 и целочисленный
+генератор xorshift32; хэш `AbilityStateHasher.Compute` сравнивается между участниками каждые N тиков. Этого хватает для
+серверной игры и повторов на одной сборке, но не для бит-в-бит lockstep между платформами: float-арифметика в IL2CPP на
+ARM может сливать умножение и сложение. Для политики «в домене нет float» используйте целочисленное ядро
+[Fixed core](./FixedCore.md).

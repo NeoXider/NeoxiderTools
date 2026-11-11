@@ -14,8 +14,12 @@ split into asmdef-backed submodules (`Neo.Tools.*`), namespace `Neo.Tools`.
 *Demo scenes: `Scenes/Tools/Physics/Physics3DDemo.unity`, `Scenes/Tools/Dialogue.unity`, `Scenes/Tools/Move/Follow.unity`, `Scenes/Tools/ChanceSystemExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
-**Contents:** the submodule index below. Each submodule README lists its components with the C# API and the
-scene/NoCode workflow.
+**How to work with it:** pick the submodule below, reference its `Neo.Tools.*` assembly from your asmdef, and
+follow its README for the C# API and the scene/NoCode workflow.
+
+**Navigation:** [← Docs](../README.md)
+
+**Contents:** the submodule index below.
 
 ---
 

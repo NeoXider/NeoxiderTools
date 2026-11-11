@@ -14,74 +14,84 @@ MonoBehaviour:
   m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
   _blueprint:
     Id: frost_ring
-    DisplayName: Frost Ring
-    Description: Damages and chills nearby foes, slowing them.
+    DisplayName: Frost Nova
+    Description: Freezes everything around you.
     Targeting: 0
     TeamFilter: 1
     Range: 0
+    RangeByLevel: []
     Costs: []
-    Cooldown: 3.4
+    Cooldown: 6
+    CooldownByLevel:
+    - 6
+    - 5.6
+    - 5.2
+    - 4.8
+    - 4.2
     MaxCharges: 1
+    MaxChargesByLevel: 
     ChargeRestoreTime: 0
+    ChargeRestoreTimeByLevel: []
     Delivery: 0
     ProjectileArchetypeId: 
     ProjectileSpeed: 20
-    CastEffects:
-    - OpId: spawn
-      Target: 1
-      TeamFilter: 0
-      Radius: 0
-      RadiusByLevel: []
-      MaxTargets: 0
-      Amount: 0
-      AmountByLevel: []
-      AmountKey: 
-      AmountScaleProperty: 
-      AmountScalePerPoint: 0
-      AmountScaleSource: 0
-      AmountLevelSource: 0
-      DamageType: 
-      ModifierId: 
-      ResourceId: 
-      ArchetypeId: fx_frost
-      CustomParam: 
-      Chance: 1
-      AbilityId: 
-      Angle: 0
-      Duration: 0
-      Interval: 0
-      AmountPerStack: 0
+    ProjectileSpeedByLevel: []
+    CastEffects: []
     ImpactEffects:
     - OpId: damage
       Target: 3
       TeamFilter: 1
-      Radius: 3.8
-      RadiusByLevel: []
+      Radius: 3.2
+      RadiusByLevel:
+      - 3.2
+      - 3.5
+      - 3.8
+      - 4.1
+      - 4.5
       MaxTargets: 0
-      Amount: 7
-      AmountByLevel: []
+      MaxTargetsByLevel: 
+      Amount: 8
+      AmountByLevel:
+      - 8
+      - 10
+      - 12
+      - 14
+      - 18
       AmountKey: 
       AmountScaleProperty: 
       AmountScalePerPoint: 0
       AmountScaleSource: 0
-      AmountLevelSource: 0
+      AmountLevelSource: 1
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
       DamageType: magical
       ModifierId: 
       ResourceId: 
       ArchetypeId: 
       CustomParam: 
       Chance: 1
+      ChanceByLevel: []
       AbilityId: 
       Angle: 0
       Duration: 0
       Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
       AmountPerStack: 0
     - OpId: apply_modifier
       Target: 3
       TeamFilter: 1
-      Radius: 3.8
-      RadiusByLevel: []
+      Radius: 3.2
+      RadiusByLevel:
+      - 3.2
+      - 3.5
+      - 3.8
+      - 4.1
+      - 4.5
       MaxTargets: 0
+      MaxTargetsByLevel: 
       Amount: 0
       AmountByLevel: []
       AmountKey: 
@@ -89,17 +99,24 @@ MonoBehaviour:
       AmountScalePerPoint: 0
       AmountScaleSource: 0
       AmountLevelSource: 0
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
       DamageType: magical
-      ModifierId: chill
+      ModifierId: frozen
       ResourceId: 
       ArchetypeId: 
       CustomParam: 
       Chance: 1
+      ChanceByLevel: []
       AbilityId: 
       Angle: 0
       Duration: 0
       Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
       AmountPerStack: 0
     Specials: []
-    CastCue: 
+    CastCue: frost
     ImpactCue: 

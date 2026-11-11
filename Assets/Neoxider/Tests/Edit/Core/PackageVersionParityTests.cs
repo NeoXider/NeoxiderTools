@@ -27,10 +27,11 @@ namespace Neo.Editor.Tests
         }
 
         // WHY: a list that quietly shrank to nothing would make the test above pass on a broken repo.
+        // Seven files carry the version: the two imported-sample paths left with the UPM samples.
         [Test]
         public void VersionMentionList_CoversEveryKnownVersionBearingFile()
         {
-            Assert.That(PackageHealthCheck.VersionMentions.Length, Is.GreaterThanOrEqualTo(9),
+            Assert.That(PackageHealthCheck.VersionMentions.Length, Is.GreaterThanOrEqualTo(7),
                 "Files were removed from PackageHealthCheck.VersionMentions — the guard got weaker, not the repo cleaner.");
         }
     }

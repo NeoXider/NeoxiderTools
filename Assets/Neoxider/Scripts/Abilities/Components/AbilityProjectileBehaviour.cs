@@ -14,6 +14,16 @@ namespace Neo.Abilities
     [AddComponentMenu("Neoxider/Abilities/Ability Projectile")]
     public sealed class AbilityProjectileBehaviour : MonoBehaviour, ISpawnedAbilityEntity
     {
+        /// <summary>How a spawned projectile moves.</summary>
+        public enum ProjectileMotion
+        {
+            /// <summary>Homes on the target unit, or flies straight to the cast point.</summary>
+            Flight = 0,
+
+            /// <summary>Circles its owner until Max Lifetime runs out (orbiting blades, a rotating shield).</summary>
+            Orbit = 1
+        }
+
         [Tooltip("Fallback speed when the spawn request carries none.")]
         [SerializeField] private float _speed = 20f;
 
@@ -30,11 +40,85 @@ namespace Neo.Abilities
                  "Z so its right (+X) follows the flight, for 2D sprites drawn pointing right.")]
         [SerializeField] private AbilityZonePlane _plane = AbilityZonePlane.GroundXZ;
 
+        [Header("Motion")]
+        [Tooltip("Flight: homes on the target unit or flies straight. Orbit: circles its owner for Max Lifetime " +
+                 "seconds and ignores Max Hits. Give an orbiting ability NoTarget targeting and Projectile delivery.")]
+        [SerializeField] private ProjectileMotion _motion = ProjectileMotion.Flight;
+
+        [Tooltip("Orbit: distance from the owner. Not used when Hit Points are assigned: the root then stays on the " +
+                 "owner and only turns, and the points keep their own offsets.")]
+        [SerializeField] [Min(0f)] private float _orbitRadius = 2f;
+
+        [Tooltip("Orbit: degrees per second. Negative turns the other way.")]
+        [SerializeField] private float _orbitDegreesPerSecond = 180f;
+
+        [Tooltip("Points that hit units, each with Hit Radius: the blades of an orbiting ring. Empty = this object.")]
+        [SerializeField] private Transform[] _hitPoints = System.Array.Empty<Transform>();
+
+        [Tooltip("Seconds before the same unit can be hit again. 0 = each unit once per projectile.")]
+        [SerializeField] [Min(0f)] private float _rehitInterval;
+
         /// <summary>How the projectile faces its flight direction (3D forward or 2D sprite right).</summary>
         public AbilityZonePlane Plane
         {
             get => _plane;
             set => _plane = value;
+        }
+
+        /// <summary>Flight (homing or straight) or Orbit around the owner.</summary>
+        public ProjectileMotion Motion
+        {
+            get => _motion;
+            set => _motion = value;
+        }
+
+        /// <summary>Orbit distance from the owner when no Hit Points are assigned.</summary>
+        public float OrbitRadius
+        {
+            get => _orbitRadius;
+            set => _orbitRadius = Mathf.Max(0f, value);
+        }
+
+        /// <summary>Orbit speed in degrees per second.</summary>
+        public float OrbitDegreesPerSecond
+        {
+            get => _orbitDegreesPerSecond;
+            set => _orbitDegreesPerSecond = value;
+        }
+
+        /// <summary>Seconds before the same unit can be hit again. 0 = once per projectile.</summary>
+        public float RehitInterval
+        {
+            get => _rehitInterval;
+            set => _rehitInterval = Mathf.Max(0f, value);
+        }
+
+        /// <summary>Hit detection radius in world units.</summary>
+        public float HitRadius
+        {
+            get => _hitRadius;
+            set => _hitRadius = Mathf.Max(0f, value);
+        }
+
+        /// <summary>
+        ///     Applies a settings block, as the ability hub does for a plain prefab used as a projectile.
+        /// </summary>
+        public void Configure(AbilityProjectileSettings settings)
+        {
+            if (settings == null)
+            {
+                return;
+            }
+
+            _speed = settings.Speed;
+            _maxLifetime = settings.MaxLifetime;
+            _hitRadius = Mathf.Max(0f, settings.HitRadius);
+            _maxHits = settings.MaxHits;
+            _plane = settings.Plane;
+            _motion = settings.Motion;
+            _orbitRadius = Mathf.Max(0f, settings.OrbitRadius);
+            _orbitDegreesPerSecond = settings.OrbitDegreesPerSecond;
+            _rehitInterval = Mathf.Max(0f, settings.RehitInterval);
         }
 
         private static readonly System.Collections.Generic.List<UnitId> HitScratch =
@@ -45,6 +129,10 @@ namespace Neo.Abilities
         private readonly System.Collections.Generic.HashSet<UnitId> _hitUnits =
             new System.Collections.Generic.HashSet<UnitId>();
 
+        private readonly System.Collections.Generic.Dictionary<UnitId, float> _hitTimes =
+            new System.Collections.Generic.Dictionary<UnitId, float>();
+
+        private float _orbitAngle;
         private AbilitySystemBehaviour _hub;
         private Transform _transform;
         private uint _castId;
@@ -75,6 +163,8 @@ namespace Neo.Abilities
             _age = 0f;
             _hits = 0;
             _hitUnits.Clear();
+            _hitTimes.Clear();
+            _orbitAngle = 0f;
             _active = true;
 
             if (!_homingTarget.IsValid && request.Direction.sqrMagnitude > 0.0001f)
@@ -107,6 +197,12 @@ namespace Neo.Abilities
             }
 
             float deltaTime = Time.deltaTime;
+            if (_motion == ProjectileMotion.Orbit)
+            {
+                UpdateOrbit(deltaTime);
+                return;
+            }
+
             float step = _effectiveSpeed * deltaTime;
             Transform self = _transform;
             Vector3 position = self.position;
@@ -163,10 +259,56 @@ namespace Neo.Abilities
             }
         }
 
+        private void UpdateOrbit(float deltaTime)
+        {
+            if (!_hub.TryGetPosition(_owner, out Vector3 center))
+            {
+                Despawn();
+                return;
+            }
+
+            _orbitAngle += _orbitDegreesPerSecond * deltaTime;
+            bool screen = _plane == AbilityZonePlane.ScreenXY;
+            Quaternion turn = Quaternion.AngleAxis(_orbitAngle, screen ? Vector3.forward : Vector3.up);
+            if (_hitPoints != null && _hitPoints.Length > 0)
+            {
+                _transform.SetPositionAndRotation(center, turn);
+            }
+            else
+            {
+                Vector3 arm = screen ? Vector3.right : Vector3.forward;
+                _transform.SetPositionAndRotation(center + turn * arm * _orbitRadius, turn);
+            }
+
+            TryHitUnits();
+            _age += deltaTime;
+            if (_active && _age >= _maxLifetime)
+            {
+                Despawn();
+            }
+        }
+
         private void TryHitUnits()
         {
+            if (_hitPoints != null && _hitPoints.Length > 0)
+            {
+                for (int i = 0; i < _hitPoints.Length && _active; i++)
+                {
+                    if (_hitPoints[i] != null)
+                    {
+                        HitAt(_hitPoints[i].position);
+                    }
+                }
+
+                return;
+            }
+
+            HitAt(_transform.position);
+        }
+
+        private void HitAt(Vector3 position)
+        {
             HitScratch.Clear();
-            Vector3 position = _transform.position;
             _hub.QueryUnitsInRadius(position, _hitRadius, HitScratch);
             if (HitScratch.Count == 0)
             {
@@ -175,11 +317,10 @@ namespace Neo.Abilities
 
             AbilitySystem system = _hub.System;
             AbilityUnit owner = system.GetUnit(_owner);
-
             for (int i = 0; i < HitScratch.Count && _active; i++)
             {
                 UnitId id = HitScratch[i];
-                if (id == _owner || _hitUnits.Contains(id))
+                if (id == _owner || !CanHit(id))
                 {
                     continue;
                 }
@@ -196,13 +337,42 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                _hitUnits.Add(id);
+                MarkHit(id);
                 system.NotifyProjectileHit(_castId, id, position);
+                // WHY: an orbiting projectile lives for its lifetime, not for a number of hits.
+                if (_motion == ProjectileMotion.Orbit)
+                {
+                    continue;
+                }
+
                 _hits++;
                 if (_hits >= Mathf.Max(1, _maxHits))
                 {
                     Despawn();
                 }
+            }
+        }
+
+        private bool CanHit(UnitId id)
+        {
+            if (_rehitInterval > 0f)
+            {
+                return !_hitTimes.TryGetValue(id, out float hitAt) || _age - hitAt >= _rehitInterval;
+            }
+
+            // WHY: pierce means N distinct targets; a unit stays inside the hit radius for several frames.
+            return !_hitUnits.Contains(id);
+        }
+
+        private void MarkHit(UnitId id)
+        {
+            if (_rehitInterval > 0f)
+            {
+                _hitTimes[id] = _age;
+            }
+            else
+            {
+                _hitUnits.Add(id);
             }
         }
 

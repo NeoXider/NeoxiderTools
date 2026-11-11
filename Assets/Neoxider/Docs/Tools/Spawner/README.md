@@ -1,6 +1,8 @@
 ﻿# Tools / Spawner
 
-**What it is:** Reusable prefab pools (`NeoObjectPool`, `PoolManager`, `SpawnUtility`) plus optional scene spawners and a despawner. Scripts in `Scripts/Tools/Spawner/`, namespace `Neo.Tools`, assembly `Neo.Tools.Spawner`. This is the canonical module entry.
+**What it is:** reusable prefab pools (`NeoObjectPool`, `PoolManager`, `SpawnUtility`) plus optional scene spawners and a despawner. Scripts in `Scripts/Tools/Spawner/`, namespace `Neo.Tools`, assembly `Neo.Tools.Spawner`.
+
+**Navigation:** [← Tools](../README.md)
 
 **Contents:** see [Component and API reference](#component-and-api-reference) below.
 
@@ -27,16 +29,14 @@ For an exclusively owned generated source, return your current rentals, call `Sp
 
 Retirement also works from the first prewarm create/get callback: the pool is already registered, and the original Spawn/Get returns null. Startup prewarm does not recreate that source through duplicate entries. Handle a null rental when your callbacks can retire its source; see [PoolManager](PoolManager.md) and [SpawnUtility](SpawnUtility.md).
 
-A destroyed `PoolManager` retires all of its pools the same way: its stored instances die with it, and a rental still out is destroyed on its later return instead of being left inactive where it stands (PlayMode `PoolManagerTeardownTests`).
+A destroyed `PoolManager` retires all of its pools the same way: its stored instances die with it, and a rental still out is destroyed on its later return instead of being left inactive where it stands.
 
 ## Performance contract
 
 - `GetObject`/`ReturnObject` (and `SpawnUtility.Spawn`/`Despawn` on a warm pool) are O(1) and do not allocate. The per-instance `IPoolable` set is cached on `PooledObjectInfo` at creation.
-- Double, foreign and destroyed returns are rejected by the `PooledObjectInfo.IsInPool`/owner check in every build. Unity's `collectionCheck` (an O(n) scan per return that Unity runs only in the Editor, never in Player builds) is therefore disabled: Editor and Play Mode returns no longer slow down as the pool grows, while Player builds behave as before.
+- Double, foreign and destroyed returns are rejected by the `PooledObjectInfo.IsInPool`/owner check in every build, so Unity's Editor-only O(n) `collectionCheck` is disabled and Editor returns stay O(1) as the pool grows.
 - `Spawner.GetSpawnPosition()` (area sampling and deny-zone re-rolls) and `Spawner.GetActiveObjectCount()` do not
   allocate. Fixed spawner waits (equal min/max spawn delay, wave pause, destroy delay) reuse one `WaitForSeconds`.
-- Covered by allocation guards: EditMode `PoolingHotPathTests` (warm Get/Return, area sampling, active count) and
-  PlayMode `PoolCallbackCacheTests` (the cached `IPoolable` callbacks and a warm cycle that runs them).
 - Prewarm through `PoolManager` **Preconfigured Pools** (or a `NeoObjectPool` initial size) to move `Instantiate` cost to load time.
 
 ## Scene and Inspector workflow

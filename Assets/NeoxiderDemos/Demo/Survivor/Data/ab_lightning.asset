@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42ed834e73743f48ba73071f9eb8b21, type: 3}
+  m_Name: ab_lightning
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
+  _blueprint:
+    Id: lightning
+    DisplayName: Chain Lightning
+    Description: Strikes a random foe and jumps to others.
+    Targeting: 2
+    TeamFilter: 1
+    Range: 9
+    RangeByLevel: []
+    Costs: []
+    Cooldown: 2.4
+    CooldownByLevel:
+    - 2.4
+    - 2.2
+    - 2
+    - 1.8
+    - 1.5
+    MaxCharges: 1
+    MaxChargesByLevel: 
+    ChargeRestoreTime: 0
+    ChargeRestoreTimeByLevel: []
+    Delivery: 0
+    ProjectileArchetypeId: 
+    ProjectileSpeed: 20
+    ProjectileSpeedByLevel: []
+    CastEffects: []
+    ImpactEffects:
+    - OpId: chain
+      Target: 0
+      TeamFilter: 1
+      Radius: 4.5
+      RadiusByLevel: []
+      MaxTargets: 3
+      MaxTargetsByLevel: 0300000004000000050000000600000008000000
+      Amount: 14
+      AmountByLevel:
+      - 14
+      - 16
+      - 18
+      - 21
+      - 25
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 1
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
+      DamageType: magical
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: 
+      CustomParam: 0.85
+      Chance: 1
+      ChanceByLevel: []
+      AbilityId: 
+      Angle: 0
+      Duration: 0
+      Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
+      AmountPerStack: 0
+    Specials: []
+    CastCue: 
+    ImpactCue: zap

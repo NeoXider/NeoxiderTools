@@ -22,6 +22,14 @@ namespace Neo.Abilities
             Interval
         }
 
+        /// <summary>Which valid unit in range an aimed ability locks onto.</summary>
+        public enum AutoCastTargetPick
+        {
+            Nearest = 0,
+            Random = 1,
+            Farthest = 2
+        }
+
         [Tooltip("Caster driven by this component. Empty = the AbilityCasterBehaviour on this GameObject or its parents.")]
         [SerializeField] private AbilityCasterBehaviour _caster;
 
@@ -39,6 +47,10 @@ namespace Neo.Abilities
 
         [Tooltip("Target search radius for unit/point/direction abilities whose Range is 0 (unlimited).")]
         [SerializeField] [Min(0f)] private float _targetSearchRange = 20f;
+
+        [Tooltip("Which valid unit in range a unit, point or direction ability is aimed at. Random uses " +
+                 "UnityEngine.Random: fine for single-player games, not for deterministic lockstep.")]
+        [SerializeField] private AutoCastTargetPick _targetPick = AutoCastTargetPick.Nearest;
 
         [Header("Events")]
         [SerializeField] private UnityEvent<string> _onCast = new UnityEvent<string>();
@@ -59,6 +71,13 @@ namespace Neo.Abilities
         private bool _casterSearched;
         private uint _cachedSlotsUnit;
         private int _cachedSlotsVersion = -1;
+
+        /// <summary>Which valid unit in range an aimed ability locks onto.</summary>
+        public AutoCastTargetPick TargetPick
+        {
+            get => _targetPick;
+            set => _targetPick = value;
+        }
 
         public UnityEvent<string> OnCast => _onCast;
         public UnityEvent<string> OnCastFailed => _onCastFailed;
@@ -251,6 +270,7 @@ namespace Neo.Abilities
         {
             double bestSqr = double.PositiveInfinity;
             uint bestId = 0;
+            int candidates = 0;
             for (int i = 0; i < _unitScratch.Count; i++)
             {
                 UnitId id = _unitScratch[i];
@@ -284,10 +304,22 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                double sqr = AbilitySpatialGrid.SqrDistance(position, origin);
+                if (_targetPick == AutoCastTargetPick.Random)
+                {
+                    // WHY: reservoir sampling picks uniformly without collecting the candidates first.
+                    candidates++;
+                    if (UnityEngine.Random.Range(0, candidates) == 0)
+                    {
+                        bestId = id.Value;
+                    }
 
+                    continue;
+                }
+
+                double sqr = AbilitySpatialGrid.SqrDistance(position, origin);
+                bool closer = _targetPick == AutoCastTargetPick.Farthest ? sqr > bestSqr : sqr < bestSqr;
                 // WHY: unit-id tie-break keeps equidistant target choice deterministic.
-                if (sqr < bestSqr || (sqr == bestSqr && bestId != 0 && id.Value < bestId))
+                if (bestId == 0 || closer || (sqr == bestSqr && id.Value < bestId))
                 {
                     bestSqr = sqr;
                     bestId = id.Value;

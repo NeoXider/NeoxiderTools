@@ -12,11 +12,16 @@
 *Demo scene: `Scenes/Level/LevelFlowDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**Navigation:** [← Docs](../README.md)
+
+**How to work with it:**
+1. Add `LevelManager`, configure its maps and save prefix.
+2. Optionally add `LevelButton` children for the map UI and `TextLevel` labels.
+3. After a won level call `SaveLevel()` and `SetLastLevel()`; load scenes with `SceneFlowController`.
+
 **Contents:** see [Component documentation](#component-documentation) below.
 
 ---
-
-Demo: `Assets/NeoxiderDemos/Demo/Scenes/Level/LevelFlowDemo.unity`, controller `Demo/Scripts/Shell/LevelDemoController.cs`. The hand-authored `Level Demo` `LevelManager` gets a finite **World 1** map (5 levels) and an infinite **Endless** map under the save key `Neo.Demo.LevelFlow`. A grid of five `LevelButton`s switches its Lock / Next / Done visuals through its own events, two `TextLevel` labels show the selected level and the cleared count, and the completion badge reads `Map.IsComplete`. **Complete level**, **Next level**, **Replay** and the map buttons call `SaveLevel`, `NextLevel`, `Restart` and `SetMapId` directly through persistent UnityEvents (NoCode). The same scene drives a `Neo.Core.Level` `LevelComponent` (XP curve asset, labels bound to its reactive states, `LevelNoCodeAction` and C# buttons). It is part of the Demo download.
 
 ## Runtime API
 
@@ -43,7 +48,11 @@ Reference `Neo.Level` from a custom assembly. Level selection does not load a Un
 
 Configure maps and the save prefix on `LevelManager`; optional `LevelButton` children provide the map UI and `TextLevel` displays current or maximum progress. Buttons use visual IDs **0 = locked, 1 = current frontier, 2 = passed**. Inspector UnityEvents call the same public methods shown above. `SceneFlowController` independently handles loading, progress, manual activation, pause, and quit.
 
-In 11.0, `LevelButton` labels widen their one-based addition, and `TextLevel` integer animations finish with exact digits through the existing `SetText` API. Intermediate text/`currentNum` remain approximate floats. `TextLevel` combines the base tween enable/disable hooks with its own source subscription and deferred wait; see [TextLevel](TextLevel.md) for lifecycle and offset details.
+`LevelButton` labels widen their one-based addition, and `TextLevel` integer animations finish with exact digits through `SetText`; intermediate text and `currentNum` remain approximate floats. See [TextLevel](TextLevel.md) for lifecycle and offset details.
+
+## Demo scene
+
+`Assets/NeoxiderDemos/Demo/Scenes/Level/LevelFlowDemo.unity` (Demo download). The `Level Demo` `LevelManager` has a finite **World 1** map (5 levels) and an infinite **Endless** map under the save key `Neo.Demo.LevelFlow`. Look at the five `LevelButton`s, the two `TextLevel` labels and the buttons that call `SaveLevel`, `NextLevel`, `Restart` and `SetMapId` through persistent UnityEvents. The same scene drives a `Neo.Core.Level` `LevelComponent`. Everything is saved in the scene.
 
 ## Component documentation
 

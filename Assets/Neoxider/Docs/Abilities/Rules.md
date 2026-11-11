@@ -1,12 +1,17 @@
 # Rules and extension points
 
-**What it is:** `AbilitySystem.Rules` (`AbilityRules`) is the one place where a game swaps the rules of the ability system without forking the package: damage formula, mitigation, critical hits, evasion, modifier stacking, property aggregation, effect targeting, cooldowns, costs, the time source, the numeric backend and the random source. Every rule has a default that reproduces the classic Neo.Abilities behaviour; assigning `null` restores it.
+**What it is:** `AbilitySystem.Rules` (`AbilityRules`) is where a game replaces the formulas and systems of `Neo.Abilities` without forking the package. Every rule has a default with the standard behaviour; assigning `null` restores it.
 
-**How to use:** implement the interface, assign it once after creating the system (or from a component in your scene), before gameplay starts. Rules run on hot paths, so implementations must not allocate per call.
+**How to use:**
+1. Implement the rule's interface, or derive from its default class.
+2. Assign it once after creating the system, before gameplay starts, from code or from a scene component.
+3. Keep implementations allocation-free per call: rules run on hot paths.
 
 - Namespace: `Neo.Abilities`
 - Sources: `Assets/Neoxider/Scripts/Abilities/Domain/Rules/`
-- Related: [Triggers, damage hooks, zones and templates](./TriggersAndHooks.md)
+- Related: [Triggers, damage hooks, zones and templates](./TriggersAndHooks.md), [Deterministic mode](./DeterministicMode.md)
+
+---
 
 | Property | Interface | Default | Decides |
 |----------|-----------|---------|---------|
@@ -125,7 +130,13 @@ public sealed class HealthCostsDoubleInRage : StandardCastCostRule
 
 ## Time source
 
-`AbilitySystem.Advance(hostDelta)` asks `Rules.Time` how many steps to run. `VariableStepTimeSource` (default) runs one step of the host delta, exactly like `Tick(dt)`. `FixedStepTimeSource(ticksPerSecond, maxStepsPerCall)` accumulates host time and runs whole ticks of the same length (the excess beyond `maxStepsPerCall` ticks is dropped and counted in `DiscardedSeconds`); `StepTicks(n)` runs n ticks directly for a server or lockstep driver. `TickCount` and `ElapsedTime` report the domain clock. In a scene, **Time Mode** on [AbilitySystemBehaviour](./AbilitySystemBehaviour.md) selects Variable or Fixed Ticks.
+`AbilitySystem.Advance(hostDelta)` asks `Rules.Time` how many steps to run.
+
+- `VariableStepTimeSource` (default) runs one step of the host delta, exactly like `Tick(dt)`.
+- `FixedStepTimeSource(ticksPerSecond, maxStepsPerCall)` accumulates host time and runs whole ticks of the same length. Time beyond `maxStepsPerCall` ticks is dropped and counted in `DiscardedSeconds`.
+- `StepTicks(n)` runs n ticks directly, for a server or lockstep driver. `TickCount` and `ElapsedTime` report the domain clock.
+
+In a scene, **Time Mode** on [AbilitySystemBehaviour](./AbilitySystemBehaviour.md) selects Variable or Fixed Ticks.
 
 ```csharp
 system.Rules.Time = new FixedStepTimeSource(ticksPerSecond: 30);
@@ -155,8 +166,11 @@ system.Rules.Random = new GameRandomFactory();
 
 ## Fixed core
 
-The engine-free integer core has the same extension points typed on raw ints in `FixedRules` (`IFixedDamageFormula`, `IFixedMitigationRule`, `IFixedCriticalHitRule`, `IFixedEvasionRule`, `IFixedStackingRule`, `IFixedPropertyAggregator`, `IFixedTargetResolver`, `IFixedCooldownRule`, `IFixedCastCostRule`, `IFixedRandomFactory`); time is whole ticks and the number format is `FixedRules.Format`. See [Fixed core](./FixedCore.md#rules) for the defaults and a game's armor, rational multiplier and stacking rules plugged in.
+The integer core has the same extension points, typed on raw ints, in `FixedRules`; time is whole ticks and the number format is `FixedRules.Format`. The interfaces, their defaults and an example with a game's own armor, multiplier and stacking rules are in [Fixed core: Rules](./FixedCore.md#rules).
 
 ## По-русски
 
-`AbilitySystem.Rules` — единое место, где игра заменяет правила системы способностей, не форкая пакет: формулу урона, снижение бронёй и сопротивлением, крит, уклонение, политику стаков модификаторов, сложение характеристик (слои Add / Mul / Max), выбор целей, кулдауны, стоимость, источник времени (секунды или фиксированные тики), числовой бэкенд (float или фиксированная точка Q8.8) и источник случайности. У каждого правила есть стандартная реализация, повторяющая прежнее поведение; присваивание `null` возвращает её. Правила вызываются на горячих путях, поэтому реализации не должны выделять память на вызов. Примеры выше: своя кривая брони, формула с разницей уровней, стаки «до трёх, дальше игнор», аддитивные проценты, плоское снижение кулдауна, двойная цена здоровьем в ярости, фиксированные тики и своя фабрика генераторов. Детерминированный режим описан на странице [Deterministic mode](./DeterministicMode.md). У целочисленного ядра `Neo.Abilities.Fixed` те же точки расширения на сырых int в `FixedRules` (см. [Fixed core](./FixedCore.md#rules)).
+`AbilitySystem.Rules` — место, где игра заменяет правила системы способностей без форка пакета: формулу урона, броню и
+сопротивление, крит, уклонение, стаки, сложение характеристик, выбор целей, кулдауны, стоимость, время, числовой бэкенд и
+случайность. У каждого правила есть стандартная реализация; `null` возвращает её. Правила вызываются на горячих путях и
+не должны выделять память на вызов. У целочисленного ядра те же точки расширения в `FixedRules` ([Fixed core](./FixedCore.md#rules)).

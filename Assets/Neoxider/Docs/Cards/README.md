@@ -4,7 +4,9 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/cards.jpg" alt="Concept art for the Cards module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** card-game building blocks — pure C# models (`DeckModel`, `HandModel`, `BoardModel`, `CardData`), scene components (`DeckComponent`, `HandComponent`, `BoardComponent`, `CardComponent`), an MVP view/presenter layer (`CardView`, `HandView`, `HandPresenter`, ...), layout math, comparers and poker evaluation. Scripts live in `Scripts/Cards/` (namespace `Neo.Cards`, poker in `Neo.Cards.Poker`); Drunkard is a complete sample game built from these blocks.
+**What it is:** card-game building blocks in `Scripts/Cards/` (namespace `Neo.Cards`, poker in `Neo.Cards.Poker`): pure C# models (`DeckModel`, `HandModel`, `BoardModel`, `CardData`), scene components (`DeckComponent`, `HandComponent`, `BoardComponent`, `CardComponent`), an MVP view layer, layout math, comparers and poker evaluation. Drunkard is a complete sample game built from these blocks.
+
+**Navigation:** [← Docs](../README.md)
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/CardGame.jpg" alt="CardGame: the Drunkard card game built from deck, hand and board components" width="100%" /></p>
@@ -107,7 +109,7 @@ A hand or board ignores repeated insertion of the same scene card; `HandPresente
 
 Presenter add/remove calls also honor a newer mutation made by a model callback: `Model.OnCardAdded`/`OnCardRemoved` can call `presenter.Clear()` without stale view insertion, stale indexed removal or click subscription. A superseded asynchronous call does not publish an old presenter add/remove notification after its custom view finishes. Ordinary completed calls keep their synchronous event order.
 
-Since 11.0 a deal whose hand rejects the card after the flight returns the card to its source deck, and a cancelled deal never changes a newer deal. The Drunkard sample's `RestartGame()` can be called mid-turn: earlier animations and continuations are cancelled before state is cleared. Asset setup is described in [Cards editor](./Editor.md); the C# path is on the component pages.
+A deal whose hand rejects the card after the flight returns the card to its source deck, and a cancelled deal never changes a newer deal. The Drunkard sample's `RestartGame()` can be called mid-turn: earlier animations and continuations are cancelled before state is cleared. Asset setup is described in [Cards editor](./Editor.md); the C# path is on the component pages.
 
 `CardPresenter.IsFaceUp` reports the actual view state, including fixed display modes and direct view flips. If a face or back sprite cannot be resolved, built-in card renderers clear their previous sprite. A missing back therefore produces a blank card instead of exposing the old face.
 
@@ -131,15 +133,7 @@ Use `CanAdd(...)` or `TryAdd(...)` for player-facing flows where overflow should
 
 ## Demo scene
 
-`Assets/NeoxiderDemos/Demo/Scenes/_ExampleGame/CardGame.unity` (Demo download) is a complete Drunkard game assembled in the scene. `CardManager` (`DrunkardGame`), `DECK` (`DeckComponent`), `Hand Player` / `Hand Bot` (`HandComponent`) and `Board` (`BoardComponent`) sit on the NeoxiderPages `PM` pages and talk through UnityEvents: a pile click calls `DrunkardGame.Play`, `HandComponent.OnCardCountChanged` feeds the `SetText` score labels, and the win/lose events call `GM`.
-
-The `[Demo] Guide` overlay is saved in the scene (no runtime bootstrap).
-
-| Object | What it shows |
-|--------|---------------|
-| `[Demo] Guide/InfoCard` (texts on `[Demo] Services/Demo Info`) | Collapsible card: which object plays which role, the C# API and how to play. |
-| `[Demo] Guide/LivePanel` | Appears when the dealer tips end (`Tutorial` `Selector.OnFinished` → `GameObject.SetActive(true)`). Its log receives `DrunkardGame` events (`OnGameRestarted`, `OnPlayerWonRound`, `OnWarStarted`, `OnPlayerWin`, ...) through persistent `DemoLogFeed.Log` listeners; select `CardManager` to see them in the Inspector. |
-| **Same deal every restart** toggle and **Restart deal** button | The toggle sets `DeckComponent.UseFixedShuffleSeed` directly; with it on, `DrunkardGame.RestartGame` deals the same order every time. |
+`Assets/NeoxiderDemos/Demo/Scenes/_ExampleGame/CardGame.unity` (Demo download) is a complete Drunkard game. Look at `CardManager` (`DrunkardGame`), `DECK` (`DeckComponent`), `Hand Player` / `Hand Bot` (`HandComponent`) and `Board` (`BoardComponent`): they talk through UnityEvents, for example a pile click calls `DrunkardGame.Play` and `HandComponent.OnCardCountChanged` feeds the score labels. `[Demo] Guide/LivePanel` logs the `DrunkardGame` events, and the **Same deal every restart** toggle sets `DeckComponent.UseFixedShuffleSeed`. Everything is saved in the scene.
 
 The C# path is the same API: `deck.UseFixedShuffleSeed = true; game.RestartGame(); game.OnPlayerWonRound.AddListener(...)`.
 

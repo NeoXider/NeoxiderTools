@@ -29,9 +29,12 @@
 | [SaveProviderType](./SaveProviderType.md) | Backend selector enum |
 | [PlayerData](./PlayerData.md) | Sample `ISaveableComponent` |
 
----
+**Navigation:** [← Docs](../README.md)
 
-Demo: `Assets/NeoxiderDemos/Demo/Scenes/Save/SaveDemo.unity`, controller `Demo/Scripts/Shell/SaveDemoController.cs`. Everything is saved in the scene, so the wiring is visible without Play Mode: `Save Demo` holds `SaveManager` and a `SaveProviderSettingsComponent` that selects `Demo/Data/Save/SaveDemoProviderSettings.asset` (File provider, `neo_save_demo.json`; the demo never touches your PlayerPrefs). The card shows both save layers: `[SaveField]` values through `SaveManager.Save(this)` / `Load(this)` and a 64-bit wallet through `SaveProvider.SetLong` / `GetLong` above `int.MaxValue`. The status rows read `FileSaveProvider.HasUnsavedChanges` and count `SaveProvider.OnDataSaved` events against real file writes: press **Save** twice and the second save raises the event without rewriting the file. **FlushNow (NoCode)** calls `SaveManager.FlushNow()` through a persistent UnityEvent. It is part of the Demo download.
+**How to work with it:** for key/value data call `SaveProvider` directly ([Quick start](#quick-start)); for
+component state add a `SaveManager` and mark fields with `[SaveField]` ([Scene / Inspector setup](#scene--inspector-setup)).
+
+---
 
 ## Main workflows
 
@@ -66,7 +69,11 @@ For component state, add one `SaveManager` and derive components from `SaveableB
 
 Direct `FileSaveProvider` instances need explicit `Save()` calls. The static facade also flushes on focus loss and application quit, and `SaveManager` flushes on pause, focus loss and quit. A file provider with no pending change skips the disk write, so these overlapping flushes cost no I/O. Failed file-slot flushes retain the original slot and pending values; use [`TryChangeSlot`](./FileSaveProvider.md) when the caller needs a success result.
 
-Invalid enabled file encryption is rejected before opening storage. [`SaveProviderSettings.TryCreateProvider`](./Settings/SaveProviderSettings.md) returns the error without activating a provider; legacy `CreateProvider()` throws `InvalidOperationException`. Lazy Resources initialization can be retried after correcting the asset, and an assigned scene-settings failure retains the previous provider and always logs the error. This is an intentional 11.0 change from silently falling back to plaintext.
+Invalid enabled file encryption is rejected before opening storage. [`SaveProviderSettings.TryCreateProvider`](./Settings/SaveProviderSettings.md) returns the error without activating a provider; legacy `CreateProvider()` throws `InvalidOperationException`. Lazy Resources initialization can be retried after correcting the asset, and an assigned scene-settings failure retains the previous provider and always logs the error. There is no silent fallback to plaintext.
+
+## Demo scene
+
+`Assets/NeoxiderDemos/Demo/Scenes/Save/SaveDemo.unity` (Demo download). `Save Demo` holds `SaveManager` and a `SaveProviderSettingsComponent` with the File provider (`neo_save_demo.json`), so the demo never touches your PlayerPrefs. The card shows `[SaveField]` values, a 64-bit wallet through `SaveProvider.SetLong` / `GetLong`, and `FileSaveProvider.HasUnsavedChanges`: press **Save** twice and the second save raises `OnDataSaved` without rewriting the file. Everything is saved in the scene.
 
 ## More docs
 

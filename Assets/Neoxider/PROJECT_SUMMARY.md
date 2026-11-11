@@ -1,23 +1,22 @@
 # NeoxiderTools Project Summary
 
-**What it is:** a concise map of the `NeoxiderTools` package for developers, maintainers, and AI agents. Goal: quickly understand which ready-made runtime APIs, MonoBehaviour wrappers, sample scenes, and docs already exist before writing a new mechanic.
+**What it is:** a compact map of the `NeoxiderTools` package for developers, maintainers and AI agents. Check it before writing a new mechanic: the runtime API, wrapper, demo or doc you need often exists already.
 
-**Contents:** [package status](#package-status), [structure](#structure), [product layers](#key-product-layers), [reuse-first map](#reuse-first-map), [12.0 notes](#120-notes), [dependencies](#dependencies), [development rules](#package-development-rules), [samples](#samples), [tests](#tests-and-quality).
+**Contents:** [package status](#package-status), [structure](#structure), [product layers](#key-product-layers), [reuse-first map](#reuse-first-map), [dependencies](#dependencies), [development rules](#package-development-rules), [demos](#samples), [tests](#tests-and-quality), [canonical documents](#canonical-documents).
 
 ---
 
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json` (`com.neoxider.tools`)
-- **Current version**: `12.3.0`
-- **Upgrade guides**: [`Docs/Migration12.md`](./Docs/Migration12.md) (from 11.x), [`Docs/Migration11.md`](./Docs/Migration11.md) (from 10.x)
-- **Validation**: the 11.0.0 Windows record is [`Verification11.md`](./Verification11.md); release verification of the 12.0.0 source is pending and is not implied by any audit receipt.
+- **Current version**: `12.4.0`
 - **Unity**: `6000.0+`
 - **Main namespace**: `Neo`
 - **Size**: 26 module areas plus 17 Tools submodules, compiled as 54 runtime and 6 editor assemblies
-- **Main user entry point**: [`README.md`](./README.md)
-- **Main documentation index**: [`Docs/README.md`](./Docs/README.md)
-- **Package tests**: `Assets/Neoxider/Tests/`
+- **Install**: `https://github.com/NeoXider/NeoxiderTools.git#upm` ([Getting Started](./Docs/GettingStarted.md#installation))
+- **Upgrade guides**: [`Docs/Migration12.md`](./Docs/Migration12.md) (from 11.x, including every 12.x change), [`Docs/Migration11.md`](./Docs/Migration11.md) (from 10.x)
+- **Validation**: the 11.0.0 Windows record is [`Verification11.md`](./Verification11.md); no release verification record for 12.x is published, and no audit receipt implies one.
+- **Entry points**: [`README.md`](./README.md) for users, [`Docs/README.md`](./Docs/README.md) for module navigation
 
 ## Structure
 
@@ -38,15 +37,19 @@ Maintainer documents (plans, TODO, demo scene rules) live in the repository's `d
 ## Key Product Layers
 
 - **Core gameplay modules**: `Core` (Level, Resources), `Cards`, `GridSystem`, `Merge`, `Save`, `Settings`, `Shop`, `StateMachine`, `NPC`, `UI`, `Progression`, `Quest`, `Bonus`.
-- **Abilities (combat)**: `Neo.Abilities` — a data-driven, Dota-style ability/modifier system. Units with properties (`{ Add | Mul | Max }`, aggregated `add -> mul -> max`), modifiers that unify buffs/debuffs/DoT/shields/stuns under one lifecycle, data-authored abilities resolved through a validated cast pipeline (states, costs, cooldown/charges, targeting, range) with a typed `CastResult`, an opt-in `AbilitySpatialGrid` for hundreds of units, multiplayer-ready event receipts, and a UITK Ability Designer. Supersedes `Rpg`.
-- **Grid games**: `FieldGenerator` for shape/coordinates/cell state/pathfinding, `GridPathfinder` for paths and movement ranges, `GridPlacementEntry` / `GridPlacementResult` / `PlaceContentFootprint` for multi-cell placement, `GridMergeResolver` for connected-group merge, `DiceBoardService` for Dice Merge, plus the Match3, TicTacToe (n-in-a-row) and SlidingMerge (2048 with game-over and spawn events) layers.
-- **Generic merge**: `Neo.Merge` - a pure C# connected-group merge engine with no dependency on Unity scene/Grid.
+- **Abilities (combat)**: `Neo.Abilities` is a data-driven, Dota-style ability and modifier system and supersedes `Rpg`.
+  - Units have properties (`{ Add | Mul | Max }`, aggregated `add -> mul -> max`).
+  - Modifiers put buffs, debuffs, DoT, shields and stuns under one lifecycle.
+  - Abilities are data, resolved through a validated cast pipeline (states, costs, cooldown and charges, targeting, range) with a typed `CastResult`.
+  - An opt-in `AbilitySpatialGrid` handles hundreds of units; event receipts are multiplayer-ready; the UITK Ability Designer edits the data.
+- **Grid games**: `FieldGenerator` owns shape, coordinates, cell state and pathfinding; `GridPathfinder` finds paths and movement ranges; `GridPlacementEntry` / `GridPlacementResult` / `PlaceContentFootprint` place multi-cell content; `GridMergeResolver` merges connected groups; `DiceBoardService` runs Dice Merge. Match3, TicTacToe (n-in-a-row) and SlidingMerge (2048 with game-over and spawn events) are separate layers.
+- **Generic merge**: `Neo.Merge`, a pure C# connected-group merge engine with no dependency on Unity scenes or grids.
 - **Plain C# cores behind components**: `CollectionSet`, `BoxProgress`, `CooldownSchedule`, `SlotSpinMath` (Bonus); `DeckModel`, `HandModel` (Cards); `RpgCharacterStatService`, `RpgCharacterProgressionService`, `RpgModifierMath` (Rpg); `ResourcePoolModel` (Core); `StateMachine<TState>`; `DialogueLinePool`; `IntegerChanceTable`.
 - **Time and randomness seams**: `IFrameClock` / `ManualFrameClock` and `INeoClock` / `NeoTrustedTime.AsClock` for injectable time; seeded `RandomExtensions` overloads, `DeckModel(seed)` and `IntegerChanceTable` for reproducible rolls.
 - **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move` (including `FreeFlyCameraController`), `Tools/Dialogue`, `Tools/Input`, `Tools/Time`, `Tools/Random`, `Tools/Physics`, `Tools/Draw`.
-- **No-code / Inspector workflows**: `Condition`, **`Neo.NoCode`** (`NoCodeBindText`, `NoCodeFormattedText`, `SetProgress` -> TMP / Slider / Image), module `*NoCodeAction` bridges, `PropertyAttribute`, UnityEvent-driven components. Every NoCode component has a typed C# API.
+- **No-code / Inspector workflows**: `Condition`, `Neo.NoCode` (`NoCodeBindText`, `NoCodeFormattedText`, `SetProgress` -> TMP / Slider / Image), module `*NoCodeAction` bridges, `PropertyAttribute` and UnityEvent-driven components. Every NoCode component has a typed C# API.
 - **Editor support**: custom inspectors, creation menus, maintenance windows.
-- **Optional sample module**: `Assets/NeoxiderDemos/NeoxiderPages`.
+- **Optional page module**: `Assets/NeoxiderDemos/NeoxiderPages`, shipped as a demo download.
 - **Moved out**: the HTML/CSS → UI Toolkit converter is the separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package (`com.neoxider.htmltouitk`).
 
 ## Reuse-first map
@@ -78,16 +81,6 @@ Before implementing something new, check these ready-made building blocks:
 | Quest credit from enemy/pickup prefabs | `QuestManager.Notify*`, `QuestNoCodeAction` Notify actions by Target Id | [`Docs/Quest/README.md`](./Docs/Quest/README.md) |
 | Debug/spectator movement, pooling, timers, input helpers | `Tools/Move`, `Tools/Spawner`, `Tools/Time`, `Tools/Input` | [`Docs/Tools/README.md`](./Docs/Tools/README.md) |
 
-## 12.0 notes
-
-The full list is in [`CHANGELOG.md`](./CHANGELOG.md) and [`Docs/Migration12.md`](./Docs/Migration12.md).
-
-- The HTML/CSS → UI Toolkit converter left the package (`com.neoxider.htmltouitk`).
-- Demo scenes are saved complete (UI, components, UnityEvent wiring) instead of being built by runtime bootstraps; `NeoDemoShell` is an obsolete fallback.
-- Hot paths of most modules were reworked to avoid per-frame and per-call allocations once warm; zero-allocation tests use Unity's GC.Alloc recorder. Explicit `Performance` tests print `NEO_PERF` lines.
-- Plain C# cores were extracted from components (Bonus, Cards, Rpg, GridSystem), and time/random seams were added (clocks, seeded overloads, integer odds).
-- Behaviour changes worth knowing: `AMSettings` persists mute, `ButtonScale`/`ButtonShake`/`FakeLoad` default to unscaled time, `AnimationFly.Play` copies its request, NPC chase events fire once per chase, `StringExtension.ToFloat` reads the invariant culture first.
-
 ## Dependencies
 
 ### Via UPM
@@ -104,37 +97,40 @@ The full list is in [`CHANGELOG.md`](./CHANGELOG.md) and [`Docs/Migration12.md`]
 - `Spine Unity Runtime` only for Spine integrations
 - `MarkdownRenderer` optionally for improved `.md` viewing in the inspector
 - `com.neoxider.htmltouitk` only for HTML/CSS → UI Toolkit conversion
-- `com.unity.render-pipelines.universal` only for projects that need URP-specific rendering features or 2D lights; the package does not install URP
+- `com.unity.render-pipelines.universal` only for URP-specific rendering features or 2D lights; the package does not install URP
+
+Versions and status: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md#package-dependencies).
 
 ## Package development rules
 
-- Check this summary and the docs index first: the needed building block often already exists, and a new mechanic can be assembled with an adapter instead of rewriting from scratch.
-- Reuse existing modules and extend them instead of adding duplicates.
-- When changing public behavior, update the module documentation and `CHANGELOG.md`.
+- Check this summary and the docs index first: a new mechanic can often be assembled from existing blocks with an adapter.
+- Extend existing modules instead of adding duplicates.
+- When changing public behaviour, update the module documentation and `CHANGELOG.md`.
 - For new user-facing entry points, update `README.md` and `Docs/README.md` first.
 - For multi-instance systems, prefer explicit references over implicit auto-find.
-- Keep editor-only logic in `Editor/` or in separate `Editor` folders under the correct `asmdef`.
+- Keep editor-only logic in `Editor/` or in separate `Editor` folders under the correct asmdef.
 - Keep rules in plain C# with injectable time and randomness; components and NoCode helpers wrap them.
-- **Module structure:** folders (Interfaces, Domain, Data, Components, Bridge, Runtime, Events, Enums), asmdef, namespaces, and the "one type - one file" principle are described in [MODULE_STRUCTURE.md](./MODULE_STRUCTURE.md).
+- Module structure (folders Interfaces, Domain, Data, Components, Bridge, Runtime, Events, Enums; asmdef; namespaces; one type per file) is described in [MODULE_STRUCTURE.md](./MODULE_STRUCTURE.md).
 
 ## Samples
 
-- `Assets/NeoxiderDemos/Demo` contains the module demo scenes, the example games and `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game assembled only from library components and UnityEvents on top of `Neo.Abilities`, without game scripts. Every module demo (Audio, Save, Settings, Level, StateMachine, NoCode, Parallax, Quest, Progression, Inventory, Abilities, Grid, Shop, NPC, Network, Tools, `UI/AnimationFlyDemo` and more) is saved with its UI and UnityEvent wiring. See [`Docs/Samples.md`](./Docs/Samples.md).
-- `Assets/NeoxiderDemos/NeoxiderPages` contains the optional page navigation module and its demo.
-- `Assets/NeoxiderDemos/CharacterMovementFundamentals` holds the 3D character controller showcase (slopes, stairs, platforms, gravity rooms) and the Capguy character the animated character presets reference.
-- These are ordinary project folders outside the package; each ships as its own `.unitypackage` on the releases page.
+The demos are ordinary project folders outside the package; each ships as its own `.unitypackage` on the releases page ([`Docs/Samples.md`](./Docs/Samples.md)):
+
+- `Assets/NeoxiderDemos/Demo`: module demo scenes, example games and `Scenes/SurvivorDemo.unity`, a Vampire-Survivors-style NoCode game with seven weapons, built from library components and UnityEvents on `Neo.Abilities`, with no game scripts. Every scene is saved with its UI and UnityEvent wiring.
+- `Assets/NeoxiderDemos/NeoxiderPages`: the optional page navigation module and its demo.
+- `Assets/NeoxiderDemos/CharacterMovementFundamentals`: the 3D character controller showcase (slopes, stairs, platforms, gravity rooms) and the Capguy character used by the animated character presets.
 
 ## Tests and quality
 
-- `com.unity.test-framework` is **not** a package dependency — install it in the host project to run the tests.
-- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `Fixtures`, `Integration`) — more than 5,000 EditMode cases plus the PlayMode suites. Current counts and skips are reported by Test Runner and depend on Unity, optional modules, graphics, and sample layout.
-- Covered are the critical scenarios of the runtime modules, including `Abilities`, `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, `Network`, `NoCode` and editor regressions, plus zero-allocation guards for warm hot paths.
+- Tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `Fixtures`, `Integration`, `Performance`): more than 5,000 EditMode cases plus the PlayMode suites. Counts and skips depend on Unity, optional modules, graphics and the demo layout.
+- They cover the critical scenarios of the runtime modules, including `Abilities`, `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, `Network`, `NoCode` and editor regressions, plus zero-allocation guards for warm hot paths.
+- `com.unity.test-framework` is not a package dependency; install it in the host to run the tests. How to run them: [`Docs/Testing.md`](./Docs/Testing.md).
 
 ## Canonical documents
 
 - User-facing package overview: [`README.md`](./README.md)
 - User navigation across modules: [`Docs/README.md`](./Docs/README.md)
-- Change history: [`CHANGELOG.md`](./CHANGELOG.md)
+- Change history: [`CHANGELOG.md`](./CHANGELOG.md) and, for what an upgrading project notices, [`Docs/Migration12.md`](./Docs/Migration12.md)
 - Upgrade guides: [`Docs/Migration12.md`](./Docs/Migration12.md), [`Docs/Migration11.md`](./Docs/Migration11.md)
 - Module structure rules (folders, asmdef, namespaces): [`MODULE_STRUCTURE.md`](./MODULE_STRUCTURE.md)
 - Documentation standard: [`DOCUMENTATION.md`](./DOCUMENTATION.md) and [`DOCUMENTATION_GUIDELINES.md`](./DOCUMENTATION_GUIDELINES.md)

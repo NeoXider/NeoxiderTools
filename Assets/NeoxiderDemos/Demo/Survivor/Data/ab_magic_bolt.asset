@@ -15,29 +15,61 @@ MonoBehaviour:
   _blueprint:
     Id: magic_bolt
     DisplayName: Magic Bolt
-    Description: A homing bolt that strikes the nearest foe.
+    Description: Homing bolts at the nearest foes. Levels add bolts.
     Targeting: 2
     TeamFilter: 1
     Range: 11
+    RangeByLevel: []
     Costs: []
-    Cooldown: 0.75
+    Cooldown: 0.8
+    CooldownByLevel:
+    - 0.8
+    - 0.75
+    - 0.7
+    - 0.65
+    - 0.55
     MaxCharges: 1
+    MaxChargesByLevel: 
     ChargeRestoreTime: 0
-    Delivery: 1
-    ProjectileArchetypeId: bolt
-    ProjectileSpeed: 15
+    ChargeRestoreTimeByLevel: []
+    Delivery: 0
+    ProjectileArchetypeId: 
+    ProjectileSpeed: 20
+    ProjectileSpeedByLevel: []
     CastEffects: []
     ImpactEffects:
-    - OpId: damage
-      Target: 0
+    - OpId: projectile
+      Target: 3
       TeamFilter: 1
-      Radius: 0
-      Amount: 10
+      Radius: 11
+      RadiusByLevel: []
+      MaxTargets: 1
+      MaxTargetsByLevel: 0100000001000000020000000200000003000000
+      Amount: 0
+      AmountByLevel: []
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 0
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
       DamageType: magical
       ModifierId: 
       ResourceId: 
-      ArchetypeId: 
+      ArchetypeId: bolt
       CustomParam: 
       Chance: 1
+      ChanceByLevel: []
+      AbilityId: bolt_hit
+      Angle: 0
+      Duration: 0
+      Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
+      AmountPerStack: 0
+    Specials: []
     CastCue: 
     ImpactCue: 

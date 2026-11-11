@@ -1,4 +1,53 @@
 
+## [12.4.0] - 2026-11-11
+
+Distinct weapon behaviours for the ability constructor, and a Survivor demo rebuilt on them.
+
+### Added
+
+- **AbilityProjectileBehaviour:** **Motion** `Orbit` (circles its owner for its lifetime: orbiting blades, rotating
+  shields), **Hit Points** (several hit positions on one projectile) and **Rehit Interval** (the same unit can be hit
+  again). C#: `Motion`, `OrbitRadius`, `OrbitDegreesPerSecond`, `RehitInterval`, `HitRadius`.
+- **AbilityAutoCaster:** **Target Pick** `Nearest` / `Random` / `Farthest`.
+- **AbilityNoCodeAction:** `LevelUpAbility` grants the ability or raises its level by one, up to **Max Level**: one
+  button for "pick the weapon card again to level it up".
+- **AbilityCooldownSource:** `Level` and `IsGranted` for loadout bars.
+- **Ability hub — archetype roles:** an archetype entry has a **Role** (`As Is`, `Projectile`, `Zone View`) with inline
+  settings, so a plain visual prefab works as a projectile or a zone view without a component on it.
+- **Ability hub — spawn API:** `EntitySpawned` (C#) and **On Entity Spawned** (Inspector) hand over every object an
+  ability spawns; `AdoptSpawned(request, instance)` accepts objects created by your own code; `AddArchetype(entry)`.
+- **AbilityEventListener:** one ability system event as UnityEvents and a C# event, filtered by ability and by the
+  units on either side: a NoCode and code entry point for quests, analytics and third-party calls.
+- **AbilitySummonBehaviour:** a summoned unit that knows its owner: inherits team and level, hands the owner to its
+  movement or AI, has a lifetime and a cap per owner, leaves with the owner.
+- **AbilitySceneValidator** (**Neoxider > Abilities > Validate Open Scenes**): lists ability wiring that fails
+  silently at runtime: unknown ability or modifier ids in auto-casters, cooldown sources and NoCode actions, unmapped
+  spawn archetypes, missing payloads and cues nobody plays.
+- **PlayAudio:** **Play On Enable** (`PlayOnEnable`) for pooled effects and projectiles.
+- **AbilityCuePlayer:** plays `CastCue` at the caster and `ImpactCue` at every damaged unit (chain hops, zone pulses
+  and projectile payloads included) as a pooled prefab plus a UnityEvent; `PlayAt(id, position)` for other moments.
+
+### Changed
+
+- **Survivor demo:** seven weapons with different behaviour, still data and library components only: a homing volley
+  (Magic Bolt), an aura zone with knockback (Holy Aura), orbiting blades, chain lightning at a random foe, a burning
+  ground zone, a piercing spear and a freezing nova. A weapon card levels its weapon up to 5: more bolts, more chain
+  targets, bigger areas, longer freezes, shorter cooldowns. New: a loadout bar with levels and cooldowns, a ranged
+  Spitter enemy and an Ogre King boss at 2:00. Weapon effects are played by `AbilityCuePlayer` and zone views.
+- **Documentation:** an editorial pass over the module entry pages and the largest pages. Each page opens with what
+  it is and how to start, every topic has one home that the other pages link to, and release history lives only in
+  `Migration12.md`. Stale statements found on the way were corrected against the code.
+
+### Fixed
+
+- **Spawner:** **Spawn Limit** counts spawned objects only. A table still locked by **Prefab Unlock Seconds** used the
+  limit up while it waited, so a limit of 1 with an unlock time (a boss) never spawned.
+
+### Removed
+
+- **Survivor demo:** the `nova` and `ember` abilities and the `chill` / `burn` modifiers (three near-identical
+  bursts are replaced by the weapons above).
+
 ## [12.3.0] - 2026-11-11
 
 Ability parameters become level- and resource-scalable on both cores; module additions let a survivor game (and
