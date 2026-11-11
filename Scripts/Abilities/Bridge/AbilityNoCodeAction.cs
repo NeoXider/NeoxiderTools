@@ -41,6 +41,9 @@ namespace Neo.Abilities
         [SerializeField] private string _modifierId = string.Empty;
 
         [SerializeField] [Min(1)] private int _level = 1;
+
+        [Tooltip("LevelUpAbility: the highest level the action raises the ability to. 0 = no cap.")]
+        [SerializeField] [Min(0)] private int _maxLevel;
         [SerializeField] [Min(0f)] private float _amount = 25f;
 
         [Header("Events")] [SerializeField] private UnityEvent _onSuccess = new UnityEvent();
@@ -89,6 +92,9 @@ namespace Neo.Abilities
                     break;
                 case AbilityNoCodeActionType.SetAbilityLevel:
                     ExecuteSetAbilityLevel();
+                    break;
+                case AbilityNoCodeActionType.LevelUpAbility:
+                    ExecuteLevelUpAbility();
                     break;
                 case AbilityNoCodeActionType.SetUnitLevel:
                     ExecuteSetUnitLevel();
@@ -223,6 +229,37 @@ namespace Neo.Abilities
             {
                 EmitFailed($"Ability not granted: {abilityId}");
             }
+        }
+
+        private void ExecuteLevelUpAbility()
+        {
+            if (!TryGetUnit(out AbilityUnitBehaviour unit) || !TryGetAbilityId(out string abilityId))
+            {
+                return;
+            }
+
+            AbilitySystem system = unit.Unit.System;
+            if (!EnsureRegistered(system, abilityId, isAbility: true))
+            {
+                return;
+            }
+
+            if (!system.TryGetSlot(unit.UnitId, abilityId, out AbilitySlot slot))
+            {
+                system.GrantAbility(unit.UnitId, abilityId);
+                EmitSuccess($"Granted ability: {abilityId}");
+                return;
+            }
+
+            if (_maxLevel > 0 && slot.Level >= _maxLevel)
+            {
+                EmitFailed($"Ability is at its max level: {abilityId} ({slot.Level})");
+                return;
+            }
+
+            int next = slot.Level + 1;
+            system.SetAbilityLevel(unit.UnitId, abilityId, next);
+            EmitSuccess($"Leveled up ability: {abilityId} -> {next}");
         }
 
         private void ExecuteSetUnitLevel()

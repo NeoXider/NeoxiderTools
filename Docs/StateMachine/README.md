@@ -4,7 +4,10 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/statemachine.jpg" alt="Concept art for the StateMachine module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** State machine runtime (IState, transitions), no-code ScriptableObject config, and visual editor. Scripts in `Scripts/StateMachine/`. Use this page as the English module entry.
+**What it is:** a state machine runtime (`IState`, transitions), no-code ScriptableObject configuration and a visual editor. Scripts in `Scripts/StateMachine/`.
+
+**How to work with it:** in code, run a `StateMachine<IState>` with your own states; in a scene, attach
+`StateMachineBehaviourBase` and assign a `StateMachineData` asset ([Choosing a workflow](#choosing-a-workflow)).
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/StateMachineDemo.jpg" alt="StateMachineDemo: a C# state machine agent next to a NoCode guard" width="100%" /></p>
@@ -19,21 +22,19 @@
 
 ---
 
-Demo (Demo download): `Assets/NeoxiderDemos/Demo/Scenes/StateMachine/StateMachineDemo.unity`, controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/StateMachineDemoController.cs`. The scene is saved with its UI; nothing is built at runtime. The **Agent** shows the C# path (`StateMachine<IState>` driven by `StateMachineDemoController`); the **Guard** shows the NoCode path: a `StateMachineBehaviourBase` playing `Data/StateMachine/Guard StateMachine.asset` (Sleep / Alert), where Sleep → Alert reads the Noise toggle through a `ConditionEntryPredicate` in context slot Override1 and Alert → Sleep also needs 1.5 s in Alert (`StateDurationPredicate`).
-
 ## Current Architecture
 
 - `StateMachine<TState>` is the C# runtime core. Use it directly when you do not need a scene component.
 - `StateMachineBehaviour<TState>` and `StateMachineBehaviourBase` are scene wrappers: ticking, context slots, UnityEvents, reload, and enable/disable lifecycle.
 - `StateMachineData` / `StateData` assets must not store scene object references. Put scene objects on the component context overrides and reference them from SO data by slot.
 - Use `SetContextGameObjectActiveAction` for scene-object actions. `SetGameObjectActiveAction` is legacy compatibility for old assets with direct scene references.
-- Runtime logs are gated per machine. A component's **Enable Debug Log** (C#: `EnableDebugLog`) drives its own logs and its machine's `DebugLogEnabled`, which also gates the NoCode actions that machine runs (`LogStateAction`, action errors). Another component's setting no longer changes them. A plain `StateMachine<TState>` follows the shared switch (the last enabled component) until you assign `DebugLogEnabled`.
+- Runtime logs are gated per machine. A component's **Enable Debug Log** (C#: `EnableDebugLog`) drives its own logs and its machine's `DebugLogEnabled`, which also gates the NoCode actions that machine runs (`LogStateAction`, action errors). Another component's setting does not change them. A plain `StateMachine<TState>` follows the shared switch (the last enabled component) until you assign `DebugLogEnabled`.
 - On disable, the component exits the current state; on re-enable it can reload `StateMachineData`.
 - Enter, update, and exit actions receive the component's owner and override slots, including exit during disable, destruction, and reload.
 - Transition priorities and sources can change at runtime. Moving `FromStateData` to another asset, or changing `FromStateType` (including clearing it to make the transition source-less), takes effect on the next evaluation without re-registering.
 - A NoCode machine evaluates only the transitions leaving the active `StateData` (plus source-less ones): per-frame cost is O(outgoing transitions), `OnTransitionEvaluated` reports only those, and predicate entry hooks run only for transitions leaving the entered state. Equal priorities keep registration order. Sorted lists are revalidated through `StateTransition.RoutingVersion`, so a warm evaluation neither re-sorts nor allocates.
 - A missing condition override returns false before optional predicate inversion; it does not substitute the owner. `StateMachineData.Validate(true)` returns false for missing initial state or invalid NoCode endpoints without logging; `Validate(false)` (the Inspector's **Validate Configuration** button) always writes those problems to the console.
-- A `ConditionEntryPredicate` whose **Source Object** is empty reads its context slot also from a saved asset in Editor Play Mode (before 12.0 the Editor's placeholder for the empty field was taken for a destroyed source, so such predicates never passed).
+- A `ConditionEntryPredicate` whose **Source Object** is empty reads its context slot, also from a saved asset in Editor Play Mode.
 
 ## Scene wrapper API
 
@@ -53,19 +54,19 @@ For code, implement `IState`, register `StateTransition` rules, and call `Update
 
 `ChangeState` and `Stop` called from lifecycle callbacks are queued FIFO until the current exit/enter/events finish. Each outer dispatch processes at most 128 requests, then discards pending requests with a gated diagnostic. Normal calls remain synchronous. See the [lifecycle and timing contracts](StateMachine.md) for ordering, exception behavior, clock injection and the addressed `SetCurrentStateEnterTime` migration.
 
-В 11.0 длительность состояния изолирована по машине по умолчанию. Для ручной правки времени активной машины используйте `machine.SetCurrentStateEnterTime(...)`; `predicate.SetEnterTime(...)` сохраняет контракт самостоятельного вычисления. Вложенные смены состояния выполняются после текущей последовательности lifecycle-событий.
+Each machine measures state duration on its own clock. To adjust the active machine's time by hand use `machine.SetCurrentStateEnterTime(...)`; `predicate.SetEnterTime(...)` keeps its standalone contract.
 
 If a target state's constructor changes or stops the machine, that newer choice wins: the interrupted activation does not enter or cache its target and does not fall through to a lower-priority automatic rule. `TryChangeState<T>()` returns false for it.
 
-Если конструктор нового состояния меняет активное состояние машины, в том числе останавливает его, этот более новый выбор
-сохраняется. Прерванная активация не входит в старый target, не кладёт его в кэш и не продолжает
-старую цепочку автоматических переходов. `TryChangeState<T>()` возвращает false для такой активации.
+Automatic transitions to a CLR type (`ToStateType`) check the target type once per machine, including targets it rejects. With state caching on (the default), repeated transitions between cached states use no reflection, and the machine itself does not allocate; your predicates, states and event listeners may.
 
-NoCode-переходы ищутся по конкретному ассету `StateData`: кадр проверяет только переходы, выходящие из активного состояния (и переходы без источника), `OnTransitionEvaluated` сообщает только о них, а `OnOwnerStateEntered` вызывается только для переходов из вошедшего состояния. При равном приоритете сохраняется порядок регистрации. Смена `FromStateData` на другой ассет и смена (или сброс) `FromStateType` действуют со следующей проверки, перерегистрировать переход не нужно.
+## Demo scene
 
-Логи включаются для каждой машины отдельно: **Enable Debug Log** компонента (`EnableDebugLog` в C#) управляет его логами, предупреждениями его машины (`DebugLogEnabled`) и выводом NoCode-действий, которые выполняет эта машина (`LogStateAction`). Компонент, включённый позже с другой настройкой, на них больше не влияет. `Validate(false)` (кнопка **Validate Configuration**) всегда пишет найденные проблемы в консоль.
+`Assets/NeoxiderDemos/Demo/Scenes/StateMachine/StateMachineDemo.unity` (Demo download). The **Agent** shows the C# path (`StateMachine<IState>` driven by `StateMachineDemoController`). The **Guard** shows the NoCode path: a `StateMachineBehaviourBase` playing `Data/StateMachine/Guard StateMachine.asset`, where Sleep → Alert reads the Noise toggle through a `ConditionEntryPredicate` and Alert → Sleep also needs 1.5 s in Alert (`StateDurationPredicate`). Everything is saved in the scene.
 
-Automatic transitions to a CLR type (`ToStateType`) check the target type once per machine, including targets it rejects. With state caching on (the default), repeated transitions between cached states use no reflection, and the machine itself does not allocate; your predicates, states and event listeners may. Автоматические переходы по типу проверяют тип один раз на машину, в том числе отклонённый; при включённом кэше состояний повторные переходы не используют reflection, и сама машина не выделяет память (ваши предикаты, состояния и подписчики событий могут).
+## По-русски
+
+Длительность состояния считается по часам каждой машины; для ручной правки используйте `machine.SetCurrentStateEnterTime(...)`. Вложенные смены состояния выполняются после текущей последовательности lifecycle-событий, а более новый выбор из конструктора состояния побеждает (`TryChangeState<T>()` вернёт false). NoCode-машина проверяет только переходы из активного `StateData` и переходы без источника. Логи включаются для каждой машины отдельно через **Enable Debug Log**; `Validate(false)` всегда пишет найденные проблемы в консоль.
 
 ## docs
 

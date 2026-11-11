@@ -5,6 +5,8 @@ lifecycle events and the damage/heal interfaces. Scripts live in `Scripts/Tools/
 `Neo.Tools.Components`, namespace `Neo.Tools`). Legacy AttackSystem documentation remains indexed here for
 discoverability; its compatibility sources live in `Scripts/Rpg/Combat/` (optional `Neo.Rpg.Combat` assembly).
 
+**Navigation:** [← Tools](../README.md)
+
 **Contents:** the tables below. Every component has a typed C# API; the UnityEvents and Inspector buttons are the
 NoCode layer on top of it.
 
@@ -44,13 +46,8 @@ views release both subscriptions and pending source searches. The typewriter sce
 automatic playback in `Start`, preserving authored text until playback begins.
 
 `CameraAspectRatioScaler` and `UpdateChilds` also compile in `Neo.Tools.Components`; their existing
-guides are [CameraAspectRatioScaler](../CameraAspectRatioScaler.md) and [UpdateChilds](../UpdateChilds.md).
-For camera render textures, the scaler uses the texture dimensions and `FitBoth` expands the projection
-to keep the reference view visible. [Unity ignores camera viewport rectangles for render textures](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Camera-targetTexture.html),
-so this path does not create viewport bars. Changing texture dimensions or projection mode invalidates
-the runtime cache. Disable **Update In Editor** to suppress automatic edit-mode previews, including
-`Start` and disable cleanup; the explicit **Apply Camera Scale** button remains available. The reference
-size/FOV is serialized on the scaler, so an edit-mode preview never compounds into the next reference.
+guides are [CameraAspectRatioScaler](../CameraAspectRatioScaler.md) (render textures, edit-mode preview) and
+[UpdateChilds](../UpdateChilds.md).
 
 ## See also
 

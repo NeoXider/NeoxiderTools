@@ -13,7 +13,7 @@
 |-------|------|-------------|
 | **Display Name** | string | Name for the unit. Falls back to the asset name if blank. |
 | **Team** | int | Team id. `0` = neutral. Allies share a non-zero id; everyone else is an enemy. |
-| **Start Level** | int | Starting `AbilityUnit.Level` (min 1) for per-unit-level [leveled values](./README.md#leveled-values-per-level-scaling). |
+| **Start Level** | int | Starting `AbilityUnit.Level` (min 1) for per-unit-level [leveled values](./AbilityDefinition.md#leveled-and-scalable-values). |
 | **Resources** | `List<UnitResourceConfig>` | Resource pools. Include a `health` pool for damageable units. Each pool starts full. |
 | **Base Properties** | `List<UnitPropertyDefault>` | Base property values before modifiers (id + value). |
 | **Abilities** | `List<AbilityDefinition>` | Abilities registered and granted on application. |

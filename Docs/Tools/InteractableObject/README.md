@@ -4,8 +4,12 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/interaction.jpg" alt="Concept art for the Interaction module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** Click/hover interactions and 2D/3D physics events. Scripts live in
-`Scripts/Tools/InteractableObject/`. Use this page as the English module entry.
+**What it is:** click, hover, keyboard and distance interactions plus 2D/3D physics events. Scripts live in
+`Scripts/Tools/InteractableObject/`.
+
+**How to work with it:** add `InteractiveObject` and a collider to a world target (or put it on a UI element),
+configure checkpoints and distance, and connect its UnityEvents. Add `InteractionRayProvider` to the main camera to
+choose cursor or crosshair rays.
 
 **Contents:** the [per-component pages](#docs-per-component), [C# and scene workflows](#c-and-scene-workflows)
 and the [interaction core](Core/README.md).
@@ -46,11 +50,9 @@ Add `InteractionRayProvider` to the main camera to choose cursor or viewport-cen
 `Both` mode hovers at the crosshair but clicks at the cursor. Use `ScreenCenter` for crosshair clicks
 as well. A per-object `UseScreenCenterRay` override selects the center for both operations.
 
-Automatic targets now share identical raw physics queries during a stable interaction epoch.
-Each target retains its own colliders, range, hierarchy, obstacle and event rules. No new controller,
-registration or scene wiring is required. Complete overflow handling replaces the old 16-hit limit.
-Different masks, physics kinds, cameras or genuinely different LOS rays remain separate queries.
-See [Shared queries](./SharedQueries.md) for lifetime and measurement details.
+Automatic targets share identical raw physics queries during a stable interaction epoch, with no hit-count
+limit. Each target keeps its own colliders, range, hierarchy, obstacle and event rules, and no extra scene wiring
+is required. See [Shared queries](./SharedQueries.md) for lifetime and measurement details.
 
 After application-controlled collider movement, manual simulation or `SyncTransforms` inside a frame,
 call `InteractionRayProvider.InvalidateQueries()` before the next shared interaction pass. Interaction

@@ -4,7 +4,9 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/gridsystem.jpg" alt="Concept art for the GridSystem module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** the base constructor module for grid-based games and tools (`Scripts/GridSystem/`, assemblies `Neo.GridSystem` and `Neo.GridSystem.Dice`). It separates the generic field core (`FieldGenerator`: shape, cells, coordinates, state) from optional rule layers, so the same grid can power Match3, TicTacToe and n-in-a-row, 2048-like games, Dice merge, tactical boards, inventory grids, puzzle fields and custom board games. Views are replaceable; every rule layer is usable from plain C#.
+**What it is:** the base constructor for grid-based games and tools (`Scripts/GridSystem/`, assemblies `Neo.GridSystem` and `Neo.GridSystem.Dice`). The field core (`FieldGenerator`: shape, cells, coordinates, state) is separate from optional rule layers such as Match3, TicTacToe, sliding merge and Dice merge. Views are replaceable, and every rule layer works from plain C#.
+
+**Navigation:** [← Docs](../README.md)
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemMatch3Demo.jpg" alt="GridSystemMatch3Demo: shaped Match3 board with path and reach highlights" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemTicTacToeDemo.jpg" alt="GridSystemTicTacToeDemo: n-in-a-row board with a bot" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemDiceMergeDemo.jpg" alt="GridSystemDiceMergeDemo: dice placement and merge" width="32%" /></p>
@@ -84,12 +86,12 @@ Use one gameplay service per board unless your own composition coordinates its c
 
 Demo scenes are in the Demo download (`Assets/NeoxiderDemos/Demo`).
 
-GridSystem scenes live in `Scenes/GridSystem/`; controller and view scripts live in `Scripts/GridSystem/`. Every scene is saved fully wired: open it and select the objects below to see the configuration and the UnityEvent wiring without entering Play Mode. Nothing is assembled at Play start.
+Scenes live in `Scenes/GridSystem/`, their controller and view scripts in `Scripts/GridSystem/`. Everything is saved in the scenes.
 
 | Scene | What it shows | Select in the Hierarchy |
 |---|---|---|
-| `GridSystemMatch3Demo` | 8×8 Match3 on a cut-corners `GridShapeMask`; buttons regenerate the shape (full, cut corners, code-built diamond), block/disable/occupy single cells, highlight a `GridPathfinder.TryFindPath` path or a `CollectReachableCells` area, swap and restart. Click two neighbouring tiles to swap. | `GridSystem_Match3` (FieldGenerator, Match3BoardService, view); `GridSystemMatch3DemoUI` (button targets). `Match3BoardService.OnMatchesResolved` and `FieldGenerator.OnFieldGenerated` call the controller through saved listeners. |
-| `GridSystemTicTacToeDemo` | X against a bot playing O, 3×3 or 5×5 with four in a row (`WinLineLength`), the winning line highlighted from `WinningLine`, blocked and disabled cells. | `GridSystem_TicTacToe`; the Reset button calls `TicTacToeBoardService.ResetBoard` directly, and `OnPlayerChanged` / `OnWinnerDetected` / `OnDrawDetected` drive `GridSystemTicTacToeDemoUI`. |
-| `GridSystemDiceMergeDemo` | 5×5 dice merge: drag the next piece from the tray, tap to rotate, merge three equal neighbours, Hint (`TryFindPlacement`), live `MinMergeGroupSize`, game over through `CanPlaceAnywhere`. | `GridSystem_DiceMerge` (FieldGenerator, DiceBoardService, DiceMergeDemoController, DiceMergeDemoView); `OnMergesResolved` feeds the log. |
+| `GridSystemMatch3Demo` | 8×8 Match3 on a cut-corners `GridShapeMask`: shape switching, blocked and disabled cells, path and reach highlights, swaps. | `GridSystem_Match3`, `GridSystemMatch3DemoUI` (button targets). |
+| `GridSystemTicTacToeDemo` | X against a bot, 3×3 or 5×5 four in a row (`WinLineLength`), winning line from `WinningLine`. | `GridSystem_TicTacToe`; its events drive `GridSystemTicTacToeDemoUI`. |
+| `GridSystemDiceMergeDemo` | 5×5 dice merge: drag from the tray, rotate, Hint (`TryFindPlacement`), game over through `CanPlaceAnywhere`. | `GridSystem_DiceMerge`; `OnMergesResolved` feeds the log. |
 
-Board tiles are drawn by the demo views at runtime from the live field; the `[Demo] Board Preview` object only shows the same layout in Edit Mode and hides itself on Play. The scenes are saved with their UI and wiring.
+The demo views draw the tiles at runtime from the live field; `[Demo] Board Preview` shows the layout in Edit Mode only.

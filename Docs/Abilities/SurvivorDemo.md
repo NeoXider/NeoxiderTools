@@ -1,110 +1,155 @@
 # Survivor Demo
 
-**What it is** — a complete, playable Vampire-Survivors-style 2D game built **only from library components and
-UnityEvents**, like the Shooter2D reference game: no game scripts. You move a wizard while endless waves close in;
-weapons fire by themselves, kills drop XP gems, every level-up offers three upgrade cards, and surviving three
-minutes wins the run. The look is wired the same way: sprites, squash and shake animations, particles, sounds and
-music. The same modules work in 3D (XZ plane options on the spawner, magnet, mover and projectiles).
+**What it is:** a complete Vampire-Survivors-style 2D game built only from library components and UnityEvents, with no game scripts, like the Shooter2D reference game. You move a wizard through endless waves while seven weapons fire by themselves; kills drop XP gems, each level-up offers three cards, a boss arrives at 2:00 and surviving 3:00 wins. Sprites, animations, particles, sounds and music are wired the same way, and the same modules work in 3D.
 
-**How to use** — download the Demo `.unitypackage` (`Assets/NeoxiderDemos/Demo`), open
-`Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity` and press Play. Everything is a saved scene object, so the whole
-wiring can be read in the Hierarchy and Inspector **without entering Play Mode**. There is no scene-generation
-script: change the game by editing the scene.
+**How to use:**
+1. Download the Demo `.unitypackage` (`Assets/NeoxiderDemos/Demo`).
+2. Open `Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity` and press Play.
+3. Read the wiring in the Hierarchy and Inspector: everything is a saved scene object, visible without Play Mode.
+4. Change the game by editing the scene and the assets in `Survivor/Data`. There is no scene-generation script.
+
+---
 
 ## How to play
 
-- **WASD / arrows** move. Weapons auto-fire at the nearest enemy (`magic_bolt`) or around you (nova, frost ring,
-  ember).
+- **WASD / arrows** move. Weapons fire by themselves.
 - **XP gems** fly to you once you are within the pickup radius; each is 1 XP.
-- On **level-up** the game pauses and shows three different cards; click one.
+- On **level-up** the game pauses and shows three different cards; click one. A weapon card gives the weapon, and picking it again levels it up, to 5. The other cards are permanent bonuses.
+- The bar at the bottom left shows every weapon with its level and cooldown.
 - The timer counts to **3:00**: survive it for **VICTORY**; dying shows **YOU FELL**. **Play again** restarts.
 - The top-right **+10 XP** button opens a level-up at once; **Restart run** reloads the scene.
 
+## The weapons: seven behaviours from one constructor
+
+Every weapon is an ability asset in `Survivor/Data`, plus a template in the scene when it has a body. None has code of its own.
+
+| Weapon | Behaviour | How the ability is built | What levels change |
+|--------|-----------|--------------------------|--------------------|
+| **Magic Bolt** (start) | Homing bolts at the nearest foes. | Unit target; a `projectile` effect with the `AreaAroundCaster` selector launches one bolt per selected foe, and the payload `bolt_hit` deals the damage. | Damage, cooldown and **Max Targets By Level**: 1, 1, 2, 2, 3 bolts. |
+| **Holy Aura** | A ring around the hero that burns and pushes back. | No target; a `zone` cast effect with the `Caster` selector follows the hero and pulses `aura_tick` (damage + `knockback`) every 0.5 s. The zone lasts as long as the cooldown, so it never drops. | Radius and damage. |
+| **Spinning Blades** | Three blades orbit the hero. | No target, `Projectile` delivery; the template is an `AbilityProjectileBehaviour` with **Motion** Orbit, three **Hit Points** and a **Rehit Interval**. | Damage and cooldown: at level 5 the blades are almost permanent. |
+| **Chain Lightning** | Strikes a random foe and jumps on. | Unit target, a `chain` effect with a falloff per hop. A second auto-caster with **Target Pick** Random aims it. | Damage and **Max Targets By Level**: 3 to 8 hops. |
+| **Burning Ground** | Sets the ground on fire under a random foe. | Point target; a `zone` effect fixed at the point pulses `fire_tick`. Aimed by the Random auto-caster. | Radius, damage and **Duration By Level**. |
+| **Ice Spear** | A fast spear that pierces a whole line. | Direction target, `Projectile` delivery; the template has **Max Hits** 99. | Damage and cooldown. |
+| **Frost Nova** | Freezes everything around the hero. | No target; area damage plus `apply_modifier` `frozen` (the `stunned` state). | Radius, damage and the freeze: **Duration By Level** 1 to 2 s. |
+
+Cooldowns come from **Cooldown By Level** on each ability. A weapon card is a button with one `AbilityNoCodeAction` set to `LevelUpAbility` (**Max Level** 5): the first pick grants the weapon, the next ones raise its level.
+
 ## How it is assembled
 
-| Scene object | Components and wiring |
-|--------------|-----------------------|
-| `[Demo] World/Player` | `KeyboardMover` (XY) + `AbilityUnitBehaviour` (`unit_player`) + `AbilityCasterBehaviour` + `AbilityAutoCaster` + `MagneticField` (TwoD, Kinematic, reach = player radius). `OnMoveSpeedChanged -> KeyboardMover.SetSpeed` (Swift and slows change the speed). `MagneticField.OnObjectReached -> LevelComponent.AddXp(1)` and `Despawner.DespawnOther(gem)`. |
-| `[Demo] World/Templates/Enemy_*` (inactive) | `AbilityUnitBehaviour` (`unit_grunt` / `unit_fast` / `unit_tank`, each granting its `bite_*` ability) + `AbilityCasterBehaviour` + `AbilityAutoCaster` (bites the player in range) + `Follow` (TwoD, target = player; `OnMoveSpeedChanged -> Follow.SetPositionSpeed`, so `chill` slows them and stuns stop them) + `Loot` (pooled, drops `XpReward` gems) + `Despawner` (spawns `Fx_Death`). `OnDied -> Loot.DropLoot`, `Kills.Add(1)`, `Despawner.Despawn`. |
-| `[Demo] World/Templates/XpOrb` (inactive) | Sprites + a trigger `CircleCollider2D` + `Despawner` (spawns `Fx_Pickup`). No game script: the player's magnet moves and collects it. |
-| `[Demo] World/Templates/Projectile_bolt` (inactive) | `AbilityProjectileBehaviour` (**Plane** ScreenXY) + a particle trail; the `bolt` archetype of the ability hub. |
-| `[Demo] World/Templates/Fx_*` (inactive) | Pooled effect templates: `ParticleSystem` sparks and a ring, `Despawner` with **Despawn After Seconds**, `UnityLifecycleEvents` for the sound. |
-| `[Demo] World/Enemy Spawner` | `Spawner`: the enemy templates with **Prefab Weights** and **Prefab Unlock Seconds**, **Around Target** = player on a ring outside the view, **Delay Over Time** ramping 1.1 s to 0.25 s over 180 s, **Max Active** 160, object pool. |
-| `[Demo] Services/Run` | `XP Level` (`LevelComponent`, custom curve asset `SurvivorXpCurve`, no save), `Kills` (`Counter`, no save), `Survival Timer` (`TimerObject`, 180 s), `Scene Flow` (`SceneFlowController`: pause and restart), `Pickup Collector` (`Despawner`) and `Upgrade Draft` (`ChanceSystemBehaviour`, one entry per card, **Draw Count** 3, weapon cards with **Max Picks** 1). |
-| `[Demo] Services/Ability System` | `AbilitySystemBehaviour`: the library, the `bolt` projectile archetype and the `fx_nova` / `fx_frost` / `fx_ember` effect archetypes, spatial grid cell 3. |
-| `[Demo] Services/Audio` | One `PlayAudio` per sound (`Sfx Shoot`, `Sfx Enemy Death`, `Sfx Pickup`, `Sfx Level Up`, ...). |
-| `[Demo] Audio` | The package `-AM` prefab with one startup music entry. |
-| `[Demo] HUD` | XP bar and HP bar (`SetProgress` on `LevelComponent.XpProgress01` and `AbilityUnitBehaviour.HealthNormalized`), level and kills texts (`NoCodeFormattedText`), timer (`NoCodeBindText` + `TimeToText`), the cards, the defeat and victory overlays. |
+| Scene object | What it holds |
+|--------------|---------------|
+| `[Demo] World/Player` | The hero: movement, unit, casters, XP magnet. See [Player](#player). |
+| `[Demo] World/Player/Random Aim` | A second `AbilityAutoCaster` with **Target Pick** Random, for lightning and burning ground. |
+| `[Demo] World/Templates/Enemy_*` (inactive) | The five enemy types. See [Enemies](#enemies). |
+| `[Demo] World/Templates/XpOrb` (inactive) | Sprites, a trigger `CircleCollider2D` and a `Despawner` that spawns `Fx_Pickup`. The player's magnet moves and collects it. |
+| `[Demo] World/Templates/Projectile_*`, `Orbit_blades` (inactive) | `AbilityProjectileBehaviour` templates (**Plane** ScreenXY): the homing bolt, the piercing spear, the enemy spit and the orbiting blades. |
+| `[Demo] World/Templates/Zone_*` (inactive) | `AbilityZoneView` templates for the aura and the burning ground: they scale to the zone radius, follow the anchor and return to the pool when the zone ends. |
+| `[Demo] World/Templates/Fx_*` (inactive) | Pooled effects: `ParticleSystem`, `Despawner` with **Despawn After Seconds**, `UnityLifecycleEvents` for the sound. |
+| `[Demo] World/Enemy Spawner`, `[Demo] World/Boss Spawner` | Two `Spawner` components. See [Spawners](#spawners). |
+| `[Demo] Services/Run` | XP, kills, timer, scene flow and the upgrade draft. See [Run services](#run-services). |
+| `[Demo] Services/Ability System` | `AbilitySystemBehaviour` with the library and the archetypes `bolt`, `spear`, `spit`, `blades`, `zone_aura`, `zone_fire`; an `AbilityCuePlayer` with the cues `frost`, `zap` and `hit`. |
+| `[Demo] Services/Audio`, `[Demo] Audio` | One `PlayAudio` per sound, and the package `-AM` prefab with the music. |
+| `[Demo] HUD` | Bars, texts, cards, overlays and the weapon loadout. See [HUD](#hud). |
 | `[Demo] Camera Rig` | `Follow` (TwoD, exponential smoothing) on the player; the child camera carries the shake. |
 
-**Run flow, all as persistent UnityEvents:**
+### Player
 
-- `LevelComponent.OnLevelUp` -> `UpgradeOverlay.SetActive(true)`, `SceneFlowController.Pause(true)`,
-  `ChanceSystemBehaviour.GenerateUniqueVoid()`, the level-up sound and burst.
+- `KeyboardMover` (XY), `AbilityUnitBehaviour` (`unit_player`) and `AbilityCasterBehaviour`.
+- An `AbilityAutoCaster` with **Target Pick** Nearest for the bolt, aura, blades, nova and spear.
+- `MagneticField` (TwoD, Kinematic, reach = the player radius).
+- `OnMoveSpeedChanged -> KeyboardMover.SetSpeed`.
+- `MagneticField.OnObjectReached -> LevelComponent.AddXp(1)` and `Despawner.DespawnOther(gem)`.
+
+### Enemies
+
+Each `Enemy_*` template has:
+
+- `AbilityUnitBehaviour` (`unit_grunt`, `unit_fast`, `unit_tank`, `unit_spitter` or `unit_boss`), `AbilityCasterBehaviour` and `AbilityAutoCaster`;
+- `Follow` (TwoD, target = player) with `OnMoveSpeedChanged -> Follow.SetPositionSpeed`, so a freeze stops them;
+- `Loot` (pooled gems) and a `Despawner` that spawns `Fx_Death`;
+- `OnDied -> Loot.DropLoot`, `Kills.Add(1)`, `Despawner.Despawn`.
+
+The Spitter keeps its distance with `Follow` **Stopping Distance** and casts a straight `spit` projectile. The Ogre King is a big unit with a heavy bite.
+
+### Spawners
+
+- **Enemy Spawner:** the enemy templates with **Prefab Weights** and **Prefab Unlock Seconds**; **Around Target** = player, on a ring outside the view; **Delay Over Time** ramps from 1.1 s to 0.25 s over 180 s; **Max Active** 160; object pool.
+- **Boss Spawner:** one template, **Prefab Unlock Seconds** 120, **Spawn Limit** 1.
+
+### Run services
+
+`[Demo] Services/Run` holds:
+
+- `XP Level`: a `LevelComponent` with the curve asset `SurvivorXpCurve`;
+- `Kills`: a `Counter`;
+- `Survival Timer`: a `TimerObject`, 180 s;
+- `Scene Flow`: a `SceneFlowController`;
+- `Pickup Collector`: a `Despawner`;
+- `Upgrade Draft`: a `ChanceSystemBehaviour` with one entry per card, **Draw Count** 3, and **Max Picks** 5 on weapon cards.
+
+### HUD
+
+- XP and HP bars (`SetProgress`), level and kill texts (`NoCodeFormattedText`), the timer (`NoCodeBindText` + `TimeToText`), the cards and the overlays.
+- `Loadout`: one slot per weapon with an `AbilityCooldownSource`, a `SetProgress` on `CooldownNormalized` and a `NoCodeFormattedText` on `Level`.
+
+### Run flow
+
+All as persistent UnityEvents:
+
+- `LevelComponent.OnLevelUp` -> `UpgradeOverlay.SetActive(true)`, `SceneFlowController.Pause(true)`, `ChanceSystemBehaviour.GenerateUniqueVoid()`, the level-up sound and burst.
 - `ChanceSystemBehaviour.OnDrawStarted` hides every card; `Events By Index[i]` shows card *i*.
-- Card button -> `AbilityNoCodeAction.Execute` (`GrantAbility` or `ApplyModifier`; Vitality also `Heal`),
-  `ConsumePick(i)`, hide the overlay, `Pause(false)`.
-- Player `OnDied` -> defeat overlay, pause, `Spawner.StopSpawn`. `TimerObject.OnTimerCompleted` -> victory overlay,
-  pause, `StopSpawn`.
+- Card button -> `AbilityNoCodeAction.Execute` (`LevelUpAbility` or `ApplyModifier`; Vitality also `Heal`), `ConsumePick(i)`, hide the overlay, `Pause(false)`.
+- Player `OnDied` -> defeat overlay, pause, `StopSpawn` on both spawners. `TimerObject.OnTimerCompleted` -> victory overlay, pause, `StopSpawn`.
 - **Play again** / **Restart run** -> `SceneFlowController.Pause(false)`, `SceneFlowController.Restart()`.
 
 ## Look and feel, also without scripts
 
 | Feedback | How it is wired |
 |----------|-----------------|
-| Idle "breathing" | `TransformAnimator` (scale pulse, random start time) on each `Body` sprite; the gem also floats. |
-| Hit reaction | `AbilityUnitBehaviour.OnDamaged -> TransformAnimator.Shake()` on the body. The hero's `OnDamaged` also shakes the camera: the rig follows, the child camera has its own `TransformAnimator`. |
-| Weapon effects | Each area weapon has a `spawn` cast effect in its ability asset (`fx_nova`, `fx_frost`, `fx_ember`, target = caster). The ability hub maps the archetype id to a pooled effect template, so the effect is part of the ability data. |
+| Idle "breathing" | `TransformAnimator` (scale pulse, random start time) on each `Body` sprite; the gem also floats, the blades spin. |
+| Hit reaction | `AbilityUnitBehaviour.OnDamaged -> TransformAnimator.Shake()` on the body. The hero's `OnDamaged` also shakes the child camera of the rig, which has its own `TransformAnimator`. |
+| Weapon effects | Ability data names a cue: **Cast Cue** `frost` on Frost Nova, **Impact Cue** `zap` on Chain Lightning and `hit` on the bolt, spear and blades. `AbilityCuePlayer` spawns the pooled effect at the caster or at every damaged unit. |
+| Zones | The aura and the fire are `AbilityZoneView` templates named by the zone effect's archetype id. |
 | Enemy death, gem pickup | `Despawner` **Spawn Prefab On Despawn** on the enemy and gem templates. |
 | Effect lifetime | Every effect template has a `Despawner` with **Despawn After Seconds** and returns to the pool by itself. |
-| Sounds | Pooled templates play their `PlayAudio` with `UnityLifecycleEvents.OnEnable -> PlayAudio.AudioPlay` (bolt shot, death, pickup, weapon bursts); **Min Interval** on those `PlayAudio` components keeps twenty simultaneous deaths from stacking one sound. `OnLevelUp`, the timer, the hero's `OnDied` and every button call `AudioPlay` directly. |
+| Sounds of pooled objects | `UnityLifecycleEvents.OnEnable -> PlayAudio.AudioPlay`. **Min Interval** on those `PlayAudio` components keeps twenty deaths at once from stacking one sound. |
+| Other sounds | `OnLevelUp`, the timer, the hero's `OnDied` and every button call `AudioPlay` directly. |
 | Level-up burst | `LevelComponent.OnLevelUp -> ParticleSystem.Play` on `Player/LevelUp Burst`. It uses unscaled time, so it plays while the game is paused for the cards. |
-| Projectile trail | A world-space `ParticleSystem` (rate over distance) on the bolt template. |
 | Ground | One tiled sprite (`SpriteRenderer` **Draw Mode** Tiled). |
 
-The art is in `Assets/NeoxiderDemos/Demo/Sprites/Survivor` (sprites and two particle materials); the sounds and the music loop are in
-`Demo/Survivor/Audio` (generated with Stable Audio 3; the button click is the shared demo clip). Swap a sprite or a clip in
-the Inspector to restyle the game.
+The art is in `Assets/NeoxiderDemos/Demo/Sprites/Survivor` (sprites and particle materials); the sounds and the music loop are in `Demo/Survivor/Audio`. Swap a sprite or a clip in the Inspector to restyle the game.
 
 ## The data
 
-The tuning lives in the scene components (the spawner table, the draft entries, the timer) and in Neo.Abilities
-assets in `Survivor/Data`:
+The tuning lives in the scene components (the spawner table, the draft entries, the timer) and in the Neo.Abilities assets in `Survivor/Data`:
 
 | Asset | Content |
 |-------|---------|
-| `unit_player` | `health` 100, `mana` 100, `move_speed` 5; grants `magic_bolt` (homing projectile, 10 magical, 0.75 s). |
-| `unit_grunt` / `unit_fast` / `unit_tank` | 20 / 12 / 70 HP, move 2.2 / 3.6 / 1.5; grant `bite_grunt` / `bite_fast` / `bite_tank` (instant melee every 0.5 s: 5 / 4 / 8 damage). In the spawner: weight 2 / 1.2 / 0.7, unlocked at 0 / 20 / 50 s; in `Loot`: 1 / 1 / 3 XP gems. |
-| `nova`, `frost_ring`, `ember` | Self-centred area weapons granted by cards (frost applies `chill`, ember applies `burn`), each with a `spawn` cast effect for its visual. |
+| `unit_player` | `health` 100, `mana` 100, `move_speed` 5; grants `magic_bolt`. |
+| `unit_grunt` / `unit_fast` / `unit_tank` | 20 / 12 / 70 HP, move 2.2 / 3.6 / 1.5; melee `bite_*` every 0.5 s. Spawn weight 2 / 1.2 / 0.7, unlocked at 0 / 20 / 50 s. |
+| `unit_spitter` | 16 HP, move 1.9, stops 5.5 away and casts `spit` (a straight projectile, 7 damage). Weight 0.9, unlocked at 40 s. |
+| `unit_boss` | Ogre King: 450 HP, move 1.25, `bite_boss` 14 damage. Arrives once at 120 s and drops 14 gems. |
+| `magic_bolt`, `aura`, `blades`, `lightning`, `fire_pool`, `spear`, `frost_ring` | The seven weapons, each with per-level arrays. |
+| `bolt_hit`, `aura_tick`, `fire_tick` | Payload abilities: what a bolt, an aura pulse and a fire pulse do to the units they reach. |
+| `frozen` | The freeze: the `stunned` state with **Duration By Level**. |
 | `swift`, `might`, `haste`, `regen`, `ward`, `vitality` | Permanent player modifiers applied by cards (independent stacks). |
 | `SurvivorXpCurve` | Cumulative XP table: level *n* costs `5 + 4*(n-1)` XP. |
 
 ## Clip your own survivor game
 
-- Change the numbers in the unit, ability and modifier assets, or in the scene components.
-- Add an enemy: create a `UnitTemplate` with a bite ability, duplicate an enemy template in the scene, set its
-  `UnitTemplate` and sprite, and add it to the spawner's **Prefabs**, **Prefab Weights** and
-  **Prefab Unlock Seconds**.
-- Add an upgrade: a card button with an `AbilityNoCodeAction`, a new entry in the `Upgrade Draft` and its
-  `Events By Index` element.
-- Add a weapon effect: duplicate an `Fx_*` template, register it in the ability hub's **Archetypes** and add a
-  `spawn` cast effect with that id to the ability.
-- Make it 3D: `KeyboardMover` XZ, spawner **Ring Plane** XZ, magnet **Space** ThreeD, `Follow` ThreeD and projectiles
-  with **Plane** GroundXZ.
-
-## What it verifies
-
-`SurvivorDemoGameplayTests` (Play Mode) has two cases. `SavedScene_IsWiredFromLibraryComponentsWithoutGameScripts`
-reads the saved scene: the wiring is persistent UnityEvents between library components, and the info card is the only
-component that does not come from the package. `Autopilot_KillsLevelsUpTakesCardsAndWinsTheRun` plays the scene with
-an autopilot that kites and picks cards: it has to kill more than 20 enemies, reach level 4, take three cards and
-win the 180 s run. With `-neoSurvivorFrames <dir>` the test also writes JPEG frames and the mixed audio for a
-gameplay video.
+- **Tune:** change the numbers in the unit, ability and modifier assets, or in the scene components.
+- **Add a weapon:** create an ability asset from the effects above (`projectile`, `zone`, `chain`, `knockback`, `apply_modifier`, an area or cone selector) and add it to `SurvivorLibrary`. List its id in one of the hero's auto-casters, then duplicate a weapon card and a loadout slot. A weapon with a body also needs a template in the hub's **Archetypes**.
+- **Add an enemy:** create a `UnitTemplate` with an ability and duplicate an enemy template in the scene. Set its `UnitTemplate` and sprite, and add it to the spawner's **Prefabs**, **Prefab Weights** and **Prefab Unlock Seconds**.
+- **Add an effect:** duplicate an `Fx_*` template, add a cue to `AbilityCuePlayer` and write its id into the ability's **Cast Cue** or **Impact Cue**.
+- **Make it 3D:** `KeyboardMover` XZ, spawner **Ring Plane** XZ, magnet **Space** ThreeD, `Follow` ThreeD, projectiles and zone views with **Plane** GroundXZ.
 
 ## See also
 
-- [Neo.Abilities](./README.md), [AbilityUnitBehaviour](./AbilityUnitBehaviour.md),
-  [AbilityProjectileBehaviour](./AbilityProjectileBehaviour.md)
+- [Neo.Abilities](./README.md), [AbilityDefinition](./AbilityDefinition.md),
+  [AbilityProjectileBehaviour](./AbilityProjectileBehaviour.md), [AbilityAutoCaster](./AbilityAutoCaster.md),
+  [AbilityCuePlayer](./AbilityCuePlayer.md), [AbilityNoCodeAction](./AbilityNoCodeAction.md),
+  [AbilityCooldownSource](./AbilityCooldownSource.md)
 - [Spawner](../Tools/Spawner/Spawner.md), [Despawner](../Tools/Spawner/Despawner.md),
   [MagneticField](../Tools/Physics/MagneticField.md),
   [ChanceSystemBehaviour](../Tools/Random/ChanceSystemBehaviour.md),

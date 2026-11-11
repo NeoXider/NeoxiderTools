@@ -16,6 +16,8 @@
 
 **Contents:** see [Documentation](#documentation) below.
 
+**Navigation:** [← Tools](../README.md)
+
 **How to work with it:**
 1. Plain C#: create a storage, call `SetConstraints`, then `Add`/`Remove`/`MoveSlot` (see Runtime API).
 2. Scene: add [InventoryComponent](InventoryComponent.md) with an optional [InventoryDatabase](Data/InventoryDatabase.md).
@@ -58,33 +60,19 @@ See [core contracts](InternalTypes.md) and [InventoryComponent](InventoryCompone
 
 ## Playable example and collection games
 
-Open `Demo/Scenes/Inventory/InventoryUseDemo.unity` from the Demo download (`Assets/NeoxiderDemos/Demo`). Deposit the catch,
-select a PET, place/recall it with its UID and state, then select CELL and use it to restore HP.
-The screen explains each step, shows the selected item and remaining quantity, and provides Reset.
-It demonstrates independent temporary carry, nine-slot hotbar and podium inventories. See
-[exact selection and collection-game integration](InventorySelection.md) for API and save/catalog mapping.
-
-Everything is saved in the scene, so the wiring is visible without entering Play Mode:
-
-| Look at | What it shows |
-|---|---|
-| `Hotbar - nine permanent slots`, `Temporary catch - four slots`, `Podium - exact unique instance` | Three `InventoryComponent`s (Slot Grid, singleton off, no save) sharing the generated `Data/Inventory/InventoryDemoDatabase` (PET 101, CELL 202). Their `OnInventoryChanged` calls `InventoryDemoController.Refresh`. |
-| `Inventory demo - select and use` | `InventoryHand` → `OnUseSelectionRequested` calls `InventoryUseAction.UseSelection` (CELL, consume 1); `OnUsed` calls `InventoryDemoController.OnCellUsed`. |
-| `[Demo] Frame/Content/Hotbar slots` | `InventorySlotGridView` with nine manual `InventorySlotView` + `InventoryItemView` cells. Each `Btn_Slot N` button calls `InventoryHand.SetSlotIndex(N-1)` directly (NoCode). |
-| Count labels | `InventoryTotalCountText` (Total for the catch, Selected for the hotbar — follows the hand selection without a mutation) and `InventoryItemCountText` (CELL units). |
+`Demo/Scenes/Inventory/InventoryUseDemo.unity` (Demo download). Deposit the catch, select a PET, place and recall it
+with its UID and state, then select CELL and use it to restore HP. Three `InventoryComponent`s (temporary catch,
+nine-slot hotbar, podium) share `Data/Inventory/InventoryDemoDatabase`; `InventoryHand.OnUseSelectionRequested`
+calls `InventoryUseAction.UseSelection`, and each `Btn_Slot N` calls `InventoryHand.SetSlotIndex(N-1)` directly.
+Everything is saved in the scene. See [exact selection and collection-game integration](InventorySelection.md) for
+the API and save/catalog mapping.
 
 C# equivalents: `InventoryComponent.AddItemInstance` / `TryCaptureSelection`,
 `InventoryTransferService.TransferSelection`, `InventoryHand.SetSlotIndex` / `UseEquippedItem`,
-`InventoryUseAction.TryUse`. The scene is saved with its UI and wiring.
+`InventoryUseAction.TryUse`.
 
-**По-русски:** готовый пример показывает использование, а не только подбор и переключение. Улов,
-постоянный инвентарь и подиум — отдельные контейнеры; UID, уровень и мутация сохраняются при переносе.
-`TryConsumeSelection` расходует выбранный экземпляр, `TryConsume(itemId, amount)` — количество по типу.
-Вся связка сохранена в сцене: кнопки слотов `Btn_Slot N` напрямую вызывают `InventoryHand.SetSlotIndex`,
-ряды слотов — это `InventorySlotGridView` с ручными ячейками, счётчики — `InventoryTotalCountText` и
-`InventoryItemCountText`, а `InventoryHand.OnUseSelectionRequested` → `InventoryUseAction.UseSelection`
-видно в инспекторе без запуска Play Mode.
-Демо: `Assets/NeoxiderDemos/Demo`, отдельная загрузка `NeoxiderTools.Demo`.
+**По-русски:** улов, постоянный инвентарь и подиум — отдельные контейнеры; UID, уровень и мутация сохраняются при
+переносе. `TryConsumeSelection` расходует выбранный экземпляр, `TryConsume(itemId, amount)` — количество по типу.
 
 Successful slot moves, swaps, and payload replacements notify UI and auto-save even when item counts
 stay equal. Item delta events only describe actual count changes. Auto-save writes JSON to the current
@@ -95,7 +83,7 @@ finalizers and rethrow the first fault after those attempts. This does not make 
 Partial pickups leave the rejected remainder in the world. `CanDrop` gates every drop entry point,
 including calls from `InventoryHand`. Runtime Inspector buttons are available in Play Mode.
 
-In 11.0, pickup remaining amounts and drop recovery use the exact committed quantity before inventory
+Pickup remaining amounts and drop recovery use the exact committed quantity before inventory
 callbacks. Failed drops return to their original physical slot first. If reentrant callbacks occupy the
 available capacity, the dropper retains the unreturned quantity: inspect `PendingReturnCount`, free room,
 and call `RetryPendingReturns()` before requesting more drops. See the pickup/drop pages for ownership
@@ -106,10 +94,10 @@ and exception behavior. Item icons remain authored asset references; prefab prev
 
 ## Performance notes
 
-- Every mutation captures before/after counts for its delta events. The built-in storages read ids and counts
-  in place, so this no longer deep-clones every instance payload; `GetSnapshotEntries`, `GetNonEmptySlotCount`,
-  `GetFirstItemId`/`GetLastItemId`, `GetItemIdAtSlotIndex` and `TryTakeFirstRecordByItemId` avoid clones the same
-  way, and so does `InventoryHand.EquippedItemId` (safe to poll from NeoCondition every frame).
+- Every mutation captures before/after counts for its delta events by reading ids and counts in place, without
+  cloning instance payloads. `GetSnapshotEntries`, `GetNonEmptySlotCount`, `GetFirstItemId`/`GetLastItemId`,
+  `GetItemIdAtSlotIndex`, `TryTakeFirstRecordByItemId` and `InventoryHand.EquippedItemId` avoid clones the same way
+  (safe to poll from NeoCondition every frame).
 - Auto Save serializes the live rows instead of a cloned snapshot. It still writes JSON after each mutation;
   wrap a burst of mutations in `using (inventory.DeferAutoSave()) { ... }` to write once when the scope closes
   (or set `AutoSave = false` and call `Save()` yourself). See [InventoryComponent](InventoryComponent.md).
@@ -117,8 +105,6 @@ and exception behavior. Item icons remain authored asset references; prefab prev
   `TrySetSlot` and `Load` reads slots in place.
 - `InventorySlotGridView` binds live slot states, count labels skip rewriting an unchanged value, and
   `InventoryHand` keeps its visual when an unrelated change leaves the equipped item and payload unchanged.
-- Allocation guards in `InventoryHotPathTests` cover the mutation capture, unchanged count-label refreshes and the
-  clone-free id reads.
 
 ## Documentation
 

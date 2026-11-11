@@ -1,7 +1,9 @@
 ﻿# Tools / Text
 
 **What it is:** text and time formatting components for TextMeshPro UI. Scripts live in `Scripts/Tools/Text/`,
-assembly `Neo.Tools.Text`, namespace `Neo.Tools`. This is the canonical module entry.
+assembly `Neo.Tools.Text`, namespace `Neo.Tools`.
+
+**Navigation:** [← Tools](../README.md)
 
 **Contents:** `SetText` (numbers and strings) and `TimeToText` (durations); see the table below.
 

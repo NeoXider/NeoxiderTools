@@ -35,6 +35,21 @@ namespace Neo.Abilities
         private float _remaining;
         private bool _active;
 
+        /// <summary>Applies a settings block, as the ability hub does for a plain prefab used as a zone view.</summary>
+        public void Configure(AbilityZoneViewSettings settings)
+        {
+            if (settings == null)
+            {
+                return;
+            }
+
+            _scaleToRadius = settings.ScaleToRadius;
+            _plane = settings.Plane;
+            _meshRadius = Mathf.Max(0.001f, settings.MeshRadius);
+            _heightScale = settings.HeightScale;
+            _offset = settings.Offset;
+        }
+
         /// <summary>Zone this view shows (0 when idle).</summary>
         public int ZoneId => _active ? _zoneId : 0;
 

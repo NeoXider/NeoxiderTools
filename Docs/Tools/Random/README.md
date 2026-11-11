@@ -47,12 +47,10 @@ Create reusable configurations with **Assets > Create > Neoxider > Tools > Rando
 
 ## Demo scene
 
-Open `Assets/NeoxiderDemos/Demo/Scenes/Tools/ChanceSystemExample.unity` from the Demo download. The whole scene is saved, so the wiring is visible in the Inspector without Play Mode:
+`Assets/NeoxiderDemos/Demo/Scenes/Tools/ChanceSystemExample.unity` (Demo download). Everything is saved in the scene.
 
-- **NoCode column** - the `Chance` object (`ChanceSystemBehaviour`) owns the table. `Btn_Roll` calls `GenerateVoid` and `Counter.Add(1)`; `Events By Index[i]` lights the rarity tile and writes *Last drop* through `SetText`; `OnIdGenerated` clears the highlight, writes *Index* and calls `ChanceDemoController.RecordRoll`.
-- **C# column** - *Sample 100 / 1,000* runs `ChanceManager.TryEvaluate` in a loop (no events), and the bars converge on the white expected markers; *Draw 10,000 / 100,000* rolls an `IntegerChanceTable` with exact `1 in 1,000,000` jackpot odds.
-
-The scene is saved with its UI and wiring.
+- **NoCode column** — the `Chance` object (`ChanceSystemBehaviour`) owns the table; `Btn_Roll` calls `GenerateVoid`, and `Events By Index[i]` lights the rarity tile.
+- **C# column** — *Sample 100 / 1,000* runs `ChanceManager.TryEvaluate` in a loop; *Draw 10,000 / 100,000* rolls an `IntegerChanceTable` with exact `1 in 1,000,000` jackpot odds.
 
 ## Component documentation
 

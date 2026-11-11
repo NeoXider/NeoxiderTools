@@ -14,19 +14,17 @@ colors, vectors and transform poses, with light and emission wrappers in [Tools/
 *Demo scene: `../../../NeoxiderDemos/Demo/Scenes/Animations/AnimatorsDemo.unity` (Demo download). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**Navigation:** [← Docs](../README.md)
+
+**How to work with it:**
+1. Add an animator component (one component animates one value) and configure it in the Inspector.
+2. Subscribe to its events or read `CurrentValue` / `CurrentVector` / `CurrentColor`.
+3. Call `Play()`, or enable `playOnStart` (`PlayOnEnable` for `TransformAnimator`).
+
 **Contents:** the component list below; start with [FloatAnimator](FloatAnimator.md),
 [TransformAnimator](TransformAnimator.md) and [AnimationUtils](AnimationUtils.md).
 
 ---
-
-## Features
-
-- **Universal**: Animate any data types (float, Color, Vector3)
-- **Multiple animation types**: From simple sine waves to Perlin noise
-- **Easy to use**: One component — one animation
-- **Configurable**: Many parameters for fine-tuning
-- **Events**: UnityEvents to react to animated value changes
-- **Caller-owned time**: Evaluate several values with the same supplied time through `AnimationUtils`
 
 ## Components
 
@@ -48,27 +46,13 @@ colors, vectors and transform poses, with light and emission wrappers in [Tools/
 
 ### Demo
 
-Import the optional Demo download first, then open `../../../NeoxiderDemos/Demo/Scenes/Animations/AnimatorsDemo.unity`
-(in the editor also **Neoxider > Demo > Open Animators Demo**). The
-whole demo is saved in the scene and visible without Play Mode; nothing is built at runtime:
+Scene: `../../../NeoxiderDemos/Demo/Scenes/Animations/AnimatorsDemo.unity` (Demo download). Under `[Demo] World`, `Vector3Animator` scales a disc, `ColorAnimator`
+recolors another, `TransformAnimator` rotates and bobs a square, and a `FloatAnimator` fills the card's bar; each
+value reaches its target through a persistent UnityEvent. The card's buttons call `AnimatorsDemoController`, which
+forwards to the animators' public API and logs each call. Everything is saved in the scene.
 
-| Target | Animator | Binding (persistent UnityEvent, no code) |
-|--------|----------|------------------------------------------|
-| Left disc under `[Demo] World/Scale Target` | `Vector3Animator` | `OnVectorChanged` > `Transform.localScale` |
-| Middle disc under `[Demo] World/Colour Target` | `ColorAnimator` | `OnColorChanged` > `SpriteRenderer.color` and the card swatch `Image.color` |
-| Square under `[Demo] World/Transform Target` | `TransformAnimator` | rotate, float (bob) and scale pulse channels; the **Shake() impulse** button calls `Shake()` directly |
-| Bar row of the card | `FloatAnimator` (0..1) | `Value.OnChanged` > `Image.fillAmount` and a value readout; its started/paused/stopped events update the events label |
-
-The card's Play / Pause / Resume / Stop buttons, the shared `AnimationType` dropdown, the `AnimationSpeed` slider
-and the channel toggles call `AnimatorsDemoController`, which only forwards to the animators' public API
-(`Play`, `Pause`, `Resume`, `Stop`, `AnimationType`, `AnimationSpeed`, `TransformAnimator.Settings`) and logs
-each call. Type and speed apply to the three value animators; `TransformAnimator` has its own channel settings.
-The scene is saved with its UI and wiring.
-
-По-русски: откройте сцену `Scenes/Animations/AnimatorsDemo.unity`. Все четыре аниматора работают на настоящих
-целях: `Vector3Animator` масштабирует диск, `ColorAnimator` перекрашивает второй диск, `TransformAnimator`
-вращает и покачивает квадрат, `FloatAnimator` заполняет полосу на карточке. Привязки значений сделаны через
-UnityEvent в инспекторе, кнопки карточки вызывают публичный API аниматоров.
+По-русски: откройте `Scenes/Animations/AnimatorsDemo.unity`. Четыре аниматора работают на настоящих целях,
+значения передаются через UnityEvent, кнопки карточки вызывают публичный API аниматоров.
 
 ## Animation types
 
@@ -81,13 +65,6 @@ UnityEvent в инспекторе, кнопки карточки вызываю
 7. **BounceEase** — Bounce with decay
 8. **ElasticEase** — Elastic effect
 9. **CustomCurve** — Custom animation curve
-
-## Quick usage
-
-1. Add the desired animator component to a GameObject
-2. Configure parameters in the Inspector
-3. Subscribe to events or read CurrentValue / CurrentVector / CurrentColor
-4. Call `Play()` to start (or enable `playOnStart`; `PlayOnEnable` for `TransformAnimator`)
 
 ## Runtime API and scene wiring
 

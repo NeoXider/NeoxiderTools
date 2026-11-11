@@ -53,6 +53,12 @@ namespace Neo.Abilities
         /// <summary>True when the ability is granted and can be cast right now.</summary>
         public bool IsReady => TryGetSlot(out AbilitySlot slot) && slot.IsReady;
 
+        /// <summary>Level of the ability on the caster; 0 while it is not granted. Bind it to a text for a loadout.</summary>
+        public int Level => TryGetSlot(out AbilitySlot slot) ? slot.Level : 0;
+
+        /// <summary>True while the caster has the ability.</summary>
+        public bool IsGranted => TryGetSlot(out AbilitySlot _);
+
         private void OnEnable()
         {
             // WHY: caster resolution (found or not) is cached; re-enable is the re-search point.

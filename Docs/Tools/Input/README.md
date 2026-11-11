@@ -1,6 +1,11 @@
 ﻿# Tools / Input
 
-**What it is:** Keyboard polling, swipe gestures, mouse picking and cursor effects. Scripts live in `Scripts/Tools/Input/`; public types use namespace `Neo.Tools`. Custom game assemblies must reference `Neo.Tools.Input`.
+**What it is:** keyboard polling, swipe gestures, mouse picking and cursor effects that work with the legacy Input Manager and the Input System alike. Scripts live in `Scripts/Tools/Input/` (namespace `Neo.Tools`); custom game assemblies must reference `Neo.Tools.Input`.
+
+**How to work with it:**
+1. From code, read input through `KeyInputCompat`, `MouseInputCompat` and `MoveInputCompat` instead of `UnityEngine.Input`.
+2. In a scene, add `MouseInputManager` (assign its camera), `SwipeController` or `MultiKeyEventTrigger` and wire their events.
+3. On touch devices the first finger acts as the mouse; see [Touch as mouse](#touch-as-mouse).
 
 **Contents:** the [per-component pages](#docs-per-component), the [runtime API](#runtime-api), the
 [polling model and cost](#polling-model-and-cost), [UI picking](#ui-picking-with-compatible-mouse-input) and the
@@ -58,7 +63,7 @@ Touch-as-mouse is not UI-aware: a tap on a HUD button or a virtual joystick is a
 
 #### Upgrading from 11.x (behaviour change in 12.0)
 
-Before 12.0 the Input System path never read touch, so in Input System-only projects (**Active Input Handling** = *Input System Package (New)*) every `MouseInputCompat` reader ignored fingers. From 12.0 those readers react to the primary touch as the left button and pointer. Projects that use the legacy Input Manager or *Both* see no change: there `Input.simulateMouseWithTouches` already did the same. Readers that now follow touch in Input System-only projects:
+In Input System-only projects (**Active Input Handling** = *Input System Package (New)*) every `MouseInputCompat` reader follows the primary touch as the left button and pointer; earlier versions ignored fingers there. Legacy Input Manager and *Both* projects see no change, because `Input.simulateMouseWithTouches` already did the same. Readers that follow touch in Input System-only projects:
 
 - Tools/Input: `MouseInputManager` (Press/Hold/Release/Click and picking), `MouseEffect`, `UIInputCompat.IsPointerOverUI` / `GetUIElementsUnderCursor` (a finger counts as the cursor) and the mouse path of `SwipeController` (its touch path keeps priority, so a swipe is not detected twice).
 - Tools/InteractableObject: `InteractiveObject` mouse interaction and its pointer ray.
@@ -67,7 +72,7 @@ Before 12.0 the Input System path never read touch, so in Input System-only proj
 - Rpg: `RpgButtonBinding` with a mouse-button trigger on the left button, which is the default attack binding, so every tap attacks, including taps on on-screen controls, unless you gate it.
 - Samples: the GridSystem demo board views, `DemoPointerGate` and `FollowDemoController`.
 
-To keep the 11.x behaviour, switch the fallback off once per run. Subsystem registration restores it to `true`, so set it from a `BeforeSceneLoad` hook (or later); there is no Inspector switch:
+To keep touch out of mouse reads, switch the fallback off once per run. Subsystem registration restores it to `true`, so set it from a `BeforeSceneLoad` hook (or later); there is no Inspector switch:
 
 ```csharp
 using Neo.Tools;
@@ -99,7 +104,7 @@ The Input System path (`OptionalInputSystemAdapter`, used by New-only projects a
 
 The first read of a control binds it and allocates once. After that, reads of keys, mouse buttons, mouse position and delta, gamepad sticks and buttons and the primary touch make no managed allocation. A control whose getter cannot be bound (an unusual signature, a non-`int` enum, an object-returning `ReadValue`, or a runtime that rejects delegate binding) keeps the previous reflected read, which boxes and therefore allocates on every call; results and exceptions are identical in both paths (getter faults surface as `TargetInvocationException`). `SubsystemRegistration` drops all cached metadata and bindings.
 
-Scope of the zero-allocation guarantee: it is asserted by the package's allocation tests on the Mono scripting backend, in Edit Mode with fake controls and in Play Mode with virtual Input System keyboard, mouse, gamepad and touchscreen devices, including the scroll, pointer-delta and touch-as-mouse reads. IL2CPP player builds are not measured: the per-read control lookup goes through `PropertyInfo.GetValue`, which Mono serves from a cached getter delegate but IL2CPP serves as a reflected invoke.
+The zero-allocation guarantee holds on the Mono scripting backend. IL2CPP player builds are not measured: the per-read control lookup goes through `PropertyInfo.GetValue`, which Mono serves from a cached getter delegate but IL2CPP serves as a reflected invoke.
 
 ### Managed code stripping (IL2CPP)
 
@@ -113,22 +118,22 @@ No `link.xml` is needed. The adapter binds only members of Input System devices 
 
 A getter that is stripped anyway makes its control report unavailable (a `false` read) instead of throwing; a runtime that rejects delegate binding keeps the reflected read, with the same results but an allocation per read.
 
-`MouseInputManager` adds picking and event dispatch on top of polling; with cached subscriber snapshots and struct event data a warmed Press/Hold/Release/Click cycle with physics picking also allocates nothing in the same Play Mode tests, apart from what your own handlers allocate.
+`MouseInputManager` adds picking and event dispatch on top of polling; a warmed Press/Hold/Release/Click cycle with physics picking also allocates nothing, apart from what your own handlers allocate.
 
-To measure on your machine, run the explicit `Performance` test category (`-testCategory Performance`). The `Audit20261102NeoToolsInputPollingPerformance*` fixtures print one `NEO_PERF` line per case with time per operation, native `GC.Alloc` calls per operation and, in Play Mode, an estimate of bytes per operation. Each Play Mode device case also runs as `role=head_reference`: a frozen copy of the 11.0.1 reflection reader on the same virtual devices, so the old and the current read path are compared in one process. Compare `NEO_PERF` lines only with lines from the same machine and Unity version.
+To measure on your machine, run the explicit `Performance` test category (`-testCategory Performance`); it prints one `NEO_PERF` line per case. Compare lines only from the same machine and Unity version.
 
-### Measured results (12.0)
+### Measured results
 
-One run of the Play Mode suite on real virtual Input System devices, Input System path, Unity 6000.3.14f1 Editor, Mono, batch mode, profiler off. Times are medians per operation; an operation is the read pattern of the named consumer for one frame. The Editor adds overhead, so read the ratios rather than the absolute times, and expect different numbers in a player build.
+One Play Mode run on virtual Input System devices (Input System path, Unity 6000.3.14f1 Editor, Mono, batch mode, profiler off). Times are medians per operation, where an operation is the named consumer's reads for one frame; none allocates. Read the ratios, not the absolute times: the Editor adds overhead.
 
-| Operation | 11.0.1 reader | 12.0 | GC.Alloc calls per operation |
-|---|---:|---:|---|
-| Key down + key up (`InteractiveObject` keyboard check) | 35.1 µs | 0.41 µs | 24 (about 3.4 KB) → 0 |
-| Mouse position plus left-button down, held and up (`MouseInputManager.Update`) | 60.9 µs | 1.02 µs | 39 (about 6.0 KB) → 0 |
-| Primary touch (`SwipeController.Update`) | 34.4 µs | 0.92 µs | 25 (about 3.1 KB) → 0 |
-| `ReadMove` (eight keys and the left stick) | 113.2 µs | 3.55 µs | 68 (about 10.5 KB) → 0 |
+| Operation | Time |
+|---|---:|
+| Key down + key up (`InteractiveObject` keyboard check) | 0.41 µs |
+| Mouse position plus left-button down, held and up (`MouseInputManager.Update`) | 1.02 µs |
+| Primary touch (`SwipeController.Update`) | 0.92 µs |
+| `ReadMove` (eight keys and the left stick) | 3.55 µs |
 
-For scale: three `KeyInputCompat` reads cost 0.09 µs through the legacy Input Manager and 0.64 µs through the adapter. A whole warmed `MouseInputManager` Press/Hold/Hold/Release/Click cycle with eight `Action` and eight `in` subscribers per event takes 12.8 µs, and a Hold frame with one subscriber of each kind 1.9 µs, both without a GC allocation. IL2CPP players were not measured.
+For scale: three `KeyInputCompat` reads cost 0.09 µs through the legacy Input Manager and 0.64 µs through the adapter. A warmed `MouseInputManager` Press/Hold/Hold/Release/Click cycle with eight `Action` and eight `in` subscribers per event takes 12.8 µs.
 
 ## UI picking with compatible mouse input
 
@@ -159,13 +164,11 @@ Manager event switches filter notifications independently. Disabling a component
 
 `KeyInputCompat`, `MouseInputCompat` и `SwipeController` читают ввод в момент вызова: при Legacy Input Manager — напрямую через `UnityEngine.Input`, в New-only проектах — через `OptionalInputSystemAdapter` без жёсткой зависимости от пакета Input System. Адаптер один раз привязывает к делегатам `current` устройства и геттеры контролов (`isPressed`, `wasPressedThisFrame`, `wasReleasedThisFrame`, `ReadValue()` для `Vector2`, `int` и фазы касания), но каждое чтение берёт живое устройство и живой контрол, поэтому замена устройства и несколько обновлений Input System за кадр видны сразу. Таблица привязок держит контролы слабыми ссылками.
 
-После первого чтения контрола опрос клавиатуры, мыши, геймпада и primary touch не выделяет управляемую память. Это проверяют тесты аллокаций на бэкенде Mono: в Edit Mode на фейковых контролах и в Play Mode на виртуальных устройствах Input System. Сборки IL2CPP не измерялись. Нестандартные контролы, которые нельзя привязать, читаются через прежнюю рефлексию с тем же результатом, но с аллокацией. Прогретый цикл Press/Hold/Release/Click в `MouseInputManager` тоже не выделяет память, кроме того, что выделяют ваши обработчики. `UIInputCompat.IsPointerOverUI()` не создаёт список результатов и `PointerEventData` на каждый вызов.
-
-Замеры запускаются явно категорией `Performance` и печатают строки `NEO_PERF`. В Play Mode каждый случай устройства идёт ещё и с `role=head_reference` — замороженной копией читателя из 11.0.1 на тех же виртуальных устройствах, так что старый и новый путь сравниваются в одном процессе. В прогоне 12.0 (Unity 6000.3.14f1, редактор, Mono, batch, профайлер выключен) чтение клавиш для `InteractiveObject` ускорилось с 35,1 до 0,41 мкс, опрос мыши для `MouseInputManager` — с 60,9 до 1,02 мкс, primary touch — с 34,4 до 0,92 мкс, `ReadMove` — с 113,2 до 3,55 мкс; аллокации во всех случаях упали до нуля (таблица выше).
+После первого чтения контрола опрос клавиатуры, мыши, геймпада и primary touch не выделяет управляемую память (бэкенд Mono; IL2CPP не измерялся). Нестандартные контролы, которые нельзя привязать, читаются через рефлексию с тем же результатом, но с аллокацией.
 
 `MouseInputCompat.TryGetScrollDelta` читает колесо мыши, `TryGetPointerDelta` — смещение указателя за кадр в пикселях, оба на обоих бэкендах. `MoveInputCompat.ReadMove()` читает движение по двум осям: в Legacy — сырые оси `Horizontal`/`Vertical` (имена можно передать), в Input System — WASD, стрелки и левый стик; диагональ не нормализуется. На устройствах без мыши первый палец считается указателем и левой кнопкой: в Legacy через `Input.simulateMouseWithTouches`, в Input System через `OptionalInputSystemAdapter.SimulateMouseWithTouches` (по умолчанию включено). Подключённая мышь всегда в приоритете; правая и средняя кнопки и колесо от касаний не приходят. Касание не учитывает UI: тап по кнопке HUD или виртуальному джойстику — это и левый клик для всех читателей мира, фильтруйте сами, например через `UIInputCompat.IsPointerOverUI()`.
 
-**Изменение поведения в 12.0.** До 12.0 путь Input System касания не читал, поэтому в проектах только с Input System читатели `MouseInputCompat` пальцы игнорировали. Теперь на касание реагируют `MouseInputManager`, `MouseEffect`, `UIInputCompat.IsPointerOverUI`, `InteractiveObject`, `CameraRotationController`, `MouseMover2D`/`MouseMover3D`, `UniversalRotator`, `Drawer`, `RpgButtonBinding` с левой кнопкой мыши (атака по умолчанию — каждый тап атакует), демо-виды GridSystem и другие читатели (полный список выше). В проектах с Legacy или Both ничего не меняется: там это уже делал `Input.simulateMouseWithTouches`. Чтобы вернуть поведение 11.x, выставьте `OptionalInputSystemAdapter.SimulateMouseWithTouches = false` из метода с `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]` (регистрация подсистем возвращает `true`); в Legacy/Both — `Input.simulateMouseWithTouches = false`.
+В проектах только с Input System на касание реагируют все читатели `MouseInputCompat` (список выше), включая `RpgButtonBinding` с левой кнопкой мыши: каждый тап атакует. Чтобы касания не попадали в чтение мыши, выставьте `OptionalInputSystemAdapter.SimulateMouseWithTouches = false` из метода с `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]`; в Legacy/Both — `Input.simulateMouseWithTouches = false`.
 
 `InputBackendCompat.IsLegacyInputConfigured` сообщает, включён ли Legacy Input Manager в Player Settings. Для IL2CPP `link.xml` не нужен: пакет Input System сам сохраняет при сборке все типы контролов и устройств.
 

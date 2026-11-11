@@ -12,6 +12,17 @@
 *Demo scene: `Scenes/Condition/NeoConditionDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**Navigation:** [← Docs](../README.md)
+
+**How to work with it (scene / NoCode):**
+1. Add **NeoCondition** to a GameObject (Add Component → Neoxider → Condition → NeoCondition).
+2. Add conditions to the Conditions list: source object, component, field, operator, threshold.
+3. Configure the **On True** / **On False** events.
+4. Pick the check mode: **Manual** (call `Check()` from a UnityEvent), **EveryFrame** or **Interval** (optionally on
+   unscaled time for pause menus).
+
+From code, evaluate a `ConditionEntry` directly ([Runtime API](#runtime-api)).
+
 **Contents:**
 
 | Page | Topic |
@@ -19,19 +30,8 @@
 | [NeoCondition](NeoCondition.md) | Component fields, events, `ConditionEntry` C# API, method conditions, occurrences, performance, networking. |
 | [Condition_Reuse](Condition_Reuse.md) | Using `ConditionEntry` / `IConditionEvaluator` in the State Machine and your own systems. |
 | [InternalTypes](InternalTypes.md) | Helper types: `ConditionValueSource`, `ReflectionCache`, `BindingSourceGameObjectResolver`. |
-| [NeoCondition_Editor_Roadmap](NeoCondition_Editor_Roadmap.md) | Planned editor/no-code improvements (design notes, not shipped API). |
 
 ---
-
-## Demo
-
-`Scenes/Condition/NeoConditionDemo.unity` (Demo download, `Assets/NeoxiderDemos/Demo`). Everything is saved in the scene:
-
-- `Health` holds two rules, `CheckDead` (Hp <= 0) and `CheckLowHP` (Hp <= 30); `Score` holds `CheckWin` (Score >= 100). Select a rule to see its Conditions list and its `OnResult` listeners, which light the rule's lamp and toggle the Game Over banner, LOW HP badge or You Win banner through `GameObject.SetActive` (no code).
-- Buttons call `Health.TakeDamage` / `Heal` and `ScoreManager.Add` directly; HP and score are shown by `NoCodeFormattedText` + `SetProgress`.
-- **Evaluate in code** runs the C# path, `NeoCondition.Evaluate()` (no events), through `ConditionDemoUI`; **Pause** sets `Time.timeScale` to 0 and the rules keep checking because they use **Use Unscaled Time**.
-
-The scene is saved with its UI and wiring.
 
 ## Runtime API
 
@@ -50,13 +50,6 @@ bool compared = active.TryEvaluate(actor, out bool result); // false when the so
 ```
 
 Use `using Neo.Condition;` and `using UnityEngine;`; `actor` is the GameObject being checked. An entry without an explicit source follows the context passed on each evaluation, including when reused for several owners. Every Inspector setting, including the Other Object branch and method arguments, has a public property. See [Condition_Reuse](Condition_Reuse.md) for integration and source-resolution rules.
-
-## Quick start (scene / NoCode)
-
-1. Add **NeoCondition** to a GameObject (Add Component → Neoxider → Condition → NeoCondition).
-2. Add conditions (Conditions list): choose source object, component, field, operator, threshold.
-3. Configure **On True** / **On False** events.
-4. Set check mode: **Manual** (call `Check()` from a UnityEvent), **EveryFrame**, or **Interval** (optionally on unscaled time for pause menus).
 
 ## Main types
 
@@ -77,6 +70,10 @@ Use `using Neo.Condition;` and `using UnityEngine;`; `actor` is the GameObject b
 `Evaluate()` does not update `LastResult`. `Check()` updates it and invokes events, subject to `OnlyOnChange`. With the default `OnlyOnChange = true`, the first check and subsequent changes invoke `OnResult`, `OnInvertedResult`, and exactly one of `OnTrue` / `OnFalse`.
 
 For repeated component types, use `ConditionEntry.ComponentOccurrence` and `OtherComponentOccurrence`: `0` selects the first matching component, `1` the second. These selectors count only matching types and are independent of the legacy Inspector component-list indices. See [NeoCondition](NeoCondition.md#component-occurrences) for C# and scene setup.
+
+## Demo scene
+
+`Scenes/Condition/NeoConditionDemo.unity` (Demo download). Select a rule on `Health` (`CheckDead`, `CheckLowHP`) or `Score` (`CheckWin`) to see its Conditions list and the `OnResult` listeners that switch lamps and banners through `GameObject.SetActive`. **Evaluate in code** runs `NeoCondition.Evaluate()`; **Pause** sets `Time.timeScale` to 0 and the rules keep checking on **Use Unscaled Time**. Everything is saved in the scene.
 
 ## See also
 

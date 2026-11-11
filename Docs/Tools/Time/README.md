@@ -1,6 +1,6 @@
 ﻿# Tools / Time
 
-**What it is:** Timers, scene adapters, game speed and the package's clock seams (frame pacing and guarded UTC). Scripts live in `Scripts/Tools/Time/`, namespace `Neo.Tools`, assembly `Neo.Tools.Time`. Use this page as the canonical module entry.
+**What it is:** Timers, scene adapters, game speed and the package's clock seams (frame pacing and guarded UTC). Scripts live in `Scripts/Tools/Time/`, namespace `Neo.Tools`, assembly `Neo.Tools.Time`.
 
 **Contents:**
 

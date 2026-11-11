@@ -4,7 +4,12 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/extensions.jpg" alt="Concept art for the Extensions module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** reusable helpers for C# and Unity, in assembly `Neo.Extensions` (source: `Scripts/Extensions/`). Add `using Neo.Extensions;` and, for a custom assembly definition, reference `Neo.Extensions`. This is the canonical module entry point.
+**What it is:** reusable helpers for C# and Unity, in assembly `Neo.Extensions` (source: `Scripts/Extensions/`).
+
+**How to work with it:** add `using Neo.Extensions;` and, for a custom assembly definition, reference
+`Neo.Extensions`. Call the helpers from ordinary C#; there is nothing to configure in the Inspector.
+
+**Navigation:** [← Docs](../README.md)
 
 **Contents:** the topic list under [Runtime API](#runtime-api) and the two [contract guides](#contract-guides).
 
@@ -33,10 +38,7 @@ deck.Shuffle(new System.Random(42)); // same seed, same order: replays and deter
 
 Hot helpers avoid per-call garbage: list/array overloads of `FindClosest`, `GetClosest`, `GetAveragePosition`,
 `SetActiveAll`, `GetCombinedBounds`, `GetRandomWeightedIndex`, `GetRandomEnumValue`, `IsNullOrEmpty`, `IsNumeric`/`IsNullOrEmptyAfterTrim` do
-not allocate after warm-up (EditMode tests count `GC.Alloc` calls). `UIUtils.IsPointerOverUI(screenPosition)` and
-`UIUtils.GetUIElementsAtPosition(screenPosition, results)` with a retained list add no allocation of their own; what
-Unity's raycasters allocate inside `EventSystem.RaycastAll` (sorting hits while the pointer is over UI) remains.
-Camera parameters treat a destroyed `Camera` like `null` and fall back to `Camera.main`.
+not allocate after warm-up. Camera parameters treat a destroyed `Camera` like `null` and fall back to `Camera.main`.
 
 ## Contract guides
 
@@ -55,13 +57,13 @@ Call the typed APIs from ordinary C# components. There is no Inspector action gr
 
 Layout collection methods consume the source once and position the resulting transforms in order. `GetCombinedBounds` also supports a one-shot `IEnumerable`. `WorldToCanvasPoint` returns local canvas coordinates for every render mode; Overlay Canvas conversion uses a null UI camera.
 
-For EventSystem picking, `UIUtils.GetUIElementsAtPosition(screenPosition, results)` accepts explicit pixels and clears/refills a caller-owned result list; `UIUtils.IsPointerOverUI(screenPosition)` answers yes/no. Both reuse one shared PointerEventData, so neither adds an allocation of its own to the raycast. For a compatible mouse in Both/New-only projects, use `Neo.Tools.UIInputCompat` from `Neo.Tools.Input`. The original UIUtils cursor methods retain legacy input semantics. See [UIUtils](UIUtils.md) for exact overloads, missing-input behavior and raycaster boundaries.
-
-`NeoDiagnostics.LogWarningThrottled(key, message, context, seconds)` repeats a warning at most once per window and key. At most `NeoDiagnostics.MaxThrottleKeys` (1024) keys get their own window, and a running window is never forgotten: a new key at the bound takes an elapsed window's slot, otherwise it shares one overflow window with every other such key and the suppressed count is appended to the next throttled warning that logs. See [Diagnostics](../Core/Diagnostics.md).
+For EventSystem picking, `UIUtils.GetUIElementsAtPosition(screenPosition, results)` accepts explicit pixels and clears/refills a caller-owned result list; `UIUtils.IsPointerOverUI(screenPosition)` answers yes/no. Both reuse one shared PointerEventData and add no allocation of their own; what Unity's raycasters allocate inside `EventSystem.RaycastAll` remains. For a compatible mouse in Both/New-only projects, use `Neo.Tools.UIInputCompat` from `Neo.Tools.Input`. The original UIUtils cursor methods retain legacy input semantics. See [UIUtils](UIUtils.md) for exact overloads, missing-input behavior and raycaster boundaries.
 
 ## Diagnostics
 
 `NeoDiagnostics.Configure(logs: true, warnings: true)` enables optional runtime output. Info and warning output is disabled by default; errors are enabled. `NeoDiagnostics.StableId(UnityEngine.Object)` is the shared runtime identity gateway for Unity 6.0–6.4 and 6.5+. Keep version-specific identity calls in that gateway.
+
+`NeoDiagnostics.LogWarningThrottled(key, message, context, seconds)` repeats a warning at most once per window and key. At most `NeoDiagnostics.MaxThrottleKeys` (1024) keys get their own window, and a running window is never forgotten: a new key at the bound takes an elapsed window's slot, otherwise it shares one overflow window with every other such key and the suppressed count is appended to the next throttled warning that logs. See [Diagnostics](../Core/Diagnostics.md).
 
 ## Lifecycle notes
 

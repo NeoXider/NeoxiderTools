@@ -4,7 +4,10 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/editor.jpg" alt="Concept art for the Editor module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** Editor-only tools: custom inspectors, auto-build, Scene Saver, settings window, missing-scripts finder, texture tools, zip backup. Code in `Editor/`. Use this page as the English module entry.
+**What it is:** Editor-only tools in `Editor/` (assembly `Neo.Editor`): custom inspectors, auto-build, Scene Saver, the settings window, the missing-scripts finder, texture tools and zip backup.
+
+**How to work with it:** the inspectors work on every Neo component without setup. Open the windows from the
+**Neoxider** menu, and keep calls to editor APIs in an Editor assembly or behind `#if UNITY_EDITOR`.
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AttributeExample.jpg" alt="AttributeExample: Inspector attributes resolved in Edit Mode next to the same lookups in C#" width="100%" /></p>
@@ -39,25 +42,22 @@ In Condition and float-binding inspectors, choose the source object, the exact c
 
 Runtime C# uses `ConditionEntry.ComponentOccurrence`, `OtherComponentOccurrence`, or `ComponentFloatBinding.ComponentOccurrence`. All default to zero for existing content; legacy flat UI `ComponentIndex` fields are preserved and are not occurrence values. Editor extensions can use `ComponentBindingInspectorShared.FindComponentByTypeName(root, typeName, occurrence)`, `IndexOfComponent(...)`, and `ComponentOccurrenceAt(...)`; the existing two-argument resolver still selects occurrence zero. These Editor helpers stay outside player builds.
 
-Since 11.0 the second and later components of one type can be selected. Existing data keeps using the first instance; a selected instance that no longer exists has to be re-picked explicitly.
-
-The component and member pickers reflect each component type once and reuse the formatted member labels, so drawing a Condition or float-binding inspector does not repeat reflection on every IMGUI event.
+Existing data keeps using the first instance of a type; a selected instance that no longer exists has to be re-picked explicitly.
 
 The Network Context Action Relay method menu follows the runtime's argument modes: no argument, `bool`, `float`, `string`, or `GameObject`. Float input also supports widening to a `double` parameter; it does not bind `int` or `long` parameters. Existing unsupported configurations need a compatible overload or a typed C# adapter.
 
 The missing-script window scans closed scenes in temporary preview scenes, retaining open and unsaved work. Repairs to closed scenes and prefabs are saved; repairs to already open scenes remain dirty for normal Save/Undo. See its guide for the exact persistence rules.
 
-Scene Saver separates same-named scenes by source asset GUID. See [SceneSaver](./SceneSaver.md) for the 11.0 backup path and retention of older copies. With Mirror enabled, [lobby authoring](./EditorWindows.md#lobby-demo-authoring-mirror) saves player prefab assets and persistent presenter callbacks after a cancellable save decision.
+Scene Saver separates same-named scenes by source asset GUID. See [SceneSaver](./SceneSaver.md) for the backup path and retention of older copies. With Mirror enabled, [lobby authoring](./EditorWindows.md#lobby-demo-authoring-mirror) saves player prefab assets and persistent presenter callbacks after a cancellable save decision.
 
 `PrefabToSpriteUtility.GetReadableCopy(texture)` returns the caller's texture when it is already readable; otherwise it returns a new texture that the caller must destroy. `CreateSpriteFromPreview(texture, "Assets/Icons/Item.png")` owns and releases its temporary copy, including on export failure, and returns the imported Sprite.
 
 ## Demo scene
 
-`Assets/NeoxiderDemos/Demo/Scenes/Tools/AttributeExample.unity` shows the inspector attributes on one component, `AttributeTest` on the **Attribute** object. Everything is saved in the scene, so the wiring is visible without Play Mode:
+`Assets/NeoxiderDemos/Demo/Scenes/Tools/AttributeExample.unity` shows the inspector attributes on one component, `AttributeTest` on the **Attribute** object. Everything is saved in the scene.
 
-- **Edit Mode.** Select **Attribute**. The Neo inspector fills `[FindAllInScene]` (Rigidbody and SphereCollider arrays, tinted by `[GUIColor]`), `[FindInScene]` (camera), `[GetComponents(true)]` (the object and its children) and `[GetComponent]` (ToggleObject); `[RequireInterface(typeof(IMoneyAdd))]` accepts only objects with an `IMoneyAdd` component (here **Money**). Clear *Cam Find In Scene*: the inspector refills it at once, and *Edit > Undo History* lists the fill as *Find attributed component* (prefab instances keep it as an override). Select **Attribute** and **[Demo] Inspector/Attribute B**, press *Add Score*: the action runs on both objects and one Ctrl+Z reverts both.
-- **Game view.** The right card lists the resolved values (already in Edit Mode). In Play Mode, *Compare with C#* runs the runtime equivalents (`Object.FindObjectsByType<T>()`, `FindFirstObjectByType<T>()`, `GetComponent<T>()`, `GetComponentsInChildren<T>()`) and marks each field as equal; *Kick bodies* pushes the Rigidbodies stored in `rbsFindAllInScene`. The `PrintHello()`, `AddScore(10)` and `ResetScore()` buttons call the `[Button]` methods through persistent listeners (select a button to see the call in its On Click list).
-- **Authoring.** The scene is saved with its UI and wiring; `AttributeDemoController` holds only references to the authored objects.
+- **Edit Mode.** Select **Attribute**: the Neo inspector fills the `[FindAllInScene]`, `[FindInScene]`, `[GetComponents(true)]` and `[GetComponent]` fields, and `[RequireInterface(typeof(IMoneyAdd))]` accepts only **Money**. Clear *Cam Find In Scene* and the inspector refills it as an Undo step. Select **Attribute** and **[Demo] Inspector/Attribute B** and press *Add Score*: the action runs on both, and one Ctrl+Z reverts both.
+- **Play Mode.** *Compare with C#* runs the runtime equivalents (`FindObjectsByType<T>()`, `GetComponent<T>()`, ...) and marks each field as equal; the `[Button]` methods are called through persistent listeners.
 
 ## See also
 

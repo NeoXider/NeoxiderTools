@@ -22,6 +22,7 @@ The sources are tried in that order of precedence: explicit clips win, then `_so
 | `_clips` | Array of `AudioClip`s. If only 1 clip is provided, it will always play. |
 | `_useRandomClip` | If `true` and `_clips` has more than 1 item, a random sound from the array will be played on each call. |
 | `_playOnAwake` | If `true`, plays the sound on start (in `Start()`). |
+| `_playOnEnable` (`PlayOnEnable`) | Plays every time the object is enabled: pooled effects, projectiles and pop-ups that are enabled again on each reuse. Replaces `_playOnAwake` when both are set. |
 | `_volume` | Volume for this play, **replacing** the entry's own volume multiplier (`0..2`). **Negative = use the entry's volume**, which is the default for a new component. Still multiplied by the effects channel. |
 | `_minInterval` (`MinInterval`) | Ignores `AudioPlay()` calls that come sooner than this many seconds after the previous accepted one (unscaled time), so a burst of simultaneous events does not stack the same sound. `0` = every call plays. `LastPlayTime` reports the last accepted play. |
 

@@ -13,7 +13,12 @@ Inspector-friendly wrappers for `float`, `int`, and `bool`, plus code-first gene
 *Demo scene: `Scenes/NoCode/NoCodeBindingDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**How to work with it:** declare a `ReactivePropertyFloat` / `Int` / `Bool` field on your component, wire
+**On Changed** in the Inspector or `Subscribe` from code, and change it through `Value`.
+
 **Contents:** [ReactiveProperty](ReactiveProperty.md) — API, subscription lifetime, notification and allocation rules.
+
+**Navigation:** [← Docs](../README.md)
 
 ---
 
@@ -122,8 +127,6 @@ Important: the generic bridge accepts any `T` on the Reactive API side. Mirror o
 ## Notes
 
 - This is not a full observable framework with operators or streams.
-- The current module only includes Inspector-friendly wrappers for `float`, `int`, and `bool`.
-- These are serializable helper types, not standalone `MonoBehaviour` components.
 - Access and notify on the Unity main thread. Code subscriptions use snapshot semantics and isolate
   callback exceptions through `NeoDiagnostics`; `OnChanged` uses UnityEvent's own invocation semantics.
 - Collected or destroyed weak targets and cleanup triggered by `ListenerCount` are silent. Destroyed targets

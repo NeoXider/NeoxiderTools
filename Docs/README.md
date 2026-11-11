@@ -4,64 +4,36 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/docs.jpg" alt="Concept art: the NeoxiderTools documentation hub" width="100%" /></p>
 <!-- docs-banner:end -->
 
-**What it is:** the documentation entry point for **NeoxiderTools** `v12.3.0`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
+**What it is:** the documentation entry point for **NeoxiderTools** `v12.4.0`. It routes you by task to the runtime APIs, scene setup and optional Inspector / NoCode workflows of every module.
 
-**Contents:** [starting points](#choose-your-starting-point), [existing building blocks](#do-not-rebuild-first), [module index](#modules), [samples](#samples-and-add-ons) and [guides](#guides).
+**Contents:** [I want to…](#choose-your-starting-point), [existing building blocks](#do-not-rebuild-first), [module index](#modules), [demos and add-ons](#samples-and-add-ons), [guides](#guides).
 
-> **Upgrading?** From 11.x read [Upgrading to 12](./Migration12.md): the HTML → UI Toolkit converter moved to its own package, a few APIs became obsolete, and the demo scenes are now authored in the scene. From 10.x read [Migration to 11](./Migration11.md) first. The Windows verification recorded for 11.0.0 (Unity `6000.3.14f1` and `6000.6.0f1`) is in [Verification 11](../Verification11.md).
+---
 
 ## Choose your starting point
 
-| Goal | Entry |
-|------|-------|
-| C# API без сцены / Runtime API | [Runtime-model quick start](./GettingStarted.md#start-with-a-c-runtime-model), then [Core](./Core/README.md), [Merge](./Merge/README.md), or [StateMachine](./StateMachine/README.md) |
-| Первый компонент / First component | [Getting Started — first audio scene](./GettingStarted.md#your-first-scene-in-5-minutes-audio-manager-am), then [Audio](./Audio/README.md) |
-| Inspector / NoCode | [NoCode Getting Started](./NoCode/GettingStarted.md) and [Condition](./Condition/README.md) |
-| Взаимодействия / Interaction | [Interaction contracts and components](./Tools/InteractableObject/README.md) |
-| Примеры / Samples | [Sample scenes, how they are authored and rebuilt](./Samples.md) |
-| Обновление с 11.x / Upgrade from 11.x | [Upgrading to 12](./Migration12.md) |
-| Обновление с 10.x / Upgrade from 10.x | [Migration to 11](./Migration11.md) |
-| Проверки / Verification | [Recorded results and limits](../Verification11.md), [EditMode and isolation](./Testing.md), [PlayMode](./PlayModeTesting.md), and [Package compatibility](./PackageCompatibility.md) |
-| Host requirements / Требования проекта | [Package compatibility](./PackageCompatibility.md) and [IL2CPP / code stripping](./IL2CPP.md) |
-| Dependencies / Зависимости и MCP | [Versions, upgrade constraints and editor tooling](./Dependencies.md) |
+| I want to… | Read |
+|------------|------|
+| Install the package | [Getting Started — installation](./GettingStarted.md#installation) |
+| Use a C# API without a scene | [Runtime-model quick start](./GettingStarted.md#start-with-a-c-runtime-model), then [Core](./Core/README.md), [Merge](./Merge/README.md) or [StateMachine](./StateMachine/README.md) |
+| Add a first component | [First audio scene](./GettingStarted.md#your-first-scene-in-5-minutes-audio-manager-am), then [Audio](./Audio/README.md) |
+| Build without code | [NoCode Getting Started](./NoCode/GettingStarted.md) and [Condition](./Condition/README.md) |
+| Handle hover, click and physics interaction | [Interaction contracts and components](./Tools/InteractableObject/README.md) |
+| Open a ready demo | [Demo scenes](./Samples.md) |
+| Find a block before writing one | [Do not rebuild first](#do-not-rebuild-first) and the [project summary](../PROJECT_SUMMARY.md) |
+| Upgrade from 11.x | [Upgrading to 12](./Migration12.md) |
+| Upgrade from 10.x | [Migration to 11](./Migration11.md), then [Upgrading to 12](./Migration12.md) |
+| Run or write tests | [Testing](./Testing.md) and [PlayMode testing](./PlayModeTesting.md) |
+| Check host requirements | [Package compatibility](./PackageCompatibility.md), [IL2CPP / code stripping](./IL2CPP.md), [dependency versions and MCP](./Dependencies.md) |
+| Build multiplayer | [Multiplayer Guide](./Network/Multiplayer_Guide.md) |
 
-Use each module's README as its canonical entry. It links to the runtime API and the scene / NoCode setup. Runtime models can be owned by your code; scene services document their component dependencies. ScriptableObjects store reusable configuration, while scene components hold scene references.
+Each module's README is its canonical entry: it links the runtime API and the scene / NoCode setup.
 
-**По-русски:** выберите строку под свою задачу. C#-ядро можно использовать отдельно; компоненты и NoCode подключаются по необходимости. Для обновления существующего проекта начните с migration guide, а для запуска тестов — с требований к изолированному host.
-
-The HTML/CSS → UI Toolkit converter (HtmlToUitk) is now the separate package `com.neoxider.htmltouitk`
-([HtmlToUitk](https://github.com/NeoXider/HtmlToUitk)); see [Upgrading to 12](./Migration12.md#htmltouitk-moved-to-its-own-package).
-Legacy delivery is choose-one Core or Complete; [Samples](./Samples.md#release-archives)
-explains the layouts. Final archive import status is in [Verification 11](../Verification11.md).
+**По-русски:** выберите строку под задачу: [установка](./GettingStarted.md#installation), [C# без сцены](./GettingStarted.md#start-with-a-c-runtime-model), [первый компонент](./GettingStarted.md#your-first-scene-in-5-minutes-audio-manager-am), [NoCode](./NoCode/GettingStarted.md), [демо-сцены](./Samples.md), [обновление с 11.x](./Migration12.md), [с 10.x](./Migration11.md), [тесты](./Testing.md). C#-ядро можно использовать отдельно; компоненты и NoCode подключаются по необходимости.
 
 ## Namespace policy
 
-Runtime gameplay types live in their module namespace (`Neo.Audio`, `Neo.Bonus`, `Neo.Level`,
-`Neo.Parallax`, `Neo.UI`, and so on). The root `Neo` namespace is intentionally reserved for the small
-authoring-attribute surface used across every module: `[Button]`, `[GUIColor]`, `[FindInScene]`,
-`[NeoDoc]`, `[RequireInterface]`, `[CreateFromMenu]`, `[LegacyComponent]`, and their editor drawers.
-Keeping these attributes at the root preserves the terse, stable `using Neo;` workflow; new runtime
-components must use a module namespace. The Tools submodules share `Neo.Tools`; see
-[module structure](../MODULE_STRUCTURE.md) for folder, assembly and namespace rules.
-
-## Start here
-
-- [Package README](../README.md)
-- [**Getting Started** — C# runtime model or first audio scene](./GettingStarted.md)
-- [**NoCode Getting Started** — build gameplay without writing code](./NoCode/GettingStarted.md)
-- [**Cookbook** — recipes & interesting examples (cross-module combos)](./Cookbook.md)
-- [Project summary](../PROJECT_SUMMARY.md)
-- [Useful components](./UsefulComponents.md)
-- [Package compatibility](./PackageCompatibility.md)
-- [Sample scenes](./Samples.md)
-- [Upgrading from 11.x to 12](./Migration12.md)
-- [Migration from 10.x to 11](./Migration11.md)
-- [Deprecated components and removal candidates](./DEPRECATED_OR_REMOVAL_CANDIDATES.md)
-- [Testing — EditMode contracts and isolation](./Testing.md)
-- [PlayMode testing — lifecycle and integration scope](./PlayModeTesting.md)
-- [IL2CPP and code stripping](./IL2CPP.md)
-
-Static-reset and Play Mode transition fixtures need an isolated host. The testing guides explain provider/scene ownership and global-state effects; broad test-suite dependencies can exceed those of a single runtime module.
+Runtime gameplay types live in their module namespace: `Neo.Audio`, `Neo.Bonus`, `Neo.Level`, `Neo.Parallax`, `Neo.UI` and so on. The Tools submodules share `Neo.Tools`. The root `Neo` namespace holds only the authoring attributes used by every module: `[Button]`, `[GUIColor]`, `[FindInScene]`, `[NeoDoc]`, `[RequireInterface]`, `[CreateFromMenu]`, `[LegacyComponent]` and their editor drawers. This keeps `using Neo;` short and stable; new runtime components must use a module namespace. Folder, assembly and namespace rules: [module structure](../MODULE_STRUCTURE.md).
 
 ## Do not rebuild first
 
@@ -92,7 +64,7 @@ Static-reset and Play Mode transition fixtures need an isolated host. The testin
 
 <table>
 <tr>
-<td width="33%" align="center"><a href="./Abilities/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SurvivorDemo.jpg" alt="Survivor arena: Abilities, waves and upgrades from one config" width="100%" /></a><br /><b>Survivor arena</b><br /><sub>Abilities, waves and upgrades from one config</sub></td>
+<td width="33%" align="center"><a href="./Abilities/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SurvivorDemo.jpg" alt="Survivor arena: Seven weapons, waves and a boss, no game scripts" width="100%" /></a><br /><b>Survivor arena</b><br /><sub>Seven weapons, waves and a boss, no game scripts</sub></td>
 <td width="33%" align="center"><a href="./GridSystem/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemMatch3Demo.jpg" alt="Match3 board: Shaped boards, paths and match rules" width="100%" /></a><br /><b>Match3 board</b><br /><sub>Shaped boards, paths and match rules</sub></td>
 <td width="33%" align="center"><a href="./Bonus/README.md"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/BonusRewardsDemo.jpg" alt="Rewards and collection: Collection, chest and cooldown gifts, no script" width="100%" /></a><br /><b>Rewards and collection</b><br /><sub>Collection, chest and cooldown gifts, no script</sub></td>
 </tr>
@@ -119,55 +91,61 @@ Static-reset and Play Mode transition fixtures need an isolated host. The testin
 
 | | Module | What it covers | Entry |
 |:-:|--------|----------------|-------|
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/abilities.jpg" alt="Abilities module concept art" width="96" /> | **Abilities** | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline with typed `CastResult`, opt-in spatial grid for crowds, multiplayer-ready receipts; successor to Rpg | [Abilities](./Abilities/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/animations.jpg" alt="Animations module concept art" width="96" /> | **Animations** | Runtime value animation for float, color, `Vector3` and transforms, with a manual `Tick` clock and unscaled time | [Animations](./Animations/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/abilities.jpg" alt="Abilities module concept art" width="96" /> | **Abilities** | Data-driven Dota-style abilities and modifiers: units, buffs, DoT, shields, a cast pipeline with typed `CastResult`, a spatial grid for crowds; successor to Rpg | [Abilities](./Abilities/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/animations.jpg" alt="Animations module concept art" width="96" /> | **Animations** | Float, color, `Vector3` and transform animation with a manual `Tick` clock and unscaled time | [Animations](./Animations/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/audio.jpg" alt="Audio module concept art" width="96" /> | **Audio** | Audio manager, mixer helpers, random music, audio UI; `AMSettings` saves volumes and mutes | [Audio](./Audio/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/haptics.jpg" alt="Haptics module concept art" width="96" /> | **Haptics** | Device vibration: named feels, settings switch, repeat throttle, MobileHapticFeedback backend | [Haptics](./Haptics/Haptics.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/bonus.jpg" alt="Bonus module concept art" width="96" /> | **Bonus** | Slots, wheel rewards, collections, timed rewards; every mechanic has a plain C# core (`CollectionSet`, `BoxProgress`, `CooldownSchedule`, `SlotSpinMath`) | [Bonus](./Bonus/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/cards.jpg" alt="Cards module concept art" width="96" /> | **Cards** | Deck/hand/board runtime, seeded shuffling, stable custom sorting, poker evaluation, Drunkard sample | [Cards](./Cards/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/haptics.jpg" alt="Haptics module concept art" width="96" /> | **Haptics** | Named vibration feels, settings switch, repeat throttle, MobileHapticFeedback backend | [Haptics](./Haptics/Haptics.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/bonus.jpg" alt="Bonus module concept art" width="96" /> | **Bonus** | Slots, wheel rewards, collections, timed rewards, each with a plain C# core (`CollectionSet`, `BoxProgress`, `CooldownSchedule`, `SlotSpinMath`) | [Bonus](./Bonus/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/cards.jpg" alt="Cards module concept art" width="96" /> | **Cards** | Deck/hand/board runtime, seeded shuffling, stable custom sorting, poker evaluation, Drunkard example | [Cards](./Cards/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/condition.jpg" alt="Condition module concept art" width="96" /> | **Condition** | No-code conditions, reflection checks, AND/OR logic, events, unscaled-time checks | [Condition](./Condition/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/core.jpg" alt="Core module concept art" width="96" /> | **Core** | Resource pools, health, level/XP helpers | [Core](./Core/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/editor.jpg" alt="Editor module concept art" width="96" /> | **Editor** | Inspector, editor windows, missing-script scan, settings (`NeoxiderSettings`, saved in `ProjectSettings/NeoxiderSettings.json`), maintenance tools | [Editor](./Editor/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/editor.jpg" alt="Editor module concept art" width="96" /> | **Editor** | Inspector, editor windows, missing-script scan, `NeoxiderSettings` (saved in `ProjectSettings/NeoxiderSettings.json`), maintenance tools | [Editor](./Editor/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/extensions.jpg" alt="Extensions module concept art" width="96" /> | **Extensions** | Extension methods for C# and Unity APIs, including seeded random helpers | [Extensions](./Extensions/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/gridsystem.jpg" alt="GridSystem module concept art" width="96" /> | **GridSystem** | Grid-game constructor: field generation, pathfinding, placement, Dice, GridMerge, Match3, TicTacToe / n-in-a-row, SlidingMerge (2048) | [GridSystem](./GridSystem/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/inventory.jpg" alt="Inventory module concept art" width="96" /> | **Inventory** | Aggregated and slot-grid inventories, pickups, transfers, selection events, save integration | [Inventory](./Tools/Inventory/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/interaction.jpg" alt="Interaction module concept art" width="96" /> | **Interaction** | Reusable C# contracts, scene hover/click, 2D/3D physics events, ray modes, range checks | [Interaction](./Tools/InteractableObject/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/interaction.jpg" alt="Interaction module concept art" width="96" /> | **Interaction** | C# contracts, scene hover/click, 2D/3D physics events, ray modes, range checks | [Interaction](./Tools/InteractableObject/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/level.jpg" alt="Level module concept art" width="96" /> | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/merge.jpg" alt="Merge module concept art" width="96" /> | **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Merge/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/network.jpg" alt="Network module concept art" width="96" /> | **Network** | Mirror wrappers, no-code sync, lobby, discovery, realtime .io toolkit (snapshots, prediction), bootstrap, telemetry, transport-free authority policy | [Network](./Network/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/nocode.jpg" alt="NoCode module concept art" width="96" /> | **NoCode** | Scene UI bindings and Inspector wrappers around C# contracts, each with a typed C# API; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/merge.jpg" alt="Merge module concept art" width="96" /> | **Merge** | Pure C# connected-group merge engine for grids, inventories, lists and custom graphs | [Merge](./Merge/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/network.jpg" alt="Network module concept art" width="96" /> | **Network** | Mirror wrappers, no-code sync, lobby, discovery, a realtime .io toolkit, telemetry, transport-free authority policy | [Network](./Network/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/nocode.jpg" alt="NoCode module concept art" width="96" /> | **NoCode** | Scene UI bindings and Inspector wrappers around C# contracts, each with a typed C# API | [NoCode](./NoCode/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/npc.jpg" alt="NPC module concept art" width="96" /> | **NPC** | Navigation, target finder, patrol/chase, staggered re-pathing, RPG combat brain | [NPC](./NPC/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/parallax.jpg" alt="Parallax module concept art" width="96" /> | **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/progression.jpg" alt="Progression module concept art" width="96" /> | **Progression** | XP, levels, unlock tree, perk tree, premium track (`ActivatePremium` action, `HasPremium` condition) | [Progression](./Progression/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/editor.jpg" alt="PropertyAttribute module concept art" width="96" /> | **PropertyAttribute** | Inspector attributes: button, color, inject helpers | [PropertyAttribute](./PropertyAttribute/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/quest.jpg" alt="Quest module concept art" width="96" /> | **Quest** | Quest configs, objectives, manager, runtime state; kill/collect/reach/talk notifications by target id from code or `QuestNoCodeAction` | [Quest](./Quest/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/reactive.jpg" alt="Reactive module concept art" width="96" /> | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Reactive/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/reactive.jpg" alt="Reactive module concept art" width="96" /> | **Reactive** | Serializable reactive properties for `float`, `int` and `bool` | [Reactive](./Reactive/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/rpg.jpg" alt="Rpg module concept art" width="96" /> | **Rpg** | `RpgCharacter`, resources, stats, attacks, damage modifiers, buffs/statuses, save/network/no-code bridges (superseded by Abilities) | [Rpg](./Rpg/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/save.jpg" alt="Save module concept art" width="96" /> | **Save** | Save providers, attributes, scene/global save flow, 64-bit values | [Save](./Save/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/settings.jpg" alt="Settings module concept art" width="96" /> | **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/shop.jpg" alt="Shop module concept art" width="96" /> | **Shop** | Shop data, typed purchases, currency UI | [Shop](./Shop/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/statemachine.jpg" alt="StateMachine module concept art" width="96" /> | **StateMachine** | Runtime state machine and no-code data workflow | [StateMachine](./StateMachine/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/tools.jpg" alt="Tools module concept art" width="96" /> | **Tools** | Movement, free-fly camera, input, physics, spawning, timers and clocks, random tables, dialogue, UI helpers | [Tools](./Tools/README.md) |
-| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/ui.jpg" alt="UI module concept art" width="96" /> | **UI** | UI panels, button animations, toggles, `CategoryBar` / `VariantView` with typed C# events, UI Mesh Rig, presentation helpers | [UI](./UI/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/ui.jpg" alt="UI module concept art" width="96" /> | **UI** | UI panels, button animations, toggles, `CategoryBar` / `VariantView` with typed C# events, UI Mesh Rig | [UI](./UI/README.md) |
 
 ## Gameplay ownership
 
-`Gameplay` is not a standalone Neoxider module. Gameplay systems are owned by concrete runtime modules (`Rpg`, `Quest`, `Progression`, `Cards`, `GridSystem`, `Tools`, `NoCode`, etc.). Do not add a new `Docs/Gameplay` or `Scripts/Gameplay` folder unless a real runtime assembly/API is introduced with clear ownership and tests.
+`Gameplay` is not a standalone module: gameplay systems belong to concrete runtime modules (`Rpg`, `Quest`, `Progression`, `Cards`, `GridSystem`, `Tools`, `NoCode` and others). Add a `Docs/Gameplay` or `Scripts/Gameplay` folder only together with a real runtime assembly that has clear ownership and tests.
 
 ## Samples and add-ons
 
 | Section | Entry |
 |---------|-------|
-| **Sample scenes** (authored in the scene, rebuilt from **Neoxider > Demo**) | [Samples](./Samples.md) |
+| **Demo scenes** (separate downloads, plain saved scenes) | [Samples](./Samples.md) |
 | **Examples** | [Examples](./Examples/README.md) |
 | **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
 | **Character Movement Fundamentals** | [Character controller and optional demo scenes](./Tools/Move/CharacterController/README.md) |
 | **UI Extension** | [UI Extension](./UI%20Extension/README.md) |
+| **HTML/CSS → UI Toolkit** | Separate package `com.neoxider.htmltouitk` ([HtmlToUitk](https://github.com/NeoXider/HtmlToUitk), [move notes](./Migration12.md#htmltouitk-moved-to-its-own-package)) |
 
 ## Guides
 
+- [Package README](../README.md) and [project summary](../PROJECT_SUMMARY.md)
+- [Cookbook](./Cookbook.md): cross-module recipes
+- [Useful components](./UsefulComponents.md)
 - [Multiplayer Guide](./Network/Multiplayer_Guide.md)
-- [Realtime IO Guide](./Network/Realtime_IO_Guide.md) - server-authoritative realtime games: handshake, snapshots, interpolation, prediction, events, bootstrap
+- [Realtime IO Guide](./Network/Realtime_IO_Guide.md): server-authoritative realtime games with handshake, snapshots, interpolation, prediction, events and bootstrap
 - [NoCode Network Spec](./Network/NoCode_Network_Spec.md)
 - [Survivor demo — Vampire-Survivors kit on `Neo.Abilities`](./Abilities/SurvivorDemo.md)
 - [Building a Vampire Survivors game (Neo.Abilities)](./VampireSurvivor_Guide.md)
+- [Deprecated components and removal candidates](./DEPRECATED_OR_REMOVAL_CANDIDATES.md)
+- [Verification 11](../Verification11.md): the recorded 11.0.0 Windows results and their limits

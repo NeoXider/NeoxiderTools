@@ -4,7 +4,7 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/rpg.jpg" alt="Concept art for the RPG module" width="100%" /></p>
 <!-- module-art:end -->
 
-**What it is:** a full RPG runtime module for persistent player profiles, local and networked combat actors, melee/ranged/aoe attacks, target selectors, attack presets for AI/skills/spells, evade, buffs, statuses, built-in input, and no-code integration. Scripts live in `Scripts/Rpg/`.
+**What it is:** an RPG runtime in `Scripts/Rpg/`: the `RpgCharacter` actor with resources, stats, buffs, statuses and a persistent profile, plus attacks, target selectors, evade and NoCode bridges. Networking, the `NeoCondition` bridge and legacy combat compatibility are optional assemblies. For new combat code, start with [Abilities](../Abilities/README.md).
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/RpgCombatNpcDemo.jpg" alt="RpgCombatNpcDemo: auto combat between RpgCharacter NPCs with health bars" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/RpgCharacterQuickDemo.jpg" alt="RpgCharacterQuickDemo: RpgCharacter HUD bindings and NoCode actions" width="49%" /></p>
@@ -55,9 +55,7 @@
 
 ## Demo scenes
 
-Both scenes live in the Demo download (`Assets/NeoxiderDemos/Demo/Scenes/`). Their UI, bindings and listeners are saved in the
-scenes, so every connection can be inspected without
-entering Play Mode.
+Both scenes are in the Demo download (`Assets/NeoxiderDemos/Demo/Scenes/`). Everything is saved in the scenes.
 
 | Scene | What it shows | Look at in the Inspector | C# equivalent |
 |---|---|---|---|
@@ -74,21 +72,15 @@ entering Play Mode.
 - `Neo.Rpg.ConditionBridge` contains only the optional `RpgConditionAdapter` component and owns the
   dependency on `Neo.Condition`. Code in a custom asmdef that uses this adapter must reference
   `Neo.Rpg.ConditionBridge` in addition to `Neo.Rpg`.
-- `RpgCharacter` is the scene/API facade and keeps orchestration only (event order, re-entrancy guards,
-  persistence, replication hooks). State lives in plain-C# services: `RpgCharacterResourceService`
-  (resources, regen clocks), `RpgCharacterStatService` (stats, upgrade rules, investments, resolvers),
-  `RpgCharacterProgressionService` (level, XP, upgrade points, applied growth) and `RpgEffectShelf`
-  (buffs/statuses), with `RpgModifierMath` aggregating combat multipliers.
+- `RpgCharacter` is the scene/API facade; its state lives in plain-C# services. See
+  [RpgCharacter → Architecture](./RpgCharacter.md#architecture).
 - Damage is extensible without subclassing: `IRpgDamageModifier` hooks run after resist multipliers and
   before HP changes; `RpgCharacter.DamageApplied` reports the hit source and the HP removed.
 - Hot paths (character tick, regen, damage, multiplier queries, Direct/Area attack casts, aura pulses and
-  target selection) are allocation-free once warm and are guarded by zero-GC tests. Listeners you add to
-  the UnityEvents on these paths can still allocate on their own.
-- `RpgCharacterNetworkAdapter` adds optional Mirror commands and snapshot replication without coupling
-  `Neo.Rpg` to the `Neo.Network` runtime implementation; the local assembly uses only
-  `Neo.Network.Contracts`. The adapter itself lives in the separate `Neo.Rpg.Network` assembly. The
-  character publishes one complete snapshot per step (a frame of regen/effect ticks, a hit, a level-up, one
-  command); `RpgCharacter.DeferSnapshotPublication()` groups your own mutations the same way.
+  target selection) are allocation-free once warm. Listeners you add to the UnityEvents on these paths can
+  still allocate on their own.
+- `RpgCharacterNetworkAdapter` in the separate `Neo.Rpg.Network` assembly adds optional Mirror commands and
+  snapshot replication; the local assembly uses only `Neo.Network.Contracts`. See [Network integration](./Network.md).
 - `BuffDefinition` defines temporary buffs with duration and stat modifiers.
 - `StatusEffectDefinition` defines status effects (poison, slow, DoT).
 - `RpgCharacterProfileData` is the serializable profile payload stored via `SaveProvider`; the plain-C#

@@ -58,13 +58,11 @@ No UI is required for cursor navigation and events. Custom asmdefs must referenc
 
 ## Demo scene
 
-Open `Assets/NeoxiderDemos/Demo/Scenes/Tools/Dialogue.unity` from the Demo download. Everything is saved in the scene:
+`Assets/NeoxiderDemos/Demo/Scenes/Tools/Dialogue.unity` (Demo download). Everything is saved in the scene.
 
-- **Dialogue box** - a `DialogueUI` (portrait, name plate, body) driven by the `DialogueComponent` object (`DialogueController`, typewriter, `autoStart`). Clicking the box or `Btn_Skip or next` calls `SkipOrNext`; `Btn_Restart` calls `RestartAll`.
-- **Live column** - `OnCharacterChange`, `OnSentenceEnd`, `OnTypewriterProgress` and `OnAllDialoguesEnd` update the labels and the typing bar through `DialogueDemoController`; the toggles and the speed slider change `useTypewriterEffect`, `autoNextSentence` and `Typewriter.CharactersPerSecond`.
-- **Barks panel** - the `Blacksmith Barks` object (`DialogueLinePlayer`) holds idle, greet and hit lines. `Btn_Idle line` calls `RequestIdle`, `Btn_Hit!` calls `RequestContext("hit")` and interrupts an idle line, `Btn_Greet` shows the `FirstOnly` line once and `AfterFirst` lines later, `Btn_New session` calls `ResetSession`.
-
-The scene is saved with its UI and wiring.
+- **Dialogue box** — a `DialogueUI` driven by the `DialogueComponent` object (`DialogueController` with typewriter and `autoStart`); its buttons call `SkipOrNext` and `RestartAll`.
+- **Live column** — the controller's events update labels and a typing bar; toggles and a slider change `useTypewriterEffect`, `autoNextSentence` and `Typewriter.CharactersPerSecond`.
+- **Barks panel** — `Blacksmith Barks` (`DialogueLinePlayer`) with idle, greet and hit lines: `RequestIdle`, `RequestContext("hit")` interrupting an idle line, and `ResetSession`.
 
 ## Component guides
 

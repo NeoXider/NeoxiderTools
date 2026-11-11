@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Neo.Tools;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.Abilities
 {
@@ -24,6 +25,10 @@ namespace Neo.Abilities
 
         [Tooltip("Archetype id → prefab bindings for projectiles, zones and summons.")]
         [SerializeField] private List<SpawnArchetypeEntry> _archetypes = new List<SpawnArchetypeEntry>();
+
+        [Tooltip("Raised after the hub spawned an object for an ability (projectile, zone view, summon, effect), " +
+                 "with that object.")]
+        [SerializeField] private UnityEvent<GameObject> _onEntitySpawned = new UnityEvent<GameObject>();
 
         [Tooltip("Advance the system every frame with Time.deltaTime. Disable for manual/server ticking.")]
         [SerializeField] private bool _autoTick = true;
@@ -194,6 +199,26 @@ namespace Neo.Abilities
             }
         }
 
+        private static readonly List<ISpawnedAbilityEntity> SpawnedScratch = new List<ISpawnedAbilityEntity>(2);
+
+        /// <summary>
+        ///     Raised after the hub spawned an object for an ability: the request (owner, ability, position, target,
+        ///     cast id) and the object. Outside code can set the object up without a component on the prefab.
+        /// </summary>
+        public event Action<SpawnRequest, GameObject> EntitySpawned;
+
+        /// <summary>Inspector twin of <see cref="EntitySpawned" />: the spawned object.</summary>
+        public UnityEvent<GameObject> OnEntitySpawned => _onEntitySpawned;
+
+        /// <summary>Adds an archetype with a role and its settings at runtime.</summary>
+        public void AddArchetype(SpawnArchetypeEntry entry)
+        {
+            if (!string.IsNullOrEmpty(entry.Id) && entry.Prefab != null)
+            {
+                _archetypes.Add(entry);
+            }
+        }
+
         /// <summary>Adds an archetype binding at runtime.</summary>
         public void AddArchetype(string id, GameObject prefab)
         {
@@ -303,15 +328,22 @@ namespace Neo.Abilities
 
         public void RequestSpawn(SpawnRequest request)
         {
-            GameObject prefab = ResolveArchetype(request.ArchetypeId);
-            if (prefab == null)
+            if (!TryResolveArchetype(request.ArchetypeId, out SpawnArchetypeEntry entry))
             {
                 return;
             }
 
-            AbilityZonePlane plane = prefab.TryGetComponent(out AbilityProjectileBehaviour projectile)
-                ? projectile.Plane
-                : AbilityZonePlane.GroundXZ;
+            GameObject prefab = entry.Prefab;
+            AbilityZonePlane plane = AbilityZonePlane.GroundXZ;
+            if (prefab.TryGetComponent(out AbilityProjectileBehaviour projectile))
+            {
+                plane = projectile.Plane;
+            }
+            else if (entry.Role == SpawnArchetypeRole.Projectile && entry.Projectile != null)
+            {
+                plane = entry.Projectile.Plane;
+            }
+
             Quaternion rotation = AbilityZonePlaneFacing.Facing(request.Direction, plane);
             GameObject instance = PoolManager.Get(prefab, request.Position, rotation);
             if (instance == null)
@@ -319,11 +351,55 @@ namespace Neo.Abilities
                 return;
             }
 
-            // WHY: TryGetComponent avoids the editor-only allocation GetComponent makes for a missing component.
-            if (instance.TryGetComponent(out ISpawnedAbilityEntity spawned))
+            AdoptSpawned(request, instance, entry);
+        }
+
+        /// <summary>
+        ///     Treats an object as the entity of a spawn request: applies the archetype role (adds and configures the
+        ///     projectile or zone component when the object has none), passes the request to every
+        ///     <see cref="ISpawnedAbilityEntity" /> on it and raises <see cref="EntitySpawned" />.
+        ///     <see cref="RequestSpawn" /> calls it for pooled prefabs; call it yourself when your own code creates
+        ///     the object (a custom pool, Addressables, a network spawn).
+        /// </summary>
+        public void AdoptSpawned(SpawnRequest request, GameObject instance)
+        {
+            if (instance == null)
             {
-                spawned.OnSpawned(request, this);
+                return;
             }
+
+            TryResolveArchetype(request.ArchetypeId, out SpawnArchetypeEntry entry);
+            AdoptSpawned(request, instance, entry);
+        }
+
+        private void AdoptSpawned(SpawnRequest request, GameObject instance, SpawnArchetypeEntry entry)
+        {
+            // WHY: the component is added once per pooled instance; the next rental finds it and keeps it.
+            if (entry.Role == SpawnArchetypeRole.Projectile)
+            {
+                if (!instance.TryGetComponent(out AbilityProjectileBehaviour _))
+                {
+                    instance.AddComponent<AbilityProjectileBehaviour>()
+                        .Configure(entry.Projectile ?? new AbilityProjectileSettings());
+                }
+            }
+            else if (entry.Role == SpawnArchetypeRole.ZoneView)
+            {
+                if (!instance.TryGetComponent(out AbilityZoneView _))
+                {
+                    instance.AddComponent<AbilityZoneView>().Configure(entry.Zone ?? new AbilityZoneViewSettings());
+                }
+            }
+
+            instance.GetComponents(SpawnedScratch);
+            for (int i = 0; i < SpawnedScratch.Count; i++)
+            {
+                SpawnedScratch[i].OnSpawned(request, this);
+            }
+
+            SpawnedScratch.Clear();
+            EntitySpawned?.Invoke(request, instance);
+            _onEntitySpawned.Invoke(instance);
         }
 
         private AbilitySpatialGrid EnsureSpatialGrid()
@@ -366,22 +442,22 @@ namespace Neo.Abilities
                    _grid.CellSize.Equals(_spatialCellSize);
         }
 
-        private GameObject ResolveArchetype(string id)
+        private bool TryResolveArchetype(string id, out SpawnArchetypeEntry entry)
         {
-            if (string.IsNullOrEmpty(id))
+            if (!string.IsNullOrEmpty(id))
             {
-                return null;
-            }
-
-            for (int i = 0; i < _archetypes.Count; i++)
-            {
-                if (AbilityIdComparer.Same(_archetypes[i].Id, id))
+                for (int i = 0; i < _archetypes.Count; i++)
                 {
-                    return _archetypes[i].Prefab;
+                    if (AbilityIdComparer.Same(_archetypes[i].Id, id) && _archetypes[i].Prefab != null)
+                    {
+                        entry = _archetypes[i];
+                        return true;
+                    }
                 }
             }
 
-            return null;
+            entry = default;
+            return false;
         }
 
         // WHY: the Transform is cached with the registration; radius queries read every unit's position

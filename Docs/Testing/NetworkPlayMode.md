@@ -1,74 +1,74 @@
 # Network Play Mode testing
 
-**What it is:** This page describes the package's network test boundaries and how to add useful regression coverage. Start with the [Network module](../Network/README.md) for public runtime APIs and the [Multiplayer Guide](../Network/Multiplayer_Guide.md) for scene setup.
+**What it is:** the network test boundaries of the package and how to add useful coverage, from host-loopback Play Mode tests to a dedicated server with two client processes. Runtime APIs are in the [Network module](../Network/README.md); scene setup is in the [Multiplayer Guide](../Network/Multiplayer_Guide.md).
 
-**How to use:** pick the test arrangement that proves what you need from the table below, then follow
-[running and interpreting results](#running-and-interpreting-results).
+**How to use:**
+1. Pick the arrangement that proves what you need from [the table below](#what-each-kind-of-test-proves).
+2. For host tests, follow [public C# API contracts](#public-c-api-contracts) and [determinism and cleanup](#determinism-and-cleanup).
+3. Run and record them as in [running and interpreting results](#running-and-interpreting-results).
+4. For real peers, build and launch the [three-process matrix](#dedicated-server-and-two-independent-clients).
+
+**Navigation:** [← Testing](../Testing.md) · [Play Mode testing](../PlayModeTesting.md)
 
 ## What each kind of test proves
 
-| Test arrangement | Evidence | Additional verification needed |
+| Test arrangement | Evidence | Still needs |
 |---|---|---|
-| Offline component call | Local state and UnityEvent behavior with networking disabled | Network authority, serialization and delivery |
-| Host with `DummyTransport` | Host lifecycle and the local server/client path | Real transport connection, ports, pure-client execution |
-| Explicit host-loopback messages | Mirror serialization, queued delivery and registered handlers | Separate client objects, remote ownership, transport behavior |
-| Server and remote client processes | Actual transport exchange and separate peer state | Other supported platforms/transports and adverse network conditions |
+| Offline component call | Local state and UnityEvent behaviour with networking off | Network authority, serialization and delivery |
+| Host with `DummyTransport` | Host lifecycle and the local server/client path | A real transport, ports, pure-client execution |
+| Explicit host-loopback messages | Mirror serialization, queued delivery, registered handlers | Separate client objects, remote ownership, transport behaviour |
+| Server and remote client processes | Real transport exchange and separate peer state | Other platforms and transports, adverse network conditions |
 
-`DummyTransport` in `NetworkSingletonTests.cs` has empty send/connect implementations and opens no sockets. Mirror's `LocalConnectionToClient` and `LocalConnectionToServer` supply the host loopback independently. A passing host test alone does not prove that a remote client received a SyncVar, Command or RPC. There is no real port contention in this arrangement; `PortDummyTransport.Port` only tests configuration propagation.
+`DummyTransport` in `NetworkSingletonTests.cs` has empty send and connect methods and opens no sockets; Mirror's `LocalConnectionToClient` and `LocalConnectionToServer` supply the loopback. A host pass does not prove a remote client received a SyncVar, Command or RPC, and there is no port contention: `PortDummyTransport.Port` only tests configuration.
 
-The host session tests already exchange custom messages and fragmented frames. The supplemental `Audit20261023TestPlayNetworkHostContractsTests` fixture adds three contracts:
+Beyond the custom-message and fragmented-frame host tests, `Audit20261023TestPlayNetworkHostContractsTests` adds three loopback contracts:
 
-- Ready connections without players receive neither broadcast nor targeted `NetReadyBroadcast` traffic; attaching a player enables ordered delivery with intact payloads.
-- Handlers added to a live registry receive a serialized request and acknowledgement; excluding the host from a broadcast does not suppress that positive control.
-- A networked `NetworkEventDispatcher` sends and receives four real Mirror `RpcMessage` values while each host UnityEvent executes once. Observing both message directions prevents a local fallback from satisfying this test.
-
-These are host-loopback checks. Remote-client verification remains separate.
+- Ready connections without players get neither broadcast nor targeted `NetReadyBroadcast` traffic; attaching a player enables ordered delivery with intact payloads.
+- Handlers added to a live registry receive a serialized request and acknowledgement, even when the host is excluded from a broadcast.
+- A networked `NetworkEventDispatcher` sends and receives four real `RpcMessage` values while each host UnityEvent runs once, so a local fallback cannot pass.
 
 ## Public C# API contracts
 
-For a host fixture, explicitly configure `autoCreatePlayer` and `HandshakeMode` before `StartAsHost()`. Wait for the role and connection state required by the action. `NetworkClient.active` means a connection attempt exists; also check `isConnected`, readiness and player state when the scenario requires them.
-
-`NetReadyBroadcast.CanReceive(connection)` requires a ready connection with a player identity. Check the return value of `SendTo` or `ToReadyClients`, then observe the receiver's payload and count. A send count alone is insufficient evidence of delivery. To test rejection, enqueue a positive control on the same reliable connection and assert the complete received sequence after that control arrives.
-
-Register message handlers before sending. `NetClientHandlers` and `NetServerHandlers` follow `NeoNetworkManager` restarts and implement `IDisposable`; release them when their owner ends. Give each test message a unique type so fixtures cannot replace each other's handlers.
-
-Construct networked objects while inactive, add their `NetworkIdentity` and all `NetworkBehaviour` components, then activate them. Mirror collects behaviors in `NetworkIdentity.Awake`; adding behaviors afterward leaves the cached array incomplete. In test fixtures, the public `NetworkClient.RegisterPrefab(gameObject, nonzeroAssetId)` overload can assign a runtime object's asset ID without reflecting `_assetId`. This registration does not create a project prefab asset.
+- Set `autoCreatePlayer` and `HandshakeMode` before `StartAsHost()`, then wait for the role and connection state the action needs. `NetworkClient.active` only means a connection attempt; also check `isConnected`, readiness and player state.
+- `NetReadyBroadcast.CanReceive(connection)` needs a ready connection with a player identity. Check the result of `SendTo` or `ToReadyClients`, then the receiver's payload and count. To test rejection, enqueue a positive control on the same reliable connection and assert the full sequence after it.
+- Register handlers before sending. `NetClientHandlers` and `NetServerHandlers` follow `NeoNetworkManager` restarts and are `IDisposable`; release them with their owner. Give each test message a unique type.
+- Build networked objects while inactive, add the `NetworkIdentity` and every `NetworkBehaviour`, then activate: Mirror caches behaviours in `NetworkIdentity.Awake`.
+- `NetworkClient.RegisterPrefab(gameObject, nonzeroAssetId)` assigns a runtime object's asset ID without reflecting `_assetId`; it creates no prefab asset.
 
 ## Scene and NoCode workflows
 
-For `NetworkActionRelay`, dispatcher, interaction and physics checks, set `isNetworked`/`IsNetworked` explicitly. Assert that the object is spawned and has the intended observer or owner before triggering its public API. Configure authority and scope explicitly for the case being tested.
-
-Count events instead of storing only a boolean: duplicate host execution otherwise remains invisible. Check int/float/string payloads and unrelated channel or player state. For context relays, resolve the entering player's spawned identity, assert only its intended child changes, and keep the disabled template unchanged. A second host-side player copy tests target selection, but does not establish a second connected client.
-
-Calling a private `OnTriggerEnter` method checks its callback logic. Actual collision coverage needs collider/Rigidbody configuration and a simulated physics step. Calling a snapshot apply method checks the codec/application seam; late-join synchronization additionally needs a new client to receive its initial state through Mirror.
-
-`MultSceneNetworkTests` intentionally require the development-only `Assets/Scenes/Mult.unity`; their missing-scene skip is not a package multiplayer pass. General sample validators should resolve the active layout: `Assets/Neoxider/Samples`, release `Assets/Neoxider/Samples~`, or imported `Assets/Samples/NeoxiderTools/<version>/<sample name>`. Renaming sample folders is not part of running these network contracts.
+- For `NetworkActionRelay`, dispatcher, interaction and physics checks, set `isNetworked` / `IsNetworked`, authority and scope explicitly, and assert the object is spawned with the intended observer or owner before calling it.
+- Count events instead of storing a boolean, or duplicate host execution stays invisible. Check int, float and string payloads and unrelated channel or player state.
+- For context relays, resolve the entering player's spawned identity, assert that only its intended child changes and keep the disabled template unchanged. A second host-side player copy tests target selection, not a second client.
+- A private `OnTriggerEnter` call checks callback logic only; collisions need colliders, a Rigidbody and a physics step. A snapshot apply call checks the codec; late join needs a new client to receive its state through Mirror.
+- `MultSceneNetworkTests` need the development-only `Assets/Scenes/Mult.unity`; their skip is not a multiplayer pass. Demo validators read `Assets/NeoxiderDemos/<name>`; no folder renaming is needed.
 
 ## Determinism and cleanup
 
-Use a realtime deadline followed by a failing assertion for every connection, scene-load or spawn wait. Include role, connected, ready and player state in timeout messages. An elapsed deadline with no postcondition can turn a stalled setup into a false pass. Avoid scaled `WaitForSeconds` for networking; paused gameplay must not suspend test timeouts. Prefer an observed message barrier over a guessed number of frames.
-
-Run fixtures serially in an empty test scene. A fixture must refuse an existing session before claiming ownership. Track and destroy every created object, including player templates and objects created inside test bodies; cleanup must run when an assertion fails. Dispose handler registries and unsubscribe diagnostic callbacks in `finally` blocks. Stop the owned session, clear registrations, release its objects, and restore the previous transport, frame rate, VSync and run-in-background settings. Assert that server and client are inactive afterward.
-
-Money tests should disable persistence for a session-only wallet before `Start` or use an isolated `SaveProvider` and unique keys. Do not delete the development project's `Money` and `MoneyAllMoney` keys. If persistence itself is under test, preserve and restore the provider and prior values through that provider's API.
+- Follow every connection, scene-load or spawn wait with a real-time deadline and a failing assertion that reports role, connected, ready and player state. Do not use scaled `WaitForSeconds`; prefer an observed message barrier over a frame count.
+- Run fixtures serially in an empty scene; refuse an existing session before claiming ownership.
+- Destroy every created object, player templates included, even after a failed assertion. Dispose handler registries and unsubscribe diagnostics in `finally`.
+- Stop the owned session, clear registrations, restore the previous transport, frame rate, VSync and run-in-background, and assert server and client are inactive.
+- Money tests disable persistence before `Start` or use an isolated `SaveProvider` with unique keys. Never delete the development project's `Money` and `MoneyAllMoney` keys; when testing persistence, restore prior values through the provider.
 
 ## Running and interpreting results
 
-Use the Unity Test Runner's Play Mode tab with the project operator's exclusive Editor session. Filter by `Neo.Tests.Play.Audit20261023TestPlayNetworkHostContractsTests` for the supplemental cases. They use the existing `Neo.Tests.Play` assembly, require Mirror and `MIRROR`, and do not require extra assembly references. In the 12.0.0 run all 260 network-related Play Mode cases (host contracts, relay, sync, lobby, RPG and Money network tests) passed.
-
-An optional-network release also needs a separate compile/import check with Mirror and its symbols absent. The current Play test assembly directly references `Mirror`, and many legacy fixtures import it unconditionally; excluding a single guarded test file does not establish that configuration. Any split into a Mirror-only test assembly belongs to the assembly owner.
-
-For remote integration, record the exact Unity, Mirror, transport and package versions, peer roles, ports, received payloads/counts and teardown outcome. Use a leased port for real transports and bounded process termination. Keep host smoke results, missing-scene skips and remote integration results distinguishable in the evidence.
+- Use the Play Mode tab in an exclusive Editor session; filter by `Neo.Tests.Play.Audit20261023TestPlayNetworkHostContractsTests` for the supplemental cases. They live in `Neo.Tests.Play`, need Mirror and `MIRROR`, and add no references.
+- In the 12.0.0 run all 260 network-related Play Mode cases passed (host contracts, relay, sync, lobby, RPG and Money).
+- An optional-network release also needs a compile and import check without Mirror and its symbols. The Play assembly references `Mirror` and many legacy fixtures import it, so excluding one guarded file proves nothing; splitting out a Mirror-only assembly is the owner's call.
+- For remote runs, record Unity, Mirror, transport and package versions, roles, ports, received payloads and counts, and teardown. Use a leased port and bounded process termination, and keep host results, skips and remote results apart.
 
 ## Dedicated server and two independent clients
 
-The source-authored matrix is in `Tests/Integration/Network` (`Neo.Tests.Network.Integration`). Its launcher is [`scripts/network_playmode_matrix.ps1`](../../../../scripts/network_playmode_matrix.ps1). **Last run 2026-11-04 (12.0.0):** Unity 6000.3.14f1, Mirror Telepathy over TCP, three Development players; all 54 cases passed (RPG initialization and late join, concurrent Counter, NI19 malformed inputs, owner/unknown/local-only/rate admission, the three relay scopes, Selector, Money and NI7-02, handler generations, paused polling, physics/context, B reconnect and a full server restart) with 240 client acknowledgements and clean teardown on every role, in about 20 seconds. Each new run still needs its own build and run ID.
+The matrix lives in `Tests/Integration/Network` (`Neo.Tests.Network.Integration`) with the launcher [`scripts/network_playmode_matrix.ps1`](../../../../scripts/network_playmode_matrix.ps1): one dedicated server and two standalone Windows clients over the installed `Mirror.TelepathyTransport` (TCP).
 
-The matrix uses the installed `Mirror.TelepathyTransport` over TCP, one dedicated server and two standalone Windows client processes. It refuses Editor/host substitution, a foreign session, nonempty bootstrap scenes, reused output roots and mismatched build/persistence identities. It does not install Mirror or a transport. The test assembly requires `MIRROR`, `UNITY_INCLUDE_TESTS`, Mirror/Mirror.Transports and the runtime assemblies listed in its asmdef; production builds without test assemblies do not get this entrypoint. It contains no ordinary NUnit-discovered cases: launch the three players to execute the matrix.
+**Last run: 2026-11-04 (12.0.0).** Unity 6000.3.14f1, three Development players: all 54 cases passed, NI7-02 and NI19 included, with 240 client acknowledgements and clean teardown on every role, in about 20 seconds. Each new run needs its own build and run ID.
+
+The matrix refuses Editor or host substitution, a foreign session, nonempty bootstrap scenes, reused output roots and mismatched build or persistence identities, and installs no Mirror or transport. The assembly needs `MIRROR`, `UNITY_INCLUDE_TESTS`, Mirror, Mirror.Transports and the runtime assemblies in its asmdef. It has no NUnit-discovered cases: launch the three players.
 
 ### Build entrypoint (verification operator, after source freeze)
 
-Use an isolated validation project containing the frozen package, installed Mirror/Telepathy, Windows build support and the test assemblies. Enable `MIRROR` and `UNITY_INCLUDE_TESTS` in that validation project. Do not use the working/user project. The operator invokes:
+Use an isolated validation project (not the working project) with the frozen package, Mirror and Telepathy, Windows build support, the test assemblies, and `MIRROR` and `UNITY_INCLUDE_TESTS` enabled:
 
 ```bat
 "<Unity.exe>" -batchmode -nographics -projectPath "<isolated validation project>" ^
@@ -79,17 +79,18 @@ Use an isolated validation project containing the frozen package, installed Mirr
   -logFile "D:\NeoQA\matrix-build-<run ID>.log"
 ```
 
-`Build()` creates one task-owned empty scene, builds three `StandaloneWindows64` players sequentially with `Development | IncludeTestAssemblies | StrictMode`, then releases that scene/folder and restores company/product/version and the previously active scene. Existing scenes are kept open. The build output must not exist. Check `build-receipt.json.passed`, the Editor exit/log/build reports, and actual compilation/Weaver discovery before launching. A failed build is not a matrix result.
+- `Build()` creates one owned empty scene, builds three `StandaloneWindows64` players with `Development | IncludeTestAssemblies | StrictMode`, then restores company, product, version and the active scene. The output folder must not exist.
+- Before launching, check `build-receipt.json.passed`, the exit code, log and build reports, and Weaver discovery. A failed build is not a matrix result.
+- Choose the run ID **before** building: identity is baked into each player. Launch with the same run ID and snapshot and a fresh artifact root; a new attempt needs a new run ID and build.
+- The snapshot is a correlation token for the operator's frozen-source manifest, not an attested hash. Record the Mirror package revision separately; `mirrorAssemblyVersion` is only an assembly version.
 
-Each player has company `NeoQA_Network_<run ID>`, version `12.0.0` and a separate product:
+Players use company `NeoQA_Network_<run ID>`, version `12.0.0` (set by the build script) and one product each:
 
 | Role | Product / output directory | Executable |
 |---|---|---|
 | server | `NetworkMatrix_server` | `NetworkMatrix.exe` |
 | client-a | `NetworkMatrix_client-a` | `NetworkMatrix.exe` |
 | client-b | `NetworkMatrix_client-b` | `NetworkMatrix.exe` |
-
-The run ID must be decided **before** building: identity is baked into each player. Reuse the same run ID/snapshot when launching these three builds, with a fresh artifact root. A new attempt uses a new run ID and builds. The snapshot argument is a correlation token for the operator's frozen-source manifest, not a self-computed or independently attested source hash. Record the installed Mirror package/source revision separately; `mirrorAssemblyVersion` is only an assembly version.
 
 ### Launch and persistence probes
 
@@ -103,93 +104,92 @@ powershell.exe -NoProfile -File scripts/network_playmode_matrix.ps1 `
   -PhaseTimeout 20 -OverallTimeout 300
 ```
 
-Reserve a distinct port for every concurrent matrix. The launcher holds a port-specific Windows mutex, probes the TCP port without taking over a listener, starts only its three supplied executables with hidden windows, and keeps their returned process handles. The release-to-bind race can fail the owned server; no foreign process is killed. Startup advances only on `server-listening` and `launch-client-b` receipts. Each connection additionally crosses Connected, Authenticated, Ready, PlayerSpawned and world-initialization barriers. All waits use realtime deadlines. Poll intervals and the explicit one-second cadence measurement are not delivery assumptions.
+**Processes.** Use a distinct port per concurrent matrix. The launcher holds a port-specific mutex, probes the port without taking over a listener, starts only its three executables (hidden) and lists every child it may kill in `owned-processes.json`; no foreign process is killed. Startup advances on `server-listening` and `launch-client-b` receipts, and each connection crosses Connected, Authenticated, Ready, PlayerSpawned and world-initialization barriers with real-time deadlines. Success needs cleanup and result receipts and exit code zero from each player; on failure the launcher kills only its own running handles and records that as cleanup debt.
 
-Before launch, the script requires the three expected Windows persistence directories and PlayerPrefs registry keys to be absent. The effective directories are `%USERPROFILE%\AppData\LocalLow\NeoQA_Network_<run ID>\<product>` (derived from the current account's local AppData location); the namespaces are `HKEY_CURRENT_USER\Software\NeoQA_Network_<run ID>\<product>`. Each player checks its actual company/product/`Application.persistentDataPath` before scenario setup. `-neoNetworkMatrixPersistentDataPath` is an **expected-value assertion**, not an override of Unity storage.
+**Persistence.**
 
-Before the first provider load/write, the player records the actual identities, PID, transport/port and store locations. It then installs `FileSaveProvider("matrix-save.json", new FileSaveProviderOptions { PersistenceRoot = <artifact root>/<role>/save })` through `SaveProvider.SetProvider`, round-trips and removes only its unique sentinel, and checks the same provider before each phase. The original Counter/Selector saves, original wallet's persistence and RPG load/autosave are disabled. NI7-02 uses one additional persisted wallet; the Counter malformed-input cases use separate persisted fixture identities. All use unique run-owned keys in this same isolated provider. No scenario calls PlayerPrefs. Thus implicit Unity state and explicit scenario stores both have owned, distinct namespaces.
+- Before launch, `%USERPROFILE%\AppData\LocalLow\NeoQA_Network_<run ID>\<product>` and `HKEY_CURRENT_USER\Software\NeoQA_Network_<run ID>\<product>` must be absent.
+- Each player checks its company, product and `Application.persistentDataPath`; `-neoNetworkMatrixPersistentDataPath` is an **expected-value assertion**, not an override.
+- Before the first save it records identities, PID, transport, port and stores, installs `FileSaveProvider("matrix-save.json", new FileSaveProviderOptions { PersistenceRoot = <artifact root>/<role>/save })` through `SaveProvider.SetProvider`, round-trips a unique sentinel and rechecks the provider before each phase.
+- Original Counter and Selector saves, the original wallet's persistence and RPG load and autosave are off; NI7-02 and NI19 use their own fixtures with run-owned keys in that provider. No scenario calls PlayerPrefs.
+- `persistence-probe.json` records only registry key and value names, paths and existence. Logs and save roots are kept; nothing is deleted recursively.
 
-The launcher records registry **key/value names only**, effective paths and whether they exist in `persistence-probe.json`; it does not read or erase user values. It retains all owned logs/save roots for inspection. `owned-processes.json` identifies every child it may terminate. Normal completion requires each player's successful cleanup/result receipt and zero exit code. A deadline/failure kills only still-running handles it created, and records forced termination as cleanup evidence debt. No recursive persistence deletion occurs.
-
-Direct runtime CLI switches are `-neoNetworkMatrix`, then `-neoNetworkMatrixRunId`, `Snapshot`, `Peer`, `Root`, `Company`, `Product`, `PersistentDataPath`, `Port`, `PhaseTimeout`, `OverallTimeout` (each suffix carries the same `-neoNetworkMatrix` prefix). Use the launcher to create the owned marker and directories. Peers are exactly `server`, `client-a`, `client-b`; phase timeout is 2–120 seconds and the overall player timeout is at most 3600 seconds.
+Runtime switches: `-neoNetworkMatrix`, `-neoNetworkMatrixRunId`, `-neoNetworkMatrixSnapshot`, `-neoNetworkMatrixPeer`, `-neoNetworkMatrixRoot`, `-neoNetworkMatrixCompany`, `-neoNetworkMatrixProduct`, `-neoNetworkMatrixPersistentDataPath`, `-neoNetworkMatrixPort`, `-neoNetworkMatrixPhaseTimeout`, `-neoNetworkMatrixOverallTimeout`. Let the launcher create the marker and directories. Peers are `server`, `client-a` and `client-b`; the phase timeout is 2–120 s and the overall player timeout at most 3600 s.
 
 ### Authored observable contracts
 
-| Case | Required receiver evidence |
-|---|---|
-| RPG initialization and late join | A's local template starts at HP/max9 and custom resource1, yet receives server120/120/10. After real server mutations, A and newly admitted B receive73/120/7, including a delimiter-containing resource ID. |
-| Concurrent Counter.Add(1) | Both independent callers record10; actual server Command ingress yields11,12. Only the test world's outgoing replication is temporarily held through Mirror's public observer collections. The server's12 is checked before two explicit trusted publications13,12 restore both receivers; each receives exactly those two payloads. |
-| Counter malformed remote inputs (NI19) | Separate persisted FLOAT fixtures reject NaN/+Infinity/-Infinity for Set/Add/Multiply and finite-operand raw overflow, with zero state/event/save/RPC effects. The same peer's immediate finite operation succeeds in the measured server window. An INT2 multiplied by float.MaxValue case requires rejection before integer normalization can hide infinity. Finite fractional/independent-peer controls remain mandatory; original Counter12/Money213 are checked throughout. |
-| Owner / unknown / local-only / rate admission | Owner A's11 is delivered once; B's22 is absent. Unknown policy delivers zero events, with32 on a separate known-policy component as positive control. Local-only queued ingress delivers zero events, then accepted42 still works on that same component within a test-owned1000-second budget. A's duplicate51 is throttled while B's52 is independently accepted. |
-| Relay scopes | AllClients: server/A/B each71 once. ServerOnly: server72 once, both clients zero. OthersOnly from A: B73 once, server/A zero. |
-| Selector | B cannot change authoritative state; its optimistic local Set is reported without asserting an unsupported rollback. A's accepted additive choice3 retains active0,2,3 and complete exclusions; reconnect receives the complete snapshot. Test-only long budget makes a denied B consuming A's budget observable. |
-| Money | Fresh ServerOnly rejects both clients; unknown policy rejects. Actual malformed Command wire payloads (refund7, unknown255, NaN, negative add/spend, unaffordable spend) precede a valid same-channel add1 and must consume no budget. Explicit None permits3/4; OwnerOnly permits A5 and rejects B7. All three receive final213. |
-| Money NI7-02 | Additional persisted wallet: server100000000, lifetime123, level7, last change17. Actual remote TrySpend(1) returns pending but is denied with zero state/key/event/RPC effects. Same-peer TrySpend(1), TrySpend(5) in one measured server frame admits only5: stored balance99999992, debit8, nominal last change-5; both receivers get one Spend RPC with payload5. Fractional10.5 minus0.25 reaches10.25. The original213 wallet and all reconnect oracles remain unchanged. |
-| Handler generations | Older sets disposed after replacement cannot remove the current client/server handler. Exact Unicode request/response payloads and one reply per peer survive opposite disposal order, B reconnect, and a complete dedicated-server restart. Disposing the current client generation also leaves no previously registered handler. |
-| Paused polling / late reactive field | With server timeScale0, unchanged property reads stay bounded by the0.2-second interval over an explicit realtime window. Property9 and a field changed from null to ReactivePropertyFloat15 reach both clients while still paused. |
-| Physics/context | A's real server Collider/Rigidbody enters a trigger. Server/A/B each observe exactly one PhysicsEvents3D entry carrying A's actual netId. AllClients activates A's Bonus on both current clients; the dedicated server's BonusA stays inactive. BonusB stays inactive everywhere. Client colliders are disabled to prevent duplicate local contacts. |
-| Reconnect / restart / cleanup | B is replaced by a new connection in the same independent OS process. A retains its active BonusA; B's fresh replicas start with BonusA inactive, and both server children stay inactive. Both peers later reconnect after server stop/start, using owned atomic rendezvous files and readiness barriers. Teardown receipts and process exit are checked for all three roles. |
+Each case needs evidence on the receiving side:
 
-Authoring reflection only configures serialized fields while objects are inactive; it never invokes a private Command, receive hook, snapshot applicator or physics callback. Malformed Money payloads intentionally exercise Mirror's actual `CommandMessage` decoder; the signature/hash is tied to the installed Cecil/Weaver convention and must be checked during compilation/execution. A signature mismatch or disconnect fails the matrix.
+- **RPG initialization and late join.** A's template starts at HP/max `9` and resource `1` and receives the server's `120/120/10`; after server mutations A and the late B receive `73/120/7`, with a resource ID that contains a delimiter.
+- **Concurrent `Counter.Add(1)`.** Both callers record `10`; server ingress yields `11`, `12`. With outgoing replication held through Mirror's observer collections, the server's `12` is checked, then trusted publications `13`, `12` reach each receiver exactly.
+- **Counter NI19.** See [Counter malformed ingress](#counter-malformed-ingress-ni19); the original Counter `12` and Money `213` hold throughout.
+- **Admission.** Owner A's `11` arrives once, B's `22` never. Unknown policy delivers nothing (`32` on a known-policy component is the control). Local-only ingress delivers nothing, then `42` still works within a test-owned `1000`-second budget. A's duplicate `51` is throttled while B's `52` is accepted.
+- **Relay scopes.** AllClients: `71` once on server, A and B. ServerOnly: `72` once on the server only. OthersOnly from A: `73` once on B only.
+- **Selector.** B cannot change authoritative state (its optimistic local Set is reported, no rollback asserted). A's additive choice `3` keeps active `0,2,3` and the exclusions; a reconnect gets the full snapshot. A long test budget would expose a denied B consuming A's budget.
+- **Money.** Fresh ServerOnly rejects both clients; unknown policy rejects. Malformed Command payloads (refund `7`, unknown `255`, NaN, negative add or spend, unaffordable spend) consume no budget before a valid add `1`. None permits `3` and `4`; OwnerOnly permits A's `5`, rejects B's `7`. All roles end at `213`.
+- **Money NI7-02.** See [NI7-02](#ni7-02-rounded-debit-and-pending-client-requests).
+- **Handler generations.** Disposed older sets cannot remove the current handler. Exact Unicode request and response payloads, one reply per peer, survive opposite disposal order, a B reconnect and a full server restart; disposing the current client generation leaves nothing registered.
+- **Paused polling.** With server timeScale `0`, unchanged reads stay bounded by the `0.2`-second interval; property `9` and a late ReactivePropertyFloat `15` reach both clients while paused.
+- **Physics and context.** A's server Collider and Rigidbody enter a trigger; every role sees exactly one PhysicsEvents3D entry with A's netId. AllClients activates A's Bonus on both clients; the server's BonusA and every BonusB stay inactive. Client colliders are off to avoid duplicate contacts.
+- **Reconnect and restart.** B reconnects in the same OS process: A keeps BonusA active, B's fresh replicas start with it inactive, server children stay inactive. Both peers reconnect after a server stop and start through owned rendezvous files; teardown receipts and exits are checked on all roles.
 
-Context actions use `AllClients` and `TriggerOnlyForLocalContext=true`. The physics wait observes the real engine event carrying A's player netId; the subsequent receiver assertions require exactly one such entry on every role. Context target activity is a transient action, so it has separate role expectations from replicated Counter/Selector/Money/RPG/property state:
+Authoring reflection only sets serialized fields on inactive objects; no private Command, receive hook, snapshot applicator or physics callback is called. Malformed Money payloads go through Mirror's real `CommandMessage` decoder, whose signature hash follows the installed Cecil/Weaver; a mismatch or disconnect fails the matrix.
+
+### Context relay roles
+
+Context actions use `AllClients` and `TriggerOnlyForLocalContext=true`; they are transient, so their expectations differ from replicated state:
 
 | Context observation | Dedicated server BonusA | Retained client A BonusA | Client B BonusA | BonusB on every role |
 |---|---|---|---|---|
 | After the physical entry, with both clients connected | false | true | true | false |
 | After B disconnects and reconnects | false | true | false | false |
 
-B's shutdown destroys all its observed player replicas; the registered spawn factory creates their Bonus children inactive. The context relay does not replay the earlier action to these new replicas. The launcher independently checks these role values and the exact physics identity/count, while the complete reconnect snapshot still requires Counter12, Selector3/active0,2,3/excluded1, Money213, RPG73/120/7 and property9/reactive15. No forced child activation or additional state synchronization is used.
-
-Контекстное действие не сохраняет состояние для нового клиента: после переподключения B его BonusA неактивен, у оставшегося клиента A он активен, на выделенном сервере оба Bonus неактивны.
+B's shutdown destroys its replicas and the spawn factory recreates Bonus children inactive; the relay does not replay earlier actions. The reconnect snapshot still requires Counter `12`, Selector `3` / active `0,2,3` / excluded `1`, Money `213`, RPG `73/120/7` and property `9` / reactive `15`, with no forced activation or extra sync.
 
 ### Receiver schema and limits
 
-Each `<artifact root>/<role>/events.jsonl` line has schema1: `kind`, `runId`, `snapshotSha`, `peerId`, `fromPeer`, `processId`, `connectionId`, `epoch`, `step`, `caseId`, `passed`, `realtime`, `detail`, `environment`, `state`. State carries net/player IDs, ownership/Start, Counter, complete Selector active/excluded arrays, Money, RPG HP/max/resource, property/reactive values, context child states, property-read count, exact handler payload and named event-value arrays. Event-array length is the count; values are checked individually. Handler receiver lines include exact text and server sender connection ID.
+Each `<artifact root>/<role>/events.jsonl` line has schema `1`: `kind`, `runId`, `snapshotSha`, `peerId`, `fromPeer`, `processId`, `connectionId`, `epoch`, `step`, `caseId`, `passed`, `realtime`, `detail`, `environment`, `state`.
 
-`server-receiver` records checked authoritative values, `receiver` records actual client observations, and `remote-receiver` contains the received client observation on the server. Reliable control acknowledgements fence ingress; separate observations prove RPC/SyncVar delivery. The launcher correlates both client and server snapshots by run/PID/epoch/step/case, independently checks core payload/count cases, and requires `cleanup` plus `result` from every player. The final process result is `matrix-result.json` with first failure and separate cleanup failures. A JSON send log, host pass, missing receipt or successful build cannot satisfy it.
+- `state` carries net and player IDs, ownership and Start, Counter, Selector active and excluded arrays, Money, RPG values, property and reactive values, context child states, the property-read count, the handler payload and named event-value arrays (length is the count; values are checked one by one). Handler lines include the exact text and the server sender's connection ID.
+- `server-receiver` holds checked authoritative values, `receiver` client observations, `remote-receiver` a client observation as received on the server. Control acknowledgements fence ingress; separate observations prove RPC and SyncVar delivery.
+- The launcher correlates snapshots by run, PID, epoch, step and case, checks core payloads and counts itself, and needs `cleanup` and `result` from every player. The verdict is `matrix-result.json` with the first failure and cleanup failures; a send log, host pass, missing receipt or successful build cannot satisfy it.
 
 ### NI7-02: rounded debit and pending client requests
 
-The same launcher also requires `money-ni7-zero-debit-denied`, `money-ni7-rounded-debit-budget`, `money-ni7-fractional-control` and `money-ni7-original-wallet-preserved`. These are source-authored and **UNEXECUTED**, like the other matrix cases. They create one additional network-spawned Money with singleton assignment disabled, an owned `matrix-ni7-<run ID>` save key and persistence enabled. The server initially retains ServerOnly until both clients' startup requests are fenced, then explicitly enables cooperative `None` for these requests. No private Money method, hand-built Command packet or local predicate substitutes for the real client `TrySpend` calls.
+Required receipts: `money-ni7-zero-debit-denied`, `money-ni7-rounded-debit-budget`, `money-ni7-fractional-control`, `money-ni7-original-wallet-preserved`. They use one extra spawned Money with singleton assignment off, save key `matrix-ni7-<run ID>` and persistence on. The server keeps ServerOnly until both clients' startup requests are fenced, then allows `None`. Only real client `TrySpend` calls are used.
 
-The first cost1 request is made with local/server current100000000. It must return `RequestedServerAuthority` on A even though a local float32 subtraction of1 would store no decrease. The actual server then rejects it: current/lifetime/level/last change remain100000000/123/7/17, provider values and persisted-file SHA256 stay unchanged, reactive and save-key notifications are zero, and neither client receives a Money RPC.
+1. **Zero debit denied.** At `100000000`, lifetime `123`, level `7`, last change `17`, A's `TrySpend(1)` returns `RequestedServerAuthority` although float32 subtraction of `1` stores no decrease. The server rejects it: values, provider data and the file SHA256 are unchanged, notifications are zero and no client gets a Money RPC.
+2. **Rounded debit and budget.** A's public `CurrentMoney` is made stale at `0`; `TrySpend(1)` and `TrySpend(5)` run back to back and both return pending with before/after `0`. The fixture restores `100000000` before yielding; this isolates request routing and does **not** claim Money repairs stale replicas. A's current events are `0`, `100000000`, `99999992`; B sees only `99999992`. Both Commands arrive in one server frame, under `50` ms apart, and only the `5` changes current value, last change, keys and RPCs: it stores a decrease of `8` while the request and RPC price stays `5`.
+3. **Fractional control.** Reseeded to `10.5`, `TrySpend(0.25)` stores `10.25` and sends exactly one `0.25` RPC to each client. The wallet is then destroyed through NetworkServer and both despawns are observed.
 
-A second phase makes A's public reactive CurrentMoney temporarily stale0, invokes `TrySpend(1)` and `TrySpend(5)` consecutively without yielding, and records both returned pending results with before/after0. The fixture restores A's public reactive current to100000000 before yielding. This restoration isolates pending-request routing from the existing delta-based RPC behavior; it does **not** claim that Money repairs stale replicas. A's explicitly asserted current-event sequence is therefore0,100000000,99999992; B observes only99999992. Both real Commands must be observed in the same server frame and less than50ms apart. Only5 changes server current, last change, persisted keys and outgoing RPCs. It stores a decrease of8, while the request/RPC price remains5. No assertion equates nominal price with stored debit.
-
-`money-request-status` carries actual client `MoneySpendResult` fields in `spendRequests`: amount, status, pending/confirmed flags and reported before/after balances. The server's `remote-request-status` contains that same telemetry and sender connection. These statuses are separate from `server-receiver` / `receiver` outcomes: the existing generic control fence is not a new Money request-acknowledgement API. Nested `state.precision` contains current/lifetime/level/last change, stored provider values, phase-before/stored-debit, file SHA256/unchanged flag and measured server ingress frames/times.
-
-Passive Mirror diagnostics count the additional wallet's actual Command/RPC envelopes and decode their real op/amount payloads. Named `ni7-*` event arrays count current, last-change, lifetime, level, key changes, saves and wire op/amount values. FileSaveProvider's public key notification fires for every SetFloat call, including unchanged values, so a rejected spend cannot hide an unnecessary persistence write. Accepted5 requires one current/key update per peer, two server RPC recipients and one actual RPC per client. Each process then flushes and reloads its own real file; `money-persistence-reload` is required for the accepted rounded and fractional controls.
-
-The additional wallet is publicly reseeded to10.5 for `TrySpend(0.25)` after a measured eligible budget boundary; it must store10.25 and deliver exactly one0.25 RPC to each client. It is then destroyed through NetworkServer and both client despawns are observed before continuing the original handler/reconnect/restart matrix. The standalone NI7 status records, exact effect counts, persistence reloads and original Money213 oracle are all required by the launcher.
+Evidence: `money-request-status` and the server's `remote-request-status` carry the client's `MoneySpendResult` (amount, status, pending and confirmed flags, before/after balances); the control fence is not a Money acknowledgement API. `state.precision` holds the wallet values, stored provider values, phase-before and stored debit, the file SHA256 and ingress frames and times. Passive Mirror diagnostics decode the wallet's Command and RPC op and amount, and `ni7-*` arrays count every notification. `FileSaveProvider` notifies on every `SetFloat`, so a rejected spend cannot hide a write. Each process reloads its file (`money-persistence-reload`) after the accepted rounded and fractional controls.
 
 ### Counter malformed ingress (NI19)
 
-The same three-process matrix now requires eight bounded input groups, each with `counter-ni19-<group>-denied` and `counter-ni19-<group>-budget` receiver records. This extension is **source-authored and UNEXECUTED**. The Components owner's remote-only finite-input/raw-candidate guards are present in current Counter source before budget and integer normalization; compilation and actual wire acceptance remain deferred. The extension introduces no general numeric policy or new runtime API, and does not change direct server/offline behavior.
+Eight input groups, each with `counter-ni19-<group>-denied` and `counter-ni19-<group>-budget` records. Counter's remote-only finite-input and raw-candidate guards run before budget and integer normalization; direct server and offline behaviour is unchanged.
 
-| Group | Actual remote malformed input | Immediate finite operation / result |
+| Group | Remote malformed input | Immediate finite operation and result |
 |---|---|---|
-| `set-nonfinite` | FLOAT10.5: public Set(NaN), Set(+Infinity), Set(-Infinity) | Set(12.5) →12.5 |
-| `add-nonfinite` | FLOAT10.5: public Add(NaN), Add(+Infinity), Add(-Infinity) | Add(0.25) →10.75 |
-| `multiply-nonfinite` | FLOAT10.5: public Multiply(NaN), Multiply(+Infinity), Multiply(-Infinity) | Multiply(2) →21 |
-| `add-positive-overflow` | FLOAT2e38: Add(2e38), whose raw result overflows | Add(-2e38) →0 |
-| `add-negative-overflow` | FLOAT-2e38: Add(-2e38), whose raw result overflows | Add(2e38) →0 |
-| `multiply-positive-overflow` | FLOAT2e38: Multiply(2), whose raw result overflows | Multiply(0.5) →1e38 |
-| `multiply-negative-overflow` | FLOAT-2e38: Multiply(2), whose raw result overflows | Multiply(0.5) →-1e38 |
-| `int-multiply-overflow` | INT2: Multiply(float.MaxValue), whose raw float result is infinite | Multiply(3) →6 |
+| `set-nonfinite` | FLOAT `10.5`: public `Set(NaN)`, `Set(+Infinity)`, `Set(-Infinity)` | `Set(12.5)` → `12.5` |
+| `add-nonfinite` | FLOAT `10.5`: public `Add(NaN)`, `Add(+Infinity)`, `Add(-Infinity)` | `Add(0.25)` → `10.75` |
+| `multiply-nonfinite` | FLOAT `10.5`: public `Multiply(NaN)`, `Multiply(+Infinity)`, `Multiply(-Infinity)` | `Multiply(2)` → `21` |
+| `add-positive-overflow` | FLOAT `2e38`: `Add(2e38)`, whose raw result overflows | `Add(-2e38)` → `0` |
+| `add-negative-overflow` | FLOAT `-2e38`: `Add(-2e38)`, whose raw result overflows | `Add(2e38)` → `0` |
+| `multiply-positive-overflow` | FLOAT `2e38`: `Multiply(2)`, whose raw result overflows | `Multiply(0.5)` → `1e38` |
+| `multiply-negative-overflow` | FLOAT `-2e38`: `Multiply(2)`, whose raw result overflows | `Multiply(0.5)` → `-1e38` |
+| `int-multiply-overflow` | INT `2`: `Multiply(float.MaxValue)`, whose raw float result is infinite | `Multiply(3)` → `6` |
 
-Every operation above is called through the actual pure-client Counter API. The test does not invoke a private body or construct a Counter Command packet. The FLOAT mode prevents client integer normalization from hiding NaN/Infinity before transmission. The INT multiplication case independently catches a server check that runs only after infinity has been normalized to an integer.
+- All calls go through the real pure-client Counter API. FLOAT mode stops client integer normalization from hiding NaN or Infinity; the INT case catches a server check that runs only after normalization.
+- Each group gets a fresh identity (asset IDs `1023100600`–`1023100607`), persistence under `matrix-ni19-<run ID>-<group>` and a test-only Counter subclass with a `1000`-second admission interval. The server's public Set seeds the baseline, both clients receive it, and all processes flush and reload before events are reset.
+- **Denied:** exact float32 bits, persisted value and file SHA256 are unchanged, and every event, key, save and RPC count is zero. Passive Mirror diagnostics record each Command's operation, operand bits, frame and time, and pre-handler counts, so the next Command also shows whether the previous one had effects.
+- **Budget:** the malformed inputs repeat and A immediately calls the valid operation. Pre-handler values and counts stay at the baseline, first and last arrivals share one frame under `50` ms apart, and exactly one event and key write happen per process with one exact value on A and B. Every process reloads the result (`counter-input-persistence-reload`).
+- `counter-ni19-finite-peer-a-rate` adds `0.25` then `0.5` from A in one frame: only the first is accepted, final `10.75`. `counter-ni19-independent-peer-b` multiplies by `2` from B in the same window, final `21.5`. Both use identity `1023100608`.
+- Fixtures are destroyed through NetworkServer with both despawns observed; `counter-ni19-original-oracles-preserved` requires `12` / `213` afterwards. `state.counterInput` writes nonfinite values as explicit `NaN` / `+Infinity` / `-Infinity` kinds and bit strings, never invalid JSON numbers. The launcher checks all `16` receivers, both peer controls, wire operands, timing and reloads.
 
-Each group gets a fresh additional spawned identity (asset IDs1023100600–1023100607), persistence enabled under `matrix-ni19-<run ID>-<group>`, and a test-only Counter subclass with a1000-second admission interval. Authoring fields are configured while inactive; save loading, optional sends and repeat events are disabled. The actual server public Set seeds the finite baseline, both clients must receive it, and all three flush/reload their isolated provider before the event baseline is reset. The large float baselines2e38 and finite results1e38 also keep the persistence control separate from unrelated decimal formatting precision.
+### Scope limits
 
-The `-denied` phase requires unchanged exact server/client float32 bits and persisted value, unchanged file SHA256, zero reactive and typed Counter events, zero key/save notifications and zero outgoing/received Counter RPCs. Passive Mirror diagnostics capture each actual Command's operation, operand kind/bits, frame/time and pre-handler value/event/key-write/RPC counts. The installed Mirror emits this diagnostic before dispatch, so the next Command also observes whether the preceding malformed request had any effects.
+A focused Windows/Telepathy loopback harness. It does not cover internet reliability, other transports or platforms, malicious-client certification, packet loss or reordering, raw third-party Mirror handler replacement, absent serialized Money-field migration or aggregate interaction-query `1/100/1000` measurements. Test-only rate windows do not change production defaults.
 
-The `-budget` phase repeats that group's malformed inputs and immediately calls its valid operation from A without yielding. Every recorded pre-handler value remains the baseline and all pre-handler effect counts remain zero, including just before the final valid Command. First/last arrivals must share one server frame and be less than50ms apart. Exactly one finite state/reactive/typed event and key write occurs per process; the server sends two RPC envelopes, and A/B each receive one exact value. This proves the malformed inputs did not consume the sender's budget. Each accepted result is then flushed and reloaded from every process's own real file, with required `counter-input-persistence-reload` receipts.
+## По-русски
 
-`counter-ni19-finite-peer-a-rate` adds0.25 then0.5 from A in one frame: only the first is accepted, final10.75. `counter-ni19-independent-peer-b` then multiplies by2 from B within the same test-owned1000-second window, final21.5, proving A's admission does not starve B. These use a ninth fresh identity1023100608. Every fixture is NetworkServer-destroyed and both client despawns are observed before the next fixture or original reconnect matrix. `counter-ni19-original-oracles-preserved` requires the original12/213 afterward. No extra player processes or ports are needed.
-
-The additive `state.counterInput` schema contains case/mode/net/save identity, exact value/stored float32 hex bits, finite-value display fields, persistence SHA256/unchanged flag and actual ingress records. Nonfinite telemetry is encoded with explicit `NaN`/`+Infinity`/`-Infinity` kind and bit strings, never invalid JSON numeric tokens. The mandatory launcher checks all16 rejection/budget receivers, both finite peer controls, exact effects, received wire operands, timing, file reloads and unchanged original oracles. Existing NI7 status/payload/count assertions and all original scopes/reconnect checks remain mandatory.
-
-This is a focused Windows/Telepathy loopback-address integration harness, not internet reliability, other transports/platforms, malicious-client security certification, or a general NetworkTestSession framework. It does not cover packet loss/reordering, raw third-party Mirror handler replacement, absent serialized Money-field asset migration, or aggregate interaction-query1/100/1000 measurements. Those retain separate owner/operator acceptance. Test-only subclass rate windows do not change production defaults. Selector sender admission and Counter finite guards are present in current source; their integrated behavior still requires frozen-source compilation/Weaver and the complete matrix.
-
-Кратко: матрица запускает отдельный сервер и два самостоятельных Windows-процесса через Telepathy. У каждого процесса собственные product, persistentDataPath, пространство PlayerPrefs и файловое хранилище. Проверяются полученные значения и число событий, а не только отправки. Исходники подготовлены; сборка и запуск разрешены оператору только после завершения всех авторов. Отсутствующая проверка или принудительное завершение процесса не считаются успешным результатом.
+Host-тест с `DummyTransport` проверяет только локальный путь и не доказывает доставку на удалённый клиент. Матрица запускает выделенный сервер и два Windows-клиента через Telepathy; последний прогон 2026-11-04 (12.0.0) прошёл все 54 случая. У каждого процесса свои product, persistentDataPath, PlayerPrefs и файловое хранилище; проверяются полученные значения и число событий, а не отправки. Собирать матрицу можно после завершения правок, с новым run ID на сборку; отсутствующая квитанция или принудительное завершение — не успех. Контекстное действие не сохраняется для нового клиента: после переподключения B его BonusA неактивен.

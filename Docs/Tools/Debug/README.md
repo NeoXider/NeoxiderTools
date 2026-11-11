@@ -4,6 +4,8 @@
 an on-screen Unity log and a self-building debug overlay. They use TextMeshPro and can be added independently.
 Scripts live in `Scripts/Tools/Debug/`.
 
+**Navigation:** [← Tools](../README.md)
+
 **Contents:** the component table below plus the C#/scene paths for each.
 
 ---
@@ -32,9 +34,7 @@ These are opt-in scene tools. The overlay reads existing managers without creati
 
 ErrorLogger history is bounded by **Max Entries** (default 50, `0` = unlimited) and optionally by **Max Characters**
 (default `0` = unlimited; the newest entry always stays); `Clear()` empties history, the
-duplicate filter and the label. The FPS label reuses its string while the displayed value is unchanged, and the
-overlay caches the active scene name and reads manager flags through typed delegates instead of boxing reflection
-calls.
+duplicate filter and the label.
 
 ## Related modules
 

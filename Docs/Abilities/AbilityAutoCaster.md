@@ -33,6 +33,7 @@ Replacing a catalog entry does not change an already granted slot's targeting or
 | **Interval** | `float` | Seconds between passes in `Interval` mode. |
 | **Failed Retry Delay** | `float` | Seconds before a failed ability is retried (prevents per-frame failure spam while e.g. out of mana). `0` = retry immediately. |
 | **Target Search Range** | `float` | Search radius for abilities whose Range is `0`. |
+| **Target Pick** | `AutoCastTargetPick` | Which valid unit in range an aimed ability locks onto: `Nearest` (default), `Random` or `Farthest`. `Random` uses `UnityEngine.Random`, so it is not for deterministic lockstep. Put a second auto-caster with its own **Ability Ids** on a child object to aim some abilities differently. |
 
 ### Unity Events
 

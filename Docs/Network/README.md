@@ -14,8 +14,11 @@ offline projects while enabling network synchronization when Mirror is installed
 *Demo scene: `Scenes/Network/NetworkDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
+**Navigation:** [← Docs](../README.md)
+
 **Contents:** the entry-point table below, the [guides](#guides) and the [Realtime toolkit](./Realtime/README.md).
-How to work with it:
+
+**How to work with it:**
 1. Put a `NeoNetworkManager` (or `NeoLobbyManager` for a ready-check lobby) in the scene; start it from UI or with
    [NeoNetworkBootstrap](./NeoNetworkBootstrap.md).
 2. Replicate state with typed components (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkSingleton<T>`)
@@ -62,7 +65,15 @@ Runtime `Log` and `Warning` output in package code goes through `NetworkDiagnost
 
 ## Realtime games (.io, arenas, shooters)
 
-Everything a server-authoritative realtime game needs beyond per-property sync lives in `Neo.Network.Realtime` plus the bootstrap and telemetry components: a guaranteed client handshake with per-connection server events, scene objects woken on every peer, batched and quantised world snapshots with datagram fragmentation, an adaptive interpolation clock, client prediction with input acknowledgement, a reliable typed event channel, handler registries that survive reconnects, RTT and bandwidth telemetry, and a command-line bootstrap for dedicated servers (WebGL included). Start with the [Realtime IO Guide](./Realtime_IO_Guide.md).
+For a server-authoritative realtime game, `Neo.Network.Realtime` adds what per-property sync lacks:
+
+- a client handshake with per-connection server events, and scene objects woken on every peer;
+- batched, quantised world snapshots with fragmentation and an adaptive interpolation clock;
+- client prediction with input acknowledgement and a reliable typed event channel;
+- handler registries that survive reconnects, RTT and bandwidth telemetry, and a command-line bootstrap for dedicated
+  servers (WebGL included).
+
+Start with the [Realtime IO Guide](./Realtime_IO_Guide.md).
 
 ## Start / stop cheat sheet
 
@@ -77,8 +88,7 @@ Details: [NeoNetworkManager](./NeoNetworkManager.md#start--stop-cheat-sheet).
 
 ## Demo scene
 
-`Assets/NeoxiderDemos/Demo/Scenes/Network/NetworkDemo.unity` is the demo scene. Everything is saved in the scene,
-so the wiring is visible in the Inspector without entering Play Mode:
+`Assets/NeoxiderDemos/Demo/Scenes/Network/NetworkDemo.unity`. Everything is saved in the scene.
 
 | Object | What to look at |
 |--------|-----------------|
@@ -111,9 +121,8 @@ Realtime snapshot buffers reject non-finite timestamps without taking ownership 
 timeline observations and deltas with NaN or infinity are ignored. See [snapshot interpolation](./Realtime/SnapshotInterpolation.md).
 LAN discovery joins use the complete advertised URI, including its port. See [discovery](./NeoNetworkDiscovery.md).
 
-In 11.0.0, unnamed authority-policy integers fail closed for every caller, including direct server and
-host contexts. Pick `None`, `OwnerOnly` or `ServerOnly` explicitly; their values and named behavior are
-unchanged. `INeoOptionalNetworked.IsNetworked` describes configuration: offline scene recovery requires
+Unnamed authority-policy integers fail closed for every caller, including direct server and host contexts. Pick
+`None`, `OwnerOnly` or `ServerOnly` explicitly. `INeoOptionalNetworked.IsNetworked` describes configuration: offline scene recovery requires
 at least one implementation in the identity hierarchy and every implementation opting out. See
 [Contracts](./Contracts.md), rather than inferring opt-out from a disconnected session.
 
