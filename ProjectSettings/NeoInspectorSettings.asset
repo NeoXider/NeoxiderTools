@@ -16,6 +16,8 @@ MonoBehaviour:
   enableAnimations: 1
   animateInPlayMode: 0
   animationFps: 30
+  enableTransitions: 1
+  compactRepeatedBanners: 1
   enableRainbowSignature: 1
   enableRainbowSignatureAnimation: 1
   enableRainbowOutline: 1
