@@ -10,7 +10,7 @@ namespace Neo.Demo.GridSystem
 {
     /// <summary>
     ///     Controller of the authored GridSystem TicTacToe demo. The UI and every listener are saved in
-    ///     GridSystemTicTacToeDemo.unity by its scene builder: buttons call the public methods below (Reset calls
+    ///     GridSystemTicTacToeDemo.unity: buttons call the public methods below (Reset calls
     ///     <see cref="TicTacToeBoardService.ResetBoard" /> directly), and the service events
     ///     (<see cref="TicTacToeBoardService.OnPlayerChanged" />, OnWinnerDetected, OnDrawDetected) call the Handle*
     ///     methods through persistent UnityEvents. An optional bot answers as O. It builds no UI at runtime.
@@ -36,7 +36,7 @@ namespace Neo.Demo.GridSystem
         private Coroutine _botRoutine;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _generator != null && _board != null && _statusText != null && _log != null;
 
         public bool BotPlaysO => _botPlaysO;
@@ -320,7 +320,7 @@ namespace Neo.Demo.GridSystem
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[GridSystemTicTacToeDemoUI] Scene references are missing; run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[GridSystemTicTacToeDemoUI] Scene references are missing; re-import the scene from the Demo download.",
                 this);
         }
 

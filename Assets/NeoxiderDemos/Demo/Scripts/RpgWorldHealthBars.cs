@@ -461,7 +461,7 @@ namespace Neo.Rpg.Demo
             _warnedMissingCanvas = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
                 "[RpgWorldHealthBars] No canvas is assigned and Create Canvas If Missing is off, so no bars are " +
-                "drawn. Run Neoxider/Demo/Rebuild Active Demo Scene or assign a canvas.", this);
+                "drawn. Re-import the scene from the Demo download or assign a canvas.", this);
         }
 
         private static string CleanName(string objectName)

@@ -210,7 +210,7 @@ namespace Neo.Tests.Play
             Assert.That(calls, Is.EqualTo(1));
         }
 
-        // WHY: NetworkDemo is authored by NetworkDemoBuilder; the controller only reads serialized scene references,
+        // WHY: NetworkDemo is saved with its UI; the controller only reads serialized scene references,
         // builds no UI at runtime and must stay quiet and exception-free in an unbuilt scene (no manager, relay or labels).
         [UnityTest]
         public IEnumerator NetworkController_ComponentRemovals_BuildNoUiAndTolerateMissingReferences()
@@ -239,7 +239,7 @@ namespace Neo.Tests.Play
             }
         }
 
-        // WHY: LevelFlowDemo is authored by LevelFlowDemoBuilder; the controller only drives the scene's
+        // WHY: LevelFlowDemo is saved with its UI; the controller only drives the scene's
         // LevelComponent / LevelManager through serialized references and never builds UI or owns their assets.
         [UnityTest]
         public IEnumerator LevelController_ComponentRemoval_KeepsAuthoredLevelAndBuildsNoUi()
@@ -421,7 +421,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator StateMachineController_DrivesAuthoredObjectsAndStopsItsMachineOnRemoval()
         {
-            // WHY: StateMachineDemo.unity is authored by StateMachineDemoBuilder; the controller builds nothing at
+            // WHY: StateMachineDemo.unity is saved with its UI; the controller builds nothing at
             // runtime (no UI, no StateData) and only drives the scene objects it references.
             Type dataType = RequireType("Neo.StateMachine.NoCode.StateMachineData");
             Type stateType = RequireType("Neo.StateMachine.NoCode.StateData");
@@ -456,72 +456,6 @@ namespace Neo.Tests.Play
 
             Assert.That(Property(machine, "CurrentState"), Is.Null);
             Assert.That(agent != null && prey != null && owner != null, Is.True);
-        }
-
-        [UnityTest]
-        public IEnumerator SurvivorRemoval_RetiresExactSources_PreservesSameNamePoolAndLateReturn()
-        {
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            Assert.Ignore("The current Survivor gameplay sample requires legacy input support.");
-            yield break;
-#else
-            Type hubType = RequireType("Neo.Abilities.AbilitySystemBehaviour");
-            Type gameType = RequireDemoType("Neo.Samples.Survivor.SurvivorGame");
-            if (Object.FindObjectsByType(hubType, FindObjectsInactive.Include, FindObjectsSortMode.None).Length > 0 ||
-                Object.FindObjectsByType(gameType, FindObjectsInactive.Include, FindObjectsSortMode.None).Length > 0)
-                Assert.Ignore("This integration requires an isolated Survivor game and Abilities hub.");
-            PoolManager manager = (PoolManager)FreshService(typeof(PoolManager));
-            manager.gameObject.SetActive(true);
-            ScriptableObject config = Own(ScriptableObject.CreateInstance(RequireDemoType("Neo.Samples.Survivor.SurvivorConfig")));
-            ScriptableObject playerTemplate = Own(ScriptableObject.CreateInstance(RequireType("Neo.Abilities.UnitTemplate")));
-            config.GetType().GetField("PlayerTemplate").SetValue(config, playerTemplate);
-            GameObject owner = Host("Survivor");
-            // WHY: the Survivor scene is authored by SurvivorDemoBuilder; the game only references its saved,
-            // inactive pooled templates, so the regression authors the orb template the same way.
-            GameObject templates = new GameObject("Templates");
-            templates.transform.SetParent(owner.transform, false);
-            templates.SetActive(false);
-            GameObject source = new GameObject("XpOrb");
-            source.transform.SetParent(templates.transform, false);
-            source.SetActive(false);
-            Component orb = source.AddComponent(RequireDemoType("Neo.Samples.Survivor.SurvivorXpOrb"));
-            Component game = owner.AddComponent(gameType);
-            SerializedObject serialized = new SerializedObject(game);
-            serialized.FindProperty("_config").objectReferenceValue = config;
-            serialized.FindProperty("_orbTemplate").objectReferenceValue = orb;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            owner.SetActive(true);
-            yield return null;
-            GameObject otherSource = Host("External source");
-            otherSource.name = source.name;
-            _beforeDestroy.Add(() => SpawnUtility.RetirePool(otherSource));
-            GameObject lateRental = Own(PoolManager.Get(source, Vector3.zero, Quaternion.identity));
-            GameObject parked = Own(PoolManager.Get(source, Vector3.zero, Quaternion.identity));
-            GameObject external = Own(PoolManager.Get(otherSource, Vector3.zero, Quaternion.identity));
-            Assert.That(lateRental != null && parked != null && external != null, Is.True);
-            PoolManager.Release(parked);
-            PoolManager.Release(external);
-            Transform sharedStorage = manager.transform.Find(source.name + "_Pool");
-            Assert.That(parked.transform.parent, Is.SameAs(sharedStorage));
-            Assert.That(external.transform.parent, Is.SameAs(sharedStorage));
-
-            Object.Destroy(game);
-            yield return null;
-            yield return null;
-
-            Assert.That(parked == null && lateRental != null, Is.True);
-            Assert.That(external != null && sharedStorage != null && manager != null, Is.True);
-            Assert.That(PoolManager.Get(source, Vector3.zero, Quaternion.identity), Is.Null,
-                "A removed demo's exact source must not recreate a registration.");
-            Assert.That(SpawnUtility.RetirePool(source), Is.False, "The demo must already have removed its registration.");
-            GameObject externalAgain = PoolManager.Get(otherSource, Vector3.zero, Quaternion.identity);
-            Assert.That(externalAgain, Is.SameAs(external));
-            PoolManager.Release(externalAgain);
-            PoolManager.Release(lateRental);
-            yield return null;
-            yield return null;
-            Assert.That(lateRental == null && sharedStorage != null && external != null, Is.True);
-#endif
         }
 
         private object BuildShell(Transform owner)

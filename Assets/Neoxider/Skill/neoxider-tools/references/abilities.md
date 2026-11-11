@@ -55,6 +55,24 @@ in data — `AmountByLevel[]`, `AmountLevelSource` (`AbilityLevel`/`CasterUnitLe
 `Specials` entry shared by several nodes. Raise ability level via `System.SetAbilityLevel(unit, id, level)`;
 unit level bridges from `Neo.Core.Level.LevelComponent` or `unit.SetLevel(...)`.
 
+**Everything else scales too (12.3)** — arrays sampled as `array[clamp(level - 1)]`, empty = flat field, all off by
+default (old content and fixed-core hashes unchanged):
+- Cast parameters by ability level: `CooldownByLevel` (10/8/6), `RangeByLevel`, `MaxChargesByLevel`,
+  `ChargeRestoreTimeByLevel`, `ProjectileSpeedByLevel`; read with `blueprint.ResolveCooldown(level)` etc. or
+  `slot.MaxCharges/UsesCharges/Range`. A level change keeps a running cooldown; a raised charge cap grants charges.
+- Costs: `AbilityCost.AmountByLevel`, `AmountKey` (special, e.g. `ScaleStat = ResourceMax`, `ScalePerPoint = 0.1`
+  = 10% of max mana), `Mode` `Fixed`/`UpTo`/`All` + `MinAmount`
+  (`new AbilityCost(AbilityResourceIds.Mana, 0f, AbilityCostMode.All, 1f)` = spend all mana).
+- Spent term: node `AmountSpentResource = "mana"`, `AmountSpentCoefficient = 2` ⇒ damage = 2 × mana actually paid
+  (also `LeveledValue.SpentResource/SpentCoefficient`); travels to projectile hits and to DoT ticks of modifiers whose
+  nodes use it; not to zone pulses. Code: `context.GetSpent(id)`, `modifierInstance.GetSpent(id)`.
+- Scale term: `AmountScaleMode = Multiply` (`value *= 1 + k * stat`, applied last) and `AmountScaleStat`
+  `Property`/`ResourceCurrent`/`ResourceMax`/`ResourceMissing` (e.g. 5% of the target's missing health).
+- Modifiers: `PropertyContribution.ValueByLevel` (slow `Mul [0.8, 0.7, 0.6]` = 20/30/40%), `DurationByLevel`
+  (stun 1/1.5/2 s); nodes: `ChanceByLevel`, `MaxTargetsByLevel`, zone `DurationByLevel`/`IntervalByLevel`.
+- Full table: `Docs/Abilities/AbilityDefinition.md#leveled-and-scalable-values`; the converter maps every field to
+  the fixed core.
+
 ## Code-first usage
 
 ```csharp
@@ -172,16 +190,16 @@ action/source bridges.
 
 ## Survivor kit — the reference implementation
 
-`Assets/NeoxiderDemos/Demo` ships **SurvivorDemo.unity**: a complete Vampire-Survivors game built from ONE
-`SurvivorConfig` ScriptableObject (player/enemy `UnitTemplate`s, auto-cast weapon `AbilityDefinition`s,
-slow/DoT/stat `ModifierDefinition`s, upgrade cards, spawn/health ramps, XP curve) on top of Neo.Abilities +
-Core resources. The scene is authored in the Editor by `SurvivorDemoBuilder` from that config (camera,
-`PoolManager`, the ability hub with **Spatial Cell Size** 3, arena, player, pooled templates, HUD); at
-runtime `SurvivorGame` only runs the loop (`RestartRun()`, `PickUpgrade(int)`, `GrantLevelUp()`). After
-changing the config's enemy list or projectile archetypes, re-run **Neoxider/Demo/Rebuild Active Demo
-Scene**. **Clip a similar game by authoring new data and swapping the config — never edit the kit
-scripts.** Read `Docs/Abilities/SurvivorDemo.md` before building any survivor-like/auto-battler game; copy
-its idioms (enemy-as-presentation: MonoBehaviour steers, the ability domain owns health/combat;
+`Assets/NeoxiderDemos/Demo` ships **SurvivorDemo.unity**: a complete Vampire-Survivors game on top of Neo.Abilities +
+Core resources (player/enemy `UnitTemplate`s, auto-cast weapon `AbilityDefinition`s and slow/DoT/stat
+`ModifierDefinition`s are assets). The saved scene is a NoCode game with no game
+scripts: `KeyboardMover` + `AbilityUnitBehaviour` + `AbilityAutoCaster` + 2D kinematic `MagneticField` on the
+player; `Spawner` (ring around the player, weights, unlock times, delay ramp, cap) cloning enemy templates with
+`Follow`, a bite ability, `Loot` and `Despawner`; `LevelComponent.OnLevelUp` opening a
+`ChanceSystemBehaviour.GenerateUnique` card draft whose buttons run `AbilityNoCodeAction`; `TimerObject` wins,
+`SceneFlowController` pauses and restarts. **Clip a similar game by copying the scene, authoring new data assets and re-wiring
+the components in the Inspector.** Read `Docs/Abilities/SurvivorDemo.md` before building any survivor-like/auto-battler game; copy
+its idioms (enemy-as-presentation: `Follow` steers at the unit's `OnMoveSpeedChanged` speed, the ability domain owns health/combat;
 config-driven setup; upgrade kinds PermanentModifier/GrantAbility/MaxHealth).
 
 ## Pitfalls

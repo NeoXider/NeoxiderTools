@@ -10,7 +10,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored <b>AnimationFly</b> demo scene. The whole scene (frame, play buttons, tuning
     ///     sliders, wallet and gem targets, world pickup and chest, the <see cref="AnimationFly" /> service and the
-    ///     info card) is saved in AnimationFlyDemo.unity by its DemoSceneKit builder; buttons, sliders and toggles
+    ///     info card) is saved in AnimationFlyDemo.unity; buttons, sliders and toggles
     ///     call the public methods below through persistent UnityEvents. Every Play method builds one
     ///     <see cref="AnimationFly.AnimationFlyRequest" /> and calls <see cref="AnimationFly.Play" />, the C# path a
     ///     game uses. This component builds no UI and creates no textures at runtime.
@@ -103,7 +103,7 @@ namespace Neo.Samples
                                              _flyRoot.TryGetComponent(out Graphic graphic) &&
                                              graphic.raycastTarget;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _fly != null && _flyRoot != null && _walletTarget != null && _gemTarget != null &&
                                     _log != null;
 
@@ -561,7 +561,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[AnimationFlyDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[AnimationFlyDemoController] The scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

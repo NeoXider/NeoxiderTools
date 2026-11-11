@@ -17,6 +17,10 @@
 | **Field Strength** / **Radius** | The power and effective radius of the magnet. |
 | **Falloff Type** | How the force diminishes over distance (`Linear`, `Quadratic`, `Constant`). |
 | **Affected Layers** | The layer mask for objects that should be affected. |
+| **Space** | `ThreeD` queries 3D colliders; `TwoD` queries `Collider2D` (triggers included) for 2D games. |
+| **Move Method** | `Force`: `AddForce` on the body (`Rigidbody` / `Rigidbody2D`). `Kinematic`: moves the transform at **Strength** units per second (scaled by falloff), no body needed: pickups, XP orbs, coins. A pull toward a point never overshoots it. |
+| **Reach Distance** | An attracted object closer than this to the attraction point raises **On Object Reached** (collect, score or despawn it). 0 = off. |
+| **On Object Reached** `UnityEvent<GameObject>` | Raised for each object within **Reach Distance** after an update. Example: `LevelComponent.AddXp(1)` + `Despawner.DespawnOther(GameObject)` collects XP orbs without any script on the orb. |
 | **Toggle** | Alternate forward/reverse phases in any mode; reverse negates the configured direction. **Attract Duration**, **Repel Duration**, and **Start With Attract** configure the phases. |
 | **Add Rigidbody If Needed** | Automatically attaches a `Rigidbody` to objects caught in the field if they lack one. |
 | **Use Fixed Update** | Apply from `FixedUpdate` (default, recommended for physics) or `Update`. |

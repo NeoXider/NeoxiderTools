@@ -298,5 +298,5 @@ Verified against the code on 2026-11-04 and removed from the open lists above:
 ## See Also
 
 - [Ideas](IDEAS.md)
-- [Demo scene builders](DemoSceneBuilders.md)
+- [Demo scenes](DemoScenes.md)
 - [GridSystem](../Assets/Neoxider/Docs/GridSystem/README.md)

@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Controller of the authored <b>Neo.Save</b> demo scene (SaveDemo.unity, built by SaveDemoBuilder). It is a
+    ///     Controller of the authored <b>Neo.Save</b> demo scene (SaveDemo.unity). It is a
     ///     <see cref="SaveableBehaviour" />: the coins, name and best time fields carry <see cref="SaveField" /> and go
     ///     through <see cref="SaveManager.Save(MonoBehaviour, bool)" /> / <see cref="SaveManager.Load(MonoBehaviour)" />.
     ///     The wallet is a plain key written with <see cref="SaveProvider.SetLong" /> (money in cents above
@@ -58,7 +58,7 @@ namespace Neo.Samples
         private bool _subscribed;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _log != null && _coinsValue != null && _nameValue != null && _timeValue != null &&
                                     _walletValue != null && _providerValue != null && _unsavedValue != null &&
                                     _savedCountValue != null;
@@ -344,7 +344,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[SaveDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "[SaveDemoController] The scene UI is not authored. Re-import the scene from the Demo download.", this);
         }
     }
 }

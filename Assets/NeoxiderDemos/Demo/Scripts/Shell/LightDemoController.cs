@@ -9,7 +9,7 @@ namespace Neo.Samples
     ///     Controller of the authored <b>Neo.Tools.View</b> light demo (Light.unity). The five hand-authored point
     ///     lights each carry a <see cref="LightAnimator" /> with a different <see cref="Neo.Animations.AnimationType" />
     ///     and a sphere whose <see cref="MeshEmission" /> follows the light. The control card, the reactive
-    ///     intensity readout and the info card are saved in the scene by its DemoSceneKit builder; the buttons,
+    ///     intensity readout and the info card are saved in the scene; the buttons,
     ///     sliders and toggles call the public methods below through persistent UnityEvents. The component only
     ///     forwards to the real <see cref="LightAnimator" /> API (Play / Pause / Stop, speed and range, the manual
     ///     <see cref="LightAnimator.Tick" /> clock, unscaled time) and logs every call. It builds nothing at runtime.
@@ -35,7 +35,7 @@ namespace Neo.Samples
         private bool _changedTimeScale;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _lights != null && _lights.Length > 0 && _log != null && _speedSlider != null;
 
         /// <summary>Animators driven by the demo.</summary>
@@ -296,7 +296,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[LightDemoController] The scene card is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[LightDemoController] The scene card is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

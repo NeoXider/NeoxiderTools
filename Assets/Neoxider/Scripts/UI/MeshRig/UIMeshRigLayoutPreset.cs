@@ -284,13 +284,15 @@ namespace Neo.UI
             RectTransform pointRect,
             UIMeshRigPointLayout layout)
         {
-            if (rig is UIMeshRigGraphic)
+            if (rig is UIMeshRigGraphic graphic)
             {
-                pointRect.anchorMin = layout.CenterNormalized;
-                pointRect.anchorMax = layout.CenterNormalized;
+                // WHY: the anchor sits on the bind centre in full-rect terms, so the rest anchoredPosition is
+                // zero and Animator keys on it read as offsets from the bind at any rig size.
+                Vector2 anchor = graphic.GetBindAnchor(layout.CenterNormalized);
+                pointRect.anchorMin = anchor;
+                pointRect.anchorMax = anchor;
                 pointRect.sizeDelta = new Vector2(24f, 24f);
                 pointRect.anchoredPosition = Vector2.zero;
-                pointRect.position = rig.NormalizedToWorld(layout.CenterNormalized);
                 return;
             }
 

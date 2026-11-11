@@ -43,7 +43,9 @@
         "UnityEngine.UI",
         "Unity.TextMeshPro",
         "UniTask",
-        "Neo.Tests.Performance"
+        "Neo.Tests.Performance",
+        "Neo.Tools.Random",
+        "Neo.Tools.Physics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

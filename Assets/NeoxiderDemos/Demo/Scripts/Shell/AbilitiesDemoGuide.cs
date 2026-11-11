@@ -8,8 +8,8 @@ namespace Neo.Samples
     /// <summary>
     ///     Behaviour of the authored <b>Neo.Abilities NoCode</b> demo (AbilitiesNoCodeDemo.unity). The scene - frame,
     ///     NoCode buttons with their <see cref="AbilityNoCodeAction" />, <c>SetProgress</c> bars, the Auto Zap toggle and
-    ///     the persistent listeners from the units and the caster into this component - is saved by the
-    ///     AbilitiesNoCodeDemoBuilder; nothing is built at runtime. This component holds the C# path next to the
+    ///     the persistent listeners from the units and the caster into this component - is saved in the
+    ///     scene; nothing is built at runtime. This component holds the C# path next to the
     ///     NoCode one (<see cref="AbilityCasterBehaviour.TryCastAtUnit" />, <see cref="AbilityUnitBehaviour.SetLevel" />)
     ///     and turns unit events into readable feedback.
     /// </summary>
@@ -48,7 +48,7 @@ namespace Neo.Samples
         /// <summary>Most recent gameplay result shown to the person running this sample.</summary>
         public string LastResult => _feedback != null ? _feedback.text : string.Empty;
 
-        /// <summary>True when the builder assigned every authored reference.</summary>
+        /// <summary>True when every authored reference is assigned.</summary>
         public bool IsSceneBuilt => _player != null && _dummy != null && _caster != null && _autoCaster != null &&
                                     _status != null && _feedback != null;
 
@@ -253,7 +253,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[AbilitiesDemoGuide] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "[AbilitiesDemoGuide] The scene UI is not authored. Re-import the scene from the Demo download.", this);
         }
     }
 }

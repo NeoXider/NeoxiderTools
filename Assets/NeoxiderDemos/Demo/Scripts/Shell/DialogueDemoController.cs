@@ -48,7 +48,7 @@ namespace Neo.Samples
         private readonly StringBuilder _line = new(128);
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _dialogue != null && _barks != null && _log != null && _speakerValue != null &&
                                     _cursorValue != null && _stateValue != null && _barkStatusValue != null;
 
@@ -266,7 +266,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[DialogueDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[DialogueDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

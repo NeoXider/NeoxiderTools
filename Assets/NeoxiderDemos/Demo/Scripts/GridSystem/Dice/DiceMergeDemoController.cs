@@ -12,7 +12,7 @@ namespace Neo.Demo.GridSystem
     /// <summary>
     ///     Game loop of the authored dice merge demo: spawns the next piece from the dice pool, places it through
     ///     <see cref="DiceBoardService" />, scores merges and detects game over with
-    ///     <see cref="DiceBoardService.CanPlaceAnywhere" />. The scene builder saves the UI and the persistent
+    ///     <see cref="DiceBoardService.CanPlaceAnywhere" />. The scene saves the UI and the persistent
     ///     listeners (buttons, the merge-size slider, <see cref="DiceBoardService.OnMergesResolved" />); this
     ///     component builds no UI at runtime.
     /// </summary>

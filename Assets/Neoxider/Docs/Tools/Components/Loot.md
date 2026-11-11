@@ -22,6 +22,7 @@ when the object is destroyed during gameplay or on demand. Script: `Scripts/Tool
 | `minCount` / `maxCount` | Item count range per successful drop; both endpoints are included. Keep them ordered. |
 | `dropRadius` | Scatter radius around the transform (0 = exact position). |
 | `_scatterPlane` (`ScatterPlane`) | `XZ` (default): horizontal scatter, Y stays at the owner's height. `XY`: 2D scatter, Z stays at the owner's depth. |
+| `_useObjectPool` (`UseObjectPool`) | Take drops from the shared `PoolManager` pool instead of `Instantiate`, so frequent drops (XP orbs, coins) make no garbage. Return them with a `Despawner` or `PoolManager.Release`. |
 
 ## Destroy-time drops
 

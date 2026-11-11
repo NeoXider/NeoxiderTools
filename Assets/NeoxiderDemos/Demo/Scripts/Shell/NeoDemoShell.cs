@@ -10,16 +10,15 @@ namespace Neo.Samples
 {
     /// <summary>
     ///     Deprecated runtime builder for the shared "module demo" look. Demo scenes are now authored in the
-    ///     editor by the Neo.Demo.Editor <c>DemoSceneKit</c> (camera, canvas, header, content rows, log feed and
-    ///     info card saved in the scene with persistent listeners), see dev-docs/DemoSceneBuilders.md. This class
+    ///     editor (camera, canvas, header, content rows, log feed and
+    ///     info card saved in the scene with persistent listeners). This class
     ///     stays only as a fallback for controllers that have not been converted yet: <see cref="Build(string, Color, Transform)" />
     ///     still assembles the same frame at runtime and returns a <see cref="Context" /> for rows and logging.
     /// </summary>
     public static class NeoDemoShell
     {
         internal const string DeprecationMessage =
-            "Runtime-built demo frames are deprecated. Author the frame in the scene with the Neo.Demo.Editor " +
-            "DemoSceneKit (dev-docs/DemoSceneBuilders.md).";
+            "Runtime-built demo frames are deprecated. Author the frame in the scene as uGUI objects.";
 
         // WHY: aliases DemoPalette so authored scenes and the runtime fallback read as one system.
         public static readonly Color Ink = DemoPalette.Ink;

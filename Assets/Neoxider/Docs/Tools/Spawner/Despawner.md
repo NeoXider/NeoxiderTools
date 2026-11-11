@@ -14,6 +14,7 @@
 | Field | Description |
 |-------|-------------|
 | **Despawn On Disable** | Should `Despawn()` be called automatically when the object is disabled (`OnDisable`). |
+| **Despawn After Seconds** | Despawns the object this many seconds after it is enabled, every time it is enabled: pooled effects, projectiles, timed pickups. 0 = off. Scaled time. C#: `DespawnAfterSeconds`. |
 | **Spawn Prefab On Despawn** | (Optional) A prefab to spawn at the object's location just before it disappears. |
 | **Spawn At This Transform** | Spawn the effect exactly at this object's coordinates (otherwise, at zero). |
 | **Spawn Parent** | Optional parent for the effect. |

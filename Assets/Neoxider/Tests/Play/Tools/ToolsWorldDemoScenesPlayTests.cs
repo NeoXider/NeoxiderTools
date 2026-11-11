@@ -15,8 +15,8 @@ namespace Neo.Tests.Play
 {
     /// <summary>
     ///     Play-mode smoke of the authored Tools world demos (Follow, DrawExample, MouseEffectorExample,
-    ///     CameraConstraint): each scene loads without errors, its controller finds the references the editor builder
-    ///     saved, and the persistent UnityEvent wiring works at runtime. Sample types are reached by name because
+    ///     CameraConstraint): each scene loads without errors, its controller finds the references saved
+    ///     in the scene, and the persistent UnityEvent wiring works at runtime. Sample types are reached by name because
     ///     this assembly must not reference the sample assemblies; hidden Samples~ layouts are skipped.
     /// </summary>
     public sealed class ToolsWorldDemoScenesPlayTests
@@ -116,8 +116,7 @@ namespace Neo.Tests.Play
             string root = SampleRuntimeSceneSmokeTests.FindSampleDemoRoot(SampleRootCandidates);
             if (root == null || root.Replace('\\', '/').Contains("/Samples~/"))
             {
-                Assert.Ignore("Tools world demo smoke needs development or imported samples (hidden Samples~ scripts do " +
-                              "not compile); the builders are covered by Neo.Demo.Editor.Tests.");
+                Assert.Ignore("Tools world demo smoke needs development or imported samples (hidden Samples~ scripts do not compile).");
             }
 
             string path = root + "/" + relativePath;
@@ -146,7 +145,7 @@ namespace Neo.Tests.Play
         {
             Component controller = RequireSingle(typeName);
             Assert.That((bool)GetProperty(controller, "IsSceneBuilt"), Is.True,
-                typeName + " has no authored references; run Neoxider/Demo/Rebuild All Demo Scenes.");
+                typeName + " has no authored references.");
             return controller;
         }
 

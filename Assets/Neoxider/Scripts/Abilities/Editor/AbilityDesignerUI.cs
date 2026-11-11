@@ -254,11 +254,65 @@ namespace Neo.Abilities.Editor
                     break;
             }
 
-            string chance = node.Chance < 1f
-                ? string.Format(" · {0}%", Mathf.RoundToInt(Mathf.Clamp01(node.Chance) * 100f))
-                : string.Empty;
+            string chance;
+            if (node.ChanceByLevel != null && node.ChanceByLevel.Length > 0)
+            {
+                string[] percents = new string[node.ChanceByLevel.Length];
+                for (int i = 0; i < percents.Length; i++)
+                {
+                    percents[i] = Mathf.RoundToInt(Mathf.Clamp01(node.ChanceByLevel[i]) * 100f).ToString();
+                }
 
-            return core + "  " + target + chance;
+                chance = " · " + string.Join("/", percents) + "% by level";
+            }
+            else
+            {
+                chance = node.Chance < 1f
+                    ? string.Format(" · {0}%", Mathf.RoundToInt(Mathf.Clamp01(node.Chance) * 100f))
+                    : string.Empty;
+            }
+
+            return core + ScalingSummary(node) + "  " + target + chance;
+        }
+
+        /// <summary>
+        ///     Short tag of the node's level, spent and scale terms (" · by level · +2×spent mana · ×(1+0.01·spell_power)"),
+        ///     empty for a flat node.
+        /// </summary>
+        public static string ScalingSummary(EffectNodeData node)
+        {
+            if (node == null)
+            {
+                return string.Empty;
+            }
+
+            string result = string.Empty;
+            if (!string.IsNullOrEmpty(node.AmountKey))
+            {
+                result += " · %" + node.AmountKey + "%";
+            }
+            else if (node.AmountByLevel != null && node.AmountByLevel.Length > 0)
+            {
+                result += " · by level";
+            }
+
+            if (!string.IsNullOrEmpty(node.AmountSpentResource))
+            {
+                result += string.Format(" · +{0:0.##}×spent {1}", node.AmountSpentCoefficient, node.AmountSpentResource);
+            }
+
+            if (!string.IsNullOrEmpty(node.AmountScaleProperty) && node.AmountScalePerPoint != 0f)
+            {
+                string stat = node.AmountScaleStat == ScaleAmountStat.Property
+                    ? node.AmountScaleProperty
+                    : node.AmountScaleStat.ToString().Replace("Resource", string.Empty).ToLowerInvariant() + " " +
+                      node.AmountScaleProperty;
+                result += node.AmountScaleMode == ScaleAmountMode.Multiply
+                    ? string.Format(" · ×(1+{0:0.###}·{1})", node.AmountScalePerPoint, stat)
+                    : string.Format(" · +{0:0.###}·{1}", node.AmountScalePerPoint, stat);
+            }
+
+            return result;
         }
 
         private static string ModifyDamageSummary(EffectNodeData node)

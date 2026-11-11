@@ -9,7 +9,7 @@ namespace Neo.Demo.GridSystem
 {
     /// <summary>
     ///     Controller of the authored GridSystem Match3 demo. The UI, its persistent listeners and the module
-    ///     event wiring are saved in GridSystemMatch3Demo.unity by its scene builder; the buttons call the public
+    ///     event wiring are saved in GridSystemMatch3Demo.unity; the buttons call the public
     ///     methods below, and <see cref="Match3BoardService" /> / <see cref="FieldGenerator" /> events call the
     ///     Handle* methods. Every method forwards to the real GridSystem API and logs what it did. It builds no UI.
     /// </summary>
@@ -43,7 +43,7 @@ namespace Neo.Demo.GridSystem
         private int _cleared;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _generator != null && _match3 != null && _boardView != null && _log != null;
 
         /// <summary>Tiles cleared since the last restart (fed by Match3BoardService.OnMatchesResolved).</summary>
@@ -477,7 +477,7 @@ namespace Neo.Demo.GridSystem
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[GridSystemMatch3DemoUI] Scene references are missing; run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[GridSystemMatch3DemoUI] Scene references are missing; re-import the scene from the Demo download.",
                 this);
         }
 

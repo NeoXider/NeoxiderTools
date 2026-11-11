@@ -35,6 +35,11 @@ namespace Neo.Abilities
         private int _ownerLease;
         private int _lease;
 
+        // WHY: what the cast paid drives spent-scaled amounts. A pooled context owns and reuses its list (allocated on
+        // first use); a CreateNested child borrows its parent's and copies it only if it records its own amounts.
+        private List<AbilitySpentResource> _spent;
+        private bool _ownsSpent;
+
         public EffectContext(AbilitySystem system, UnitId caster, string abilityId, IRandomSource random)
         {
             System = system;
@@ -85,6 +90,64 @@ namespace Neo.Abilities
             return false;
         }
 
+        /// <summary>
+        ///     Number of resource amounts the cast of this context paid: cast and impact effects, projectile hits,
+        ///     payloads, and ticks / reactions of modifiers whose effects scale with a spent resource. 0 otherwise.
+        /// </summary>
+        public int SpentCount => _spent != null ? _spent.Count : 0;
+
+        /// <summary>The <paramref name="index" />-th paid amount (0 ≤ index &lt; <see cref="SpentCount" />).</summary>
+        public AbilitySpentResource GetSpentAt(int index)
+        {
+            return _spent[index];
+        }
+
+        /// <summary>Total amount of <paramref name="resourceId" /> (case-insensitive) the cast paid; 0 when none.</summary>
+        public float GetSpent(string resourceId)
+        {
+            if (_spent == null || string.IsNullOrEmpty(resourceId))
+            {
+                return 0f;
+            }
+
+            float total = 0f;
+            for (int i = 0; i < _spent.Count; i++)
+            {
+                if (AbilityIdComparer.Same(_spent[i].ResourceId, resourceId))
+                {
+                    total += _spent[i].Amount;
+                }
+            }
+
+            return total;
+        }
+
+        /// <summary>
+        ///     Records a paid amount. The system does it for every cast; hosts running effects directly may record one so
+        ///     spent-scaled nodes see it. Non-positive amounts, non-finite amounts and empty ids are ignored.
+        /// </summary>
+        public void AddSpent(string resourceId, float amount)
+        {
+            if (string.IsNullOrEmpty(resourceId) || !(amount > 0f) || float.IsInfinity(amount))
+            {
+                return;
+            }
+
+            if (!_ownsSpent)
+            {
+                List<AbilitySpentResource> own = new List<AbilitySpentResource>(_spent != null ? _spent.Count + 2 : 2);
+                if (_spent != null)
+                {
+                    own.AddRange(_spent);
+                }
+
+                _spent = own;
+                _ownsSpent = true;
+            }
+
+            _spent.Add(new AbilitySpentResource(resourceId, amount));
+        }
+
         /// <summary>Resolved primary targets of the context (cast targets / modifier owner / event source).</summary>
         public List<UnitId> PrimaryTargets { get; }
 
@@ -130,8 +193,8 @@ namespace Neo.Abilities
 
         /// <summary>
         ///     Builds a child context one level deeper that shares this context's RNG, cast id, point,
-        ///     level and specials. Use it when an operation runs further effect nodes on its own. A child of
-        ///     a system-created context has the same lifetime as its parent.
+        ///     level, specials and spent amounts. Use it when an operation runs further effect nodes on its own. A child
+        ///     of a system-created context has the same lifetime as its parent.
         /// </summary>
         public EffectContext CreateNested(UnitId newCaster, string abilityId, List<UnitId> targets)
         {
@@ -149,6 +212,8 @@ namespace Neo.Abilities
             };
             nested._leaseOwner = _leaseOwner;
             nested._ownerLease = _ownerLease;
+            nested._spent = _spent;
+            nested._ownsSpent = false;
             if (targets != null)
             {
                 for (int i = 0; i < targets.Count; i++)
@@ -194,8 +259,21 @@ namespace Neo.Abilities
             SourceStacks = 1;
             Damage = null;
             PrimaryTargets.Clear();
+            ResetSpent();
             _leaseOwner = this;
             _ownerLease = _lease;
+        }
+
+        private void ResetSpent()
+        {
+            if (_ownsSpent)
+            {
+                _spent.Clear();
+            }
+            else
+            {
+                _spent = null;
+            }
         }
 
         /// <summary>
@@ -213,6 +291,7 @@ namespace Neo.Abilities
             Specials = null;
             Damage = null;
             PrimaryTargets.Clear();
+            ResetSpent();
         }
     }
 

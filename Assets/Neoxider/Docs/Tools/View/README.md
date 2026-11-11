@@ -27,7 +27,7 @@ entry point: `SelectorModel`.
 ## Demo scenes
 
 Both scenes live in `Assets/NeoxiderDemos/Demo/Scenes/Tools/View/` and are
-authored by editor builders in `Assets/NeoxiderDemos/Demo/Editor/Builders/View/`, so the wiring is visible without
+saved with their UI, so the wiring is visible without
 Play Mode:
 
 - **Light.unity** - five hand-authored point lights, one `LightAnimator` each (RandomFlicker, Pulsing,

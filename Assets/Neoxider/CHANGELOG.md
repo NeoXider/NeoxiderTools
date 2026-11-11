@@ -1,5 +1,102 @@
 
-## [Unreleased]
+## [12.3.0] - 2026-11-11
+
+Ability parameters become level- and resource-scalable on both cores; module additions let a survivor game (and
+similar genres) be assembled from library components, in 2D and 3D; the Survivor demo becomes a NoCode game; demo
+scenes no longer ship scene builders; UI Mesh Rig audit fixes.
+
+### Added
+
+- **Spawner:** per-prefab **Prefab Weights** and **Prefab Unlock Seconds**, a **Delay Over Time** multiplier curve,
+  a **Max Active** cap and an **Around Target** ring (min/max radius, XY or XZ plane, deny zones respected). C#:
+  `PickPrefabIndex`, `ElapsedSpawnSeconds`, `AroundTarget`, `MaxActive`, `SetRing`, `SetSelection`,
+  `SetDelayOverTime`; the math is the pure, tested `SpawnPlanner`.
+- **Despawner:** **Despawn After Seconds** (`DespawnAfterSeconds`): a timed self-despawn that restarts on every
+  enable, for pooled effects, projectiles and timed pickups.
+- **PlayAudio:** **Min Interval** (`MinInterval`, `LastPlayTime`): drops repeated `AudioPlay` calls inside the window, so a
+  burst of simultaneous events (twenty enemies dying in one frame) does not stack the same sound.
+- **MagneticField:** **Space** `TwoD` (Collider2D queries, triggers included), **Move Method** `Kinematic` (moves
+  transforms, no Rigidbody, never overshoots) and **Reach Distance** with `OnObjectReached(GameObject)` for
+  collecting pickups.
+- **ChanceManager / ChanceSystemBehaviour:** unique weighted draws without repeats (`PickUnique`,
+  `GenerateUnique(count)`, **Draw Count**, `OnDrawStarted`) and per-entry **Max Picks** with `ConsumePick`,
+  `ResetPicks`, `HasPicksLeft` for upgrade cards, shop offers and reward choices.
+- **LevelComponent:** `XpProgress01` (progress through the current level) for XP bars; `LevelModel.LevelProgress01`.
+- **Loot:** **Use Object Pool** takes drops from the shared pool.
+- **KeyboardMover:** `Speed` / `SetSpeed`.
+- **Neo.Abilities — cast parameters by ability level** (float and fixed cores): `CooldownByLevel`, `RangeByLevel`,
+  `MaxChargesByLevel`, `ChargeRestoreTimeByLevel`, `ProjectileSpeedByLevel` with `AbilityBlueprint.Resolve*(level)`
+  and `AbilitySlot.MaxCharges` / `UsesCharges` / `Range`. The range check, Direction reach, `AbilityAutoCaster`,
+  cooldown and charge start and projectile spawns read the slot level. A level change keeps a running cooldown; a
+  raised charge cap grants the added charges, a lowered one clamps.
+- **Neo.Abilities — leveled costs:** `AbilityCost.AmountByLevel`, `AmountKey` (a named special, for example 10% of max
+  mana) and `Mode` `Fixed` / `UpTo` / `All` with `MinAmount`.
+- **Neo.Abilities — scaling from what a cast paid:** `LeveledValue.SpentResource` / `SpentCoefficient` and node
+  `AmountSpentResource` / `AmountSpentCoefficient` add `coefficient x spent`, including delayed projectile hits,
+  payloads and the ticks and reactions of modifiers that use it (`EffectContext.GetSpent`, `ModifierInstance.GetSpent`).
+  Zone pulses and `cast_ability` casts do not carry it.
+- **Neo.Abilities — scale mode and source:** `ScaleMode` (`Add` / `Multiply`) and `ScaleStat` (a property or a
+  resource's current, max or missing amount) for leveled values and inline node amounts.
+- **Neo.Abilities — strength and odds by level:** `PropertyContribution.ValueByLevel` (modifier strength by the
+  captured level, shields included); node `ChanceByLevel`, `MaxTargetsByLevel` and zone `DurationByLevel` /
+  `IntervalByLevel`. Validation, `FixedContentConverter` support, designer summaries and a "Leveled and scalable
+  values" section in the docs. Every new field defaults to off: existing content resolves exactly as before on both
+  cores and fixed state hashes are unchanged.
+- **Neo.Abilities:** `AbilityUnitBehaviour.OnMoveSpeedChanged` and `MoveSpeed` (the `move_speed` property, 0 while
+  stunned, rooted or frozen) to drive any mover; `AbilityProjectileBehaviour` **Plane** `ScreenXY` faces 2D sprites
+  along their flight (`AbilityZonePlaneFacing`).
+- **UI Mesh Rig:** **Animator Clip Preview** in the uGUI, world and SpriteRenderer rig inspectors: pick a clip of the
+  Animator above the rig and preview it in Edit Mode; Stop restores every animated property.
+- **UI Mesh Rig:** a code path for UI Toolkit: `UIMeshRigElement.PointCount`, `SetPointPose`, `ClearPointPose`,
+  `ClearPointPoses`. `UIMeshRigUIToolkitHost` adds `MotionEnabled` / `MotionSpeed` / `MotionPhase` with their setters
+  and pushes Animator-keyed host fields to the element.
+- **UI Mesh Rig:** `UIMeshRigGeometryBuilder.Build(..., normalizedBounds, ...)`, `GetSpriteContentBounds`, `UnitRect`;
+  `UIMeshRigSpriteRenderer.CanDeform`. Inspector warnings for tightly packed or rotated atlas sprites and for
+  SpriteRenderer Flip X/Y.
+
+### Changed
+
+- **Survivor demo** is now a NoCode reference game with no game scripts: player, enemies, XP, cards, timer victory
+  and defeat are library components wired with UnityEvents (see `Docs/Abilities/SurvivorDemo.md`). Its look is wired
+  the same way: new sprites, `TransformAnimator` idle pulses and hit shakes (camera included), pooled particle
+  effects spawned by ability data (`spawn` cast effects) and by `Despawner`, its own sounds through `PlayAudio` and music
+  through the `-AM` prefab. New demo data: `bite_*` enemy abilities, `mod_vitality`, `SurvivorXpCurve`.
+  `SurvivorDemoGameplayTests` checks the saved wiring and plays a full winning run with an autopilot.
+- **Demo scenes are plain saved scenes.** The demo no longer ships scene-generation code: edit a demo scene in the
+  Editor like any other scene, and re-import it from the download to get the original back.
+- **UI Mesh Rig:** a rebound direct child point of a uGUI rig rests at `anchoredPosition` (0, 0), so Animator keys are
+  offsets from the bind at any rig size. Points bound earlier keep their offset until rebound.
+- **UI Mesh Rig:** Strength is documented as a relative weight: above 1 it widens the fully-following area and never
+  moves a vertex further than the point. Influence evaluation rejects points outside the outer ellipse early.
+
+### Fixed
+
+- **UI Mesh Rig:** an Animation window or Timeline preview or recording in Setup no longer rewrites the bind of the
+  points it moves. During a preview the rig deforms as posed, bind handles hide, Capture Rest Pose is disabled and
+  leaving Pose / Animate is locked.
+- **UI Mesh Rig:** with Preserve Aspect, resizing a uGUI rig, swapping its sprite or toggling Preserve Aspect no
+  longer pushes direct child points off their binds. Play Mode Setup no longer snaps Animator or code poses back to
+  rest for a frame.
+- **UI Mesh Rig:** world and SpriteRenderer rigs update during the Edit Mode motion preview and while a clip is
+  scrubbed.
+- **UI Mesh Rig:** choosing a motion Preset in the Inspector applies its curves and starts the preview.
+- **UI Mesh Rig:** adding a motion component, or calling `ApplyPreset`, `Phase` or `Seed` on a stopped motion, no
+  longer leaves a frozen pose that blocked Setup rebinding.
+- **UI Mesh Rig:** pose handles key only the dragged channel and axes; Rotate is a disc about the rig axis.
+- **UI Mesh Rig:** an unchanged procedural pose no longer rebuilds the mesh every frame.
+- **UI Mesh Rig:** SpriteRenderer rigs with tightly packed or rotated atlas sprites no longer throw on every rebuild;
+  trimmed atlas sprites are no longer stretched.
+- **UI Mesh Rig:** Sprite Alpha raycast works again after a readable sprite is assigned in the Inspector.
+
+### Removed
+
+- **Demo:** the `Neo.Demo.Editor` assembly (60 scene builders, the DemoSceneKit, the **Neoxider > Demo** rebuild menu
+  and the RPG demo fixer) and its `Neo.Demo.Editor.Tests`; the `DemoGeneratedRoot` marker component (stripped from
+  the 46 demo scenes); the Survivor demo scripts `SurvivorGame`, `SurvivorEnemy`, `SurvivorPlayerController`,
+  `SurvivorXpOrb`, `SurvivorHudView`, `SurvivorConfig`, `SurvivorUpgrade`, `SurvivorUpgradeKind`,
+  `SurvivorEnemyType` and their config assets. The package itself is not affected.
+- **Tests:** `SampleScenePlaySmokeTests.EveryRegisteredSceneBuilder_HasItsSceneSavedInTheVisibleSample`; the smoke
+  test now requires the authored info card on every scene of the Demo download.
 
 ## [12.2.0] - 2026-11-11
 

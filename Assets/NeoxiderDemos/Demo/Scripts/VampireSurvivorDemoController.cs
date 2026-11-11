@@ -18,8 +18,8 @@ namespace Neo.Rpg.Demo
     ///     per life: on its <see cref="Spawner.OnObjectSpawned" /> event, or when the fallback scene search first sees
     ///     it (hand-placed enemies, or one enabled again after it died or was disabled). While it feeds the bars it
     ///     turns their own tag search off. Enemy death (deactivation) is the job of the RpgDeathHandler authored on the
-    ///     enemy prefabs. The HUD (status card, buttons, log feed, death overlay, health-bar canvas) is authored by the
-    ///     VampireSurvivorDemoBuilder; buttons call the public methods below through persistent UnityEvents and this
+    ///     enemy prefabs. The HUD (status card, buttons, log feed, death overlay, health-bar canvas) is saved in the
+    ///     scene; buttons call the public methods below through persistent UnityEvents and this
     ///     component only refreshes the authored labels. It builds no UI at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Samples/Vampire Survivor Demo Controller")]
@@ -92,7 +92,7 @@ namespace Neo.Rpg.Demo
         public bool PlayerDead => _playerDead || (_player != null && _player.IsDead);
         public string LastEvent => _lastEvent;
 
-        /// <summary>True when the builder assigned the authored HUD references.</summary>
+        /// <summary>True when the authored HUD references are assigned.</summary>
         public bool IsHudBuilt => _hpFill != null && _playerValue != null && _enemiesValue != null &&
                                   _spawnersValue != null && _deathOverlay != null;
 
@@ -166,7 +166,7 @@ namespace Neo.Rpg.Demo
             RefreshHud(false);
         }
 
-        /// <summary>Scene-search fallback for references the builder did not assign.</summary>
+        /// <summary>Scene-search fallback for references that are not assigned.</summary>
         [Button]
         public void AutoResolve()
         {
@@ -629,7 +629,7 @@ namespace Neo.Rpg.Demo
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[VampireSurvivorDemoController] The HUD is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[VampireSurvivorDemoController] The HUD is not authored. Re-import the scene from the Demo download.",
                 this);
         }
 

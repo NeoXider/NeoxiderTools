@@ -7,7 +7,7 @@ namespace Neo.Samples
 {
     /// <summary>
     ///     Controller of the authored <b>Drawer</b> demo (Scenes/Tools/DrawExample.unity). The hand-authored Drawer,
-    ///     Spawner and PoolManager stay as they were; the DrawExampleBuilder saves the UI and wires the reactive
+    ///     Spawner and PoolManager stay as they were; the scene also saves the UI and wires the reactive
     ///     <see cref="Drawer.PointCount" /> / <see cref="Drawer.Distance" /> events straight into value labels, and the
     ///     Undo / Clear / Pause / Resume buttons straight into Drawer and Spawner methods (the NoCode path). This
     ///     component only sets the public Drawer fields that have no setter method (smoothing, width, auto-delete,
@@ -37,7 +37,7 @@ namespace Neo.Samples
         private int _shownLines = -1;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _drawer != null && _log != null && _linesValue != null;
 
         public Drawer Drawer => _drawer;
@@ -186,7 +186,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[DrawerDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[DrawerDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

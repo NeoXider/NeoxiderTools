@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace Neo.Rpg.Demo
 {
     /// <summary>
-    ///     Controller of the authored RpgCharacter quick demo (Scenes/RpgCharacterQuickDemo.unity). The scene builder
+    ///     Controller of the authored RpgCharacter quick demo (Scenes/RpgCharacterQuickDemo.unity). The scene
     ///     saves everything the demo shows: both characters with their RpgCharacterTemplate assets, the cards, the
     ///     RpgResourceBinding / RpgStatBinding rows, the RpgNoCodeAction buttons, the NeoCondition low-HP row, the log
     ///     feed and the info card. Buttons call the public methods below through persistent UnityEvents; each method
@@ -54,7 +54,7 @@ namespace Neo.Rpg.Demo
         public RpgCharacter Enemy => _enemy;
         public bool GuardActive => _guardActive;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _player != null && _enemy != null && _progressValue != null && _log != null;
 
         private void OnEnable()
@@ -321,8 +321,8 @@ namespace Neo.Rpg.Demo
             {
                 _warnedMissingCharacters = true;
                 global::Neo.Demo.SampleDiagnostics.Warn(
-                    "[RpgCharacterQuickDemo] Player or Enemy is not assigned. Rebuild the scene with " +
-                    "Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                    "[RpgCharacterQuickDemo] Player or Enemy is not assigned. Re-import the scene from the " +
+                    "Demo download.", this);
             }
 
             return false;
@@ -345,7 +345,7 @@ namespace Neo.Rpg.Demo
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[RpgCharacterQuickDemo] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[RpgCharacterQuickDemo] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
 

@@ -7,8 +7,8 @@ using UnityEngine;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Controller of the authored <b>Neo.Bonus</b> wheel of fortune demo (WheelFortuneExample.unity). Its
-    ///     DemoSceneKit builder saves the frame, the wallet, the prize table and every listener in the scene:
+    ///     Controller of the authored <b>Neo.Bonus</b> wheel of fortune demo (WheelFortuneExample.unity). The
+    ///     scene saves the frame, the wallet, the prize table and every listener in the scene:
     ///     the wheel's own SPIN/STOP buttons call <see cref="WheelFortune.Spin" /> / <see cref="WheelFortune.Stop" />,
     ///     and <see cref="WheelFortune.OnWinIdVariant" /> calls <see cref="WheelMoneyWin.Win" /> (pays the sector prize
     ///     into the <see cref="Money" /> wallet and writes the prize label) and <see cref="OnWheelResult" />. This
@@ -47,7 +47,7 @@ namespace Neo.Samples
         private bool _hasShownStatus;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _wheel != null && _payout != null && _wallet != null && _stateValue != null &&
                                     _canUseValue != null && _sectorValue != null && _log != null;
 
@@ -234,7 +234,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[WheelFortuneDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[WheelFortuneDemoController] The scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

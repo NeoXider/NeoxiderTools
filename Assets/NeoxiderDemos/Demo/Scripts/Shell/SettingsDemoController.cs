@@ -10,7 +10,7 @@ namespace Neo.Samples
 {
     /// <summary>
     ///     Controller of the authored <b>Neo.Settings</b> demo scene. The whole UI (frame, rows, log feed, info
-    ///     card) is saved in SettingsDemo.unity by its DemoSceneKit builder; buttons, the preset dropdown and the
+    ///     card) is saved in SettingsDemo.unity; buttons, the preset dropdown and the
     ///     VSync toggle call the public methods below through persistent UnityEvents, and the sensitivity slider
     ///     calls <see cref="GameSettingsComponent.SetMouseSensitivityForMenu" /> on the service directly (the
     ///     NoCode path). This component only forwards to the real <see cref="GameSettings" /> API, mirrors the
@@ -51,7 +51,7 @@ namespace Neo.Samples
         private bool _watchingDeferredSave;
         private int _burstChanges;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _log != null && _presetValue != null && _framerateValue != null &&
                                     _vSyncValue != null && _sensitivityValue != null && _deferredValue != null &&
                                     _storedValue != null;
@@ -284,7 +284,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[SettingsDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[SettingsDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

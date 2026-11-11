@@ -136,7 +136,7 @@ namespace Neo.Editor.Tests
             if (failures.Count > 0)
             {
                 Assert.Fail("Sample content persists under library default save keys (give the demo its own " +
-                            "'NeoDemo.<Demo>.<Data>' key through its builder, or switch persistence off):\n" +
+                            "'NeoDemo.<Demo>.<Data>' key in the scene, or switch persistence off):\n" +
                             string.Join("\n", failures));
             }
         }

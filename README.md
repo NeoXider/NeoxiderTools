@@ -6,7 +6,7 @@
 
 A modular construction library: use runtime APIs directly, then add scene components and optional Inspector / NoCode workflows.
 
-[![Version](https://img.shields.io/badge/version-12.2.0-blue)](Assets/Neoxider/package.json)
+[![Version](https://img.shields.io/badge/version-12.3.0-blue)](Assets/Neoxider/package.json)
 [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](Assets/Neoxider/LICENSE.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](Assets/Neoxider/Docs/PackageCompatibility.md)
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](Assets/Neoxider/Docs/README.md#namespace-policy)
@@ -32,7 +32,7 @@ Captures taken in the Unity Editor (several in Play Mode) of scenes from the Dem
 
 <table>
 <tr>
-<td width="33%" align="center"><a href="Assets/Neoxider/Docs/Abilities/README.md"><img src="Images/demos/SurvivorDemo.jpg" alt="Survivor arena: Abilities, waves and upgrades from one config" width="100%" /></a><br /><b>Survivor arena</b><br /><sub>Abilities, waves and upgrades from one config</sub></td>
+<td width="33%" align="center"><a href="Assets/Neoxider/Docs/Abilities/README.md"><img src="Images/demos/SurvivorDemo.jpg" alt="Survivor arena: a NoCode game from library components" width="100%" /></a><br /><b>Survivor arena</b><br /><sub>Abilities, waves and upgrades from one config</sub></td>
 <td width="33%" align="center"><a href="Assets/Neoxider/Docs/GridSystem/README.md"><img src="Images/demos/GridSystemMatch3Demo.jpg" alt="Match3 board: Shaped boards, paths and match rules" width="100%" /></a><br /><b>Match3 board</b><br /><sub>Shaped boards, paths and match rules</sub></td>
 <td width="33%" align="center"><a href="Assets/Neoxider/Docs/Bonus/README.md"><img src="Images/demos/BonusRewardsDemo.jpg" alt="Rewards and collection: Collection, chest and cooldown gifts, no script" width="100%" /></a><br /><b>Rewards and collection</b><br /><sub>Collection, chest and cooldown gifts, no script</sub></td>
 </tr>
@@ -246,11 +246,11 @@ Demo scenes are not part of the package. In this repository they are ordinary fo
 
 | Download | Folder | Purpose |
 |----------|--------|---------|
-| `NeoxiderTools.Demo` | `Assets/NeoxiderDemos/Demo` | Module demo scenes, example games and `SurvivorDemo`, configured by `SurvivorConfig` on top of `Neo.Abilities` ([guide](Assets/Neoxider/Docs/Abilities/SurvivorDemo.md)) |
+| `NeoxiderTools.Demo` | `Assets/NeoxiderDemos/Demo` | Module demo scenes, example games and `SurvivorDemo`, a NoCode game on top of `Neo.Abilities` ([guide](Assets/Neoxider/Docs/Abilities/SurvivorDemo.md)) |
 | `NeoxiderPages` | `Assets/NeoxiderDemos/NeoxiderPages` | Optional page-navigation module with `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers |
 | `NeoxiderTools.CharacterMovementDemo` | `Assets/NeoxiderDemos/CharacterMovementFundamentals` | Character-controller scenes for slopes, stairs, platforms, gravity, and a top-down arena ([guide](Assets/Neoxider/Docs/Tools/Move/CharacterController/README.md)) |
 
-Every demo scene is saved with its UI, configured components and UnityEvent wiring, so you can see how a button reaches a module API without entering Play Mode. Editor builders in the demo author these scenes; **Neoxider > Demo > Rebuild Active Demo Scene** restores a scene you changed. See [how demo scenes are made](Assets/Neoxider/Docs/Samples.md#how-demo-scenes-are-made).
+Every demo scene is saved with its UI, configured components and UnityEvent wiring, so you can see how a button reaches a module API without entering Play Mode. Re-import a demo to restore a scene you changed. See [how demo scenes are made](Assets/Neoxider/Docs/Samples.md#how-demo-scenes-are-made).
 
 Import all three for the full integration collection: example games can reference sibling demo
 assets (CardGame uses the NeoxiderPages PM prefab). Module demos can be explored separately;
@@ -273,7 +273,7 @@ Package tests live under `Assets/Neoxider/Tests/`:
 - `Play` for runtime and scene behavior (`Neo.Tests.Play`).
 - `Fixtures`, `Integration` (Mirror network) and shared test helpers.
 
-Together they hold more than 5,000 EditMode cases plus the PlayMode suites. Read the [EditMode and isolation guide](Assets/Neoxider/Docs/Testing.md) and [PlayMode guide](Assets/Neoxider/Docs/PlayModeTesting.md) before running Unity Test Runner. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For a UPM installation, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply. The demo builders have their own `Neo.Demo.Editor.Tests`, which compile while the Demo sample is visible.
+Together they hold more than 5,000 EditMode cases plus the PlayMode suites. Read the [EditMode and isolation guide](Assets/Neoxider/Docs/Testing.md) and [PlayMode guide](Assets/Neoxider/Docs/PlayModeTesting.md) before running Unity Test Runner. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For a UPM installation, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply.
 
 Run static-reset and Play Mode transition fixtures in an isolated test host: they can change global state, providers, and editor lifecycle. The [11.0.0 verification record](Assets/Neoxider/Verification11.md) separates actual runs, qualified unchanged inputs, manual observations and remaining limits. After source changes, run `python scripts/check_package.py` locally to check package integrity without Unity. Record actual pass/fail/skip results for the tested checkout, Unity version, dependencies, and sample layout. This repository does not currently configure GitHub Actions workflows.
 

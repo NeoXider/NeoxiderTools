@@ -12,7 +12,7 @@ namespace Neo.Rpg.Demo
     /// <summary>
     ///     Drives the RPG combat demo loop (the player hits the nearest enemy, enemies pressure the player, the wave
     ///     restores once cleared) and mirrors it into the authored HUD of RpgCombatNpcDemo.unity. The HUD, the health
-    ///     bar canvas, the log feed and the info card are saved in the scene by its DemoSceneKit builder; buttons and
+    ///     bar canvas, the log feed and the info card are saved in the scene; buttons and
     ///     toggles call the public methods below through persistent UnityEvents. Nothing is built at runtime.
     /// </summary>
     [AddComponentMenu("Neoxider/Samples/RPG Combat Demo Controller")]
@@ -68,7 +68,7 @@ namespace Neo.Rpg.Demo
         public bool AutoDemoLoop => _autoDemoLoop;
         public bool EnemyPressureEnabled => _enemyPressureEnabled;
 
-        /// <summary>True when the authored HUD references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored HUD references are assigned.</summary>
         public bool IsSceneBuilt => _enemiesValue != null && _lastEventValue != null && _log != null;
 
         private void Awake()
@@ -159,7 +159,7 @@ namespace Neo.Rpg.Demo
             }
         }
 
-        /// <summary>Fallback scene search for references the scene builder did not assign.</summary>
+        /// <summary>Fallback scene search for references that are not assigned.</summary>
         [Button]
         public void AutoResolve()
         {
@@ -485,7 +485,7 @@ namespace Neo.Rpg.Demo
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[RpgCombatDemoController] The HUD is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "[RpgCombatDemoController] The HUD is not authored. Re-import the scene from the Demo download.", this);
         }
 
         private static string Describe(Component component)

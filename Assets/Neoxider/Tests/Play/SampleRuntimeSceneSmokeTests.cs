@@ -250,7 +250,7 @@ namespace Neo.Tests.Play
             yield return LoadScene("Scenes/Inventory/InventoryUseDemo.unity");
             object controller = FindRequiredComponent("Neo.Samples.InventoryDemoController", "inventory demo");
             Assert.That(GetProperty<bool>(controller, "IsSceneBuilt"), Is.True,
-                "InventoryUseDemo must be authored by InventoryUseDemoBuilder (UI saved in the scene).");
+                "InventoryUseDemo must carry its UI saved in the scene.");
             GameObject frame = GameObject.Find("[Demo] Frame");
             Assert.That(frame, Is.Not.Null, "The authored demo frame canvas is missing.");
             Canvas inventoryCanvas = frame.GetComponent<Canvas>();
@@ -300,7 +300,7 @@ namespace Neo.Tests.Play
             object controller = FindRequiredComponent("Neo.Samples.StateMachineDemoController",
                 "state machine demo controller");
             Assert.That(GetProperty<bool>(controller, "IsSceneBuilt"), Is.True,
-                "StateMachineDemo must be authored by StateMachineDemoBuilder (UI saved in the scene).");
+                "StateMachineDemo must carry its UI saved in the scene.");
             Assert.That(GetProperty<string>(controller, "AgentStateName"), Is.EqualTo("Idle"));
             ClickDemoButton("Btn_Provoke");
             Assert.That(GetProperty<string>(controller, "AgentStateName"), Is.EqualTo("Chase"));

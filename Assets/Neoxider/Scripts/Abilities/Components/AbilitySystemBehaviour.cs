@@ -309,9 +309,10 @@ namespace Neo.Abilities
                 return;
             }
 
-            Quaternion rotation = request.Direction.sqrMagnitude > 0.0001f
-                ? Quaternion.LookRotation(request.Direction.normalized)
-                : Quaternion.identity;
+            AbilityZonePlane plane = prefab.TryGetComponent(out AbilityProjectileBehaviour projectile)
+                ? projectile.Plane
+                : AbilityZonePlane.GroundXZ;
+            Quaternion rotation = AbilityZonePlaneFacing.Facing(request.Direction, plane);
             GameObject instance = PoolManager.Get(prefab, request.Position, rotation);
             if (instance == null)
             {

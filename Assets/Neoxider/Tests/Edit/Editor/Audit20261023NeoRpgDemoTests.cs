@@ -90,23 +90,6 @@ namespace Neo.Editor.Tests
             if (firstFault == null) firstFault = ExceptionDispatchInfo.Capture(failure);
         }
 
-        [TestCase(5, 4, 1, 5)]
-        [TestCase(5, 4, 3, 13)]
-        [TestCase(0, 0, 1, 1)]
-        [TestCase(5, -4, 3, 1)]
-        [TestCase(int.MaxValue, int.MaxValue, 2, int.MaxValue)]
-        [TestCase(5, 4, int.MinValue, 5)]
-        public void SurvivorXpThreshold_IsPositiveAndDoesNotOverflow(int baseXp, int step, int level, int expected)
-        {
-            Type type = RequireDemoType("Neo.Samples.Survivor.SurvivorConfig");
-            ScriptableObject config = ScriptableObject.CreateInstance(type);
-            _owned.Add(config);
-            type.GetField("BaseXp").SetValue(config, baseXp);
-            type.GetField("XpPerLevel").SetValue(config, step);
-
-            Assert.That(Invoke(config, "XpForLevel", level), Is.EqualTo(expected));
-        }
-
         [Test]
         public void ConditionActions_UseConfiguredDamageHealingAndScore()
         {

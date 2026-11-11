@@ -59,6 +59,19 @@ namespace Neo.Tools
         /// <inheritdoc />
         public bool IsMoving { get; private set; }
 
+        /// <summary>Movement speed in units per second (for code; NoCode uses <see cref="SetSpeed" />).</summary>
+        public float Speed
+        {
+            get => speed;
+            set => speed = Mathf.Max(0f, value);
+        }
+
+        /// <summary>Sets the movement speed in units per second, for example from a unit's move-speed event.</summary>
+        public void SetSpeed(float unitsPerSecond)
+        {
+            Speed = unitsPerSecond;
+        }
+
         /// <inheritdoc />
         public void MoveDelta(Vector2 delta)
         {

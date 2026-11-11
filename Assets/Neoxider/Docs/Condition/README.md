@@ -31,7 +31,7 @@
 - Buttons call `Health.TakeDamage` / `Heal` and `ScoreManager.Add` directly; HP and score are shown by `NoCodeFormattedText` + `SetProgress`.
 - **Evaluate in code** runs the C# path, `NeoCondition.Evaluate()` (no events), through `ConditionDemoUI`; **Pause** sets `Time.timeScale` to 0 and the rules keep checking because they use **Use Unscaled Time**.
 
-The scene is authored by the editor builder `NeoConditionDemoBuilder` (menu **Neoxider/Demo/Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ## Runtime API
 

@@ -29,6 +29,7 @@ new domain id. A captured old event still passes the wrapper's current identity 
 | **On Damaged** `UnityEvent<float>` | This unit takes damage (after mitigation/shields). | HP damage dealt. |
 | **On Healed** `UnityEvent<float>` | This unit is healed. | Effective healing. |
 | **On Died** `UnityEvent` | This unit's health reaches zero. | — |
+| **On Move Speed Changed** `UnityEvent<float>` | The effective move speed changes: the `move_speed` property, or 0 while stunned, rooted or frozen (checked once per frame only while the event has a listener). | Units per second. Wire it to `KeyboardMover.SetSpeed` or `Follow.SetPositionSpeed`. |
 | **On Modifier Applied** `UnityEvent<string>` | A modifier is applied to this unit. | Modifier id. |
 | **On Modifier Removed** `UnityEvent<string>` | A modifier is removed or expires. | Modifier id. |
 | **On Ability Cast** `UnityEvent<string>` | This unit's cast is accepted. | Ability id. |

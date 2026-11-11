@@ -18,7 +18,7 @@
 
 Demo: `Assets/NeoxiderDemos/Demo/Scenes/Parallax/ParallaxDemo.unity`, controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/ParallaxDemoController.cs`. It is part of the Demo download.
 
-The scene is authored by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Parallax/ParallaxDemoBuilder.cs`, so every layer is visible and configurable without Play Mode. `[Demo] World` holds seven bands, each a `ParallaxLayer` bound to the scene camera through `targetCamera`:
+The scene is saved with its UI and wiring, so every layer is visible and configurable without Play Mode. `[Demo] World` holds seven bands, each a `ParallaxLayer` bound to the scene camera through `targetCamera`:
 
 | Band | `parallaxMultiplier.x` | Shows |
 |---|---|---|

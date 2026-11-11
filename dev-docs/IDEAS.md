@@ -18,5 +18,5 @@ Ideas that can become tasks later if a mechanic starts repeating across modules 
 ## See Also
 
 - [TODO](TODO.md)
-- [Demo scene builders](DemoSceneBuilders.md)
+- [Demo scenes](DemoScenes.md)
 - [GridSystem](../Assets/Neoxider/Docs/GridSystem/README.md)

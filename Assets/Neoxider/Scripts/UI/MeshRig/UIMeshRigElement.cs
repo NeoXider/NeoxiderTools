@@ -28,6 +28,10 @@ namespace Neo.UI
         private float _motionPhase;
         private IVisualElementScheduledItem _motionSchedule;
 
+        // WHY: UI Toolkit has no point Transforms for an Animator or a script to move, so code poses live
+        // here, one per layout point, and compose with the preset motion. Null means no point is posed.
+        private UIMeshRigProceduralPose[] _pointPoses;
+
         public UIMeshRigElement()
         {
             style.width = 300f;
@@ -117,9 +121,73 @@ namespace Neo.UI
             get => _layoutPreset;
             set
             {
+                if (_layoutPreset != value)
+                {
+                    _pointPoses = null;
+                }
+
                 _layoutPreset = value;
                 MarkDirtyRepaint();
             }
+        }
+
+        /// <summary>Number of points in the current <see cref="LayoutPreset"/>; valid indices for the point pose API.</summary>
+        public int PointCount => UIMeshRigLayoutPresets.GetPointCount(_layoutPreset);
+
+        /// <summary>
+        /// Poses one layout point from code, on top of its preset motion: <paramref name="offset"/> is in
+        /// element pixels (x right, y up) and is added, <paramref name="rotationDegrees"/> is added
+        /// (counter-clockwise), <paramref name="scale"/> multiplies. This is the code path for the element: an
+        /// AnimationClip cannot key it, because it has no point Transforms. Changing <see cref="LayoutPreset"/>
+        /// clears every point pose.
+        /// </summary>
+        public void SetPointPose(int index, Vector2 offset, float rotationDegrees, Vector2 scale)
+        {
+            int pointCount = PointCount;
+            if (index < 0 || index >= pointCount)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(index), index,
+                    "The layout has " + pointCount + " points.");
+            }
+
+            if (_pointPoses == null || _pointPoses.Length != pointCount)
+            {
+                _pointPoses = new UIMeshRigProceduralPose[pointCount];
+                for (int poseIndex = 0; poseIndex < pointCount; poseIndex++)
+                {
+                    _pointPoses[poseIndex] = UIMeshRigProceduralPose.Identity;
+                }
+            }
+
+            _pointPoses[index] = new UIMeshRigProceduralPose(
+                offset,
+                rotationDegrees,
+                new Vector2(Mathf.Max(0.0001f, scale.x), Mathf.Max(0.0001f, scale.y)));
+            MarkDirtyRepaint();
+        }
+
+        /// <summary>Returns one layout point to its preset motion alone. Out-of-range indices are ignored.</summary>
+        public void ClearPointPose(int index)
+        {
+            if (_pointPoses == null || index < 0 || index >= _pointPoses.Length)
+            {
+                return;
+            }
+
+            _pointPoses[index] = UIMeshRigProceduralPose.Identity;
+            MarkDirtyRepaint();
+        }
+
+        /// <summary>Removes every code pose set through <see cref="SetPointPose"/>.</summary>
+        public void ClearPointPoses()
+        {
+            if (_pointPoses == null)
+            {
+                return;
+            }
+
+            _pointPoses = null;
+            MarkDirtyRepaint();
         }
 
         [UxmlAttribute]
@@ -210,6 +278,7 @@ namespace Neo.UI
                 _rows,
                 space,
                 uvRect,
+                UIMeshRigGeometryBuilder.GetSpriteContentBounds(_sprite),
                 _deformationEnabled,
                 _pointStates,
                 reuse);
@@ -308,6 +377,15 @@ namespace Neo.UI
                         layout.Phase + _motionPhase,
                         layout.CenterNormalized,
                         layout.Seed);
+                }
+
+                if (_pointPoses != null && index < _pointPoses.Length)
+                {
+                    UIMeshRigProceduralPose codePose = _pointPoses[index];
+                    pose = new UIMeshRigProceduralPose(
+                        pose.Position + codePose.Position,
+                        pose.RotationDegrees + codePose.RotationDegrees,
+                        Vector2.Scale(pose.Scale, codePose.Scale));
                 }
 
                 Vector2 restCenter = space.NormalizedToPosition(layout.CenterNormalized);

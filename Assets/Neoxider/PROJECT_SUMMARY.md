@@ -9,7 +9,7 @@
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json` (`com.neoxider.tools`)
-- **Current version**: `12.2.0`
+- **Current version**: `12.3.0`
 - **Upgrade guides**: [`Docs/Migration12.md`](./Docs/Migration12.md) (from 11.x), [`Docs/Migration11.md`](./Docs/Migration11.md) (from 10.x)
 - **Validation**: the 11.0.0 Windows record is [`Verification11.md`](./Verification11.md); release verification of the 12.0.0 source is pending and is not implied by any audit receipt.
 - **Unity**: `6000.0+`
@@ -33,7 +33,7 @@ Assets/Neoxider/
   ThirdParty/   # Bundled Character Movement Fundamentals (MIT)
 ```
 
-Maintainer documents (plans, TODO, demo builder guide) live in the repository's `dev-docs/` folder and are not part of the package.
+Maintainer documents (plans, TODO, demo scene rules) live in the repository's `dev-docs/` folder and are not part of the package.
 
 ## Key Product Layers
 
@@ -83,7 +83,7 @@ Before implementing something new, check these ready-made building blocks:
 The full list is in [`CHANGELOG.md`](./CHANGELOG.md) and [`Docs/Migration12.md`](./Docs/Migration12.md).
 
 - The HTML/CSS → UI Toolkit converter left the package (`com.neoxider.htmltouitk`).
-- Demo scenes are authored in the scene by editor builders (`Assets/NeoxiderDemos/Demo/Editor/Builders`) instead of runtime bootstraps; `NeoDemoShell` is an obsolete fallback.
+- Demo scenes are saved complete (UI, components, UnityEvent wiring) instead of being built by runtime bootstraps; `NeoDemoShell` is an obsolete fallback.
 - Hot paths of most modules were reworked to avoid per-frame and per-call allocations once warm; zero-allocation tests use Unity's GC.Alloc recorder. Explicit `Performance` tests print `NEO_PERF` lines.
 - Plain C# cores were extracted from components (Bonus, Cards, Rpg, GridSystem), and time/random seams were added (clocks, seeded overloads, integer odds).
 - Behaviour changes worth knowing: `AMSettings` persists mute, `ButtonScale`/`ButtonShake`/`FakeLoad` default to unscaled time, `AnimationFly.Play` copies its request, NPC chase events fire once per chase, `StringExtension.ToFloat` reads the invariant culture first.
@@ -119,7 +119,7 @@ The full list is in [`CHANGELOG.md`](./CHANGELOG.md) and [`Docs/Migration12.md`]
 
 ## Samples
 
-- `Assets/NeoxiderDemos/Demo` contains the module demo scenes, the example games and `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game driven by one `SurvivorConfig` data asset on top of `Neo.Abilities`. Every module demo (Audio, Save, Settings, Level, StateMachine, NoCode, Parallax, Quest, Progression, Inventory, Abilities, Grid, Shop, NPC, Network, Tools, `UI/AnimationFlyDemo` and more) is saved with its UI and UnityEvent wiring and is authored by an editor builder in `Assets/NeoxiderDemos/Demo/Editor/Builders`; **Neoxider > Demo > Rebuild Active Demo Scene** rebuilds one. See [`Docs/Samples.md`](./Docs/Samples.md).
+- `Assets/NeoxiderDemos/Demo` contains the module demo scenes, the example games and `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game assembled only from library components and UnityEvents on top of `Neo.Abilities`, without game scripts. Every module demo (Audio, Save, Settings, Level, StateMachine, NoCode, Parallax, Quest, Progression, Inventory, Abilities, Grid, Shop, NPC, Network, Tools, `UI/AnimationFlyDemo` and more) is saved with its UI and UnityEvent wiring. See [`Docs/Samples.md`](./Docs/Samples.md).
 - `Assets/NeoxiderDemos/NeoxiderPages` contains the optional page navigation module and its demo.
 - `Assets/NeoxiderDemos/CharacterMovementFundamentals` holds the 3D character controller showcase (slopes, stairs, platforms, gravity rooms) and the Capguy character the animated character presets reference.
 - These are ordinary project folders outside the package; each ships as its own `.unitypackage` on the releases page.
@@ -127,7 +127,7 @@ The full list is in [`CHANGELOG.md`](./CHANGELOG.md) and [`Docs/Migration12.md`]
 ## Tests and quality
 
 - `com.unity.test-framework` is **not** a package dependency — install it in the host project to run the tests.
-- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `Fixtures`, `Integration`) — more than 5,000 EditMode cases plus the PlayMode suites. Current counts and skips are reported by Test Runner and depend on Unity, optional modules, graphics, and sample layout. Demo builders are tested in `Neo.Demo.Editor.Tests` inside the Demo sample.
+- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `Fixtures`, `Integration`) — more than 5,000 EditMode cases plus the PlayMode suites. Current counts and skips are reported by Test Runner and depend on Unity, optional modules, graphics, and sample layout.
 - Covered are the critical scenarios of the runtime modules, including `Abilities`, `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, `Network`, `NoCode` and editor regressions, plus zero-allocation guards for warm hot paths.
 
 ## Canonical documents

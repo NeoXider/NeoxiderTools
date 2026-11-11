@@ -11,8 +11,8 @@ chases). Script: `Scripts/Tools/Other/AiNavigation.cs`, namespace `Neo.Tools`, a
 
 > ⚠️ **Deprecated.** Use `Neo.NPC.NpcNavigation + modules` instead. The demo scene
 > `Assets/NeoxiderDemos/Demo/Scenes/Ai/AiMoveExample.unity` (Demo download) is the migration example:
-> its builder converts the legacy chaser and guard to `NpcNavigation` (the guard's mode is switched with `SetMode`)
-> and adds a waypoint patroller and a zone sentry in `Combined` mode.
+> its legacy chaser and guard now use `NpcNavigation` (the guard's mode is switched with `SetMode`),
+> next to a waypoint patroller and a zone sentry in `Combined` mode.
 
 ---
 

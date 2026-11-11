@@ -48,7 +48,7 @@ namespace Neo.Samples
         private long _tickets;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _chance != null && _log != null && _sampleValue != null && _ticketsValue != null &&
                                     _observedFills.Length > 0 && _exactHits.Length > 0;
 
@@ -311,7 +311,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[ChanceDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[ChanceDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

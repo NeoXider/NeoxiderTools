@@ -34,6 +34,9 @@ namespace Neo.Abilities
                  "Direction casts reach exactly this far; with 0 they reach the aim vector's length, at least 10.")]
         public float Range;
 
+        [Tooltip("Per-ability-level ranges (index = level - 1, clamped). Empty ⇒ use Range.")]
+        public float[] RangeByLevel;
+
         [Header("Costs & cooldown")]
         [Tooltip("Resource costs paid on cast.")]
         public List<AbilityCost> Costs = new List<AbilityCost>();
@@ -41,11 +44,23 @@ namespace Neo.Abilities
         [Tooltip("Cooldown seconds after cast. Reduced by cooldown_reduction_percent.")]
         public float Cooldown;
 
+        [Tooltip("Per-ability-level cooldowns in seconds, e.g. [10, 8, 6]. Empty ⇒ use Cooldown. " +
+                 "A cooldown already running keeps its remaining time when the level changes.")]
+        public float[] CooldownByLevel;
+
         [Tooltip("Charge count. 0 or 1 = classic single cooldown; >1 = charge system.")]
         public int MaxCharges = 1;
 
+        [Tooltip("Per-ability-level charge counts. Empty ⇒ use MaxCharges. A raised cap grants the new charges at " +
+                 "once; a lowered cap clamps the available charges.")]
+        public int[] MaxChargesByLevel;
+
         [Tooltip("Seconds to restore one charge when MaxCharges > 1. 0 = use Cooldown.")]
         public float ChargeRestoreTime;
+
+        [Tooltip("Per-ability-level charge restore seconds. Empty ⇒ use ChargeRestoreTime; a non-positive entry uses " +
+                 "the level's cooldown.")]
+        public float[] ChargeRestoreTimeByLevel;
 
         [Header("Delivery")]
         [Tooltip("Instant impact or host-driven projectile.")]
@@ -56,6 +71,9 @@ namespace Neo.Abilities
 
         [Tooltip("Projectile speed hint for the host (world units/second).")]
         public float ProjectileSpeed = 20f;
+
+        [Tooltip("Per-ability-level projectile speeds. Empty ⇒ use ProjectileSpeed.")]
+        public float[] ProjectileSpeedByLevel;
 
         [Header("Effects")]
         [Tooltip("Effect nodes executed immediately on cast (at the caster, before delivery).")]
@@ -75,7 +93,52 @@ namespace Neo.Abilities
         [Tooltip("Optional presentation cue id consumed by presentation listeners on impact.")]
         public string ImpactCue;
 
+        /// <summary>
+        ///     True when the flat <see cref="MaxCharges" /> uses the charge system. Level-aware code uses
+        ///     <see cref="UsesChargesAt" /> or <see cref="AbilitySlot.UsesCharges" />.
+        /// </summary>
         public bool UsesCharges => MaxCharges > 1;
+
+        /// <summary>Authored cast range at an ability level (before cast_range_bonus): <see cref="RangeByLevel" />, else <see cref="Range" />.</summary>
+        public float ResolveRange(int level)
+        {
+            return LeveledValueResolver.SampleByLevel(RangeByLevel, level, Range);
+        }
+
+        /// <summary>Authored cooldown seconds at an ability level (before the cooldown rule): <see cref="CooldownByLevel" />, else <see cref="Cooldown" />.</summary>
+        public float ResolveCooldown(int level)
+        {
+            return LeveledValueResolver.SampleByLevel(CooldownByLevel, level, Cooldown);
+        }
+
+        /// <summary>Charge cap at an ability level: <see cref="MaxChargesByLevel" />, else <see cref="MaxCharges" />. 0 or 1 = no charges.</summary>
+        public int ResolveMaxCharges(int level)
+        {
+            return LeveledValueResolver.SampleByLevel(MaxChargesByLevel, level, MaxCharges);
+        }
+
+        /// <summary>True when the ability uses the charge system at <paramref name="level" />.</summary>
+        public bool UsesChargesAt(int level)
+        {
+            return ResolveMaxCharges(level) > 1;
+        }
+
+        /// <summary>
+        ///     Seconds to restore one charge at an ability level (before the cooldown rule):
+        ///     <see cref="ChargeRestoreTimeByLevel" /> / <see cref="ChargeRestoreTime" /> when positive, else the level's
+        ///     cooldown (<see cref="ResolveCooldown" />).
+        /// </summary>
+        public float ResolveChargeRestoreTime(int level)
+        {
+            float restore = LeveledValueResolver.SampleByLevel(ChargeRestoreTimeByLevel, level, ChargeRestoreTime);
+            return restore > 0f ? restore : ResolveCooldown(level);
+        }
+
+        /// <summary>Projectile speed hint at an ability level: <see cref="ProjectileSpeedByLevel" />, else <see cref="ProjectileSpeed" />.</summary>
+        public float ResolveProjectileSpeed(int level)
+        {
+            return LeveledValueResolver.SampleByLevel(ProjectileSpeedByLevel, level, ProjectileSpeed);
+        }
     }
 
     /// <summary>

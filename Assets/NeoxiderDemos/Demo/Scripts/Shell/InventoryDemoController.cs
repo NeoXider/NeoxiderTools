@@ -10,7 +10,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored InventoryUseDemo scene: three ordinary slot-grid inventories (temporary catch,
     ///     nine-slot hotbar, one-slot podium), an <see cref="InventoryHand" /> and an <see cref="InventoryUseAction" />.
-    ///     The whole UI is saved in the scene by its DemoSceneKit builder: slot rows are
+    ///     The whole UI is saved in the scene: slot rows are
     ///     <see cref="InventorySlotGridView" /> cells, slot buttons call <see cref="InventoryHand.SetSlotIndex" />
     ///     directly, count labels are <see cref="InventoryTotalCountText" /> / <see cref="InventoryItemCountText" />,
     ///     and the module events reach this component through persistent listeners. This component only keeps the
@@ -84,7 +84,7 @@ namespace Neo.Samples
         /// <summary>Whether placement and consumable use have both been demonstrated in this run.</summary>
         public bool IsGoalComplete => _placed && _healed;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => HasInventories && _goalLabel != null && _selectedLabel != null &&
                                     _podiumLabel != null && _healthBar != null && _log != null;
 
@@ -389,7 +389,7 @@ namespace Neo.Samples
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
                 "[InventoryDemoController] The scene UI or inventories are not authored. " +
-                "Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "Re-import the scene from the Demo download.", this);
         }
 
         private static int FirstEmpty(InventoryComponent inventory)

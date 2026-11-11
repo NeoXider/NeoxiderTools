@@ -14,4 +14,4 @@ Common blocks that already exist:
 - `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` for common gameplay systems;
 - `Tools` for movement, spawners, timers, input, physics, and view helpers.
 
-Demo scenes are authored by editor scene builders, not runtime bootstraps: see [DemoSceneBuilders.md](DemoSceneBuilders.md). Open tasks: [TODO.md](TODO.md).
+Demo scenes are plain saved scenes, with no runtime bootstraps and no committed scene builders: see [DemoScenes.md](DemoScenes.md). Open tasks: [TODO.md](TODO.md).

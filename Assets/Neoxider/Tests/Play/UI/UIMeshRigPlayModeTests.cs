@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Neo.UI;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 using UnityEngine.TestTools;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -200,7 +202,6 @@ namespace Neo.Tests.Play
         {
             Canvas canvas = CreateOverlayCanvas("AnimatorCanvas");
             RigBundle bundle = CreateRig(canvas.transform, "AnimatorRig");
-            Animator animator = bundle.Point.gameObject.AddComponent<Animator>();
             UIMeshRigPointMotion motion = bundle.Point.gameObject.AddComponent<UIMeshRigPointMotion>();
             motion.Stop();
             motion.PlayOnEnable = false;
@@ -227,8 +228,6 @@ namespace Neo.Tests.Play
             yield return null;
 
             Vector2 result = bundle.Graphic.CalculateDeformedLocalPoint(bundle.Point.RestCenterNormalized);
-            Assert.That(animator, Is.Not.Null,
-                "The point remains a regular Animator-compatible RectTransform target.");
             Assert.That(bundle.PointRect.anchoredPosition.x, Is.EqualTo(18f).Within(0.01f),
                 "The AnimationClip should own the authored RectTransform pose.");
             Assert.That(result.x, Is.EqualTo(25f).Within(0.05f),
@@ -237,17 +236,102 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator AnimatorOnRigRoot_ComposesClipRotationAndScaleWithRunningMotionInTheRenderedMesh()
+        {
+            Canvas canvas = CreateOverlayCanvas("AnimatorRootCanvas");
+            RigBundle bundle = CreateRig(canvas.transform, "AnimatorRootRig");
+            bundle.Graphic.SetPreserveAspect(false);
+            bundle.Graphic.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
+
+            AnimationClip clip = Track(new AnimationClip());
+            clip.name = "RigRootPose";
+            clip.SetCurve("Point", typeof(RectTransform), "m_AnchoredPosition.x", AnimationCurve.Constant(0f, 1f, 18f));
+            clip.SetCurve("Point", typeof(RectTransform), "localEulerAnglesRaw.x", AnimationCurve.Constant(0f, 1f, 0f));
+            clip.SetCurve("Point", typeof(RectTransform), "localEulerAnglesRaw.y", AnimationCurve.Constant(0f, 1f, 0f));
+            clip.SetCurve("Point", typeof(RectTransform), "localEulerAnglesRaw.z", AnimationCurve.Constant(0f, 1f, 30f));
+            clip.SetCurve("Point", typeof(RectTransform), "m_LocalScale.x", AnimationCurve.Constant(0f, 1f, 1.5f));
+            clip.SetCurve("Point", typeof(RectTransform), "m_LocalScale.y", AnimationCurve.Constant(0f, 1f, 1f));
+            clip.SetCurve("Point", typeof(RectTransform), "m_LocalScale.z", AnimationCurve.Constant(0f, 1f, 1f));
+            Animator animator = bundle.Graphic.gameObject.AddComponent<Animator>();
+            PlayableGraph graph = default;
+
+            UIMeshRigPointMotion motion = bundle.Point.gameObject.AddComponent<UIMeshRigPointMotion>();
+            motion.Stop();
+            motion.PlayOnEnable = false;
+            motion.Speed = 1f;
+            UIMeshRigMotionProfile profile = motion.Profile;
+            profile.Duration = 1f;
+            profile.PositionAmplitudePixels = new Vector2(7f, 3f);
+            profile.PositionX = AnimationCurve.Constant(0f, 1f, 1f);
+            profile.PositionY = AnimationCurve.Constant(0f, 1f, 1f);
+            profile.RotationAmplitudeDegrees = 10f;
+            profile.Rotation = AnimationCurve.Constant(0f, 1f, 1f);
+            profile.ScaleAmplitude = new Vector2(0.2f, 0f);
+            profile.ScaleX = AnimationCurve.Constant(0f, 1f, 1f);
+            profile.ScaleY = AnimationCurve.Constant(0f, 1f, 0f);
+
+            try
+            {
+                AnimationPlayableUtilities.PlayClip(animator, clip, out graph);
+                motion.Restart();
+
+                yield return null;
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+
+                Assert.That(motion.IsPlaying, Is.True);
+                Assert.That(motion.CurrentTime, Is.GreaterThan(0f), "The motion must advance frame by frame.");
+                Assert.That(bundle.PointRect.anchoredPosition.x, Is.EqualTo(18f).Within(0.01f),
+                    "The Animator on the rig root owns the point RectTransform pose.");
+
+                // WHY: grid 8 x 6 over a 200 x 100 rect; vertex (5, 3) sits at local (25, 0), inside the point's
+                // full-influence ellipse. Clip and motion compose: position adds, rotation adds, scale multiplies.
+                const int vertexIndex = 3 * 9 + 5;
+                float rotation = (30f + 10f) * Mathf.Deg2Rad;
+                Vector2 relative = new Vector2(25f * 1.5f * 1.2f, 0f);
+                Vector2 expected = new Vector2(18f + 7f, 3f) + new Vector2(
+                    relative.x * Mathf.Cos(rotation) - relative.y * Mathf.Sin(rotation),
+                    relative.x * Mathf.Sin(rotation) + relative.y * Mathf.Cos(rotation));
+                Vector3 rendered = bundle.Graphic.canvasRenderer.GetMesh().vertices[vertexIndex];
+                Assert.That(rendered.x, Is.EqualTo(expected.x).Within(0.05f),
+                    "The rendered mesh, not only an on-demand evaluation, must show the composed pose.");
+                Assert.That(rendered.y, Is.EqualTo(expected.y).Within(0.05f));
+            }
+            finally
+            {
+                if (graph.IsValid())
+                {
+                    graph.Destroy();
+                }
+            }
+        }
+
+        [UnityTest]
         public IEnumerator CanvasScalerAndRectResize_KeepDirectPointAtCapturedNormalizedPosition()
+        {
+            return ResizeKeepsDirectPointOnItsBind(UIMeshRigAuthoringMode.Setup);
+        }
+
+        [UnityTest]
+        public IEnumerator CanvasScalerAndRectResize_InPoseMode_KeepDirectPointOnItsBindWithoutDeformation()
+        {
+            return ResizeKeepsDirectPointOnItsBind(UIMeshRigAuthoringMode.Pose);
+        }
+
+        private IEnumerator ResizeKeepsDirectPointOnItsBind(UIMeshRigAuthoringMode mode)
         {
             Canvas canvas = CreateOverlayCanvas("ResponsiveCanvas");
             CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1080f, 1920f);
             RigBundle bundle = CreateRig(canvas.transform, "ResponsiveRig");
+            bundle.Graphic.SetAuthoringMode(mode);
 
             bundle.PointRect.anchoredPosition = new Vector2(52f, -17f);
             bundle.Point.CaptureRestPose(bundle.Graphic);
             Vector2 expectedNormalized = bundle.Point.RestCenterNormalized;
+            Assert.That(bundle.PointRect.anchoredPosition.magnitude, Is.LessThan(0.001f),
+                "A captured direct point rests on its anchor even with a letterboxed sprite.");
 
             bundle.Graphic.rectTransform.sizeDelta = new Vector2(520f, 310f);
             scaler.referenceResolution = new Vector2(1440f, 2560f);
@@ -255,11 +339,14 @@ namespace Neo.Tests.Play
             yield return null;
 
             Vector2 actualNormalized = bundle.Graphic.WorldToNormalized(bundle.PointRect.position);
-            Assert.That(bundle.PointRect.anchorMin.x, Is.EqualTo(expectedNormalized.x).Within(0.001f));
-            Assert.That(bundle.PointRect.anchorMin.y, Is.EqualTo(expectedNormalized.y).Within(0.001f));
             Assert.That(bundle.PointRect.anchorMax, Is.EqualTo(bundle.PointRect.anchorMin));
+            Assert.That(bundle.PointRect.anchoredPosition.magnitude, Is.LessThan(0.001f));
             Assert.That(actualNormalized.x, Is.EqualTo(expectedNormalized.x).Within(0.001f));
             Assert.That(actualNormalized.y, Is.EqualTo(expectedNormalized.y).Within(0.001f));
+            Vector2 rest = bundle.Graphic.NormalizedToLocal(expectedNormalized);
+            Vector2 deformed = bundle.Graphic.CalculateDeformedLocalPoint(expectedNormalized);
+            Assert.That(deformed.x, Is.EqualTo(rest.x).Within(0.01f), "A resized rig at rest must not deform.");
+            Assert.That(deformed.y, Is.EqualTo(rest.y).Within(0.01f));
         }
 
         [UnityTest]

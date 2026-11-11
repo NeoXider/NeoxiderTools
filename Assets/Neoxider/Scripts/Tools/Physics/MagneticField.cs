@@ -49,6 +49,29 @@ namespace Neo.Tools
             Direction
         }
 
+        /// <summary>Physics world the field queries.</summary>
+        public enum PhysicsSpace
+        {
+            /// <summary>3D colliders; Force moves Rigidbody.</summary>
+            ThreeD,
+
+            /// <summary>2D colliders (triggers included); Force moves Rigidbody2D, Kinematic keeps Z.</summary>
+            TwoD
+        }
+
+        /// <summary>How objects in the field are moved.</summary>
+        public enum MoveMethod
+        {
+            /// <summary>AddForce on the object's body (needs a Rigidbody / Rigidbody2D).</summary>
+            Force,
+
+            /// <summary>
+            ///     Moves the object's transform at Strength units per second (scaled by falloff); no body needed.
+            ///     For pickups, XP orbs, coins and other objects that should not simulate physics.
+            /// </summary>
+            Kinematic
+        }
+
         [Header("Settings")] [Tooltip("Field mode")] [SerializeField]
         private FieldMode mode = FieldMode.Attract;
 
@@ -63,6 +86,21 @@ namespace Neo.Tools
 
         [Header("Filtering")] [Tooltip("Layers of objects affected by the field")] [SerializeField]
         private LayerMask affectedLayers = -1;
+
+        [Header("Space & Motion")]
+        [Tooltip("ThreeD queries 3D colliders, TwoD queries Collider2D (triggers included) for 2D games.")]
+        [SerializeField]
+        private PhysicsSpace _space = PhysicsSpace.ThreeD;
+
+        [Tooltip("Force: AddForce on the object's body. Kinematic: moves the transform at Strength units per second " +
+                 "(scaled by falloff), no Rigidbody needed: pickups, XP orbs, coins.")]
+        [SerializeField]
+        private MoveMethod _moveMethod = MoveMethod.Force;
+
+        [Tooltip("An attracted object closer than this to the attraction point raises On Object Reached, for example " +
+                 "to collect a pickup. Checked in both move methods. 0 = off.")]
+        [Min(0f)] [SerializeField]
+        private float _reachDistance;
 
         [Header("Toggle")]
         [Tooltip(
@@ -114,6 +152,10 @@ namespace Neo.Tools
         [Tooltip("Invoked when object exits field")]
         public UnityEvent<GameObject> OnObjectExited = new();
 
+        [Tooltip("Invoked when an attracted object is within Reach Distance of the attraction point " +
+                 "(collect, despawn or score it here).")]
+        public UnityEvent<GameObject> OnObjectReached = new();
+
         [Tooltip("Invoked when mode changes (for Toggle)")]
         public UnityEvent<bool> OnModeChanged = new();
 
@@ -129,7 +171,12 @@ namespace Neo.Tools
         private readonly HashSet<GameObject> currentObjects = new();
         private readonly HashSet<Rigidbody> affectedBodies = new();
         private readonly List<GameObject> toRemove = new();
+        private readonly List<GameObject> _reached = new();
+        private readonly List<Collider2D> _colliders2D = new();
+        private readonly Dictionary<GameObject, Rigidbody2D> cachedBodies2D = new();
+        private readonly HashSet<Rigidbody2D> affectedBodies2D = new();
         private Collider[] _colliderBuffer;
+        private float _stepSeconds;
 
         // WHY: like after OnDisable, the first update after creation runs at once instead of waiting one Update Interval.
         private float lastUpdateTime = float.NegativeInfinity;
@@ -159,6 +206,27 @@ namespace Neo.Tools
             set => affectedLayers = value;
         }
 
+        /// <summary>Physics world queried by the field (3D or 2D).</summary>
+        public PhysicsSpace Space
+        {
+            get => _space;
+            set => _space = value;
+        }
+
+        /// <summary>Force (bodies) or Kinematic (transforms) motion.</summary>
+        public MoveMethod Motion
+        {
+            get => _moveMethod;
+            set => _moveMethod = value;
+        }
+
+        /// <summary>Distance to the attraction point that raises <see cref="OnObjectReached" />; 0 = off.</summary>
+        public float ReachDistance
+        {
+            get => _reachDistance;
+            set => _reachDistance = Mathf.Max(0f, value);
+        }
+
         /// <summary>
         ///     Current toggle phase (true = attract, false = repel) when Toggle is enabled.
         /// </summary>
@@ -181,6 +249,10 @@ namespace Neo.Tools
             currentObjects.Clear();
             affectedBodies.Clear();
             cachedRigidbodies.Clear();
+            affectedBodies2D.Clear();
+            cachedBodies2D.Clear();
+            _colliders2D.Clear();
+            _reached.Clear();
             toRemove.Clear();
             if (_colliderBuffer != null)
             {
@@ -390,48 +462,37 @@ namespace Neo.Tools
                 return;
             }
 
+            // WHY: kinematic steps cover the real time since the last update, so an Update Interval does not slow
+            // the motion; the clamp keeps a hitch from teleporting objects across the field.
+            _stepSeconds = float.IsNegativeInfinity(lastUpdateTime)
+                ? Time.deltaTime
+                : Mathf.Min(Time.time - lastUpdateTime, 0.25f);
             lastUpdateTime = Time.time;
 
             Vector3 fieldCenter = GetFieldCenter();
-            Rigidbody sourceBody = GetComponentInParent<Rigidbody>();
-            // WHY: a saturated buffer used to drop arbitrary colliders, churning enter/exit events every update.
-            int colliderCount = PhysicsOverlap.OverlapSphereComplete(fieldCenter, radius, affectedLayers,
-                ref _colliderBuffer, _maxOverlapColliders);
             currentObjects.Clear();
             affectedBodies.Clear();
+            affectedBodies2D.Clear();
+            _reached.Clear();
 
-            for (int i = 0; i < colliderCount; i++)
+            bool alive = _space == PhysicsSpace.TwoD ? UpdateObjects2D(fieldCenter) : UpdateObjects3D(fieldCenter);
+            if (!alive)
             {
-                Collider col = _colliderBuffer[i];
-                if (col == null || col.gameObject == gameObject ||
-                    (sourceBody != null && col.attachedRigidbody == sourceBody))
-                {
-                    continue;
-                }
+                return;
+            }
 
-                GameObject obj = col.gameObject;
-                if (!currentObjects.Add(obj))
-                {
-                    continue;
-                }
-
-                if (!objectsInField.Contains(obj))
-                {
-                    objectsInField.Add(obj);
-                    OnObjectEntered?.Invoke(obj);
-                }
-
+            for (int i = 0; i < _reached.Count; i++)
+            {
                 if (this == null || !isActiveAndEnabled)
                 {
                     return;
                 }
 
-                if (obj == null || col == null)
+                GameObject reached = _reached[i];
+                if (reached != null)
                 {
-                    continue;
+                    OnObjectReached?.Invoke(reached);
                 }
-
-                ApplyMagneticForce(obj, col);
             }
 
             toRemove.Clear();
@@ -448,8 +509,201 @@ namespace Neo.Tools
                 GameObject obj = toRemove[i];
                 objectsInField.Remove(obj);
                 cachedRigidbodies.Remove(obj);
+                cachedBodies2D.Remove(obj);
                 OnObjectExited?.Invoke(obj);
             }
+        }
+
+        /// <summary>Returns false when a listener disabled or destroyed the field mid-update.</summary>
+        private bool UpdateObjects3D(Vector3 fieldCenter)
+        {
+            Rigidbody sourceBody = GetComponentInParent<Rigidbody>();
+            // WHY: a saturated buffer used to drop arbitrary colliders, churning enter/exit events every update.
+            int colliderCount = PhysicsOverlap.OverlapSphereComplete(fieldCenter, radius, affectedLayers,
+                ref _colliderBuffer, _maxOverlapColliders);
+
+            for (int i = 0; i < colliderCount; i++)
+            {
+                Collider col = _colliderBuffer[i];
+                if (col == null || col.gameObject == gameObject ||
+                    (sourceBody != null && col.attachedRigidbody == sourceBody))
+                {
+                    continue;
+                }
+
+                GameObject obj = col.gameObject;
+                if (!TrackObject(obj))
+                {
+                    continue;
+                }
+
+                if (this == null || !isActiveAndEnabled)
+                {
+                    return false;
+                }
+
+                if (obj == null || col == null)
+                {
+                    continue;
+                }
+
+                if (_moveMethod == MoveMethod.Kinematic)
+                {
+                    MoveKinematic(obj.transform, false);
+                }
+                else
+                {
+                    ApplyMagneticForce(obj, col);
+                }
+            }
+
+            return true;
+        }
+
+        private bool UpdateObjects2D(Vector3 fieldCenter)
+        {
+            Rigidbody2D sourceBody = GetComponentInParent<Rigidbody2D>();
+            ContactFilter2D filter = new ContactFilter2D { useTriggers = true };
+            filter.SetLayerMask(affectedLayers);
+            Physics2D.OverlapCircle(fieldCenter, radius, filter, _colliders2D);
+
+            for (int i = 0; i < _colliders2D.Count; i++)
+            {
+                Collider2D col = _colliders2D[i];
+                if (col == null || col.gameObject == gameObject ||
+                    (sourceBody != null && col.attachedRigidbody == sourceBody))
+                {
+                    continue;
+                }
+
+                GameObject obj = col.gameObject;
+                if (!TrackObject(obj))
+                {
+                    continue;
+                }
+
+                if (this == null || !isActiveAndEnabled)
+                {
+                    return false;
+                }
+
+                if (obj == null || col == null)
+                {
+                    continue;
+                }
+
+                if (_moveMethod == MoveMethod.Kinematic)
+                {
+                    MoveKinematic(obj.transform, true);
+                }
+                else
+                {
+                    ApplyMagneticForce2D(obj, col);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Adds the object to this update's set and raises On Object Entered for newcomers. False for a duplicate.
+        /// </summary>
+        private bool TrackObject(GameObject obj)
+        {
+            if (!currentObjects.Add(obj))
+            {
+                return false;
+            }
+
+            if (!objectsInField.Contains(obj))
+            {
+                objectsInField.Add(obj);
+                OnObjectEntered?.Invoke(obj);
+            }
+
+            return true;
+        }
+
+        private void MoveKinematic(Transform target, bool keepDepth)
+        {
+            Vector3 position = target.position;
+            float speed = CalculateForceAtDistance(Vector3.Distance(GetFieldCenter(), position), fieldStrength);
+            float step = speed * _stepSeconds;
+            Vector3 next = position + CalculateForceDirection(position) * step;
+
+            // WHY: a pull toward a point must not overshoot it and jitter around it on the next update.
+            if (IsPullingToPoint())
+            {
+                Vector3 point = GetAttractionPoint();
+                Vector3 toPoint = point - position;
+                if (keepDepth)
+                {
+                    toPoint.z = 0f;
+                }
+
+                if (toPoint.sqrMagnitude <= step * step)
+                {
+                    next = point;
+                }
+            }
+
+            if (keepDepth)
+            {
+                next.z = position.z;
+            }
+
+            target.position = next;
+            CheckReached(target.gameObject, next);
+        }
+
+        private bool IsPullingToPoint()
+        {
+            bool forward = !_toggle || CurrentToggleState;
+            return mode != FieldMode.Direction && (mode == FieldMode.Repel ? !forward : forward);
+        }
+
+        private void CheckReached(GameObject obj, Vector3 position)
+        {
+            if (_reachDistance <= 0f || !IsPullingToPoint())
+            {
+                return;
+            }
+
+            Vector3 offset = GetAttractionPoint() - position;
+            if (_space == PhysicsSpace.TwoD)
+            {
+                offset.z = 0f;
+            }
+
+            if (offset.sqrMagnitude <= _reachDistance * _reachDistance)
+            {
+                _reached.Add(obj);
+            }
+        }
+
+        private void ApplyMagneticForce2D(GameObject obj, Collider2D col)
+        {
+            Rigidbody2D body = col.attachedRigidbody;
+            if (body == null && addRigidbodyIfNeeded)
+            {
+                if (!cachedBodies2D.TryGetValue(obj, out body) || body == null)
+                {
+                    body = obj.AddComponent<Rigidbody2D>();
+                    cachedBodies2D[obj] = body;
+                }
+            }
+
+            if (body == null || !affectedBodies2D.Add(body))
+            {
+                return;
+            }
+
+            Vector3 objectPosition = body.worldCenterOfMass;
+            Vector3 forceDirection = CalculateForceDirection(objectPosition);
+            float distance = Vector2.Distance(GetFieldCenter(), objectPosition);
+            float force = CalculateForceAtDistance(distance, fieldStrength);
+            body.AddForce((Vector2)forceDirection * force, ForceMode2D.Force);
+            CheckReached(obj, objectPosition);
         }
 
         private void ApplyMagneticForce(GameObject obj, Collider col)
@@ -467,6 +721,7 @@ namespace Neo.Tools
             float forceAtDistance = CalculateForceAtDistance(distance, fieldStrength);
 
             rb.AddForce(forceDirection * forceAtDistance, ForceMode.Force);
+            CheckReached(obj, objectPosition);
         }
 
         private Rigidbody GetOrAddRigidbody(GameObject obj, Collider col)

@@ -116,6 +116,14 @@ namespace Neo.Abilities
                 hash = Fold(hash, m.AbilityLevel);
                 hash = FoldFloat(hash, m.RemainingDuration, fixedPoint);
                 hash = FoldFloat(hash, m.ShieldConsumed, fixedPoint);
+                // WHY: only spent-scaled modifiers capture paid amounts, so every other state hash is unchanged.
+                for (int s = 0; s < m.SpentCount; s++)
+                {
+                    AbilitySpentResource paid = m.GetSpentAt(s);
+                    hash = FoldString(hash, paid.ResourceId);
+                    hash = FoldFloat(hash, paid.Amount, fixedPoint);
+                }
+
                 if (m.ReactionStates != null)
                 {
                     for (int r = 0; r < m.ReactionStates.Length; r++)

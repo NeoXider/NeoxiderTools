@@ -33,7 +33,7 @@ Both scenes are fully authored in the `.unity` file (no runtime UI construction,
 
 C# equivalent of the binding demo: `counter.Add(10)`, `bindText.RefreshBinding()`, `formattedText.SetValues(sources, "{0:0} / 100")`, `setProgress.SetRange(0f, 100f)`.
 
-The scenes are authored by the editor builders `NoCodeBindingDemoBuilder` / `NoCodeActionsDemoBuilder` (menu **Neoxider/Demo/Rebuild Active Demo Scene**). Paths are relative to `Assets/NeoxiderDemos/Demo` (Demo download).
+The scenes are saved with their UI and wiring. Paths are relative to `Assets/NeoxiderDemos/Demo` (Demo download).
 
 ## UX Discipline And C# Contract
 

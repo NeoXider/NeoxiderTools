@@ -94,6 +94,7 @@ NoCode существует для быстрой сборки сцен и ит�
 
 - Демо-сцены лежат вне пакета, в обычных видимых папках `Assets/NeoxiderDemos/Demo`, `Assets/NeoxiderDemos/NeoxiderPages`, `Assets/NeoxiderDemos/CharacterMovementFundamentals`. Их правят и коммитят как есть.
 - Пакет (`Assets/Neoxider`) не должен ссылаться на ассеты демо; демо могут ссылаться на пакет.
+- Сцена — источник правды. Скрипты, которые собирают или пересобирают сцену (билдеры, фиксеры, меню «rebuild», kit и их тесты), в репозиторий не коммитятся. Разовый редакторный скрипт допустим как инструмент: написать, один раз запустить в batchmode (`-executeMethod`), проверить и сохранить сцену, затем удалить скрипт до коммита. Подробнее — `dev-docs/DemoScenes.md`.
 - Git-установка: `https://github.com/NeoXider/NeoxiderTools.git#upm`. Ветку `upm` собирает `python scripts/build_distribution.py upm` из закоммиченной ревизии: в ней только пакет без `Tests/` и `Images/`, поэтому Unity качает несколько мегабайт, а не весь репозиторий (`git fetch --depth=1` тянет снимок всего дерева коммита).
 - Архивы релиза собирает `python scripts/build_distribution.py unitypackages`: `NeoxiderTools.v<ver>` (пакет) и по архиву на каждое демо, плюс `SHA256SUMS.txt`.
 - Тяжёлые ассеты сжимает `python scripts/optimize_package_assets.py`: PNG больше размера импорта уменьшаются до него с пересчётом PPU и прямоугольников спрайтов, WAV переводятся в OGG под тем же `.meta`. Цель — пакет до 5 МБ в git-загрузке и в архиве.

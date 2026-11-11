@@ -226,7 +226,7 @@ namespace Neo.Abilities.Fixed
                 FixedPropertyContribution c = properties[i];
                 if (FixedIdComparer.Same(c.PropertyId, FixedProperties.ShieldHp))
                 {
-                    capacity += c.ValueForStacks(instance.Stacks);
+                    capacity += c.ValueFor(instance.Stacks, instance.AbilityLevel);
                 }
             }
 

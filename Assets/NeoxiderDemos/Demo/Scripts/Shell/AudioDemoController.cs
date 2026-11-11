@@ -9,7 +9,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored <b>Neo.Audio</b> demo scene. The UI, the <see cref="AM" /> sound entries and
     ///     music pools, the <see cref="AMSettings" /> service and the <see cref="MusicControl" /> component are saved
-    ///     in AudioDemo.unity by its DemoSceneKit builder. Buttons call <c>AM.Play(id)</c>,
+    ///     in AudioDemo.unity. Buttons call <c>AM.Play(id)</c>,
     ///     <see cref="MusicControl" /> and <see cref="AMSettings" /> directly through persistent UnityEvents (the
     ///     NoCode path); this component only logs those calls, mirrors the live state into the authored labels and
     ///     syncs the controls with the persisted settings on start. It builds no UI and creates no clips at runtime.
@@ -46,7 +46,7 @@ namespace Neo.Samples
         private bool _started;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _audio != null && _settings != null && _nowPlaying != null && _log != null &&
                                     _musicVolume != null && _efxVolume != null && _musicToggle != null &&
                                     _efxToggle != null;
@@ -276,7 +276,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[AudioDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[AudioDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

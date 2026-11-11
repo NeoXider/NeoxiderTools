@@ -26,29 +26,80 @@ MonoBehaviour:
     Delivery: 0
     ProjectileArchetypeId: 
     ProjectileSpeed: 20
-    CastEffects: []
+    CastEffects:
+    - OpId: spawn
+      Target: 1
+      TeamFilter: 0
+      Radius: 0
+      RadiusByLevel: []
+      MaxTargets: 0
+      Amount: 0
+      AmountByLevel: []
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 0
+      DamageType: 
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: fx_frost
+      CustomParam: 
+      Chance: 1
+      AbilityId: 
+      Angle: 0
+      Duration: 0
+      Interval: 0
+      AmountPerStack: 0
     ImpactEffects:
     - OpId: damage
       Target: 3
       TeamFilter: 1
       Radius: 3.8
+      RadiusByLevel: []
+      MaxTargets: 0
       Amount: 7
+      AmountByLevel: []
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 0
       DamageType: magical
       ModifierId: 
       ResourceId: 
       ArchetypeId: 
       CustomParam: 
       Chance: 1
+      AbilityId: 
+      Angle: 0
+      Duration: 0
+      Interval: 0
+      AmountPerStack: 0
     - OpId: apply_modifier
       Target: 3
       TeamFilter: 1
       Radius: 3.8
+      RadiusByLevel: []
+      MaxTargets: 0
       Amount: 0
+      AmountByLevel: []
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 0
       DamageType: magical
       ModifierId: chill
       ResourceId: 
       ArchetypeId: 
       CustomParam: 
       Chance: 1
+      AbilityId: 
+      Angle: 0
+      Duration: 0
+      Interval: 0
+      AmountPerStack: 0
+    Specials: []
     CastCue: 
     ImpactCue: 

@@ -102,6 +102,70 @@ namespace Neo.Abilities.Fixed
             InitialDurationTicks = Blueprint.ResolveDurationTicks(AbilityLevel);
         }
 
+        // WHY: what the applying cast paid, kept only for blueprints whose tick or reaction amounts scale with it, so
+        // every other modifier stays allocation- and hash-identical.
+        private FixedSpentResource[] _spent;
+        private int _spentCount;
+
+        /// <summary>Raw amounts the applying cast paid, captured when the blueprint scales with them; 0 otherwise.</summary>
+        public int SpentCount => _spentCount;
+
+        public FixedSpentResource GetSpentAt(int index)
+        {
+            if ((uint)index >= (uint)_spentCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            return _spent[index];
+        }
+
+        /// <summary>Total captured raw amount of <paramref name="resourceId" />; 0 when none.</summary>
+        public int GetSpent(string resourceId)
+        {
+            long total = 0L;
+            for (int i = 0; i < _spentCount; i++)
+            {
+                if (FixedIdComparer.Same(_spent[i].ResourceId, resourceId))
+                {
+                    total += _spent[i].AmountRaw;
+                }
+            }
+
+            return FixedMath.ClampToInt(total);
+        }
+
+        /// <summary>Captures (or, without paid amounts, clears) what the applying cast paid; the latest application wins.</summary>
+        internal void CaptureSpent(FixedEffectContext source)
+        {
+            int count = source != null ? source.SpentCount : 0;
+            if (count == 0 || !FixedValueResolver.UsesSpent(Blueprint, source.Specials))
+            {
+                _spentCount = 0;
+                return;
+            }
+
+            if (_spent == null || _spent.Length < count)
+            {
+                _spent = new FixedSpentResource[count];
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                _spent[i] = source.GetSpentAt(i);
+            }
+
+            _spentCount = count;
+        }
+
+        internal void CopySpentTo(FixedEffectContext context)
+        {
+            for (int i = 0; i < _spentCount; i++)
+            {
+                context.AddSpent(_spent[i].ResourceId, _spent[i].AmountRaw);
+            }
+        }
+
         internal void RefreshDuration()
         {
             RemainingTicks = InitialDurationTicks;
@@ -195,6 +259,16 @@ namespace Neo.Abilities.Fixed
         public FixedModifierApplyResult Apply(FixedModifierBlueprint blueprint, int caster, int owner,
             string sourceAbilityId = null, int abilityLevel = 1)
         {
+            return Apply(blueprint, caster, owner, sourceAbilityId, abilityLevel, null);
+        }
+
+        /// <summary>
+        ///     Apply that also captures what <paramref name="spentSource" />'s cast paid (before the Applied triggers) when
+        ///     the blueprint's tick or reaction effects scale with a spent resource; re-applications re-capture it.
+        /// </summary>
+        public FixedModifierApplyResult Apply(FixedModifierBlueprint blueprint, int caster, int owner,
+            string sourceAbilityId, int abilityLevel, FixedEffectContext spentSource)
+        {
             if (blueprint == null || string.IsNullOrEmpty(blueprint.Id) || owner == 0)
             {
                 return new FixedModifierApplyResult(null, false);
@@ -254,6 +328,7 @@ namespace Neo.Abilities.Fixed
                         existing.TickAccumulator = 0;
                     }
 
+                    existing.CaptureSpent(spentSource);
                     Bump(state);
                     Applied?.Invoke(existing, false);
                     return new FixedModifierApplyResult(existing, false);
@@ -275,6 +350,7 @@ namespace Neo.Abilities.Fixed
                 instance.ReactionStates = new FixedReactionState[blueprint.EventReactions.Count];
             }
 
+            instance.CaptureSpent(spentSource);
             state.List.Add(instance);
             CountTriggers(state, instance.TriggerFlags, 1);
             Bump(state);
@@ -411,7 +487,7 @@ namespace Neo.Abilities.Fixed
                     FixedPropertyContribution c = properties[p];
                     if (FixedIdComparer.Same(c.PropertyId, propertyId))
                     {
-                        results.Add(new FixedResolvedContribution(c.Op, c.ValueForStacks(m.Stacks), c.Denominator));
+                        results.Add(new FixedResolvedContribution(c.Op, c.ValueFor(m.Stacks, m.AbilityLevel), c.Denominator));
                     }
                 }
             }

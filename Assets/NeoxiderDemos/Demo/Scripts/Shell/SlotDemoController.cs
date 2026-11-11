@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Controller of the authored <b>Neo.Bonus</b> slot machine demo (SlotExample.unity). Its DemoSceneKit builder
+    ///     Controller of the authored <b>Neo.Bonus</b> slot machine demo (SlotExample.unity). The scene
     ///     saves the frame, the wallet and every listener in the scene: the bet and payline buttons call
     ///     <see cref="SpinController" /> directly, <see cref="SpinController.OnChangeBet" /> and
     ///     <see cref="SpinController.OnChangeMoneyWin" /> write their labels through <c>TMP_Text.SetText</c>, and the
@@ -49,7 +49,7 @@ namespace Neo.Samples
         private readonly StringBuilder _lineText = new();
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _slot != null && _wallet != null && _resultValue != null && _log != null;
 
         public SpinController Slot => _slot;
@@ -244,7 +244,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[SlotDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "[SlotDemoController] The scene is not authored. Re-import the scene from the Demo download.", this);
         }
     }
 }

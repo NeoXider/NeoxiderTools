@@ -69,7 +69,12 @@ namespace Neo.Abilities.Fixed
         }
     }
 
-    /// <summary>A granted ability of a fixed unit: level, charges and cooldown in ticks.</summary>
+    /// <summary>
+    ///     A granted ability of a fixed unit: level, charges and cooldown in ticks. Level-scaled cast parameters are read
+    ///     at the current level; a level change keeps a running cooldown's remaining ticks, grants the charges a raised
+    ///     cap adds and clamps the charges to a lowered cap (stopping the restore timer when nothing is left to restore),
+    ///     exactly like the float AbilitySlot.
+    /// </summary>
     public sealed class FixedAbilitySlot
     {
         private int _cooldownTicks;
@@ -78,7 +83,7 @@ namespace Neo.Abilities.Fixed
         internal FixedAbilitySlot(FixedAbilityBlueprint blueprint)
         {
             Blueprint = blueprint ?? throw new ArgumentNullException(nameof(blueprint));
-            Charges = blueprint.UsesCharges ? blueprint.MaxCharges : 1;
+            Charges = blueprint.UsesChargesAt(1) ? blueprint.ResolveMaxCharges(1) : 1;
         }
 
         public FixedAbilityBlueprint Blueprint { get; }
@@ -88,21 +93,49 @@ namespace Neo.Abilities.Fixed
         public int Level
         {
             get => _level;
-            set => _level = value < 1 ? 1 : value;
+            set
+            {
+                int clamped = value < 1 ? 1 : value;
+                if (clamped == _level)
+                {
+                    return;
+                }
+
+                int previousCapacity = ChargeCapacity;
+                _level = clamped;
+                ReconcileChargeCapacity(previousCapacity);
+            }
         }
 
-        public bool IsReady => Charges > 0 || !Blueprint.UsesCharges && CooldownRemainingTicks <= 0;
+        /// <summary>Charge cap at the current level.</summary>
+        public int MaxCharges => Blueprint.ResolveMaxCharges(_level);
+
+        public bool UsesCharges => MaxCharges > 1;
+
+        /// <summary>Raw cast range at the current level, before cast_range_bonus.</summary>
+        public int RangeRaw => Blueprint.ResolveRangeRaw(_level);
+
+        public bool IsReady => Charges > 0 || !UsesCharges && CooldownRemainingTicks <= 0;
 
         /// <summary>Length of the cooldown currently running, in ticks.</summary>
         public int CooldownTicks => _cooldownTicks;
+
+        private int ChargeCapacity
+        {
+            get
+            {
+                int max = MaxCharges;
+                return max > 1 ? max : 1;
+            }
+        }
 
         internal void StartCooldown(int ticks)
         {
             _cooldownTicks = ticks > 0 ? ticks : 0;
             CooldownRemainingTicks = _cooldownTicks;
-            if (Blueprint.UsesCharges && _cooldownTicks <= 0)
+            if (UsesCharges && _cooldownTicks <= 0)
             {
-                Charges = Blueprint.MaxCharges;
+                Charges = MaxCharges;
             }
         }
 
@@ -119,15 +152,40 @@ namespace Neo.Abilities.Fixed
                 return;
             }
 
-            if (Blueprint.UsesCharges)
+            int maxCharges = MaxCharges;
+            if (maxCharges > 1)
             {
-                Charges = Charges + 1 < Blueprint.MaxCharges ? Charges + 1 : Blueprint.MaxCharges;
-                CooldownRemainingTicks = Charges >= Blueprint.MaxCharges ? 0 : _cooldownTicks;
+                Charges = Charges + 1 < maxCharges ? Charges + 1 : maxCharges;
+                CooldownRemainingTicks = Charges >= maxCharges ? 0 : _cooldownTicks;
             }
             else
             {
                 CooldownRemainingTicks = 0;
                 Charges = 1;
+            }
+        }
+
+        private void ReconcileChargeCapacity(int previousCapacity)
+        {
+            int capacity = ChargeCapacity;
+            if (capacity == previousCapacity)
+            {
+                return;
+            }
+
+            if (capacity > previousCapacity)
+            {
+                long raised = (long)Charges + (capacity - previousCapacity);
+                Charges = raised >= capacity ? capacity : (int)raised;
+            }
+            else if (Charges > capacity)
+            {
+                Charges = capacity;
+            }
+
+            if (Charges >= capacity && CooldownRemainingTicks > 0)
+            {
+                CooldownRemainingTicks = 0;
             }
         }
     }

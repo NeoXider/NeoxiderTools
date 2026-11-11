@@ -128,8 +128,7 @@ namespace Neo.Tests.Play
             string root = FindCompiledDemoRoot();
             if (root == null)
             {
-                Assert.Ignore("This scene test needs the demo tree Assets/NeoxiderDemos/Demo (Demo download); " +
-                              "the builders are covered by Neo.Demo.Editor.Tests.");
+                Assert.Ignore("This scene test needs the demo tree Assets/NeoxiderDemos/Demo (Demo download).");
             }
 
             string path = root + "/" + relativePath;
@@ -174,7 +173,7 @@ namespace Neo.Tests.Play
 
         /// <summary>
         ///     Every demo controller of the scene that exposes <c>public bool IsSceneBuilt</c> must report true. False
-        ///     means the saved scene is not authored or is stale against its builder, which the controller itself
+        ///     means the saved scene lost its authored references, which the controller itself
         ///     only reports as a warning. Returns how many controllers were checked.
         /// </summary>
         internal static int CollectUnbuiltControllerFailures(Scene scene, List<string> failures)
@@ -201,8 +200,8 @@ namespace Neo.Tests.Play
                 {
                     if (!(bool)built.GetValue(behaviour))
                     {
-                        failures.Add(at + " reports " + SceneBuiltProperty + " = false: the saved scene is not " +
-                                     "authored or is stale against its builder (Neoxider/Demo/Rebuild Active Demo Scene).");
+                        failures.Add(at + " reports " + SceneBuiltProperty + " = false: the saved scene lost " +
+                                     "its authored references.");
                     }
                 }
                 catch (TargetInvocationException exception)
@@ -273,73 +272,6 @@ namespace Neo.Tests.Play
         }
 
         /// <summary>
-        ///     Sample names of the scene builders registered for <paramref name="scenePath" />. Returns false when the
-        ///     Neo.Demo.Editor kit does not compile (no builder registry to ask).
-        /// </summary>
-        internal static bool TryGetSceneBuilderSamples(string scenePath, List<string> samples)
-        {
-            Type runner = FindType("Neo.Demo.Editor.DemoSceneRunner");
-            if (runner == null)
-            {
-                return false;
-            }
-
-            MethodInfo find = runner.GetMethod("FindBuildersForScene", BindingFlags.Public | BindingFlags.Static,
-                null, new[] { typeof(string) }, null);
-            Assert.That(find, Is.Not.Null, "DemoSceneRunner.FindBuildersForScene(string) is the builder registry seam.");
-            foreach (object builder in (IEnumerable)find.Invoke(null, new object[] { scenePath }))
-            {
-                samples.Add(Convert.ToString(GetProperty(builder, "Sample")));
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        ///     Resolved scene paths of every registered, valid scene builder whose sample is visible. Builders that
-        ///     cannot resolve (their sample is hidden) go to <paramref name="unresolved" />. Returns false when the
-        ///     Neo.Demo.Editor kit does not compile.
-        /// </summary>
-        internal static bool TryGetRegisteredBuilderScenes(List<string> scenes, List<string> unresolved)
-        {
-            Type runner = FindType("Neo.Demo.Editor.DemoSceneRunner");
-            if (runner == null)
-            {
-                return false;
-            }
-
-            MethodInfo discover = runner.GetMethod("DiscoverBuilders", BindingFlags.Public | BindingFlags.Static,
-                null, Type.EmptyTypes, null);
-            Assert.That(discover, Is.Not.Null, "DemoSceneRunner.DiscoverBuilders() is the builder registry seam.");
-            foreach (object info in (IEnumerable)discover.Invoke(null, null))
-            {
-                string id = Convert.ToString(GetProperty(info, "Id"));
-                if (!string.IsNullOrEmpty((string)GetProperty(info, "Error")))
-                {
-                    continue;
-                }
-
-                MethodInfo resolve = info.GetType().GetMethod("ResolveAssetPath",
-                    BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
-                Assert.That(resolve, Is.Not.Null, "DemoSceneBuilderInfo.ResolveAssetPath() resolves the builder scene.");
-                try
-                {
-                    string path = (string)resolve.Invoke(info, null);
-                    if (!scenes.Contains(path))
-                    {
-                        scenes.Add(path);
-                    }
-                }
-                catch (TargetInvocationException exception)
-                {
-                    unresolved.Add(id + ": " + (exception.InnerException ?? exception).Message);
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
         ///     Every <c>ModuleDemoSceneInfo</c> of the scene must point at its authored card, and an enabled info with
         ///     Show Runtime Overlay must show it. Returns how many authored cards the scene carries.
         /// </summary>
@@ -363,7 +295,7 @@ namespace Neo.Tests.Play
                 if (!(bool)GetProperty(info, "HasAuthoredOverlay"))
                 {
                     failures.Add("ModuleDemoSceneInfo on '" + at + "' has no authored info card " +
-                                 "(rebuild the scene with Neoxider/Demo/Rebuild All Demo Scenes).");
+                                 "(re-import the scene from the Demo download).");
                     continue;
                 }
 
@@ -701,13 +633,13 @@ namespace Neo.Tests.Play
 
     /// <summary>
     ///     Collects the error, assert and exception logs raised while it is open, plus the warnings demo
-    ///     controllers raise when their saved scene is not authored or is stale ("... is not authored. Run
-    ///     Neoxider/Demo/Rebuild Active Demo Scene."). Other warnings and plain logs are allowed.
+    ///     controllers raise when their saved scene lost its authored references ("... is not authored. Re-import
+    ///     the scene from the Demo download."). Other warnings and plain logs are allowed.
     /// </summary>
     internal sealed class SampleLogCapture : IDisposable
     {
         private static readonly Regex UnbuiltSceneWarning = new(
-            @"\b(?:not|no) authored\b|Rebuild (?:the scene|Active Demo Scene|All Demo Scenes)|Scene references are missing",
+            @"\b(?:not|no) authored\b|Re-import the scene|Scene references are missing",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly object _lock = new object();

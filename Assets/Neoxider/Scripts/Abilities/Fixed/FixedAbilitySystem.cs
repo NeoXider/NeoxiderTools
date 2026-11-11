@@ -36,6 +36,10 @@ namespace Neo.Abilities.Fixed
         private readonly List<FixedEffectContext> _contextPool = new List<FixedEffectContext>(8);
         private readonly List<List<int>> _targetScratchPool = new List<List<int>>(FixedEffectContext.MaxDepth + 1);
         private readonly List<List<FixedAbilityCost>> _costScratchPool = new List<List<FixedAbilityCost>>(2);
+
+        // WHY: what each cast depth paid, handed to its effect context; nested casts use the next depth's list.
+        private readonly List<List<FixedSpentResource>> _spentScratchPool =
+            new List<List<FixedSpentResource>>(MaxCastDepth + 1);
         private readonly List<FixedUnit> _stepUnitScratch = new List<FixedUnit>(16);
 
         private IFixedWorldAdapter _world;
@@ -340,6 +344,7 @@ namespace Neo.Abilities.Fixed
                 context.AbilityLevel = pending.Level;
                 context.Specials = ability.Specials;
                 context.Origin = FixedEffectOrigin.ProjectileHit;
+                pending.CopySpentTo(context);
                 FixedUnit hit = GetUnit(hitUnit);
                 if (hit != null && hit.IsAlive)
                 {
@@ -387,7 +392,8 @@ namespace Neo.Abilities.Fixed
                         continue;
                     }
 
-                    if (node.ChanceRaw < one && context.Random.NextRaw(one) >= node.ChanceRaw)
+                    int chance = node.ResolveChanceRaw(context.AbilityLevel);
+                    if (chance < one && context.Random.NextRaw(one) >= chance)
                     {
                         continue;
                     }
@@ -498,10 +504,12 @@ namespace Neo.Abilities.Fixed
         }
 
         internal void LaunchProjectile(FixedAbilityBlueprint payload, int caster, FixedVec3 origin, FixedVec3 direction,
-            int target, string archetypeId, int speedRaw, int level, uint seed)
+            int target, string archetypeId, int speedRaw, int level, uint seed, FixedEffectContext spentSource = null)
         {
             uint castId = _nextCastId++;
-            _pendingProjectiles[castId] = RentPending(payload, caster, seed, level);
+            PendingProjectile pending = RentPending(payload, caster, seed, level);
+            pending.CaptureSpent(spentSource);
+            _pendingProjectiles[castId] = pending;
             _world.RequestSpawn(new FixedSpawnRequest(archetypeId, caster, origin, direction, target, payload.Id, speedRaw,
                 castId));
         }
@@ -525,6 +533,7 @@ namespace Neo.Abilities.Fixed
                 context.SourceStacks = parent.SourceStacks;
                 context.TargetPoint = parent.TargetPoint;
                 context.HasTargetPoint = parent.HasTargetPoint;
+                context.CopySpentFrom(parent);
                 for (int i = 0; i < targets.Count; i++)
                 {
                     context.PrimaryTargets.Add(targets[i]);
@@ -606,8 +615,10 @@ namespace Neo.Abilities.Fixed
 
             if (!slot.IsReady)
             {
-                return FixedCastResult.Fail(ability.UsesCharges ? FixedCastFailure.NoCharges : FixedCastFailure.OnCooldown);
+                return FixedCastResult.Fail(slot.UsesCharges ? FixedCastFailure.NoCharges : FixedCastFailure.OnCooldown);
             }
+
+            int level = slot.Level;
 
             FixedUnit targetUnit = null;
             if (ability.Targeting == FixedTargeting.Unit)
@@ -634,9 +645,10 @@ namespace Neo.Abilities.Fixed
                 }
             }
 
-            if (ability.RangeRaw > 0 && _world.TryGetPosition(caster.Id, out FixedVec3 casterPosition))
+            int rangeRaw = ability.ResolveRangeRaw(level);
+            if (rangeRaw > 0 && _world.TryGetPosition(caster.Id, out FixedVec3 casterPosition))
             {
-                long range = (long)ability.RangeRaw + caster.GetProperty(FixedProperties.CastRangeBonus);
+                long range = (long)rangeRaw + caster.GetProperty(FixedProperties.CastRangeBonus);
                 bool hasTarget = false;
                 FixedVec3 targetPosition = FixedVec3.Zero;
                 if (ability.Targeting == FixedTargeting.Unit && targetUnit != null &&
@@ -658,40 +670,52 @@ namespace Neo.Abilities.Fixed
                 }
             }
 
-            if (!TryPayCosts(caster, ability))
+            List<FixedSpentResource> spent = RentScratch(_spentScratchPool, _castDepth);
+            spent.Clear();
+            if (!TryPayCosts(caster, ability, level, targetUnit != null ? targetUnit.Id : 0, spent))
             {
+                spent.Clear();
                 return FixedCastResult.Fail(FixedCastFailure.NotEnoughResources);
             }
 
             IFixedCooldownRule cooldowns = Rules.Cooldowns;
-            if (ability.UsesCharges)
+            if (slot.UsesCharges)
             {
                 slot.Charges--;
                 if (slot.CooldownRemainingTicks <= 0)
                 {
-                    int restore = ability.ChargeRestoreTicks > 0 ? ability.ChargeRestoreTicks : ability.CooldownTicks;
-                    slot.StartCooldown(cooldowns.ResolveCooldownTicks(caster, ability, restore));
+                    slot.StartCooldown(cooldowns.ResolveCooldownTicks(caster, ability, ability.ResolveChargeRestoreTicks(level)));
                 }
             }
             else
             {
                 slot.Charges = 0;
-                slot.StartCooldown(cooldowns.ResolveCooldownTicks(caster, ability, ability.CooldownTicks));
+                slot.StartCooldown(cooldowns.ResolveCooldownTicks(caster, ability, ability.ResolveCooldownTicks(level)));
             }
 
             uint castId = _nextCastId++;
-            Events.Publish(new FixedEventArgs(FixedEvents.AbilityCast, caster.Id, targetUnit != null ? targetUnit.Id : 0, 0,
-                ability.Id, castId: castId));
-            ExecuteAcceptedCast(in request, caster, ability, slot, targetUnit, castId);
+            try
+            {
+                Events.Publish(new FixedEventArgs(FixedEvents.AbilityCast, caster.Id, targetUnit != null ? targetUnit.Id : 0,
+                    0, ability.Id, castId: castId));
+                ExecuteAcceptedCast(in request, caster, ability, slot, targetUnit, castId, spent);
+            }
+            finally
+            {
+                spent.Clear();
+            }
+
             return FixedCastResult.Ok(castId);
         }
 
         private void ExecuteAcceptedCast(in FixedCastRequest request, FixedUnit caster, FixedAbilityBlueprint ability,
-            FixedAbilitySlot slot, FixedUnit targetUnit, uint castId)
+            FixedAbilitySlot slot, FixedUnit targetUnit, uint castId, List<FixedSpentResource> spent)
         {
+            // WHY: read after the ability_cast receipt, as the float core does.
+            int level = slot.Level;
             uint seed = FixedSeeds.ForCast(request.Seed, castId, caster.Id);
             FixedVec3 reach = ability.Targeting == FixedTargeting.Direction
-                ? DirectionReach(caster, ability, request.Direction)
+                ? DirectionReach(caster, ability, level, request.Direction)
                 : FixedVec3.Zero;
             FixedEffectContext context = RentContext(caster.Id, ability.Id, seed);
             try
@@ -723,9 +747,14 @@ namespace Neo.Abilities.Fixed
                 }
 
                 context.CastId = castId;
-                context.AbilityLevel = slot.Level;
+                context.AbilityLevel = level;
                 context.Specials = ability.Specials;
                 context.Origin = FixedEffectOrigin.Cast;
+                for (int i = 0; i < spent.Count; i++)
+                {
+                    context.AddSpent(spent[i].ResourceId, spent[i].AmountRaw);
+                }
+
                 if (ability.CastEffects.Count > 0)
                 {
                     ExecuteEffects(ability.CastEffects, context);
@@ -733,7 +762,9 @@ namespace Neo.Abilities.Fixed
 
                 if (ability.Delivery == FixedDelivery.Projectile)
                 {
-                    _pendingProjectiles[castId] = RentPending(ability, caster.Id, seed, slot.Level);
+                    PendingProjectile pending = RentPending(ability, caster.Id, seed, level);
+                    pending.CaptureSpent(context);
+                    _pendingProjectiles[castId] = pending;
                     _world.TryGetPosition(caster.Id, out FixedVec3 origin);
                     FixedVec3 direction = request.Direction;
                     if (ability.Targeting == FixedTargeting.Direction)
@@ -751,7 +782,7 @@ namespace Neo.Abilities.Fixed
                     }
 
                     _world.RequestSpawn(new FixedSpawnRequest(ability.ProjectileArchetypeId, caster.Id, origin, direction,
-                        targetUnit != null ? targetUnit.Id : 0, ability.Id, ability.ProjectileSpeedRaw, castId));
+                        targetUnit != null ? targetUnit.Id : 0, ability.Id, ability.ResolveProjectileSpeedRaw(level), castId));
                 }
                 else if (ability.ImpactEffects.Count > 0)
                 {
@@ -764,18 +795,20 @@ namespace Neo.Abilities.Fixed
             }
         }
 
-        private FixedVec3 DirectionReach(FixedUnit caster, FixedAbilityBlueprint ability, FixedVec3 direction)
+        private FixedVec3 DirectionReach(FixedUnit caster, FixedAbilityBlueprint ability, int level, FixedVec3 direction)
         {
             int one = Rules.Format.One;
             long length = direction.LengthFloor;
-            long reach = ability.RangeRaw > 0
-                ? (long)ability.RangeRaw + caster.GetProperty(FixedProperties.CastRangeBonus)
+            int rangeRaw = ability.ResolveRangeRaw(level);
+            long reach = rangeRaw > 0
+                ? (long)rangeRaw + caster.GetProperty(FixedProperties.CastRangeBonus)
                 : FixedMath.Max(length, 10L * one);
             int clamped = FixedMath.ClampToInt(FixedMath.Max(0L, reach));
             return length > 0L ? direction.WithLength(clamped) : new FixedVec3(0, 0, clamped);
         }
 
-        private bool TryPayCosts(FixedUnit caster, FixedAbilityBlueprint ability)
+        private bool TryPayCosts(FixedUnit caster, FixedAbilityBlueprint ability, int level, int target,
+            List<FixedSpentResource> spent)
         {
             int count = ability.Costs.Count;
             if (count == 0)
@@ -791,7 +824,35 @@ namespace Neo.Abilities.Fixed
                 for (int i = 0; i < count; i++)
                 {
                     FixedAbilityCost cost = ability.Costs[i];
-                    captured.Add(new FixedAbilityCost(cost.ResourceId, Rules.Costs.ResolveCost(caster, ability, cost)));
+                    FixedAbilityCost leveled = cost;
+                    leveled.AmountRaw = cost.ResolveAmountRaw(ability.Specials, this, caster.Id, level, target);
+                    int amount = Rules.Costs.ResolveCost(caster, ability, leveled);
+                    if (cost.Mode != FixedCostMode.Fixed)
+                    {
+                        if (string.IsNullOrEmpty(cost.ResourceId))
+                        {
+                            return false;
+                        }
+
+                        long available = caster.GetCurrent(cost.ResourceId);
+                        for (int previous = 0; previous < captured.Count; previous++)
+                        {
+                            if (FixedIdComparer.Same(captured[previous].ResourceId, cost.ResourceId))
+                            {
+                                available -= FixedMath.Max(0, captured[previous].AmountRaw);
+                            }
+                        }
+
+                        int availableRaw = FixedMath.ClampToInt(FixedMath.Max(0L, available));
+                        if (availableRaw < cost.MinAmountRaw)
+                        {
+                            return false;
+                        }
+
+                        amount = cost.Mode == FixedCostMode.All ? availableRaw : FixedMath.Min(availableRaw, amount);
+                    }
+
+                    captured.Add(new FixedAbilityCost(cost.ResourceId, amount));
                 }
 
                 for (int i = 0; i < captured.Count; i++)
@@ -828,6 +889,11 @@ namespace Neo.Abilities.Fixed
                     if (cost.AmountRaw > 0 && !caster.TrySpend(cost.ResourceId, cost.AmountRaw))
                     {
                         return false;
+                    }
+
+                    if (cost.AmountRaw > 0)
+                    {
+                        spent.Add(new FixedSpentResource(cost.ResourceId, cost.AmountRaw));
                     }
                 }
 
@@ -896,6 +962,7 @@ namespace Neo.Abilities.Fixed
 
                 context.Origin = FixedEffectOrigin.ModifierTick;
                 context.SourceStacks = instance.Stacks;
+                instance.CopySpentTo(context);
                 context.PrimaryTargets.Add(instance.Owner);
                 ExecuteEffects(effects, context);
             }
@@ -952,6 +1019,7 @@ namespace Neo.Abilities.Fixed
             {
                 _pendingProjectiles.Remove(castId);
                 pending.Ability = null;
+                pending.ClearSpent();
                 _pendingPool.Add(pending);
             }
         }
@@ -988,6 +1056,43 @@ namespace Neo.Abilities.Fixed
             public int Level;
             public uint HitIndex;
             public long ExpireAtTick;
+
+            /// <summary>What the launching cast paid, replayed into every hit; null until first needed.</summary>
+            private List<FixedSpentResource> _spent;
+
+            public void CaptureSpent(FixedEffectContext source)
+            {
+                _spent?.Clear();
+                int count = source != null ? source.SpentCount : 0;
+                if (count == 0)
+                {
+                    return;
+                }
+
+                _spent ??= new List<FixedSpentResource>(count);
+                for (int i = 0; i < count; i++)
+                {
+                    _spent.Add(source.GetSpentAt(i));
+                }
+            }
+
+            public void CopySpentTo(FixedEffectContext context)
+            {
+                if (_spent == null)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < _spent.Count; i++)
+                {
+                    context.AddSpent(_spent[i].ResourceId, _spent[i].AmountRaw);
+                }
+            }
+
+            public void ClearSpent()
+            {
+                _spent?.Clear();
+            }
         }
     }
 }

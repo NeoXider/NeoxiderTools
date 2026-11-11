@@ -160,6 +160,19 @@ namespace Neo.Core.Level
             }
         }
 
+        /// <summary>
+        ///     Progress through the current level in [0, 1] (1 at the max level). Bind it to a SetProgress / Image fill
+        ///     for an XP bar.
+        /// </summary>
+        public float XpProgress01
+        {
+            get
+            {
+                EnsureInitialized();
+                return _model != null ? _model.LevelProgress01 : 0f;
+            }
+        }
+
         public bool HasMaxLevel
         {
             get

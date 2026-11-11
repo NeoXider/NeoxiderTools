@@ -62,7 +62,7 @@ namespace Neo.Tests.Play
             Scene scene = SceneManager.GetSceneByPath(path);
             Component controller = SamplePlayScenes.RequireActiveComponent("Neo.Samples.AudioDemoController");
             Assert.That((bool)SamplePlayScenes.GetProperty(controller, "IsSceneBuilt"), Is.True,
-                "AudioDemo must be authored by AudioDemoBuilder (UI and wiring saved in the scene).");
+                "AudioDemo must carry its UI and wiring saved in the scene.");
             AM manager = (AM)SamplePlayScenes.GetProperty(controller, "Audio");
             Assert.That(manager, Is.Not.Null);
             Assert.That(manager.gameObject.scene == scene, Is.True, "The demo drives the scene's own AM.");
@@ -73,7 +73,7 @@ namespace Neo.Tests.Play
             int canvasesBefore = CountSceneCanvases(scene);
 
             SoundEntry shot = manager.GetSound("shot");
-            Assert.That(shot, Is.Not.Null, "The builder authors the 'shot' sound entry.");
+            Assert.That(shot, Is.Not.Null, "The scene carries the 'shot' sound entry.");
             Assert.That(shot.RandomizePitch, Is.True, "'shot' plays on a pitch voice, so the voice proves the play.");
             Assert.That(shot.PitchMax, Is.GreaterThan(shot.PitchMin), "'shot' authors a real pitch range.");
             UnityEngine.Random.State randomBefore = UnityEngine.Random.state;

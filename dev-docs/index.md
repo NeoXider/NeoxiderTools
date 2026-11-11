@@ -50,7 +50,7 @@ Working documents for package developers and agents. They are not shipped in the
 
 - [TODO](TODO.md) — open technical tasks and follow-ups, grouped by module.
 - [Ideas](IDEAS.md) — ideas that may become tasks later.
-- [Demo scene builders](DemoSceneBuilders.md) — how demo scenes are authored by editor scene builders (DemoSceneKit), the runner menu and batch mode, idempotency rules.
+- [Demo scenes](DemoScenes.md) — demo scenes are saved assets; scene builders are one-off tools and are never committed.
 - [Documentation style](DocumentationStyle.md) and the [component page template](TEMPLATE.md).
 - [Summary](summary.md) — compact navigation for agents.
 - [Abilities architecture](ABILITIES_ARCHITECTURE.md), [Dota ability architecture reference](DOTA_ABILITY_ARCHITECTURE.md), [Abilities atom gap analysis](ABILITIES_ATOMS_GAP.md) — design references for `Neo.Abilities`.

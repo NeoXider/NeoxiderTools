@@ -20,6 +20,8 @@
 | `OnRollComplete` | Completion notification, including failed rolls. |
 | `LastSelectedIndex` / `LastSelectedEntry` | Most recently notified index and entry; initially `-1` / `null`. |
 | `Manager` | Runtime table; edits use the same mutation rules as `ChanceManager`. |
+| `Draw Count` / `OnDrawStarted` | Unique draws (`GenerateUniqueVoid()` / `GenerateUnique(count)`) pick up to **Draw Count** different entries by weight. `OnDrawStarted` fires first (hide every option there), then each pick raises `OnIndexSelected`, `OnIndexAndWeightSelected` and its `EventsByIndex` entry, then `OnRollComplete` once. Use it for upgrade cards, shop offers, reward choices. |
+| Entry **Max Picks** / `ConsumePick(index)` | `ConsumePick` records that an option was taken (call it from the option's button). An entry whose **Max Picks** (0 = unlimited) is used up drops out of unique draws. `ResetPicks()` starts over, `HasPicksLeft(index)`, `LastDraw`, `PicksTaken`. The core is `ChanceManager.PickUnique(count, result, picksTaken)`. |
 
 For each notified roll, result state is assigned first, then events run in this order: index, index/probability, matching per-index event, completion. A generated roll on an empty or zero-total table still emits index `-1`, probability `0`, and completion; no per-index event runs.
 

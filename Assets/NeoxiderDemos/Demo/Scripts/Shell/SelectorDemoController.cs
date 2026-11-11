@@ -7,7 +7,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored <b>Selector</b> demo (Selector.unity). Three <see cref="Selector" /> components
     ///     - a skin picker (index mode), a level bar (fill mode) and hearts (fill mode with index offset -1) - their
-    ///     item objects, the buttons and the info card are saved in the scene by its DemoSceneKit builder. Buttons
+    ///     item objects, the buttons and the info card are saved in the scene. Buttons
     ///     call <see cref="Selector.Next" />, <see cref="Selector.Previous" />, <see cref="Selector.SetRandom()" /> and
     ///     <see cref="Selector.SetLast" /> directly through persistent UnityEvents, and every selector's
     ///     <see cref="Selector.OnSelectionChanged" /> drives a readout without code (the NoCode path). This component
@@ -30,7 +30,7 @@ namespace Neo.Samples
 
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _skins != null && _levelBar != null && _hearts != null && _log != null;
 
         public Selector Skins => _skins;
@@ -112,7 +112,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[SelectorDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[SelectorDemoController] The scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

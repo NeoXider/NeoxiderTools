@@ -14,6 +14,7 @@ namespace Neo.UI.Editor
     {
         private UIMeshRigPoint _selectedPoint;
         private UIMeshRigLayoutPreset _layoutPreset = UIMeshRigLayoutPreset.FlagCloth;
+        private int _clipPreviewIndex;
 
         protected override string NeoxiderModuleName => "UI Mesh Rig";
 
@@ -24,6 +25,7 @@ namespace Neo.UI.Editor
         protected override void OnDisable()
         {
             UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
+            UIMeshRigClipPreviewDriver.StopIfOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
@@ -42,8 +44,14 @@ namespace Neo.UI.Editor
             UIMeshRigOwnerInspector.DrawQuickStart(rig, ref _layoutPreset);
             UIMeshRigOwnerInspector.DrawDiagnostics(
                 rig, rig.Sprite, rig.Columns, rig.Rows, "MeshFilter + MeshRenderer");
+            UIMeshRigOwnerInspector.DrawSpriteWarnings(rig.Sprite, null);
             UIMeshRigOwnerInspector.DrawAuthoringControls(rig);
+            UIMeshRigOwnerInspector.DrawClipPreview(rig, ref _clipPreviewIndex);
             _selectedPoint = UIMeshRigOwnerInspector.DrawPointList(rig, _selectedPoint);
+            if (UIMeshRigClipPreviewDriver.IsPreviewing(rig))
+            {
+                EnsureLiveRepaint();
+            }
         }
 
         private void OnSceneGUI()
@@ -70,6 +78,7 @@ namespace Neo.UI.Editor
         private string _nativeSizeText;
         private SpriteDrawMode _shownDrawMode;
         private string _drawModeWarning;
+        private int _clipPreviewIndex;
 
         protected override string NeoxiderModuleName => "UI Mesh Rig";
 
@@ -106,6 +115,7 @@ namespace Neo.UI.Editor
         protected override void OnDisable()
         {
             UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
+            UIMeshRigClipPreviewDriver.StopIfOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
@@ -133,8 +143,14 @@ namespace Neo.UI.Editor
                 EditorGUILayout.HelpBox(GetDrawModeWarning(spriteRenderer.drawMode), MessageType.Warning);
             }
 
+            UIMeshRigOwnerInspector.DrawSpriteWarnings(rig.Sprite, spriteRenderer);
             UIMeshRigOwnerInspector.DrawAuthoringControls(rig);
+            UIMeshRigOwnerInspector.DrawClipPreview(rig, ref _clipPreviewIndex);
             _selectedPoint = UIMeshRigOwnerInspector.DrawPointList(rig, _selectedPoint);
+            if (UIMeshRigClipPreviewDriver.IsPreviewing(rig))
+            {
+                EnsureLiveRepaint();
+            }
         }
 
         private void OnSceneGUI()
@@ -190,6 +206,11 @@ namespace Neo.UI.Editor
             EditorGUILayout.LabelField("Attached", host.IsAttached ? "Yes" : "No");
             EditorGUILayout.LabelField(
                 "In UXML / UI Builder use the element directly: Library > Custom Controls > Neoxider > UI Mesh Rig.",
+                EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField(
+                "The element has no point Transforms, so an AnimationClip cannot pose single points. An Animator " +
+                "can key this host's fields; from code use SetMotionSpeed / SetMotionPhase here and " +
+                "Element.SetPointPose for one point.",
                 EditorStyles.wordWrappedMiniLabel);
 
             if (GUILayout.Button("Refresh Element"))

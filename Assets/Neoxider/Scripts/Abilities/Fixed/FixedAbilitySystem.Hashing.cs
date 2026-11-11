@@ -113,6 +113,14 @@ namespace Neo.Abilities.Fixed
                 hash = Fold(hash, m.AbilityLevel);
                 hash = Fold(hash, m.RemainingTicks);
                 hash = Fold(hash, m.ShieldConsumedRaw);
+                // WHY: only spent-scaled modifiers capture paid amounts, so every other state hash is unchanged.
+                for (int s = 0; s < m.SpentCount; s++)
+                {
+                    FixedSpentResource paid = m.GetSpentAt(s);
+                    hash = FoldString(hash, paid.ResourceId);
+                    hash = Fold(hash, paid.AmountRaw);
+                }
+
                 if (m.ReactionStates != null)
                 {
                     for (int r = 0; r < m.ReactionStates.Length; r++)

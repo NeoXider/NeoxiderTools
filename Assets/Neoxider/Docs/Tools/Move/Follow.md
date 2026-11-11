@@ -21,7 +21,7 @@
 | `[Demo] Frame/Content` | **Position speed** and **Deadzone** call `Follow.SetPositionSpeed` / `SetDeadzoneEnabled` directly (persistent UnityEvents); **Teleport** calls `TeleportToTarget` on every position follower. The smoothing dropdown, **Drop target** / **Restore target** and **Reset layout** go through `FollowDemoController`. |
 | `[Demo] Frame/Live Followers` | `IsFollowing()` and `GetDistanceToTarget()` of every follower, left to right. |
 
-The scene is authored by the editor builder `FollowBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ---
 

@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Shared colors of the bright NeoxiderTools demo look. Scenes authored by the Neo.Demo.Editor
-    ///     DemoSceneKit and runtime demo controllers use the same values, so every demo reads as one system.
+    ///     Shared colors of the bright NeoxiderTools demo look. The saved demo scenes
+    ///     and the runtime demo controllers use the same values, so every demo reads as one system.
     /// </summary>
     public static class DemoPalette
     {

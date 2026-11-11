@@ -10,7 +10,7 @@ namespace Neo.Samples
 {
     /// <summary>
     ///     Controller of the authored <b>Neo.Editor</b> inspector-attribute demo (Scenes/Tools/AttributeExample.unity).
-    ///     The AttributeExampleBuilder saves the UI, the stage and every persistent listener; this component only
+    ///     The scene saves the UI, the stage and every persistent listener; this component only
     ///     reads the <see cref="AttributeTest" /> fields that the Neo inspector filled in Edit Mode, runs the
     ///     equivalent C# scene queries on request and pushes the Rigidbodies the inspector found. It builds no UI.
     /// </summary>
@@ -61,7 +61,7 @@ namespace Neo.Samples
         private Quaternion[] _startRotations;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _attributes != null && _log != null && _rigidbodiesValue != null &&
                                     _spheresValue != null && _cameraValue != null && _moneyValue != null &&
                                     _childrenValue != null && _toggleValue != null && _checkValue != null &&
@@ -408,7 +408,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[AttributeDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[AttributeDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

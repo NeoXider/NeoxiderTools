@@ -39,6 +39,27 @@ namespace Neo.Audio
             /// <summary>True when this component overrides the entry's own volume rather than deferring to it.</summary>
             private bool HasVolumeOverride => _volume >= 0f;
 
+            [Tooltip("Ignore AudioPlay calls that come sooner than this many seconds after the previous accepted one " +
+                     "(unscaled time). Stops a burst of simultaneous events, such as twenty enemies dying in one frame, " +
+                     "from stacking the same sound. 0 = every call plays.")]
+            [Min(0f)]
+            [SerializeField]
+            private float _minInterval;
+
+            private float _lastPlayTime = float.NegativeInfinity;
+
+            /// <summary>Minimum seconds between two accepted plays (unscaled time). 0 = every call plays.</summary>
+            public float MinInterval
+            {
+                get => _minInterval;
+                set => _minInterval = Mathf.Max(0f, value);
+            }
+
+            /// <summary>
+            ///     Unscaled time of the last accepted <see cref="AudioPlay" />; negative infinity before the first one.
+            /// </summary>
+            public float LastPlayTime => _lastPlayTime;
+
             private void Start()
             {
                 if (_playOnAwake)
@@ -53,6 +74,13 @@ namespace Neo.Audio
             /// </summary>
             public void AudioPlay()
             {
+                float now = Time.unscaledTime;
+                if (_minInterval > 0f && now - _lastPlayTime < _minInterval)
+                {
+                    return;
+                }
+
+                _lastPlayTime = now;
                 if (_clips != null && _clips.Length > 0)
                 {
                     AudioClip clipToPlay;

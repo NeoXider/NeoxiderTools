@@ -40,6 +40,28 @@ Nested rigs beneath ordinary grouping objects remain independent.
 ordinary Animator or Timeline tracks can animate them. Bind handles are available in both modes. The Scene
 overlay selects the mode and pose tool, and **Labels** / **All rings** control visual clutter.
 
+The pose gizmo writes only the selected tool's channel and only the axes that moved: **Move** changes the
+point position in the rig plane, **Rotate** is a disc about the rig's forward axis, **Scale** keeps Z. While
+the Animation window records, keys therefore land only on what was dragged.
+
+While an Animation window preview or recording, a Timeline preview or the **Animator Clip Preview** below
+samples the scene, the rig inspector shows a warning and the rig behaves as posed: **Setup** does not rebind
+moved points, bind handles are hidden, **Capture Rest Pose** is disabled and a rig in **Pose / Animate** cannot
+switch to **Setup** (that would reset every point, and recording would key the reset). Stop the preview to
+edit the bind.
+
+**Animator Clip Preview** appears in the uGUI, world and SpriteRenderer rig inspectors when the rig or a parent
+has an `Animator`. Pick a clip of its controller and press **Preview Clip**: the clip is sampled through
+`AnimationMode` and loops in Edit Mode, and **Stop Clip Preview** restores every animated property. It stops on
+selection change, inspector retargeting, assembly reload, entering Play Mode and editor quit, and it does not
+start while another Animation window or Timeline preview is active.
+
+Пока Animation window, Timeline или **Animator Clip Preview** проигрывают клип в Edit Mode, риг ведёт себя как в
+позе: в **Setup** сдвинутые клипом точки не перепривязываются, ручки привязки скрыты, **Capture Rest Pose**
+недоступна, а из **Pose / Animate** нельзя переключиться в **Setup**. **Animator Clip Preview** в инспекторе рига
+проигрывает клип Animator без входа в Play Mode, а **Stop Clip Preview** возвращает все свойства, которые клип
+изменил.
+
 **Add Point** creates a point at the rig center. **Duplicate** keeps the original parent, authored pose and
 rest pose, including points under transformed grouping objects. Added points and duplicated branches receive
 binding keys unique among this owner's points, including inactive descendants. Existing keys are preserved;
@@ -71,6 +93,15 @@ The point and motion inspectors expose **Start Preview**, **Pause / Resume**, **
 serialized authoring mode. It stops on selection changes, inspector retargeting, assembly reload, entering
 Play Mode and editor quit. Persistent prefab assets are excluded. In Play Mode, use the motion component's
 runtime playback controls. Preview behavior and timing are described in [UI Mesh Rig](UIMeshRig.md#edit-mode-preview).
+
+Choosing a value in the motion component's **Preset** dropdown applies it immediately (the preset curves
+replace the profile, as one Undo step) and starts the preview; **Custom** keeps the curves. The C# path is
+`UIMeshRigPointMotion.ApplyPreset`.
+
+The rig inspectors also warn about sprites the rig draws differently from the artwork: a sprite packed tightly
+or rotated in a Sprite Atlas, and a `SpriteRenderer` with Flip X / Flip Y, which mirrors the art but not the
+points. The UI Toolkit host inspector notes that an AnimationClip cannot pose the element's points and names the
+code path (`SetMotionSpeed`, `SetMotionPhase`, `Element.SetPointPose`).
 
 ## Convert a Simple Image
 

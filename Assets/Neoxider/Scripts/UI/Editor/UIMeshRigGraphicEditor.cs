@@ -23,6 +23,7 @@ namespace Neo.UI.Editor
         // callback removed something. Every loop below runs over a copy so the callbacks cannot corrupt it.
         private static readonly List<UIMeshRigPointMotion> TickBuffer = new List<UIMeshRigPointMotion>();
         private static readonly List<UIMeshRigPointMotion> SelectionBuffer = new List<UIMeshRigPointMotion>();
+        private static readonly List<IUIMeshRigOwner> AdvancedOwners = new List<IUIMeshRigOwner>();
         private static double _lastTime;
         private static bool _updateSubscribed;
 
@@ -94,6 +95,7 @@ namespace Neo.UI.Editor
                     {
                         motion.SetTime(motion.CurrentTime + deltaTime);
                         previewed = true;
+                        AddAdvancedOwner(motion);
                     }
                     catch (System.Exception exception)
                     {
@@ -106,6 +108,7 @@ namespace Neo.UI.Editor
             finally
             {
                 TickBuffer.Clear();
+                RebuildAdvancedOwners();
                 RefreshUpdateSubscription();
                 if (previewed)
                 {
@@ -116,6 +119,29 @@ namespace Neo.UI.Editor
                     SceneView.RepaintAll();
                 }
             }
+        }
+
+        // WHY: the world and SpriteRenderer rigs rebuild only in LateUpdate, which the editor does not run for
+        // a preview tick, so a running preview showed a frozen mesh until the mouse moved. A Canvas rebuilds on
+        // the repaint below; the other owners are rebuilt here, once per tick however many points advanced.
+        private static void AddAdvancedOwner(UIMeshRigPointMotion motion)
+        {
+            UIMeshRigPoint point = motion.GetComponent<UIMeshRigPoint>();
+            IUIMeshRigOwner owner = point != null ? point.BoundOwner : null;
+            if (owner != null && !AdvancedOwners.Contains(owner))
+            {
+                AdvancedOwners.Add(owner);
+            }
+        }
+
+        private static void RebuildAdvancedOwners()
+        {
+            for (int index = 0; index < AdvancedOwners.Count; index++)
+            {
+                UIMeshRigEditorUtility.RebuildNow(AdvancedOwners[index]);
+            }
+
+            AdvancedOwners.Clear();
         }
 
         internal static bool IsUpdateSubscribed => _updateSubscribed;
@@ -331,6 +357,287 @@ namespace Neo.UI.Editor
     }
 
     /// <summary>
+    /// Edit Mode preview of a clip of the Animator above a rig, sampled through <see cref="AnimationMode"/> so
+    /// every sampled property is restored exactly when it stops. Like <see cref="UIMeshRigMotionPreviewDriver"/>
+    /// it ticks on <see cref="EditorApplication.update"/> only while a clip plays and stops on selection change,
+    /// Play Mode, assembly reload and quit. Unity does not evaluate Animator clips outside Play Mode, so this
+    /// is the way to see an Animator-driven rig move without pressing Play.
+    /// </summary>
+    [InitializeOnLoad]
+    internal static class UIMeshRigClipPreviewDriver
+    {
+        private const double MinStepSeconds = 1.0 / 60.0;
+        private const double ClipCacheSeconds = 1.0;
+
+        private static readonly List<AnimationClip> ClipBuffer = new List<AnimationClip>();
+        private static readonly AnimationClip[] NoClips = new AnimationClip[0];
+        private static readonly string[] NoClipNames = new string[0];
+
+        private static IUIMeshRigOwner _rig;
+        private static Animator _animator;
+        private static AnimationClip _clip;
+        private static float _time;
+        private static double _lastTime;
+        private static bool _updateSubscribed;
+
+        // WHY: the clip popup is drawn on every inspector event, and AnimationUtility.GetAnimationClips builds a
+        // new array each call. The list is re-read when the controller changes or once a second while shown.
+        private static RuntimeAnimatorController _cachedController;
+        private static double _cachedAt;
+        private static AnimationClip[] _cachedClips = NoClips;
+        private static string[] _cachedClipNames = NoClipNames;
+
+        static UIMeshRigClipPreviewDriver()
+        {
+            AssemblyReloadEvents.beforeAssemblyReload -= Shutdown;
+            AssemblyReloadEvents.beforeAssemblyReload += Shutdown;
+            EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
+            EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
+            EditorApplication.quitting -= Shutdown;
+            EditorApplication.quitting += Shutdown;
+            Selection.selectionChanged -= HandleSelectionChanged;
+            Selection.selectionChanged += HandleSelectionChanged;
+        }
+
+        internal static bool IsUpdateSubscribed => _updateSubscribed;
+        internal static bool IsAnyPreviewRunning => _clip != null;
+        internal static AnimationClip PreviewClip => _clip;
+        internal static float PreviewTime => _time;
+
+        internal static bool IsPreviewing(IUIMeshRigOwner rig)
+        {
+            return _clip != null && rig != null && ReferenceEquals(_rig, rig);
+        }
+
+        /// <summary>The Animator on the rig or its nearest ancestor, the one a clip of this rig is keyed from.</summary>
+        internal static Animator FindAnimator(IUIMeshRigOwner rig)
+        {
+            Transform rigTransform = rig != null ? rig.RigTransform : null;
+            return rigTransform != null ? rigTransform.GetComponentInParent<Animator>(true) : null;
+        }
+
+        /// <summary>Distinct clips of <paramref name="animator"/>'s controller, cached for the inspector.</summary>
+        internal static AnimationClip[] GetClips(Animator animator)
+        {
+            RefreshClipCache(animator);
+            return _cachedClips;
+        }
+
+        internal static string[] GetClipNames(Animator animator)
+        {
+            RefreshClipCache(animator);
+            return _cachedClipNames;
+        }
+
+        /// <summary>
+        /// Starts sampling <paramref name="clip"/> on the rig's Animator. Returns false outside Edit Mode, without
+        /// an Animator, or while another Animation preview already owns AnimationMode.
+        /// </summary>
+        internal static bool StartPreview(IUIMeshRigOwner rig, AnimationClip clip)
+        {
+            StopPreview();
+            Animator animator = FindAnimator(rig);
+            if (animator == null || clip == null || Application.isPlaying ||
+                EditorApplication.isPlayingOrWillChangePlaymode || EditorUtility.IsPersistent(animator) ||
+                AnimationMode.InAnimationMode())
+            {
+                return false;
+            }
+
+            AnimationMode.StartAnimationMode();
+            _rig = rig;
+            _animator = animator;
+            _clip = clip;
+            _time = 0f;
+            Sample();
+            SetUpdateSubscribed(true);
+            return true;
+        }
+
+        /// <summary>Stops the clip preview; AnimationMode restores every property the clip sampled.</summary>
+        internal static void StopPreview()
+        {
+            IUIMeshRigOwner rig = _rig;
+            bool wasPreviewing = _clip != null;
+            _rig = null;
+            _animator = null;
+            _clip = null;
+            _time = 0f;
+            SetUpdateSubscribed(false);
+            if (!wasPreviewing)
+            {
+                return;
+            }
+
+            if (AnimationMode.InAnimationMode())
+            {
+                AnimationMode.StopAnimationMode();
+            }
+
+            if (rig is Object rigObject && rigObject != null)
+            {
+                UIMeshRigEditorUtility.RebuildNow(rig);
+            }
+
+            SceneView.RepaintAll();
+        }
+
+        /// <summary>Stops the preview unless the selection is still the previewed rig, its Animator or a point.</summary>
+        internal static void StopIfOutsideSelection()
+        {
+            HandleSelectionChanged();
+        }
+
+        internal static void TickForTests(float deltaTime)
+        {
+            Tick(Mathf.Max(0f, deltaTime));
+        }
+
+        private static void Update()
+        {
+            double now = EditorApplication.timeSinceStartup;
+            double elapsed = now - _lastTime;
+            if (elapsed < MinStepSeconds)
+            {
+                return;
+            }
+
+            _lastTime = now;
+            Tick(Mathf.Clamp((float)elapsed, 0f, 0.1f));
+        }
+
+        private static void Tick(float deltaTime)
+        {
+            if (_clip == null)
+            {
+                SetUpdateSubscribed(false);
+                return;
+            }
+
+            if (EditorApplication.isPlayingOrWillChangePlaymode || _animator == null ||
+                !(_rig is Object rigObject) || rigObject == null || !AnimationMode.InAnimationMode())
+            {
+                StopPreview();
+                return;
+            }
+
+            _time += deltaTime;
+            Sample();
+        }
+
+        private static void Sample()
+        {
+            float length = _clip.length;
+            float sampleTime = length > 0f ? Mathf.Repeat(_time, length) : 0f;
+            AnimationMode.BeginSampling();
+            try
+            {
+                AnimationMode.SampleAnimationClip(_animator.gameObject, _clip, sampleTime);
+            }
+            finally
+            {
+                AnimationMode.EndSampling();
+            }
+
+            UIMeshRigEditorUtility.RebuildNow(_rig);
+            SceneView.RepaintAll();
+        }
+
+        private static void SetUpdateSubscribed(bool subscribed)
+        {
+            if (subscribed == _updateSubscribed)
+            {
+                return;
+            }
+
+            EditorApplication.update -= Update;
+            if (subscribed)
+            {
+                _lastTime = EditorApplication.timeSinceStartup;
+                EditorApplication.update += Update;
+            }
+
+            _updateSubscribed = subscribed;
+        }
+
+        private static void RefreshClipCache(Animator animator)
+        {
+            RuntimeAnimatorController controller = animator != null ? animator.runtimeAnimatorController : null;
+            double now = EditorApplication.timeSinceStartup;
+            if (controller == _cachedController && now - _cachedAt < ClipCacheSeconds)
+            {
+                return;
+            }
+
+            _cachedController = controller;
+            _cachedAt = now;
+            ClipBuffer.Clear();
+            AnimationClip[] clips = animator != null ? AnimationUtility.GetAnimationClips(animator.gameObject) : NoClips;
+            for (int index = 0; index < clips.Length; index++)
+            {
+                AnimationClip clip = clips[index];
+                if (clip != null && !ClipBuffer.Contains(clip))
+                {
+                    ClipBuffer.Add(clip);
+                }
+            }
+
+            if (ClipBuffer.Count == 0)
+            {
+                _cachedClips = NoClips;
+                _cachedClipNames = NoClipNames;
+                return;
+            }
+
+            _cachedClips = ClipBuffer.ToArray();
+            _cachedClipNames = new string[_cachedClips.Length];
+            for (int index = 0; index < _cachedClips.Length; index++)
+            {
+                _cachedClipNames[index] = _cachedClips[index].name;
+            }
+
+            ClipBuffer.Clear();
+        }
+
+        private static void HandleSelectionChanged()
+        {
+            if (_clip == null)
+            {
+                return;
+            }
+
+            Transform rigTransform = _rig is Object rigObject && rigObject != null ? _rig.RigTransform : null;
+            Transform selected = Selection.activeTransform;
+            bool ownsSelection = rigTransform != null && selected != null &&
+                                 (selected.IsChildOf(rigTransform) ||
+                                  (_animator != null && selected == _animator.transform));
+            if (!ownsSelection)
+            {
+                StopPreview();
+            }
+        }
+
+        private static void HandlePlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.EnteredPlayMode)
+            {
+                StopPreview();
+            }
+        }
+
+        private static void Shutdown()
+        {
+            StopPreview();
+            EditorApplication.update -= Update;
+            _updateSubscribed = false;
+            AssemblyReloadEvents.beforeAssemblyReload -= Shutdown;
+            EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
+            EditorApplication.quitting -= Shutdown;
+            Selection.selectionChanged -= HandleSelectionChanged;
+        }
+    }
+
+    /// <summary>
     /// uGUI rig inspector. Fields are declared with plain <c>[Header]</c> / <c>[Tooltip]</c> on the
     /// component and drawn by <see cref="CustomEditorBase"/>, which is what produces the collapsible
     /// sections, ON/OFF switches and coloured rails everywhere else in the package. Only the parts that no
@@ -342,6 +649,7 @@ namespace Neo.UI.Editor
     {
         private UIMeshRigPoint _selectedPoint;
         private UIMeshRigLayoutPreset _layoutPreset = UIMeshRigLayoutPreset.SimpleBounce;
+        private int _clipPreviewIndex;
 
         protected override string NeoxiderModuleName => "UI Mesh Rig";
 
@@ -352,6 +660,7 @@ namespace Neo.UI.Editor
         protected override void OnDisable()
         {
             UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
+            UIMeshRigClipPreviewDriver.StopIfOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
@@ -361,9 +670,15 @@ namespace Neo.UI.Editor
             UIMeshRigGraphic rig = (UIMeshRigGraphic)target;
             UIMeshRigOwnerInspector.DrawQuickStart(rig, ref _layoutPreset);
             UIMeshRigOwnerInspector.DrawDiagnostics(rig, rig.Sprite, rig.Columns, rig.Rows, "Canvas mesh (uGUI)");
+            UIMeshRigOwnerInspector.DrawSpriteWarnings(rig.Sprite, null);
             UIMeshRigOwnerInspector.DrawAuthoringControls(rig);
+            UIMeshRigOwnerInspector.DrawClipPreview(rig, ref _clipPreviewIndex);
             UnityEditor.Tools.hidden = rig.AuthoringMode == UIMeshRigAuthoringMode.Setup;
             _selectedPoint = UIMeshRigOwnerInspector.DrawPointList(rig, _selectedPoint);
+            if (UIMeshRigClipPreviewDriver.IsPreviewing(rig))
+            {
+                EnsureLiveRepaint();
+            }
         }
 
         private void OnSceneGUI()
@@ -394,6 +709,7 @@ namespace Neo.UI.Editor
         protected override void OnDisable()
         {
             UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
+            UIMeshRigClipPreviewDriver.StopIfOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
@@ -486,6 +802,62 @@ namespace Neo.UI.Editor
             base.OnDisable();
         }
 
+        // WHY: the Preset field only stored the enum. Its tooltip promised that choosing a preset applies it
+        // and starts the preview, yet the profile kept the previous curves. The change is caught here, in the
+        // GUI event that made it, so loading a scene, an undo or a curve edit never re-applies a preset over
+        // hand-tuned curves the way an OnValidate check would.
+        protected override bool DrawCustomProperty(SerializedProperty property)
+        {
+            if (property == null || property.propertyPath != PresetPropertyPath)
+            {
+                return false;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            DrawStandardProperty(property);
+            if (EditorGUI.EndChangeCheck())
+            {
+                ApplyInspectorPresetSelection(property.serializedObject);
+            }
+
+            return true;
+        }
+
+        internal const string PresetPropertyPath = "_preset";
+
+        /// <summary>
+        /// Applies the Preset value just picked in <paramref name="serializedObject"/> to every selected motion:
+        /// copies the preset curves into its profile (Custom keeps the curves) and starts the Edit Mode preview.
+        /// </summary>
+        internal static void ApplyInspectorPresetSelection(SerializedObject serializedObject)
+        {
+            if (serializedObject == null)
+            {
+                return;
+            }
+
+            serializedObject.ApplyModifiedProperties();
+            Object[] targets = serializedObject.targetObjects;
+            for (int index = 0; index < targets.Length; index++)
+            {
+                UIMeshRigPointMotion motion = targets[index] as UIMeshRigPointMotion;
+                if (motion == null || motion.Preset == UIMeshRigMotionPreset.Custom)
+                {
+                    continue;
+                }
+
+                Undo.RecordObject(motion, "Apply UI mesh rig motion preset");
+                motion.ApplyPreset(motion.Preset);
+                UIMeshRigEditorUtility.MarkChanged(motion);
+                if (!Application.isPlaying && motion.isActiveAndEnabled)
+                {
+                    UIMeshRigMotionPreviewDriver.StartPreview(motion);
+                }
+            }
+
+            serializedObject.Update();
+        }
+
         protected override void OnAfterDrawNeoProperties()
         {
             UIMeshRigPointMotion motion = (UIMeshRigPointMotion)target;
@@ -524,6 +896,11 @@ namespace Neo.UI.Editor
         // arrays on every event.
         internal static readonly string[] ModeToolbarLabels = { "Setup", "Pose / Animate" };
         internal static readonly string[] PoseToolLabels = { "Move", "Rotate", "Scale" };
+
+        internal const string AnimationPreviewHint =
+            "An Animation window or Timeline preview is running. The rig deforms as in Pose / Animate, Setup does " +
+            "not rebind moved points, bind handles are hidden, and Pose / Animate cannot be left (that would key a " +
+            "reset of every point) until the preview stops. Record keys in Pose / Animate.";
 
         public static void DrawQuickStart(IUIMeshRigOwner rig, ref UIMeshRigLayoutPreset preset)
         {
@@ -590,14 +967,23 @@ namespace Neo.UI.Editor
             Object rigObject = rig as Object;
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Authoring", EditorStyles.boldLabel);
-            UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
-                (int)rig.AuthoringMode,
-                UIMeshRigOwnerInspector.ModeToolbarLabels);
-            if (requestedMode != rig.AuthoringMode)
+            bool animationPreview = UIMeshRigAuthoring.IsAnimationPreviewActive();
+            if (animationPreview)
             {
-                UIMeshRigEditorUtility.RecordRig(rig, "Change UI mesh rig mode");
-                rig.SetAuthoringMode(requestedMode);
-                UIMeshRigEditorUtility.MarkRigAndPointsChanged(rig);
+                EditorGUILayout.HelpBox(AnimationPreviewHint, MessageType.Warning);
+            }
+
+            using (new EditorGUI.DisabledScope(UIMeshRigEditorUtility.IsModeSwitchLocked(rig)))
+            {
+                UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
+                    (int)rig.AuthoringMode,
+                    UIMeshRigOwnerInspector.ModeToolbarLabels);
+                if (requestedMode != rig.AuthoringMode)
+                {
+                    UIMeshRigEditorUtility.RecordRig(rig, "Change UI mesh rig mode");
+                    rig.SetAuthoringMode(requestedMode);
+                    UIMeshRigEditorUtility.MarkRigAndPointsChanged(rig);
+                }
             }
 
             if (rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
@@ -622,11 +1008,16 @@ namespace Neo.UI.Editor
                 GUIUtility.ExitGUI();
             }
 
-            if (GUILayout.Button("Capture Rest Pose"))
+            // WHY: capturing during an Animation preview binds the sampled pose, and AnimationMode then puts the
+            // Transforms back on stop, so the bind and the restored points no longer agree.
+            using (new EditorGUI.DisabledScope(animationPreview))
             {
-                UIMeshRigEditorUtility.RecordRig(rig, "Capture UI mesh rig rest pose");
-                rig.CaptureRestPose();
-                UIMeshRigEditorUtility.MarkRigAndPointsChanged(rig);
+                if (GUILayout.Button("Capture Rest Pose"))
+                {
+                    UIMeshRigEditorUtility.RecordRig(rig, "Capture UI mesh rig rest pose");
+                    rig.CaptureRestPose();
+                    UIMeshRigEditorUtility.MarkRigAndPointsChanged(rig);
+                }
             }
 
             if (GUILayout.Button("Reset Pose"))
@@ -641,6 +1032,96 @@ namespace Neo.UI.Editor
                 ? "SETUP edits bind centers, influence ellipses and falloff. The same mode switch is available in the Scene view overlay."
                 : "POSE edits the point Transforms. Position, rotation and scale are Animator-recordable and can also be saved as a static deformation.";
             EditorGUILayout.HelpBox(help, MessageType.Info);
+        }
+
+        /// <summary>
+        /// Clip popup and Preview / Stop button for the Animator above the rig. Draws nothing without an Animator
+        /// or in Play Mode, where the Animator plays the clip itself.
+        /// </summary>
+        public static void DrawClipPreview(IUIMeshRigOwner rig, ref int clipIndex)
+        {
+            if (Application.isPlaying)
+            {
+                return;
+            }
+
+            Animator animator = UIMeshRigClipPreviewDriver.FindAnimator(rig);
+            if (animator == null)
+            {
+                return;
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Animator Clip Preview", EditorStyles.boldLabel);
+            AnimationClip[] clips = UIMeshRigClipPreviewDriver.GetClips(animator);
+            if (clips.Length == 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "The Animator above this rig has no clips. Assign a controller with states to preview them here.",
+                    MessageType.Info);
+                return;
+            }
+
+            bool previewing = UIMeshRigClipPreviewDriver.IsPreviewing(rig);
+            clipIndex = Mathf.Clamp(clipIndex, 0, clips.Length - 1);
+            using (new EditorGUI.DisabledScope(previewing))
+            {
+                clipIndex = EditorGUILayout.Popup("Clip", clipIndex, UIMeshRigClipPreviewDriver.GetClipNames(animator));
+            }
+
+            if (previewing)
+            {
+                EditorGUILayout.LabelField(
+                    "Playing",
+                    UIMeshRigClipPreviewDriver.PreviewTime.ToString("F2") + " s",
+                    EditorStyles.miniLabel);
+                if (GUILayout.Button("Stop Clip Preview"))
+                {
+                    UIMeshRigClipPreviewDriver.StopPreview();
+                }
+
+                return;
+            }
+
+            bool otherPreview = UIMeshRigAuthoring.IsAnimationPreviewActive();
+            using (new EditorGUI.DisabledScope(otherPreview))
+            {
+                if (GUILayout.Button("Preview Clip"))
+                {
+                    UIMeshRigClipPreviewDriver.StartPreview(rig, clips[clipIndex]);
+                }
+            }
+
+            EditorGUILayout.LabelField(
+                otherPreview
+                    ? "Another Animation window or Timeline preview is running. Stop it to preview here."
+                    : "Samples the clip in Edit Mode without pressing Play. Stopping restores every animated property.",
+                EditorStyles.wordWrappedMiniLabel);
+        }
+
+        /// <summary>
+        /// Sprite and renderer setups the rig draws differently from what the artwork suggests, explained where
+        /// the rig is configured.
+        /// </summary>
+        public static void DrawSpriteWarnings(Sprite sprite, SpriteRenderer spriteRenderer)
+        {
+            if (sprite != null && sprite.packed &&
+                (sprite.packingMode == SpritePackingMode.Tight || sprite.packingRotation != SpritePackingRotation.None))
+            {
+                EditorGUILayout.HelpBox(
+                    "The sprite is packed tightly or rotated in a Sprite Atlas. The rig draws one rectangle of the " +
+                    "atlas, so neighbouring sprites can show through, and a Sprite Renderer rig draws it undeformed. " +
+                    "Pack rig sprites as Full Rect without rotation.",
+                    MessageType.Warning);
+            }
+
+            if (spriteRenderer != null && (spriteRenderer.flipX || spriteRenderer.flipY))
+            {
+                EditorGUILayout.HelpBox(
+                    "Flip X / Flip Y mirror the drawn sprite but not the points, so the deformation and the handles " +
+                    "appear on the mirrored side. Flip the rig with a negative Transform scale to mirror the points too.",
+                    MessageType.Warning);
+            }
         }
 
         public static UIMeshRigPoint DrawPointList(IUIMeshRigOwner rig, UIMeshRigPoint selectedPoint)
@@ -802,8 +1283,13 @@ namespace Neo.UI.Editor
 
             // WHY: bind handles used to disappear the moment the rig switched to Pose, which read as
             // "the anchor and the circles cannot be moved". Both authoring aids are always available now;
-            // the pose gizmo is simply added on top while posing.
-            DrawSetupHandles(rig, selectedPoint);
+            // the pose gizmo is simply added on top while posing. The one exception is an Animation preview:
+            // a bind edit there is keyed into the clip while recording, and in Setup it moves a Transform that
+            // AnimationMode then restores, leaving the point off its new bind.
+            if (!UIMeshRigAuthoring.IsAnimationPreviewActive())
+            {
+                DrawSetupHandles(rig, selectedPoint);
+            }
             if (rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
             {
                 DrawPoseHandle(rig, selectedPoint);
@@ -868,14 +1354,17 @@ namespace Neo.UI.Editor
                 (selectedPoint != null ? " / " + selectedPoint.name : string.Empty),
                 EditorStyles.miniBoldLabel);
 
-            UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
-                (int)rig.AuthoringMode,
-                UIMeshRigOwnerInspector.ModeToolbarLabels);
-            if (requestedMode != rig.AuthoringMode)
+            using (new EditorGUI.DisabledScope(UIMeshRigEditorUtility.IsModeSwitchLocked(rig)))
             {
-                UIMeshRigEditorUtility.RecordRig(rig, "Change UI mesh rig mode");
-                rig.SetAuthoringMode(requestedMode);
-                UIMeshRigEditorUtility.MarkRigAndPointsChanged(rig);
+                UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
+                    (int)rig.AuthoringMode,
+                    UIMeshRigOwnerInspector.ModeToolbarLabels);
+                if (requestedMode != rig.AuthoringMode)
+                {
+                    UIMeshRigEditorUtility.RecordRig(rig, "Change UI mesh rig mode");
+                    rig.SetAuthoringMode(requestedMode);
+                    UIMeshRigEditorUtility.MarkRigAndPointsChanged(rig);
+                }
             }
 
             if (rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
@@ -1060,15 +1549,24 @@ namespace Neo.UI.Editor
         private static void DrawPoseHandle(IUIMeshRigOwner rig, UIMeshRigPoint point)
         {
             Transform pointTransform = point.transform;
+            UIMeshRigSceneTool tool = UIMeshRigEditorUtility.GetSceneTool(rig);
             EditorGUI.BeginChangeCheck();
             Vector3 position = pointTransform.position;
             Quaternion rotation = pointTransform.rotation;
             Vector3 scale = pointTransform.localScale;
 
-            switch (UIMeshRigEditorUtility.GetSceneTool(rig))
+            switch (tool)
             {
                 case UIMeshRigSceneTool.Rotate:
-                    rotation = Handles.RotationHandle(pointTransform.rotation, pointTransform.position);
+                    // WHY: the rig reads only the rotation about its own forward axis. The free rotation handle
+                    // tilted points out of the plane and keyed X/Y rotation channels the mesh never uses.
+                    rotation = Handles.Disc(
+                        pointTransform.rotation,
+                        pointTransform.position,
+                        rig.RigTransform.forward,
+                        HandleUtility.GetHandleSize(pointTransform.position),
+                        false,
+                        0f);
                     break;
                 case UIMeshRigSceneTool.Scale:
                     scale = Handles.ScaleHandle(
@@ -1087,13 +1585,98 @@ namespace Neo.UI.Editor
                 return;
             }
 
+            ApplyPoseHandle(rig, point, tool, position, rotation, scale);
+        }
+
+        /// <summary>
+        /// Writes the result of a pose handle into the point Transform, touching only the channel of
+        /// <paramref name="tool"/> and only the axes that actually moved, so Animation recording keys exactly
+        /// what the user dragged.
+        /// </summary>
+        // WHY: position, rotation and scale used to be re-assigned together after any drag. The round trip
+        // through world space added float noise to untouched channels, and recording turned that noise into
+        // keys on properties the user never moved.
+        internal static void ApplyPoseHandle(
+            IUIMeshRigOwner rig,
+            UIMeshRigPoint point,
+            UIMeshRigSceneTool tool,
+            Vector3 handlePosition,
+            Quaternion handleRotation,
+            Vector3 handleScale)
+        {
+            Transform pointTransform = point.transform;
             UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Pose UI mesh rig point");
-            pointTransform.position = position;
-            pointTransform.rotation = rotation;
-            pointTransform.localScale = scale;
+            switch (tool)
+            {
+                case UIMeshRigSceneTool.Rotate:
+                    ApplyPlanarRotation(rig, pointTransform, handleRotation);
+                    break;
+                case UIMeshRigSceneTool.Scale:
+                    Vector3 currentScale = pointTransform.localScale;
+                    pointTransform.localScale = new Vector3(
+                        HasMoved(currentScale.x, handleScale.x) ? handleScale.x : currentScale.x,
+                        HasMoved(currentScale.y, handleScale.y) ? handleScale.y : currentScale.y,
+                        currentScale.z);
+                    break;
+                default:
+                    ApplyPlanarMove(pointTransform, handlePosition);
+                    break;
+            }
+
             pointTransform.hasChanged = true;
             rig.NotifyPoseChanged();
             UIMeshRigEditorUtility.MarkChanged(rig as Object, point, pointTransform);
+        }
+
+        private static void ApplyPlanarMove(Transform pointTransform, Vector3 handlePosition)
+        {
+            Transform parent = pointTransform.parent;
+            Vector3 currentLocal = parent != null ? parent.InverseTransformPoint(pointTransform.position) : pointTransform.position;
+            Vector3 movedLocal = parent != null ? parent.InverseTransformPoint(handlePosition) : handlePosition;
+            float deltaX = HasMoved(currentLocal.x, movedLocal.x) ? movedLocal.x - currentLocal.x : 0f;
+            float deltaY = HasMoved(currentLocal.y, movedLocal.y) ? movedLocal.y - currentLocal.y : 0f;
+            if (deltaX == 0f && deltaY == 0f)
+            {
+                return;
+            }
+
+            if (pointTransform is RectTransform pointRect)
+            {
+                Vector2 anchored = pointRect.anchoredPosition;
+                pointRect.anchoredPosition = new Vector2(anchored.x + deltaX, anchored.y + deltaY);
+                return;
+            }
+
+            Vector3 localPosition = pointTransform.localPosition;
+            pointTransform.localPosition = new Vector3(localPosition.x + deltaX, localPosition.y + deltaY, localPosition.z);
+        }
+
+        private static void ApplyPlanarRotation(IUIMeshRigOwner rig, Transform pointTransform, Quaternion handleRotation)
+        {
+            Quaternion worldDelta = handleRotation * Quaternion.Inverse(pointTransform.rotation);
+            worldDelta.ToAngleAxis(out float angle, out Vector3 axis);
+            if (angle > 180f)
+            {
+                angle -= 360f;
+            }
+
+            Vector3 rigAxis = rig.RigTransform.forward;
+            float signedAngle = Vector3.Dot(axis, rigAxis) < 0f ? -angle : angle;
+            if (Mathf.Abs(signedAngle) <= 0.0001f || float.IsNaN(signedAngle))
+            {
+                return;
+            }
+
+            Transform parent = pointTransform.parent;
+            Vector3 localAxis = parent == rig.RigTransform
+                ? Vector3.forward
+                : parent != null ? parent.InverseTransformDirection(rigAxis) : rigAxis;
+            pointTransform.localRotation = Quaternion.AngleAxis(signedAngle, localAxis) * pointTransform.localRotation;
+        }
+
+        private static bool HasMoved(float current, float moved)
+        {
+            return Mathf.Abs(moved - current) > 0.00001f * Mathf.Max(1f, Mathf.Abs(current));
         }
 
         // WHY: Handles.Label draws through a GUIStyle and ignores Handles.color entirely, so alpha has to be
@@ -1439,6 +2022,33 @@ namespace Neo.UI.Editor
                     break;
                 case UIMeshRigSpriteRenderer sprite:
                     sprite.SetSceneTool(tool);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// True while leaving Pose / Animate must wait: SetAuthoringMode(Setup) resets every point, which an
+        /// Animation recording keys into the clip and a plain preview silently undoes on stop.
+        /// </summary>
+        public static bool IsModeSwitchLocked(IUIMeshRigOwner rig)
+        {
+            return rig != null && rig.AuthoringMode == UIMeshRigAuthoringMode.Pose &&
+                   UIMeshRigAuthoring.IsAnimationPreviewActive();
+        }
+
+        /// <summary>
+        /// Rebuilds an owner that renders without a Canvas right away. A Canvas rebuilds on the next repaint
+        /// by itself, so the uGUI graphic needs nothing here.
+        /// </summary>
+        public static void RebuildNow(IUIMeshRigOwner rig)
+        {
+            switch (rig)
+            {
+                case UIMeshRigWorldRenderer world when world != null && world.isActiveAndEnabled:
+                    world.RebuildNow();
+                    break;
+                case UIMeshRigSpriteRenderer sprite when sprite != null && sprite.isActiveAndEnabled:
+                    sprite.RebuildNow();
                     break;
             }
         }

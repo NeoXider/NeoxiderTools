@@ -32,7 +32,7 @@ Demo: `Assets/NeoxiderDemos/Demo/Scenes/Quests/QuestDemo.unity` (Demo download).
 - `[Demo] Services/Quest Manager` — `QuestManager` with the three quest assets from `Demo/Data/Quest` in **Known Quests**; its **On Quest Completed** event calls `Money.Add(25)` on `[Demo] Services/Gold Wallet (Money)` (a reward without code).
 - Left column (C# path) — buttons call `QuestDemoController` (`Demo/Scripts/Shell/QuestDemoController.cs`), which uses `TryAcceptQuest`, `AddObjectiveProgress`, `FailQuest`, `RestartQuest`, `ResetAllQuests` and refreshes from the C# events.
 - Right column (NoCode path) — each world button calls `Execute()` on a pre-configured `QuestNoCodeAction` under `[Demo] Services/Quest NoCode Actions` (`NotifyKill wolf ×1/×3`, `NotifyCollect herb ×1/×2`, `NotifyTalk healer`, `NotifyReachPoint ruins_gate`).
-- The scene is authored by the editor builder `Demo/Editor/Builders/Quest/QuestDemoBuilder.cs` (menu **Neoxider → Demo → Rebuild Active Demo Scene**).
+- The scene is saved with its UI and wiring.
 
 ---
 

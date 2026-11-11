@@ -13,13 +13,13 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored <b>Neo.Quest</b> demo scene (QuestDemo.unity). The frame, the quest journal,
     ///     the QuestManager with its quest assets, the reward wallet, the QuestNoCodeAction objects and every
-    ///     persistent listener are saved in the scene by its DemoSceneKit builder (QuestDemoBuilder); this component
+    ///     persistent listener are saved in the scene; this component
     ///     builds no UI. Journal buttons call the public methods below (the C# path: TryAcceptQuest,
     ///     AddObjectiveProgress, FailQuest, RestartQuest, ResetAllQuests), and the C# events of
     ///     <see cref="QuestManager" /> refresh the authored labels and feed the log.
     /// </summary>
     /// <remarks>
-    ///     Added to a scene without quest assets (an unbuilt scene or a test host), the controller registers three
+    ///     Added to a scene without quest assets (a bare scene or a test host), the controller registers three
     ///     session-only fallback quests and destroys them again in OnDestroy.
     /// </remarks>
     [AddComponentMenu("Neoxider/Demos/Quest Demo")]
@@ -57,7 +57,7 @@ namespace Neo.Samples
         private bool _subscribed;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _log != null && _titleValue != null && _statusValue != null &&
                                     _objectiveValue != null && _quests != null && _quests.Length > 0 &&
                                     _ownedFallback.Count == 0;
@@ -482,7 +482,7 @@ namespace Neo.Samples
 
         private void CreateFallbackQuests()
         {
-            // WHY: mirrors the assets QuestDemoBuilder authors (same ids), so saved progress matches both paths.
+            // WHY: mirrors the demo quest assets (same ids), so saved progress matches both paths.
             _quests = new[]
             {
                 CreateQuest("demo_wolf_hunt", "Wolf Hunt", "Thin the pack prowling the forest road.",
@@ -570,7 +570,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[QuestDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[QuestDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

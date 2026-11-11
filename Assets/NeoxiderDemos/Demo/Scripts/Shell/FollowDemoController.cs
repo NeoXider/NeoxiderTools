@@ -60,7 +60,7 @@ namespace Neo.Samples
         private float _nextStatus;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _target != null && _followers.Length > 0 && _log != null;
 
         public Transform Target => _target;
@@ -268,7 +268,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[FollowDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[FollowDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

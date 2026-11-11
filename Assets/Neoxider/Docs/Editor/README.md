@@ -57,7 +57,7 @@ Scene Saver separates same-named scenes by source asset GUID. See [SceneSaver](.
 
 - **Edit Mode.** Select **Attribute**. The Neo inspector fills `[FindAllInScene]` (Rigidbody and SphereCollider arrays, tinted by `[GUIColor]`), `[FindInScene]` (camera), `[GetComponents(true)]` (the object and its children) and `[GetComponent]` (ToggleObject); `[RequireInterface(typeof(IMoneyAdd))]` accepts only objects with an `IMoneyAdd` component (here **Money**). Clear *Cam Find In Scene*: the inspector refills it at once, and *Edit > Undo History* lists the fill as *Find attributed component* (prefab instances keep it as an override). Select **Attribute** and **[Demo] Inspector/Attribute B**, press *Add Score*: the action runs on both objects and one Ctrl+Z reverts both.
 - **Game view.** The right card lists the resolved values (already in Edit Mode). In Play Mode, *Compare with C#* runs the runtime equivalents (`Object.FindObjectsByType<T>()`, `FindFirstObjectByType<T>()`, `GetComponent<T>()`, `GetComponentsInChildren<T>()`) and marks each field as equal; *Kick bodies* pushes the Rigidbodies stored in `rbsFindAllInScene`. The `PrintHello()`, `AddScore(10)` and `ResetScore()` buttons call the `[Button]` methods through persistent listeners (select a button to see the call in its On Click list).
-- **Authoring.** The scene is produced by `AttributeExampleBuilder` (menu *Neoxider/Demo/Rebuild Active Demo Scene*); `AttributeDemoController` holds only references to the authored objects.
+- **Authoring.** The scene is saved with its UI and wiring; `AttributeDemoController` holds only references to the authored objects.
 
 ## See also
 

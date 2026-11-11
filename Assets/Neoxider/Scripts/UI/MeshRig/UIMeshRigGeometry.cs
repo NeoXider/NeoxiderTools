@@ -133,6 +133,27 @@ namespace Neo.UI
             IReadOnlyList<UIMeshRigPointState> points,
             UIMeshRigGeometry reuse)
         {
+            return Build(columns, rows, space, uvRect, UnitRect, deformationEnabled, points, reuse);
+        }
+
+        /// <summary>
+        ///     Builds the grid over <paramref name="normalizedBounds" /> of the coordinate space instead of the whole
+        ///     of it, while the UVs still span all of <paramref name="uvRect" />. A sprite whose transparent border
+        ///     was trimmed by an atlas uses this: its texture region covers only the inner part of the sprite rect,
+        ///     and point binds stay in the full rect. <see cref="UnitRect" /> gives the same result as the overload
+        ///     without bounds.
+        /// </summary>
+        public static UIMeshRigGeometry Build(
+            int columns,
+            int rows,
+            UIMeshRigCoordinateSpace space,
+            Rect uvRect,
+            Rect normalizedBounds,
+            bool deformationEnabled,
+            IReadOnlyList<UIMeshRigPointState> points,
+            UIMeshRigGeometry reuse)
+        {
+            bool fullBounds = normalizedBounds == UnitRect;
             int safeColumns = Mathf.Clamp(columns, 2, 40);
             int safeRows = Mathf.Clamp(rows, 2, 40);
             int vertexCount = (safeColumns + 1) * (safeRows + 1);
@@ -152,7 +173,11 @@ namespace Neo.UI
                 for (int x = 0; x <= safeColumns; x++)
                 {
                     float u = x / (float)safeColumns;
-                    Vector2 normalized = new Vector2(u, v);
+                    Vector2 normalized = fullBounds
+                        ? new Vector2(u, v)
+                        : new Vector2(
+                            Mathf.LerpUnclamped(normalizedBounds.xMin, normalizedBounds.xMax, u),
+                            Mathf.LerpUnclamped(normalizedBounds.yMin, normalizedBounds.yMax, v));
                     int vertexIndex = y * (safeColumns + 1) + x;
                     Vector2 position = DeformPoint(normalized, space, deformationEnabled, points);
                     vertices[vertexIndex] = new Vector3(position.x, position.y, 0f);
@@ -201,14 +226,16 @@ namespace Neo.UI
             Vector2 weightedPosition = Vector2.zero;
             for (int index = 0; index < points.Count; index++)
             {
+                // WHY: the state is a large struct and the interface indexer already returns a copy; the two
+                // helpers take it by reference so a vertex x point pair copies it once instead of three times.
                 UIMeshRigPointState point = points[index];
-                float weight = EvaluateInfluence(point, normalizedPosition);
+                float weight = EvaluateInfluenceCore(in point, normalizedPosition);
                 if (weight <= 0f)
                 {
                     continue;
                 }
 
-                weightedPosition += ApplyPose(point, basePosition, space) * weight;
+                weightedPosition += ApplyPoseCore(in point, basePosition, space) * weight;
                 totalWeight += weight;
             }
 
@@ -223,25 +250,40 @@ namespace Neo.UI
 
         public static float EvaluateInfluence(UIMeshRigPointState point, Vector2 normalizedPosition)
         {
+            return EvaluateInfluenceCore(in point, normalizedPosition);
+        }
+
+        private static float EvaluateInfluenceCore(in UIMeshRigPointState point, Vector2 normalizedPosition)
+        {
             if (!point.Enabled || point.Strength <= 0f)
             {
                 return 0f;
             }
 
             Vector2 delta = normalizedPosition - point.RestCenterNormalized;
+            Vector2 outerRadius = point.OuterRadiusNormalized;
+            // WHY: most vertex x point pairs lie outside the outer ellipse. Its bounding box rejects them before
+            // the square root and the two ellipse boundary evaluations; a vertex on or past the box edge is on
+            // or outside the ellipse, where the full test returned zero as well.
+            bool outsideBox = Mathf.Abs(delta.x) >= outerRadius.x || Mathf.Abs(delta.y) >= outerRadius.y;
+            if (outsideBox && delta.sqrMagnitude > 0.000000000001f)
+            {
+                return 0f;
+            }
+
             float distance = delta.magnitude;
             if (distance <= 0.000001f)
             {
                 return point.Strength;
             }
 
-            float outerBoundary = GetEllipseBoundaryDistance(delta, point.OuterRadiusNormalized);
+            float outerBoundary = GetEllipseBoundaryDistance(delta, distance, outerRadius);
             if (distance >= outerBoundary)
             {
                 return 0f;
             }
 
-            float innerBoundary = GetEllipseBoundaryDistance(delta, point.InnerRadiusNormalized);
+            float innerBoundary = GetEllipseBoundaryDistance(delta, distance, point.InnerRadiusNormalized);
             if (innerBoundary > 0f && distance <= innerBoundary)
             {
                 return point.Strength;
@@ -257,6 +299,14 @@ namespace Neo.UI
 
         public static Vector2 ApplyPose(
             UIMeshRigPointState point,
+            Vector2 sourcePosition,
+            UIMeshRigCoordinateSpace space)
+        {
+            return ApplyPoseCore(in point, sourcePosition, space);
+        }
+
+        private static Vector2 ApplyPoseCore(
+            in UIMeshRigPointState point,
             Vector2 sourcePosition,
             UIMeshRigCoordinateSpace space)
         {
@@ -302,9 +352,42 @@ namespace Neo.UI
             return availableRect;
         }
 
-        private static float GetEllipseBoundaryDistance(Vector2 direction, Vector2 radius)
+        /// <summary>
+        ///     Normalized rect of the sprite that its texture region covers. An atlas that trims a transparent border
+        ///     packs only the inner part, so drawing the texture region over the whole sprite rect stretched it;
+        ///     uGUI Image shrinks its quad by the same padding. Untrimmed sprites return <see cref="UnitRect" />.
+        /// </summary>
+        public static Rect GetSpriteContentBounds(Sprite sprite)
         {
-            float length = direction.magnitude;
+            if (sprite == null)
+            {
+                return UnitRect;
+            }
+
+            Vector2 size = sprite.rect.size;
+            if (size.x <= 0f || size.y <= 0f)
+            {
+                return UnitRect;
+            }
+
+            Vector4 padding = UnityEngine.Sprites.DataUtility.GetPadding(sprite);
+            if (padding == Vector4.zero)
+            {
+                return UnitRect;
+            }
+
+            return Rect.MinMaxRect(
+                padding.x / size.x,
+                padding.y / size.y,
+                1f - padding.z / size.x,
+                1f - padding.w / size.y);
+        }
+
+        /// <summary>The whole coordinate space, (0, 0) to (1, 1).</summary>
+        public static readonly Rect UnitRect = new Rect(0f, 0f, 1f, 1f);
+
+        private static float GetEllipseBoundaryDistance(Vector2 direction, float length, Vector2 radius)
+        {
             if (length <= 0.000001f || radius.x <= 0.000001f || radius.y <= 0.000001f)
             {
                 return 0f;

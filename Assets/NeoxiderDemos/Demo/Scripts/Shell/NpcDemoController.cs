@@ -8,8 +8,8 @@ namespace Neo.Samples
 {
     /// <summary>
     ///     Controller of the authored <b>Neo.NPC</b> demo scene (Ai/AiMoveExample.unity). The four NPCs, the patrol
-    ///     route, the sentry zone, the world labels, the control card and the info card are saved in the scene by its
-    ///     DemoSceneKit builder; this component builds nothing. Walk / Run / Stop / Resume call
+    ///     route, the sentry zone, the world labels, the control card and the info card are saved in the scene;
+    ///     this component builds nothing. Walk / Run / Stop / Resume call
     ///     <see cref="NpcNavigation" /> directly (NoCode); the mode buttons call <see cref="SetGuardMode" /> because a
     ///     persistent UnityEvent cannot pass an enum. The NPC events (onModeChanged, onSpeedChanged,
     ///     onMovementStarted / Stopped, onStartFollowing / onStopFollowing, onPatrolPointReached) are wired to the
@@ -43,7 +43,7 @@ namespace Neo.Samples
         private float _chaserSpeed;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _chaser != null && _guard != null && _patroller != null && _sentry != null &&
                                     _chaserValue != null && _guardValue != null && _sentryValue != null && _log != null;
 
@@ -183,7 +183,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[NpcDemoController] The NPC demo scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[NpcDemoController] The NPC demo scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

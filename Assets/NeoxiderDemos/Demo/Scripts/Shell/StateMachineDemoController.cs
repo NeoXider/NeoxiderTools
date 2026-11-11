@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Controller of the authored <b>Neo.StateMachine</b> demo scene. StateMachineDemoBuilder saves the world, the
+    ///     Controller of the authored <b>Neo.StateMachine</b> demo scene. The scene saves the world, the
     ///     UI, the NoCode guard and every persistent listener in StateMachineDemo.unity; this component builds nothing
     ///     at runtime and only references those scene objects.
     ///     <para>
@@ -78,7 +78,7 @@ namespace Neo.Samples
         private int _shownTenths = -1;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _agent != null && _agentRenderer != null && _prey != null && _preyRenderer != null &&
                                     _stateLabel != null && _guard != null && _log != null;
 
@@ -289,7 +289,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[StateMachineDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[StateMachineDemoController] The scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
 

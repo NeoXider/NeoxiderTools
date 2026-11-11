@@ -26,4 +26,5 @@ MonoBehaviour:
     Value: 5
   - PropertyId: attack_damage
     Value: 10
-  _abilities: []
+  _abilities:
+  - {fileID: 11400000, guid: 44560f1399d29df419691cedc23531bd, type: 2}

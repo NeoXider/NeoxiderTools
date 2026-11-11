@@ -11,8 +11,8 @@ namespace Neo.Samples
     ///     C# side of the "Abilities: triggers and modifiers" tutorial (AbilitiesTriggersDemo.unity): button
     ///     handlers that cast through <see cref="AbilityCasterBehaviour" />, a live status of each unit (health,
     ///     shield, poison stacks, mark and empower charges), world indicators and the "why did this fire" panel read
-    ///     from <see cref="AbilitySystem.Trace" />. Everything it touches is authored in the scene by
-    ///     AbilitiesTriggersDemoBuilder; this behaviour only reacts.
+    ///     from <see cref="AbilitySystem.Trace" />. Everything it touches is authored in the scene;
+    ///     this behaviour only reacts.
     /// </summary>
     [AddComponentMenu("")]
     public sealed class AbilitiesTriggersDemoGuide : MonoBehaviour
@@ -56,7 +56,7 @@ namespace Neo.Samples
         private System.Action<AbilityEventArgs> _onEvent;
         private System.Func<UnitId, string> _unitName;
 
-        /// <summary>True when the builder assigned the units, casters and readouts (checked by the smoke tests).</summary>
+        /// <summary>True when the units, casters and readouts are assigned (checked by the smoke tests).</summary>
         public bool IsSceneBuilt => _hero != null && _golem != null && _imp != null && _heroCaster != null &&
                                     _golemCaster != null && _status != null && _why != null;
         private AbilitySystem _subscribed;

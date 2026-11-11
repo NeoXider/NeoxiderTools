@@ -126,7 +126,7 @@ Demos are not part of the package. Download the ones you want from the [releases
 
 They import into `Assets/NeoxiderDemos/<name>/`. For example, the audio scene is `Assets/NeoxiderDemos/Demo/Scenes/Audio/AudioDemo.unity`.
 
-Each demo scene is saved with its UI, configured components and UnityEvent wiring. Open it, select a button and look at its **On Click** list to see which module API it calls, then press Play. The collapsible info card in the scene names the components to inspect and the equivalent C# calls. If you change a demo scene and want it back, use **Neoxider > Demo > Rebuild Active Demo Scene** ([how demo scenes are made](./Samples.md#how-demo-scenes-are-made)).
+Each demo scene is saved with its UI, configured components and UnityEvent wiring. Open it, select a button and look at its **On Click** list to see which module API it calls, then press Play. The collapsible info card in the scene names the components to inspect and the equivalent C# calls. If you change a demo scene and want it back, re-import it from the Demo download ([how demo scenes are made](./Samples.md#how-demo-scenes-are-made)).
 
 Samples imported from 12.1 and earlier stay in `Assets/Samples/NeoxiderTools/<version>/`. Delete that copy before importing a demo download: both carry the same asset GUIDs. See [Demo scenes](./Samples.md) for the scene index.
 

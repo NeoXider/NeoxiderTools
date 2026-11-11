@@ -22,6 +22,7 @@
 | `Save Key` | Key used by the active `SaveProvider`. |
 | `Load On Awake`, `Auto Save` | Enable initial loading and saving on disable. |
 | `Level State`, `Xp State`, `Xp To Next Level State` | Reactive output for UI and Inspector listeners. |
+| `XpProgress01` (property) | Progress through the current level in [0, 1] (1 at the max level). Bind it to `SetProgress` for an XP bar; it is computed from the curve, cached per level. |
 
 ## Runtime Contract
 

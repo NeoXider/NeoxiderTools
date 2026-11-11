@@ -11,7 +11,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored <b>Neo.Progression</b> demo scene (Progression_Demo.unity). The whole UI, the
     ///     ProgressionNoCodeAction objects, the NoCodeBindText readouts and every persistent listener are saved in
-    ///     the scene by its DemoSceneKit builder (ProgressionDemoBuilder); this component builds nothing at runtime.
+    ///     the scene; this component builds nothing at runtime.
     ///     XP buttons call <see cref="AddXp" /> (the C# path: <see cref="LevelComponent.AddXp" />), perk/unlock/premium
     ///     buttons call ProgressionNoCodeAction.Execute directly (the NoCode path), and the LevelComponent and
     ///     ProgressionManager UnityEvents call the Handle* methods below to refresh the authored labels and log.
@@ -49,7 +49,7 @@ namespace Neo.Samples
         private readonly StringBuilder _text = new();
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _log != null && _levelLabel != null && _xpFill != null && _unlockTreeValue != null &&
                                     _perkTreeValue != null;
 
@@ -65,7 +65,7 @@ namespace Neo.Samples
 
             if (_levelComponent == null)
             {
-                // WHY: scene search is only the fallback for an unbuilt scene; the builder assigns the reference.
+                // WHY: scene search is only the fallback; the saved scene carries the reference.
                 _levelComponent = FindFirstObjectByType<LevelComponent>();
             }
 
@@ -76,7 +76,7 @@ namespace Neo.Samples
 
             if (_levelComponent == null)
             {
-                Log("<color=#FF5C7A>No LevelComponent in the scene - run Neoxider/Demo/Rebuild Active Demo Scene.</color>");
+                Log("<color=#FF5C7A>No LevelComponent in the scene - re-import the scene from the Demo download.</color>");
                 return;
             }
 
@@ -312,7 +312,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[ProgressionDemoUI] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "[ProgressionDemoUI] The scene UI is not authored. Re-import the scene from the Demo download.", this);
         }
     }
 }

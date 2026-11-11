@@ -43,6 +43,18 @@ namespace Neo.Tools
         [Tooltip("Random scatter radius around this object (0 = drop exactly at its position).")]
         public float dropRadius;
 
+        [Tooltip("Take drops from the shared PoolManager pool instead of Instantiate, so frequent drops (XP orbs, coins) " +
+                 "make no garbage. Return them with a Despawner or PoolManager.Release.")]
+        [SerializeField]
+        private bool _useObjectPool;
+
+        /// <summary>Whether drops come from the shared pool (<see cref="SpawnUtility" />) instead of Instantiate.</summary>
+        public bool UseObjectPool
+        {
+            get => _useObjectPool;
+            set => _useObjectPool = value;
+        }
+
         [Tooltip("XZ keeps the object's height (3D); XY keeps its depth (2D).")]
         [SerializeField]
         private LootScatterPlane _scatterPlane = LootScatterPlane.XZ;
@@ -106,7 +118,14 @@ namespace Neo.Tools
 
                     if (selectedItem != null)
                     {
-                        Instantiate(selectedItem, GetDropPosition(), Quaternion.identity);
+                        if (_useObjectPool)
+                        {
+                            SpawnUtility.Spawn(selectedItem, GetDropPosition(), Quaternion.identity, null);
+                        }
+                        else
+                        {
+                            Instantiate(selectedItem, GetDropPosition(), Quaternion.identity);
+                        }
                     }
                 }
             }

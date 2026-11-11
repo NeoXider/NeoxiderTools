@@ -1,0 +1,175 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16a5ddbf4da4c2a4c832bd2533fd2596, type: 3}
+  m_Name: SurvivorXpCurve
+  m_EditorClassIdentifier: Neo.Core.Level.Data::Neo.Core.Level.LevelCurveDefinition
+  _mode: 2
+  _formulaType: 0
+  _xpPerLevel: 100
+  _constantOffset: 0
+  _quadraticBase: 100
+  _expBase: 100
+  _expFactor: 1.5
+  _powerBase: 100
+  _powerExponent: 2
+  _animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 2
+      value: 100
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 3
+      value: 250
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _customEntries:
+  - _level: 2
+    _requiredXp: 5
+  - _level: 3
+    _requiredXp: 14
+  - _level: 4
+    _requiredXp: 27
+  - _level: 5
+    _requiredXp: 44
+  - _level: 6
+    _requiredXp: 65
+  - _level: 7
+    _requiredXp: 90
+  - _level: 8
+    _requiredXp: 119
+  - _level: 9
+    _requiredXp: 152
+  - _level: 10
+    _requiredXp: 189
+  - _level: 11
+    _requiredXp: 230
+  - _level: 12
+    _requiredXp: 275
+  - _level: 13
+    _requiredXp: 324
+  - _level: 14
+    _requiredXp: 377
+  - _level: 15
+    _requiredXp: 434
+  - _level: 16
+    _requiredXp: 495
+  - _level: 17
+    _requiredXp: 560
+  - _level: 18
+    _requiredXp: 629
+  - _level: 19
+    _requiredXp: 702
+  - _level: 20
+    _requiredXp: 779
+  - _level: 21
+    _requiredXp: 860
+  - _level: 22
+    _requiredXp: 945
+  - _level: 23
+    _requiredXp: 1034
+  - _level: 24
+    _requiredXp: 1127
+  - _level: 25
+    _requiredXp: 1224
+  - _level: 26
+    _requiredXp: 1325
+  - _level: 27
+    _requiredXp: 1430
+  - _level: 28
+    _requiredXp: 1539
+  - _level: 29
+    _requiredXp: 1652
+  - _level: 30
+    _requiredXp: 1769
+  - _level: 31
+    _requiredXp: 1890
+  - _level: 32
+    _requiredXp: 2015
+  - _level: 33
+    _requiredXp: 2144
+  - _level: 34
+    _requiredXp: 2277
+  - _level: 35
+    _requiredXp: 2414
+  - _level: 36
+    _requiredXp: 2555
+  - _level: 37
+    _requiredXp: 2700
+  - _level: 38
+    _requiredXp: 2849
+  - _level: 39
+    _requiredXp: 3002
+  - _level: 40
+    _requiredXp: 3159
+  - _level: 41
+    _requiredXp: 3320
+  - _level: 42
+    _requiredXp: 3485
+  - _level: 43
+    _requiredXp: 3654
+  - _level: 44
+    _requiredXp: 3827
+  - _level: 45
+    _requiredXp: 4004
+  - _level: 46
+    _requiredXp: 4185
+  - _level: 47
+    _requiredXp: 4370
+  - _level: 48
+    _requiredXp: 4559
+  - _level: 49
+    _requiredXp: 4752
+  - _level: 50
+    _requiredXp: 4949
+  - _level: 51
+    _requiredXp: 5150
+  - _level: 52
+    _requiredXp: 5355
+  - _level: 53
+    _requiredXp: 5564
+  - _level: 54
+    _requiredXp: 5777
+  - _level: 55
+    _requiredXp: 5994
+  - _level: 56
+    _requiredXp: 6215
+  - _level: 57
+    _requiredXp: 6440
+  - _level: 58
+    _requiredXp: 6669
+  - _level: 59
+    _requiredXp: 6902
+  - _level: 60
+    _requiredXp: 7139

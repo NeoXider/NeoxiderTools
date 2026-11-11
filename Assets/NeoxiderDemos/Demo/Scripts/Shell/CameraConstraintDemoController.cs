@@ -43,7 +43,7 @@ namespace Neo.Samples
         private float _nextRefresh;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _camera != null && _constraint != null && _log != null && _positionValue != null;
 
         public CameraConstraint Constraint => _constraint;
@@ -192,7 +192,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[CameraConstraintDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[CameraConstraintDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

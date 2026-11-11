@@ -15,6 +15,9 @@ namespace Neo.Abilities.Fixed
         private IFixedRandomSource _ownedRandom;
         private IFixedRandomFactory _ownedFactory;
 
+        // WHY: what the cast paid drives spent-scaled amounts; pooled, reused, allocated on first use.
+        private List<FixedSpentResource> _spent;
+
         internal FixedEffectContext()
         {
         }
@@ -39,6 +42,56 @@ namespace Neo.Abilities.Fixed
 
         public bool IsDirectHit => Origin == FixedEffectOrigin.Cast || Origin == FixedEffectOrigin.ProjectileHit;
         public FixedDamageFlags HitFlags => IsDirectHit ? FixedDamageFlags.Hit : FixedDamageFlags.None;
+
+        /// <summary>Number of raw amounts the cast of this context paid (see the float EffectContext.SpentCount).</summary>
+        public int SpentCount => _spent != null ? _spent.Count : 0;
+
+        public FixedSpentResource GetSpentAt(int index)
+        {
+            return _spent[index];
+        }
+
+        /// <summary>Total raw amount of <paramref name="resourceId" /> the cast paid; 0 when none.</summary>
+        public int GetSpent(string resourceId)
+        {
+            if (_spent == null || string.IsNullOrEmpty(resourceId))
+            {
+                return 0;
+            }
+
+            long total = 0L;
+            for (int i = 0; i < _spent.Count; i++)
+            {
+                if (FixedIdComparer.Same(_spent[i].ResourceId, resourceId))
+                {
+                    total += _spent[i].AmountRaw;
+                }
+            }
+
+            return FixedMath.ClampToInt(total);
+        }
+
+        /// <summary>Records a paid raw amount; non-positive amounts and empty ids are ignored.</summary>
+        public void AddSpent(string resourceId, int amountRaw)
+        {
+            if (string.IsNullOrEmpty(resourceId) || amountRaw <= 0)
+            {
+                return;
+            }
+
+            _spent ??= new List<FixedSpentResource>(2);
+            _spent.Add(new FixedSpentResource(resourceId, amountRaw));
+        }
+
+        internal void CopySpentFrom(FixedEffectContext source)
+        {
+            int count = source != null ? source.SpentCount : 0;
+            for (int i = 0; i < count; i++)
+            {
+                FixedSpentResource paid = source._spent[i];
+                AddSpent(paid.ResourceId, paid.AmountRaw);
+            }
+        }
 
         public bool TryGetSpecial(string name, out FixedLeveledValue value)
         {
@@ -86,6 +139,7 @@ namespace Neo.Abilities.Fixed
             TargetPoint = FixedVec3.Zero;
             HasTargetPoint = false;
             Damage = null;
+            _spent?.Clear();
         }
 
         internal void Clear()
@@ -94,6 +148,7 @@ namespace Neo.Abilities.Fixed
             Specials = null;
             Damage = null;
             AbilityId = null;
+            _spent?.Clear();
         }
     }
 
@@ -161,24 +216,141 @@ namespace Neo.Abilities.Fixed
             return byLevel[index];
         }
 
+        /// <summary>
+        ///     Resolves a leveled raw value in a context: level → base, + spent term (what the context's cast paid), then
+        ///     the scaling term added or multiplied (the float LeveledValueResolver on raw values).
+        /// </summary>
         public static int Resolve(in FixedLeveledValue value, FixedEffectContext context, int target)
         {
-            int level = LevelFor(value.LevelFrom, context, target);
+            return ResolveCore(in value, context.System, context.Caster, context.AbilityLevel, target, context);
+        }
+
+        /// <summary>Resolves a leveled raw value outside an effect execution (cast costs): no spent term.</summary>
+        public static int Resolve(in FixedLeveledValue value, FixedAbilitySystem system, int caster, int abilityLevel,
+            int target)
+        {
+            return ResolveCore(in value, system, caster, abilityLevel, target, null);
+        }
+
+        /// <summary>True when one of the nodes scales with a spent resource, inline or through a special of <paramref name="specials" />.</summary>
+        public static bool UsesSpent(List<FixedEffectNode> nodes, List<FixedAbilitySpecial> specials)
+        {
+            if (nodes == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                FixedEffectNode node = nodes[i];
+                if (node == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(node.AmountSpentResource))
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(node.AmountKey) && specials != null)
+                {
+                    for (int s = 0; s < specials.Count; s++)
+                    {
+                        if (FixedIdComparer.Same(specials[s].Name, node.AmountKey))
+                        {
+                            if (!string.IsNullOrEmpty(specials[s].Value.SpentResource))
+                            {
+                                return true;
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>True when the tick effects or a reaction of <paramref name="modifier" /> scale with a spent resource.</summary>
+        public static bool UsesSpent(FixedModifierBlueprint modifier, List<FixedAbilitySpecial> specials)
+        {
+            if (modifier == null)
+            {
+                return false;
+            }
+
+            if (UsesSpent(modifier.TickEffects, specials))
+            {
+                return true;
+            }
+
+            List<FixedModifierReaction> reactions = modifier.EventReactions;
+            if (reactions == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < reactions.Count; i++)
+            {
+                if (reactions[i] != null && UsesSpent(reactions[i].Effects, specials))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static int ResolveCore(in FixedLeveledValue value, FixedAbilitySystem system, int caster,
+            int abilityLevel, int target, FixedEffectContext spentSource)
+        {
+            int level = LevelFor(value.LevelFrom, system, caster, abilityLevel, target);
             long result = value.LevelsRaw != null && value.LevelsRaw.Length > 0
                 ? SampleByLevel(value.LevelsRaw, level, value.BaseRaw)
                 : value.BaseRaw + (long)value.PerLevelRaw * (level - 1);
+            if (system == null)
+            {
+                return FixedMath.ClampToInt(result);
+            }
+
+            int one = system.Rules.Format.One;
+            if (spentSource != null && !string.IsNullOrEmpty(value.SpentResource) && value.SpentCoefficientRaw != 0)
+            {
+                result += FixedMath.MulDiv(value.SpentCoefficientRaw, spentSource.GetSpent(value.SpentResource), one);
+            }
+
             if (!string.IsNullOrEmpty(value.ScaleProperty) && value.ScalePerPointRaw != 0)
             {
-                int scaleUnit = value.ScaleFrom == FixedScaleSource.Target ? target : context.Caster;
-                FixedUnit unit = context.System.GetUnit(scaleUnit);
+                int scaleUnit = value.ScaleFrom == FixedScaleSource.Target ? target : caster;
+                FixedUnit unit = system.GetUnit(scaleUnit);
                 if (unit != null)
                 {
-                    result += FixedMath.MulDiv(value.ScalePerPointRaw, unit.GetProperty(value.ScaleProperty),
-                        context.System.Rules.Format.One);
+                    long term = FixedMath.MulDiv(value.ScalePerPointRaw, ReadStat(unit, value.ScaleStat, value.ScaleProperty),
+                        one);
+                    result = value.ScaleMode == FixedScaleMode.Multiply
+                        ? FixedMath.SaturatingAdd(result, FixedMath.MulDiv(result, term, one))
+                        : result + term;
                 }
             }
 
             return FixedMath.ClampToInt(result);
+        }
+
+        private static int ReadStat(FixedUnit unit, FixedScaleStat stat, string id)
+        {
+            switch (stat)
+            {
+                case FixedScaleStat.ResourceCurrent:
+                    return unit.GetCurrent(id);
+                case FixedScaleStat.ResourceMax:
+                    return unit.GetMax(id);
+                case FixedScaleStat.ResourceMissing:
+                    return FixedMath.ClampToInt(FixedMath.Max(0L, (long)unit.GetMax(id) - unit.GetCurrent(id)));
+                default:
+                    return unit.GetProperty(id);
+            }
         }
 
         /// <summary>The node's amount: its special (AmountKey) or inline leveled value, plus AmountPerStack per extra stack.</summary>
@@ -203,24 +375,25 @@ namespace Neo.Abilities.Fixed
             return amount;
         }
 
-        private static int LevelFor(FixedLevelSource source, FixedEffectContext context, int target)
+        private static int LevelFor(FixedLevelSource source, FixedAbilitySystem system, int caster, int abilityLevel,
+            int target)
         {
             switch (source)
             {
                 case FixedLevelSource.AbilityLevel:
-                    return context.AbilityLevel;
+                    return abilityLevel;
                 case FixedLevelSource.CasterUnitLevel:
-                    return LevelOf(context, context.Caster);
+                    return LevelOf(system, caster);
                 case FixedLevelSource.TargetUnitLevel:
-                    return LevelOf(context, target);
+                    return LevelOf(system, target);
                 default:
                     return 1;
             }
         }
 
-        private static int LevelOf(FixedEffectContext context, int unitId)
+        private static int LevelOf(FixedAbilitySystem system, int unitId)
         {
-            FixedUnit unit = context.System.GetUnit(unitId);
+            FixedUnit unit = system != null ? system.GetUnit(unitId) : null;
             return unit != null ? unit.Level : 1;
         }
     }

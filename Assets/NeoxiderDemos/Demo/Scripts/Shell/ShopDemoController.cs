@@ -8,7 +8,7 @@ namespace Neo.Samples
 {
     /// <summary>
     ///     Controller of the authored <b>Neo.Shop</b> demo scene (Shop.unity). The storefront cards, the wallet label,
-    ///     the control card, the log feed and the info card are saved in the scene by its DemoSceneKit builder; this
+    ///     the control card, the log feed and the info card are saved in the scene; this
     ///     component builds nothing. It is the target of persistent UnityEvents: the TryBuy / sale / reset buttons call
     ///     its public methods, and the <see cref="Neo.Shop.Shop" /> events (OnPurchasedId, OnPurchaseFailedId, OnSelectId,
     ///     OnShopChanged) are wired to it in the Inspector. Wallet buttons call <see cref="Money" /> directly (NoCode).
@@ -43,7 +43,7 @@ namespace Neo.Samples
 
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _shop != null && _money != null && _log != null && _statusValue != null &&
                                     _equippedValue != null && _ownedValue != null;
 
@@ -279,7 +279,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[ShopDemoController] The Shop demo scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[ShopDemoController] The Shop demo scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

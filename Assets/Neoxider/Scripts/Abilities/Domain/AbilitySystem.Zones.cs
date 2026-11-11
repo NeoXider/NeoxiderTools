@@ -363,13 +363,16 @@ namespace Neo.Abilities
 
         /// <summary>
         ///     Launches a projectile carrying <paramref name="payload" />'s impact effects (projectile op). The host
-        ///     reports hits with <see cref="NotifyProjectileHit" /> using the returned cast id.
+        ///     reports hits with <see cref="NotifyProjectileHit" /> using the returned cast id. What
+        ///     <paramref name="spentSource" />'s cast paid travels with the projectile to its hits.
         /// </summary>
         internal uint LaunchProjectile(AbilityBlueprint payload, UnitId caster, Vector3 origin, Vector3 direction,
-            UnitId target, string archetypeId, float speed, int level, uint seed)
+            UnitId target, string archetypeId, float speed, int level, uint seed, EffectContext spentSource = null)
         {
             uint castId = _nextCastId++;
-            _pendingProjectiles[castId] = RentPending(payload, caster, seed, level, _time + PendingProjectileTimeout);
+            PendingProjectileCast pending = RentPending(payload, caster, seed, level, _time + PendingProjectileTimeout);
+            pending.CaptureSpent(spentSource);
+            _pendingProjectiles[castId] = pending;
             _world.RequestSpawn(new SpawnRequest(archetypeId, caster, origin, direction, target, payload.Id, speed,
                 castId));
             return castId;
@@ -377,7 +380,8 @@ namespace Neo.Abilities
 
         /// <summary>
         ///     Runs <paramref name="payload" />'s impact effects in a fresh pooled context one level below
-        ///     <paramref name="parent" /> (area_apply): same caster, cast, point, level and origin; the payload's specials.
+        ///     <paramref name="parent" /> (area_apply): same caster, cast, point, level, origin and spent amounts; the
+        ///     payload's specials.
         /// </summary>
         internal void ExecutePayload(AbilityBlueprint payload, EffectContext parent, List<UnitId> targets)
         {
@@ -398,6 +402,12 @@ namespace Neo.Abilities
                 context.SourceStacks = parent.SourceStacks;
                 context.TargetPoint = parent.TargetPoint;
                 context.HasTargetPoint = parent.HasTargetPoint;
+                for (int i = 0; i < parent.SpentCount; i++)
+                {
+                    AbilitySpentResource paid = parent.GetSpentAt(i);
+                    context.AddSpent(paid.ResourceId, paid.Amount);
+                }
+
                 for (int i = 0; i < targets.Count; i++)
                 {
                     context.PrimaryTargets.Add(targets[i]);

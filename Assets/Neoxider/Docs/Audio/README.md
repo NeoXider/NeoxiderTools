@@ -31,8 +31,7 @@ Mode:
   `AMSettings.SetMusicVolume` / `SetEfxVolume` / `SetMusic` / `SetEfx` and `AM.SetUiVolume`. The
   `MuteMusic` / `MuteEfx` labels are driven by `AMSettings.MuteMusic.OnChanged` without code.
 
-The scene is produced by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Audio/AudioDemoBuilder.cs`
-(**Neoxider > Demo > Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ## Main pieces
 

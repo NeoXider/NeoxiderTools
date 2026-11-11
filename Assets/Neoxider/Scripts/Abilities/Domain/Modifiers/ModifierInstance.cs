@@ -39,6 +39,11 @@ namespace Neo.Abilities
         /// <summary>Reaction kinds of the blueprint captured at creation (engine bookkeeping).</summary>
         internal byte TriggerFlags;
 
+        // WHY: what the applying cast paid, kept only for blueprints whose tick or reaction amounts scale with a
+        // spent resource, so every other modifier stays allocation- and hash-identical.
+        private AbilitySpentResource[] _spent;
+        private int _spentCount;
+
         internal bool WatchesStates => (TriggerFlags & StateWatcherTriggerFlag) != 0;
 
         internal ModifierInstance(int instanceId, ModifierBlueprint blueprint, UnitId caster, UnitId owner,
@@ -155,6 +160,73 @@ namespace Neo.Abilities
         {
             AbilityLevel = abilityLevel < 1 ? 1 : abilityLevel;
             InitialDuration = Blueprint.ResolveDuration(AbilityLevel);
+        }
+
+        /// <summary>
+        ///     Resource amounts the applying cast paid, captured at apply time (and re-captured by each re-application)
+        ///     when the blueprint's tick or reaction effects scale with a spent resource; 0 otherwise.
+        /// </summary>
+        public int SpentCount => _spentCount;
+
+        /// <summary>The <paramref name="index" />-th captured paid amount.</summary>
+        public AbilitySpentResource GetSpentAt(int index)
+        {
+            if ((uint)index >= (uint)_spentCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            return _spent[index];
+        }
+
+        /// <summary>Total captured amount of <paramref name="resourceId" /> (case-insensitive); 0 when none.</summary>
+        public float GetSpent(string resourceId)
+        {
+            float total = 0f;
+            for (int i = 0; i < _spentCount; i++)
+            {
+                if (AbilityIdComparer.Same(_spent[i].ResourceId, resourceId))
+                {
+                    total += _spent[i].Amount;
+                }
+            }
+
+            return total;
+        }
+
+        /// <summary>
+        ///     Captures what <paramref name="source" />'s cast paid when the blueprint scales with it; a re-application
+        ///     without paid amounts clears an earlier capture (the latest application wins, like the ability level).
+        /// </summary>
+        internal void CaptureSpent(EffectContext source)
+        {
+            int count = source != null ? source.SpentCount : 0;
+            if (count == 0 || !LeveledValueResolver.UsesSpent(Blueprint, source.Specials))
+            {
+                _spentCount = 0;
+                return;
+            }
+
+            if (_spent == null || _spent.Length < count)
+            {
+                _spent = new AbilitySpentResource[count];
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                _spent[i] = source.GetSpentAt(i);
+            }
+
+            _spentCount = count;
+        }
+
+        /// <summary>Replays the captured paid amounts into a tick or reaction context.</summary>
+        internal void CopySpentTo(EffectContext context)
+        {
+            for (int i = 0; i < _spentCount; i++)
+            {
+                context.AddSpent(_spent[i].ResourceId, _spent[i].Amount);
+            }
         }
     }
 

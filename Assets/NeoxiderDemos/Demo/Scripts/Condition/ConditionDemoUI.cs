@@ -13,7 +13,7 @@ namespace Neo.Demo.Condition
     /// <summary>
     ///     UI controller for the NeoCondition demo scene.
     ///     Drives GameOver, Win, Warning panels and status text.
-    ///     In the authored scene (NeoConditionDemoBuilder) the NeoCondition events toggle the panels directly through
+    ///     In the authored scene the NeoCondition events toggle the panels directly through
     ///     persistent listeners; this component adds the C# path (<see cref="EvaluateInCode" />) and the pause switch
     ///     that shows conditions which keep checking while <see cref="Time.timeScale" /> is 0.
     /// </summary>

@@ -10,7 +10,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored <b>CameraAspectRatio</b> demo scene. Everything the demo shows (the world-space
     ///     design frame, the control card, the live readout, the device preview and the info card) is saved in
-    ///     CameraAspectRatio.unity by its DemoSceneKit builder. Buttons call the public methods below through
+    ///     CameraAspectRatio.unity. Buttons call the public methods below through
     ///     persistent UnityEvents; the reference-size slider writes
     ///     <see cref="CameraAspectRatioScaler.ReferenceOrthographicSize" /> directly (the NoCode path) and then
     ///     calls <see cref="OnReferenceSizeChanged" />. This component only forwards to the real
@@ -127,7 +127,7 @@ namespace Neo.Samples
         private Vector2 _lastDesign;
         private CameraAspectRatioScaler.ScaleMode _lastMode;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _scaler != null && _camera != null && _frameFill != null && _log != null &&
                                     _outputValue != null && _referenceSlider != null;
 
@@ -279,7 +279,7 @@ namespace Neo.Samples
 
         /// <summary>
         ///     Sizes the world-space design frame to the scaler's reference composition: height = 2 ×
-        ///     ReferenceOrthographicSize, width = height × the TargetResolution aspect. The scene builder calls it
+        ///     ReferenceOrthographicSize, width = height × the TargetResolution aspect. Call it
         ///     once so the saved frame matches the authored scaler.
         /// </summary>
         public void LayoutDesignFrame()
@@ -340,7 +340,7 @@ namespace Neo.Samples
             string label = output == ScreenOutput ? "Screen" : _deviceLabels[output - 1];
             if (output != ScreenOutput && texture == null)
             {
-                Log(label + " has no render texture; run Neoxider/Demo/Rebuild Active Demo Scene");
+                Log(label + " has no render texture; re-import the scene from the Demo download");
                 return;
             }
 
@@ -619,7 +619,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[CameraAspectRatioDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[CameraAspectRatioDemoController] The scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

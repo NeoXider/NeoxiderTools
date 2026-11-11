@@ -11,10 +11,9 @@ namespace Neo.Demo.Quest
 {
     /// <summary>
     ///     Legacy quest demo panel that binds its UI by name and loads quests from Resources at runtime. No shipped
-    ///     scene uses it; the Quest demo scene is driven by <c>Neo.Samples.QuestDemoController</c> and authored by its
-    ///     editor scene builder.
+    ///     scene uses it; the Quest demo scene is driven by <c>Neo.Samples.QuestDemoController</c>.
     /// </summary>
-    [System.Obsolete("Legacy sample view used by no scene. Use QuestDemoController in the builder-authored Quest demo " +
+    [System.Obsolete("Legacy sample view used by no scene. Use QuestDemoController in the Quest demo " +
                      "scene instead; this script will be removed in a later release.")]
     [AddComponentMenu("Neoxider/Demo/Quest/QuestDemoView")]
     public class QuestDemoView : MonoBehaviour

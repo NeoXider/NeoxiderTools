@@ -131,6 +131,9 @@ namespace Neo.Editor.Tests.Abilities.Fixed
         void Base(int unit, string propertyId, double value);
         void Register(IEnumerable<AbilityBlueprint> abilities, IEnumerable<ModifierBlueprint> modifiers);
         void Grant(int unit, string abilityId);
+        void SetLevel(int unit, string abilityId, int level);
+        double CooldownSeconds(int unit, string abilityId);
+        int SlotCharges(int unit, string abilityId);
         void Apply(string modifierId, int caster, int target);
         bool Cast(int caster, string abilityId, int target = 0, uint seed = 0u);
         bool CastAt(int caster, string abilityId, double x, double z, uint seed = 0u);
@@ -195,6 +198,21 @@ namespace Neo.Editor.Tests.Abilities.Fixed
         public void Grant(int unit, string abilityId)
         {
             _system.GrantAbility(Id(unit), abilityId);
+        }
+
+        public void SetLevel(int unit, string abilityId, int level)
+        {
+            _system.SetAbilityLevel(Id(unit), abilityId, level);
+        }
+
+        public double CooldownSeconds(int unit, string abilityId)
+        {
+            return _system.TryGetSlot(Id(unit), abilityId, out AbilitySlot slot) ? slot.CooldownRemaining : -1d;
+        }
+
+        public int SlotCharges(int unit, string abilityId)
+        {
+            return _system.TryGetSlot(Id(unit), abilityId, out AbilitySlot slot) ? slot.Charges : -1;
         }
 
         public void Apply(string modifierId, int caster, int target)
@@ -351,6 +369,23 @@ namespace Neo.Editor.Tests.Abilities.Fixed
         public void Grant(int unit, string abilityId)
         {
             _system.GrantAbility(unit, abilityId);
+        }
+
+        public void SetLevel(int unit, string abilityId, int level)
+        {
+            _system.SetAbilityLevel(unit, abilityId, level);
+        }
+
+        public double CooldownSeconds(int unit, string abilityId)
+        {
+            return _system.TryGetSlot(unit, abilityId, out FixedAbilitySlot slot)
+                ? slot.CooldownRemainingTicks / (double)_settings.TicksPerSecond
+                : -1d;
+        }
+
+        public int SlotCharges(int unit, string abilityId)
+        {
+            return _system.TryGetSlot(unit, abilityId, out FixedAbilitySlot slot) ? slot.Charges : -1;
         }
 
         public void Apply(string modifierId, int caster, int target)

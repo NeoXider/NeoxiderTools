@@ -8,8 +8,8 @@ using UnityEngine.UI;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Controller of the authored <b>Neo.Animations</b> demo (AnimatorsDemo.unity). The scene, saved by its
-    ///     DemoSceneKit builder, holds a disc whose scale follows a <see cref="Vector3Animator" />, a disc tinted by a
+    ///     Controller of the authored <b>Neo.Animations</b> demo (AnimatorsDemo.unity). The saved scene
+    ///     holds a disc whose scale follows a <see cref="Vector3Animator" />, a disc tinted by a
     ///     <see cref="ColorAnimator" />, a square moved by a <see cref="TransformAnimator" /> (rotate, bob, scale pulse,
     ///     impulse shake) and a card bar filled by a <see cref="FloatAnimator" />. The value animators reach their
     ///     targets through persistent UnityEvents (OnVectorChanged, OnColorChanged, Value.OnChanged), so the targets
@@ -53,7 +53,7 @@ namespace Neo.Samples
             Stop
         }
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _float != null && _color != null && _vector != null && _transform != null &&
                                     _log != null;
 
@@ -305,7 +305,7 @@ namespace Neo.Samples
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
                 "[AnimatorsDemoController] The scene is not authored. Open Scenes/Animations/AnimatorsDemo.unity or " +
-                "run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "re-import the scene from the Demo download.", this);
         }
     }
 }

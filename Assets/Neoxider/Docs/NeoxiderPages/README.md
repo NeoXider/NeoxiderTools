@@ -67,8 +67,7 @@ save under demo-only keys (`NeoDemo.Pages.Money`, `NeoDemo.Pages.BestScore`, `Ne
 never touches the balance, best score or level progress of your own game.
 
 The card is plain uGUI + TextMeshPro with built-in UI sprites, so the scene still opens when only this sample is
-imported. When the Demo Scenes sample is also visible, its `PagesUIBuilder` re-authors the card and keeps the scene
-clean (Input System UI module on the EventSystem) through **Neoxider > Demo > Rebuild Active Demo Scene**. The
+imported. The
 CardGame example in Demo Scenes uses the PM prefab and `UIPage` from this sample.
 
 ## Main concepts

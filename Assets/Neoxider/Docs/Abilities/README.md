@@ -68,7 +68,7 @@ Start with **Hit Player 20**, then **Cast Heal**: numeric HP and the result expl
 Try Heal again during cooldown, **Zap dummy**, **Next level**, and compare 12/20/30 damage.
 **Auto Zap** starts off so the dummy survives while you read; enable it to inspect automatic casting.
 **Reset demo** restores both units, level and cooldowns. The whole wiring is saved in the scene, so it is
-readable without entering Play Mode (the scene is authored by `Editor/Builders/Abilities/AbilitiesNoCodeDemoBuilder.cs`):
+readable without entering Play Mode:
 
 - `Btn_Hit Player 20` / `Btn_Cast Heal` each carry their own `AbilityNoCodeAction` (ApplyDamage 20 on the
   Player / CastById `heal_pulse` through the Player's caster); `Button.OnClick → AbilityNoCodeAction.Execute`,
@@ -204,6 +204,8 @@ Any effect `Amount` — plus an area `Radius` and a modifier's `Duration` — ca
 - **Modifiers** add `DurationByLevel`, resolved by the captured ability level.
 
 Example — an ember bolt dealing `[50, 90, 140]` per ability level plus `0.4 × spell_power`: on the `damage` node set `AmountByLevel = [50, 90, 140]`, `AmountLevelSource = AbilityLevel`, `AmountScaleProperty = spell_power`, `AmountScalePerPoint = 0.4`, `AmountScaleSource = Caster`.
+
+**Since 12.3 every important parameter can scale**, not only amounts: cooldown, cast range, charges, charge restore time and projectile speed by ability level (`CooldownByLevel`, `RangeByLevel`, ...); costs by level or from a special (10% of max mana) with the `Fixed` / `UpTo` / `All` spend modes; a **spent term** that scales effects by what the cast actually paid (it travels to projectile hits and to the DoT ticks of the modifiers it applied); a `Multiply` scale mode and resource stats (`ResourceCurrent` / `ResourceMax` / `ResourceMissing`); modifier strength by level (`PropertyContribution.ValueByLevel`); node chance, target cap and zone duration / interval by level. The table of every scalable parameter, the resolution order, the level-change rules and worked examples are in [AbilityDefinition: Leveled and scalable values](./AbilityDefinition.md#leveled-and-scalable-values).
 
 ## Code-first usage
 

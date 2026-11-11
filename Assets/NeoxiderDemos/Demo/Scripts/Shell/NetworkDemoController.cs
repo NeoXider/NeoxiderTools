@@ -11,7 +11,7 @@ using Mirror;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Controller of the authored <b>Neo.Network</b> demo scene (NetworkDemo.unity). Its DemoSceneKit builder saves
+    ///     Controller of the authored <b>Neo.Network</b> demo scene (NetworkDemo.unity). The scene saves
     ///     the whole UI, the network objects and every persistent listener in the scene: Host / Server / Stop call
     ///     <see cref="NeoNetworkManager" /> directly, the relay buttons call <see cref="NetworkActionRelay" /> directly,
     ///     and the relay channels call this component and the shared boss on every peer. This component builds no UI:
@@ -115,7 +115,7 @@ namespace Neo.Samples
             Unavailable = 5
         }
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _log != null && _roleValue != null && _manager != null && _relay != null &&
                                     _boss != null && _pingsValue != null && _bossValue != null;
 
@@ -647,7 +647,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[NetworkDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[NetworkDemoController] The scene UI is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }

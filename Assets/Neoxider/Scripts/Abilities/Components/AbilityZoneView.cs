@@ -117,6 +117,29 @@ namespace Neo.Abilities
         }
     }
 
+    /// <summary>Rotation that faces a direction in a <see cref="AbilityZonePlane" />.</summary>
+    public static class AbilityZonePlaneFacing
+    {
+        /// <summary>
+        ///     GroundXZ: forward (Z) along <paramref name="direction" />. ScreenXY: a turn around Z so right (+X) points
+        ///     along the direction's XY part. Identity for a zero direction.
+        /// </summary>
+        public static Quaternion Facing(Vector3 direction, AbilityZonePlane plane)
+        {
+            if (plane == AbilityZonePlane.ScreenXY)
+            {
+                if (direction.x * direction.x + direction.y * direction.y < 0.000001f)
+                {
+                    return Quaternion.identity;
+                }
+
+                return Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+            }
+
+            return direction.sqrMagnitude > 0.000001f ? Quaternion.LookRotation(direction.normalized) : Quaternion.identity;
+        }
+    }
+
     /// <summary>Plane a zone visual lies in.</summary>
     public enum AbilityZonePlane
     {

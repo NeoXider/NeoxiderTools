@@ -29,7 +29,7 @@ Supported flows:
 
 The demo scene is `Assets/NeoxiderDemos/Demo/Scenes/UI/AnimationFlyDemo.unity` (Demo download).
 
-Everything is saved in the scene, so the wiring is visible in the Hierarchy and Inspector without entering Play Mode (the scene is authored by the editor builder `AnimationFlyDemoBuilder`, nothing is built at runtime):
+Everything is saved in the scene, so the wiring is visible in the Hierarchy and Inspector without entering Play Mode (nothing is built at runtime):
 
 | Object | What to look at |
 |---|---|

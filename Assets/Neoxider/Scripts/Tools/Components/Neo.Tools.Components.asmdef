@@ -12,19 +12,16 @@
         "Neo.Tools.Text",
         "Neo.Save",
         "Mirror",
-        "Neo.Network"
+        "Neo.Network",
+        "Neo.Tools.Spawner"
     ],
-    "includePlatforms": [
-    ],
-    "excludePlatforms": [
-    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [
-    ],
+    "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-    ],
+    "defineConstraints": [],
     "versionDefines": [
         {
             "define": "MIRROR",

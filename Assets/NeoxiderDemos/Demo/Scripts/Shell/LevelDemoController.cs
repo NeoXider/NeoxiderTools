@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace Neo.Samples
 {
     /// <summary>
-    ///     Controller of the authored level demo scene (LevelFlowDemo.unity, built by LevelFlowDemoBuilder). The left
+    ///     Controller of the authored level demo scene (LevelFlowDemo.unity). The left
     ///     card drives a <b>Neo.Core.Level</b> <see cref="LevelComponent" /> (linear curve asset, 100 XP per level):
     ///     the level and XP-to-next labels are bound to its reactive states in the scene (NoCode), the NoCode buttons
     ///     call <see cref="LevelNoCodeAction" /> components, and the C# buttons call <see cref="AddXp" /> and
@@ -46,7 +46,7 @@ namespace Neo.Samples
 
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _level != null && _levelManager != null && _totalXpValue != null && _xpFill != null &&
                                     _mapValue != null && _completeValue != null && _log != null;
 
@@ -254,7 +254,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[LevelDemoController] The scene UI is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.", this);
+                "[LevelDemoController] The scene UI is not authored. Re-import the scene from the Demo download.", this);
         }
     }
 }

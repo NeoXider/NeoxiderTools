@@ -63,8 +63,7 @@ The card's Play / Pause / Resume / Stop buttons, the shared `AnimationType` drop
 and the channel toggles call `AnimatorsDemoController`, which only forwards to the animators' public API
 (`Play`, `Pause`, `Resume`, `Stop`, `AnimationType`, `AnimationSpeed`, `TransformAnimator.Settings`) and logs
 each call. Type and speed apply to the three value animators; `TransformAnimator` has its own channel settings.
-The scene is authored by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Animations/AnimatorsDemoBuilder.cs`
-(rebuild it with **Neoxider > Demo > Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 По-русски: откройте сцену `Scenes/Animations/AnimatorsDemo.unity`. Все четыре аниматора работают на настоящих
 целях: `Vector3Animator` масштабирует диск, `ColorAnimator` перекрашивает второй диск, `TransformAnimator`

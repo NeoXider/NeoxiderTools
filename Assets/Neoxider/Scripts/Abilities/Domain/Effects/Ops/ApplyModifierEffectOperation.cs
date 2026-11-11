@@ -27,7 +27,7 @@ namespace Neo.Abilities
                 }
 
                 context.System.Modifiers.Apply(blueprint, context.Caster, target.Id, context.AbilityId,
-                    context.AbilityLevel);
+                    context.AbilityLevel, context);
             }
         }
     }

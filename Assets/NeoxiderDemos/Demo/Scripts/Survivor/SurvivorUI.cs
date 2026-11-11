@@ -7,7 +7,7 @@ namespace Neo.Samples.Survivor
     /// <summary>
     ///     Legacy uGUI construction helpers (rounded panels, bars, labels and buttons in the v10 dark style), kept for
     ///     the obsolete runtime <c>NeoDemoShell</c>. <see cref="SetFill" /> is the runtime fill helper for authored
-    ///     anchor-driven bars. Demo HUDs are authored into the saved scenes by the editor scene builders, not built
+    ///     anchor-driven bars. Demo HUDs are saved in the scenes, not built
     ///     with these helpers at runtime.
     /// </summary>
     public static class SurvivorUI

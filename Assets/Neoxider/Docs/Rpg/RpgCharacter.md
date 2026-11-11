@@ -16,7 +16,7 @@ optional network adapter. It replaces the legacy `RpgCombatant` + `RpgStatsManag
    add `RpgCharacterNetworkAdapter` for multiplayer.
 
 **Demo:** `Scenes/RpgCharacterQuickDemo.unity` in the Demo download (`Assets/NeoxiderDemos/Demo/`). The whole demo is saved in
-the scene (authored by `RpgCharacterQuickDemoBuilder`, menu `Neoxider/Demo/Rebuild Active Demo Scene`), so the
+the scene, so the
 wiring is visible without Play Mode: select `Rpg Demo Player` for its `RpgCharacterTemplate` asset, the
 `Resource · HP` / `Stamina` / `DarkMana` rows for `RpgResourceBinding` events driving labels and bars, the
 `NoCode ...` buttons for `RpgNoCodeAction`, and the `Condition · Low HP` row for a `NeoCondition` reading

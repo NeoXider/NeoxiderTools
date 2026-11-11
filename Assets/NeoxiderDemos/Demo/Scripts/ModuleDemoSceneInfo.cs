@@ -9,7 +9,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Tutorial info card of a demo scene: module title, purpose, runtime API, scene workflow, verification
     ///     and hint lines with a collapse button. The card itself is an authored uGUI + TextMeshPro object saved
-    ///     in the scene (the Neo.Demo.Editor DemoSceneKit builds it and wires the collapse button as a persistent
+    ///     in the scene (its collapse button is wired as a persistent
     ///     listener to <see cref="ToggleCollapsed" />). This component only pushes its texts into the authored
     ///     labels and toggles the collapsible parts; it never constructs UI at runtime.
     /// </summary>
@@ -95,8 +95,7 @@ namespace Neo.Samples
         }
 
         /// <summary>Creates a standalone info card at runtime for demos assembled from code.</summary>
-        [Obsolete("Runtime-built info cards are deprecated. Author the card in the scene with the Neo.Demo.Editor " +
-                  "DemoSceneKit (dev-docs/DemoSceneBuilders.md).")]
+        [Obsolete("Runtime-built info cards are deprecated. Author the card in the scene as uGUI objects.")]
         public static ModuleDemoSceneInfo Show(string title, string description, params string[] hints)
         {
             GameObject host = new("ModuleDemoSceneInfo");
@@ -275,8 +274,8 @@ namespace Neo.Samples
 
             _warnedMissingOverlay = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[ModuleDemoSceneInfo] '" + _moduleName + "' has no authored info card. Rebuild the scene with " +
-                "Neoxider/Demo/Rebuild Active Demo Scene (or Author Info Card In Active Scene).", this);
+                "[ModuleDemoSceneInfo] '" + _moduleName + "' has no authored info card. Re-import the scene from the " +
+                "Demo download.", this);
         }
 
         private static void AppendLabeledHint(StringBuilder builder, string accent, string label, string text)

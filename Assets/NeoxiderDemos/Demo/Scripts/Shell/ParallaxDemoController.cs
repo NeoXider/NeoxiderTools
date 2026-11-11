@@ -9,7 +9,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Controller of the authored <b>Neo.Parallax</b> demo scene. The landscape bands - each a real
     ///     <see cref="ParallaxLayer" /> with its own multiplier, tiling and sorting - the UI and the info card are
-    ///     saved in ParallaxDemo.unity by its DemoSceneKit builder. This component only moves the camera (auto pan,
+    ///     saved in ParallaxDemo.unity. This component only moves the camera (auto pan,
     ///     reverse, jumps) so the layers have something to react to, and mirrors the camera position into the
     ///     authored label. It builds nothing at runtime.
     /// </summary>
@@ -41,7 +41,7 @@ namespace Neo.Samples
         private int _shownTenths = int.MinValue;
         private bool _warnedUnbuilt;
 
-        /// <summary>True when the authored scene references are assigned (the scene builder ran).</summary>
+        /// <summary>True when the authored scene references are assigned.</summary>
         public bool IsSceneBuilt => _camera != null && _layers != null && _layers.Length > 0 && _cameraX != null &&
                                     _log != null;
 
@@ -184,7 +184,7 @@ namespace Neo.Samples
 
             _warnedUnbuilt = true;
             global::Neo.Demo.SampleDiagnostics.Warn(
-                "[ParallaxDemoController] The scene is not authored. Run Neoxider/Demo/Rebuild Active Demo Scene.",
+                "[ParallaxDemoController] The scene is not authored. Re-import the scene from the Demo download.",
                 this);
         }
     }
