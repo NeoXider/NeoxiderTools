@@ -64,8 +64,9 @@ namespace Neo.Tests.Play.Samples
             AbilityUnitBehaviour player = FindByName<AbilityUnitBehaviour>("Player");
             Assert.That(player.GetComponent<AbilityAutoCaster>(), Is.Not.Null);
             Assert.That(Describe(player.OnMoveSpeedChanged), Is.EqualTo("KeyboardMover.SetSpeed"));
-            Assert.That(Describe(player.OnDamaged), Is.EqualTo("TransformAnimator.Shake; TransformAnimator.Shake"),
-                "a hit shakes the hero and the camera");
+            Assert.That(Describe(player.OnDamaged),
+                Is.EqualTo("TransformAnimator.Shake; TransformAnimator.Shake; SpriteFlash.Flash"),
+                "a hit shakes the hero and the camera and flashes the hero white");
             MagneticField magnet = player.GetComponent<MagneticField>();
             Assert.That(magnet.Space, Is.EqualTo(MagneticField.PhysicsSpace.TwoD));
             Assert.That(magnet.Motion, Is.EqualTo(MagneticField.MoveMethod.Kinematic));
@@ -82,13 +83,26 @@ namespace Neo.Tests.Play.Samples
                 "ability cues play the weapon effects");
             Assert.That(FindInactive("Loadout").GetComponentsInChildren<AbilityCooldownSource>(true).Length,
                 Is.EqualTo(7), "one loadout slot per weapon");
+            int levelBadges = 0;
+            foreach (AbilityNoCodeAction card in FindInactive("UpgradeOverlay")
+                         .GetComponentsInChildren<AbilityNoCodeAction>(true))
+            {
+                Transform badge = card.transform.Find("Level");
+                if (badge != null && badge.GetComponent("NoCodeFormattedText") != null)
+                {
+                    levelBadges++;
+                }
+            }
+
+            Assert.That(levelBadges, Is.EqualTo(7), "every weapon card shows the level it takes the weapon to");
             foreach (GameObject template in spawner.prefabs)
             {
                 AbilityUnitBehaviour enemy = template.GetComponent<AbilityUnitBehaviour>();
                 Assert.That(Describe(enemy.OnDied), Is.EqualTo("Loot.DropLoot; Counter.Add; Despawner.Despawn"),
                     template.name);
                 Assert.That(Describe(enemy.OnMoveSpeedChanged), Is.EqualTo("Follow.SetPositionSpeed"), template.name);
-                Assert.That(Describe(enemy.OnDamaged), Is.EqualTo("TransformAnimator.Shake"), template.name);
+                Assert.That(Describe(enemy.OnDamaged), Is.EqualTo("TransformAnimator.Shake; SpriteFlash.Flash"),
+                    template.name);
                 Assert.That(template.GetComponent<Loot>().UseObjectPool, Is.True, template.name);
             }
 
@@ -166,9 +180,15 @@ namespace Neo.Tests.Play.Samples
                 string grant = Argument(GrantArgument);
                 if (!string.IsNullOrEmpty(grant))
                 {
-                    foreach (string id in grant.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                    // WHY: "id" grants a weapon, "id:3" also sets its level, so a recording can show late upgrades.
+                    foreach (string entry in grant.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                     {
-                        player.Unit.System.GrantAbility(player.UnitId, id.Trim());
+                        string[] pair = entry.Trim().Split(':');
+                        player.Unit.System.GrantAbility(player.UnitId, pair[0]);
+                        if (pair.Length > 1 && int.TryParse(pair[1], out int grantLevel))
+                        {
+                            player.Unit.System.SetAbilityLevel(player.UnitId, pair[0], grantLevel);
+                        }
                     }
                 }
 

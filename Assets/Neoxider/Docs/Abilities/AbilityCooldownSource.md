@@ -24,6 +24,7 @@
 | `SecondsRemaining` | `>= 0` | Seconds until the cooldown or next charge completes; `0` when no timer is running or the id is unknown. |
 | `IsReady` | `bool` | Granted slot has a usable charge or its cooldown completed. States, resources and target validity are checked only by `Cast`. |
 | `Level` | `int` | Level of the ability on the caster; `0` while it is not granted. Bind it to a text for a loadout bar. |
+| `NextLevel` | `int` | `Level + 1`: the level one more pick gives. Bind it next to `Level` for "Lv 2 → 3" on an upgrade card. |
 | `IsGranted` | `bool` | The caster has the ability. |
 
 ## Example — cooldown overlay on an ability button

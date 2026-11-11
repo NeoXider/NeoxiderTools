@@ -120,10 +120,12 @@ namespace Neo.Editor.Tests.Abilities
 
                 Assert.That(source.Level, Is.Zero, "Not granted yet.");
                 Assert.That(source.IsGranted, Is.False);
+                Assert.That(source.NextLevel, Is.EqualTo(1), "The first pick gives level 1.");
 
                 action.Execute();
                 Assert.That(source.IsGranted, Is.True);
                 Assert.That(source.Level, Is.EqualTo(1), "The first pick grants the ability.");
+                Assert.That(source.NextLevel, Is.EqualTo(2));
 
                 action.Execute();
                 action.Execute();
@@ -133,6 +135,59 @@ namespace Neo.Editor.Tests.Abilities
                 action.Execute();
                 Assert.That(source.Level, Is.EqualTo(3), "The cap holds.");
                 Assert.That(failed, Is.EqualTo(1));
+            }
+        }
+
+        [Test]
+        public void SecondChainNode_SwitchedOnByChanceByLevel_AddsABoltAtTheNearestFoeFromThatLevel()
+        {
+            using (AbilitySceneRig rig = new AbilitySceneRig())
+            {
+                AbilityUnitBehaviour caster = rig.AddUnit("Caster", 1, Vector3.zero);
+                AbilityUnitBehaviour aimed = rig.AddUnit("Aimed", 2, new Vector3(8f, 0f, 0f));
+                AbilityUnitBehaviour near = rig.AddUnit("Near", 2, new Vector3(1f, 0f, 0f));
+                AbilityBlueprint lightning = new AbilityBlueprint
+                {
+                    Id = "lightning",
+                    Targeting = TargetingMode.Unit,
+                    TeamFilter = AbilityTeamFilter.Enemies,
+                    Range = 20f
+                };
+                lightning.ImpactEffects.Add(new EffectNodeData
+                {
+                    OpId = AbilityEffectOps.Chain,
+                    Target = EffectTargetSelector.Target,
+                    TeamFilter = AbilityTeamFilter.Enemies,
+                    Radius = 3f,
+                    MaxTargets = 3,
+                    Amount = 10f,
+                    DamageType = AbilityDamageTypes.Pure
+                });
+                // WHY: the extra bolt of a leveled weapon is a second node whose chance is 0 below its level.
+                lightning.ImpactEffects.Add(new EffectNodeData
+                {
+                    OpId = AbilityEffectOps.Chain,
+                    Target = EffectTargetSelector.AreaAroundCaster,
+                    TeamFilter = AbilityTeamFilter.Enemies,
+                    Radius = 3f,
+                    MaxTargets = 3,
+                    Amount = 10f,
+                    DamageType = AbilityDamageTypes.Pure,
+                    ChanceByLevel = new[] { 0f, 0f, 1f }
+                });
+                rig.System.RegisterAbility(lightning);
+                rig.System.GrantAbility(caster.UnitId, "lightning");
+
+                Assert.That(rig.System.Cast(CastRequest.AtUnit(caster.UnitId, "lightning", aimed.UnitId)).Success,
+                    Is.True);
+                Assert.That(aimed.Unit.Health, Is.EqualTo(90f));
+                Assert.That(near.Unit.Health, Is.EqualTo(100f), "Below level 3 there is one bolt.");
+
+                rig.System.SetAbilityLevel(caster.UnitId, "lightning", 3);
+                Assert.That(rig.System.Cast(CastRequest.AtUnit(caster.UnitId, "lightning", aimed.UnitId)).Success,
+                    Is.True);
+                Assert.That(aimed.Unit.Health, Is.EqualTo(80f));
+                Assert.That(near.Unit.Health, Is.EqualTo(90f), "From level 3 a second bolt strikes the nearest foe.");
             }
         }
 

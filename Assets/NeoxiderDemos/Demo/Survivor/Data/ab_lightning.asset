@@ -15,7 +15,8 @@ MonoBehaviour:
   _blueprint:
     Id: lightning
     DisplayName: Chain Lightning
-    Description: Strikes a random foe and jumps to others.
+    Description: Strikes a random foe and jumps to others. From level 3 a second bolt
+      strikes the nearest foe.
     Targeting: 2
     TeamFilter: 1
     Range: 9
@@ -68,6 +69,48 @@ MonoBehaviour:
       CustomParam: 0.85
       Chance: 1
       ChanceByLevel: []
+      AbilityId: 
+      Angle: 0
+      Duration: 0
+      Interval: 0
+      DurationByLevel: []
+      IntervalByLevel: []
+      AmountPerStack: 0
+    - OpId: chain
+      Target: 3
+      TeamFilter: 1
+      Radius: 6
+      RadiusByLevel: []
+      MaxTargets: 3
+      MaxTargetsByLevel: 0300000004000000050000000600000008000000
+      Amount: 14
+      AmountByLevel:
+      - 14
+      - 16
+      - 18
+      - 21
+      - 25
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 1
+      AmountScaleStat: 0
+      AmountScaleMode: 0
+      AmountSpentResource: 
+      AmountSpentCoefficient: 0
+      DamageType: magical
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: 
+      CustomParam: 0.85
+      Chance: 1
+      ChanceByLevel:
+      - 0
+      - 0
+      - 1
+      - 1
+      - 1
       AbilityId: 
       Angle: 0
       Duration: 0

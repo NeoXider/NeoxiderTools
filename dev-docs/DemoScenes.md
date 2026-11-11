@@ -33,5 +33,7 @@ persistent UnityEvent listeners live in the scene and are edited in the Editor l
 - `SampleScenePlaySmokeTests` loads every demo scene for 12 frames: no errors, no missing references reported by
   controllers (`IsSceneBuilt`), Filled Images with sprites, an authored info card on every Demo scene.
 - `SurvivorDemoGameplayTests` reads the saved Survivor wiring (library components only, no game scripts) and wins a
-  run with an autopilot; `-neoSurvivorFrames <dir>` writes frames for a gameplay video.
+  run with an autopilot; `-neoSurvivorFrames <dir>` writes frames and audio for a gameplay video,
+  `-neoSurvivorGrant "lightning:3,blades"` grants weapons at a level before the run and
+  `-neoSurvivorCards "Lightning,Blades"` sets the order in which the autopilot takes cards.
 - Visual checks run in batch mode only: never open a GUI editor on the owner's desktop.

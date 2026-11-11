@@ -6,7 +6,7 @@
 
 A modular construction library: use runtime APIs directly, then add scene components and optional Inspector / NoCode workflows.
 
-[![Version](https://img.shields.io/badge/version-12.4.0-blue)](Assets/Neoxider/package.json)
+[![Version](https://img.shields.io/badge/version-12.5.0-blue)](Assets/Neoxider/package.json)
 [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](Assets/Neoxider/LICENSE.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](Assets/Neoxider/Docs/PackageCompatibility.md)
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](Assets/Neoxider/Docs/README.md#namespace-policy)

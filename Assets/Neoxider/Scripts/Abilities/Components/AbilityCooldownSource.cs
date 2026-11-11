@@ -56,6 +56,9 @@ namespace Neo.Abilities
         /// <summary>Level of the ability on the caster; 0 while it is not granted. Bind it to a text for a loadout.</summary>
         public int Level => TryGetSlot(out AbilitySlot slot) ? slot.Level : 0;
 
+        /// <summary>The level one more pick gives: 1 while the ability is not granted. For "Lv 2 → 3" on an upgrade card.</summary>
+        public int NextLevel => Level + 1;
+
         /// <summary>True while the caster has the ability.</summary>
         public bool IsGranted => TryGetSlot(out AbilitySlot _);
 
