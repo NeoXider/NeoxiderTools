@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeActionsDemo.jpg" alt="NoCodeActionsDemo: Level, Progression, Quest and Rpg NoCode actions" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeBindingDemo.jpg" alt="NoCodeBindingDemo: one counter bound to text, formatted text and a progress bar" width="49%" /></p>
 
-*Demo scenes: `Scenes/NoCode/NoCodeActionsDemo.unity`, `Scenes/NoCode/NoCodeBindingDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/NoCode/NoCodeActionsDemo.unity`, `Scenes/NoCode/NoCodeBindingDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -33,7 +33,7 @@ Both scenes are fully authored in the `.unity` file (no runtime UI construction,
 
 C# equivalent of the binding demo: `counter.Add(10)`, `bindText.RefreshBinding()`, `formattedText.SetValues(sources, "{0:0} / 100")`, `setProgress.SetRange(0f, 100f)`.
 
-The scenes are authored by the editor builders `NoCodeBindingDemoBuilder` / `NoCodeActionsDemoBuilder` (menu **Neoxider/Demo/Rebuild Active Demo Scene**). Paths are relative to the Demo sample root: `Assets/Neoxider/Samples~/Demo` in the release layout, `Assets/Neoxider/Samples/Demo` during sample development, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` after a Package Manager import.
+The scenes are authored by the editor builders `NoCodeBindingDemoBuilder` / `NoCodeActionsDemoBuilder` (menu **Neoxider/Demo/Rebuild Active Demo Scene**). Paths are relative to `Assets/NeoxiderDemos/Demo` (Demo download).
 
 ## UX Discipline And C# Contract
 

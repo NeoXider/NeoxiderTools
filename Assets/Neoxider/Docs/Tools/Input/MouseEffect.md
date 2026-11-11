@@ -84,7 +84,7 @@ On touch-only devices both input backends report the first finger as the left mo
 
 ## Demo scene
 
-`Scenes/Tools/MouseEffectorExample.unity` (sample "Demo Scenes", root `Assets/Neoxider/Samples~/Demo/` in the package or `Samples/` while developing samples) is authored by `MouseEffectorExampleBuilder` (**Neoxider > Demo > Rebuild Active Demo Scene**). It keeps three hand-authored effects under `Effects` (prefab spawning, trail, follower) and adds:
+`Scenes/Tools/MouseEffectorExample.unity` (Demo download, `Assets/NeoxiderDemos/Demo/`) is authored by `MouseEffectorExampleBuilder` (**Neoxider > Demo > Rebuild Active Demo Scene**). It keeps three hand-authored effects under `Effects` (prefab spawning, trail, follower) and adds:
 
 - `[Demo] Mouse Input`: a `MouseInputManager` with **Enable Hold** on, so hold spawning works;
 - toggles that call `GameObject.SetActive` on each effect object directly;

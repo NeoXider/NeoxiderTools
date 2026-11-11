@@ -23,7 +23,7 @@ namespace Neo.Tests.Play
     {
         private static readonly string[] SampleRootCandidates =
         {
-            "Assets/Neoxider/Samples",
+            "Assets/NeoxiderDemos",
             "Assets/Neoxider/Samples~",
             "Assets/Samples/NeoxiderTools",
             "Assets/Samples/Neoxider Tools"

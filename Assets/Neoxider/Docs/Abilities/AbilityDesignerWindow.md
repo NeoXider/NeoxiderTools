@@ -42,7 +42,7 @@ See [Editor API and authoring contracts](./Editor.md) for case-insensitive built
 ## Pitfalls
 
 - The window edits assets through `SerializedObject`, so undo/redo works and dirty assets save with the project as usual.
-- The library scans the whole project via the asset database; assets inside `Samples~` (hidden) folders are not imported and will not appear.
+- The library scans the whole project via the asset database; demo assets live in ordinary project folders such as `Assets/NeoxiderDemos/Demo` and always appear.
 - The scan runs when the window opens and again after the project changes (an asset was created, deleted, moved or re-imported). Focusing the window otherwise re-runs validation and rebuilds the effect board only when the selected asset was changed elsewhere (for example an effect added or reordered in the regular Inspector), so the inspector pane keeps its scroll position and an active text field. The selected asset and the search text survive script reloads and editor restarts.
 - Validation is advisory — the runtime does not refuse to register "invalid" data.
 

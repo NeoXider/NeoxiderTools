@@ -29,7 +29,7 @@ namespace Neo.Tests.Play
         internal const string DemoRuntimeAssembly = "Neo.Rpg.Demo";
         internal const string NoVisibleSampleRoot = "(no visible sample root)";
         internal const string ImportedSamplesRoot = "Assets/Samples/NeoxiderTools";
-        internal const string DevelopmentSamplesRoot = "Assets/Neoxider/Samples";
+        internal const string DevelopmentSamplesRoot = "Assets/NeoxiderDemos";
 
         private const double LoadTimeoutSeconds = 30d;
         private const string SceneBuiltProperty = "IsSceneBuilt";
@@ -128,9 +128,8 @@ namespace Neo.Tests.Play
             string root = FindCompiledDemoRoot();
             if (root == null)
             {
-                Assert.Ignore("This scene test needs the compiled Demo sample: rename Assets/Neoxider/Samples~ to " +
-                              "Samples during development or import 'Demo Scenes'. Hidden Samples~ scripts do not " +
-                              "compile; the builders are covered by Neo.Demo.Editor.Tests.");
+                Assert.Ignore("This scene test needs the demo tree Assets/NeoxiderDemos/Demo (Demo download); " +
+                              "the builders are covered by Neo.Demo.Editor.Tests.");
             }
 
             string path = root + "/" + relativePath;

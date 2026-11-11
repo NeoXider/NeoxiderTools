@@ -1,11 +1,11 @@
 ﻿# NeoxiderPages module
 
-**What it is:** `NeoxiderPages` is a sample module for screen/page navigation on top of Unity UI (namespace `Neo.Pages`, sample source `Samples~/NeoxiderPages`). It imports and runs on its own, without **DOTween**, **DOTween Pro** or the Demo Scenes sample.
+**What it is:** `NeoxiderPages` is a sample module for screen/page navigation on top of Unity UI (namespace `Neo.Pages`, sample source `Assets/NeoxiderDemos/NeoxiderPages`). It imports and runs on its own, without **DOTween**, **DOTween Pro** or the Demo Scenes sample.
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UI.jpg" alt="NeoxiderPages UI scene: PM page navigation with the info card" width="45%" /></p>
 
-*Demo scene: `Demo/Scenes/UI.unity`, in the **NeoxiderPages** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Demo/Scenes/UI.unity`, in the **NeoxiderPages** sample (separate Demo download, `Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -31,22 +31,19 @@ DOTween dependency to Pages. See [sample setup](../Samples.md) for the full coll
 
 ## Location
 
-In the package the sample source lives in `Assets/Neoxider/Samples~/NeoxiderPages/` (or
-`Assets/Neoxider/Samples/NeoxiderPages/` while samples are being developed). Importing it through
-**Package Manager → NeoxiderTools → Samples → Import** copies it into the game project:
+NeoxiderPages ships as its own download, `NeoxiderPages.v<ver>.unitypackage`, and imports into the game project:
 
 ```text
-Assets/Samples/NeoxiderTools/<version at import>/NeoxiderPages/
+Assets/NeoxiderDemos/NeoxiderPages/
 ```
 
 ### Updating an imported copy
 
-The imported copy is part of the game, not of the package: bumping the package version does **not**
+The imported copy is part of the game, not of the package: updating the package does **not**
 update it. When a release fixes something in NeoxiderPages (for example 10.16.1, where the `PM` editor
-page preview stopped switching pages during Play Mode), re-import the sample or copy the changed files.
-The folder keeps the version it was first imported with, so to find out which fixes a project has,
-compare the files with the package's `Samples~/NeoxiderPages` (ignore BOM and line endings) instead of
-trusting the folder name.
+page preview stopped switching pages during Play Mode), import the new `NeoxiderPages` download or copy the changed files.
+Copies imported up to 12.1 live in `Assets/Samples/NeoxiderTools/<version at import>/NeoxiderPages/` and keep the
+version they were first imported with; delete such a copy before importing the download, because both carry the same GUIDs.
 
 ## Demo scene
 

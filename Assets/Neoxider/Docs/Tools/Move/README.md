@@ -5,7 +5,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Follow.jpg" alt="Follow: draggable target, rail follower with limits and a turret" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/CameraConstraint.jpg" alt="CameraConstraint: camera bounds, edges and zoom" width="49%" /></p>
 
-*Demo scenes: `Scenes/Tools/Move/Follow.unity`, `Scenes/Tools/CameraConstraint.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/Tools/Move/Follow.unity`, `Scenes/Tools/CameraConstraint.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Navigation:** [← Tools](../README.md)

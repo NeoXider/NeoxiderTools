@@ -52,7 +52,8 @@ namespace Neo.Editor.Tests
         private readonly List<string> _temporaryRoots = new();
         private PackageScan _package;
 
-        private PackageScan Package => _package ??= PackageScan.Read(Audit20261023NeoEditorTestsPaths.PackageDiskRoot);
+        private PackageScan Package => _package ??= PackageScan.Read(Audit20261023NeoEditorTestsPaths.PackageDiskRoot,
+            Audit20261023NeoEditorTestsPaths.DemosRoot);
 
         [TearDown]
         public void DeleteTemporaryPackages()
@@ -74,7 +75,7 @@ namespace Neo.Editor.Tests
             PackageScan scan = Package;
             if (scan.SampleGuidCount == 0)
             {
-                Assert.Ignore("No Samples~ or Samples folder on disk next to " + scan.Root + "; nothing to isolate.");
+                Assert.Ignore("No demo tree (Assets/NeoxiderDemos) on disk; nothing to isolate from " + scan.Root + ".");
             }
 
             AssertScannedRealAssets(scan);
@@ -321,7 +322,7 @@ namespace Neo.Editor.Tests
             public int InspectedAssetCount { get; private set; }
             public int SampleGuidCount { get; private set; }
 
-            public static PackageScan Read(string packageRoot)
+            public static PackageScan Read(string packageRoot, string demosRoot = null)
             {
                 string root = Path.GetFullPath(packageRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 Assert.That(Directory.Exists(root), Is.True, "Package root not found on disk: " + root);
@@ -344,7 +345,32 @@ namespace Neo.Editor.Tests
                     }
                 }
 
+                // WHY: since 12.2.0 the demos live outside the package (Assets/NeoxiderDemos); their GUIDs are the
+                // sample side of the isolation check.
+                if (!string.IsNullOrEmpty(demosRoot) && Directory.Exists(demosRoot))
+                {
+                    scan.ReadExternalSampleTree(Path.GetFullPath(demosRoot));
+                }
+
                 return scan;
+            }
+
+            private void ReadExternalSampleTree(string demosRoot)
+            {
+                string name = Path.GetFileName(demosRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                foreach (string file in Directory.EnumerateFiles(demosRoot, "*.meta", SearchOption.AllDirectories))
+                {
+                    string ownGuid = ReadOwnGuid(File.ReadAllText(file));
+                    if (ownGuid == null)
+                    {
+                        continue;
+                    }
+
+                    string inDemos = file.Substring(demosRoot.Length, file.Length - demosRoot.Length - ".meta".Length)
+                        .Replace('\\', '/').TrimStart('/');
+                    AddOwner(ownGuid, new AssetOwner(name + "/" + inDemos, true, "sample:" + inDemos));
+                    SampleGuidCount++;
+                }
             }
 
             private void ReadPackageTree(string directory)

@@ -1,26 +1,28 @@
-# Sample Scenes
+# Demo Scenes
 
-**What it is:** the index of the three Package Manager samples: what each scene shows, how the scenes are authored and rebuilt, and where the sources and imported copies live. The sources ship hidden in `Samples~`.
+**What it is:** the index of the three demo downloads: what each scene shows, how the scenes are authored and rebuilt, and where they live. Demos are not part of the package; each is a separate `.unitypackage` on the [releases page](https://github.com/NeoXider/NeoxiderTools/releases).
 
 **How to use:**
-1. Prepare the host project: [prerequisites](#host-and-sample-prerequisites) (TMP Essential Resources, 2D Sprite).
-2. Open **Package Manager → NeoxiderTools → Samples** and import **Demo Scenes**. Import **NeoxiderPages** and **Character Movement Fundamentals** too if you want the example games.
-3. Open a scene, for example `Assets/Samples/NeoxiderTools/12.1.0/Demo Scenes/Scenes/Audio/AudioDemo.unity`. The UI, the configured components and every button's UnityEvent are already in the scene: inspect them in Edit Mode, then press Play.
+1. Install the package ([Getting Started](./GettingStarted.md)) and prepare the host project: [prerequisites](#host-and-sample-prerequisites) (TMP Essential Resources, 2D Sprite).
+2. Download and import `NeoxiderTools.Demo.v<ver>.unitypackage`. Import `NeoxiderPages.v<ver>.unitypackage` and `NeoxiderTools.CharacterMovementDemo.v<ver>.unitypackage` too if you want the example games.
+3. Open a scene, for example `Assets/NeoxiderDemos/Demo/Scenes/Audio/AudioDemo.unity`. The UI, the configured components and every button's UnityEvent are already in the scene: inspect them in Edit Mode, then press Play.
 4. To restore a demo scene after editing it, use **Neoxider > Demo > Rebuild Active Demo Scene** ([how demo scenes are made](#how-demo-scenes-are-made)).
 
 **Navigation:** [← Docs](./README.md) · [Getting Started](./GettingStarted.md) · [Upgrading to 12](./Migration12.md)
 
 ---
 
-## Sample roots
+## Demo roots
 
-| Layout | Root | Use |
-|--------|------|-----|
-| **Current release source** | `Assets/Neoxider/Samples~/` | Hidden UPM sample sources; `package.json.samples[].path` points to `Samples~/...`. |
-| **Development source** | `Assets/Neoxider/Samples/` | Alternative active source folder while editing sample scenes/scripts in Unity. Restore `Samples~` and check package paths before release. |
-| **Imported project copy** | `Assets/Samples/NeoxiderTools/<version>/<sample name>/` | Unity copies the selected sample here; it does not copy it back into the package. |
+| Download | Root |
+|----------|------|
+| `NeoxiderTools.Demo.v<ver>.unitypackage` | `Assets/NeoxiderDemos/Demo/` |
+| `NeoxiderPages.v<ver>.unitypackage` | `Assets/NeoxiderDemos/NeoxiderPages/` |
+| `NeoxiderTools.CharacterMovementDemo.v<ver>.unitypackage` | `Assets/NeoxiderDemos/CharacterMovementFundamentals/` |
 
-Only one source layout needs to be active. For a UPM installation the hidden source is inside the installed package, while the imported project copy appears under `Assets/Samples/NeoxiderTools/<version>/`. The paths in the scene tables below are relative to the **Demo Scenes** root: the imported copy, `Assets/Neoxider/Samples~/Demo/` in the source checkout, or `Assets/Neoxider/Samples/Demo/` in the development layout.
+The repository keeps the same folders, always visible to Unity, so demo development needs no renaming. The paths in the scene tables below are relative to `Assets/NeoxiderDemos/Demo/`.
+
+Up to 12.1 the demos were Package Manager samples, copied into `Assets/Samples/NeoxiderTools/<version>/<sample name>/`. Such a copy shares asset GUIDs with the downloads: delete it before importing a demo `.unitypackage`.
 
 ## Host and sample prerequisites
 
@@ -38,18 +40,18 @@ Network demo scripts are written to compile without Mirror installed: Mirror-spe
 
 **По-русски:** для текстовых Demo/Pages импортируйте официальные TMP Essential Resources; для всей
 коллекции Demo также нужен пакет 2D Sprite с его стандартными ассетами. Это отдельные ресурсы хоста,
-а не доказательство успешного импорта сэмплов. Mirror остаётся опциональным; его отсутствие нельзя
+а не доказательство успешного импорта демо. Mirror остаётся опциональным; его отсутствие нельзя
 проверить только выключением символа при оставленных файлах.
 
-## The three samples
+## The three demos
 
-| Package Manager sample | Package source | What it contains |
-|------------------------|----------------|------------------|
-| **Demo Scenes** | `Samples~/Demo` | Module demo scenes, example games and `SurvivorDemo` ([guide](./Abilities/SurvivorDemo.md)), plus the editor scene builders that author them. |
-| **NeoxiderPages** | `Samples~/NeoxiderPages` | Optional page navigation: `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers ([guide](./NeoxiderPages/README.md)). Imports and runs on its own. |
-| **Character Movement Fundamentals** | `Samples~/CharacterMovementFundamentals` | Character-controller showcase, special movement scenes, and their supporting art/audio ([guide](./Tools/Move/CharacterController/README.md)). |
+| Download | Folder | What it contains |
+|----------|--------|------------------|
+| **NeoxiderTools.Demo** | `Assets/NeoxiderDemos/Demo` | Module demo scenes, example games and `SurvivorDemo` ([guide](./Abilities/SurvivorDemo.md)), plus the editor scene builders that author them. |
+| **NeoxiderPages** | `Assets/NeoxiderDemos/NeoxiderPages` | Optional page navigation: `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers ([guide](./NeoxiderPages/README.md)). Imports and runs on its own. |
+| **NeoxiderTools.CharacterMovementDemo** | `Assets/NeoxiderDemos/CharacterMovementFundamentals` | Character-controller showcase, special movement scenes, and their supporting art/audio ([guide](./Tools/Move/CharacterController/README.md)). |
 
-For the full collection, import **all three samples** before opening the example games. Some scenes reference assets in a sibling sample:
+For the full collection, import **all three demos** before opening the example games. Some scenes reference assets in a sibling demo:
 
 - `_ExampleGame/CardGame.unity` uses the PM prefab and `UIPage` from **NeoxiderPages**.
 - The **9-Sliced** background of `Tools/CameraAspectRatio.unity` uses `background_game.png` from **NeoxiderPages**. With only Demo Scenes imported the background stays empty; the scene remains usable.
@@ -66,7 +68,7 @@ Each scene is produced by an editor **builder**: a static method in `Demo/Editor
 - objects without the `[Demo]` prefix are hand-authored (the game in CardGame or VampireSurvivorMCP, the world of the RPG demos) and are never removed by a rebuild;
 - the collapsible info card names the components to inspect and the equivalent C# calls; the log feed lists the events as they fire.
 
-The **Neoxider > Demo** menu appears while the Demo sample is visible to Unity (imported, or the development layout `Assets/Neoxider/Samples`), because the builders live in the sample:
+The **Neoxider > Demo** menu appears while the Demo download is in the project (`Assets/NeoxiderDemos/Demo`), because the builders live in the demo:
 
 | Menu item | Effect |
 |---|---|
@@ -144,53 +146,20 @@ These modules and components have no scene yet; their pages show the setup and t
 
 The open demo work is tracked in the repository's [dev-docs/TODO.md](https://github.com/NeoXider/NeoxiderTools/blob/main/dev-docs/TODO.md).
 
-## Legacy release archives: choose one
+## Release archives
 
-| Archive | Legacy manifest / visible content |
-|---|---|
-| `NeoxiderTools.Core.v11.0.0.unitypackage` | `samples: []`; no sample trees. |
-| `NeoxiderTools.v11.0.0.unitypackage` | Complete/Core plus `Samples/Demo`, `Samples/NeoxiderPages`, `Samples/CharacterMovementFundamentals` under Assets/Neoxider. |
-
-Required prefab textures/materials/animations are staged under `Assets/Neoxider/SharedAssets` in both legacy 11.0.0 variants (from 12.0.0 the package itself carries them under `Assets/Neoxider/Art` and `ThirdParty/CharacterMovementFundamentals/Art`). Their asset bytes and GUIDs are preserved; serialized references remain valid. The source `Samples~` tree is not moved. The legacy Pages Shine material uses built-in `UI/Default` instead of a missing optional shader; its former proprietary glint effect is not supplied. An inactive missing particle-mask property was removed while preserving its active texture and tint.
-
-These are archive-specific variants; main/source UPM retains `Samples~`. Legacy imports do not install UPM
-dependencies automatically. Do not combine duplicate UPM/legacy GUID copies. The 11.0.0 release also shipped
-`HtmlToUitk.Cli.v11.0.0.zip`; the HTML → UI Toolkit converter has since moved to the separate
-[HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package. Actual final export/import and publication status is in
-[Verification 11](../Verification11.md), not these intended layouts.
-
-Earlier imported versions remain separate project copies; compare customized content before adopting a newer sample copy. See [Upgrading to 12](./Migration12.md#samples-and-demo-scenes).
-
-## Recorded manual subset (11.0.0)
-
-Eleven scenes were examined for the 11.0.0 release; this is not acceptance of every sample or every interaction, and the scenes have since been re-authored by their builders. The [verification record](../Verification11.md) retains the tested inputs and evidence.
-
-| Scenario | Observed result / limit |
-|---|---|
-| Abilities | HP **80**, then **95**; Zap **12 / 30**. The corrected panel and filled HP display were observed. |
-| Inventory | Deposit/place/recall retained the same item UID; one **E** press consumed one CELL and changed HP **45 → 70**. |
-| Save | **100 → 110 → Load 100** observed. |
-| Quest | Three kills awarded **25 gold**. |
-| TicTacToe / Survivor | **X** win; survivor death and restart observed. |
-| Audio | ON/OFF UI state observed; audible output was not established. |
-| Dice | Tap rotation observed; OS-level dragging remains **INCONCLUSIVE**. |
-| CardGame | Three OS-click rounds completed and the tutorial advanced. Piles at scale **0.7** fit Free Aspect and 16:9. Automated P31 scene clicks require exactly one round through the actual EventSystem top-graphic raycast and `ExecuteHierarchy`. |
-
-По-русски: это проверенные сценарии ограниченного набора сцен релиза 11.0.0, не приёмка всего каталога.
-В CardGame завершены три раунда OS-кликами; слышимость аудио и OS-level drag в Dice не подтверждены.
+Since 12.2.0 every release carries the package and each demo as separate archives (`NeoxiderTools.v<ver>`, `NeoxiderTools.Demo.v<ver>`, `NeoxiderPages.v<ver>`, `NeoxiderTools.CharacterMovementDemo.v<ver>`), built by `python scripts/build_distribution.py unitypackages` from a committed revision. The 11.0.0 archives (`NeoxiderTools.Core` without samples and `NeoxiderTools` with all three trees under `Assets/Neoxider/Samples`) and their `Assets/Neoxider/SharedAssets` staging are described in [Verification 11](../Verification11.md); do not combine their GUID copies with the new downloads.
 
 ## Automated checks
 
-`SampleAssetValidationTests` checks sample prefabs/scenes for missing scripts, missing MonoScript GUIDs, `NetworkBehaviour` components without `NetworkIdentity`, and broken `TerrainData.treePrototypes`. It resolves the active root from `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~`, or the imported root `Assets/Samples/NeoxiderTools`, validates each visible sample and skips only hidden or not-imported ones (a missing script that belongs to a hidden sample is skipped; a reference that resolves nowhere still fails). The [testing guide](./Testing.md#sample-validation) describes scene ownership and isolation for these checks.
+`SampleAssetValidationTests` checks demo prefabs and scenes under `Assets/NeoxiderDemos` for missing scripts, missing MonoScript GUIDs, `NetworkBehaviour` components without `NetworkIdentity`, and broken `TerrainData.treePrototypes`; a demo tree that is absent is skipped, a reference that resolves nowhere still fails. The [testing guide](./Testing.md#sample-validation) describes scene ownership and isolation for these checks.
 
-If the Character Movement Fundamentals example scenes or prefabs show missing scripts although their script GUIDs resolve (for example after updating from a version where the controller scripts lived in the sample), the project's Library holds stale script data: right-click `Assets/Neoxider/ThirdParty/CharacterMovementFundamentals/Scripts` (or the package's `ThirdParty` folder) and choose **Reimport**. The asset files themselves are fine.
+If the Character Movement Fundamentals scenes or prefabs show missing scripts although their script GUIDs resolve (for example after updating from a version where the controller scripts lived in the demo), the project's Library holds stale script data: right-click `Assets/Neoxider/ThirdParty/CharacterMovementFundamentals/Scripts` (or the package's `ThirdParty` folder) and choose **Reimport**. The asset files themselves are fine.
 
-`SampleScenePlaySmokeTests` (Play Mode) loads every scene of the visible samples, ticks 12 frames and fails on error, assert or exception logs, Filled Images without a sprite, a demo controller that reports an unbuilt scene, and a builder-owned scene without its authored info card; it also fails when a registered builder has no saved scene. `AudioDemoScenePlayTests` presses the authored AudioDemo buttons. `SampleSceneSaveKeyTests` rejects library default save keys in sample scenes and prefabs, and `PackageSampleIsolationTests` rejects package assets that reference a GUID shipped only in the samples. In the release layout the Play Mode cases report Ignored until **Demo Scenes** (and **NeoxiderPages**) are visible: imported, or `Samples~` renamed to `Samples` for development. The Character Movement Fundamentals scenes report Ignored in Input System-only projects (they need Active Input Handling = Both).
+`SampleScenePlaySmokeTests` (Play Mode) loads every demo scene, ticks 12 frames and fails on error, assert or exception logs, Filled Images without a sprite, a demo controller that reports an unbuilt scene, and a builder-owned scene without its authored info card; it also fails when a registered builder has no saved scene. `AudioDemoScenePlayTests` presses the authored AudioDemo buttons. `SampleSceneSaveKeyTests` rejects library default save keys in demo scenes and prefabs, and `PackageSampleIsolationTests` rejects package assets that reference a GUID shipped only with the demos. The Character Movement Fundamentals scenes report Ignored in Input System-only projects (they need Active Input Handling = Both).
 
-`SampleSceneCoverageTests` supports all three sample-root formats. Visible development/imported scenes can be inspected through disposable preview scenes; hidden `Samples~` content is checked as source/YAML because Unity does not compile its sample-only scripts. [PlayMode testing](./PlayModeTesting.md) explains which scene checks require visible compiled samples and which cases skip when they are absent.
-
-The builders have their own tests in `Neo.Demo.Editor.Tests` (`Samples~/Demo/Editor/Tests`), which compile only while the Demo sample is visible. Each builds a temporary copy of its scene twice and checks the wiring, that hand-authored objects survive and that the second pass creates and removes nothing. Keep pass/fail/skip separate; recorded imported-sample and manual scopes are listed in [Verification 11](../Verification11.md).
+The builders have their own tests in `Neo.Demo.Editor.Tests` (`Assets/NeoxiderDemos/Demo/Editor/Tests`). Each builds a temporary copy of its scene twice and checks the wiring, that hand-authored objects survive and that the second pass creates and removes nothing.
 
 ## По-русски
 
-Демо-сцены сохранены целиком: UI, настроенные компоненты и UnityEvent-связи видны в Inspector без запуска игры. Каждую сцену собирает редакторный билдер из сэмпла (`Demo/Editor/Builders`); пересборка — **Neoxider > Demo > Rebuild Active Demo Scene**, а отсутствующую сцену билдера пересборка создаёт сама. Новые сцены: Animations (`AnimatorsDemo`), UI Components, Bonus Rewards и Physics 3D; у игр ClickerExample, Shooter2D, adventure и у сцены Pages `UI.unity` есть инфо-карточка. Демо сохраняют данные только под своими ключами `NeoDemo.<Demo>.<Data>`. Модули без демо-сцены перечислены в разделе [Modules without a demo scene](#modules-without-a-demo-scene). Объекты `[Demo] ...` создаёт билдер и пересоздаёт при пересборке, объекты без префикса — ручные и сохраняются. Меню доступно, пока сэмпл Demo виден Unity (импортирован или лежит в `Assets/Neoxider/Samples`).
+Демо-сцены сохранены целиком: UI, настроенные компоненты и UnityEvent-связи видны в Inspector без запуска игры. Каждую сцену собирает редакторный билдер из сэмпла (`Demo/Editor/Builders`); пересборка — **Neoxider > Demo > Rebuild Active Demo Scene**, а отсутствующую сцену билдера пересборка создаёт сама. Новые сцены: Animations (`AnimatorsDemo`), UI Components, Bonus Rewards и Physics 3D; у игр ClickerExample, Shooter2D, adventure и у сцены Pages `UI.unity` есть инфо-карточка. Демо сохраняют данные только под своими ключами `NeoDemo.<Demo>.<Data>`. Модули без демо-сцены перечислены в разделе [Modules without a demo scene](#modules-without-a-demo-scene). Объекты `[Demo] ...` создаёт билдер и пересоздаёт при пересборке, объекты без префикса — ручные и сохраняются. Меню доступно, пока сэмпл Demo виден Unity (папка `Assets/NeoxiderDemos/Demo`).

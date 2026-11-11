@@ -9,17 +9,15 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AudioDemo.jpg" alt="AudioDemo: AM sound entries, Loop and Shuffle music pools, persisted volumes and mutes" width="100%" /></p>
 
-*Demo scene: `Scenes/Audio/AudioDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Audio/AudioDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the component list below; the main guides are [AM](AM.md), [AMSettings](AMSettings.md) and [AudioControl](View/AudioControl.md).
 
 ---
 
-Demo in the release layout: `Assets/Neoxider/Samples~/Demo/Scenes/Audio/AudioDemo.unity`; controller:
-`Assets/Neoxider/Samples~/Demo/Scripts/Shell/AudioDemoController.cs`. During sample development the root
-is `Assets/Neoxider/Samples` instead. Package Manager imports the **Demo Scenes** sample into
-`Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`; open the copied scene there.
+Demo: `Assets/NeoxiderDemos/Demo/Scenes/Audio/AudioDemo.unity`; controller:
+`Assets/NeoxiderDemos/Demo/Scripts/Shell/AudioDemoController.cs` (Demo download).
 
 The demo is fully authored in the scene (no runtime UI building), so the wiring is visible without Play
 Mode:
@@ -33,7 +31,7 @@ Mode:
   `AMSettings.SetMusicVolume` / `SetEfxVolume` / `SetMusic` / `SetEfx` and `AM.SetUiVolume`. The
   `MuteMusic` / `MuteEfx` labels are driven by `AMSettings.MuteMusic.OnChanged` without code.
 
-The scene is produced by the editor builder `Samples~/Demo/Editor/Builders/Audio/AudioDemoBuilder.cs`
+The scene is produced by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Audio/AudioDemoBuilder.cs`
 (**Neoxider > Demo > Rebuild Active Demo Scene**).
 
 ## Main pieces

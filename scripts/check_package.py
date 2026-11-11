@@ -216,17 +216,13 @@ def main() -> int:
             errors.append("package.json: unexpected package name")
         if not re.fullmatch(r"\d+\.\d+\.\d+(?:-[\w.-]+)?", manifest.get("version", "")):
             errors.append("package.json: invalid version")
-        sample_roots = [root for root in ("Samples", "Samples~") if (PACKAGE_ROOT / root).is_dir()]
-        if len(sample_roots) != 1:
-            errors.append("package.json: expected exactly one active Samples or Samples~ root")
-        for sample in manifest.get("samples", []):
-            sample_path = sample.get("path", "")
-            target = (PACKAGE_ROOT / sample_path).resolve()
-            if (not sample_path or not target.is_relative_to(PACKAGE_ROOT)
-                    or not target.is_dir()):
-                errors.append(f"package.json: sample directory does not exist inside the package: {sample_path}")
-            elif sample_roots and sample_path.split("/")[0] != sample_roots[0]:
-                errors.append(f"package.json: sample path does not match the active layout: {sample_path}")
+        # WHY: since 12.2.0 demos live in Assets/NeoxiderDemos and ship as separate archives; a samples entry or a
+        # Samples folder inside the package would put them back into every git install.
+        if manifest.get("samples"):
+            errors.append("package.json: declares samples; demos belong in Assets/NeoxiderDemos")
+        for root in ("Samples", "Samples~"):
+            if (PACKAGE_ROOT / root).exists():
+                errors.append(f"{root}: demo content inside the package; move it to Assets/NeoxiderDemos")
         check_entry_documents(manifest, errors)
     except (json.JSONDecodeError, AttributeError, TypeError):
         errors.append("package.json: invalid package manifest")
@@ -234,7 +230,7 @@ def main() -> int:
     # WHY: Unity's YAML serializer writes empty values with a trailing space ("m_Name: "), so every re-saved scene or
     # asset would fail the whitespace check; it applies to the hand-written files.
     unity_yaml = [":(exclude)*." + extension for extension in
-                  ("unity", "prefab", "asset", "mat", "controller", "anim", "physicMaterial", "overrideController",
+                  ("unity", "prefab", "asset", "mat", "meta", "controller", "anim", "physicMaterial", "overrideController",
                    "mask", "renderTexture", "lighting")]
     for arguments in (["git", "diff", "--check"], ["git", "diff", "--cached", "--check"]):
         diff = subprocess.run(arguments + ["--", "."] + unity_yaml, cwd=REPO_ROOT, capture_output=True, text=True)

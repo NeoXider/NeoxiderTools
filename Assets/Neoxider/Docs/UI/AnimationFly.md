@@ -27,7 +27,7 @@ Supported flows:
 
 ## Demo Scene
 
-The demo scene is `<Demo sample>/Scenes/UI/AnimationFlyDemo.unity` (import the Demo sample via Package Manager).
+The demo scene is `Assets/NeoxiderDemos/Demo/Scenes/UI/AnimationFlyDemo.unity` (Demo download).
 
 Everything is saved in the scene, so the wiring is visible in the Hierarchy and Inspector without entering Play Mode (the scene is authored by the editor builder `AnimationFlyDemoBuilder`, nothing is built at runtime):
 

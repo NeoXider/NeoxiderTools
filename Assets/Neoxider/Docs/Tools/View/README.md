@@ -7,7 +7,7 @@ entry point: `SelectorModel`.
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Light.jpg" alt="Light: five LightAnimator presets" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Selector.jpg" alt="Selector: index, fill and offset selectors" width="49%" /></p>
 
-*Demo scenes: `Scenes/Tools/View/Light.unity`, `Scenes/Tools/View/Selector.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/Tools/View/Light.unity`, `Scenes/Tools/View/Selector.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the table below links one page per component.
@@ -26,8 +26,8 @@ entry point: `SelectorModel`.
 
 ## Demo scenes
 
-Both scenes live in `Samples~/Demo/Scenes/Tools/View/` (`Samples/` during sample development) and are
-authored by editor builders in `Samples~/Demo/Editor/Builders/View/`, so the wiring is visible without
+Both scenes live in `Assets/NeoxiderDemos/Demo/Scenes/Tools/View/` and are
+authored by editor builders in `Assets/NeoxiderDemos/Demo/Editor/Builders/View/`, so the wiring is visible without
 Play Mode:
 
 - **Light.unity** - five hand-authored point lights, one `LightAnimator` each (RandomFlicker, Pulsing,

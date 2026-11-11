@@ -11,7 +11,7 @@ optional Inventory bridge. Scripts live in `Scripts/Shop/` (`Neo.Shop`; the brid
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Shop.jpg" alt="Shop: storefront cards, purchase states and a wallet" width="100%" /></p>
 
-*Demo scene: `Scenes/Shop/Shop.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Shop/Shop.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the table below; start with [Shop](./Shop.md) and [Money](./Money.md).
@@ -78,7 +78,7 @@ Networked Money now defaults to server-only client mutation authority. Choose co
 
 ## Demo scene
 
-`Samples~/Demo/Scenes/Shop/Shop.unity` (`Samples/...` while the samples are unpacked for development) is a storefront
+`Assets/NeoxiderDemos/Demo/Scenes/Shop/Shop.unity` is a storefront
 made only of the module's components, all saved in the scene:
 
 - `Shop` keeps the catalog (`Resources/Shop/*.asset`) and its **Shop Items** are the authored cards under
@@ -92,7 +92,7 @@ made only of the module's components, all saved in the scene:
   `SetRuntimePrice` / `ClearRuntimePrice`, and a reset of the `SaveProvider` keys. `Shop.OnPurchasedId`,
   `OnPurchaseFailedId`, `OnSelectId` and `OnShopChanged` are wired to `Demo Controller` (`ShopDemoController`).
 
-The scene is authored by the editor builder `Samples~/Demo/Editor/Builders/Shop/ShopDemoBuilder.cs` (menu
+The scene is authored by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Shop/ShopDemoBuilder.cs` (menu
 **Neoxider/Demo/Rebuild Active Demo Scene**).
 
 ## Tests

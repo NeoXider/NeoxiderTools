@@ -10,7 +10,7 @@ One third-party component ships **inside** this package and its license travels 
 
 | Component | Location | Used by | License |
 |-----------|----------|---------|---------|
-| [Character Movement Fundamentals](https://github.com/Jan-Ott/CharacterMovementFundamentals) by Jan Ott | `ThirdParty/CharacterMovementFundamentals/` (runtime + editor scripts), `Samples~/CharacterMovementFundamentals/` (demo scenes, prefabs, character, environment, sounds) | `Tools/Move/CharacterController` — the character motor, cameras and animation driver | MIT — full text in `ThirdParty/CharacterMovementFundamentals/LICENSE.md` |
+| [Character Movement Fundamentals](https://github.com/Jan-Ott/CharacterMovementFundamentals) by Jan Ott | `ThirdParty/CharacterMovementFundamentals/` (runtime + editor scripts), `Assets/NeoxiderDemos/CharacterMovementFundamentals/` (demo scenes, prefabs, character, environment, sounds) | `Tools/Move/CharacterController` — the character motor, cameras and animation driver | MIT — full text in `ThirdParty/CharacterMovementFundamentals/LICENSE.md` |
 
 Copyright (c) 2025 Jan Ott. The MIT notice must be preserved in any redistribution of this package or of a product built with it.
 

@@ -54,7 +54,7 @@ Pair a model test with a narrow component test when scene integration adds behav
 
 Use Play Mode for real enable/disable scheduling, coroutine cancellation, projectile flight, UI interaction, scene loading and visual animation. A coroutine test that skips because Edit Mode did not create a handle is not evidence of cancellation. Keep unavailable-environment skips explicit and distinguish them from regressions.
 
-Imported sample scenes may live in `Assets/Samples/NeoxiderTools/<version>/<sample name>`. Package authoring can use `Assets/Neoxider/Samples`, while release packaging uses `Assets/Neoxider/Samples~`; gameplay contract tests should not require any one sample layout.
+Demo scenes live in `Assets/NeoxiderDemos/<name>`; gameplay contract tests should not require any one sample layout.
 
 ## Verification handoff
 

@@ -48,9 +48,9 @@ Add `DiceBoardService` beside `FieldGenerator`, configure the field and dice rul
 
 Playable sample scene:
 
-`<Demo sample>/Scenes/GridSystem/GridSystemDiceMergeDemo.unity`
+`Assets/NeoxiderDemos/Demo/Scenes/GridSystem/GridSystemDiceMergeDemo.unity`
 
-The sample ships under `Assets/Neoxider/Samples~/Demo` in release layout (`Assets/Neoxider/Samples/Demo` during sample development). Import Demo Scenes through Package Manager to use it at `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...`.
+It is part of the Demo download.
 
 The sample uses sprites from `Assets/Neoxider/Sprites/Dice`, drag/drop input, pair rotation in the tray, score, pool progression, and game-over logic.
 

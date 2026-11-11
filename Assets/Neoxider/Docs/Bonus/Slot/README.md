@@ -31,9 +31,7 @@ See `SpinController` for wallet ownership, numeric limits, and lifecycle callbac
 
 ## Demo scene
 
-`Scenes/Bonuses/SlotExample.unity` in the Demo sample (`Assets/Neoxider/Samples~/Demo` in the package,
-`Assets/Neoxider/Samples/Demo` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`
-after importing the sample) runs the full loop with a wallet. Everything is saved in the scene:
+`Scenes/Bonuses/SlotExample.unity` in the Demo download (`Assets/NeoxiderDemos/Demo`) runs the full loop with a wallet. Everything is saved in the scene:
 
 | Object | What to look at |
 |--------|-----------------|

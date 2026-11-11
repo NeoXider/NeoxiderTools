@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Progression_Demo.jpg" alt="Progression_Demo: XP, levels, perk and unlock trees and a premium track" width="100%" /></p>
 
-*Demo scene: `Scenes/Progression_Demo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Progression_Demo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -19,7 +19,7 @@
 - [Level Reward Track](./Data/LevelCurveDefinition.md), [Unlock Tree](./Data/UnlockTreeDefinition.md), and [Perk Tree](./Data/PerkTreeDefinition.md) — reusable definition assets.
 - [Runtime types](./InternalTypes.md) and [Scenarios](./Scenarios.md).
 
-**Demo:** `Assets/Neoxider/Samples~/Demo/Scenes/Progression_Demo.unity` (`Samples/...` during sample development, `Assets/Samples/NeoxiderTools/<version>/<sample name>/` after a Package Manager import). The hand-authored `ProgressionDemoManager` holds `LevelComponent` + `ProgressionManager` with the reward track, unlock tree and perk tree from `Demo/Data/Progression`. XP buttons call `ProgressionDemoUI.AddXp` (C# path), the perk/unlock/premium buttons call `ProgressionNoCodeAction.Execute` on the objects under `[Demo] Services/Progression NoCode Actions` (NoCode path), and the perk point / XP labels use `NoCodeBindText`. Authored by `Demo/Editor/Builders/Progression/ProgressionDemoBuilder.cs`; nothing is built at Play.
+**Demo:** `Assets/NeoxiderDemos/Demo/Scenes/Progression_Demo.unity` (Demo download). The hand-authored `ProgressionDemoManager` holds `LevelComponent` + `ProgressionManager` with the reward track, unlock tree and perk tree from `Demo/Data/Progression`. XP buttons call `ProgressionDemoUI.AddXp` (C# path), the perk/unlock/premium buttons call `ProgressionNoCodeAction.Execute` on the objects under `[Demo] Services/Progression NoCode Actions` (NoCode path), and the perk point / XP labels use `NoCodeBindText`. Authored by `Demo/Editor/Builders/Progression/ProgressionDemoBuilder.cs`; nothing is built at Play.
 
 **Navigation:** [← Docs](../README.md)
 

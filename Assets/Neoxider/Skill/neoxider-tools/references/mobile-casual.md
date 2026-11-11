@@ -27,12 +27,12 @@ Use it as the checklist of *which Neo piece does what*, and which small pieces s
 
 ### NeoxiderPages sample versions (gotcha)
 
-NeoxiderPages is a **sample**, copied into the game at import time:
-`Assets/Samples/NeoxiderTools/<version at import>/NeoxiderPages/`. Bumping the package pin does **not**
-update that copy. After a package fix in the sample (for example 10.16.1: `PM` editor preview no longer
-runs in Play Mode), re-import the sample from Package Manager or copy the changed files — and expect the
-folder to keep the *old* version name, so compare contents (ignoring BOM/line endings), not the folder
-name, when checking which fix a project has.
+NeoxiderPages is a **separate download** (`NeoxiderPages.v<ver>.unitypackage`), copied into the game at import time:
+`Assets/NeoxiderDemos/NeoxiderPages/`. Updating the package does **not** update that copy. After a fix in
+NeoxiderPages (for example 10.16.1: `PM` editor preview no longer runs in Play Mode), import the new download or
+copy the changed files. Copies imported up to 12.1 live in `Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/`
+and keep the *old* version name, so compare contents (ignoring BOM/line endings), not the folder name, when
+checking which fix a project has.
 
 ## Audio — `AM`
 

@@ -1,11 +1,11 @@
 ﻿# Examples
 
-**What it is:** step-by-step example guides plus a map of the C# entry points behind the **Demo Scenes** sample. The sample scripts live in `Samples~/Demo/Scripts` (assembly `Neo.Rpg.Demo`) and the scene builders in `Samples~/Demo/Editor` (assembly `Neo.Demo.Editor`).
+**What it is:** step-by-step example guides plus a map of the C# entry points behind the Demo download. The demo scripts live in `Assets/NeoxiderDemos/Demo/Scripts` (assembly `Neo.Rpg.Demo`) and the scene builders in `Assets/NeoxiderDemos/Demo/Editor` (assembly `Neo.Demo.Editor`).
 
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/ClickerExample.jpg" alt="ClickerExample: a clicker built only from library components" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Shooter2D.jpg" alt="Shooter2D: a 2D shooter assembled in the Inspector" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/adventure.jpg" alt="adventure: a first-person NoCode sandbox" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/CardGame.jpg" alt="CardGame: the Drunkard card game" width="49%" /></p>
 
-*Demo scenes: `Scenes/_ExampleGame/ClickerExample.unity`, `Scenes/_ExampleGame/Shooter2D.unity`, `Scenes/_ExampleGame/adventure.unity`, `Scenes/_ExampleGame/CardGame.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/_ExampleGame/ClickerExample.unity`, `Scenes/_ExampleGame/Shooter2D.unity`, `Scenes/_ExampleGame/adventure.unity`, `Scenes/_ExampleGame/CardGame.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -24,11 +24,8 @@
 
 ## Demo sample scripts
 
-Import **Demo Scenes** from **Package Manager → NeoxiderTools → Samples**. The package stores it in
-`Assets/Neoxider/Samples~/Demo`; Unity imports a copy under
-`Assets/Samples/NeoxiderTools/<version>/Demo Scenes`. During package development the working root can be
-`Assets/Neoxider/Samples/Demo`. Importing the sample makes its `Neo.Rpg.Demo` runtime assembly and the
-`Neo.Demo.Editor` builder assembly available. `Neo.Rpg.Demo` contains examples for several modules and
+The Demo download imports into `Assets/NeoxiderDemos/Demo` and brings its `Neo.Rpg.Demo` runtime assembly and the
+`Neo.Demo.Editor` builder assembly. `Neo.Rpg.Demo` contains examples for several modules and
 references Mirror as well as the RPG compatibility modules.
 
 Every demo scene is authored by an editor builder and saved with its UI and wiring, so the controllers

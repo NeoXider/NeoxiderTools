@@ -13,7 +13,7 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 12.1.0
+  version: 12.2.0
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---
@@ -90,7 +90,7 @@ high-signal examples (full catalogs are in the reference files below):
   (v10): author `AbilityDefinition`/`ModifierDefinition`/`UnitTemplate` assets, add
   `AbilityUnitBehaviour` + `AbilityCasterBehaviour`, cast with `caster.TryCast("fireball")`. It
   **supersedes `Neo.Rpg`** (legacy, slated for removal) — see `references/abilities.md`. For
-  survivor-likes, clip the Survivor kit (`Samples~/Demo`) instead of building from scratch, and set the
+  survivor-likes, clip the Survivor kit (`Assets/NeoxiderDemos/Demo`) instead of building from scratch, and set the
   hub's **Spatial Cell Size** for hundreds of units.
 - A countdown/timer shown on a TMP label? The **`TimeToText`** component (`Neo.Tools`) — `Set(float)` (or
   wire a `UnityEvent<float>` → `Set`); `TimeFormat`, Clock/Compact modes, `Prefix`/`Suffix`, auto-grabs the
@@ -262,18 +262,17 @@ game code lives in its **own asmdef**, a `using` is not enough: add the module's
 unresolved (`CS0246`). When you hit `CS0246`/`CS0103` on a `Neo.*` type, check the namespace first, then the
 asmdef reference — not the API name.
 
-## Samples — installed separately via Package Manager
+## Demos — installed separately from the GitHub release
 
-Two pieces ship as **samples** (under `Samples~/`, not compiled until imported). The user installs them from
-**Package Manager → NeoxiderTools → Samples → Import**, which copies them to
-`Assets/Samples/NeoxiderTools/<version>/<SampleName>/`.
+Two pieces are **separate downloads** from the GitHub release, not part of the package. The user imports the
+`.unitypackage`, which places them in `Assets/NeoxiderDemos/<Name>/`.
 
 - **NeoxiderPages** — an optional page-navigation module that includes the **`G` static facade**
   (namespace `Neo.Pages`), plus `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers. `G` is the convenient
   entry point many projects use for game flow/events: `G.OnStart` (→ `EM.I.OnGameStart`), `G.OnRestart`,
   `G.Win()`, `G.Lose()`, `G.Pause`, `G.GoMenu()`, etc. It forwards to `EM`/`GM` under the hood. **If you see
   `G.` in project code and it won't resolve, the fix is `using Neo.Pages;` *and* confirming the NeoxiderPages
-  sample is imported** — `G` does not exist in the core package, only in this sample. It has no asmdef, so
+  download is imported** — `G` does not exist in the core package, only in this download. It has no asmdef, so
   once imported it lands in `Assembly-CSharp` and needs no extra assembly reference.
 - **Demo Scenes** — one scene per module (Audio, Save, Settings, Level, Quest, Progression, StateMachine,
   Condition, NoCode, Abilities, Animations, GridSystem, Cards, Bonus incl. Bonus Rewards, Shop, NPC, Network,

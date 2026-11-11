@@ -12,7 +12,7 @@ Updated for **11.0.0**, 2026-10-27. Windows verification recorded on **26–27 O
 
 | Source | Version |
 |--------|---------|
-| `Assets/Neoxider/package.json` | `version: 12.1.0`, `unity: 6000.0` |
+| `Assets/Neoxider/package.json` | `version: 12.2.0`, `unity: 6000.0` |
 | Local project `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
 The UPM minimum was raised from `2022.1` to `6000.0` (Unity 6) starting with `9.8.0` — the package is now developed and validated against Unity 6 only. Projects on Unity 2022 LTS should stay on the last `9.7.x` release.
@@ -33,9 +33,9 @@ These groups overlap: do not add them together or describe qualified coverage as
 
 ### Version-sensitive integration
 
-Legacy release archives are choose-one **Core** (`NeoxiderTools.Core.v11.0.0.unitypackage`, no samples)
-or **Complete** (`NeoxiderTools.v11.0.0.unitypackage`, all three visible Samples trees). UPM source remains
-Samples~. The 11.0.0 release also shipped the converter CLI as `HtmlToUitk.Cli.v11.0.0.zip`; the converter now
+Since 12.2.0 the package has no UPM samples. Git installs use the `upm` branch (the package alone); release
+archives are `NeoxiderTools.v<ver>.unitypackage` plus one archive per demo, imported into `Assets/NeoxiderDemos/`.
+The 11.0.0 archives were choose-one Core or Complete. The 11.0.0 release also shipped the converter CLI as `HtmlToUitk.Cli.v11.0.0.zip`; the converter now
 lives in the separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package. Final archive export/import is a separate release gate. The hosted
 package check passed for 11.0.0; hosted Unity jobs did not run because GameCI secrets were unavailable.
 GitHub Actions workflows were subsequently removed. Local native receipts remain separate evidence.
@@ -78,8 +78,8 @@ Static-reset and Play Mode transition fixtures belong in an isolated test host w
 
 - Keep the UPM `unity` field in sync with the actually-supported floor; it was deliberately raised to `6000.0` for `9.8.0` — do not lower it without a corresponding compatibility pass.
 - Keep optional third-party integrations guarded so offline/package-only projects still compile when the optional dependency is absent.
-- The current release layout uses `Assets/Neoxider/Samples~`, matching the three `package.json.samples[].path` entries. During sample development the source root can be `Assets/Neoxider/Samples`; before UPM release restore `Samples~` and verify the matching package paths.
-- After importing through Unity Package Manager, Unity copies samples into `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`; validation supports that imported root as well.
+- Demo scenes live outside the package in `Assets/NeoxiderDemos/<name>` and ship as separate archives; `package.json` declares no samples. Package assets must not reference demo GUIDs.
+- `python scripts/build_distribution.py upm` writes the package to the `upm` branch; `python scripts/build_distribution.py unitypackages` writes the archives. Both read a committed revision.
 - The `demo` preparation branch does not itself change sample layout or establish a published package ref.
 - Update this page when `package.json`, `Packages/manifest.json`, or the documented install requirements change.
 

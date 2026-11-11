@@ -9,19 +9,19 @@ table, the abilities, the upgrades and the tuning, so swapping that asset produc
 survivor game on the same code. That is the point of the kit: it is a template you clip by editing
 data, not code.
 
-**How to use** — import the **Demo Scenes** sample via Package Manager (the package ships it hidden in
-`Samples~`), then open `<Demo sample>/Scenes/SurvivorDemo.unity` and press Play. Everything the game
+**How to use** — download the Demo `.unitypackage` (separate Demo download, `Assets/NeoxiderDemos/Demo`),
+then open `Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity` and press Play. Everything the game
 needs is a saved scene object, so you can read the whole wiring in the Hierarchy and Inspector
 **without entering Play Mode**: the `Survivor Game` object (config + references), `[Demo] Services`
 (ability hub, info card data), `[Demo] World` (arena, player, inactive pooled templates),
 `[Demo] Pool Manager`, `[Demo] Camera` and `[Demo] HUD`. Nothing is assembled at runtime.
 
-The active release source is `Assets/Neoxider/Samples~/Demo/Scenes/SurvivorDemo.unity`. During sample development it becomes `Assets/Neoxider/Samples/Demo/Scenes/SurvivorDemo.unity`. Package Manager imports it into the consuming project, for example `Assets/Samples/NeoxiderTools/10.19.0/Demo Scenes/Scenes/SurvivorDemo.unity`; use the installed version's folder. Importing does not make `Samples~` itself visible as a regular Unity asset folder.
+The demo scene is `Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity` (Demo download).
 
 ## How to open and play
 
-1. Import the Demo sample (Package Manager → Neoxider Tools → Samples), then open
-   `<Demo sample>/Scenes/SurvivorDemo.unity`.
+1. Download the Demo `.unitypackage`, then open
+   `Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity`.
 2. Press Play.
 3. Move with **WASD** / arrow keys (Unity's `Horizontal` / `Vertical` axes).
 4. Weapons **auto-fire** — you never aim or press a fire button. You start with **Magic Bolt**, a

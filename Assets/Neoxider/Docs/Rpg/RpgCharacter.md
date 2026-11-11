@@ -15,8 +15,7 @@ optional network adapter. It replaces the legacy `RpgCombatant` + `RpgStatsManag
 4. Optional: register `IRpgDamageModifier` hooks for custom damage rules, subscribe to `DamageApplied`,
    add `RpgCharacterNetworkAdapter` for multiplayer.
 
-**Demo:** `Scenes/RpgCharacterQuickDemo.unity` in the Demo sample (`Assets/Neoxider/Samples~/Demo/` in the
-release layout, `Assets/Neoxider/Samples/Demo/` while samples are being developed). The whole demo is saved in
+**Demo:** `Scenes/RpgCharacterQuickDemo.unity` in the Demo download (`Assets/NeoxiderDemos/Demo/`). The whole demo is saved in
 the scene (authored by `RpgCharacterQuickDemoBuilder`, menu `Neoxider/Demo/Rebuild Active Demo Scene`), so the
 wiring is visible without Play Mode: select `Rpg Demo Player` for its `RpgCharacterTemplate` asset, the
 `Resource · HP` / `Stamina` / `DarkMana` rows for `RpgResourceBinding` events driving labels and bars, the

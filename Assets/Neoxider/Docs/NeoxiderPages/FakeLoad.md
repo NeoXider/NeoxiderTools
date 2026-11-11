@@ -1,6 +1,6 @@
 # FakeLoad (NeoxiderPages)
 
-**What it is:** fake loading for a loading page: simulates progress over a random duration and fires progress events. Script `Samples~/NeoxiderPages/Runtime/Scripts/Page/FakeLoad.cs`, namespace `Neo.Pages`. This is the Pages sample component; the package's own `Neo.UI.FakeLoad` is documented in [UI/FakeLoad](../UI/FakeLoad.md).
+**What it is:** fake loading for a loading page: simulates progress over a random duration and fires progress events. Script `Assets/NeoxiderDemos/NeoxiderPages/Runtime/Scripts/Page/FakeLoad.cs`, namespace `Neo.Pages`. This is the Pages sample component; the package's own `Neo.UI.FakeLoad` is documented in [UI/FakeLoad](../UI/FakeLoad.md).
 
 **How to use:**
 1. **Add Component → Neoxider → Pages → FakeLoad** on the loading page.

@@ -11,7 +11,7 @@ namespace Neo.Editor.Tools
         private static readonly string[] DefaultRoots =
         {
             "Assets/Neoxider/Prefabs",
-            "Assets/Neoxider/Samples"
+            "Assets/NeoxiderDemos"
         };
 
         [MenuItem("Neoxider/Tools/Repair Missing Scripts In Prefabs", false, 121)]

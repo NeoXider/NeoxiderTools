@@ -1,10 +1,10 @@
 {
   "name": "com.neoxider.tools",
   "displayName": "NeoxiderTools",
-  "version": "12.1.0",
+  "version": "12.2.0",
   "unity": "6000.0",
   "unityRelease": "0f1",
-  "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",
+  "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components and module documentation. Demo scenes ship as separate downloads.",
   "author": {
     "name": "Neoxider"
   },
@@ -20,23 +20,6 @@
   "documentationUrl": "https://github.com/NeoXider/NeoxiderTools/tree/main/Assets/Neoxider/Docs",
   "changelogUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/CHANGELOG.md",
   "licensesUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/LICENSE.md",
-  "samples": [
-    {
-      "displayName": "Demo Scenes",
-      "description": "Module demos and integration scenes. Requires the documented host dependencies, TMP Essential Resources and 2D Sprite sample assets. Import NeoxiderPages and Character Movement Fundamentals too for legacy cross-module integration scenes.",
-      "path": "Samples~/Demo"
-    },
-    {
-      "displayName": "NeoxiderPages",
-      "description": "Optional page-navigation sample module with PM, UIPage, BtnChangePage, and UIKit helpers. Text-based examples require the consuming project's official TMP Essential Resources.",
-      "path": "Samples~/NeoxiderPages"
-    },
-    {
-      "displayName": "Character Movement Fundamentals",
-      "description": "Demo scenes for the 3D character controller: slopes, stairs, moving platforms, gravity tunnels and a top-down arena, with the environment art they use. Optional — the character presets ship self-contained.",
-      "path": "Samples~/CharacterMovementFundamentals"
-    }
-  ],
   "keywords": [
     "neoxider",
     "tools",

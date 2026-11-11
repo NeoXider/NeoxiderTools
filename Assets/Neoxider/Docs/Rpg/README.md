@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/RpgCombatNpcDemo.jpg" alt="RpgCombatNpcDemo: auto combat between RpgCharacter NPCs with health bars" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/RpgCharacterQuickDemo.jpg" alt="RpgCharacterQuickDemo: RpgCharacter HUD bindings and NoCode actions" width="49%" /></p>
 
-*Demo scenes: `Scenes/RpgCombatNpcDemo.unity`, `Scenes/RpgCharacterQuickDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/RpgCombatNpcDemo.unity`, `Scenes/RpgCharacterQuickDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -55,10 +55,8 @@
 
 ## Demo scenes
 
-Both scenes live in the Demo sample (`Assets/Neoxider/Samples~/Demo/Scenes/` in the release layout,
-`Assets/Neoxider/Samples/Demo/Scenes/` while samples are being developed; an imported copy lands in
-`Assets/Samples/NeoxiderTools/<version>/Demo Scenes/Scenes/`). Their UI, bindings and listeners are saved in the
-scenes by editor builders (`Samples~/Demo/Editor/Builders/Rpg/`), so every connection can be inspected without
+Both scenes live in the Demo download (`Assets/NeoxiderDemos/Demo/Scenes/`). Their UI, bindings and listeners are saved in the
+scenes by editor builders (`Assets/NeoxiderDemos/Demo/Editor/Builders/Rpg/`), so every connection can be inspected without
 entering Play Mode.
 
 | Scene | What it shows | Look at in the Inspector | C# equivalent |

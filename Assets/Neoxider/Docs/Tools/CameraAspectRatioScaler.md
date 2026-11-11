@@ -109,8 +109,7 @@ The scaler does not allocate, resize or release the caller's render texture.
 
 ## Demo scene
 
-`Samples~/Demo/Scenes/Tools/CameraAspectRatio.unity` (`Samples/Demo/...` while the sample folder is unpacked for
-development, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...` after a Package Manager import). Everything is
+`Assets/NeoxiderDemos/Demo/Scenes/Tools/CameraAspectRatio.unity` (Demo download). Everything is
 saved in the scene, so the wiring is visible without entering Play Mode:
 
 - **Main Camera** carries the scaler: `FitBoth`, Target Resolution 1080 × 1920, **Reference Size** 9.6, multiplier 1.

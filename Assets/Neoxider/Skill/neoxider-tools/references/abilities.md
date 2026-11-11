@@ -172,7 +172,7 @@ action/source bridges.
 
 ## Survivor kit — the reference implementation
 
-`Samples~/Demo` ships **SurvivorDemo.unity**: a complete Vampire-Survivors game built from ONE
+`Assets/NeoxiderDemos/Demo` ships **SurvivorDemo.unity**: a complete Vampire-Survivors game built from ONE
 `SurvivorConfig` ScriptableObject (player/enemy `UnitTemplate`s, auto-cast weapon `AbilityDefinition`s,
 slow/DoT/stat `ModifierDefinition`s, upgrade cards, spawn/health ramps, XP curve) on top of Neo.Abilities +
 Core resources. The scene is authored in the Editor by `SurvivorDemoBuilder` from that config (camera,

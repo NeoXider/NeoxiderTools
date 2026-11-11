@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AttributeExample.jpg" alt="AttributeExample: Inspector attributes resolved in Edit Mode next to the same lookups in C#" width="100%" /></p>
 
-*Demo scene: `Scenes/Tools/AttributeExample.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Tools/AttributeExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the [entry points](#entry-points) list of pages and the
@@ -53,7 +53,7 @@ Scene Saver separates same-named scenes by source asset GUID. See [SceneSaver](.
 
 ## Demo scene
 
-`Samples~/Demo/Scenes/Tools/AttributeExample.unity` (`Samples/...` while sample development is active) shows the inspector attributes on one component, `AttributeTest` on the **Attribute** object. Everything is saved in the scene, so the wiring is visible without Play Mode:
+`Assets/NeoxiderDemos/Demo/Scenes/Tools/AttributeExample.unity` shows the inspector attributes on one component, `AttributeTest` on the **Attribute** object. Everything is saved in the scene, so the wiring is visible without Play Mode:
 
 - **Edit Mode.** Select **Attribute**. The Neo inspector fills `[FindAllInScene]` (Rigidbody and SphereCollider arrays, tinted by `[GUIColor]`), `[FindInScene]` (camera), `[GetComponents(true)]` (the object and its children) and `[GetComponent]` (ToggleObject); `[RequireInterface(typeof(IMoneyAdd))]` accepts only objects with an `IMoneyAdd` component (here **Money**). Clear *Cam Find In Scene*: the inspector refills it at once, and *Edit > Undo History* lists the fill as *Find attributed component* (prefab instances keep it as an override). Select **Attribute** and **[Demo] Inspector/Attribute B**, press *Add Score*: the action runs on both objects and one Ctrl+Z reverts both.
 - **Game view.** The right card lists the resolved values (already in Edit Mode). In Play Mode, *Compare with C#* runs the runtime equivalents (`Object.FindObjectsByType<T>()`, `FindFirstObjectByType<T>()`, `GetComponent<T>()`, `GetComponentsInChildren<T>()`) and marks each field as equal; *Kick bodies* pushes the Rigidbodies stored in `rbsFindAllInScene`. The `PrintHello()`, `AddScore(10)` and `ResetScore()` buttons call the `[Button]` methods through persistent listeners (select a button to see the call in its On Click list).

@@ -88,20 +88,16 @@ NoCode существует для быстрой сборки сцен и ит�
 
 Если текст действительно сломан, исправлять нужно аккуратно и точечно, сохраняя нормальный UTF-8. Если проверка показывает, что файл корректный, а странные символы видны только в консоли, файл трогать нельзя.
 
-## Samples / UPM Packaging
+## Демо и дистрибутивы
 
-Сейчас в репозитории активен release layout: sample-сцены и sample-код лежат в UPM-формате `Assets/Neoxider/Samples~`, dev-папки `Samples` нет, а `package.json.samples[].path` указывает на `Samples~/...`.
+С 12.2.0 у пакета нет UPM samples: нет `Samples~`, в `package.json` нет `samples`, демо не переименовываются перед релизом.
 
-При активной разработке сэмплов папку переименовывают в рабочий developer-путь `Assets/Neoxider/Samples`, чтобы сцены были видны в проекте. Перед финальной упаковкой/релизом sample-папки снова переводятся в UPM-формат `Assets/Neoxider/Samples~`, а `package.json.samples[].path` должен указывать на `Samples~/...`.
-
-После импорта UPM sample через Unity Package Manager содержимое `Samples~` копируется Unity не обратно в пакет, а в проектный путь вида `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии это, например, `Assets/Samples/NeoxiderTools/12.1.0/Demo Scenes/...`.
-
-Правила для агентов:
-
-- не считать ошибкой наличие только одного из layout'ов: `Samples~` при release layout или `Samples` при активной разработке;
-- тесты и validation helpers должны уметь работать с текущим активным sample root: `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~` или импортированным Unity root `Assets/Samples/NeoxiderTools/<version>/<sample name>`;
-- документация может указывать текущий активный path (`Assets/Neoxider/Samples~/...` при release layout, `Assets/Neoxider/Samples/...` при разработке), но должна явно помнить оба варианта;
-- при переходе в разработку сэмплов сверить rename `Samples~` -> `Samples`, а перед релизной финализацией — rename `Samples` -> `Samples~`, package sample paths, imported sample expectations, docs и changelog.
+- Демо-сцены лежат вне пакета, в обычных видимых папках `Assets/NeoxiderDemos/Demo`, `Assets/NeoxiderDemos/NeoxiderPages`, `Assets/NeoxiderDemos/CharacterMovementFundamentals`. Их правят и коммитят как есть.
+- Пакет (`Assets/Neoxider`) не должен ссылаться на ассеты демо; демо могут ссылаться на пакет.
+- Git-установка: `https://github.com/NeoXider/NeoxiderTools.git#upm`. Ветку `upm` собирает `python scripts/build_distribution.py upm` из закоммиченной ревизии: в ней только пакет без `Tests/` и `Images/`, поэтому Unity качает несколько мегабайт, а не весь репозиторий (`git fetch --depth=1` тянет снимок всего дерева коммита).
+- Архивы релиза собирает `python scripts/build_distribution.py unitypackages`: `NeoxiderTools.v<ver>` (пакет) и по архиву на каждое демо, плюс `SHA256SUMS.txt`.
+- Тяжёлые ассеты сжимает `python scripts/optimize_package_assets.py`: PNG больше размера импорта уменьшаются до него с пересчётом PPU и прямоугольников спрайтов, WAV переводятся в OGG под тем же `.meta`. Цель — пакет до 5 МБ в git-загрузке и в архиве.
+- Сэмплы, импортированные пользователями из 12.1 и раньше, лежат в `Assets/Samples/NeoxiderTools/<version>/` и имеют те же GUID, что и демо-архивы: документация просит удалить такую копию перед импортом.
 
 ## Git и коммиты
 

@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NeoConditionDemo.jpg" alt="NeoConditionDemo: NeoCondition rules switching lamps, banners and badges from HP and score" width="100%" /></p>
 
-*Demo scene: `Scenes/Condition/NeoConditionDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Condition/NeoConditionDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -25,7 +25,7 @@
 
 ## Demo
 
-`Scenes/Condition/NeoConditionDemo.unity` (Demo sample: `Assets/Neoxider/Samples~/Demo` in the release layout, `Samples/Demo` during sample development, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` after import). Everything is saved in the scene:
+`Scenes/Condition/NeoConditionDemo.unity` (Demo download, `Assets/NeoxiderDemos/Demo`). Everything is saved in the scene:
 
 - `Health` holds two rules, `CheckDead` (Hp <= 0) and `CheckLowHP` (Hp <= 30); `Score` holds `CheckWin` (Score >= 100). Select a rule to see its Conditions list and its `OnResult` listeners, which light the rule's lamp and toggle the Game Over banner, LOW HP badge or You Win banner through `GameObject.SetActive` (no code).
 - Buttons call `Health.TakeDamage` / `Heal` and `ScoreManager.Add` directly; HP and score are shown by `NoCodeFormattedText` + `SetProgress`.

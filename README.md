@@ -6,13 +6,13 @@
 
 A modular construction library: use runtime APIs directly, then add scene components and optional Inspector / NoCode workflows.
 
-[![Version](https://img.shields.io/badge/version-12.1.0-blue)](Assets/Neoxider/package.json)
+[![Version](https://img.shields.io/badge/version-12.2.0-blue)](Assets/Neoxider/package.json)
 [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](Assets/Neoxider/LICENSE.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](Assets/Neoxider/Docs/PackageCompatibility.md)
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](Assets/Neoxider/Docs/README.md#namespace-policy)
 [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](Assets/Neoxider/Docs/NoCode/README.md)
 
-### [Demos](#-see-it-running) · [Start](#quick-start) · [Install](#-install) · [Modules](#-what-is-inside) · [Documentation](Assets/Neoxider/Docs/README.md) · [Samples](#-samples) · [Upgrade from 11.x](Assets/Neoxider/Docs/Migration12.md)
+### [Demos](#-see-it-running) · [Start](#quick-start) · [Install](#-install) · [Modules](#-what-is-inside) · [Documentation](Assets/Neoxider/Docs/README.md) · [Demos](#-demos) · [Upgrade from 11.x](Assets/Neoxider/Docs/Migration12.md)
 
 </div>
 
@@ -28,7 +28,7 @@ A modular construction library: use runtime APIs directly, then add scene compon
 
 ## 🎬 See it running
 
-Captures taken in the Unity Editor (several in Play Mode) of scenes from the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). Click a picture to open the module guide.
+Captures taken in the Unity Editor (several in Play Mode) of scenes from the Demo download (`Assets/NeoxiderDemos/Demo`). Click a picture to open the module guide.
 
 <table>
 <tr>
@@ -65,7 +65,7 @@ Captures taken in the Unity Editor (several in Play Mode) of scenes from the **D
 | **C# runtime API** | Own models and services from your code; add views when needed | [Runtime-model example](Assets/Neoxider/Docs/GettingStarted.md#start-with-a-c-runtime-model) |
 | **Scene components** | Add a component and assign its explicit dependencies | [First audio scene](Assets/Neoxider/Docs/GettingStarted.md#your-first-scene-in-5-minutes-audio-manager-am), [scene checklist](#first-scene-checklist) |
 | **Inspector / NoCode** | Connect values and events to the same typed APIs | [NoCode guide](Assets/Neoxider/Docs/NoCode/GettingStarted.md) |
-| **A working demo** | Open a ready scene and inspect how it is wired | [Sample scenes](Assets/Neoxider/Docs/Samples.md) |
+| **A working demo** | Open a ready scene and inspect how it is wired | [Demo scenes](Assets/Neoxider/Docs/Samples.md) |
 
 3. Find the next building block in the [module map](#-what-is-inside). Keep reusable configuration in assets and scene references on components.
 
@@ -106,7 +106,7 @@ The [package README](Assets/Neoxider/README.md), [reuse map](Assets/Neoxider/PRO
 - [How it fits together](#how-it-fits-together)
 - [Four ways to build](#one-package--four-ways-to-build)
 - [NoCode example](#no-code-example-neocondition)
-- [Samples](#-samples)
+- [Demos](#-demos)
 - [HTML/CSS → UI Toolkit](#htmlcss--ui-toolkit)
 - [Tests](#tests)
 - [Project layout](#project-layout)
@@ -121,10 +121,10 @@ Install **NeoxiderTools** plus the required third-party packages below. In Unity
 ### NeoxiderTools (Git URL)
 
 ```text
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
+https://github.com/NeoXider/NeoxiderTools.git#upm
 ```
 
-This URL follows the remote default branch; append a release tag (for example `#v12.1.0`) to pin a version. For source development, use the [local-package route](Assets/Neoxider/Docs/GettingStarted.md#option-b--local-path-for-development).
+The `upm` branch holds only the package, so Unity downloads about 4 MB instead of the whole repository. To pin a version, replace `upm` with the commit listed in the release notes. Demo scenes are separate downloads on the [releases page](https://github.com/NeoXider/NeoxiderTools/releases) (`NeoxiderTools.Demo`, `NeoxiderPages`, `NeoxiderTools.CharacterMovementDemo`); in this repository they live in `Assets/NeoxiderDemos`. For source development, use the [local-package route](Assets/Neoxider/Docs/GettingStarted.md#option-b--local-path-for-development).
 
 ### DOTween (required)
 
@@ -147,9 +147,9 @@ Copy `Assets/Neoxider` into your project. You still need DOTween and UniTask ins
 - **Required (host project):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676), [UniTask](https://github.com/Cysharp/UniTask) — see [Install](#-install).
 - **Optional:** `DOTween Pro`, `Mirror`, `Spine Unity Runtime`, `Odin Inspector`, `MarkdownRenderer`, [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) (HTML/CSS → UI Toolkit), and the [mobile haptics backend](Assets/Neoxider/Docs/Haptics/Haptics.md). NeoxiderPages imports without DOTween Pro.
 - URP is optional. The package does not depend on `com.unity.render-pipelines.universal`; add URP yourself only if your project uses URP-specific rendering features or 2D lights.
-- Samples additionally need **TMP Essential Resources** and `com.unity.2d.sprite`; see [sample prerequisites](Assets/Neoxider/Docs/Samples.md#host-and-sample-prerequisites).
+- Demos additionally need **TMP Essential Resources** and `com.unity.2d.sprite`; see [demo prerequisites](Assets/Neoxider/Docs/Samples.md#host-and-sample-prerequisites).
 
-Character Movement Fundamentals runtime/editor code is bundled under `ThirdParty/CharacterMovementFundamentals`; its demo content is an optional sample. See [third-party notices](Assets/Neoxider/THIRD-PARTY-NOTICES.md) for the bundled license and external dependencies.
+Character Movement Fundamentals runtime/editor code is bundled under `ThirdParty/CharacterMovementFundamentals`; its demo scenes are a separate download. See [third-party notices](Assets/Neoxider/THIRD-PARTY-NOTICES.md) for the bundled license and external dependencies.
 
 See [dependency versions and optional MCP setup](Assets/Neoxider/Docs/Dependencies.md) for pinned updates,
 Unity SDK compatibility and the DOTween Core/Pro upgrade constraint.
@@ -234,7 +234,7 @@ Example: a condition calling `CanSpend(100f)` on a configured `Money` component 
 
 Read more: [NeoCondition docs](Assets/Neoxider/Docs/Condition/NeoCondition.md).
 
-## 🎮 Samples
+## 🎮 Demos
 
 <!-- samples-shots:begin -->
 <p align="center"><img src="Images/demos/SurvivorDemo.jpg" alt="SurvivorDemo: the survivor arena with waves and upgrades" width="49%" /> <img src="Images/demos/ShowcaseScene.jpg" alt="Character Movement Fundamentals showcase: slopes, stairs, platforms and gravity zones" width="49%" /></p>
@@ -242,21 +242,21 @@ Read more: [NeoCondition docs](Assets/Neoxider/Docs/Condition/NeoCondition.md).
 *SurvivorDemo (Demo Scenes) and the Character Movement Fundamentals showcase, captured in Play Mode.*
 <!-- samples-shots:end -->
 
-This checkout uses the release layout: sources live under `Assets/Neoxider/Samples~/` and are hidden from Unity's normal asset import. Import them from `Package Manager > NeoxiderTools > Samples`. Unity copies each sample into `Assets/Samples/NeoxiderTools/<version>/<sample name>/`, for example `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/Scenes/SurvivorDemo.unity`.
+Demo scenes are not part of the package. In this repository they are ordinary folders under `Assets/NeoxiderDemos/`; users download each one separately from the [releases page](https://github.com/NeoXider/NeoxiderTools/releases) after installing the package, for example `Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity`.
 
-| Package Manager sample | Source path | Purpose |
-|------------------------|-------------|---------|
-| Demo Scenes | `Samples~/Demo` | Module demo scenes, example games and `SurvivorDemo`, configured by `SurvivorConfig` on top of `Neo.Abilities` ([guide](Assets/Neoxider/Docs/Abilities/SurvivorDemo.md)) |
-| NeoxiderPages | `Samples~/NeoxiderPages` | Optional page-navigation sample with `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers |
-| Character Movement Fundamentals | `Samples~/CharacterMovementFundamentals` | Character-controller scenes for slopes, stairs, platforms, gravity, and a top-down arena ([guide](Assets/Neoxider/Docs/Tools/Move/CharacterController/README.md)) |
+| Download | Folder | Purpose |
+|----------|--------|---------|
+| `NeoxiderTools.Demo` | `Assets/NeoxiderDemos/Demo` | Module demo scenes, example games and `SurvivorDemo`, configured by `SurvivorConfig` on top of `Neo.Abilities` ([guide](Assets/Neoxider/Docs/Abilities/SurvivorDemo.md)) |
+| `NeoxiderPages` | `Assets/NeoxiderDemos/NeoxiderPages` | Optional page-navigation module with `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers |
+| `NeoxiderTools.CharacterMovementDemo` | `Assets/NeoxiderDemos/CharacterMovementFundamentals` | Character-controller scenes for slopes, stairs, platforms, gravity, and a top-down arena ([guide](Assets/Neoxider/Docs/Tools/Move/CharacterController/README.md)) |
 
-Every demo scene is saved with its UI, configured components and UnityEvent wiring, so you can see how a button reaches a module API without entering Play Mode. Editor builders in the sample author these scenes; **Neoxider > Demo > Rebuild Active Demo Scene** restores a scene you changed. See [how demo scenes are made](Assets/Neoxider/Docs/Samples.md#how-demo-scenes-are-made).
+Every demo scene is saved with its UI, configured components and UnityEvent wiring, so you can see how a button reaches a module API without entering Play Mode. Editor builders in the demo author these scenes; **Neoxider > Demo > Rebuild Active Demo Scene** restores a scene you changed. See [how demo scenes are made](Assets/Neoxider/Docs/Samples.md#how-demo-scenes-are-made).
 
-Import all three for the full integration collection: example games can reference sibling sample
+Import all three for the full integration collection: example games can reference sibling demo
 assets (CardGame uses the NeoxiderPages PM prefab). Module demos can be explored separately;
-see the [sample dependency and scene guide](Assets/Neoxider/Docs/Samples.md).
+see the [demo dependency and scene guide](Assets/Neoxider/Docs/Samples.md).
 
-For sample development, the source folder can be renamed to `Assets/Neoxider/Samples/`; release packaging restores `Samples~` and the matching package sample paths. The [sample guide](Assets/Neoxider/Docs/Samples.md) explains the source/imported layouts.
+Nothing needs renaming for demo development: edit the scenes in `Assets/NeoxiderDemos` and commit them.
 
 Imported copies from earlier versions remain separate project content and are not updated by a package upgrade. Re-import the samples you use; see [Upgrading to 12](Assets/Neoxider/Docs/Migration12.md#samples-and-demo-scenes).
 
@@ -285,14 +285,14 @@ Assets/Neoxider/
   Editor/        Custom inspectors, windows, and editor utilities
   Tests/         EditMode and PlayMode package tests
   Docs/          Documentation
-  Samples~/      Current UPM sample sources (three importable samples)
   Prefabs/       Ready-to-use prefabs
   Resources/     Settings and package assets
   Skill/         Agent skill for coding assistants
+Assets/NeoxiderDemos/  Demo scenes (Demo, NeoxiderPages, CharacterMovementFundamentals), separate downloads
 dev-docs/        Maintainer documents (repository only, not in the package)
 ```
 
-`Samples/` is the alternative source location during sample development, replacing `Samples~/` until release packaging.
+`python scripts/build_distribution.py upm` writes the package to the `upm` branch; `python scripts/build_distribution.py unitypackages` writes the release archives.
 
 ## Games using NeoxiderTools
 

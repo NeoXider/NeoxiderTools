@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemMatch3Demo.jpg" alt="GridSystemMatch3Demo: shaped Match3 board with path and reach highlights" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemTicTacToeDemo.jpg" alt="GridSystemTicTacToeDemo: n-in-a-row board with a bot" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/GridSystemDiceMergeDemo.jpg" alt="GridSystemDiceMergeDemo: dice placement and merge" width="32%" /></p>
 
-*Demo scenes: `Scenes/GridSystem/GridSystemMatch3Demo.unity`, `Scenes/GridSystem/GridSystemTicTacToeDemo.unity`, `Scenes/GridSystem/GridSystemDiceMergeDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/GridSystem/GridSystemMatch3Demo.unity`, `Scenes/GridSystem/GridSystemTicTacToeDemo.unity`, `Scenes/GridSystem/GridSystemDiceMergeDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -82,9 +82,7 @@ Use one gameplay service per board unless your own composition coordinates its c
 
 ## Samples
 
-The Demo sample ships hidden in `Samples~`; import it via Package Manager to get the scenes.
-
-The release root is `Assets/Neoxider/Samples~`; active sample development uses `Assets/Neoxider/Samples`. Package Manager imports copies into `Assets/Samples/NeoxiderTools/<version>/<sample name>`.
+Demo scenes are in the Demo download (`Assets/NeoxiderDemos/Demo`).
 
 GridSystem scenes live in `Scenes/GridSystem/`; controller and view scripts live in `Scripts/GridSystem/`. Every scene is saved fully wired: open it and select the objects below to see the configuration and the UnityEvent wiring without entering Play Mode. Nothing is assembled at Play start.
 

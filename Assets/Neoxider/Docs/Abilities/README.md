@@ -10,7 +10,7 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SurvivorDemo.jpg" alt="SurvivorDemo: a survivor arena with waves, upgrades and auto-cast abilities" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AbilitiesNoCodeDemo.jpg" alt="AbilitiesNoCodeDemo: NoCode ability buttons, HP and cooldown bars, auto caster" width="49%" /></p>
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AbilitiesTriggersDemo.jpg" alt="AbilitiesTriggersDemo: thorns, attack enhancer, mark, stacking poison, formation zone and auto-defense shield with a why-did-this-fire panel" width="98%" /></p>
 
-*Demo scenes: `Scenes/SurvivorDemo.unity`, `Scenes/Abilities/AbilitiesNoCodeDemo.unity`, `Scenes/Abilities/AbilitiesTriggersDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity`, `Assets/NeoxiderDemos/Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity`, `Assets/NeoxiderDemos/Demo/Scenes/Abilities/AbilitiesTriggersDemo.unity` (Demo download). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 - **Abilities** resolve, per cast, into a list of effect operations (damage, heal, apply modifier, spawn, …) through a validated cast pipeline (states, costs, cooldown/charges, target, range).
@@ -63,7 +63,7 @@ Source: `Assets/Neoxider/Scripts/Abilities` (`Domain/` pure C#, `Data/` Scriptab
 
 ## Quick start (no code)
 
-**Playable guide:** open `Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity` in **Demo Scenes**.
+**Playable guide:** open `Assets/NeoxiderDemos/Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity` (Demo download).
 Start with **Hit Player 20**, then **Cast Heal**: numeric HP and the result explain the actual heal.
 Try Heal again during cooldown, **Zap dummy**, **Next level**, and compare 12/20/30 damage.
 **Auto Zap** starts off so the dummy survives while you read; enable it to inspect automatic casting.
@@ -88,8 +88,7 @@ actions. Zap explicitly reads caster unit level from its authored effect configu
 отказа; Reset позволяет повторить опыт. Автоатака включается явно и не завершает демонстрацию до чтения.
 Вся связка сохранена в сцене: кнопки несут свой `AbilityNoCodeAction`, полосы HP и кулдауна — это
 `SetProgress`, переключатель Auto Zap включает `AbilityAutoCaster.enabled`; всё видно в инспекторе без Play Mode.
-Release source is `Assets/Neoxider/Samples~`, developer layout is `Assets/Neoxider/Samples`; imported
-UPM samples are under `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` (`12.1.0` for this release).
+
 
 1. Create a [UnitTemplate](./UnitTemplate.md) with a `health` pool (and `mana` if it casts).
 2. Create [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets, add them to an [AbilityLibrary](./AbilityLibrary.md).

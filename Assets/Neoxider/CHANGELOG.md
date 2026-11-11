@@ -1,6 +1,37 @@
 
 ## [Unreleased]
 
+## [12.2.0] - 2026-11-11
+
+Distribution release: the package is much smaller to install; runtime APIs are unchanged.
+
+### Changed
+
+- **Git install is the package alone.** Unity installs git packages with `git fetch --depth=1`, which downloads
+  the whole repository tree of that commit (about 104 MB here, demos and tests included). The new `upm` branch
+  holds only the package: `https://github.com/NeoXider/NeoxiderTools.git#upm` downloads about 4.7 MB.
+  `python scripts/build_distribution.py upm` writes it from a committed revision.
+- **Demos are separate downloads, not UPM samples.** `package.json` declares no samples; the three demo trees
+  moved from `Samples~` to the always-visible project folders `Assets/NeoxiderDemos/Demo`, `NeoxiderPages` and
+  `CharacterMovementFundamentals`, so demo development needs no renaming. Each release carries
+  `NeoxiderTools.v12.2.0.unitypackage` (4.3 MB, was 56 MB with demos and 16 MB as Core) and one archive per demo
+  (Demo 9.8 MB, NeoxiderPages 2.2 MB, CharacterMovementDemo 1.1 MB), written by
+  `python scripts/build_distribution.py unitypackages`. Delete a copy imported earlier into
+  `Assets/Samples/NeoxiderTools/<version>/` before importing a demo archive: both carry the same GUIDs.
+- **Assets recompressed to what Unity imports.** `scripts/optimize_package_assets.py` downscales PNGs larger
+  than their import max size (sprite pixels-per-unit, borders and sheet rects scaled to keep world size), turns
+  WAV clips into Ogg Vorbis and large opaque or flat images into JPEG or palette PNG when the result stays
+  faithful (PSNR 38 dB or more, checked on 1:1 crops; gradient-heavy card art keeps full colour). GUIDs and
+  references are unchanged. The inspector mascots are 256 px sources, as imported.
+- `scripts/check_package.py` rejects a `samples` entry or a `Samples`/`Samples~` folder inside the package;
+  `PackageHealthCheck` no longer tracks the imported-sample path; **Repair Missing Scripts In Prefabs** scans
+  `Assets/NeoxiderDemos` instead of `Assets/Neoxider/Samples`.
+
+### Fixed
+
+- The repository no longer carries a stale July copy of the Character Movement Fundamentals sample in
+  `Assets/Samples` that shared GUIDs with the shipped one.
+
 ## [12.1.0] - 2026-11-06
 
 Additive release: existing float content and APIs behave as before.

@@ -194,7 +194,7 @@ Mirror scene identities also follow the package's [optional networking lifecycle
 
 ## Demo
 
-The Network demo scene (`Samples~/Demo/Scenes/Network/NetworkDemo.unity`) has a server-authoritative
+The Network demo scene (`Assets/NeoxiderDemos/Demo/Scenes/Network/NetworkDemo.unity`) has a server-authoritative
 `Shared Boss`: `RpgCharacter` (template asset `Data/Network/NetworkDemoBoss.asset`, **isNetworked** on,
 client state commands off) with `NetworkIdentity` and `RpgCharacterNetworkAdapter`. Its Hit and Revive
 buttons trigger ServerOnly channels of a `NetworkActionRelay`; on the server those channels call

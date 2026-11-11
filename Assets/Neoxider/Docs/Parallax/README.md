@@ -9,16 +9,16 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/ParallaxDemo.jpg" alt="ParallaxDemo: seven camera-bound parallax bands with auto-scrolling clouds" width="100%" /></p>
 
-*Demo scene: `Scenes/Parallax/ParallaxDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Parallax/ParallaxDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** [ParallaxLayer](./ParallaxLayer.md) - the one component of the module.
 
 ---
 
-Demo: `Samples~/Demo/Scenes/Parallax/ParallaxDemo.unity`, controller `Samples~/Demo/Scripts/Shell/ParallaxDemoController.cs`. The developer layout uses `Samples/` instead of `Samples~/`; importing **Demo Scenes** through Package Manager copies it under `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`.
+Demo: `Assets/NeoxiderDemos/Demo/Scenes/Parallax/ParallaxDemo.unity`, controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/ParallaxDemoController.cs`. It is part of the Demo download.
 
-The scene is authored by the editor builder `Samples~/Demo/Editor/Builders/Parallax/ParallaxDemoBuilder.cs`, so every layer is visible and configurable without Play Mode. `[Demo] World` holds seven bands, each a `ParallaxLayer` bound to the scene camera through `targetCamera`:
+The scene is authored by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Parallax/ParallaxDemoBuilder.cs`, so every layer is visible and configurable without Play Mode. `[Demo] World` holds seven bands, each a `ParallaxLayer` bound to the scene camera through `targetCamera`:
 
 | Band | `parallaxMultiplier.x` | Shows |
 |---|---|---|

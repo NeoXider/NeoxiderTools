@@ -17,9 +17,7 @@ from buttons or code.
 
 ## Demo scene
 
-`Scenes/Bonuses/WheelFortuneExample.unity` in the Demo sample (`Assets/Neoxider/Samples~/Demo` in the package,
-`Assets/Neoxider/Samples/Demo` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`
-after importing the sample). The whole setup is saved in the scene, so the wiring is visible in the Inspector
+`Scenes/Bonuses/WheelFortuneExample.unity` in the Demo download (`Assets/NeoxiderDemos/Demo`). The whole setup is saved in the scene, so the wiring is visible in the Inspector
 without entering Play Mode:
 
 | Object | What to look at |

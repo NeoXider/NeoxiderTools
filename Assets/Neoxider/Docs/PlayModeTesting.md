@@ -157,15 +157,13 @@ bindings. Demo scene smoke tests provide additional scene-level coverage where t
 
 Supported demo roots are:
 
-- Development: `Assets/Neoxider/Samples/Demo`.
-- Release package: `Assets/Neoxider/Samples~/Demo`.
-- Imported sample: `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` (the legacy package folder
+- Development: `Assets/NeoxiderDemos/Demo`.
+- Release package: `Assets/NeoxiderDemos/Demo`.
+- Imported sample: `Assets/NeoxiderDemos/Demo` (the legacy package folder
   `Neoxider Tools` and sample folder `Demo` are also recognized).
 
-Discovery prefers development samples, then visible imported samples. A hidden `Samples~` directory
-is a fallback and causes an explicit skip because Unity does not compile its sample scripts.
-Import Demo Scenes through Package Manager to exercise scene smoke coverage while keeping the package
-in release layout. `SampleScenePlaySmokeTests` loads every scene of the visible samples (one case per scene: 12
+Discovery reads `Assets/NeoxiderDemos`; a missing demo tree causes an explicit skip.
+`SampleScenePlaySmokeTests` loads every scene of the demo trees (one case per scene: 12
 frames, no error/assert/exception logs, Filled Images with sprites, no unbuilt demo scene, the authored info card on
 builder scenes) and `AudioDemoScenePlayTests` drives the authored AudioDemo buttons; see
 [sample, demo and packaging tests](Testing.md#sample-demo-and-packaging-tests). If several imported versions exist, retain the version intended for testing;

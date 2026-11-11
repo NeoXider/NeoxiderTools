@@ -12,7 +12,7 @@ in separate assemblies and are optional.
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/LevelFlowDemo.jpg" alt="LevelFlowDemo: LevelComponent XP curve next to the LevelManager map flow" width="100%" /></p>
 
-*Demo scene: `Scenes/Level/LevelFlowDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Level/LevelFlowDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** [entry points](#entry-points) (module pages), [levels from C#](#levels-from-c),

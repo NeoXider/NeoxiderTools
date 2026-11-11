@@ -1,6 +1,6 @@
 # ToggleAudio (NeoxiderPages)
 
-**What it is:** links a UI toggle (`VisualToggle`) to the music or sound-effects switch of `AMSettings`. Script `Samples~/NeoxiderPages/Runtime/Scripts/Core/ToggleAudio.cs`, namespace `Neo.Pages`.
+**What it is:** links a UI toggle (`VisualToggle`) to the music or sound-effects switch of `AMSettings`. Script `Assets/NeoxiderDemos/NeoxiderPages/Runtime/Scripts/Core/ToggleAudio.cs`, namespace `Neo.Pages`.
 
 **How to use:**
 1. Keep `AM` and [AMSettings](../Audio/AMSettings.md) in the scene (for example through the system prefab).

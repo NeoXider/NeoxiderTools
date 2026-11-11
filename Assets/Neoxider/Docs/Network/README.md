@@ -11,7 +11,7 @@ offline projects while enabling network synchronization when Mirror is installed
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NetworkDemo.jpg" alt="NetworkDemo: NeoNetworkManager session, action relay channels and a replicated boss" width="100%" /></p>
 
-*Demo scene: `Scenes/Network/NetworkDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Network/NetworkDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the entry-point table below, the [guides](#guides) and the [Realtime toolkit](./Realtime/README.md).
@@ -77,7 +77,7 @@ Details: [NeoNetworkManager](./NeoNetworkManager.md#start--stop-cheat-sheet).
 
 ## Demo scene
 
-`Samples~/Demo/Scenes/Network/NetworkDemo.unity` (`Samples/...` while the sample is being developed) is authored in
+`Assets/NeoxiderDemos/Demo/Scenes/Network/NetworkDemo.unity` is authored in
 the editor by `NetworkDemoBuilder` (menu **Neoxider/Demo/Rebuild Active Demo Scene**). Everything is saved in the scene,
 so the wiring is visible in the Inspector without entering Play Mode:
 

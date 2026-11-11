@@ -38,6 +38,16 @@ namespace Neo.Editor.Tests
             }
         }
 
+        /// <summary>Demo trees live outside the package since 12.2.0 and ship as separate archives.</summary>
+        internal const string DemosRoot = "Assets/NeoxiderDemos";
+
+        internal static readonly SampleManifest[] DemoTrees =
+        {
+            new SampleManifest { displayName = "Demo Scenes", path = "Demo" },
+            new SampleManifest { displayName = "NeoxiderPages", path = "NeoxiderPages" },
+            new SampleManifest { displayName = "Character Movement Fundamentals", path = "CharacterMovementFundamentals" }
+        };
+
         internal static string PackageAssetRoot => RegisteredPackage?.assetPath ?? "Assets/Neoxider";
         internal static string PackageDiskRoot => Path.GetFullPath(RegisteredPackage?.resolvedPath ?? "Assets/Neoxider");
 
@@ -47,9 +57,10 @@ namespace Neo.Editor.Tests
             {
                 string path = Path.Combine(PackageDiskRoot, "package.json");
                 PackageManifest manifest = JsonUtility.FromJson<PackageManifest>(File.ReadAllText(path));
-                if (manifest == null || manifest.name != PackageName || string.IsNullOrEmpty(manifest.version) ||
-                    manifest.samples == null || manifest.samples.Length == 0)
-                    throw new InvalidDataException("Expected a nonempty NeoxiderTools package/sample manifest: " + path);
+                if (manifest == null || manifest.name != PackageName || string.IsNullOrEmpty(manifest.version))
+                    throw new InvalidDataException("Expected the NeoxiderTools package manifest: " + path);
+                // WHY: package.json declares no samples since 12.2.0; the demo identities are fixed folders.
+                manifest.samples = DemoTrees;
                 return manifest;
             }
         }
@@ -59,8 +70,7 @@ namespace Neo.Editor.Tests
             return "Assets/Samples/" + manifest.displayName + "/" + manifest.version + "/" + sample.displayName;
         }
 
-        internal static string DevelopmentRoot(SampleManifest sample) =>
-            PackageAssetRoot + "/" + sample.path.Replace("Samples~/", "Samples/");
+        internal static string DevelopmentRoot(SampleManifest sample) => DemosRoot + "/" + sample.path;
 
         internal static string DemoRoot
         {

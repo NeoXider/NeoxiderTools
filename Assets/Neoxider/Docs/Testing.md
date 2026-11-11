@@ -219,11 +219,9 @@ injection. See the [gameplay](Testing/Gameplay.md) and [utility](Testing/Utiliti
 
 ## Sample validation
 
-The validators accept these layouts:
-
-- Development: `<package root>/Samples/Demo/...`.
-- Release packaging: `<package root>/Samples~/Demo/...`.
-- Imported UPM samples: `Assets/Samples/NeoxiderTools/<actual package version>/Demo Scenes/...`.
+The validators read the demo trees from `Assets/NeoxiderDemos/<name>/...` (`Demo`, `NeoxiderPages`,
+`CharacterMovementFundamentals`). The package declares no samples since 12.2.0; the demo identities are fixed in
+`Audit20261023NeoEditorTestsPaths.DemoTrees`.
 
 The resolver supports repository `Assets/Neoxider` and registered UPM package roots, including local
 packages outside `Assets`. It reads the current package manifest and selects its exact version/sample
@@ -244,8 +242,7 @@ remain failures. Separate `YamlPackaging` cases inspect every required scene fil
 serialized script references/markers. Hidden-only packaging can satisfy those file checks while native
 integration remains inconclusive; an empty AssetDatabase loop is never successful evidence.
 
-Unity does not import `Samples~` as ordinary scene assets. Release-layout checks inspect the hidden
-sample YAML and metadata on disk. Developer and imported scenes are inspected in disposable preview
+Demo scenes are inspected in disposable preview
 scenes, preserving the editor's loaded scenes, active scene, and unsaved contents. Missing-script
 checks include inactive descendants. Tagged-object checks search only the inspected scene hierarchy.
 The preview ownership helper is
@@ -266,16 +263,12 @@ resolves nowhere still fails. A sample visible at a non-canonical path is report
 | `Neo.Tests.Play.SampleScenePlaySmokeTests.EveryRegisteredSceneBuilder_HasItsSceneSavedInTheVisibleSample` | `Neo.Tests.Play` / PlayMode | Every registered demo scene builder has its scene saved in the visible sample. |
 | `Neo.Tests.Play.AudioDemoScenePlayTests` | `Neo.Tests.Play` / PlayMode | Presses the authored buttons of `Scenes/Audio/AudioDemo.unity` (AM voice, music pool and track changes), then removes `AudioDemoController` mid-crossfade: the borrowed music keeps playing and nothing leaks. Needs enabled Unity audio. |
 | `Neo.Editor.Tests.SampleSceneSaveKeyTests` | `Neo.Editor.Tests` / EditMode | Scans the YAML of every sample scene and prefab, prefab-instance overrides included, and fails when a persisting component (inventory, level profile, progression, quests, counter, selector, timer, wallet, shop, score, level manager, equipment, leaderboard, box, collection, rewards) keeps its library default save key. Remaining offenders are listed in `KnownOffenders`, which may only shrink; a listed offender that became clean fails too. |
-| `Neo.Editor.Tests.PackageSampleIsolationTests` | `Neo.Editor.Tests` / EditMode | No package asset outside `Samples~` / `Samples` references a GUID that ships only inside the samples (parsed from disk, so it also runs while `Samples~` is hidden). |
+| `Neo.Editor.Tests.PackageSampleIsolationTests` | `Neo.Editor.Tests` / EditMode | No package asset references a GUID that ships only inside `Assets/NeoxiderDemos` (parsed from disk, so it also runs while `Samples~` is hidden). |
 | `Neo.Editor.Tests.ParamsOverloadAllocationTests` | `Neo.Editor.Tests` / EditMode | Source guard: no `Mathf.Max` / `Mathf.Min` call with three or more arguments (the `params` overloads allocate an array per call). |
 | `Neo.Tests.NeoxiderPagesChangedBehaviorTests` | `Assembly-CSharp-Editor` / EditMode | PM, `BtnChangePage` (legacy actions, primary-button clicks, `Reset` without asset creation), `PageSubscriber`, `ToggleAudio`, the UIKit facades without managers, `PageIdGenerator`, `PagesEditorGUI` and two Play Mode `FakeLoad`-on-startup-page cases. Ignored while the Pages sample is hidden. |
 | `Neo.Demo.Editor.Tests.*` | `Neo.Demo.Editor.Tests` / EditMode | The kit and every builder end to end in a temporary scene, built twice (wiring present, the second pass creates and removes nothing). Wave additions: `AnimatorsAndUIComponentsDemoBuildersTests`, `BonusRewardsDemoBuilderTests`, `Physics3DDemoBuilderTests` (wiring, explicit references, `NeoDemo.` save keys) and `DemoSceneRunnerSceneCreationTests` (a missing builder scene is created). |
 
-The Play Mode sample cases and the Demo/Pages tests report Ignored in the release layout, because Unity does not
-compile scripts inside `Samples~`. Make **Demo Scenes** and **NeoxiderPages** visible first: import them, or rename
-`Samples~/Demo` and `Samples~/NeoxiderPages` to the development `Samples` folder (keep Character Movement
-Fundamentals hidden while the repository's older `Assets/Samples/CharacterMovementFundamentals` copy exists, because
-both share their GUIDs). Hidden layouts and scenes that need a hidden sample report an explicit Ignore. In Input
+The Play Mode demo cases and the Demo/Pages tests report Ignored when a demo tree under `Assets/NeoxiderDemos` is missing (for example in a project that installed only the package). In Input
 System-only projects the Character Movement Fundamentals scenes report Ignored (they need Active Input Handling =
 Both); SurvivorDemo runs on either backend. The smoke checks error, assert and exception logs through
 `Application.logMessageReceivedThreaded` rather than `LogAssert.NoUnexpectedReceived`, which in Unity Test Framework
@@ -453,9 +446,9 @@ p95/p99/max for spikes. `gc_allocs_per_op` should be 0 on warm hot paths; a cali
 must read one call per sample or about 4 KB per operation, otherwise the numbers next to it are not trusted.
 `bytes_per_op_est` is a frame-scoped estimate; treat small values as noise unless the calibration row agrees.
 
-По-русски: тесты сэмплов (`SampleScenePlaySmokeTests`, `AudioDemoScenePlayTests`, `SampleSceneSaveKeyTests`,
+По-русски: тесты демо (`SampleScenePlaySmokeTests`, `AudioDemoScenePlayTests`, `SampleSceneSaveKeyTests`,
 `PackageSampleIsolationTests`) и тесты билдеров `Neo.Demo.Editor.Tests` описаны в таблице выше; Play Mode-случаи
-требуют видимых сэмплов Demo и NeoxiderPages. Проверки аллокаций и бенчмарки используют общую тестовую сборку `Neo.Tests.Performance`.
+требуют папок `Assets/NeoxiderDemos/Demo` и `Assets/NeoxiderDemos/NeoxiderPages`. Проверки аллокаций и бенчмарки используют общую тестовую сборку `Neo.Tests.Performance`.
 `GC.GetAllocatedBytesForCurrentThread()` в редакторе Unity 6 всегда возвращает 0, поэтому вместо него
 считаются вызовы `GC.Alloc` через откалиброванный `GcAllocCounter` (пустое окно = 0, удерживаемый
 `byte[4096]` = 1). Если счётчик недоступен, тест помечается Ignored с сообщением `NotSupported`, а не

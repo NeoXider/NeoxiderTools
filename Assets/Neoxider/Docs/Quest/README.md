@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/QuestDemo.jpg" alt="QuestDemo: QuestManager journal, NoCode notifications and a money reward" width="100%" /></p>
 
-*Demo scene: `Scenes/Quests/QuestDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Quests/QuestDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -27,7 +27,7 @@
 | [Quest flow](./QuestFlowConfig.md) | Optional sequence and availability checks |
 | [Saving](./Saving.md) | SaveProvider storage and objective list migration |
 
-Demo in the release package: `Assets/Neoxider/Samples~/Demo/Scenes/Quests/QuestDemo.unity` (during sample development the root is `Assets/Neoxider/Samples`; Package Manager imports samples under `Assets/Samples/NeoxiderTools/<version>/<sample name>/`). Everything is saved in the scene, so the wiring is visible without entering Play Mode:
+Demo: `Assets/NeoxiderDemos/Demo/Scenes/Quests/QuestDemo.unity` (Demo download). Everything is saved in the scene, so the wiring is visible without entering Play Mode:
 
 - `[Demo] Services/Quest Manager` — `QuestManager` with the three quest assets from `Demo/Data/Quest` in **Known Quests**; its **On Quest Completed** event calls `Money.Add(25)` on `[Demo] Services/Gold Wallet (Money)` (a reward without code).
 - Left column (C# path) — buttons call `QuestDemoController` (`Demo/Scripts/Shell/QuestDemoController.cs`), which uses `TryAcceptQuest`, `AddObjectiveProgress`, `FailQuest`, `RestartQuest`, `ResetAllQuests` and refreshes from the C# events.

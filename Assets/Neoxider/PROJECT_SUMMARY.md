@@ -9,7 +9,7 @@
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json` (`com.neoxider.tools`)
-- **Current version**: `12.1.0`
+- **Current version**: `12.2.0`
 - **Upgrade guides**: [`Docs/Migration12.md`](./Docs/Migration12.md) (from 11.x), [`Docs/Migration11.md`](./Docs/Migration11.md) (from 10.x)
 - **Validation**: the 11.0.0 Windows record is [`Verification11.md`](./Verification11.md); release verification of the 12.0.0 source is pending and is not implied by any audit receipt.
 - **Unity**: `6000.0+`
@@ -27,7 +27,6 @@ Assets/Neoxider/
   Editor/       # Editor tools and inspectors
   Tests/        # EditMode and PlayMode tests for package runtime/editor-critical flows
   Docs/         # English user-facing documentation
-  Samples~/     # UPM samples (Demo, NeoxiderPages, CharacterMovementFundamentals) — hidden from Unity, imported via Package Manager
   Prefabs/      # Ready-to-use prefabs
   Resources/    # Settings/assets
   Skill/        # Agent skill for coding assistants
@@ -47,7 +46,7 @@ Maintainer documents (plans, TODO, demo builder guide) live in the repository's 
 - **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move` (including `FreeFlyCameraController`), `Tools/Dialogue`, `Tools/Input`, `Tools/Time`, `Tools/Random`, `Tools/Physics`, `Tools/Draw`.
 - **No-code / Inspector workflows**: `Condition`, **`Neo.NoCode`** (`NoCodeBindText`, `NoCodeFormattedText`, `SetProgress` -> TMP / Slider / Image), module `*NoCodeAction` bridges, `PropertyAttribute`, UnityEvent-driven components. Every NoCode component has a typed C# API.
 - **Editor support**: custom inspectors, creation menus, maintenance windows.
-- **Optional sample module**: `Samples~/NeoxiderPages`.
+- **Optional sample module**: `Assets/NeoxiderDemos/NeoxiderPages`.
 - **Moved out**: the HTML/CSS → UI Toolkit converter is the separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package (`com.neoxider.htmltouitk`).
 
 ## Reuse-first map
@@ -84,7 +83,7 @@ Before implementing something new, check these ready-made building blocks:
 The full list is in [`CHANGELOG.md`](./CHANGELOG.md) and [`Docs/Migration12.md`](./Docs/Migration12.md).
 
 - The HTML/CSS → UI Toolkit converter left the package (`com.neoxider.htmltouitk`).
-- Demo scenes are authored in the scene by editor builders (`Samples~/Demo/Editor/Builders`) instead of runtime bootstraps; `NeoDemoShell` is an obsolete fallback.
+- Demo scenes are authored in the scene by editor builders (`Assets/NeoxiderDemos/Demo/Editor/Builders`) instead of runtime bootstraps; `NeoDemoShell` is an obsolete fallback.
 - Hot paths of most modules were reworked to avoid per-frame and per-call allocations once warm; zero-allocation tests use Unity's GC.Alloc recorder. Explicit `Performance` tests print `NEO_PERF` lines.
 - Plain C# cores were extracted from components (Bonus, Cards, Rpg, GridSystem), and time/random seams were added (clocks, seeded overloads, integer odds).
 - Behaviour changes worth knowing: `AMSettings` persists mute, `ButtonScale`/`ButtonShake`/`FakeLoad` default to unscaled time, `AnimationFly.Play` copies its request, NPC chase events fire once per chase, `StringExtension.ToFloat` reads the invariant culture first.
@@ -120,10 +119,10 @@ The full list is in [`CHANGELOG.md`](./CHANGELOG.md) and [`Docs/Migration12.md`]
 
 ## Samples
 
-- `Samples~/Demo` contains the module demo scenes, the example games and `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game driven by one `SurvivorConfig` data asset on top of `Neo.Abilities`. Every module demo (Audio, Save, Settings, Level, StateMachine, NoCode, Parallax, Quest, Progression, Inventory, Abilities, Grid, Shop, NPC, Network, Tools, `UI/AnimationFlyDemo` and more) is saved with its UI and UnityEvent wiring and is authored by an editor builder in `Samples~/Demo/Editor/Builders`; **Neoxider > Demo > Rebuild Active Demo Scene** rebuilds one. See [`Docs/Samples.md`](./Docs/Samples.md).
-- `Samples~/NeoxiderPages` contains the optional page navigation sample module.
-- `Samples~/CharacterMovementFundamentals` holds the 3D character controller showcase (slopes, stairs, platforms, gravity rooms) and the Capguy character the animated character presets reference.
-- During sample development the folder is renamed to `Samples`; before release packaging all three sample roots return to the UPM paths `Samples~/Demo`, `Samples~/NeoxiderPages` and `Samples~/CharacterMovementFundamentals`, as specified in `package.json.samples`.
+- `Assets/NeoxiderDemos/Demo` contains the module demo scenes, the example games and `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game driven by one `SurvivorConfig` data asset on top of `Neo.Abilities`. Every module demo (Audio, Save, Settings, Level, StateMachine, NoCode, Parallax, Quest, Progression, Inventory, Abilities, Grid, Shop, NPC, Network, Tools, `UI/AnimationFlyDemo` and more) is saved with its UI and UnityEvent wiring and is authored by an editor builder in `Assets/NeoxiderDemos/Demo/Editor/Builders`; **Neoxider > Demo > Rebuild Active Demo Scene** rebuilds one. See [`Docs/Samples.md`](./Docs/Samples.md).
+- `Assets/NeoxiderDemos/NeoxiderPages` contains the optional page navigation module and its demo.
+- `Assets/NeoxiderDemos/CharacterMovementFundamentals` holds the 3D character controller showcase (slopes, stairs, platforms, gravity rooms) and the Capguy character the animated character presets reference.
+- These are ordinary project folders outside the package; each ships as its own `.unitypackage` on the releases page.
 
 ## Tests and quality
 

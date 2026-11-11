@@ -11,7 +11,7 @@ split into asmdef-backed submodules (`Neo.Tools.*`), namespace `Neo.Tools`.
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Physics3DDemo.jpg" alt="Physics3DDemo: magnetic field, impulse zone and explosive force" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Dialogue.jpg" alt="Dialogue: dialogue box with typewriter and bark lines" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Follow.jpg" alt="Follow: draggable target, rail follower and turret" width="49%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/ChanceSystemExample.jpg" alt="ChanceSystemExample: weighted rolls and exact jackpot odds" width="49%" /></p>
 
-*Demo scenes: `Scenes/Tools/Physics/Physics3DDemo.unity`, `Scenes/Tools/Dialogue.unity`, `Scenes/Tools/Move/Follow.unity`, `Scenes/Tools/ChanceSystemExample.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/Tools/Physics/Physics3DDemo.unity`, `Scenes/Tools/Dialogue.unity`, `Scenes/Tools/Move/Follow.unity`, `Scenes/Tools/ChanceSystemExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the submodule index below. Each submodule README lists its components with the C# API and the

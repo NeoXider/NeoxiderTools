@@ -69,13 +69,9 @@ Skipped tests are not passes. Report which capabilities were unavailable and ret
 
 ## Samples and package layouts
 
-Support the active layout instead of assuming a single source directory:
+Demo content lives in `Assets/NeoxiderDemos/<name>/...`, outside the package.
 
-- Development: `Assets/Neoxider/Samples/...`.
-- Release package: `Assets/Neoxider/Samples~/...`, or the corresponding hidden `Samples~` directory inside the installed UPM package.
-- Imported sample: `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`, such as `Assets/Samples/NeoxiderTools/12.0.0/Demo Scenes/...`.
-
-Use the resolved package root for package prefabs and source checks; an installed package can live under `Packages/com.neoxider.tools`. Resolve imported sample versions explicitly and avoid selecting an arbitrary stale version. A hidden `Samples~` directory is not an AssetDatabase folder: validate its files as packaging data, then run imported sample integration checks in a Unity project. Report zero discovered assets as absent coverage or an explicit unsupported capability, rather than silently passing an empty loop.
+Use the resolved package root for package prefabs and source checks; an installed package can live under `Packages/com.neoxider.tools`. Report zero discovered assets as absent coverage or an explicit unsupported capability, rather than silently passing an empty loop.
 
 When validating scene hierarchies, check every descendant, including inactive children. A missing component on a child must fail just as it would on a root object.
 

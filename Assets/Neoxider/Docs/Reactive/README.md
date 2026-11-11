@@ -10,7 +10,7 @@ Inspector-friendly wrappers for `float`, `int`, and `bool`, plus code-first gene
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/NoCodeBindingDemo.jpg" alt="NoCodeBindingDemo: a reactive counter driving bindings in Reactive, Poll and Once modes" width="100%" /></p>
 
-*Demo scene: `Scenes/NoCode/NoCodeBindingDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/NoCode/NoCodeBindingDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** [ReactiveProperty](ReactiveProperty.md) — API, subscription lifetime, notification and allocation rules.

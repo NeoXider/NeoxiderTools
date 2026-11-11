@@ -1,6 +1,6 @@
 # PageId
 
-**What it is:** a `ScriptableObject` page identifier — lets you select pages without maintaining a hand-written enum. Path: `Samples~/NeoxiderPages/Runtime/Scripts/Page/PageId.cs`, namespace `Neo.Pages`. Asset creation: menu **Create → Neoxider → Pages → Page Id**.
+**What it is:** a `ScriptableObject` page identifier — lets you select pages without maintaining a hand-written enum. Path: `Assets/NeoxiderDemos/NeoxiderPages/Runtime/Scripts/Page/PageId.cs`, namespace `Neo.Pages`. Asset creation: menu **Create → Neoxider → Pages → Page Id**.
 
 **How to use:**
 1. Create one `PageId` asset per screen, named with the recommended `Page` prefix (e.g. `PageMenu`, `PageShop`, `PageSettings`). **Neoxider > Samples > Generate Default PageIds** creates the usual set (`PageMenu`, `PageGame`, `PagePause`, `PageSettings`, `PageShop`, `PageWin`, `PageLose`, `PageEnd`) in one step; the `UIPage` inspector's **Generate & Assign** creates a single one.

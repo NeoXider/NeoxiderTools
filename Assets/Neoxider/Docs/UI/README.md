@@ -12,7 +12,7 @@ workflow.
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UIComponentsDemo.jpg" alt="UIComponentsDemo: CategoryBar, VariantView, AnchorMove, FakeLoad, ButtonShake and PausePage" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AnimationFlyDemo.jpg" alt="AnimationFlyDemo: rewards flying from world, canvas and screen origins" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/UIMeshRigDemo.jpg" alt="UIMeshRigDemo: one rig through uGUI, UI Toolkit, MeshRenderer and SpriteRenderer" width="32%" /></p>
 
-*Demo scenes: `Scenes/UI/UIComponentsDemo.unity`, `Scenes/UI/AnimationFlyDemo.unity`, `UI Mesh Rig/UIMeshRigDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/UI/UIComponentsDemo.unity`, `Scenes/UI/AnimationFlyDemo.unity`, `UI Mesh Rig/UIMeshRigDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the tables below link every component page.

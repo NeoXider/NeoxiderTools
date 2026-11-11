@@ -11,7 +11,7 @@ colors, vectors and transform poses, with light and emission wrappers in [Tools/
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AnimatorsDemo.jpg" alt="AnimatorsDemo: Vector3, Color, Transform and Float animators with shared playback controls" width="100%" /></p>
 
-*Demo scene: `Scenes/Animations/AnimatorsDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `../../../NeoxiderDemos/Demo/Scenes/Animations/AnimatorsDemo.unity` (Demo download). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the component list below; start with [FloatAnimator](FloatAnimator.md),
@@ -48,11 +48,8 @@ colors, vectors and transform poses, with light and emission wrappers in [Tools/
 
 ### Demo
 
-Import the optional **Demo Scenes** sample through Unity Package Manager first. Its package source is
-`Assets/Neoxider/Samples~/Demo` in the release layout, or `Assets/Neoxider/Samples/Demo` during sample
-development. Unity imports it into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...`.
-
-Open `Scenes/Animations/AnimatorsDemo.unity` (in the editor also **Neoxider > Demo > Open Animators Demo**). The
+Import the optional Demo download first, then open `../../../NeoxiderDemos/Demo/Scenes/Animations/AnimatorsDemo.unity`
+(in the editor also **Neoxider > Demo > Open Animators Demo**). The
 whole demo is saved in the scene and visible without Play Mode; nothing is built at runtime:
 
 | Target | Animator | Binding (persistent UnityEvent, no code) |
@@ -66,7 +63,7 @@ The card's Play / Pause / Resume / Stop buttons, the shared `AnimationType` drop
 and the channel toggles call `AnimatorsDemoController`, which only forwards to the animators' public API
 (`Play`, `Pause`, `Resume`, `Stop`, `AnimationType`, `AnimationSpeed`, `TransformAnimator.Settings`) and logs
 each call. Type and speed apply to the three value animators; `TransformAnimator` has its own channel settings.
-The scene is authored by the editor builder `Samples~/Demo/Editor/Builders/Animations/AnimatorsDemoBuilder.cs`
+The scene is authored by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Animations/AnimatorsDemoBuilder.cs`
 (rebuild it with **Neoxider > Demo > Rebuild Active Demo Scene**).
 
 По-русски: откройте сцену `Scenes/Animations/AnimatorsDemo.unity`. Все четыре аниматора работают на настоящих

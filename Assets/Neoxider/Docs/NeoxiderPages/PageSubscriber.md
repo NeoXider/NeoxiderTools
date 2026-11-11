@@ -1,6 +1,6 @@
 # PageSubscriber (NeoxiderPages)
 
-**What it is:** listens to game-state events (Start/Restart/Win/Lose/End via `G`) and drives **PM** to open the matching page. It subscribes once both `GM` and `EM` exist and unsubscribes when destroyed, so reloading the scene does not leave listeners on a persistent `EM`. Script `Samples~/NeoxiderPages/Runtime/Scripts/Core/PageSubscriber.cs`, namespace `Neo.Pages`.
+**What it is:** listens to game-state events (Start/Restart/Win/Lose/End via `G`) and drives **PM** to open the matching page. It subscribes once both `GM` and `EM` exist and unsubscribes when destroyed, so reloading the scene does not leave listeners on a persistent `EM`. Script `Assets/NeoxiderDemos/NeoxiderPages/Runtime/Scripts/Core/PageSubscriber.cs`, namespace `Neo.Pages`.
 
 **How to use:**
 1. **Add Component → Neoxider → Pages → PageSubscriber** to any object in the UI scene.

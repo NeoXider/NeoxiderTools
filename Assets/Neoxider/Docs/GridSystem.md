@@ -43,9 +43,7 @@
 
 ## Samples
 
-The Demo sample ships hidden in `Samples~`; import it via Package Manager to get the scenes.
-
-Release/UPM path before packaging: `Assets/Neoxider/Samples~/Demo/`; during sample development: `Assets/Neoxider/Samples/Demo/`.
+Demo scenes are in the Demo download (`Assets/NeoxiderDemos/Demo`).
 
 GridSystem demo scenes live under `Scenes/GridSystem/`; setup/view scripts live under `Scripts/GridSystem/`.
 

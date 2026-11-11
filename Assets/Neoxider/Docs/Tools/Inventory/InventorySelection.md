@@ -75,12 +75,10 @@ Map an external string `DataID` to a stable, authored integer catalog id. Do not
 code owns catalog mapping, cloud synchronization and multi-container persistence boundaries; the library
 does not claim an atomic cloud transaction across separate keys.
 
-The sample `Demo/Scenes/Inventory/InventoryUseDemo.unity` demonstrates a four-slot temporary catch,
+The demo `Assets/NeoxiderDemos/Demo/Scenes/Inventory/InventoryUseDemo.unity` demonstrates a four-slot temporary catch,
 nine physical hotbar slots, a one-slot podium, two same-type unique specimens, and consumable healing
 cells. It keeps UID/level/mutation through deposit, placement and recall; full destinations reject without
 losing items. Select a slot with a button or 1–9, then press E / **Use selected**. **Reset demo** starts over.
-Sample source is under `Assets/Neoxider/Samples~` in release layout, `Assets/Neoxider/Samples` in developer
-layout, or `Assets/Samples/NeoxiderTools/<version>/Demo Scenes` after Package Manager import.
 
 ## По-русски
 

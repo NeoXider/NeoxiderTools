@@ -7,7 +7,7 @@
 2. Choose the **Action** and, for `OpenPage`, the **Target Page Id**.
 3. Optionally set **Execute State** to change the game state on click (for example `Restart`).
 
-Script: `Samples~/NeoxiderPages/Runtime/Scripts/Page/BtnChangePage.cs`, namespace `Neo.Pages`.
+Script: `Assets/NeoxiderDemos/NeoxiderPages/Runtime/Scripts/Page/BtnChangePage.cs`, namespace `Neo.Pages`.
 
 ---
 

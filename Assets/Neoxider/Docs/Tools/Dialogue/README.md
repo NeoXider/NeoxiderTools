@@ -5,7 +5,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/Dialogue.jpg" alt="Dialogue: DialogueController box and DialogueLinePlayer barks" width="100%" /></p>
 
-*Demo scene: `Scenes/Tools/Dialogue.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Tools/Dialogue.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** see [Component guides](#component-guides) below.
@@ -58,7 +58,7 @@ No UI is required for cursor navigation and events. Custom asmdefs must referenc
 
 ## Demo scene
 
-Import the **Demo Scenes** sample and open `<Demo sample>/Scenes/Tools/Dialogue.unity` (package source `Assets/Neoxider/Samples~/Demo/...`, `Assets/Neoxider/Samples/Demo/...` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...` after import). Everything is saved in the scene:
+Open `Assets/NeoxiderDemos/Demo/Scenes/Tools/Dialogue.unity` from the Demo download. Everything is saved in the scene:
 
 - **Dialogue box** - a `DialogueUI` (portrait, name plate, body) driven by the `DialogueComponent` object (`DialogueController`, typewriter, `autoStart`). Clicking the box or `Btn_Skip or next` calls `SkipOrNext`; `Btn_Restart` calls `RestartAll`.
 - **Live column** - `OnCharacterChange`, `OnSentenceEnd`, `OnTypewriterProgress` and `OnAllDialoguesEnd` update the labels and the typing bar through `DialogueDemoController`; the toggles and the speed slider change `useTypewriterEffect`, `autoNextSentence` and `Typewriter.CharactersPerSecond`.

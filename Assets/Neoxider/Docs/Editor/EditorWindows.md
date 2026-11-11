@@ -49,7 +49,7 @@ The generated assets directory also contains `LobbyGame.unity`, a minimal gamepl
 
 Editor C# can call the preserved `Neo.Editor.LobbyDemoSceneCreator.CreateLobbyDemoScene()` entry behind `UNITY_EDITOR && MIRROR`; it opens the same save dialogs. Runtime C# can assign `NeoLobbyPresenter.Manager`, call `SetAddress(string)`, `HostLobby()`, `JoinLobby()`, `ToggleReady()` and `LeaveLobby()` directly. Inspector button wiring is optional convenience over these typed APIs.
 
-This command writes to the chosen project path, not the package sample folders. Developer `Assets/Neoxider/Samples`, release `Assets/Neoxider/Samples~`, and imported `Assets/Samples/NeoxiderTools/<version>/<sample name>` layouts remain unchanged.
+This command writes to the chosen project path, not to the package or `Assets/NeoxiderDemos`.
 
 Since 11.0, cancelling leaves the open scenes untouched; choose a new `.unity` path inside Assets - existing assets are never overwritten. Both scenes are created from the persistent Editor template without saving unrelated untitled scenes. Prefab references and presenter events are saved into the assets. Before running, add both scenes to Build Profiles and check the Transport.
 

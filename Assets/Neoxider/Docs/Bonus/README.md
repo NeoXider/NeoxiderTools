@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SlotExample.jpg" alt="SlotExample: slot machine with bets, paylines and a paytable" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/BonusRewardsDemo.jpg" alt="BonusRewardsDemo: collection, reward chest and cooldown gifts without a demo script" width="32%" /> <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/WheelFortuneExample.jpg" alt="WheelFortuneExample: wheel of fortune paying prizes into a wallet" width="32%" /></p>
 
-*Demo scenes: `Scenes/Bonuses/SlotExample.unity`, `Scenes/Bonuses/BonusRewardsDemo.unity`, `Scenes/Bonuses/WheelFortuneExample.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scenes: `Scenes/Bonuses/SlotExample.unity`, `Scenes/Bonuses/BonusRewardsDemo.unity`, `Scenes/Bonuses/WheelFortuneExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the submodule table below; links point to the per-component documentation.

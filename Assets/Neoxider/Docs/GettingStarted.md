@@ -38,11 +38,11 @@ For recorded test environments, results and limits, see the [verification record
 2. Click **+** → **Add package from git URL…**
 3. Paste:
    ```
-   https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
+   https://github.com/NeoXider/NeoxiderTools.git#upm
    ```
 4. Click **Add** and wait for the import to finish.
 
-The Git URL follows the remote default branch; append a release tag such as `#v11.0.1` to pin a version. For local development, use the local route below.
+The `upm` branch holds only the package, so Unity downloads a few megabytes instead of the whole repository (the older `?path=Assets/Neoxider` URL still works but fetches every file of the repository). To pin a version, replace `upm` with the commit listed in the release notes. For local development, use the local route below.
 
 ### Option B — Local path (for development)
 
@@ -114,27 +114,21 @@ The two `Max*Amount` values are per-operation limits; `-1` removes the limit. Ke
 
 ---
 
-## Importing Samples
+## Demo scenes
 
-Samples are not copied automatically after installation. To import them:
+Demos are not part of the package. Download the ones you want from the [releases page](https://github.com/NeoXider/NeoxiderTools/releases) and import them after the package (**Assets → Import Package → Custom Package…**):
 
-1. Open **Window → Package Manager**, find **NeoxiderTools**.
-2. Go to the **Samples** tab.
-3. Click **Import** next to the sample you want:
+| Download | What it contains |
+|----------|-----------------|
+| `NeoxiderTools.Demo.v<ver>.unitypackage` | A demo scene per module (`AM`, `GridSystem`, `Shop`, `NoCode`, `Condition`, `StateMachine`, `Abilities`, and more), example games and `SurvivorDemo` |
+| `NeoxiderPages.v<ver>.unitypackage` | Optional UI page-navigation module (`PM`, `UIPage`, `BtnChangePage`) |
+| `NeoxiderTools.CharacterMovementDemo.v<ver>.unitypackage` | Character-controller demos for slopes, stairs, moving platforms, gravity, and a top-down arena |
 
-| Sample | What it contains |
-|--------|-----------------|
-| **Demo Scenes** | A demo scene per module (`AM`, `GridSystem`, `Shop`, `NoCode`, `Condition`, `StateMachine`, `Abilities`, and more), example games and `SurvivorDemo` |
-| **NeoxiderPages** | Optional UI page-navigation module (`PM`, `UIPage`, `BtnChangePage`) |
-| **Character Movement Fundamentals** | Character-controller demos for slopes, stairs, moving platforms, gravity, and a top-down arena |
-
-After import, files appear in `Assets/Samples/NeoxiderTools/<version>/<sample name>/`. For example, the audio scene is `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/Scenes/Audio/AudioDemo.unity`.
+They import into `Assets/NeoxiderDemos/<name>/`. For example, the audio scene is `Assets/NeoxiderDemos/Demo/Scenes/Audio/AudioDemo.unity`.
 
 Each demo scene is saved with its UI, configured components and UnityEvent wiring. Open it, select a button and look at its **On Click** list to see which module API it calls, then press Play. The collapsible info card in the scene names the components to inspect and the equivalent C# calls. If you change a demo scene and want it back, use **Neoxider > Demo > Rebuild Active Demo Scene** ([how demo scenes are made](./Samples.md#how-demo-scenes-are-made)).
 
-The release sources live in `Assets/Neoxider/Samples~/`; this hidden folder is not the imported project copy. During sample development, `Assets/Neoxider/Samples/` is the alternative active source root. See [Sample scenes](./Samples.md) for the layout and scene index.
-
-Imported copies from earlier versions remain separate and are not updated by a package upgrade. Re-import the samples you use; see [Upgrading to 12](./Migration12.md#samples-and-demo-scenes).
+Samples imported from 12.1 and earlier stay in `Assets/Samples/NeoxiderTools/<version>/`. Delete that copy before importing a demo download: both carry the same asset GUIDs. See [Demo scenes](./Samples.md) for the scene index.
 
 ---
 

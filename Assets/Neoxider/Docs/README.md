@@ -4,7 +4,7 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/docs.jpg" alt="Concept art: the NeoxiderTools documentation hub" width="100%" /></p>
 <!-- docs-banner:end -->
 
-**What it is:** the documentation entry point for **NeoxiderTools** `v12.1.0`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
+**What it is:** the documentation entry point for **NeoxiderTools** `v12.2.0`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
 
 **Contents:** [starting points](#choose-your-starting-point), [existing building blocks](#do-not-rebuild-first), [module index](#modules), [samples](#samples-and-add-ons) and [guides](#guides).
 
@@ -31,7 +31,7 @@ Use each module's README as its canonical entry. It links to the runtime API and
 
 The HTML/CSS → UI Toolkit converter (HtmlToUitk) is now the separate package `com.neoxider.htmltouitk`
 ([HtmlToUitk](https://github.com/NeoXider/HtmlToUitk)); see [Upgrading to 12](./Migration12.md#htmltouitk-moved-to-its-own-package).
-Legacy delivery is choose-one Core or Complete; [Samples](./Samples.md#legacy-release-archives-choose-one)
+Legacy delivery is choose-one Core or Complete; [Samples](./Samples.md#release-archives)
 explains the layouts. Final archive import status is in [Verification 11](../Verification11.md).
 
 ## Namespace policy

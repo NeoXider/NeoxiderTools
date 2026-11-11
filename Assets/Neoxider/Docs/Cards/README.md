@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/CardGame.jpg" alt="CardGame: the Drunkard card game built from deck, hand and board components" width="100%" /></p>
 
-*Demo scene: `Scenes/_ExampleGame/CardGame.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/_ExampleGame/CardGame.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -131,7 +131,7 @@ Use `CanAdd(...)` or `TryAdd(...)` for player-facing flows where overflow should
 
 ## Demo scene
 
-`Samples~/Demo/Scenes/_ExampleGame/CardGame.unity` (`Samples/...` in the development layout, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...` after a Package Manager import) is a complete Drunkard game assembled in the scene. `CardManager` (`DrunkardGame`), `DECK` (`DeckComponent`), `Hand Player` / `Hand Bot` (`HandComponent`) and `Board` (`BoardComponent`) sit on the NeoxiderPages `PM` pages and talk through UnityEvents: a pile click calls `DrunkardGame.Play`, `HandComponent.OnCardCountChanged` feeds the `SetText` score labels, and the win/lose events call `GM`.
+`Assets/NeoxiderDemos/Demo/Scenes/_ExampleGame/CardGame.unity` (Demo download) is a complete Drunkard game assembled in the scene. `CardManager` (`DrunkardGame`), `DECK` (`DeckComponent`), `Hand Player` / `Hand Bot` (`HandComponent`) and `Board` (`BoardComponent`) sit on the NeoxiderPages `PM` pages and talk through UnityEvents: a pile click calls `DrunkardGame.Play`, `HandComponent.OnCardCountChanged` feeds the `SetText` score labels, and the win/lose events call `GM`.
 
 The `[Demo] Guide` overlay is saved in the scene (no runtime bootstrap). The editor builder `CardGameBuilder` in the sample's `Editor/Builders/Cards` folder authors it; **Neoxider/Demo/Rebuild Active Demo Scene** rebuilds it without touching the game objects.
 

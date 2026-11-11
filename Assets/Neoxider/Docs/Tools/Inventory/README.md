@@ -11,7 +11,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/InventoryUseDemo.jpg" alt="InventoryUseDemo: slot grid, hand selection and a use action" width="100%" /></p>
 
-*Demo scene: `Scenes/Inventory/InventoryUseDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Inventory/InventoryUseDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** see [Documentation](#documentation) below.
@@ -58,7 +58,7 @@ See [core contracts](InternalTypes.md) and [InventoryComponent](InventoryCompone
 
 ## Playable example and collection games
 
-Open `Demo/Scenes/Inventory/InventoryUseDemo.unity` from the **Demo Scenes** sample. Deposit the catch,
+Open `Demo/Scenes/Inventory/InventoryUseDemo.unity` from the Demo download (`Assets/NeoxiderDemos/Demo`). Deposit the catch,
 select a PET, place/recall it with its UID and state, then select CELL and use it to restore HP.
 The screen explains each step, shows the selected item and remaining quantity, and provides Reset.
 It demonstrates independent temporary carry, nine-slot hotbar and podium inventories. See
@@ -85,8 +85,7 @@ C# equivalents: `InventoryComponent.AddItemInstance` / `TryCaptureSelection`,
 ряды слотов — это `InventorySlotGridView` с ручными ячейками, счётчики — `InventoryTotalCountText` и
 `InventoryItemCountText`, а `InventoryHand.OnUseSelectionRequested` → `InventoryUseAction.UseSelection`
 видно в инспекторе без запуска Play Mode.
-Исходники сэмпла: `Assets/Neoxider/Samples~` (release), `Assets/Neoxider/Samples` (разработка); после
-UPM-импорта — `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`.
+Демо: `Assets/NeoxiderDemos/Demo`, отдельная загрузка `NeoxiderTools.Demo`.
 
 Successful slot moves, swaps, and payload replacements notify UI and auto-save even when item counts
 stay equal. Item delta events only describe actual count changes. Auto-save writes JSON to the current

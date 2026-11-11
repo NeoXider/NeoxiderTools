@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/StateMachineDemo.jpg" alt="StateMachineDemo: a C# state machine agent next to a NoCode guard" width="100%" /></p>
 
-*Demo scene: `Scenes/StateMachine/StateMachineDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/StateMachine/StateMachineDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** [current architecture](#current-architecture), [scene wrapper API](#scene-wrapper-api),
@@ -19,7 +19,7 @@
 
 ---
 
-Demo in the current release layout: `Samples~/Demo/Scenes/StateMachine/StateMachineDemo.unity`, controller `Samples~/Demo/Scripts/Shell/StateMachineDemoController.cs`. During sample development, these paths use `Samples/` instead of `Samples~/`. Package Manager imports Demo Scenes into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/` in the consuming project. The scene is authored in the Editor by `StateMachineDemoBuilder` (`Samples~/Demo/Editor/Builders/StateMachine/`) and saved with its UI; nothing is built at runtime. The **Agent** shows the C# path (`StateMachine<IState>` driven by `StateMachineDemoController`); the **Guard** shows the NoCode path: a `StateMachineBehaviourBase` playing `Data/StateMachine/Guard StateMachine.asset` (Sleep / Alert), where Sleep → Alert reads the Noise toggle through a `ConditionEntryPredicate` in context slot Override1 and Alert → Sleep also needs 1.5 s in Alert (`StateDurationPredicate`).
+Demo (Demo download): `Assets/NeoxiderDemos/Demo/Scenes/StateMachine/StateMachineDemo.unity`, controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/StateMachineDemoController.cs`. The scene is authored in the Editor by `StateMachineDemoBuilder` (`Assets/NeoxiderDemos/Demo/Editor/Builders/StateMachine/`) and saved with its UI; nothing is built at runtime. The **Agent** shows the C# path (`StateMachine<IState>` driven by `StateMachineDemoController`); the **Guard** shows the NoCode path: a `StateMachineBehaviourBase` playing `Data/StateMachine/Guard StateMachine.asset` (Sleep / Alert), where Sleep → Alert reads the Noise toggle through a `ConditionEntryPredicate` in context slot Override1 and Alert → Sleep also needs 1.5 s in Alert (`StateDurationPredicate`).
 
 ## Current Architecture
 

@@ -1,6 +1,6 @@
 ﻿# UIPage
 
-**What it is:** UI page component for `PM` (Page Manager). Stores `PageId`, popup mode, and compatibility settings for open/close behavior. Script `Samples~/NeoxiderPages/Runtime/Scripts/Page/UIPage.cs`, namespace `Neo.Pages`.
+**What it is:** UI page component for `PM` (Page Manager). Stores `PageId`, popup mode, and compatibility settings for open/close behavior. Script `Assets/NeoxiderDemos/NeoxiderPages/Runtime/Scripts/Page/UIPage.cs`, namespace `Neo.Pages`.
 
 **How to use:**
 

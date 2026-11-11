@@ -5,7 +5,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AttributeExample.jpg" alt="AttributeExample: [FindInScene], [GetComponent], [RequireInterface] and [Button]" width="100%" /></p>
 
-*Demo scene: `Scenes/Tools/AttributeExample.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Tools/AttributeExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the attribute table below, the [Inspector workflow](#scene-and-inspector-workflow) and the
@@ -41,7 +41,7 @@ The global namespaces of existing injection attributes are retained for compatib
 
 A field that cannot be resolved (no scene candidate, no Resources asset, a non-component element type) logs its warning once per object and field, not on every repaint. The inspector does not repeat a lookup that found nothing on every IMGUI event either: it searches again after a hierarchy or project change, and at most every 0.5 s otherwise.
 
-The demo scene `Samples~/Demo/Scenes/Tools/AttributeExample.unity` (`Samples/...` during sample development) shows every attribute on one component; see [Editor - Demo scene](../Editor/README.md#demo-scene).
+The demo scene `Assets/NeoxiderDemos/Demo/Scenes/Tools/AttributeExample.unity` shows every attribute on one component; see [Editor - Demo scene](../Editor/README.md#demo-scene).
 
 For a missing single-reference `[FindInScene]` field, scene lookup checks every stacked `[RequireInterface]` before assignment. Existing nonempty references are retained by automatic lookup; no compatible candidate leaves the field unassigned with a bounded diagnostic. See the [scene-search contract](FindInSceneAttribute.md) for GameObject/Component semantics and search ordering.
 

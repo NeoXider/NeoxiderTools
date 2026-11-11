@@ -9,7 +9,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/SaveDemo.jpg" alt="SaveDemo: SaveField values, a 64-bit wallet and file save state" width="100%" /></p>
 
-*Demo scene: `Scenes/Save/SaveDemo.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Save/SaveDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -31,7 +31,7 @@
 
 ---
 
-Demo: `Assets/Neoxider/Samples~/Demo/Scenes/Save/SaveDemo.unity`, authored by the editor builder `Demo/Editor/Builders/Save/SaveDemoBuilder.cs` (rebuild with **Neoxider/Demo/Rebuild Active Demo Scene**), controller `Demo/Scripts/Shell/SaveDemoController.cs`. Everything is saved in the scene, so the wiring is visible without Play Mode: `Save Demo` holds `SaveManager` and a `SaveProviderSettingsComponent` that selects `Demo/Data/Save/SaveDemoProviderSettings.asset` (File provider, `neo_save_demo.json`; the demo never touches your PlayerPrefs). The card shows both save layers: `[SaveField]` values through `SaveManager.Save(this)` / `Load(this)` and a 64-bit wallet through `SaveProvider.SetLong` / `GetLong` above `int.MaxValue`. The status rows read `FileSaveProvider.HasUnsavedChanges` and count `SaveProvider.OnDataSaved` events against real file writes: press **Save** twice and the second save raises the event without rewriting the file. **FlushNow (NoCode)** calls `SaveManager.FlushNow()` through a persistent UnityEvent. The release layout uses `Samples~`; active sample development uses `Assets/Neoxider/Samples`. Package Manager imports the sample into `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`.
+Demo: `Assets/NeoxiderDemos/Demo/Scenes/Save/SaveDemo.unity`, authored by the editor builder `Demo/Editor/Builders/Save/SaveDemoBuilder.cs` (rebuild with **Neoxider/Demo/Rebuild Active Demo Scene**), controller `Demo/Scripts/Shell/SaveDemoController.cs`. Everything is saved in the scene, so the wiring is visible without Play Mode: `Save Demo` holds `SaveManager` and a `SaveProviderSettingsComponent` that selects `Demo/Data/Save/SaveDemoProviderSettings.asset` (File provider, `neo_save_demo.json`; the demo never touches your PlayerPrefs). The card shows both save layers: `[SaveField]` values through `SaveManager.Save(this)` / `Load(this)` and a 64-bit wallet through `SaveProvider.SetLong` / `GetLong` above `int.MaxValue`. The status rows read `FileSaveProvider.HasUnsavedChanges` and count `SaveProvider.OnDataSaved` events against real file writes: press **Save** twice and the second save raises the event without rewriting the file. **FlushNow (NoCode)** calls `SaveManager.FlushNow()` through a persistent UnityEvent. It is part of the Demo download.
 
 ## Main workflows
 

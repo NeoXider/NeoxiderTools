@@ -9,9 +9,7 @@
 
 ## Demo scene
 
-`Scenes/Tools/CameraConstraint.unity` in the Demo sample (`Assets/Neoxider/Samples~/Demo` in the package,
-`Assets/Neoxider/Samples/Demo` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`
-after importing the sample). Everything is saved in the scene:
+`Scenes/Tools/CameraConstraint.unity` in the Demo download (`Assets/NeoxiderDemos/Demo`). Everything is saved in the scene:
 
 | Object | What to look at |
 |--------|-----------------|

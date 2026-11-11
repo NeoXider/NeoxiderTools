@@ -7,7 +7,7 @@
 2. Put every page under it as a child with a [UIPage](./UIPage.md) and a [PageId](./PageId.md) asset.
 3. Open pages with `ChangePage(pageId)` from code or with [BtnChangePage](./BtnChangePage.md) buttons.
 
-Script: `Samples~/NeoxiderPages/Runtime/Scripts/Page/PM.cs`, namespace `Neo.Pages`.
+Script: `Assets/NeoxiderDemos/NeoxiderPages/Runtime/Scripts/Page/PM.cs`, namespace `Neo.Pages`.
 
 ---
 

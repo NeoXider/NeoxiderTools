@@ -5,7 +5,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/ChanceSystemExample.jpg" alt="ChanceSystemExample: ChanceSystemBehaviour, ChanceManager and IntegerChanceTable odds" width="100%" /></p>
 
-*Demo scene: `Scenes/Tools/ChanceSystemExample.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Tools/ChanceSystemExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** see [Component documentation](#component-documentation) below.
@@ -47,7 +47,7 @@ Create reusable configurations with **Assets > Create > Neoxider > Tools > Rando
 
 ## Demo scene
 
-Import the **Demo Scenes** sample and open `<Demo sample>/Scenes/Tools/ChanceSystemExample.unity` (package source `Assets/Neoxider/Samples~/Demo/...`, `Assets/Neoxider/Samples/Demo/...` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/...` after import). The whole scene is saved, so the wiring is visible in the Inspector without Play Mode:
+Open `Assets/NeoxiderDemos/Demo/Scenes/Tools/ChanceSystemExample.unity` from the Demo download. The whole scene is saved, so the wiring is visible in the Inspector without Play Mode:
 
 - **NoCode column** - the `Chance` object (`ChanceSystemBehaviour`) owns the table. `Btn_Roll` calls `GenerateVoid` and `Counter.Add(1)`; `Events By Index[i]` lights the rarity tile and writes *Last drop* through `SetText`; `OnIdGenerated` clears the highlight, writes *Index* and calls `ChanceDemoController.RecordRoll`.
 - **C# column** - *Sample 100 / 1,000* runs `ChanceManager.TryEvaluate` in a loop (no events), and the bars converge on the white expected markers; *Draw 10,000 / 100,000* rolls an `IntegerChanceTable` with exact `1 in 1,000,000` jackpot odds.

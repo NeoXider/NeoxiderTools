@@ -5,7 +5,7 @@
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/ShowcaseScene.jpg" alt="Character Movement Fundamentals showcase: slopes, stairs, platforms and gravity zones" width="100%" /></p>
 
-*Demo scene: `Example Scenes/Showcase/ShowcaseScene.unity`, in the **Character Movement Fundamentals** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Example Scenes/Showcase/ShowcaseScene.unity`, in the **Character Movement Fundamentals** sample (separate Demo download, `Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:**
@@ -123,7 +123,7 @@ Do **not** use CMF's own `MouseCursorLock` from the sample together with `Cursor
 
 The controller itself needs nothing from the sample — the motor lives in `ThirdParty/CharacterMovementFundamentals/` and the art the presets use is in `ThirdParty/CharacterMovementFundamentals/Art/`; both ship with the package.
 
-`Samples~/CharacterMovementFundamentals/` is **demo content only**: the upstream example scenes (showcase, top-down, gravity tunnel, planet walker, click-to-move), the environment art they build on, CMF's own controller prefabs and its showcase-only scripts. Import it from **Package Manager → NeoxiderTools → Samples → Character Movement Fundamentals** when you want to walk the showcase level.
+`Assets/NeoxiderDemos/CharacterMovementFundamentals/` is **demo content only**: the upstream example scenes (showcase, top-down, gravity tunnel, planet walker, click-to-move), the environment art they build on, CMF's own controller prefabs and its showcase-only scripts. It ships as the separate `NeoxiderTools.CharacterMovementDemo` download; import it when you want to walk the showcase level.
 
 In this repository it is already imported at `Assets/Samples/CharacterMovementFundamentals/`, and `Assets/Scenes/CMF Showcase.unity` is a copy of its main showcase scene (slopes, stairs, moving platforms, gravity rooms) kept handy as a physics test polygon.
 

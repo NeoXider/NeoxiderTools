@@ -10,7 +10,7 @@ modular RPG combat brain. Scripts are in `Scripts/NPC/` (`Neo.NPC`, `Neo.NPC.Nav
 <!-- demo-shots:begin -->
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/demos/AiMoveExample.jpg" alt="AiMoveExample: chaser, guard, patroller and sentry NPCs on a NavMesh" width="100%" /></p>
 
-*Demo scene: `Scenes/Ai/AiMoveExample.unity`, in the **Demo Scenes** sample (Package Manager > NeoxiderTools > Samples). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
+*Demo scene: `Scenes/Ai/AiMoveExample.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
 **Contents:** the per-component table below.
@@ -83,7 +83,7 @@ The RPG combat stack above is maintained for existing projects. New combat syste
 
 ## Demo scene
 
-`Samples~/Demo/Scenes/Ai/AiMoveExample.unity` (`Samples/...` while the samples are unpacked for development) shows
+`Assets/NeoxiderDemos/Demo/Scenes/Ai/AiMoveExample.unity` shows
 four NPCs on a baked NavMesh, each driven by one `NpcNavigation`:
 
 | Object | Mode | What to look at |
@@ -95,7 +95,7 @@ four NPCs on a baked NavMesh, each driven by one `NpcNavigation`:
 
 Everything, including the control card, the event wiring and the info card, is saved in the scene and visible in the
 Inspector without entering Play Mode. The scene is authored by the editor builder
-`Samples~/Demo/Editor/Builders/NPC/AiMoveExampleBuilder.cs` (menu **Neoxider/Demo/Rebuild Active Demo Scene**); it also
+`Assets/NeoxiderDemos/Demo/Editor/Builders/NPC/AiMoveExampleBuilder.cs` (menu **Neoxider/Demo/Rebuild Active Demo Scene**); it also
 migrated the two original agents from the deprecated `AiNavigation` to `NpcNavigation`.
 
 ## See also

@@ -2,7 +2,7 @@
 
 **What it is:** the reactive layer of `Neo.Abilities` added in 12.1: damage pre-hooks with a mutable damage context, modifier triggers (hit landed, health threshold, every Nth event, state enter / exit, animation moments, applied / removed, charges, internal cooldowns, priorities), payload ops (projectile, area apply, zone, cast ability), domain zones for auras and formations, ready templates, a content validator and a runtime trace that answers "why did this fire". Everything is data on `ModifierBlueprint` / `EffectNodeData`, so it works from assets, from code and over the network the same way.
 
-**How to use:** author reactions on a [ModifierDefinition](./ModifierDefinition.md) (**Event Reactions** list) and effect nodes on an [AbilityDefinition](./AbilityDefinition.md); or start from a template in the [Ability Designer](./AbilityDesignerWindow.md) (**+ Template**) or from code (`AbilityTemplates`). Open the demo `Scenes/Abilities/AbilitiesTriggersDemo.unity` (Demo Scenes sample) for a guided tour.
+**How to use:** author reactions on a [ModifierDefinition](./ModifierDefinition.md) (**Event Reactions** list) and effect nodes on an [AbilityDefinition](./AbilityDefinition.md); or start from a template in the [Ability Designer](./AbilityDesignerWindow.md) (**+ Template**) or from code (`AbilityTemplates`). Open the demo `Assets/NeoxiderDemos/Demo/Scenes/Abilities/AbilitiesTriggersDemo.unity` (Demo download) for a guided tour.
 
 - Namespace: `Neo.Abilities`
 - Sources: `Assets/Neoxider/Scripts/Abilities/Domain` (`Combat/DamagePipeline.cs`, `AbilitySystem.Triggers.cs`, `AbilitySystem.Zones.cs`, `Effects/Ops/*`, `Templates/AbilityTemplates.cs`, `Validation/AbilityContentValidator.cs`, `Diagnostics/AbilityTrace.cs`)
@@ -10,7 +10,7 @@
 
 ## Demo scene
 
-`Scenes/Abilities/AbilitiesTriggersDemo.unity` (Demo Scenes sample; developer layout `Assets/Neoxider/Samples/Demo`, release source `Assets/Neoxider/Samples~/Demo`, imported copies under `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`) is a six-lesson tutorial on a 2D arena: a Hero, a Golem with thorns and an Imp.
+`Assets/NeoxiderDemos/Demo/Scenes/Abilities/AbilitiesTriggersDemo.unity` (Demo download) is a six-lesson tutorial on a 2D arena: a Hero, a Golem with thorns and an Imp.
 
 | Lesson | Button | What happens | Built from |
 |--------|--------|--------------|------------|
@@ -195,7 +195,7 @@ Units whose modifiers react to `take_damage` pay for the trigger bookkeeping (ch
 
 Новые операции: `projectile` (снаряд с полезной нагрузкой — эффектами попадания другой способности), `area_apply` (модификатор и нагрузка по области или конусу), `zone` (зона: аура за кастером или формация в точке, импульс при появлении и далее с интервалом, время жизни, визуал через `AbilityZoneView`), `cast_ability` (каст выданной способности через обычный конвейер). Селектор `ConeFromCaster`, `AmountPerStack` для урона за стак, политики стаков `Unique`, `Prolong`, `IndependentCapped`. Готовые шаблоны (`AbilityTemplates` и кнопка **+ Template** в Ability Designer): автокаст техники, усилитель атак, автощит, метка на N ударов, стакающийся яд, шипы, аура, зона-формация. `AbilityContentValidator` проверяет данные, а журнал `system.Trace` объясняет, почему сработала реакция (`Explain`). Горячие пути не выделяют память; цифры производительности — в таблице выше.
 
-Демо-сцена `Scenes/Abilities/AbilitiesTriggersDemo.unity` — шесть уроков на 2D-арене (герой, голем с шипами, бес): удар и отражение, усилитель атак, метка на три удара, стакающийся яд, зона-формация и автощит ниже 40% HP. Панель внизу слева показывает `Trace.Explain` последней реакции, кнопка **Reset demo** возвращает исходное состояние. Сцену собирает `AbilitiesTriggersDemoBuilder`, вся связка сохранена в сцене и видна без Play Mode.
+Демо-сцена `Assets/NeoxiderDemos/Demo/Scenes/Abilities/AbilitiesTriggersDemo.unity` (отдельная загрузка) — шесть уроков на 2D-арене (герой, голем с шипами, бес): удар и отражение, усилитель атак, метка на три удара, стакающийся яд, зона-формация и автощит ниже 40% HP. Панель внизу слева показывает `Trace.Explain` последней реакции, кнопка **Reset demo** возвращает исходное состояние. Сцену собирает `AbilitiesTriggersDemoBuilder`, вся связка сохранена в сцене и видна без Play Mode.
 
 Помощники: **Innate Modifiers** в `UnitTemplate` (пассивки вроде шипов и автощита накладываются при регистрации, кастер — сам юнит), **Plane** у `AbilityZoneView` (`GroundXZ` для 3D-пола, `ScreenXY` для 2D-спрайта), `DamageService.RemainingShield(instance)` для полоски щита и `Trace.Explain(sequence, maxDepth, unitName)` с именами юнитов вместо `Unit(id)`.
 

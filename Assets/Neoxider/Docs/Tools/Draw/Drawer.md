@@ -11,9 +11,7 @@
 
 ## Demo scene
 
-`Scenes/Tools/DrawExample.unity` in the Demo sample (`Assets/Neoxider/Samples~/Demo` in the package,
-`Assets/Neoxider/Samples/Demo` while samples are being developed, `Assets/Samples/NeoxiderTools/<version>/Demo Scenes`
-after importing the sample): draw lines with the mouse and catch the balls that `SimpleSpawner` drops. Everything is
+`Scenes/Tools/DrawExample.unity` in the Demo download (`Assets/NeoxiderDemos/Demo`): draw lines with the mouse and catch the balls that `SimpleSpawner` drops. Everything is
 saved in the scene:
 
 | Object | What to look at |
