@@ -52,6 +52,7 @@ Working documents for package developers and agents. They are not shipped in the
 - [Ideas](IDEAS.md) — ideas that may become tasks later.
 - [Demo scenes](DemoScenes.md) — demo scenes are saved assets; scene builders are one-off tools and are never committed.
 - [Documentation style](DocumentationStyle.md) and the [component page template](TEMPLATE.md).
+- Module art: the docs link the 1280×720 `Images/modules/*.jpg`; `Images/modules/source/` keeps the full-size PNG originals for new crops and sizes. `Images/` is outside the package, so neither the `upm` branch nor the release archives carry it.
 - [Summary](summary.md) — compact navigation for agents.
 - [Abilities architecture](ABILITIES_ARCHITECTURE.md), [Dota ability architecture reference](DOTA_ABILITY_ARCHITECTURE.md), [Abilities atom gap analysis](ABILITIES_ATOMS_GAP.md) — design references for `Neo.Abilities`.
 - [NeoCondition editor roadmap](NeoCondition_Editor_Roadmap.md) — planned editor and data-model steps for `NeoCondition`; design notes, not shipped API.
