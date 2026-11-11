@@ -139,6 +139,32 @@ namespace Neo.Editor.Tests.Abilities
         }
 
         [Test]
+        public void HomingProjectile_WhoseTargetIsGoneAtLaunch_FliesAlongTheLaunchDirectionIn2D()
+        {
+            using (AbilitySceneRig rig = new AbilitySceneRig())
+            {
+                AbilityUnitBehaviour owner = rig.AddUnit("Owner", 1, Vector3.zero);
+                AbilityProjectileBehaviour projectile = rig.Own(new GameObject("Bolt"))
+                    .AddComponent<AbilityProjectileBehaviour>();
+                projectile.Plane = AbilityZonePlane.ScreenXY;
+                // WHY: the target another weapon killed in the same frame no longer resolves to a position.
+                UnitId gone = new UnitId(987654u);
+                projectile.OnSpawned(new SpawnRequest("bolt", owner.UnitId, Vector3.zero, Vector3.up * 4f, gone,
+                    "bolt", 10f), rig.Hub);
+
+                AbilitySceneRig.CallPrivate(projectile, "Update");
+
+                Vector3 position = projectile.transform.position;
+                Assert.That(projectile.IsFlying, Is.True);
+                Assert.That(position.z, Is.EqualTo(0f).Within(0.0001f), "A 2D projectile never leaves its plane.");
+                Assert.That(position.x, Is.EqualTo(0f).Within(0.0001f));
+                Assert.That(position.y, Is.GreaterThanOrEqualTo(0f));
+                Assert.That(projectile.transform.rotation.eulerAngles.z, Is.EqualTo(90f).Within(0.01f),
+                    "It faces and follows the launch direction instead of hanging in place.");
+            }
+        }
+
+        [Test]
         public void SecondChainNode_SwitchedOnByChanceByLevel_AddsABoltAtTheNearestFoeFromThatLevel()
         {
             using (AbilitySceneRig rig = new AbilitySceneRig())

@@ -29,7 +29,7 @@ manually truncating the 32-bit hash.
 | Input System | `1.20.1` | Runtime package; Unity minimum `6000.0` |
 | uGUI / TextMeshPro | `2.0.0` minimum | Runtime package; newer editor-bundled versions follow the Unity SDK |
 | UniTask | `2.5.11` | Bundled development-project vendor; install separately in a consumer |
-| Mirror | `96.11.3` | Optional networking vendor in the development project |
+| Mirror | `96.11.4` | Optional networking vendor in the development project |
 | MCP for Unity | `10.3.0` | Optional Unity editor package and matching Python server |
 | Burst | `1.8.31` | Development project; the editor may resolve its bundled compatible version |
 | Asset Manager | `1.12.0` | Development editor tooling |
@@ -47,7 +47,7 @@ Test Framework and other editor-bundled packages compatible with the chosen Unit
 
 Official sources: [Unity package registry](https://packages.unity.com),
 [UniTask release](https://github.com/Cysharp/UniTask/releases/tag/2.5.11),
-[Mirror release](https://github.com/MirrorNetworking/Mirror/releases/tag/v96.11.3),
+[Mirror release](https://github.com/MirrorNetworking/Mirror/releases/tag/v96.11.4),
 [MCP release](https://github.com/CoplayDev/unity-mcp/releases/tag/v10.3.0).
 
 ## DOTween Core and Pro must be upgraded together

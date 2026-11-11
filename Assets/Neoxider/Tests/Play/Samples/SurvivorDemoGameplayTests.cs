@@ -32,6 +32,8 @@ namespace Neo.Tests.Play.Samples
         private const string FramesArgument = "-neoSurvivorFrames";
         private const string CardsArgument = "-neoSurvivorCards";
         private const string GrantArgument = "-neoSurvivorGrant";
+        private const int ProjectileSampleEvery = 5;
+        private const int HungAfterSamples = 3;
         private const int SimulatedFps = 30;
         private const int CaptureEvery = 1;
         private const int CaptureWidth = 1280;
@@ -199,6 +201,9 @@ namespace Neo.Tests.Play.Samples
                 int frames = 0;
                 int maxFrames = Mathf.CeilToInt((timer.duration + 20f) * SimulatedFps);
                 List<string> taken = new();
+                int hungProjectiles = 0;
+                Dictionary<AbilityProjectileBehaviour, Vector2> projectilePositions = new();
+                Dictionary<AbilityProjectileBehaviour, int> projectileStillSamples = new();
                 while (frames < maxFrames && !victory.activeSelf && !defeat.activeSelf)
                 {
                     if (upgrade.activeSelf)
@@ -225,6 +230,12 @@ namespace Neo.Tests.Play.Samples
                     if (frames % CaptureEvery == 0)
                     {
                         capture?.Shoot();
+                    }
+
+                    if (frames % ProjectileSampleEvery == 0 && !upgrade.activeSelf)
+                    {
+                        hungProjectiles = Mathf.Max(hungProjectiles,
+                            CountHungProjectiles(projectilePositions, projectileStillSamples));
                     }
 
                     if (frames % 15 == 0)
@@ -272,6 +283,7 @@ namespace Neo.Tests.Play.Samples
                 Assert.That(owned.Count, Is.GreaterThan(2), "several different weapons are in play: " + summary);
                 Assert.That(spitterSeen, Is.True, "the ranged enemy joins the waves: " + summary);
                 Assert.That(bossSeen, Is.True, "the boss arrives at two minutes: " + summary);
+                Assert.That(hungProjectiles, Is.Zero, "no flying projectile hangs in place: " + summary);
                 Assert.That(victory.activeSelf, Is.True, "the autopilot should survive the timer: " + summary);
             }
             finally
@@ -281,6 +293,43 @@ namespace Neo.Tests.Play.Samples
                 Time.captureFramerate = previousCapture;
                 Time.timeScale = 1f;
             }
+        }
+
+        /// <summary>Counts flying projectiles that have stayed in one place of the screen plane for half a second.</summary>
+        private static int CountHungProjectiles(Dictionary<AbilityProjectileBehaviour, Vector2> positions,
+            Dictionary<AbilityProjectileBehaviour, int> stillSamples)
+        {
+            int hung = 0;
+            foreach (AbilityProjectileBehaviour projectile in Object.FindObjectsByType<AbilityProjectileBehaviour>(
+                         FindObjectsSortMode.None))
+            {
+                if (!projectile.IsFlying || projectile.Motion != AbilityProjectileBehaviour.ProjectileMotion.Flight)
+                {
+                    positions.Remove(projectile);
+                    stillSamples.Remove(projectile);
+                    continue;
+                }
+
+                // WHY: the screen plane only; a 2D projectile that drifts along Z looks parked to the player.
+                Vector2 position = projectile.transform.position;
+                if (positions.TryGetValue(projectile, out Vector2 before) && (before - position).sqrMagnitude < 0.0001f)
+                {
+                    int samples = stillSamples.TryGetValue(projectile, out int counted) ? counted + 1 : 1;
+                    stillSamples[projectile] = samples;
+                    if (samples >= HungAfterSamples)
+                    {
+                        hung++;
+                    }
+                }
+                else
+                {
+                    stillSamples.Remove(projectile);
+                }
+
+                positions[projectile] = position;
+            }
+
+            return hung;
         }
 
         private static string Describe(UnityEventBase unityEvent)

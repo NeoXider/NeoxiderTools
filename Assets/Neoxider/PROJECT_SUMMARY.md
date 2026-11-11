@@ -9,7 +9,7 @@
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json` (`com.neoxider.tools`)
-- **Current version**: `12.5.0`
+- **Current version**: `12.5.1`
 - **Unity**: `6000.0+`
 - **Main namespace**: `Neo`
 - **Size**: 26 module areas plus 17 Tools submodules, compiled as 54 runtime and 6 editor assemblies
