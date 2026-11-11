@@ -1,0 +1,406 @@
+using System.Collections.Generic;
+using Neo.Editor.Binding;
+using Neo.NoCode;
+using UnityEditor;
+using UnityEngine;
+
+namespace Neo.Editor.NoCode
+{
+    /// <summary>
+    ///     Inspector UI aligned with <see cref="Neo.Editor.Condition.NeoConditionEditor"/> source search: Find By Name,
+    ///     Prefab Preview when the instance is missing in Edit Mode, then Component / Member pickers.
+    /// </summary>
+    [CustomPropertyDrawer(typeof(ComponentFloatBinding))]
+    public sealed class ComponentFloatBindingDrawer : PropertyDrawer
+    {
+        private static readonly GUIContent FindByNameContent = new("Find By Name",
+            "Find a GameObject by name in the scene (GameObject.Find). Cached while the object exists.");
+
+        private static readonly GUIContent ObjectNameContent =
+            new("Object Name", "GameObject name to resolve via GameObject.Find().");
+
+        private static readonly GUIContent WaitForObjectContent = new("Wait For Object",
+            "Wait until the object appears in the scene (no warning). Useful for prefabs spawned later.");
+
+        private static readonly GUIContent PrefabPreviewContent = new("Prefab Preview",
+            "Drag a prefab from Project to configure components/properties before the instance exists.");
+
+        private static readonly GUIContent FindRetryIntervalContent = new("Find Retry Interval (sec)",
+            "How often GameObject.Find runs again while the object is missing. Non-blocking. 0 = every check. Default 1 s.");
+
+        private static readonly GUIContent SourceRootContent = new("Source Root",
+            "GameObject on which to pick the component. If empty — the GameObject with this NoCode component.");
+
+        private static readonly GUIContent HelpBoxMeasureContent = new();
+
+        // WHY: the drawer runs for height and draw on every IMGUI event. The pick lists are reused buffers
+        // (IMGUI is single-threaded and the drawer never nests) and the popups get cached option arrays.
+        private static readonly List<string> ComponentNamesBuffer = new();
+        private static readonly List<string> ComponentTypeNamesBuffer = new();
+        private static readonly List<string> MemberKeysBuffer = new();
+        private static readonly List<string> MemberLabelsBuffer = new();
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            float line = EditorGUIUtility.singleLineHeight;
+            float sp = EditorGUIUtility.standardVerticalSpacing;
+            float h = line + sp;
+
+            SerializedProperty useSearchProp = property.FindPropertyRelative("_useSceneSearch");
+            SerializedProperty searchNameProp = property.FindPropertyRelative("_searchObjectName");
+            SerializedProperty waitProp = property.FindPropertyRelative("_waitForObject");
+            SerializedProperty prefabProp = property.FindPropertyRelative("_prefabPreview");
+
+            if (useSearchProp != null)
+            {
+                h += line + sp;
+                if (useSearchProp.boolValue && searchNameProp != null)
+                {
+                    h += (line + sp) * 3;
+                    if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
+                    {
+                        GameObject found = ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue);
+                        if (found != null)
+                        {
+                            h += line + sp;
+                        }
+                        else
+                        {
+                            h += line + sp;
+                            string msg = BuildMissingObjectHelpText(searchNameProp.stringValue, waitProp,
+                                prefabProp);
+                            h += HelpBoxHeight(msg) + sp;
+                        }
+                    }
+                }
+            }
+
+            if (useSearchProp == null || !useSearchProp.boolValue)
+            {
+                h += line + sp;
+            }
+
+            GameObject root = ComponentBindingInspectorShared.ResolveFloatBindingSourceRoot(property);
+            if (root != null)
+            {
+                h += (line + sp) * 3 + line * 1.25f;
+                float reactiveInfoHeight = ReactivePollInfoHeight(property, root);
+                if (reactiveInfoHeight > 0f)
+                {
+                    h += reactiveInfoHeight + sp;
+                }
+
+                return h;
+            }
+
+            bool skipGenericHelp = useSearchProp != null && useSearchProp.boolValue && searchNameProp != null &&
+                                   !string.IsNullOrEmpty(searchNameProp.stringValue) && !Application.isPlaying &&
+                                   ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue) == null;
+            if (!skipGenericHelp)
+            {
+                h += line * 2.25f;
+            }
+
+            return h;
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+
+            SerializedProperty sourceProp = property.FindPropertyRelative("_sourceRoot");
+            SerializedProperty typeProp = property.FindPropertyRelative("_componentTypeName");
+            SerializedProperty occurrenceProp = property.FindPropertyRelative("_componentOccurrence");
+            SerializedProperty memberProp = property.FindPropertyRelative("_memberName");
+
+            float line = EditorGUIUtility.singleLineHeight;
+            float sp = EditorGUIUtility.standardVerticalSpacing;
+            float y = position.y;
+
+            Rect row = new Rect(position.x, y, position.width, line);
+            EditorGUI.LabelField(row, label, EditorStyles.boldLabel);
+            y += line + sp;
+
+            SerializedProperty useSearchProp = property.FindPropertyRelative("_useSceneSearch");
+            SerializedProperty searchNameProp = property.FindPropertyRelative("_searchObjectName");
+            SerializedProperty waitProp = property.FindPropertyRelative("_waitForObject");
+            SerializedProperty prefabProp = property.FindPropertyRelative("_prefabPreview");
+            SerializedProperty findRetryProp = property.FindPropertyRelative("_findRetryIntervalSeconds");
+
+            if (useSearchProp != null)
+            {
+                row = new Rect(position.x, y, position.width, line);
+                EditorGUI.PropertyField(row, useSearchProp, FindByNameContent);
+                y += line + sp;
+
+                if (useSearchProp.boolValue && searchNameProp != null)
+                {
+                    row = new Rect(position.x, y, position.width, line);
+                    EditorGUI.PropertyField(row, searchNameProp, ObjectNameContent);
+                    y += line + sp;
+
+                    if (waitProp != null)
+                    {
+                        row = new Rect(position.x, y, position.width, line);
+                        EditorGUI.PropertyField(row, waitProp, WaitForObjectContent);
+                        y += line + sp;
+                    }
+
+                    if (findRetryProp != null)
+                    {
+                        row = new Rect(position.x, y, position.width, line);
+                        EditorGUI.PropertyField(row, findRetryProp, FindRetryIntervalContent);
+                        y += line + sp;
+                    }
+
+                    if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
+                    {
+                        GameObject found = ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue);
+                        if (found != null)
+                        {
+                            row = new Rect(position.x, y, position.width, line);
+                            EditorGUI.BeginDisabledGroup(true);
+                            EditorGUI.ObjectField(row, "Preview", found, typeof(GameObject), true);
+                            EditorGUI.EndDisabledGroup();
+                            y += line + sp;
+                        }
+                        else
+                        {
+                            row = new Rect(position.x, y, position.width, line);
+                            EditorGUI.PropertyField(row, prefabProp, PrefabPreviewContent);
+                            y += line + sp;
+
+                            string helpText = BuildMissingObjectHelpText(searchNameProp.stringValue, waitProp,
+                                prefabProp);
+                            bool hasPrefabForMsg = prefabProp != null && prefabProp.objectReferenceValue != null;
+                            bool waitForMsg = waitProp != null && waitProp.boolValue;
+                            MessageType mt = hasPrefabForMsg || waitForMsg ? MessageType.Info : MessageType.Warning;
+                            float hbH = HelpBoxHeight(helpText);
+                            row = new Rect(position.x, y, position.width, hbH);
+                            EditorGUI.HelpBox(row, helpText, mt);
+                            y += hbH + sp;
+                        }
+                    }
+                }
+            }
+
+            if (useSearchProp == null || !useSearchProp.boolValue)
+            {
+                row = new Rect(position.x, y, position.width, line);
+                EditorGUI.PropertyField(row, sourceProp, SourceRootContent);
+                y += line + sp;
+            }
+
+            GameObject root = ComponentBindingInspectorShared.ResolveFloatBindingSourceRoot(property);
+
+            if (root == null)
+            {
+                bool skipGenericHelp = useSearchProp != null && useSearchProp.boolValue && searchNameProp != null &&
+                                       !string.IsNullOrEmpty(searchNameProp.stringValue) && !Application.isPlaying &&
+                                       ComponentBindingInspectorShared.FindSceneObject(searchNameProp.stringValue) == null;
+                if (!skipGenericHelp)
+                {
+                    string fallback =
+                        "Put this component on a GameObject, assign Source Root, or use Find By Name with Prefab Preview when the instance is not in the scene.";
+                    row = new Rect(position.x, y, position.width, line * 2.25f);
+                    EditorGUI.HelpBox(row, fallback, MessageType.Warning);
+                }
+
+                EditorGUI.EndProperty();
+                return;
+            }
+
+            List<string> displayNames = ComponentNamesBuffer;
+            List<string> fullTypeNames = ComponentTypeNamesBuffer;
+            ComponentBindingInspectorShared.BuildComponentPickLists(root, displayNames, fullTypeNames);
+
+            if (displayNames.Count == 0)
+            {
+                row = new Rect(position.x, y, position.width, line * 2f);
+                EditorGUI.HelpBox(row, "No components on the resolved source object (except Transform).",
+                    MessageType.Warning);
+                EditorGUI.EndProperty();
+                return;
+            }
+
+            if (string.IsNullOrEmpty(typeProp.stringValue) && occurrenceProp.intValue == 0)
+            {
+                ComponentBindingInspectorShared.ApplyFloatBindingDefaultsWhenTypeEmpty(typeProp, memberProp, root,
+                    fullTypeNames);
+                Apply(property);
+            }
+
+            int compIndex = ComponentBindingInspectorShared.IndexOfComponent(fullTypeNames, typeProp.stringValue,
+                occurrenceProp.intValue);
+
+            row = new Rect(position.x, y, position.width, line);
+            EditorGUI.BeginChangeCheck();
+            int newComp = EditorGUI.Popup(row, "Component", compIndex,
+                ComponentBindingInspectorShared.GetPopupOptions(root, displayNames));
+            if (EditorGUI.EndChangeCheck() && newComp >= 0 && newComp < fullTypeNames.Count)
+            {
+                typeProp.stringValue = fullTypeNames[newComp];
+                occurrenceProp.intValue = ComponentBindingInspectorShared.ComponentOccurrenceAt(fullTypeNames, newComp);
+                memberProp.stringValue = "";
+                Apply(property);
+            }
+
+            y += line + sp;
+
+            Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue,
+                occurrenceProp.intValue);
+            if (selected == null)
+            {
+                row = new Rect(position.x, y, position.width, line * 2f);
+                EditorGUI.HelpBox(row,
+                    $"Component occurrence {occurrenceProp.intValue} is unavailable. Pick a component explicitly; no fallback is applied.",
+                    MessageType.Warning);
+                EditorGUI.EndProperty();
+                return;
+            }
+
+            List<string> keys = MemberKeysBuffer;
+            List<string> labels = MemberLabelsBuffer;
+            ComponentBindingInspectorShared.BuildFloatBindingMemberLists(selected, keys, labels);
+            if (labels.Count == 0)
+            {
+                row = new Rect(position.x, y, position.width, line * 2f);
+                EditorGUI.HelpBox(row,
+                    "No float / int / bool / ReactivePropertyFloat / ReactivePropertyInt / ReactivePropertyBool fields or properties on this component.",
+                    MessageType.Info);
+                EditorGUI.EndProperty();
+                return;
+            }
+
+            int memIdx = ComponentBindingInspectorShared.IndexOfMemberKey(keys, memberProp.stringValue);
+            if (memIdx < 0)
+            {
+                memIdx = 0;
+                if (ComponentBindingInspectorShared.TryAssignFirstMemberIfKeyMissing(memberProp, keys))
+                {
+                    Apply(property);
+                }
+            }
+
+            row = new Rect(position.x, y, position.width, line);
+            EditorGUI.BeginChangeCheck();
+            int newMem = EditorGUI.Popup(row, "Member", memIdx,
+                ComponentBindingInspectorShared.GetFloatBindingMemberLabels(selected.GetType()));
+            if (EditorGUI.EndChangeCheck() && newMem >= 0 && newMem < keys.Count)
+            {
+                memberProp.stringValue = keys[newMem];
+                Apply(property);
+            }
+
+            y += line + sp;
+
+            if (TryBuildReactivePollInfo(property, root, out string reactivePollInfo))
+            {
+                float infoHeight = HelpBoxHeight(reactivePollInfo);
+                row = new Rect(position.x, y, position.width, infoHeight);
+                EditorGUI.HelpBox(row, reactivePollInfo, MessageType.Info);
+                y += infoHeight + sp;
+            }
+
+            row = new Rect(position.x, y, position.width, line * 1.2f);
+            Color c0 = GUI.contentColor;
+            GUI.contentColor = new Color(0.65f, 0.7f, 0.78f, 1f);
+            EditorGUI.LabelField(row,
+                "Manual names (advanced): type = " +
+                (string.IsNullOrEmpty(typeProp.stringValue) ? "—" : typeProp.stringValue) +
+                ", member = " + (string.IsNullOrEmpty(memberProp.stringValue) ? "—" : memberProp.stringValue),
+                EditorStyles.miniLabel);
+            GUI.contentColor = c0;
+
+            EditorGUI.EndProperty();
+        }
+
+        private static string BuildMissingObjectHelpText(string objectName, SerializedProperty waitProp,
+            SerializedProperty prefabProp)
+        {
+            bool wait = waitProp != null && waitProp.boolValue;
+            bool hasPrefab = prefabProp != null && prefabProp.objectReferenceValue != null;
+
+            if (hasPrefab)
+            {
+                return wait
+                    ? $"Object \"{objectName}\" is not in the scene yet — editing via prefab. Waiting for spawn (no warning)."
+                    : $"Object \"{objectName}\" is not in the scene yet — editing via prefab.";
+            }
+
+            return wait
+                ? $"GameObject \"{objectName}\" not found — waiting for spawn (no warning).\nDrag a prefab into Prefab Preview to edit properties."
+                : $"GameObject \"{objectName}\" not found in the scene.\nDrag a prefab into Prefab Preview to edit properties.";
+        }
+
+        private static float ReactivePollInfoHeight(SerializedProperty property, GameObject root)
+        {
+            return TryBuildReactivePollInfo(property, root, out string text)
+                ? HelpBoxHeight(text)
+                : 0f;
+        }
+
+        private static bool TryBuildReactivePollInfo(SerializedProperty property, GameObject root, out string text)
+        {
+            text = null;
+            SerializedProperty updateModeProp = property.serializedObject.FindProperty("_updateMode");
+            if (updateModeProp == null ||
+                updateModeProp.enumValueIndex != (int)NoCodeFloatUpdateMode.Reactive)
+            {
+                return false;
+            }
+
+            SerializedProperty typeProp = property.FindPropertyRelative("_componentTypeName");
+            SerializedProperty occurrenceProp = property.FindPropertyRelative("_componentOccurrence");
+            SerializedProperty memberProp = property.FindPropertyRelative("_memberName");
+            if (typeProp == null || memberProp == null)
+            {
+                return false;
+            }
+
+            Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue,
+                occurrenceProp.intValue);
+            if (!ComponentBindingInspectorShared.TryGetFloatBindingMemberType(selected, memberProp.stringValue,
+                    out System.Type memberType))
+            {
+                return false;
+            }
+
+            if (ComponentBindingInspectorShared.IsReactiveFloatBindingMemberType(memberType))
+            {
+                return false;
+            }
+
+            float pollInterval = 0.16f;
+            SerializedProperty pollIntervalProp = property.serializedObject.FindProperty("_pollIntervalSeconds");
+            if (pollIntervalProp != null)
+            {
+                pollInterval = Mathf.Max(0.016f, pollIntervalProp.floatValue);
+            }
+
+            text =
+                $"Non-reactive {ComponentBindingInspectorShared.FormatClrTypeDisplayName(memberType)}: Reactive mode will poll every {pollInterval:0.###} s. Use ReactiveProperty* for instant updates.";
+            return true;
+        }
+
+        private static float HelpBoxHeight(string text)
+        {
+            float width = EditorGUIUtility.currentViewWidth;
+            width -= 28f;
+            if (width < 80f)
+            {
+                width = 280f;
+            }
+
+            HelpBoxMeasureContent.text = text;
+            float height = EditorStyles.helpBox.CalcHeight(HelpBoxMeasureContent, width);
+            HelpBoxMeasureContent.text = null;
+            return height;
+        }
+
+        private static void Apply(SerializedProperty bindingProperty)
+        {
+            bindingProperty.serializedObject.ApplyModifiedProperties();
+        }
+    }
+}

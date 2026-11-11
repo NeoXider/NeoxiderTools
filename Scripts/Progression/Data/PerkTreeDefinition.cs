@@ -1,0 +1,277 @@
+using System;
+using System.Collections.Generic;
+using Neo.Condition;
+using UnityEngine;
+
+namespace Neo.Progression
+{
+    /// <summary>
+    ///     Defines a perk entry that can be purchased with perk points.
+    /// </summary>
+    [Serializable]
+    public sealed class PerkDefinition
+    {
+        [Tooltip("Stable unique id stored in saves. Do not rename after release.")] [SerializeField]
+        private string _id = "perk-id";
+
+        [Tooltip("UI title.")] [SerializeField] private string _displayName = "Perk";
+
+        [Tooltip("UI description.")] [SerializeField] [TextArea(2, 4)]
+        private string _description;
+
+        [Tooltip("Optional UI icon.")] [SerializeField] private Sprite _icon;
+
+        [Tooltip("Owned on load/reset without cost and without dispatching its rewards.")] [SerializeField]
+        private bool _purchasedByDefault;
+
+        [Tooltip("Perk points spent by TryBuyPerk.")] [SerializeField] [Min(0)]
+        private int _cost = 1;
+
+        [Tooltip("Minimum Core level required to buy.")] [SerializeField] [Min(1)]
+        private int _requiredLevel = 1;
+
+        [Tooltip("Perk ids that must be purchased first.")] [SerializeField]
+        private List<string> _prerequisitePerkIds = new();
+
+        [Tooltip("Unlock node ids that must be unlocked first.")] [SerializeField]
+        private List<string> _requiredUnlockNodeIds = new();
+
+        [Tooltip("Extra checks evaluated against the manager's Condition Context (all must pass).")] [SerializeField]
+        private List<ConditionEntry> _conditions = new();
+
+        [Tooltip("Rewards dispatched once when the perk is purchased.")] [SerializeField]
+        private List<ProgressionReward> _rewards = new();
+
+        /// <summary>
+        ///     Gets the stable perk identifier.
+        /// </summary>
+        public string Id => _id;
+
+        /// <summary>
+        ///     Gets the UI-facing perk name.
+        /// </summary>
+        public string DisplayName => _displayName;
+
+        /// <summary>
+        ///     Gets the optional perk description.
+        /// </summary>
+        public string Description => _description;
+
+        /// <summary>
+        ///     Gets the optional perk icon.
+        /// </summary>
+        public Sprite Icon => _icon;
+
+        /// <summary>
+        ///     Gets whether the perk is granted by default.
+        /// </summary>
+        public bool PurchasedByDefault => _purchasedByDefault;
+
+        /// <summary>
+        ///     Gets the perk point cost.
+        /// </summary>
+        public int Cost => _cost;
+
+        /// <summary>
+        ///     Gets the minimum required player level.
+        /// </summary>
+        public int RequiredLevel => _requiredLevel;
+
+        /// <summary>
+        ///     Gets the prerequisite perk identifiers.
+        /// </summary>
+        public IReadOnlyList<string> PrerequisitePerkIds => _prerequisitePerkIds;
+
+        /// <summary>
+        ///     Gets the unlock node identifiers that must already be unlocked.
+        /// </summary>
+        public IReadOnlyList<string> RequiredUnlockNodeIds => _requiredUnlockNodeIds;
+
+        /// <summary>
+        ///     Gets the extra condition evaluators that must pass before buying the perk.
+        /// </summary>
+        public IReadOnlyList<ConditionEntry> Conditions => _conditions;
+
+        /// <summary>
+        ///     Gets the rewards granted once when the perk is purchased.
+        /// </summary>
+        public IReadOnlyList<ProgressionReward> Rewards => _rewards;
+    }
+
+    /// <summary>
+    ///     Stores perk definitions for the progression system.
+    /// </summary>
+    [CreateAssetMenu(fileName = "Perk Tree Definition", menuName = "Neoxider/Progression/Perk Tree Definition")]
+    [NeoDoc("Progression/Data/PerkTreeDefinition.md")]
+    public sealed class PerkTreeDefinition : ScriptableObject
+    {
+        [SerializeField] private List<PerkDefinition> _perks = new();
+
+        /// <summary>
+        ///     Gets the configured perk entries.
+        /// </summary>
+        public IReadOnlyList<PerkDefinition> Perks => _perks;
+
+        private void OnValidate()
+        {
+            _perks.Sort((left, right) => string.Compare(left?.Id, right?.Id, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        ///     Tries to get a perk by identifier.
+        /// </summary>
+        public bool TryGetPerk(string perkId, out PerkDefinition perk)
+        {
+            for (int i = 0; i < _perks.Count; i++)
+            {
+                PerkDefinition candidate = _perks[i];
+                if (candidate != null && string.Equals(candidate.Id, perkId, StringComparison.Ordinal))
+                {
+                    perk = candidate;
+                    return true;
+                }
+            }
+
+            perk = null;
+            return false;
+        }
+
+        /// <summary>
+        ///     Validates identifiers, references, and graph cycles.
+        /// </summary>
+        public IReadOnlyList<string> ValidateDefinition()
+        {
+            return ValidateDefinition(null);
+        }
+
+        /// <summary>
+        ///     Validates identifiers, references, graph cycles, and optional unlock node dependencies.
+        /// </summary>
+        public IReadOnlyList<string> ValidateDefinition(UnlockTreeDefinition unlockTree)
+        {
+            List<string> issues = new();
+            Dictionary<string, PerkDefinition> perkMap = new(StringComparer.Ordinal);
+            HashSet<string> unlockNodeIds = null;
+
+            if (unlockTree != null)
+            {
+                unlockNodeIds = new HashSet<string>(StringComparer.Ordinal);
+                IReadOnlyList<UnlockNodeDefinition> nodes = unlockTree.Nodes;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    UnlockNodeDefinition node = nodes[i];
+                    if (node != null && !string.IsNullOrWhiteSpace(node.Id))
+                    {
+                        unlockNodeIds.Add(node.Id);
+                    }
+                }
+            }
+
+            for (int i = 0; i < _perks.Count; i++)
+            {
+                PerkDefinition perk = _perks[i];
+                if (perk == null)
+                {
+                    issues.Add($"Perks[{i}] is null.");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(perk.Id))
+                {
+                    issues.Add($"Perks[{i}] has an empty id.");
+                    continue;
+                }
+
+                if (!perkMap.TryAdd(perk.Id, perk))
+                {
+                    issues.Add($"Duplicate perk id '{perk.Id}'.");
+                }
+
+                if (perk.PurchasedByDefault && perk.Rewards.Count > 0)
+                {
+                    issues.Add(
+                        $"Perk '{perk.Id}' is purchased by default, but default-perk rewards are not dispatched automatically.");
+                }
+            }
+
+            foreach (KeyValuePair<string, PerkDefinition> pair in perkMap)
+            {
+                IReadOnlyList<string> prerequisites = pair.Value.PrerequisitePerkIds;
+                for (int i = 0; i < prerequisites.Count; i++)
+                {
+                    string prerequisiteId = prerequisites[i];
+                    if (string.IsNullOrWhiteSpace(prerequisiteId))
+                    {
+                        issues.Add($"Perk '{pair.Key}' contains an empty prerequisite id.");
+                        continue;
+                    }
+
+                    if (!perkMap.ContainsKey(prerequisiteId))
+                    {
+                        issues.Add($"Perk '{pair.Key}' references missing prerequisite perk '{prerequisiteId}'.");
+                    }
+                }
+
+                IReadOnlyList<string> requiredUnlockNodes = pair.Value.RequiredUnlockNodeIds;
+                for (int i = 0; i < requiredUnlockNodes.Count; i++)
+                {
+                    string requiredUnlockNodeId = requiredUnlockNodes[i];
+                    if (string.IsNullOrWhiteSpace(requiredUnlockNodeId))
+                    {
+                        issues.Add($"Perk '{pair.Key}' contains an empty required unlock node id.");
+                        continue;
+                    }
+
+                    if (unlockNodeIds != null && !unlockNodeIds.Contains(requiredUnlockNodeId))
+                    {
+                        issues.Add(
+                            $"Perk '{pair.Key}' references missing required unlock node '{requiredUnlockNodeId}'.");
+                    }
+                }
+            }
+
+            HashSet<string> visiting = new(StringComparer.Ordinal);
+            HashSet<string> visited = new(StringComparer.Ordinal);
+            foreach (string perkId in perkMap.Keys)
+            {
+                ValidateCycles(perkId, perkMap, visiting, visited, issues);
+            }
+
+            return issues;
+        }
+
+        private static void ValidateCycles(string perkId,
+            IReadOnlyDictionary<string, PerkDefinition> perkMap,
+            ISet<string> visiting,
+            ISet<string> visited,
+            ICollection<string> issues)
+        {
+            if (visited.Contains(perkId))
+            {
+                return;
+            }
+
+            if (!visiting.Add(perkId))
+            {
+                issues.Add($"Perk tree cycle detected at perk '{perkId}'.");
+                return;
+            }
+
+            if (perkMap.TryGetValue(perkId, out PerkDefinition perk))
+            {
+                IReadOnlyList<string> prerequisites = perk.PrerequisitePerkIds;
+                for (int i = 0; i < prerequisites.Count; i++)
+                {
+                    string prerequisiteId = prerequisites[i];
+                    if (!string.IsNullOrWhiteSpace(prerequisiteId) && perkMap.ContainsKey(prerequisiteId))
+                    {
+                        ValidateCycles(prerequisiteId, perkMap, visiting, visited, issues);
+                    }
+                }
+            }
+
+            visiting.Remove(perkId);
+            visited.Add(perkId);
+        }
+    }
+}

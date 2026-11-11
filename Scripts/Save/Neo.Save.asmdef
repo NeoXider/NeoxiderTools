@@ -1,0 +1,23 @@
+{
+    "name": "Neo.Save",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Tools.Managers",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 828c7fb7622dc3d479c23bb65d7d4ef9, type: 3}
+  m_Name: SpritesDafualt
+  m_EditorClassIdentifier: 
+  _visuals:
+  - id: 0
+    sprite: {fileID: 21300000, guid: 31a4da2d8bf84de7b156fcf43bb30cae, type: 3}
+    description: 
+  - id: 1
+    sprite: {fileID: 21300000, guid: a7e9c7d996cd44569507570640fe74b8, type: 3}
+    description: 
+  - id: 2
+    sprite: {fileID: 21300000, guid: 22938fa0b840406d97e3546de6251ae1, type: 3}
+    description: 
+  - id: 3
+    sprite: {fileID: 21300000, guid: 4c7b8cd830b446308659bc584ed7458c, type: 3}
+    description: 

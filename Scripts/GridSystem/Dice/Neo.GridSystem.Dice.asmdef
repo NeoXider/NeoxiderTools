@@ -1,0 +1,19 @@
+{
+    "name": "Neo.GridSystem.Dice",
+    "rootNamespace": "Neo.GridSystem.Dice",
+    "references": [
+        "Neo.GridSystem",
+        "Neo.Merge",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

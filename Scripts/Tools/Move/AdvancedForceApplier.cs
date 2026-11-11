@@ -1,0 +1,385 @@
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neo.Tools
+{
+    [NeoDoc("Tools/Move/AdvancedForceApplier.md")]
+    [CreateFromMenu("Neoxider/Tools/Movement/AdvancedForceApplier")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AdvancedForceApplier))]
+    public class AdvancedForceApplier : MonoBehaviour
+    {
+        public enum BodyType
+        {
+            Auto,
+            Rigidbody3D,
+            Rigidbody2D
+        }
+
+        public enum DirectionMode
+        {
+            Velocity,
+            TransformForward,
+            CustomVector,
+            ToTarget
+        }
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Components")] [SerializeField]
+#endif
+        private Rigidbody rigidbody3D;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Components")] [SerializeField]
+#endif
+        private Rigidbody2D rigidbody2D;
+
+        [Header("General")]
+#if ODIN_INSPECTOR
+        [FoldoutGroup("General")]
+        [LabelText("Body Type")]
+#endif
+        [Tooltip("Auto will try to find 3D first, then 2D. Can be fixed manually.")]
+        public BodyType bodyType = BodyType.Auto;
+
+        [Header("Force")]
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Force")]
+        [LabelText("Base Force (N)")]
+#endif
+        [Min(0f)]
+        [SerializeField]
+        private float defaultForce = 10f;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Force")] [ToggleLeft] [LabelText("Randomize Force")]
+#endif
+        public bool randomizeForce;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Force")] [ShowIf("randomizeForce")] [MinMaxSlider(0f, 10000f, true)]
+#endif
+        public Vector2 forceRange = new(5f, 15f);
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Force")] [ToggleLeft]
+#endif
+        public bool playOnAwake = true;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Force")] [ShowIf("Is3DActive")] [LabelText("Force Mode (3D)")] [EnumToggleButtons]
+#endif
+        public ForceMode forceMode3D = ForceMode.Impulse;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Force")] [ShowIf("Is2DActive")] [LabelText("Force Mode (2D)")] [EnumToggleButtons]
+#endif
+        public ForceMode2D forceMode2D = ForceMode2D.Impulse;
+
+        [Header("Limits")]
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Limits")] [ToggleLeft] [LabelText("Clamp Max Speed")]
+#endif
+        public bool clampMaxSpeed;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
+#endif
+        public float maxSpeed = 20f;
+
+        [Tooltip(
+            "When enabled, velocity is clamped every FixedUpdate (avoids overshoot with frequent ApplyForce calls).")]
+        public bool clampSpeedEveryFixedUpdate;
+
+        [Header("Direction")]
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Direction")] [LabelText("Direction Source")]
+#endif
+        public DirectionMode directionMode = DirectionMode.Velocity;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Direction")]
+        [ShowIf("directionMode == DirectionMode.TransformForward")]
+        [LabelText("Use Local Forward (2D=Right, 3D=Forward)")]
+#endif
+        public bool useLocalForward = true;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Direction")] [ToggleLeft] [LabelText("Invert Direction")]
+#endif
+        public bool invertDirection;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Direction")] [ShowIf("directionMode == DirectionMode.CustomVector")] [LabelText("Custom Vector")]
+#endif
+        public Vector3 customDirection = Vector3.forward;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Direction")]
+        [ShowIf("directionMode == DirectionMode.ToTarget")]
+        [LabelText("Target (Transform)")]
+#endif
+        public Transform target;
+
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Events")]
+#endif
+        public UnityEvent OnApplyForce;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Events")]
+#endif
+        [Tooltip("Invoked when ApplyForce is called but no Rigidbody is available.")]
+        public UnityEvent OnApplyFailed;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Debug")]
+        [InfoBox("No suitable Rigidbody found. Component won't be able to apply force.", InfoMessageType.Warning,
+            VisibleIf = nameof(ShowNoRigidbodyWarning))]
+        [ShowInInspector]
+        [ReadOnly]
+        [LabelText("Active Body Type")]
+#endif
+        private string ActiveBodyInfo => Is3DActive() ? "Rigidbody (3D)" : Is2DActive() ? "Rigidbody2D (2D)" : "None";
+
+        private const int PostForceClampSteps = 2;
+        private int _clampStepsRemaining;
+
+        private void Awake()
+        {
+            if (rigidbody3D == null)
+            {
+                rigidbody3D = GetComponent<Rigidbody>();
+            }
+
+            if (rigidbody2D == null)
+            {
+                rigidbody2D = GetComponent<Rigidbody2D>();
+            }
+        }
+
+        private void Start()
+        {
+            if (playOnAwake)
+            {
+                ApplyForce();
+            }
+        }
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Controls")]
+        [DisableInEditorMode]
+#endif
+        [Button("Apply Now", PlayModeOnly = true)]
+        private void ApplyNowButton()
+        {
+            ApplyForce();
+        }
+
+        /// <summary>
+        ///     Applies force to the resolved body.
+        /// </summary>
+        /// <param name="force">Force magnitude. If 0, uses the configured default/randomized force.</param>
+        /// <param name="direction">Optional direction override. If null, uses the computed direction from current settings.</param>
+        public void ApplyForce(float force = 0f, Vector3? direction = null)
+        {
+            float chosenForce = force > 0f ? force :
+                randomizeForce ? Random.Range(forceRange.x, forceRange.y) : defaultForce;
+            Vector3 dir = direction ?? ComputeDirection();
+            if (Resolve2D())
+            {
+                dir.z = 0f;
+            }
+
+            dir.Normalize();
+            if (dir.sqrMagnitude < 1e-6f)
+            {
+                Vector3 fallback = Resolve2D() ? transform.right : transform.forward;
+                dir = !direction.HasValue && invertDirection ? -fallback : fallback;
+            }
+
+            if (Resolve3D())
+            {
+                rigidbody3D.AddForce(dir * chosenForce, forceMode3D);
+                ClampVelocityNow();
+                ScheduleStepClamp();
+                OnApplyForce?.Invoke();
+            }
+            else if (Resolve2D())
+            {
+                rigidbody2D.AddForce(dir * chosenForce, forceMode2D);
+                ClampVelocityNow();
+                ScheduleStepClamp();
+                OnApplyForce?.Invoke();
+            }
+            else
+            {
+                OnApplyFailed?.Invoke();
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (!clampMaxSpeed)
+            {
+                _clampStepsRemaining = 0;
+                return;
+            }
+
+            if (!clampSpeedEveryFixedUpdate && _clampStepsRemaining <= 0)
+            {
+                return;
+            }
+
+            ClampVelocityNow();
+            if (_clampStepsRemaining > 0)
+            {
+                _clampStepsRemaining--;
+            }
+        }
+
+        /// <summary>
+        ///     Forces are integrated by a later simulation step, so the velocity read right after AddForce is still
+        ///     the old one. Keeping the cap for the next two fixed updates covers calls made from Update, FixedUpdate
+        ///     and physics callbacks: whichever step integrates the force is followed by a clamp.
+        /// </summary>
+        private void ScheduleStepClamp()
+        {
+            _clampStepsRemaining = clampMaxSpeed ? PostForceClampSteps : 0;
+        }
+
+        private void ClampVelocityNow()
+        {
+            if (!clampMaxSpeed)
+            {
+                return;
+            }
+
+            float maxSpeedSqr = maxSpeed * maxSpeed;
+            if (Resolve3D())
+            {
+                Vector3 velocity = rigidbody3D.linearVelocity;
+                if (velocity.sqrMagnitude > maxSpeedSqr)
+                {
+                    rigidbody3D.linearVelocity = velocity.normalized * maxSpeed;
+                }
+            }
+            else if (Resolve2D())
+            {
+                Vector2 velocity = rigidbody2D.linearVelocity;
+                if (velocity.sqrMagnitude > maxSpeedSqr)
+                {
+                    rigidbody2D.linearVelocity = velocity.normalized * maxSpeed;
+                }
+            }
+        }
+
+        /// <summary>Set target transform for DirectionMode.ToTarget.</summary>
+        public void SetTarget(Transform newTarget)
+        {
+            target = newTarget;
+        }
+
+        /// <summary>Set direction source mode.</summary>
+        public void SetDirectionMode(DirectionMode mode)
+        {
+            directionMode = mode;
+        }
+
+        /// <summary>Set custom direction vector (used when DirectionMode is CustomVector).</summary>
+        public void SetCustomDirection(Vector3 direction)
+        {
+            customDirection = direction;
+        }
+
+        /// <summary>
+        ///     Computes the force direction based on current direction mode.
+        /// </summary>
+        private Vector3 ComputeDirection()
+        {
+            Vector3 result = Vector3.zero;
+
+            switch (directionMode)
+            {
+                case DirectionMode.Velocity:
+                {
+                    if (Resolve3D())
+                    {
+                        result = rigidbody3D.linearVelocity;
+                    }
+                    else if (Resolve2D())
+                    {
+                        result = rigidbody2D.linearVelocity;
+                    }
+
+                    break;
+                }
+                case DirectionMode.TransformForward:
+                {
+                    if (Resolve3D())
+                    {
+                        result = useLocalForward ? transform.forward : Vector3.forward;
+                    }
+                    else if (Resolve2D())
+                        // WHY: In 2D it's more convenient to consider "forward" as local right in XY plane
+                    {
+                        result = useLocalForward ? transform.right : Vector3.right;
+                    }
+
+                    break;
+                }
+                case DirectionMode.CustomVector:
+                {
+                    result = customDirection;
+                    break;
+                }
+                case DirectionMode.ToTarget:
+                {
+                    if (target != null)
+                    {
+                        result = target.position - transform.position;
+                    }
+
+                    break;
+                }
+            }
+
+            if (invertDirection)
+            {
+                result = -result;
+            }
+
+            Vector3 fallback = Resolve2D() ? transform.right : transform.forward;
+            return result.sqrMagnitude > 1e-8f ? result.normalized : invertDirection ? -fallback : fallback;
+        }
+
+        private bool Resolve3D()
+        {
+            if (bodyType == BodyType.Rigidbody3D)
+            {
+                return rigidbody3D != null;
+            }
+
+            if (bodyType == BodyType.Rigidbody2D)
+            {
+                return false;
+            }
+
+            return rigidbody3D != null;
+        }
+
+        private bool Resolve2D()
+        {
+            if (bodyType == BodyType.Rigidbody2D)
+            {
+                return rigidbody2D != null;
+            }
+
+            if (bodyType == BodyType.Rigidbody3D)
+            {
+                return false;
+            }
+
+            return rigidbody3D == null && rigidbody2D != null;
+        }
+
+        private bool Is3DActive()
+        {
+            return Resolve3D();
+        }
+
+        private bool Is2DActive()
+        {
+            return Resolve2D();
+        }
+
+        private bool ShowNoRigidbodyWarning()
+        {
+            return !Resolve3D() && !Resolve2D();
+        }
+    }
+}

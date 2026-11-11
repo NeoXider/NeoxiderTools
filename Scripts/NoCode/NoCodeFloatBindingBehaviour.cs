@@ -1,0 +1,309 @@
+using Neo.Reactive;
+using UnityEngine;
+
+namespace Neo.NoCode
+{
+    /// <summary>
+    ///     Shared wiring: <see cref="ComponentFloatBinding"/>, optional reactive subscription, optional poll.
+    /// </summary>
+    [NeoDoc("NoCode/NoCodeFloatBindingBehaviour.md")]
+    public abstract class NoCodeFloatBindingBehaviour : MonoBehaviour
+    {
+        private const float DefaultPollIntervalSeconds = 0.16f;
+        private const float MinPollIntervalSeconds = 0.016f;
+
+        [Tooltip("Source object, component and member to read.")] [SerializeField]
+        private ComponentFloatBinding _binding = new();
+
+        [Tooltip(
+            "Once: apply on enable. Reactive: follow ReactiveProperty changes (ordinary fields fall back to polling). Poll: refresh every Poll Interval.")]
+        [SerializeField]
+        private NoCodeFloatUpdateMode _updateMode = NoCodeFloatUpdateMode.Reactive;
+
+        [Tooltip("When Update Mode is Poll, refreshes in LateUpdate using Poll Interval.")] [SerializeField]
+        private bool _pollInLateUpdate = true;
+
+        [Tooltip(
+            "Seconds between refreshes in Poll mode and Reactive fallback for ordinary fields. Default 0.16; minimum 0.016.")]
+        [Min(MinPollIntervalSeconds)]
+        [SerializeField]
+        private float _pollIntervalSeconds = DefaultPollIntervalSeconds;
+
+        private ReactivePropertyFloat _subscribedFloat;
+        private ReactivePropertyInt _subscribedInt;
+        private ReactivePropertyBool _subscribedBool;
+        private float _nextPollTime;
+        private bool _useReactivePollFallback;
+        private volatile bool _configurationDirty;
+
+        /// <summary>Source binding (object, component, member). Its setters take effect on the next refresh.</summary>
+        public ComponentFloatBinding Binding => _binding;
+
+        private bool HasReactiveSubscription =>
+            _subscribedFloat != null || _subscribedInt != null || _subscribedBool != null;
+
+        protected virtual void OnValidate()
+        {
+            _pollIntervalSeconds = PollIntervalSeconds;
+            _configurationDirty = true;
+        }
+
+        protected virtual void OnEnable()
+        {
+            _configurationDirty = false;
+            _binding.Invalidate();
+            _useReactivePollFallback = false;
+            _nextPollTime = Time.unscaledTime + PollIntervalSeconds;
+            // WHY: RefreshFromSource subscribes before applying and re-syncs after the output callback, so the
+            // former extra subscribe passes only repeated the same reflective read.
+            RefreshFromSource();
+        }
+
+        protected virtual void OnDisable()
+        {
+            UnsubscribeReactive();
+        }
+
+        private void UnsubscribeReactive()
+        {
+            if (_subscribedFloat != null)
+            {
+                _subscribedFloat.RemoveListener(OnReactiveFloatChanged);
+                _subscribedFloat = null;
+            }
+
+            if (_subscribedInt != null)
+            {
+                _subscribedInt.RemoveListener(OnReactiveIntChanged);
+                _subscribedInt = null;
+            }
+
+            if (_subscribedBool != null)
+            {
+                _subscribedBool.RemoveListener(OnReactiveBoolChanged);
+                _subscribedBool = null;
+            }
+        }
+
+        protected virtual void LateUpdate()
+        {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            ReconcileDirtyConfiguration();
+            bool shouldPoll = _updateMode == NoCodeFloatUpdateMode.Poll ||
+                              (_updateMode == NoCodeFloatUpdateMode.Reactive && _useReactivePollFallback);
+            if (!shouldPoll || !_pollInLateUpdate)
+            {
+                return;
+            }
+
+            float now = Time.unscaledTime;
+            if (now < _nextPollTime)
+            {
+                return;
+            }
+
+            RefreshFromSource();
+            _nextPollTime = now + PollIntervalSeconds;
+        }
+
+        private void ReconcileDirtyConfiguration()
+        {
+            if (!_configurationDirty)
+            {
+                return;
+            }
+
+            // WHY: OnValidate may run off the main thread; resolve sources only from refresh/LateUpdate.
+            _configurationDirty = false;
+            _binding.Invalidate();
+            bool reactive = TrySubscribeReactive();
+            _useReactivePollFallback = isActiveAndEnabled &&
+                                       _updateMode == NoCodeFloatUpdateMode.Reactive && !reactive;
+        }
+
+        private void OnReactiveFloatChanged(float _)
+        {
+            if (isActiveAndEnabled)
+            {
+                RefreshFromSource();
+            }
+        }
+
+        private void OnReactiveIntChanged(int _)
+        {
+            if (isActiveAndEnabled)
+            {
+                RefreshFromSource();
+            }
+        }
+
+        private void OnReactiveBoolChanged(bool _)
+        {
+            if (isActiveAndEnabled)
+            {
+                RefreshFromSource();
+            }
+        }
+
+        private bool TrySubscribeReactive()
+        {
+            if (!isActiveAndEnabled || _updateMode != NoCodeFloatUpdateMode.Reactive)
+            {
+                UnsubscribeReactive();
+                return false;
+            }
+
+            bool readable = _binding.TryReadRaw(this, out object raw);
+            return SyncReactiveSubscription(readable, raw);
+        }
+
+        /// <summary>Subscribes to the reactive instance in an already read value (no second reflective read).</summary>
+        private bool SyncReactiveSubscription(bool readable, object raw)
+        {
+            if (!isActiveAndEnabled || _updateMode != NoCodeFloatUpdateMode.Reactive)
+            {
+                UnsubscribeReactive();
+                return false;
+            }
+
+            if (!readable || !ComponentFloatBinding.TryGetReactivePropertyFromValue(raw,
+                    out ReactivePropertyFloat reactiveFloat, out ReactivePropertyInt reactiveInt,
+                    out ReactivePropertyBool reactiveBool))
+            {
+                UnsubscribeReactive();
+                return false;
+            }
+
+            if (ReferenceEquals(_subscribedFloat, reactiveFloat) &&
+                ReferenceEquals(_subscribedInt, reactiveInt) &&
+                ReferenceEquals(_subscribedBool, reactiveBool))
+            {
+                return true;
+            }
+
+            // WHY: binding setters and replacement reactive instances take effect on the next refresh.
+            UnsubscribeReactive();
+            _useReactivePollFallback = false;
+            if (reactiveFloat != null)
+            {
+                reactiveFloat.AddListener(OnReactiveFloatChanged);
+                _subscribedFloat = reactiveFloat;
+                return true;
+            }
+
+            if (reactiveInt != null)
+            {
+                reactiveInt.AddListener(OnReactiveIntChanged);
+                _subscribedInt = reactiveInt;
+                return true;
+            }
+
+            reactiveBool.AddListener(OnReactiveBoolChanged);
+            _subscribedBool = reactiveBool;
+            return true;
+        }
+
+        private void EnableReactivePollFallback()
+        {
+            if (!isActiveAndEnabled || _updateMode != NoCodeFloatUpdateMode.Reactive || HasReactiveSubscription)
+            {
+                return;
+            }
+
+            _useReactivePollFallback = true;
+        }
+
+        /// <summary>
+        ///     Reads the source, (re)subscribes to a reactive source, and applies the value through
+        ///     <see cref="ApplyFloat"/>. A rewire performed inside <see cref="ApplyFloat"/> is re-synchronised before
+        ///     returning; a subscribed reactive source is re-read once for that check.
+        /// </summary>
+        protected void RefreshFromSource()
+        {
+            ReconcileDirtyConfiguration();
+            // WHY: one reflective read per poll of a plain source. Plain value-type members box on every read, and the
+            // former subscribe/read/subscribe sequence read (and boxed) the same member three times per poll.
+            bool readable = _binding.TryReadRaw(this, out object raw);
+            bool reactive = SyncReactiveSubscription(readable, raw);
+            if (!readable || !ComponentFloatBinding.TryConvertToFloat(raw, out float value))
+            {
+                // WHY: source not resolvable yet (late spawn / Wait For Object / Find By Name). In Reactive mode with
+                // no subscription the LateUpdate poll is gated off, so without this the binding would freeze forever
+                // and never retry once the object appears. Enable the poll fallback so resolution keeps being attempted.
+                if (!reactive)
+                {
+                    EnableReactivePollFallback();
+                }
+
+                return;
+            }
+
+            int bindingVersion = _binding.InvalidationVersion;
+            ApplyFloat(value);
+            // WHY: output callbacks (Slider.onValueChanged, SetText listeners) may rewire the binding, disable this
+            // view or replace a reactive instance; re-sync with the actual current state rather than the pre-apply one.
+            if (bindingVersion != _binding.InvalidationVersion || _configurationDirty || HasReactiveSubscription ||
+                !isActiveAndEnabled)
+            {
+                reactive = TrySubscribeReactive();
+            }
+
+            if (!reactive)
+            {
+                EnableReactivePollFallback();
+            }
+        }
+
+        /// <summary>
+        ///     Reads the bound source now and pushes it to the output. Typed C# equivalent of the automatic
+        ///     Reactive/Poll refresh; also the way to refresh <see cref="NoCodeFloatUpdateMode.Once"/> bindings.
+        /// </summary>
+        public void RefreshBinding()
+        {
+            RefreshFromSource();
+        }
+
+        /// <summary>How the binding refreshes: once on enable, on reactive change (with poll fallback), or by polling.</summary>
+        public NoCodeFloatUpdateMode UpdateMode
+        {
+            get => _updateMode;
+            set
+            {
+                if (_updateMode == value)
+                {
+                    return;
+                }
+
+                _updateMode = value;
+                _configurationDirty = true;
+                if (isActiveAndEnabled)
+                {
+                    ReconcileDirtyConfiguration();
+                }
+            }
+        }
+
+        /// <summary>Seconds between refreshes in Poll mode and the Reactive fallback (clamped to at least 0.016).</summary>
+        public float PollIntervalSeconds
+        {
+            get => Mathf.Max(MinPollIntervalSeconds, _pollIntervalSeconds);
+            set => _pollIntervalSeconds = Mathf.Max(MinPollIntervalSeconds, value);
+        }
+
+        protected abstract void ApplyFloat(float value);
+
+#if UNITY_EDITOR
+        /// <summary>
+        ///     Edit Mode tests / editor utilities: apply binding when <see cref="OnEnable"/> did not run or after wiring via serialized object.
+        /// </summary>
+        public void EditorInvokeRefreshFromSource()
+        {
+            RefreshFromSource();
+        }
+#endif
+    }
+}

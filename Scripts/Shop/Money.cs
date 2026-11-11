@@ -1,0 +1,784 @@
+using Neo.Extensions;
+using Neo.Network;
+using Neo.Reactive;
+using Neo.Save;
+using Neo.Tools;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+
+#if MIRROR
+using Mirror;
+#endif
+
+namespace Neo.Shop
+{
+    [NeoDoc("Shop/Money.md")]
+    [CreateFromMenu("Neoxider/Shop/Money")]
+    [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
+#if MIRROR
+    [RequireComponent(typeof(NetworkIdentity))]
+#endif
+    public class Money : NetworkSingleton<Money>, IMoneySpendAuthority, IMoneyAdd, IMoneyCanSpend,
+        INeoOptionalNetworked
+    {
+        /// <inheritdoc />
+        bool INeoOptionalNetworked.IsNetworked => isNetworked;
+
+
+        private static readonly List<Money> Registry = new();
+
+        /// <summary>
+        ///     Raised when a wallet joins the save-key registry (Awake/OnEnable, or first lookup of an inactive
+        ///     wallet). Lets views that started before any wallet existed bind without polling the scene.
+        /// </summary>
+        internal static event System.Action<Money> WalletRegistered;
+
+        // WHY: the registry keeps destroyed wallets from the previous play session when domain reload is
+        // disabled, so Register() compares Contains against fake-null entries.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            Registry.Clear();
+            WalletRegistered = null;
+        }
+
+        [Header("Networking")]
+        [Tooltip(
+            "If true, money is shared globally across the network. If false, each player has their own local wallet.")]
+        public bool isNetworked = false;
+
+        [Tooltip("Server policy for client-requested money operations. ServerOnly rejects remote requests; None explicitly trusts cooperative clients; OwnerOnly uses this wallet's NetworkIdentity owner.")]
+        [SerializeField]
+        private NetworkAuthorityMode _clientMutationAuthority = NetworkAuthorityMode.ServerOnly;
+
+        /// <summary>Server-side admission policy for Command ingress; direct offline/server APIs are unaffected.</summary>
+        public NetworkAuthorityMode ClientMutationAuthority
+        {
+            get => _clientMutationAuthority;
+            set => _clientMutationAuthority = value;
+        }
+
+#if MIRROR
+        [SyncVar] private float _syncCurrentMoney;
+        // WHY: NegativeInfinity - first command must not be treated as "within the window of t=0".
+        private double _lastCmdTime = double.NegativeInfinity;
+        private Dictionary<int, double> _lastCmdTimePerConnection;
+        private const double CmdRateLimit = 0.05d;
+#endif
+
+        [Space] [SerializeField] private string _moneySave = "Money";
+        public string SaveKey => _moneySave;
+
+        [Tooltip(
+            "When off, balance is not loaded from or written to SaveProvider (session-only; demos / arenas / NoCode).")]
+        [SerializeField]
+        private bool _persistMoney = true;
+
+        [Tooltip(
+            "Soft cap for this wallet. 0 = unlimited. Add() and SetMoney() clamp to it; AddOverflow() ignores it (e.g. bonus rewards allowed to exceed the cap).")]
+        [SerializeField]
+        private float _maxMoney = 0f;
+
+        public float MaxMoney
+        {
+            get => _maxMoney;
+            set => _maxMoney = value;
+        }
+
+        public ReactivePropertyFloat CurrentMoney = new();
+        public ReactivePropertyFloat LevelMoney = new();
+        public ReactivePropertyFloat AllMoney = new();
+        public ReactivePropertyFloat LastChangeMoney = new();
+
+        [SerializeField] private SetText[] st_levelMoney;
+        [SerializeField] private SetText[] st_money;
+        [SerializeField] private TMP_Text[] t_levelMoney;
+
+        [SerializeField] private TMP_Text[] t_money;
+
+        private readonly int _roundToDecimal = 2;
+        public float levelMoney => LevelMoney.CurrentValue;
+        public float money => CurrentMoney.CurrentValue;
+        public float allMoney => AllMoney.CurrentValue;
+
+        /// <summary>Last amount change (for NeoCondition and reflection).</summary>
+        public float LastChangeMoneyValue => LastChangeMoney.CurrentValue;
+
+        public static Money FindBySaveKey(string saveKey)
+        {
+            if (string.IsNullOrEmpty(saveKey))
+            {
+                return I;
+            }
+
+            for (int i = Registry.Count - 1; i >= 0; i--)
+            {
+                Money money = Registry[i];
+                if (money == null)
+                {
+                    Registry.RemoveAt(i);
+                    continue;
+                }
+
+                if (money.SaveKey == saveKey)
+                {
+                    return money;
+                }
+            }
+
+            Money[] allMoney = FindObjectsByType<Money>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < allMoney.Length; i++)
+            {
+                if (allMoney[i] != null && allMoney[i].SaveKey == saveKey)
+                {
+                    Register(allMoney[i]);
+                    return allMoney[i];
+                }
+            }
+
+            return null;
+        }
+
+        public static bool TryFindBySaveKey(string saveKey, out Money money)
+        {
+            money = FindBySaveKey(saveKey);
+            return money != null;
+        }
+
+        private void OnEnable()
+        {
+            Register(this);
+        }
+
+        private void OnDisable()
+        {
+            Registry.Remove(this);
+        }
+
+        private void Start()
+        {
+            if (_persistMoney)
+            {
+                LoadFromSave();
+            }
+
+            SetLevelMoney();
+            ApplyMoneyToText();
+            ApplyLevelMoneyToText();
+        }
+
+        [Button]
+        public void Add(float amount)
+        {
+            // WHY: Add is the reward path and must never subtract. A negative amount used to slip past every
+            // balance check in TrySpend/CanSpend and drive the balance below zero, so it is rejected up front
+            // instead of being forwarded to the server or applied locally.
+            if (!IsValidAddAmount(amount, nameof(Add)))
+            {
+                return;
+            }
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.Add, amount);
+                return;
+            }
+#endif
+            AddLocal(amount);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.Add, amount);
+            }
+#endif
+        }
+
+        private void AddLocal(float amount)
+        {
+            float added = ClampAddAmount(amount);
+            CurrentMoney.Value = CurrentMoney.CurrentValue + added;
+            AllMoney.Value = AllMoney.CurrentValue + added;
+            LastChangeMoney.Value = added;
+            PersistBalanceToSave();
+            ApplyMoneyToText();
+        }
+
+        private float ClampAddAmount(float amount)
+        {
+            if (_maxMoney <= 0f || amount <= 0f)
+            {
+                return amount;
+            }
+
+            float room = _maxMoney - CurrentMoney.CurrentValue;
+            return room <= 0f ? 0f : Mathf.Min(amount, room);
+        }
+
+        /// <summary>
+        ///     Guards the deposit paths. Spending is expressed through <see cref="TrySpend" />, which is the only
+        ///     place allowed to reduce the balance, so a negative deposit is always a caller bug.
+        /// </summary>
+        private bool IsValidAddAmount(float amount, string operation)
+        {
+            if (float.IsNaN(amount) || float.IsInfinity(amount))
+            {
+                NeoDiagnostics.LogError(
+                    $"[Money] {operation} rejected: amount is not a finite number ({amount}).", this);
+                return false;
+            }
+
+            if (amount < 0f)
+            {
+                NeoDiagnostics.LogError(
+                    $"[Money] {operation} rejected: negative amount ({amount}). Use TrySpend to reduce the balance.",
+                    this);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Adds money ignoring <see cref="MaxMoney"/> (the soft cap). Use for bonus/overflow rewards
+        ///     that are allowed to exceed the cap; regular <see cref="Add"/> stays clamped.
+        /// </summary>
+        [Button]
+        public void AddOverflow(float amount)
+        {
+            if (!IsValidAddAmount(amount, nameof(AddOverflow)))
+            {
+                return;
+            }
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.AddOverflow, amount);
+                return;
+            }
+#endif
+            AddOverflowLocal(amount);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.AddOverflow, amount);
+            }
+#endif
+        }
+
+        private void AddOverflowLocal(float amount)
+        {
+            CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
+            AllMoney.Value = AllMoney.CurrentValue + amount;
+            LastChangeMoney.Value = amount;
+            PersistBalanceToSave();
+            ApplyMoneyToText();
+        }
+
+        [Button]
+        public bool Spend(float amount)
+        {
+            return TrySpend(amount).IsConfirmed;
+        }
+
+        public MoneySpendResult TrySpend(float amount)
+        {
+            float balanceBefore = CurrentMoney.CurrentValue;
+            if (amount < 0f || float.IsNaN(amount) || float.IsInfinity(amount))
+            {
+                return new MoneySpendResult(MoneySpendStatus.RejectedInvalidAmount, amount, balanceBefore,
+                    balanceBefore);
+            }
+
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.Spend, amount);
+                return new MoneySpendResult(MoneySpendStatus.RequestedServerAuthority, amount, balanceBefore,
+                    balanceBefore);
+            }
+#endif
+            if (!CanSpend(amount))
+            {
+                return new MoneySpendResult(MoneySpendStatus.RejectedInsufficientFunds, amount, balanceBefore,
+                    balanceBefore);
+            }
+
+            SpendLocal(amount);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.Spend, amount);
+            }
+#endif
+
+            return new MoneySpendResult(MoneySpendStatus.Confirmed, amount, balanceBefore, CurrentMoney.CurrentValue);
+        }
+
+        public void SpendFromButton(float amount)
+        {
+            Spend(amount);
+        }
+
+        private void SpendLocal(float amount)
+        {
+            CurrentMoney.Value = CurrentMoney.CurrentValue - amount;
+            LastChangeMoney.Value = -amount;
+            ApplyMoneyToText();
+            PersistBalanceToSave();
+        }
+
+        // WHY: a refund compensates a confirmed debit: it must bypass the reward cap without increasing AllMoney.
+        internal void RefundSpend(float amount)
+        {
+            if (!IsValidAddAmount(amount, nameof(RefundSpend)))
+            {
+                return;
+            }
+
+            RefundSpendLocal(amount);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.RefundSpend, amount);
+            }
+#endif
+        }
+
+        private void RefundSpendLocal(float amount)
+        {
+            CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
+            LastChangeMoney.Value = amount;
+            PersistBalanceToSave();
+            ApplyMoneyToText();
+        }
+
+        /// <summary>
+        ///     Shop supports several <see cref="Money"/> wallets (different <see cref="SaveKey"/>);
+        ///     they must not destroy each other as duplicate singletons.
+        /// </summary>
+        protected override bool DestroyGameObjectOnDuplicateSingleton => false;
+
+        protected override void Init()
+        {
+            base.Init();
+            Register(this);
+        }
+
+        private static void Register(Money money)
+        {
+            if (money != null && !Registry.Contains(money))
+            {
+                Registry.Add(money);
+                WalletRegistered?.Invoke(money);
+            }
+        }
+
+        private void LoadFromSave()
+        {
+            // WHY: views can subscribe in OnEnable before this wallet's Start, regardless of script execution order.
+            CurrentMoney.Value = SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue);
+            AllMoney.Value = SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
+        }
+
+        private void PersistBalanceToSave()
+        {
+            if (!_persistMoney)
+            {
+                return;
+            }
+
+            SaveProvider.SetFloat(_moneySave, CurrentMoney.CurrentValue);
+            SaveProvider.SetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
+        }
+
+        /// <summary>
+        ///     Reloads current and all-time balance from <see cref="SaveProvider"/> when persistence is enabled.
+        ///     Use after external changes to save keys, or from UnityEvent / NoCode flows.
+        ///     Notifies <see cref="CurrentMoney"/> subscribers, including views enabled before the reload.
+        /// </summary>
+        public void ReloadBalanceFromSave()
+        {
+            if (!_persistMoney)
+            {
+                return;
+            }
+
+            // WHY: public reloads notify so shop affordability, HUD counters and reactive text update.
+            CurrentMoney.Value = SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue);
+            AllMoney.Value = SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
+            ApplyMoneyToText();
+        }
+
+        /// <summary>
+        ///     Removes persisted money keys, resets runtime balance to zero, then re-persists zeros when persistence is on.
+        ///     Wire from a reset button or UnityEvent for NoCode.
+        /// </summary>
+        public void ClearSavedMoneyAndReset()
+        {
+            SaveProvider.DeleteKey(_moneySave);
+            SaveProvider.DeleteKey(_moneySave + nameof(AllMoney));
+            LastChangeMoney.Value = 0f;
+            CurrentMoney.Value = 0f;
+            AllMoney.Value = 0f;
+            ApplyMoneyToText();
+            PersistBalanceToSave();
+        }
+
+        public void AddLevelMoney(float count)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.AddLevelMoney, count);
+                return;
+            }
+#endif
+            AddLevelMoneyLocal(count);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.AddLevelMoney, count);
+            }
+#endif
+        }
+
+        private void AddLevelMoneyLocal(float count)
+        {
+            LevelMoney.Value = LevelMoney.CurrentValue + count;
+            ApplyLevelMoneyToText();
+        }
+
+        public float SetLevelMoney(float count = 0)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.SetLevelMoney, count);
+                return count;
+            }
+#endif
+            float res = SetLevelMoneyLocal(count);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.SetLevelMoney, count);
+            }
+#endif
+            return res;
+        }
+
+        private float SetLevelMoneyLocal(float count)
+        {
+            float prev = LevelMoney.CurrentValue;
+            LevelMoney.Value = count;
+            ApplyLevelMoneyToText();
+            return prev;
+        }
+
+        public float SetMoney(float count = 0)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.SetMoney, count);
+                return count;
+            }
+#endif
+            float res = SetMoneyLocal(count);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.SetMoney, count);
+            }
+#endif
+            return res;
+        }
+
+        private float SetMoneyLocal(float count)
+        {
+            if (float.IsNaN(count) || float.IsInfinity(count))
+            {
+                NeoDiagnostics.LogError($"[Money] SetMoney rejected: value is not a finite number ({count}).", this);
+                return CurrentMoney.CurrentValue;
+            }
+
+            if (_maxMoney > 0f)
+            {
+                count = Mathf.Min(count, _maxMoney);
+            }
+
+            // WHY: a balance below zero has no meaning and would let later spends succeed against a debt.
+            count = Mathf.Max(0f, count);
+
+            LastChangeMoney.Value = count - CurrentMoney.CurrentValue;
+            CurrentMoney.Value = count;
+            ApplyMoneyToText();
+            PersistBalanceToSave();
+            return CurrentMoney.CurrentValue;
+        }
+
+        /// <summary>
+        ///     Same as <see cref="SetMoney"/> but explicit name for UnityEvent / Inspector wiring (NoCode).
+        /// </summary>
+        public void SetCurrentMoney(float amount)
+        {
+            SetMoney(amount);
+        }
+
+        public float SetMoneyForLevel(bool resetLevelMoney = true)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.SetMoneyForLevel, resetLevelMoney ? 1f : 0f);
+                return LevelMoney.CurrentValue;
+            }
+#endif
+            float res = SetMoneyForLevelLocal(resetLevelMoney);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.SetMoneyForLevel, resetLevelMoney ? 1f : 0f);
+            }
+#endif
+            return res;
+        }
+
+        private float SetMoneyForLevelLocal(bool resetLevelMoney)
+        {
+            float count = LevelMoney.CurrentValue;
+            if (!IsValidAddAmount(count, nameof(SetMoneyForLevel)))
+            {
+                return 0f;
+            }
+
+            // WHY: the level payout is a regular income - it must respect the MaxMoney cap and feed
+            // AllMoney / LastChangeMoney exactly like Add() does.
+            AddLocal(count);
+
+            if (resetLevelMoney)
+            {
+                LevelMoney.Value = 0f;
+                ApplyLevelMoneyToText();
+            }
+
+            return count;
+        }
+
+        /// <summary>Checks the local snapshot, including a representable decrease for positive costs.</summary>
+        public bool CanSpend(float count)
+        {
+            if (count < 0f || float.IsNaN(count) || float.IsInfinity(count))
+            {
+                return false;
+            }
+
+            float balance = CurrentMoney.CurrentValue;
+            if (!(balance >= count))
+            {
+                return false;
+            }
+
+            // WHY: positive prices must lower the stored float. Keep ordinary rounding rather than
+            // requiring the representable delta to equal the nominal price (e.g. 1e8 - 5 loses 8).
+            float balanceAfter = balance - count;
+            return count == 0f || balanceAfter < balance;
+        }
+
+        public bool CanConfirmSpendNow(float count)
+        {
+            if (!CanSpend(count))
+            {
+                return false;
+            }
+
+#if MIRROR
+            return !isNetworked || !NeoNetworkState.IsClientOnly;
+#else
+            return true;
+#endif
+        }
+
+        private void ApplyMoneyToText()
+        {
+            float v = CurrentMoney.CurrentValue;
+            SetText(t_money, v);
+            if (st_money != null)
+            {
+                foreach (SetText item in st_money)
+                {
+                    if (item != null)
+                    {
+                        item.Set(v);
+                    }
+                }
+            }
+        }
+
+        private void ApplyLevelMoneyToText()
+        {
+            float v = LevelMoney.CurrentValue;
+            SetText(t_levelMoney, v);
+            if (st_levelMoney != null)
+            {
+                foreach (SetText item in st_levelMoney)
+                {
+                    if (item != null)
+                    {
+                        item.Set(v);
+                    }
+                }
+            }
+        }
+
+        private void SetText(TMP_Text[] text, float count)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            string s = count.RoundToDecimal(_roundToDecimal).ToString();
+            foreach (TMP_Text item in text)
+            {
+                if (item != null)
+                {
+                    item.text = s;
+                }
+            }
+        }
+
+#if MIRROR
+        /// <summary>Operation type for the unified network dispatch.</summary>
+        private enum MoneyOp : byte
+        {
+            Add = 0,
+            Spend = 1,
+            AddLevelMoney = 2,
+            SetLevelMoney = 3,
+            SetMoney = 4,
+            SetMoneyForLevel = 5,
+            AddOverflow = 6,
+            RefundSpend = 7
+        }
+
+        private bool RateLimit(NetworkConnectionToClient sender)
+        {
+            // WHY: per-connection window on the shared wallet — two clients acting within 50ms of
+            // each other are independent legitimate operations, not spam from one client.
+            double now = Time.unscaledTimeAsDouble;
+            if (sender == null || sender == NetworkServer.localConnection)
+            {
+                if (now - _lastCmdTime < CmdRateLimit)
+                {
+                    return true;
+                }
+
+                _lastCmdTime = now;
+                return false;
+            }
+
+            _lastCmdTimePerConnection ??= new Dictionary<int, double>();
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out double last)
+                && now - last < CmdRateLimit)
+            {
+                return true;
+            }
+
+            _lastCmdTimePerConnection[sender.connectionId] = now;
+            return false;
+        }
+
+        private void SyncBalance() { _syncCurrentMoney = CurrentMoney.CurrentValue; }
+
+        /// <summary>Applies the operation locally without network dispatch.</summary>
+        private void ExecuteOp(MoneyOp op, float amount)
+        {
+            switch (op)
+            {
+                case MoneyOp.Add: AddLocal(amount); break;
+                case MoneyOp.Spend: SpendLocal(amount); break;
+                case MoneyOp.AddLevelMoney: AddLevelMoneyLocal(amount); break;
+                case MoneyOp.SetLevelMoney: SetLevelMoneyLocal(amount); break;
+                case MoneyOp.SetMoney: SetMoneyLocal(amount); break;
+                case MoneyOp.SetMoneyForLevel: SetMoneyForLevelLocal(amount != 0f); break;
+                case MoneyOp.AddOverflow: AddOverflowLocal(amount); break;
+                case MoneyOp.RefundSpend: RefundSpendLocal(amount); break;
+            }
+        }
+
+        private bool CanAcceptClientMutation(MoneyOp op, float amount, NetworkConnectionToClient sender)
+        {
+            // WHY: Refund7 and unknown opcodes never enter the client mutation path, even for trusted server callers.
+            if (!isNetworked || (byte)op > (byte)MoneyOp.AddOverflow ||
+                float.IsNaN(amount) || float.IsInfinity(amount) ||
+                ((op == MoneyOp.Add || op == MoneyOp.AddOverflow) && amount < 0f))
+            {
+                return false;
+            }
+
+            if (op == MoneyOp.Spend && !CanSpend(amount))
+            {
+                return false;
+            }
+
+            switch (_clientMutationAuthority)
+            {
+                case NetworkAuthorityMode.None:
+                case NetworkAuthorityMode.OwnerOnly:
+                case NetworkAuthorityMode.ServerOnly:
+                    return NeoNetworkState.IsAuthorized(gameObject, sender, _clientMutationAuthority);
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>Admits the sender and payload before consuming rate budget or changing shared state.</summary>
+        [Command(requiresAuthority = false)]
+        private void CmdMoneyOp(MoneyOp op, float amount, NetworkConnectionToClient sender = null)
+        {
+            if (!CanAcceptClientMutation(op, amount, sender) || RateLimit(sender))
+            {
+                return;
+            }
+
+            ExecuteOp(op, amount);
+            SyncBalance();
+            RpcMoneyOp(op, amount);
+        }
+
+        /// <summary>Single unified ClientRpc — replaces 6 individual RpcXxx methods.</summary>
+        [ClientRpc(includeOwner = true)]
+        private void RpcMoneyOp(MoneyOp op, float amount)
+        {
+            if (isServer)
+            {
+                return;
+            }
+
+            ExecuteOp(op, amount);
+        }
+
+        /// <summary>Late-join: apply server-authoritative balance to newly connected client.</summary>
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (isNetworked && !isServer)
+            {
+                CurrentMoney.Value = _syncCurrentMoney;
+                ApplyMoneyToText();
+            }
+        }
+
+#endif
+    }
+}

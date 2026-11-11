@@ -1,0 +1,502 @@
+﻿using UnityEditor;
+using UnityEngine;
+
+namespace Neo.Audio.Editor
+{
+    /// <summary>
+    ///     Inspector row for one <see cref="AudioEntry" />.
+    ///     <para>
+    ///         The default drawer for a nested class buries everything behind a foldout and then shows six
+    ///         fields of equal weight, so "add a sound" costs several clicks and a lot of reading. Here the
+    ///         collapsed row carries what identifies an entry AND the thing reached for most: the clip
+    ///         itself. An empty or single-clip entry exposes its object field right on the row, so filling a
+    ///         fresh entry is one drag with nothing to expand. Volume moved inside - it is tuned once, while
+    ///         clips are assigned constantly.
+    ///     </para>
+    ///     <para>
+    ///         <b>Drag several clips onto the row</b> and they are appended in one go. Filling an entry with
+    ///         eight footstep variants is a single drag, not eight array-size edits.
+    ///     </para>
+    /// </summary>
+    [CustomPropertyDrawer(typeof(AudioEntry), true)]
+    public sealed class AudioEntryDrawer : PropertyDrawer
+    {
+        private const float Pad = 2f;
+
+        // WHY: the drawer runs once per entry per IMGUI event; labels and tooltips are built once instead of
+        // allocating a dozen GUIContent objects for every visible row on every repaint.
+        private static readonly GUIContent VolumeContent = new GUIContent("Volume",
+            "Multiplier of the channel volume, 0..2. Final = channel x this, so above 1 lifts a "
+            + "clip that was mastered too quietly.");
+
+        private static readonly GUIContent RandomizePitchContent = new GUIContent("Randomize Pitch",
+            "Detune each play so repeats stop sounding identical.");
+
+        private static readonly GUIContent PitchMinContent = new GUIContent("Pitch Min");
+        private static readonly GUIContent PitchMaxContent = new GUIContent("Pitch Max");
+
+        private static readonly GUIContent ModeContent = new GUIContent("Mode",
+            "Loop: hold this track until the game switches. Shuffle: roll on to another track of " +
+            "the pool when this one ends.");
+
+        private static readonly GUIContent FadeContent = new GUIContent("Fade Override",
+            "Negative = use AM's Music Fade Duration.");
+
+        private static readonly GUIContent ChannelContent = new GUIContent("Channel",
+            "Sfx: the Efx AudioSource volume / mute / group. Ui: the UI channel with its own volume " +
+            "and mixer group (AM > Channels).");
+
+        private static readonly GUIContent SpatialBlendContent = new GUIContent("Spatial Blend (PlayAt)",
+            "Used only when the entry is played at a world position: 0 = 2D, 1 = fully 3D.");
+
+        private static readonly GUIContent PlaceholderContent = new GUIContent("Placeholder",
+            "Intentionally empty for now: while it has no clip, playing it does nothing and logs " +
+            "nothing. Add clips later and it plays normally.");
+
+        private static readonly GUIContent ClipsHeaderContent = new GUIContent("Clips",
+            "Two or more -> a random one plays each time, never the same twice in a row.");
+
+        private static readonly GUIContent AddClipContent = new GUIContent("+", "Add an empty clip slot.");
+        private static readonly GUIContent RemoveClipContent = new GUIContent("-", "Remove this clip.");
+
+        private static readonly GUIContent TrimHeaderContent = new GUIContent("trim",
+            "Per-clip volume multiplier. Takes are rarely matched in level; this pulls the loud "
+            + "one down - or lifts the quiet one - without re-exporting the file.");
+
+        private static readonly GUIContent ClipCountContent = new GUIContent(string.Empty,
+            "Drag audio clips onto this row to add them all at once.");
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            float line = EditorGUIUtility.singleLineHeight + Pad;
+            if (!property.isExpanded)
+            {
+                return line;
+            }
+
+            float height = line;
+            SerializedProperty clips = property.FindPropertyRelative("_clips");
+            height += ClipListHeight(clips, line) + Pad;
+            height += line; // volume
+            height += line; // randomize pitch
+
+            SerializedProperty randomize = property.FindPropertyRelative("_randomizePitch");
+            if (randomize != null && randomize.boolValue)
+            {
+                height += line * 2f;
+            }
+
+            if (property.FindPropertyRelative("_mode") != null)
+            {
+                height += line * 2f; // mode + fade override
+            }
+
+            if (property.FindPropertyRelative("_channel") != null)
+            {
+                height += line * 2f; // channel + spatial blend
+            }
+
+            if (property.FindPropertyRelative("_placeholder") != null)
+            {
+                height += line; // placeholder
+            }
+
+            height += line; // drop hint
+            return height;
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+
+            SerializedProperty id = property.FindPropertyRelative("_id");
+            SerializedProperty clips = property.FindPropertyRelative("_clips");
+            SerializedProperty volume = property.FindPropertyRelative("_volume");
+            SerializedProperty randomize = property.FindPropertyRelative("_randomizePitch");
+            SerializedProperty pitchMin = property.FindPropertyRelative("_pitchMin");
+            SerializedProperty pitchMax = property.FindPropertyRelative("_pitchMax");
+            SerializedProperty mode = property.FindPropertyRelative("_mode");
+            SerializedProperty fade = property.FindPropertyRelative("_fadeDuration");
+            SerializedProperty clipVolumes = property.FindPropertyRelative("_clipVolumes");
+            SerializedProperty channel = property.FindPropertyRelative("_channel");
+            SerializedProperty spatialBlend = property.FindPropertyRelative("_spatialBlend");
+            SerializedProperty placeholder = property.FindPropertyRelative("_placeholder");
+
+            float lineHeight = EditorGUIUtility.singleLineHeight;
+            Rect row = new Rect(position.x, position.y, position.width, lineHeight);
+
+            // WHY only the header row and not the whole entry: when the entry is expanded, its rect also
+            // covers the Clips array, and swallowing drops there would break Unity's own per-element
+            // assignment - dragging a clip onto element 2 to replace it would silently append instead.
+            HandleClipDrop(row, clips, clipVolumes);
+
+            // WHY: the header is the whole point of this drawer - identity and the one value that gets
+            // tweaked most, readable without expanding anything.
+            Rect foldoutRect = new Rect(row.x, row.y, 14f, row.height);
+            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, GUIContent.none, true);
+
+            int clipCountForRow = clips != null ? clips.arraySize : 0;
+            bool singleSlot = clipCountForRow <= 1;
+
+            float remaining = row.width - 16f;
+            float countWidth = singleSlot ? 0f : 52f;
+            // The right half belongs to the clip: assigning one is the constant action, tuning volume is not.
+            float clipWidth = Mathf.Clamp(remaining * 0.5f, 120f, 260f);
+            float idWidth = Mathf.Max(60f, remaining - countWidth - clipWidth - 8f);
+
+            Rect idRect = new Rect(row.x + 16f, row.y, idWidth, row.height);
+            Rect countRect = new Rect(idRect.xMax + 4f, row.y, countWidth, row.height);
+            Rect clipRect = new Rect(row.xMax - clipWidth, row.y, clipWidth, row.height);
+
+            if (id != null)
+            {
+                string previous = id.stringValue;
+                string typed = EditorGUI.TextField(idRect, previous);
+                if (typed != previous)
+                {
+                    id.stringValue = typed;
+                }
+
+                if (string.IsNullOrEmpty(id.stringValue) && Event.current.type == EventType.Repaint)
+                {
+                    // WHY: GUI.Label takes no control id; EditorGUI.LabelField does, and this branch is Repaint-only.
+                    GUI.Label(new Rect(idRect.x + 3f, idRect.y, idRect.width, idRect.height),
+                        "id (optional)", EditorStyles.centeredGreyMiniLabel);
+                }
+            }
+
+            if (!singleSlot)
+            {
+                ClipCountContent.text = clipCountForRow + " clips";
+                EditorGUI.LabelField(countRect, ClipCountContent, EditorStyles.miniLabel);
+            }
+
+            if (clips != null)
+            {
+                if (singleSlot)
+                {
+                    // One slot straight on the row: a fresh entry is filled without ever expanding it, and
+                    // dropping a second clip here grows the set through the same drag handler as the header.
+                    Object current = clipCountForRow == 1
+                        ? clips.GetArrayElementAtIndex(0).objectReferenceValue
+                        : null;
+
+                    EditorGUI.BeginChangeCheck();
+                    Object picked = EditorGUI.ObjectField(clipRect, current, typeof(AudioClip), false);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (picked == null)
+                        {
+                            if (clipCountForRow == 1)
+                            {
+                                clips.arraySize = 0;
+                                // The trims are index-keyed, so an orphaned one would re-level the next clip
+                                // dropped into this slot.
+                                if (clipVolumes != null) clipVolumes.arraySize = 0;
+                            }
+                        }
+                        else
+                        {
+                            if (clipCountForRow == 0)
+                            {
+                                AppendClip(clips, clipVolumes, (AudioClip)picked);
+                            }
+                            else
+                            {
+                                clips.GetArrayElementAtIndex(0).objectReferenceValue = picked;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // A set cannot be summarised by one field, so the row offers the way in instead.
+                    if (GUI.Button(clipRect, property.isExpanded ? "Hide clips" : "Show clips", EditorStyles.miniButton))
+                    {
+                        property.isExpanded = !property.isExpanded;
+                    }
+                }
+            }
+
+            if (!property.isExpanded)
+            {
+                EditorGUI.EndProperty();
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            float y = row.yMax + Pad;
+            float width = position.width;
+
+            if (clips != null)
+            {
+                float clipsHeight = ClipListHeight(clips, lineHeight + Pad);
+                DrawClipList(new Rect(position.x, y, width, clipsHeight), clips, clipVolumes, lineHeight);
+                y += clipsHeight + Pad;
+            }
+
+            if (volume != null)
+            {
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), volume, VolumeContent);
+                y += lineHeight + Pad;
+            }
+
+            if (randomize != null)
+            {
+                // The package draws every bool as an ON/OFF pill; a raw checkbox here read as a foreign island.
+                Neo.Editor.NeoxiderEditorGUI.DrawPillToggleField(
+                    new Rect(position.x, y, width, lineHeight), randomize, RandomizePitchContent);
+                y += lineHeight + Pad;
+
+                if (randomize.boolValue)
+                {
+                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), pitchMin, PitchMinContent);
+                    y += lineHeight + Pad;
+                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), pitchMax, PitchMaxContent);
+                    y += lineHeight + Pad;
+                }
+            }
+
+            if (mode != null)
+            {
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), mode, ModeContent);
+                y += lineHeight + Pad;
+
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), fade, FadeContent);
+                y += lineHeight + Pad;
+            }
+
+            if (channel != null)
+            {
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), channel, ChannelContent);
+                y += lineHeight + Pad;
+
+                if (spatialBlend != null)
+                {
+                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), spatialBlend,
+                        SpatialBlendContent);
+                }
+
+                y += lineHeight + Pad;
+            }
+
+            if (placeholder != null)
+            {
+                Neo.Editor.NeoxiderEditorGUI.DrawPillToggleField(
+                    new Rect(position.x, y, width, lineHeight), placeholder, PlaceholderContent);
+                y += lineHeight + Pad;
+            }
+
+            EditorGUI.LabelField(new Rect(position.x, y, width, lineHeight),
+                "Tip: drag several clips onto the header row to add them all at once.",
+                EditorStyles.centeredGreyMiniLabel);
+
+            EditorGUI.indentLevel--;
+            EditorGUI.EndProperty();
+        }
+
+        private static float ClipListHeight(SerializedProperty clips, float line)
+        {
+            int count = clips != null ? clips.arraySize : 0;
+            // Header row, then one row per clip - or a single "empty" note when there are none.
+            return line * (1 + Mathf.Max(1, count));
+        }
+
+        /// <summary>
+        ///     The clip set, drawn as one row per clip: the clip on the left, its volume trim on the right.
+        ///     <para>
+        ///         WHY not the default array drawer: the trim array is a parallel <c>float[]</c> keyed by
+        ///         clip index, and Unity would draw it as a second, unlabelled list of numbers - impossible
+        ///         to line up with the clips by eye and trivial to desync by editing one size and not the
+        ///         other. Rendered as one row the pairing is the layout, and add/remove keeps both arrays
+        ///         aligned by construction.
+        ///     </para>
+        ///     <para>
+        ///         A missing trim reads as <c>1</c>, so the array stays short until someone actually moves a
+        ///         slider. That is what lets entries authored before trims existed load unchanged.
+        ///     </para>
+        /// </summary>
+        private static void DrawClipList(Rect area, SerializedProperty clips, SerializedProperty clipVolumes,
+            float lineHeight)
+        {
+            float line = lineHeight + Pad;
+            Rect header = new Rect(area.x, area.y, area.width, lineHeight);
+
+            EditorGUI.LabelField(header, ClipsHeaderContent);
+
+            Rect addRect = new Rect(header.xMax - 22f, header.y, 22f, lineHeight);
+            if (GUI.Button(addRect, AddClipContent, EditorStyles.miniButton))
+            {
+                AppendClip(clips, clipVolumes, null);
+            }
+
+            Rect trimHeader = new Rect(addRect.x - 84f, header.y, 80f, lineHeight);
+            if (clips.arraySize > 0)
+            {
+                EditorGUI.LabelField(trimHeader, TrimHeaderContent, EditorStyles.centeredGreyMiniLabel);
+            }
+
+            float y = header.yMax + Pad;
+
+            if (clips.arraySize == 0)
+            {
+                EditorGUI.LabelField(new Rect(area.x, y, area.width, lineHeight),
+                    "No clips - drag them onto the entry's header row.", EditorStyles.centeredGreyMiniLabel);
+                return;
+            }
+
+            int removeAt = -1;
+
+            for (int index = 0; index < clips.arraySize; index++)
+            {
+                Rect row = new Rect(area.x, y, area.width, lineHeight);
+                Rect removeRect = new Rect(row.xMax - 22f, row.y, 22f, lineHeight);
+                Rect trimRect = new Rect(removeRect.x - 84f, row.y, 80f, lineHeight);
+                Rect clipRect = new Rect(row.x, row.y, Mathf.Max(60f, trimRect.x - row.x - 4f), lineHeight);
+
+                EditorGUI.PropertyField(clipRect, clips.GetArrayElementAtIndex(index), GUIContent.none);
+
+                float trim = ReadTrim(clipVolumes, index);
+                EditorGUI.BeginChangeCheck();
+                float edited = EditorGUI.Slider(trimRect, GUIContent.none, trim, 0f, AudioEntry.MaxVolume);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    WriteTrim(clipVolumes, index, edited);
+                }
+
+                if (GUI.Button(removeRect, RemoveClipContent, EditorStyles.miniButton))
+                {
+                    removeAt = index;
+                }
+
+                y += line;
+            }
+
+            if (removeAt >= 0)
+            {
+                // WHY the trim goes with it: the arrays are index-aligned, so leaving the trim behind would
+                // silently re-level whatever clip shifts up into that slot.
+                if (clipVolumes != null && clipVolumes.arraySize > removeAt)
+                {
+                    clipVolumes.DeleteArrayElementAtIndex(removeAt);
+                }
+
+                // DeleteArrayElementAtIndex on an object-reference array nulls the element first, so it is
+                // called twice on purpose - the second call is what actually shortens the array.
+                SerializedProperty element = clips.GetArrayElementAtIndex(removeAt);
+                if (element.propertyType == SerializedPropertyType.ObjectReference &&
+                    element.objectReferenceValue != null)
+                {
+                    clips.DeleteArrayElementAtIndex(removeAt);
+                }
+
+                clips.DeleteArrayElementAtIndex(removeAt);
+            }
+        }
+
+        private static float ReadTrim(SerializedProperty clipVolumes, int index)
+        {
+            if (clipVolumes == null || index < 0 || index >= clipVolumes.arraySize)
+            {
+                return 1f;
+            }
+
+            return clipVolumes.GetArrayElementAtIndex(index).floatValue;
+        }
+
+        private static void WriteTrim(SerializedProperty clipVolumes, int index, float value)
+        {
+            if (clipVolumes == null || index < 0)
+            {
+                return;
+            }
+
+            if (clipVolumes.arraySize <= index)
+            {
+                int from = clipVolumes.arraySize;
+                clipVolumes.arraySize = index + 1;
+                // Every slot the array just grew through means "no trim", and a default of 0 would silence
+                // clips nobody touched.
+                for (int slot = from; slot < index; slot++)
+                {
+                    clipVolumes.GetArrayElementAtIndex(slot).floatValue = 1f;
+                }
+            }
+
+            clipVolumes.GetArrayElementAtIndex(index).floatValue =
+                Mathf.Clamp(value, 0f, AudioEntry.MaxVolume);
+        }
+
+        private static void AppendClip(SerializedProperty clips, SerializedProperty clipVolumes, AudioClip clip)
+        {
+            int index = clips.arraySize;
+            // Clips can be shortened through the public API without shortening the parallel trims. A new
+            // slot must not inherit an orphaned trim (including zero) from the removed clip.
+            if (clipVolumes != null && clipVolumes.arraySize > index)
+            {
+                clipVolumes.arraySize = index;
+            }
+
+            clips.arraySize = index + 1;
+            clips.GetArrayElementAtIndex(index).objectReferenceValue = clip;
+        }
+
+        /// <summary>
+        ///     Appends every dropped <see cref="AudioClip" /> to the entry's header row.
+        /// </summary>
+        private static void HandleClipDrop(Rect position, SerializedProperty clips, SerializedProperty clipVolumes)
+        {
+            if (clips == null || !clips.isArray)
+            {
+                return;
+            }
+
+            Event current = Event.current;
+            if (current.type != EventType.DragUpdated && current.type != EventType.DragPerform)
+            {
+                return;
+            }
+
+            if (!position.Contains(current.mousePosition))
+            {
+                return;
+            }
+
+            bool hasClip = false;
+            for (int index = 0; index < DragAndDrop.objectReferences.Length; index++)
+            {
+                if (DragAndDrop.objectReferences[index] is AudioClip)
+                {
+                    hasClip = true;
+                    break;
+                }
+            }
+
+            if (!hasClip)
+            {
+                return;
+            }
+
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+            if (current.type != EventType.DragPerform)
+            {
+                return;
+            }
+
+            DragAndDrop.AcceptDrag();
+
+            for (int index = 0; index < DragAndDrop.objectReferences.Length; index++)
+            {
+                if (DragAndDrop.objectReferences[index] is not AudioClip clip)
+                {
+                    continue;
+                }
+
+                AppendClip(clips, clipVolumes, clip);
+            }
+
+            current.Use();
+        }
+    }
+}

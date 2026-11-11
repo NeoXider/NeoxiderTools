@@ -1,0 +1,80 @@
+﻿# ShopListView
+
+**What it is:** optional dynamic storefront view for `Shop` (`MonoBehaviour`, `Scripts/Shop/ShopListView.cs`). It
+creates and reuses `ShopItem` rows, filters them by category and ownership, and wires each row's buy button to a
+`Shop` action, while the `Shop` keeps purchase, save, currency and ownership rules.
+
+**How to use:**
+1. Keep one `Shop` with the full catalog and disable its `Auto Spawn Items`.
+2. Add `ShopListView`, assign the `Shop`, an `Item Prefab` and an `Items Root`.
+3. Switch categories with `ShowCategory(string)` / `ShowAll()` (or `ShopCategoryButton`, `ShopCategorySelector`, `ShopListViewCategoryBar`).
+
+---
+
+Use one `Shop` for purchase logic, save data, currency, ownership, and inventory events. Add one or more `ShopListView` components when you need separate category views, tabs, filtered lists, or a fully spawned storefront.
+
+## Typical Setup
+
+1. Put `Shop` in the scene and assign all `ShopItemData` assets.
+2. Disable `Auto Spawn Items` on `Shop` if the shop should not create its own full list.
+3. Add `ShopListView` to a UI root.
+4. Assign the same `Shop`, an `Item Prefab`, and an `Items Root`.
+5. Call `ShowCategory(string)` from category buttons, or `ShowAll()` for the full list.
+
+## Key Fields (Inspector)
+
+| Field | Purpose |
+|-------|---------|
+| `Shop` | Source shop controller. Auto-resolved from parent/scene when empty. |
+| `Category` | Current category filter. |
+| `Show All When Category Empty` | Empty category means all items instead of only uncategorized items. |
+| `Include Owned` / `Include Unowned` | Basic ownership filters. |
+| `Hide Owned Single Purchase Items` | Removes already owned one-time items from the list. |
+| `Item Prefab` | `ShopItem` prefab used to spawn missing views. |
+| `Views` | Optional pre-authored views reused before spawning more. |
+| `Button Action` | What `ShopItem.buttonBuy` does: buy, preview, or select. |
+
+## NoCode API
+
+- `ShowAll()`
+- `ShowCategory(string category)`
+- `SetCategory(string category)`
+- `SetIncludeOwned(bool)`
+- `SetIncludeUnowned(bool)`
+- `SetButtonAction(ShopListButtonAction)`
+- `SetItemPrefab(ShopItem)`
+- `SetItemsRoot(Transform)`
+- `SetShowAllWhenCategoryEmpty(bool)`
+- `SetHideOwnedSinglePurchaseItems(bool)`
+- `Refresh()`
+
+For most projects, use one `Shop` and multiple `ShopListView` instances instead of one `Shop` per category.
+
+From C#, `SetShop(Shop)` replaces the source and refreshes the list. `Views` and `VisibleItems` expose the current binding order. Reused rows notify their dependent purchase-button visuals immediately. Disabling the list detaches its automatic button and Shop subscriptions; setters can update its cached data while disabled without reconnecting them. Re-enabling reconnects buttons even when `Refresh On Enable` is off.
+
+```csharp
+ShopListView list = GetComponent<ShopListView>();
+list.SetShop(shop);
+list.SetButtonAction(ShopListButtonAction.Preview);
+list.ShowCategory("Hats");
+list.OnRefreshed.AddListener(UpdateEmptyState);
+```
+
+## Refresh cost
+
+- With `Refresh On Shop Events` on, the list rebuilds on `OnShopChanged` and `OnLoad`. `OnPurchasedId` and
+  `OnSelectId` rebuild only when the shop state changed since the last rebuild, so one purchase (or one bundle with
+  many items) causes a single rebuild and a single `OnRefreshed`.
+- Each row slot keeps one cached button action; a rebuild only touches listeners when a slot's button changes, so
+  rebinding unchanged rows does not allocate.
+- Row prices come straight from the bound `ShopItemData` plus runtime overrides, without a catalog lookup per row.
+
+## Category Buttons
+
+If UnityEvent string parameters are inconvenient, add `ShopCategoryButton` to a UI `Button`.
+
+1. Assign `Target View`.
+2. Set `Category` or enable `Show All`.
+3. Leave `Auto Bind Button` enabled.
+
+At runtime the button calls `ShopListView.ShowCategory(...)` or `ShopListView.ShowAll()`.

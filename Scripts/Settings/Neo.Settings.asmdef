@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Settings",
+    "rootNamespace": "Neo.Settings",
+    "references": [
+        "Neo.Tools.Managers",
+        "Neo.Save",
+        "Neo.PropertyAttribute",
+        "Unity.TextMeshPro",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

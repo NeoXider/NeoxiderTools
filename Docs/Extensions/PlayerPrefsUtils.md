@@ -1,0 +1,27 @@
+﻿# PlayerPrefsUtils
+
+**What it is:** a static utility class extending `PlayerPrefs` with `int[]`, `float[]`, `string[]` and `bool[]` helpers stored as invariant-culture separated strings. File: `Scripts/Extensions/PlayerPrefsUtils.cs`, namespace `Neo.Extensions`.
+
+**How to use:** call `PlayerPrefsUtils.SetIntArray(key, values)` and read it back with `PlayerPrefsUtils.GetIntArray(key, fallback)`.
+
+## API
+
+- `SetIntArray(string key, int[] array)` / `GetIntArray(string key, int[] defaultValue = null)`
+- `SetFloatArray(string key, float[] array)` / `GetFloatArray(string key, float[] defaultValue = null)`
+- `SetStringArray(string key, string[] array)` / `GetStringArray(string key, string[] defaultValue = null)`
+- `SetBoolArray(string key, bool[] array)` / `GetBoolArray(string key, bool[] defaultValue = null)`
+
+## Format and validation
+
+- Arrays are stored as comma-separated strings in `PlayerPrefs`.
+- Numeric arrays use invariant culture, so floats are saved with a dot decimal separator (`1.25`).
+- `SetStringArray` writes the legacy CSV format and `GetStringArray` reads both legacy CSV and the older JSON wrapper format (`{"Value":[...]}`).
+- `string[]` values cannot contain commas. `SetStringArray` throws `ArgumentException` if any element contains `,`, because that value cannot be restored safely from CSV.
+- `bool[]` values are stored as `0` / `1`; any other stored number is treated as invalid data and returns `defaultValue`.
+- Empty or malformed boolean data also returns the caller's `defaultValue`, including when integer parsing fails.
+- Invalid stored data returns `defaultValue` or an empty array and logs a warning.
+
+Call `PlayerPrefs.Save()` manually after Set methods when you need the data flushed to disk immediately.
+
+## See Also
+- ← [Extensions](README.md)

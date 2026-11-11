@@ -1,0 +1,297 @@
+using DG.Tweening;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neo.Tools
+{
+    /// <summary>
+    ///     Camera shake component using DOTween with support for position and rotation shake
+    /// </summary>
+    [NeoDoc("Tools/Other/CameraShake.md")]
+    [CreateFromMenu("Neoxider/Tools/Other/CameraShake")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraShake))]
+    public class CameraShake : MonoBehaviour
+    {
+        public enum ShakeType
+        {
+            Position,
+            Rotation,
+            Both
+        }
+
+        [Header("Shake Type")] [Tooltip("What to shake: Position, Rotation, or Both")]
+        public ShakeType shakeType = ShakeType.Position;
+
+        [Header("Shake Settings")] [Tooltip("Duration of the shake in seconds")] [Min(0.01f)]
+        public float duration = 0.5f;
+
+        [Tooltip("Strength of the shake")] [Min(0f)]
+        public float strength = 1f;
+
+        [Tooltip("How many times the shake will vibrate")] [Range(1, 50)]
+        public int vibrato = 10;
+
+        [Tooltip("Randomness of the shake (0 = no randomness, 180 = full randomness)")] [Range(0f, 180f)]
+        public float randomness = 90f;
+
+        [Tooltip("If true, the shake will fade out smoothly")]
+        public bool fadeOut = true;
+
+        [Header("Position Shake Settings")] [Tooltip("Shake on X axis")]
+        public bool shakeX = true;
+
+        [Tooltip("Shake on Y axis")] public bool shakeY = true;
+
+        [Tooltip("Shake on Z axis")] public bool shakeZ;
+
+        [Header("Rotation Shake Settings")] [Tooltip("Shake rotation on X axis (pitch)")]
+        public bool rotateX;
+
+        [Tooltip("Shake rotation on Y axis (yaw)")]
+        public bool rotateY;
+
+        [Tooltip("Shake rotation on Z axis (roll)")]
+        public bool rotateZ = true;
+
+        [Header("Advanced Settings")] [Tooltip("Easing type for the shake")]
+        public Ease easeType = Ease.Linear;
+
+        [Tooltip("If true, uses unscaled time (ignores Time.timeScale)")]
+        public bool useUnscaledTime;
+
+        [Tooltip("If true, the shake will be relative to the current position/rotation")]
+        public bool relativeShake = true;
+
+        [Tooltip("Called when shake starts")] public UnityEvent OnShakeStart;
+
+        [Tooltip("Called when shake completes")]
+        public UnityEvent OnShakeComplete;
+
+        [Tooltip("Called when shake is stopped manually")]
+        public UnityEvent OnShakeStop;
+
+        private Vector3 _originalPosition;
+        private Quaternion _originalRotation;
+        private Vector3 _restorePosition;
+        private Quaternion _restoreRotation = Quaternion.identity;
+        private Tween _positionTween;
+        private Tween _rotationTween;
+        private Sequence _sequence;
+        private int _shakeVersion;
+        private ShakeType _activeShakeType;
+
+        /// <summary>
+        ///     Gets whether the camera is currently shaking
+        /// </summary>
+        public bool IsShaking { get; private set; }
+
+        private void Awake()
+        {
+            _originalPosition = transform.localPosition;
+            _originalRotation = transform.localRotation;
+        }
+
+        private void OnDisable()
+        {
+            StopShake();
+        }
+
+        private void OnDestroy()
+        {
+            StopShake();
+        }
+
+        private void OnValidate()
+        {
+            if (duration < 0.01f)
+            {
+                duration = 0.01f;
+            }
+
+            if (strength < 0f)
+            {
+                strength = 0f;
+            }
+
+            if (vibrato < 1)
+            {
+                vibrato = 1;
+            }
+
+            if (vibrato > 50)
+            {
+                vibrato = 50;
+            }
+
+            randomness = Mathf.Clamp(randomness, 0f, 180f);
+        }
+
+        /// <summary>
+        ///     Starts shake with default settings
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void StartShake()
+        {
+            StartShake(duration, strength);
+        }
+
+        /// <summary>
+        ///     Starts shake with custom duration and strength
+        /// </summary>
+        /// <param name="customDuration">Custom duration in seconds</param>
+        /// <param name="customStrength">Custom strength</param>
+        public void StartShake(float customDuration, float customStrength)
+        {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            int expectedVersion = _shakeVersion + (IsShaking ? 1 : 0);
+            StopShake();
+            if (_shakeVersion != expectedVersion || !isActiveAndEnabled)
+            {
+                // WHY: A stop listener issued a newer request.
+                return;
+            }
+
+            int shakeVersion = ++_shakeVersion;
+            _activeShakeType = shakeType;
+            // WHY: a relative shake must settle where it started; the Awake pose is wrong for a camera that
+            // moved (follow camera) and snapped it back on every StopShake or interrupting shake.
+            _restorePosition = relativeShake ? transform.localPosition : _originalPosition;
+            _restoreRotation = relativeShake ? transform.localRotation : _originalRotation;
+            IsShaking = true;
+
+            Sequence sequence = DOTween.Sequence().SetUpdate(useUnscaledTime).Pause();
+            _sequence = sequence;
+
+            if (_activeShakeType == ShakeType.Position || _activeShakeType == ShakeType.Both)
+            {
+                if (!relativeShake)
+                {
+                    transform.localPosition = _originalPosition;
+                }
+
+                Vector3 shakeStrength = new(
+                    shakeX ? customStrength : 0f,
+                    shakeY ? customStrength : 0f,
+                    shakeZ ? customStrength : 0f
+                );
+
+                _positionTween = transform.DOShakePosition(
+                    customDuration,
+                    shakeStrength,
+                    vibrato,
+                    randomness,
+                    snapping: false,
+                    fadeOut: fadeOut
+                ).SetEase(easeType);
+
+                sequence.Join(_positionTween);
+            }
+
+            if (_activeShakeType == ShakeType.Rotation || _activeShakeType == ShakeType.Both)
+            {
+                if (!relativeShake)
+                {
+                    transform.localRotation = _originalRotation;
+                }
+
+                Vector3 rotationStrength = new(
+                    rotateX ? customStrength : 0f,
+                    rotateY ? customStrength : 0f,
+                    rotateZ ? customStrength : 0f
+                );
+
+                _rotationTween = transform.DOShakeRotation(
+                    customDuration,
+                    rotationStrength,
+                    vibrato,
+                    randomness,
+                    fadeOut
+                ).SetEase(easeType);
+
+                sequence.Join(_rotationTween);
+            }
+
+            sequence.OnComplete(() =>
+            {
+                if (shakeVersion != _shakeVersion)
+                {
+                    return;
+                }
+
+                _sequence = null;
+                _positionTween = null;
+                _rotationTween = null;
+                IsShaking = false;
+                OnShakeComplete?.Invoke();
+            });
+
+            // WHY: The sequence must already be owned when a listener stops or replaces this shake.
+            OnShakeStart?.Invoke();
+            if (shakeVersion == _shakeVersion && IsShaking)
+            {
+                if (this != null && isActiveAndEnabled)
+                {
+                    sequence.Play();
+                }
+                else
+                {
+                    StopShake();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Stops the current shake immediately
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void StopShake()
+        {
+            if (!IsShaking)
+            {
+                return;
+            }
+
+            _shakeVersion++;
+            _sequence?.Kill();
+            _sequence = null;
+            _positionTween = null;
+            _rotationTween = null;
+
+            if (_activeShakeType == ShakeType.Position || _activeShakeType == ShakeType.Both)
+            {
+                transform.localPosition = _restorePosition;
+            }
+
+            if (_activeShakeType == ShakeType.Rotation || _activeShakeType == ShakeType.Both)
+            {
+                transform.localRotation = _restoreRotation;
+            }
+
+            IsShaking = false;
+            OnShakeStop?.Invoke();
+        }
+
+        /// <summary>
+        ///     Restores original position and rotation
+        /// </summary>
+        public void ResetTransform()
+        {
+            transform.localPosition = _originalPosition;
+            transform.localRotation = _originalRotation;
+        }
+
+        /// <summary>
+        ///     Stops the active shake and restores the original position and rotation.
+        /// </summary>
+        [Button("Stop And Reset", PlayModeOnly = true)]
+        public void StopAndReset()
+        {
+            StopShake();
+            ResetTransform();
+        }
+    }
+}

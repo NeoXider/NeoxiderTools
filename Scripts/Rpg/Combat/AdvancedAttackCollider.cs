@@ -1,0 +1,415 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neo.Tools
+{
+    public enum AttackType
+    {
+        Damage,
+        Heal
+    }
+
+    [LegacyComponent("Neo.Rpg.RpgAttackController + Neo.Rpg.RpgProjectile + Neo.Tools.RpgStatsDamageableBridge")]
+    [Obsolete(
+        "Use Neo.Rpg.RpgAttackController and RpgProjectile for new RPG combat. Use RpgStatsDamageableBridge only for legacy IDamageable compatibility.")]
+    [NeoDoc("Rpg/Combat/README.md")]
+    [CreateFromMenu("Neoxider/Tools/Components/AdvancedAttackCollider")]
+    [AddComponentMenu("Neoxider/Tools/Components/AdvancedAttackCollider (Legacy)")]
+    public class AdvancedAttackCollider : MonoBehaviour
+    {
+        [Header("Attack")] [SerializeField] private int attackDamage = 10;
+
+        [Tooltip("Attack type: damage or healing")] [SerializeField]
+        private AttackType attackType = AttackType.Damage;
+
+        [Tooltip("Limit repeated hits on the same object (off by default)")] [SerializeField]
+        private bool preventRepeatHits;
+
+        public float triggerDuration = 0.2f;
+
+        [Header("Auto")]
+        [SerializeField]
+        [Tooltip("When enabled, component toggles colliders during trigger activation.")]
+        private bool autoManageColliders;
+
+        [SerializeField] private new Collider2D collider2D;
+        [SerializeField] private Collider collider3D;
+
+        [Header("Modes")] [Tooltip("Handle 2D collisions/triggers")]
+        public bool use2D = true;
+
+        [Tooltip("Handle 3D collisions/triggers")]
+        public bool use3D = true;
+
+        [Tooltip("Handle trigger events")] public bool useTrigger = true;
+
+        [Tooltip("Handle collision events")] public bool useCollision = true;
+
+        [Header("Filtering")] public LayerMask hittableLayers = -1;
+
+        [Header("Force")] public bool applyForceOnHit;
+        public float forceMagnitude = 20f;
+        public float forceDuration = 0.3f; // WHY: reserved for future use
+
+        [Tooltip("Force mode for 3D Rigidbody")]
+        public ForceMode forceMode3D = ForceMode.Impulse;
+
+        [Tooltip("Force mode for 2D Rigidbody")]
+        public ForceMode2D forceMode2D = ForceMode2D.Impulse;
+
+        [Tooltip("Scale force by Rigidbody mass")]
+        public bool scaleForceByMass = true;
+
+        [Tooltip("Use AdvancedForceApplier as fallback")]
+        public bool useAdvancedForceApplier = true;
+
+        [Header("Effects")] public GameObject attackEffectPrefab;
+
+        [Header("Ignore")] [Tooltip("Objects that are not damaged and do not trigger hit")] [SerializeField]
+        private GameObject[] ignoreObjects;
+
+        [Header("Destroy")] [Tooltip("If true, destroys this object on collision/hit")]
+        public bool destroySelfOnHit;
+
+        [Tooltip("If true, destroys target object on collision/hit")]
+        public bool destroyTargetOnHit;
+
+        [Header("Gizmos")] [SerializeField] private bool _showGizmo = true;
+
+        [SerializeField] private Color _gizmoColor = new(1f, 0f, 0f, 0.2f);
+
+        public UnityEvent<Collider2D> OnAttackTriggerEnter2D;
+
+        public UnityEvent<Collider> OnAttackTriggerEnter3D;
+        public UnityEvent OnDeactivateTrigger;
+
+        [Tooltip("Single hit event: target GameObject")]
+        public UnityEvent<GameObject> OnHit;
+
+        private readonly HashSet<Collider2D> hitColliders2D = new();
+        private readonly HashSet<Collider> hitColliders3D = new();
+        private int _currentDamage;
+
+        public int AttackDamage
+        {
+            get => attackDamage;
+            set => attackDamage = value;
+        }
+
+        private void Awake()
+        {
+            _currentDamage = AttackDamage;
+            if (collider2D == null)
+            {
+                collider2D = GetComponent<Collider2D>();
+            }
+
+            if (collider3D == null)
+            {
+                collider3D = GetComponent<Collider>();
+            }
+
+            if (autoManageColliders)
+            {
+                EnableCollider(false);
+            }
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (!isActiveAndEnabled || !use3D || !useCollision)
+            {
+                return;
+            }
+
+            if (collider3D == null || collision.collider == null ||
+                (preventRepeatHits && hitColliders3D.Contains(collision.collider)) ||
+                !PassesFilters(collision.gameObject))
+            {
+                return;
+            }
+
+            if (preventRepeatHits)
+            {
+                hitColliders3D.Add(collision.collider);
+            }
+
+            // WHY: collision.contacts allocates a new array on every access; GetContact reads in place.
+            bool hasContact = collision.contactCount > 0;
+            ContactPoint firstContact = hasContact ? collision.GetContact(0) : default;
+            Vector3 contact = hasContact ? firstContact.point : collision.transform.position;
+            Vector3 normal = hasContact
+                ? firstContact.normal
+                : (collision.transform.position - transform.position).normalized;
+            HandleAttack(collision.gameObject, contact, normal, true);
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (!isActiveAndEnabled || !use2D || !useCollision)
+            {
+                return;
+            }
+
+            if (collider2D == null || collision.collider == null ||
+                (preventRepeatHits && hitColliders2D.Contains(collision.collider)) ||
+                !PassesFilters(collision.gameObject))
+            {
+                return;
+            }
+
+            if (preventRepeatHits)
+            {
+                hitColliders2D.Add(collision.collider);
+            }
+
+            bool hasContact = collision.contactCount > 0;
+            ContactPoint2D firstContact = hasContact ? collision.GetContact(0) : default;
+            Vector3 contact = hasContact ? (Vector3)firstContact.point : collision.transform.position;
+            Vector3 normal = hasContact
+                ? (Vector3)firstContact.normal
+                : (collision.transform.position - transform.position).normalized;
+            HandleAttack(collision.gameObject, contact, normal, true);
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (!_showGizmo)
+            {
+                return;
+            }
+
+            bool isEnabled = (collider2D != null && collider2D.enabled) || (collider3D != null && collider3D.enabled);
+            if (!isEnabled)
+            {
+                return;
+            }
+
+            Gizmos.color = _gizmoColor;
+            Gizmos.matrix = transform.localToWorldMatrix;
+
+            if (collider2D != null)
+            {
+                if (collider2D is BoxCollider2D box)
+                {
+                    Gizmos.DrawCube(box.offset, box.size);
+                }
+                else if (collider2D is CircleCollider2D circle)
+                {
+                    Gizmos.DrawSphere(circle.offset, circle.radius);
+                }
+            }
+
+            if (collider3D != null)
+            {
+                if (collider3D is BoxCollider box)
+                {
+                    Gizmos.DrawCube(box.center, box.size);
+                }
+                else if (collider3D is SphereCollider sphere)
+                {
+                    Gizmos.DrawSphere(sphere.center, sphere.radius);
+                }
+            }
+        }
+
+        private void OnTriggerEnter(Collider collision)
+        {
+            if (!isActiveAndEnabled || !use3D || !useTrigger)
+            {
+                return;
+            }
+
+            if (collider3D == null || collision == null ||
+                (preventRepeatHits && hitColliders3D.Contains(collision)) ||
+                !PassesFilters(collision.gameObject))
+            {
+                return;
+            }
+
+            if (preventRepeatHits)
+            {
+                hitColliders3D.Add(collision);
+            }
+
+            Vector3 contactPoint = collision.ClosestPoint(transform.position);
+            Vector3 approxNormal = (contactPoint - transform.position).normalized;
+            HandleAttack(collision.gameObject, contactPoint, approxNormal, false);
+            OnAttackTriggerEnter3D?.Invoke(collision);
+        }
+
+        private void OnTriggerEnter2D(Collider2D collision)
+        {
+            if (!isActiveAndEnabled || !use2D || !useTrigger)
+            {
+                return;
+            }
+
+            if (collider2D == null || collision == null ||
+                (preventRepeatHits && hitColliders2D.Contains(collision)) ||
+                !PassesFilters(collision.gameObject))
+            {
+                return;
+            }
+
+            if (preventRepeatHits)
+            {
+                hitColliders2D.Add(collision);
+            }
+
+            Vector2 contactPoint2D = collision.ClosestPoint(transform.position);
+            Vector3 approxNormal2D = ((Vector3)contactPoint2D - transform.position).normalized;
+            HandleAttack(collision.gameObject, contactPoint2D, approxNormal2D, false);
+            OnAttackTriggerEnter2D?.Invoke(collision);
+        }
+
+        private bool PassesFilters(GameObject target)
+        {
+            if (target == null || (hittableLayers.value & (1 << target.layer)) == 0)
+            {
+                return false;
+            }
+
+            if (ignoreObjects != null)
+            {
+                for (int i = 0; i < ignoreObjects.Length; i++)
+                {
+                    if (ignoreObjects[i] == target)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Activates the attack trigger for the given duration.
+        /// </summary>
+        /// <param name="damage">Override damage for this swing; -1 uses default.</param>
+        public void ActivateTrigger(int damage)
+        {
+            CancelInvoke(nameof(DeactivateTrigger));
+            _currentDamage = damage;
+            hitColliders2D.Clear();
+            hitColliders3D.Clear();
+            if (autoManageColliders)
+            {
+                EnableCollider(true);
+                Invoke(nameof(DeactivateTrigger), triggerDuration);
+            }
+        }
+
+        public void ActivateTrigger()
+        {
+            ActivateTrigger(attackDamage);
+        }
+
+        private void HandleAttack(GameObject target, Vector3 contactPosition, Vector3 contactNormal,
+            bool hasContactNormal)
+        {
+            int finalValue = _currentDamage == -1 ? attackDamage : _currentDamage;
+
+            if (attackType == AttackType.Damage)
+            {
+                if (target.TryGetComponent(out IDamageable damageable))
+                {
+                    damageable.TakeDamage(finalValue);
+                }
+            }
+            else if (attackType == AttackType.Heal)
+            {
+                if (target.TryGetComponent(out IHealable healable))
+                {
+                    healable.Heal(finalValue);
+                }
+            }
+
+            if (applyForceOnHit)
+            {
+                Vector3 direction = hasContactNormal
+                    ? contactNormal
+                    : (target.transform.position - transform.position).normalized;
+                ApplyForceToTarget(target, direction);
+            }
+
+            if (attackEffectPrefab != null)
+            {
+                Instantiate(attackEffectPrefab, contactPosition, Quaternion.identity);
+            }
+
+            OnHit?.Invoke(target);
+
+            if (destroyTargetOnHit && target != null)
+            {
+                Destroy(target);
+            }
+
+            if (destroySelfOnHit)
+            {
+                Destroy(gameObject);
+            }
+        }
+
+        private void ApplyForceToTarget(GameObject target, Vector3 direction)
+        {
+            // WHY: Skip Rigidbody forces only when the target really owns an AdvancedForceApplier;
+            // without one the Rigidbody path below must still apply the knockback (fallback contract).
+            if (useAdvancedForceApplier && target.TryGetComponent(out AdvancedForceApplier forceApplier))
+            {
+                forceApplier.ApplyForce(forceMagnitude, direction);
+                return;
+            }
+
+            if (target.TryGetComponent(out Rigidbody rb3D))
+            {
+                float magnitude = scaleForceByMass ? forceMagnitude * rb3D.mass : forceMagnitude;
+                rb3D.AddForce(direction * magnitude, forceMode3D);
+                return;
+            }
+
+            if (target.TryGetComponent(out Rigidbody2D rb2D))
+            {
+                float magnitude = scaleForceByMass ? forceMagnitude * rb2D.mass : forceMagnitude;
+                rb2D.AddForce((Vector2)direction.normalized * magnitude, forceMode2D);
+            }
+        }
+
+        private void DeactivateTrigger()
+        {
+            if (autoManageColliders)
+            {
+                EnableCollider(false);
+            }
+
+            OnDeactivateTrigger?.Invoke();
+        }
+
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(DeactivateTrigger));
+            hitColliders2D.Clear();
+            hitColliders3D.Clear();
+            if (autoManageColliders)
+            {
+                EnableCollider(false);
+            }
+        }
+
+        private void EnableCollider(bool enable)
+        {
+            if (collider2D != null)
+            {
+                collider2D.enabled = enable;
+            }
+
+            if (collider3D != null)
+            {
+                collider3D.enabled = enable;
+            }
+        }
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "name": "Neo.Cards",
+    "rootNamespace": "Neo.Cards",
+    "references": [
+        "UniTask",
+        "Unity.TextMeshPro",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+        {
+            "name": "com.demigiant.dotween",
+            "expression": "",
+            "define": "DOTWEEN"
+        }
+    ],
+    "noEngineReferences": false
+}

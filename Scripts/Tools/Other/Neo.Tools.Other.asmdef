@@ -1,0 +1,7 @@
+{
+    "name": "Neo.Tools.Other",
+    "references": [
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
+    ]
+}

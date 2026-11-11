@@ -1,0 +1,44 @@
+﻿# Tools / Components / AttackSystem
+
+**What it is:** the legacy combat components (`Health`, `AttackExecution`, `Evade`, `AdvancedAttackCollider`) and the
+`RpgStatsDamageableBridge`, kept for existing scenes. Sources: `Scripts/Rpg/Combat/`, optional assembly `Neo.Rpg.Combat`.
+
+**Contents:** the replacement table and per-component pages below.
+
+---
+
+**Legacy.** For new projects use the [RPG module](../../../Rpg/README.md) with `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, and `RpgEvadeController`.
+
+The compatibility sources live in `Scripts/Rpg/Combat/` and compile in the optional
+`Neo.Rpg.Combat` assembly. The canonical entry is [RPG / Combat compatibility](../../../Rpg/Combat/README.md). This
+documentation stays under Tools so existing links remain valid.
+
+## Recommended replacement
+
+| Legacy | Replacement |
+|--------|-------------|
+| Health | [RpgCharacter](../../../Rpg/RpgCharacter.md) |
+| AttackExecution | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgAttackDefinition](../../../Rpg/RpgAttackDefinition.md) |
+| Evade | [RpgEvadeController](../../../Rpg/RpgEvadeController.md) |
+| AdvancedAttackCollider | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgProjectile](../../../Rpg/RpgProjectile.md) |
+| `IDamageable` / `IHealable` compatibility | [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) |
+
+## Legacy bridge
+
+`RpgStatsDamageableBridge` is the supported compatibility path when old `AttackSystem` components call `IDamageable.TakeDamage(int)` or `IHealable.Heal(int)`, but the target actor already uses `RpgCharacter`.
+
+Typical setup:
+
+1. `RpgCharacter` lives on the actor.
+2. `RpgStatsDamageableBridge` lives on the same object or on a child hitbox.
+3. The legacy component calls `IDamageable`.
+4. The bridge forwards to `RpgCharacter.Damage(...)` or `RpgCharacter.Heal(...)`.
+
+## docs (per-component)
+
+| Page | Description |
+|------|-------------|
+ · Overview
+| [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) | IDamageable -> RpgCharacter bridge |
+| [Health](./Health.md), [Evade](./Evade.md) | Defence *(legacy)* |
+| [AttackExecution](./AttackExecution.md), [AdvancedAttackCollider](./AdvancedAttackCollider.md) | Attack *(legacy)* |

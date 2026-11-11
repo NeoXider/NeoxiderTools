@@ -1,0 +1,67 @@
+﻿# PrimitiveExtensions
+
+**What it is:** extension methods for `float`, `int`, and `bool` — rounding, time formatting, normalization, remapping, snapping, wrapping and type conversion. File: `Scripts/Extensions/PrimitiveExtensions.cs`, namespace `Neo.Extensions`.
+
+**How to use:** add `using Neo.Extensions;` and call the method on the value: `timer.FormatTime(TimeFormat.MinutesSeconds)`, `index.Wrap(0, count)`.
+
+---
+
+## API
+
+### Bool
+| Method | Description |
+|--------|-------------|
+| `int ToInt(this bool)` | `true` → `1`, `false` → `0`. |
+
+### Int
+| Method | Description |
+|--------|-------------|
+| `bool ToBool(this int)` | Non-zero → `true`, zero → `false`. |
+| `string FormatWithSeparator(this int, string sep)` | `1000000` → `"1 000 000"` (with `" "` separator). |
+
+### Float
+| Method | Description |
+|--------|-------------|
+| `float RoundToDecimal(this float, int places)` | Round to N decimal places. |
+| `string FormatTime(this float, TimeFormat, string sep)` | Format seconds into `"MM:SS"`, `"HH:MM:SS"`, etc. |
+| `string FormatWithSeparator(this float, string sep, int places)` | Format with thousands separator. |
+| `float NormalizeToUnit(this float, float min, float max)` | Normalize to `[0, 1]`. |
+| `float NormalizeToRange(this float, float min, float max)` | Normalize to `[-1, 1]`. |
+| `float Denormalize(this float, float min, float max)` | `[0, 1]` → `[min, max]`. |
+| `float Remap(this float, float fromMin, float fromMax, float toMin, float toMax)` | Remap between two ranges. |
+
+### Math
+| Method | Description |
+|--------|-------------|
+| `float Snap(this float, float step)` / `int Snap(this int, int step)` | Snap to nearest multiple of `step` (grid/angle). `step <= 0` returns value unchanged. |
+| `int Wrap(this int, int min, int max)` | Wrap into `[min, max)` (handles negatives) — cycling indices. Empty range → `min`. |
+| `int PingPong(this int, int length)` | Integer ping-pong over `[0, length]` (up then down), like `Mathf.PingPong`. |
+| `bool Approximately(this float, float)` | Wrapper over `Mathf.Approximately` (safe float equality). |
+| `bool Approximately(this float, float, float tolerance)` | `true` when the difference is within `tolerance`. |
+
+`Wrap` and `PingPong` use widened intermediate arithmetic: valid ranges and lengths remain correct across the full `int` domain, including `int.MinValue` inputs and `int.MaxValue` lengths.
+
+---
+
+## Examples
+
+### Code
+```csharp
+float time = 125.7f;
+string display = time.FormatTime(TimeFormat.MinutesSeconds); // "02:05"
+
+float hp = 75f;
+float normalized = hp.NormalizeToUnit(0f, 100f); // 0.75
+
+float val = 0.5f;
+float remapped = val.Remap(0f, 1f, -10f, 10f); // 0.0
+
+int score = 1500000;
+string text = score.FormatWithSeparator(" "); // "1 500 000"
+```
+
+---
+
+## See Also
+- [StringExtension](StringExtension.md) — `ToInt()`, `ToFloat()` from strings
+- ← [Extensions](README.md)

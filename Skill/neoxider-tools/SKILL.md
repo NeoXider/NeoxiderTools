@@ -1,0 +1,350 @@
+---
+name: neoxider-tools
+description: >-
+  Build Unity gameplay with the NeoxiderTools package (com.neoxider.tools, namespace `Neo`) instead of
+  writing everything from scratch. Use this skill whenever you write Unity C# in a project that contains
+  `Assets/Neoxider` or depends on `com.neoxider.tools` — audio, saving, object pooling, reactive values,
+  singleton managers, UI fly/animation, timers, combat/abilities/buffs (data-driven `Neo.Abilities`),
+  survivor-style games, slot/wheel/merge/grid mini-games,
+  inventory/shop, parallax, NPC AI, or ANY common utility (random, collections, transforms, string/number
+  formatting, coroutines). It has a huge library of ready modules and `Neo.Extensions` helpers — reach for
+  them first. Write CODE-FIRST using the package's C# APIs and AVOID the no-code / inspector-wiring layer
+  (NeoCondition, `*NoCodeAction` bridges, `NoCode*` binding components) unless the user is already using it.
+  Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
+  names the package.
+metadata:
+  version: 12.2.0
+  author: Neoxider
+  homepage: https://github.com/NeoXider/NeoxiderTools
+---
+
+# NeoxiderTools
+
+NeoxiderTools (`com.neoxider.tools`, root namespace `Neo`, Unity 6+) is a large, production-ready
+gameplay/utility toolkit. It is already installed in any project that has `Assets/Neoxider/` or lists
+`com.neoxider.tools` in `Packages/manifest.json`. It ships **hundreds of components, managers, and
+extension methods** plus a singleton manager layer, an object pool, a reactive-property system, a save
+system, and complete game systems (Abilities, Cards, Slot, Merge, Grid, Shop, Quest, Progression).
+
+The whole point of this skill: **don't reinvent what the package already does well.** Before you write a
+helper, a manager, a coroutine, a random picker, a number formatter, a pool, or a save routine — check
+whether NeoxiderTools already has it. It almost always does, and using it makes the code shorter, idiomatic
+for this project, and consistent with the rest of the codebase.
+
+## ⛔ STOP — mandatory check before writing ANY component or helper
+
+The **#1 failure mode** with this package is hand-rolling something it already ships — e.g. writing a
+custom timer-text `MonoBehaviour` when **`TimeToText`** already exists, or a fixed list of `Slot_0..3`
+when a prefab + `HorizontalLayoutGroup` is the idiom. The SKILL.md examples below are **not** the catalog;
+the catalog is in the reference files, and **you will miss things if you rely on memory or skim only this
+file.**
+
+So this is a **blocking rule, not a suggestion**: the moment you are about to create a new `MonoBehaviour`,
+helper method, coroutine, formatter, binder, or "small utility", you must **first open and grep the
+matching reference file** for an existing component/API. Map by what you're building:
+
+| About to build… | grep FIRST (don't skip) |
+|---|---|
+| a UI/gameplay component — timer, bar, counter, list/slot view, mover, follow-cam, picker, score, dialogue, loot… | `references/tools.md` |
+| a helper/one-liner — random, shuffle, weighted, format number/time, transform, collection, color, coroutine/delay… | `references/extensions.md` |
+| combat — damage, abilities/spells, buffs/debuffs/DoTs, shields, stuns, projectiles, crit/lifesteal, survivor-style auto-fire… | `references/abilities.md` |
+| a whole system — quest, shop, level, grid/merge, slot/wheel, npc, settings, parallax, animation/fly… | `references/game-systems.md` + `references/modules.md` |
+| a manager/attribute/`.I` access, or "does Neo have a component for X" | `references/modules.md` |
+| a mobile casual game flow — loading + age gate, pages and Back, reward flights into counters, music/ambience/haptics, economy config | `references/mobile-casual.md` |
+
+Grep for the concept (`rg -i "timer\|countdown\|time" references/tools.md`), read the hit, use it. **Only
+after the grep genuinely comes up empty** may you write your own — and then say so explicitly ("not in the
+package, writing it"). "I didn't check tools.md" is never an acceptable reason for a hand-rolled component.
+
+## The two rules that matter
+
+### Rule 1 — Reach for the package first
+
+When a task maps to something the package covers, use the package API rather than hand-rolling. A few
+high-signal examples (full catalogs are in the reference files below):
+
+- Need a sound? `AM.I.Play(...)` — not `AudioSource.PlayClipAtPoint`. A background bed (rain, a lake)
+  under the music? `AM.I.PlayAmbience(clip)` + `AmbienceVolume` (10.16) — not a second music source.
+  `AMSettings` saves volumes **and mutes** as the player's preference; for temporary silence (pause menu,
+  ad, cutscene) use `AudioListener.pause`, not `SetMusic(false)`.
+- Vibration? `Neo.Haptics`: `Haptics.Play(HapticType.Success)`, bind the settings toggle once with
+  `Haptics.EnabledProvider = () => vibrationOn;` (install `com.tsyk5.mobilehapticfeedback` for real
+  iOS/Android feels) — not `Handheld.Vibrate` or a hand-written native bridge.
+- Coins/hints flying into a counter? `AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest {...})`
+  with `OnItemArrived` ticking the counter — see `references/mobile-casual.md`.
+- Need to persist a value? `[SaveField("key")]` on a `SaveableBehaviour` — not raw `PlayerPrefs`. Money in
+  cents or a counter above `int.MaxValue`? `SaveProvider.SetLong`/`GetLong` (12.0.0) — not a private
+  `long`↔`string` helper.
+- Spawning many objects? `SpawnUtility.Spawn(prefab, pos, rot)` / `PoolManager.Get(prefab, pos, rot)` — not
+  `Instantiate`/`Destroy` churn. Warm get/return is O(1) and allocation-free.
+- A value that drives UI when it changes? `ReactivePropertyInt`/`ReactivePropertyFloat` — not manual events.
+- Random pick / weighted roll / shuffle? `list.GetRandomElement()`, `weights.GetRandomWeightedIndex()`,
+  `list.Shuffle()` — not bespoke `Random.Range` loops. Need it reproducible (tests, replays, daily seed)? Pass a
+  `System.Random`: `list.Shuffle(rng)`, `list.GetRandomElement(rng)`. Exact integer odds (1 in 1,000,000)?
+  `IntegerChanceTable`.
+- Delay / wait-until without writing a coroutine class? `this.Delay(2f, () => ...)`,
+  `this.WaitUntil(() => ready, OnReady)`.
+- Idle/clicker number like `1.5M`, or a `mm:ss` timer string? `value.ToIdleString()`,
+  `seconds.FormatTime(TimeFormat.MinutesSeconds)`.
+- Combat for a NEW game — damage, abilities, buffs/DoTs/shields/stuns, projectiles? **`Neo.Abilities`**
+  (v10): author `AbilityDefinition`/`ModifierDefinition`/`UnitTemplate` assets, add
+  `AbilityUnitBehaviour` + `AbilityCasterBehaviour`, cast with `caster.TryCast("fireball")`. It
+  **supersedes `Neo.Rpg`** (legacy, slated for removal) — see `references/abilities.md`. For
+  survivor-likes, clip the Survivor kit (`Assets/NeoxiderDemos/Demo`) instead of building from scratch, and set the
+  hub's **Spatial Cell Size** for hundreds of units.
+- A countdown/timer shown on a TMP label? The **`TimeToText`** component (`Neo.Tools`) — `Set(float)` (or
+  wire a `UnityEvent<float>` → `Set`); `TimeFormat`, Clock/Compact modes, `Prefix`/`Suffix`, auto-grabs the
+  `TMP_Text`, allocation-free per frame. A `TimerObject` can also write its own **Time Text** label.
+  **Never hand-roll a timer-text MonoBehaviour.**
+- Ambient NPC barks (pick a line by tag, no back-to-back repeat, a contextual line interrupts idle chatter)?
+  `DialogueLinePool` (plain C#) / `DialogueLinePlayer` — not a custom random-line picker.
+- Auto-wire a serialized reference? `[GetComponent]`, `[FindInScene]`, `[LoadFromResources("...")]`.
+- A button in the inspector to test/cheat a method? Put `[Button]` (or `[Button("Label")]`) on the method.
+  Runtime actions that mutate scene/game state must use `[Button(PlayModeOnly = true)]` (or
+  `[Button("Label", PlayModeOnly = true)]`); leave the button enabled in Edit Mode only for genuinely
+  edit-safe authoring operations such as rebuilding a serialized cache or refreshing a preview. A `[Button]`
+  runs on every selected object (static methods once) and is undoable in Edit Mode.
+  **It works on ANY MonoBehaviour — including your own scripts in the global namespace** — via the global
+  fallback inspector `NeoCustomEditor` (`[CustomEditor(typeof(MonoBehaviour), true, isFallback=true)]`).
+  **Do NOT write a custom `Editor` to add buttons** — a custom `[CustomEditor]` overrides the fallback and
+  your `[Button]`s disappear. Just `using Neo;` + the attribute.
+- A timer, camera shake, follow cam, score, loot table, dialogue, leaderboard, line drawing, mouse
+  picking, swipe, weighted chance…? The `Neo.Tools` module almost certainly has it — see
+  `references/tools.md` (it's a big catalog). Don't hand-roll a `Timer`/pool/`CameraShake`.
+- Multiplayer / co-op / PvP? Use `NetworkSingleton<T>` + `NeoNetworkState`/`NeoNetworkSpawner` (Mirror is
+  optional and the package degrades to solo-mode without it). Networking has a critical scene-object
+  pitfall — read `references/network.md` before touching `NetworkIdentity` scene objects. A realtime
+  server-authoritative game (.io, arena, shooter)? Use the `Neo.Network.Realtime` toolkit
+  (`SnapshotTimeline`/`SnapshotBuffer<T>`, `LocalPredictionModel`, `NetEventChannel<T>`, ...) and
+  `NeoNetworkBootstrap` for `-server`/`-client` command lines instead of hand-writing them.
+- Need a deformable Sprite in UI or the scene? Use UI Mesh Rig's shared geometry core and choose the thin
+  output adapter: `UIMeshRigGraphic` for uGUI, `[UxmlElement]` `UIMeshRigElement` for UI Toolkit,
+  `UIMeshRigWorldRenderer` for `MeshFilter`/`MeshRenderer`, or `UIMeshRigSpriteRenderer` for a plain
+  `SpriteRenderer` (sorting layers, 2D lights, sprite masks keep working). Create them from the
+  corresponding GameObject menu and apply `UIMeshRigLayoutBuilder` presets instead of copying deformation
+  math. Three rules when extending this module: never write geometry into an imported Sprite asset — the
+  SpriteRenderer adapter clones it at runtime and `Sprite.OverrideGeometry` is a no-op on runtime sprites
+  anyway; let `[Header]`/`[Tooltip]` plus `CustomEditorBase` draw the fields instead of hand-drawing
+  them, which is how the module once lost the whole inspector system; and keep the Edit Mode preview
+  transient — `UIMeshRigPointMotion.PreviewInEditMode` is deliberately `[NonSerialized]`, the preview
+  writes only the procedural pose (never the point `Transform`, never the serialized authoring mode), and
+  the driver subscribes to `EditorApplication.update` only while a preview is actually advancing. A new
+  output adapter implements `IUIMeshRigOwner` and needs no editor of its own; code that rebuilds geometry
+  per frame passes a `reuse` instance to `UIMeshRigGeometryBuilder.Build(...)`. Read `Docs/UI/UIMeshRig.md`
+  first.
+
+If you are unsure whether the package covers something, **check before writing it** (see "How to discover"
+below). Surfacing "NeoxiderTools already has `X` for this" is exactly the value this skill provides.
+
+### Rule 2 — Write code-first; avoid the no-code layer by default
+
+The package has a parallel **no-code / inspector-wiring layer** meant for designers who assemble behavior
+in the Unity Inspector via `UnityEvent`s and reflection instead of writing C#. When you are writing code,
+**do not** build on that layer — write the equivalent C# directly against the real API. It is clearer,
+debuggable, refactor-safe, version-control-friendly, and cheaper at runtime (NoCode bindings read their
+source through reflection on a poll; typed calls do not).
+
+**Avoid by default** (these exist mainly to be wired in the Inspector):
+
+- `NeoCondition` (the `Neo.Condition` system) → instead write the actual `if (health.Hp <= 0) ...`.
+- `*NoCodeAction` bridges: `AbilityNoCodeAction`, `RpgNoCodeAction`, `ProgressionNoCodeAction`,
+  `QuestNoCodeAction`, `LevelNoCodeAction` → instead call the real method (`caster.TryCast(...)`,
+  `RpgCharacter.Damage(...)`, `ProgressionManager.I.AddXp(...)`, `QuestManager.I.NotifyKill(...)`).
+- `NoCode*` binding components: `NoCodeBindText`, `NoCodeFormattedText`, `SetProgress`,
+  `NoCodeFloatBindingBehaviour`, `AbilityCooldownSource` → instead set the value in code or subscribe
+  to a `ReactiveProperty` (cooldowns: poll `caster.GetCooldownNormalized(id)`).
+- `StateMachineData` / `StateData` ScriptableObject workflow → instead write `IState` classes for
+  `StateMachine<T>` (or a `StateMachineBehaviour<TState>` subclass).
+- `UnityLifecycleEvents` (forwards Awake/Start/Update to UnityEvents) → instead write a normal
+  `MonoBehaviour` override.
+
+**The exception:** if the user is *already* using the no-code layer (their scene has `NeoCondition` /
+`NoCodeBindText` / `*NoCodeAction` components, or they explicitly ask for inspector wiring), then work with
+it — that's their chosen workflow. This is rare; default to code. Every NoCode component also has a typed
+C# surface (`RefreshBinding()`, `UpdateMode`, `SetValues`, `SetRange`, `ConditionEntry.TryEvaluate`, …) for
+the times you must drive it from code — see `references/avoid-nocode.md`.
+
+> Note: a component merely *having* a `UnityEvent` (like `RpgCharacter.OnDeath` or a
+> `ReactiveProperty.OnChanged`) does **not** make it no-code. Those are normal code-first components whose
+> events are output hooks. Subscribe to them from code with `AddListener(...)`. The avoid-list above is
+> specifically the components/systems that exist *primarily* to replace writing code.
+
+## Performance, time and determinism (12.0.0)
+
+The 12.0.0 quality pass made the hot paths allocation-free and added test seams. Write per-frame code
+against them instead of working around the package:
+
+- **Allocation-free once warm** (safe per frame / per hit): Abilities casts, projectile hits, modifier
+  ticks and event publication; pool get/return (`SpawnUtility`, `PoolManager`, `NeoObjectPool`); Quest
+  `Notify*`; compat input polling (`MouseInputCompat`/`KeyInputCompat`) on both input backends;
+  `UIUtils.IsPointerOverUI(screenPosition)`; `TimeToText.Set`; `Selector` getters and commands;
+  `Match3BoardService.TryFindValidSwap`; `PokerHandEvaluator.EvaluateStrength`.
+- **Pass your own list** where an overload takes one and reuse it: `GridPathfinder.TryFindPath(..., path,
+  out reason)`, `CollectReachableCells(..., results)`, `FieldGenerator.CollectNeighbors(cell, results)`,
+  `Shop.GetItemsInCategory(category, results)`, `QuestManager.GetActiveQuests(results)`,
+  `Drawer.Smooth/LimitPoints(..., results)`, `CardLayoutCalculator.CalculatePositions(..., results)`.
+- **Many units:** set `AbilitySystemBehaviour.SpatialCellSize` (Inspector **Spatial Cell Size**, about the
+  typical hit radius, e.g. 3) and give projectile/spawn archetype prefabs a sized pool.
+- **Time seams** — don't read `Time.deltaTime` / `DateTime.UtcNow` inside rules you want to test or replay:
+  `IFrameClock` (`UnityFrameClock.Instance` default, `ManualFrameClock` in tests) on `Timer.FrameClock` /
+  `TimerObject.FrameClock`; `INeoClock` for UTC (`NeoTrustedTime.AsClock` is tamper-resistant) on
+  `TimerObject.UtcClock` and `CooldownSchedule`; animators expose `ManualUpdate = true` + `Tick(dt)`.
+  Guide: `Docs/Tools/Time/Clocks.md`.
+- **Determinism:** seeded overloads instead of `UnityEngine.Random` — `RandomExtensions` `System.Random`
+  overloads, `DeckModel(seed)` / `DeckComponent.UseFixedShuffleSeed`, `Collection.RandomIndexSource`,
+  `SlidingMergeResolver.TrySpawnRandomContent(..., randomIndex)`, the Abilities `CastRequest` seed.
+- **Plain C# cores** exist for most rules — test and reuse them without a scene: `CollectionSet`,
+  `BoxProgress`, `CooldownSchedule`, `SlotSpinMath`, `DialogueLinePool`, `IntegerChanceTable`,
+  `SelectorModel`, `DiceBoard`, `RpgCharacterStatService`.
+- **Zero-GC tests:** assert with Unity's recorder, `Assert.That(() => Tick(), Is.Not.AllocatingGCMemory())`
+  (`UnityEngine.TestTools.Constraints`). `GC.GetAllocatedBytesForCurrentThread()` reads 0 in the Mono
+  Editor, so tests built on it can never fail.
+
+## How to discover what's available
+
+1. **Confirm the package is present**: look for `Assets/Neoxider/` or `com.neoxider.tools` in
+   `Packages/manifest.json`. If absent, this skill doesn't apply.
+2. **Read the docs for a module before using it.** Docs live at `Assets/Neoxider/Docs/<Module>/` (English).
+   Any class with a `[NeoDoc("X.md")]` attribute points to `Assets/Neoxider/Docs/X.md` — that's its
+   authoritative doc.
+3. **Grep the source** under `Assets/Neoxider/Scripts/<Module>/` to confirm exact method signatures before
+   calling them. Namespaces are `Neo.<Module>` (e.g. `Neo.Audio`, `Neo.Save`, `Neo.Reactive`,
+   `Neo.Extensions`, `Neo.Tools`). Verify the API against the real code — don't guess signatures.
+4. **Add components the project's way**: package components carry `[AddComponentMenu("Neoxider/...")]` and
+   `[CreateFromMenu("Neoxider/...")]`. Singleton managers are reached via `TypeName.I` (e.g. `AM.I`,
+   `SaveManager.I`, `PoolManager.I`).
+5. **Editor menus (v10)**: everything lives under one top-level **`Neoxider/`** menu — `Neoxider/Windows`
+   (Ability Designer, Dialogue Editor, Prefab To Sprite, Create Neoxider Object), `Neoxider/Tools` (Scene
+   Saver, Texture Max Size, missing-script utilities, Fix Editor Assembly References), plus Network,
+   Samples, Settings, Visual Settings (inspector animation switch: master, Play Mode, Max FPS), and Health Check. The old `Tools/...` and `Window/...` prefixed
+   paths were removed in v10 — don't reference them. Hierarchy right-click: `GameObject/Neoxider` →
+   `Create Neoxider Object...`, a flat `Presets/` group (System Root, First Person Controller, Simple
+   Weapon, Bullet, Interactive Sphere, Toggle Interactive, Trigger Cube), and Create/Sort Scene Hierarchy.
+6. **Not in this package:** the HTML/CSS → UI Toolkit converter (`Neo.HtmlToUitk`) moved to its own package
+   `com.neoxider.htmltouitk` (https://github.com/NeoXider/HtmlToUitk.git). A project that uses it installs
+   that package; its assembly names, namespaces and script GUIDs are unchanged.
+
+## Namespaces & assemblies — get the `using` right (most common error)
+
+The single most frequent failure when using this package is a **missing `using` or assembly reference**,
+not a wrong API. The root namespace is `Neo`, but most APIs live in a `Neo.<Module>` sub-namespace, and
+the package is split into **assembly definitions (asmdef)** — so a type can be visible only after you both
+`using` its namespace *and* reference its assembly.
+
+Quick map of the highest-traffic types (verify others by grepping the source for `namespace`):
+
+| API / type | `using` | Assembly (asmdef) |
+|------------|---------|-------------------|
+| `AM` (audio manager) | `Neo.Audio` | `Neo.Audio` |
+| `EM`, `GM`, `Singleton<T>`, `PoolManager`, most of `Neo.Tools` | `Neo.Tools` | `Neo.Tools.*` (per sub-module, e.g. `Neo.Tools.Managers`, `Neo.Tools.Spawner`) |
+| `Timer`, `TimerObject`, `IFrameClock`, `ManualFrameClock`, `INeoClock`, `NeoTrustedTime` | `Neo.Tools` | `Neo.Tools.Time` |
+| `ChanceManager`, `IntegerChanceTable` | `Neo.Tools` | `Neo.Tools.Random` |
+| `DialogueController`, `DialogueLinePool`, `DialogueLinePlayer` | `Neo.Tools` | `Neo.Tools.Dialogue` |
+| `SwipeController`, `SwipeData`, `SwipeDirection`, `MouseInputCompat`, `KeyInputCompat` | `Neo.Tools` | `Neo.Tools.Input` |
+| `IInteractiveTarget`, `InteractionRayHit`, `InteractionQueryMath`, `InteractionCameraResolver` | `Neo.Tools` | `Neo.Tools.InteractableObject.Core` |
+| `GetRandomElement()`, `Shuffle()`, `ToIdleString()`, `UIUtils`, all extension helpers | `Neo.Extensions` | `Neo.Extensions` |
+| `ReactivePropertyInt/Float/...` | `Neo.Reactive` | `Neo.Reactive` |
+| `AbilitySystemBehaviour`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour`, `AbilityDefinition`, … | `Neo.Abilities` | `Neo.Abilities` |
+| `SaveManager`, `[SaveField]`, `SaveableBehaviour`, `SaveProvider` | `Neo.Save` | `Neo.Save` |
+| `HealthComponent` / `ResourcePoolModel`, `RpgResourceId` | `Neo.Core.Resources` | `Neo.Core.Resources.Components` / `Neo.Core` |
+| `CollectionSet`, `BoxProgress`, `CooldownSchedule`, `SpinController` | `Neo.Bonus` | `Neo.Bonus` |
+| `Haptics`, `HapticType` | `Neo.Haptics` | `Neo.Haptics` |
+| `AnimationFly` (+ nested `AnimationFlyRequest`), `AnimationFlyMotionPreset` | `Neo.UI` | `Neo.UI` |
+| `LevelManager` | `Neo.Level` | `Neo.Level` |
+| `[Button]`, `[GetComponent]`, `[FindInScene]`, inject attributes | `Neo.` (root) | `Neo.PropertyAttribute` |
+| `G`, `PM`, `UIPage` (page-navigation facade) | `Neo.Pages` | **none — Sample**, see below |
+| `UIMeshRigGraphic`, `UIMeshRigElement`, `UIMeshRigWorldRenderer`, `UIMeshRigSpriteRenderer` | `Neo.UI` | `Neo.UI` |
+
+**asmdef gotcha:** code with **no asmdef** compiles into Unity's predefined `Assembly-CSharp`, which
+auto-references every auto-referenced asmdef — so a bare `using Neo.Audio;` just works there. But if your
+game code lives in its **own asmdef**, a `using` is not enough: add the module's assembly (e.g. `Neo.Audio`,
+`Neo.Tools.Input`, `Neo.Extensions`) to that asmdef's **Assembly Definition References**, or the type stays
+unresolved (`CS0246`). When you hit `CS0246`/`CS0103` on a `Neo.*` type, check the namespace first, then the
+asmdef reference — not the API name.
+
+## Demos — installed separately from the GitHub release
+
+Two pieces are **separate downloads** from the GitHub release, not part of the package. The user imports the
+`.unitypackage`, which places them in `Assets/NeoxiderDemos/<Name>/`.
+
+- **NeoxiderPages** — an optional page-navigation module that includes the **`G` static facade**
+  (namespace `Neo.Pages`), plus `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers. `G` is the convenient
+  entry point many projects use for game flow/events: `G.OnStart` (→ `EM.I.OnGameStart`), `G.OnRestart`,
+  `G.Win()`, `G.Lose()`, `G.Pause`, `G.GoMenu()`, etc. It forwards to `EM`/`GM` under the hood. **If you see
+  `G.` in project code and it won't resolve, the fix is `using Neo.Pages;` *and* confirming the NeoxiderPages
+  download is imported** — `G` does not exist in the core package, only in this download. It has no asmdef, so
+  once imported it lands in `Assembly-CSharp` and needs no extra assembly reference.
+- **Demo Scenes** — one scene per module (Audio, Save, Settings, Level, Quest, Progression, StateMachine,
+  Condition, NoCode, Abilities, Animations, GridSystem, Cards, Bonus incl. Bonus Rewards, Shop, NPC, Network,
+  Inventory, Tools incl. Physics 3D, UI incl. UI Components, …; `Docs/Samples.md` lists them and the modules
+  that still have none; demos save only under `NeoDemo.<Demo>.<Data>` keys) plus
+  the **Survivor kit** (`Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors game built from one
+  `SurvivorConfig` data asset on `Neo.Abilities`; the reference implementation to **clip** for
+  survivor-likes, see `references/abilities.md`), and hand-authored example games (`adventure`, `Shooter2D`,
+  `ClickerExample`; a minimal builder adds only their info card). Module demo scenes are **authored in the Editor by scene builders**
+  (`Demo/Editor/Builders/<Module>/<Scene>Builder.cs`, assembly `Neo.Demo.Editor`): UI, configured
+  components, persistent UnityEvent listeners and NoCode bindings are saved in the `.unity`, so open the
+  scene and read the wiring in the Inspector without entering Play Mode. Each `<Module>DemoController`
+  (assembly `Neo.Rpg.Demo`) holds serialized references and public listener targets — the demo UI is not
+  built at runtime. Copy idioms from the module objects and controllers; do not copy the obsolete `NeoDemoShell`
+  runtime frame, and never build UI with IMGUI. After editing a demo's data asset (e.g. a `SurvivorConfig`
+  enemy list), re-run **Neoxider/Demo/Rebuild Active Demo Scene**. The builder workflow is documented for
+  package developers in the repository's `dev-docs/DemoSceneBuilders.md`.
+
+## Reference files — read the one you need
+
+This SKILL.md is the overview. For exhaustive, verified catalogs, open the relevant file (they are dense
+reference material — load the one that fits the task, don't read all of them up front):
+
+- **`references/extensions.md`** — the full `Neo.Extensions` catalog (transforms, collections, random,
+  strings, color, numbers/time formatting, coroutines, audio fades, layout, screen, pooling helpers). This
+  is the highest-leverage file: each one-liner replaces 5–15 lines of hand-rolled code, which directly
+  **saves both developer time and tokens** — less code to generate, and less to read back on every later
+  edit or review. Default to an extension over hand-written equivalents. Skim it early so you know what
+  exists.
+- **`references/modules.md`** — module-by-module inventory: managers (and their `.I` access), key
+  entry-point components, the property-attribute family (`[Button]`, `[GetComponent]`, inject attributes,
+  `[GUIColor]`, `[RequireInterface]`), and which optional deps (Mirror/DOTween/Spine/Odin) gate what.
+- **`references/abilities.md`** — the v10 `Neo.Abilities` combat module (SUPERSEDES `Neo.Rpg`):
+  data-driven abilities/modifiers (`AbilityDefinition`/`ModifierDefinition`/`UnitTemplate`/
+  `AbilityLibrary`), the scene components (`AbilitySystemBehaviour`/`AbilityUnitBehaviour`/
+  `AbilityCasterBehaviour`/`AbilityProjectileBehaviour`), effect ops (incl. knockback/pull/teleport/
+  execute/chain), crit/lifesteal/evasion, leveled values, typed cast results, the spatial grid and pooled
+  effect-context contract, the NoCode trio, and the Survivor kit. Open this for ANY combat, buff/debuff, or
+  survivor-style work.
+- **`references/tools.md`** — the `Neo.Tools` module is huge (the package's catch-all). This is the full
+  component catalog grouped by category: spawning/pool, score/counters, timers and clock seams, move/camera,
+  interaction/physics, view/UI, text, input, debug, draw, dialogue and bark lines, leaderboard, chance/loot —
+  with key APIs and code-first snippets. Open this for anything gameplay-systems-y that isn't its own module.
+- **`references/network.md`** — multiplayer (Mirror-optional). `NetworkSingleton<T>`, `NeoNetworkManager`,
+  `NeoNetworkState`, `NeoNetworkSpawner`, the `NetworkReactivePropertyBridge`, lobby, the critical
+  scene-`NetworkIdentity` / `INeoOptionalNetworked` pitfall, and the realtime/.io toolkit
+  (`NeoNetworkBootstrap`, snapshots, prediction, telemetry). Read this for any networked/co-op/PvP work.
+- **`references/game-systems.md`** — the gameplay modules that don't have their own deep file: Bonus
+  (Slot/Wheel of Fortune and the plain-C# collection/box/cooldown cores), Cards, GridSystem + Merge, NPC AI,
+  Shop, Settings, Animations, Parallax, Level, UI/AnimationFly. Purpose + key API + a code-first snippet per
+  module. Open this for slot/card/grid/merge/NPC/shop/level/settings work so you don't have to dig through
+  source.
+- **`references/idioms.md`** — copy-pasteable code-first snippets for the most-used systems: AM audio,
+  Save, Reactive, PoolManager, Singletons/EM, StateMachine, Abilities, Quest, Progression, clock seams —
+  each shown the correct (code) way, with the no-code anti-pattern called out.
+- **`references/mobile-casual.md`** — how the pieces assemble into a shipped mobile casual game:
+  Loading scene with real preload and the age gate, PM pages and Android Back, the NeoxiderPages
+  sample-version gotcha, AM music + ambience + background pause, Haptics, SaveProvider flags, reward
+  flights through `AnimationFly` (queued on popups, counter ticks per arrival), which motion
+  components stay game-level, economy config.
+- **`references/avoid-nocode.md`** — the precise no-code surface to avoid and the code-first equivalent for
+  each, plus how to detect that a user is already on the no-code path (the one case where you embrace it).
+
+## Default workflow for a Unity coding task in this project
+
+1. Decide what the task needs (audio? save? spawn? UI value binding? a utility?).
+2. For each need, **grep the matching reference file BEFORE writing anything** (see the ⛔ STOP table
+   above) — `tools.md` for components, `extensions.md` for helpers, `game-systems.md`/`modules.md` for
+   systems. Map the need to a NeoxiderTools API. Only if the grep genuinely comes up empty do you write it
+   plainly — and say so, so the user knows it wasn't already in the package.
+3. Write **code-first** C# against the real APIs, in the `Neo.*` idiom (singletons via `.I`, `using
+   Neo.Extensions;` for helpers, attributes for wiring). Don't build no-code graphs. For per-frame code,
+   use the allocation-free overloads and clock seams from the performance section above.
+4. Verify signatures against the actual source/docs before finalizing. Prefer the package's existing
+   component over a new MonoBehaviour when one already does the job.

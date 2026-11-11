@@ -1,0 +1,74 @@
+﻿using UnityEditor;
+using UnityEngine;
+
+namespace Neo.StateMachine.NoCode.Editor
+{
+    /// <summary>
+    ///     Central registration hook for State Machine custom editors.
+    /// </summary>
+    [InitializeOnLoad]
+    public static class StateMachineEditorRegistrar
+    {
+        static StateMachineEditorRegistrar()
+        {
+            EditorApplication.delayCall -= OnEditorReady;
+            EditorApplication.delayCall += OnEditorReady;
+        }
+
+        /// <summary>
+        ///     True after the first successful initialization pass.
+        /// </summary>
+        public static bool IsInitialized { get; private set; }
+
+        private static void OnEditorReady()
+        {
+            if (IsInitialized)
+            {
+                return;
+            }
+
+            // WHY: the check runs after every domain reload on purpose. A recompile is exactly what can break
+            // the registration (another [CustomEditor(typeof(StateMachineData))], a partially failed editor
+            // assembly), and the check itself is one temporary asset plus one inspector.
+            Initialize();
+            IsInitialized = true;
+        }
+
+        /// <summary>
+        ///     Runs one-time editor-side setup.
+        /// </summary>
+        private static void Initialize()
+        {
+            // WHY: [CustomEditor] types register themselves; extend here if you add manual wiring.
+
+            ValidateRegistration();
+        }
+
+        /// <summary>
+        ///     Sanity-checks that expected custom editors resolve.
+        /// </summary>
+        private static void ValidateRegistration()
+        {
+            StateMachineData testData = ScriptableObject.CreateInstance<StateMachineData>();
+            UnityEditor.Editor stateMachineDataEditor = null;
+            try
+            {
+                stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
+                if (!(stateMachineDataEditor is StateMachineDataEditor))
+                {
+                    NeoDiagnostics.LogWarning(
+                        "[StateMachineEditorRegistrar] StateMachineDataEditor is not registered correctly.");
+                }
+            }
+            finally
+            {
+                if (stateMachineDataEditor != null)
+                {
+                    Object.DestroyImmediate(stateMachineDataEditor);
+                }
+
+                Object.DestroyImmediate(testData);
+            }
+        }
+    }
+}

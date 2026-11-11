@@ -1,0 +1,24 @@
+{
+    "name": "Neo.Tools.Input",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Tools.Managers",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

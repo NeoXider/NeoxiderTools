@@ -1,0 +1,222 @@
+# Neo.Network — multiplayer (Mirror-optional)
+
+Source: `Assets/Neoxider/Scripts/Network/` (namespace `Neo.Network`; `NetworkEventDispatcher` is `Neo.Tools`).
+Networking is **Mirror-optional** — most of it is behind `#if MIRROR`. The package compiles and runs fine
+without Mirror (everything falls back to a single-player "solo" mode). Verify signatures against source.
+
+## Gating: the `MIRROR` define
+`Neo.Network.asmdef` declares a version-define: `MIRROR` is set automatically when
+`com.mirrornetworking.mirror` is installed. With Mirror, networked classes compile their full
+`NetworkBehaviour` implementation; without it they fall back to `MonoBehaviour` stubs, and some types
+(`NeoLobbyManager`, `NeoLobbyPlayer`, `NeoNetworkDiscovery`, `NeoMirrorSceneReactivator`, the
+`NetworkContextActionMessage` struct) **don't exist at all** — code referencing them must itself be inside
+`#if MIRROR`. Install Mirror via Package Manager (OpenUPM/Git URL); LTS 86+ expected.
+
+**Solo-mode behavior (no Mirror):** `NetworkSingleton<T>` is a `MonoBehaviour`; `NeoNetworkState.IsServer/
+IsClient/IsHost`, `CanMutateState`, `HasServerAuthority` all return `true`; `IsNetworkActive` is `false`;
+`NeoNetworkSpawner.Spawn` does plain `Instantiate`.
+
+## Core types
+- **`RpgCharacterNetworkAdapter`** (`Neo.Rpg.Network`) — optional Mirror transport for the local
+  `Neo.Rpg.RpgCharacter` runtime. Add it to existing networked RPG prefabs; it owns commands, authority,
+  rate limiting, snapshots, and late-join state. Offline/local RPG objects need no adapter.
+- **`NetworkSingleton<T>`** — networked singleton base. Same access as `Singleton<T>`: `I`/`Instance`,
+  `HasInstance`, `TryGetInstance`. With Mirror it extends `NetworkBehaviour` so subclasses get `[SyncVar]`,
+  `[Command]`, `[ClientRpc]`, `isServer`, `isOwned`. `HasServerAuthority` = `NetworkServer.active`. Static
+  state auto-resets on domain reload.
+- **`NeoNetworkManager`** — wraps Mirror `NetworkManager`. Always-compiled `UnityEvent`s:
+  `OnServerStartedEvent`, `OnServerStoppedEvent`, `OnClientConnectedEvent`, `OnClientDisconnectedEvent`,
+  `OnLocalPlayerSpawnedEvent`; state `IsServer/IsClient/IsHost`; control
+  `StartAsHost()/StartAsClient([address[,port]])/StartAsServer()/StopNetwork()`, `ApplyPort(port)` (solo: log +
+  no-op, so the same calls compile without Mirror; the `StartHost()` of old docs is Mirror's, use the
+  `StartAs…` names). Calls
+  `NetworkContextActionRelay.RegisterMirrorHandlers()` on start. **Guarantees the client handshake**
+  (`HandshakeMode` Auto/Always/Manual: `Ready`, then `AddPlayer` once per connection), wakes scene
+  `NetworkIdentity` objects on every peer when a session starts (`ActivateSceneObjectsOnStart`), and
+  (Mirror-only) reports per-connection server events `OnServerClientConnectedEvent` /
+  `OnServerClientReadyEvent` / `OnServerPlayerReadyEvent` (ready **and** owns a player — the moment to welcome
+  and broadcast) / `OnServerClientDisconnectedEvent` (+ C# twins `ServerClientConnected`, `ServerPlayerReady`, …),
+  `LocalPlayerSpawned`, `IsConnectionSpawned(conn)`. Statics `ClientSessionStarted` / `ServerSessionStarted`.
+- **`NeoNetworkState`** (static) — branch online/offline cleanly WITHOUT `#if MIRROR`: `IsServer`,
+  `IsClient`, `IsClientOnly`, `IsHost`, `IsNetworkActive`, `CanMutateState`, `HasAuthority(go)`. Use
+  `CanMutateState` to guard state changes (server-or-solo).
+- **`NeoNetworkSpawner`** (static) — `Spawn(prefab,pos,rot,parent=null)`, `Despawn(instance)`, `CanSpawn`.
+  With Mirror: server-authoritative `NetworkServer.Spawn`/`Destroy`; **returns null and destroys the
+  instance** if called on a client-only peer for a `NetworkIdentity` (prevents client ghosts) — guard with
+  `CanSpawn`.
+- **`NetworkReactivePropertyBridge`** (static) — connect a Mirror `[SyncVar(hook)]` to a `Neo.Reactive`
+  property: `SetFromNetwork(ReactivePropertyFloat|Int|Bool, value)` (does `SetValueWithoutNotify` +
+  `ForceNotify`). There is **no** standalone `NetworkReactiveProperty` class — you pair a `[SyncVar]` field
+  with a normal `ReactiveProperty*` via this bridge.
+- **`NeoNetworkComponent`** — abstract base for the relays below; `bool isNetworked`; implements
+  `INeoOptionalNetworked`; protected `RateLimitCheck()` (expired per-connection entries are pruned),
+  `ApplyNetworkState()`. Components whose server-side **Is Networked** is off reject queued or crafted commands.
+- **`NetworkAuthorityPolicy`** (static, `Neo.Network`, assembly `Neo.Network.Contracts`, no Mirror) —
+  `IsKnown(mode)`, `IsAuthorized(mode, isDirectServerCall, isLocalHostSender, senderOwnsObject)`: the
+  `NetworkAuthorityMode` decision table (None allows all; OwnerOnly allows server, local host and owner;
+  ServerOnly allows server and local host; an unnamed value is rejected), unit-testable without a transport.
+- **`NeoNetworkPlayer`** — player base: `IsLocalPlayer`, `HasAuthority`, events `OnLocalPlayerStarted`/
+  `OnRemotePlayerStarted`; auto local/remote object visibility + remote AudioListener disable.
+- **`Money`** (`Neo.Shop`, `NetworkSingleton<Money>`) — currency; `isNetworked` toggle; reactive
+  `CurrentMoney/LevelMoney/AllMoney`; syncs `_syncCurrentMoney` `[SyncVar]` when networked.
+
+### Realtime / .io games (`Neo.Network.Realtime`, Mirror-optional except where noted)
+Server-authoritative realtime pieces with no game types; read `Docs/Network/Realtime_IO_Guide.md` first.
+- **`NeoNetworkBootstrap`** (+ pure `NeoStartupCommandLine.Parse` → `NeoStartupIntent`) — CLI `-host -server
+  -client -address -port -maxplayers -name` (+ custom switches), dedicated server only from the command line,
+  presentation suppression, headless frame cap/vSync/run-in-background, `[Server] status:` line, WebGL
+  transport + `?client&address=` URL start-up. Starts again after a session ended without `StopNetwork()`
+  (server shutdown, failed connect).
+- **`SnapshotTimeline`** (adaptive render clock) + **`SnapshotBuffer<T>`** (ring + `TrySample`) +
+  `NetInterpolation`; **`LocalPredictionModel`** (ack-tick replay, decaying offset); **`NetQuantization`**
+  (saturating fixed point, hit points round up); pure C#, allocation-free.
+- Mirror-only: **`NetFrameFraming`** (version + length + bounded counts, `FormatException` on mismatch),
+  **`NetFrameSender` / `NetFrameReceiver`** (fragmentation for KCP/UDP), **`NetClientHandlers` /
+  `NetServerHandlers`** (handlers survive every shutdown), **`NetReadyBroadcast`** (send only to ready +
+  spawned connections, never `NetworkServer.SendToReady`), **`NetEventChannel<T>`** (reliable event, authority →
+  remote clients, never the host).
+- **`NeoNetworkTelemetry`** / `NetTelemetry` / pure `NetTrafficMeter` — RTT, jitter, bytes/s in/out per message
+  kind, optional overlay.
+
+### Lobby (Mirror-only)
+- **`NeoLobbyManager`** (extends `NetworkRoomManager`) — `HostLobby()`, `JoinLobby(address)`,
+  `LeaveLobby()`, `CanStartGame()`; `PlayerCount`, `AllReady`; events `OnPlayerJoinedRoom`,
+  `OnAllPlayersReady`, `OnGameSceneLoaded`, `OnPlayerCountChanged`; `_minPlayersToStart`.
+- **`NeoLobbyPlayer`** (extends `NetworkRoomPlayer`) — `ToggleReady()`, `SetReady(bool)`; `IsLocal`,
+  `IsReady`; events `OnReadyChanged(bool)`, `OnBecameLocalPlayer`. `ConnectionId` returns the
+  session-unique `netId` (name kept for compatibility).
+- **`NeoNetworkDiscovery`** (LAN) — `StartDiscovery()`/`StopDiscovery()`, `QuickPlay()`, `ConnectToServer(address)`;
+  auto-advertises once per server/host start with any network manager and stops with the server
+  (`AutoAdvertiseOnHost`, `AutoDiscoverOnClient`, `IsAdvertising`); searches are not refreshed while a
+  client is connected. Advertising failures (port taken, no UDP broadcast) are one warning with
+  `IsAdvertising` false.
+- Flow: `HostLobby()` → clients `JoinLobby(addr)` → each `SetReady(true)` → `OnAllPlayersReady` when all
+  ready & `PlayerCount>=_minPlayersToStart` → Mirror loads game scene → `OnGameSceneLoaded`.
+
+### Scene-NetworkIdentity reactivation
+- **`INeoOptionalNetworked { bool IsNetworked { get; } }`** (always compiled). Implemented by
+  `NeoNetworkComponent`, `Money`, player controllers.
+- **`NeoMirrorSceneReactivator`** (Mirror-only, static) — runtime safety net that re-enables scene
+  `NetworkIdentity` objects in offline scenes (editor post-processor `NeoMirrorScenePostProcess` bakes the
+  fix at build). **See Gotchas — this is the #1 Mirror pitfall.**
+
+### Relay components — **[no-code], inspector-primary**
+These exist mainly to wire networked actions in the Inspector; for code-first networking write your own
+`NetworkBehaviour` with `[Command]`/`[ClientRpc]` instead. (Callable from code, but not the idiomatic path.)
+- **`NetworkActionRelay`** — multi-channel broadcast: `Trigger([channel])`, `TriggerFloat/String[...]`,
+  `TriggerByName(name)`, `TriggerFloatByName(name, value)`, `TriggerStringByName(name, value)`,
+  `TryGetChannelIndex(name, out index)`, `GetChannel(index)`; `NetworkActionScope{AllClients,ServerOnly,OthersOnly}`
+  (OthersOnly goes to the relay's observers only).
+- **`NetworkContextActionRelay`** — context-aware (resolves a `NetworkIdentity` like "the entering player");
+  `Trigger(...)`, `TriggerLocalPlayer()`, `TriggerOnlyForLocalContext` (dedups physics events). Uses a
+  custom `NetworkMessage`; needs `RegisterMirrorHandlers()` (auto with `NeoNetworkManager`). Messages go
+  to the observers of the relay's `NetworkIdentity` (the same audience as a ClientRpc); a host sends to
+  remote observers before applying locally, and a throwing listener on a received message is logged.
+- **`NetworkEventDispatcher`** (`Neo.Tools`) — `DispatchGlobalEvent()` → server fires + RPCs all clients.
+
+## Code-first patterns
+### Networked singleton with a synced value
+```csharp
+using Neo.Network; using Neo.Reactive;
+#if MIRROR
+using Mirror;
+#endif
+
+public class PlayerHealth : NetworkSingleton<PlayerHealth>
+{
+    public ReactivePropertyFloat HpState = new(100f);   // UI binds to this everywhere
+#if MIRROR
+    [SyncVar(hook = nameof(OnHpChanged))] private float _syncHp = 100f;
+    private void OnHpChanged(float _, float v) => NetworkReactivePropertyBridge.SetFromNetwork(HpState, v);
+
+    [Server] public void ServerSetHp(float v)
+    {
+        _syncHp = v;                       // → SyncVar hook → reactive on all clients
+        HpState.SetValueWithoutNotify(v); HpState.ForceNotify();   // update server locally
+    }
+#else
+    public void ServerSetHp(float v) { HpState.Value = v; }        // solo fallback
+#endif
+}
+// anywhere: PlayerHealth.I.HpState.AddListener(v => bar.SetValue(v));
+```
+
+### Server-authoritative spawning + state guards (no `#if` in gameplay code)
+```csharp
+using Neo.Network;
+
+if (NeoNetworkSpawner.CanSpawn)                       // server or solo
+    NeoNetworkSpawner.Spawn(enemyPrefab, pos, Quaternion.identity);
+
+if (NeoNetworkState.CanMutateState) ApplyWorldChange(); // server or solo only
+if (NeoNetworkState.HasAuthority(player)) DoLocalInput(player);
+```
+
+### Scene object that should stay enabled offline (the INeoOptionalNetworked pattern)
+```csharp
+using Neo.Network;
+#if MIRROR
+using Mirror;
+[RequireComponent(typeof(NetworkIdentity))]
+#endif
+public class ScenePowerUp : MonoBehaviour, INeoOptionalNetworked
+{
+    [SerializeField] private bool _isNetworked = false;
+    public bool IsNetworked => _isNetworked;          // false → reactivator re-enables it offline
+}
+```
+
+## Gotchas
+- **Scene NetworkIdentity force-disable (THE pitfall):** Mirror's `NetworkScenePostProcess` disables every
+  scene `NetworkIdentity` GameObject so the server owns their lifecycle. In an offline scene they'd stay
+  disabled forever. NeoxiderTools fixes this in two layers (editor post-processor + runtime
+  `NeoMirrorSceneReactivator`), but **any custom scene object with a `NetworkIdentity` that must run offline
+  must implement `INeoOptionalNetworked` and return `IsNetworked = false`**, or Mirror leaves it disabled.
+- Gate mutations with `NeoNetworkState.CanMutateState` (or Mirror `[Server]`); use `IsNetworkActive` to
+  branch online/offline without `#if MIRROR`.
+- `NeoNetworkSpawner.Spawn` returns `null` (and destroys) on a client-only peer — guard with `CanSpawn`.
+- Custom `NetworkManager` (not `NeoNetworkManager`)? Call
+  `NetworkContextActionRelay.RegisterMirrorHandlers()` in your start hooks or context relays silently fail.
+- `NetworkDiagnostics.RuntimeLogsEnabled/RuntimeWarningsEnabled` default `false` — enable to trace.
+- Never broadcast with `NetworkServer.SendToReady` (it only checks `isReady`; a ready client without a player
+  gets the message before its handlers exist and is disconnected). Use `NetReadyBroadcast` / `NetEventChannel`
+  / `NetFrameSender`, and register handlers through `NetClientHandlers` / `NetServerHandlers` so they survive
+  a restart.
+- `NetworkSingleton<T>.I` no longer remembers a miss for the whole session (frame + scene-change scoped;
+  `ForgetFailedSearch()` forces a retry).
+- `NeoNetworkTelemetry`'s optional overlay is IMGUI (a debug tool); demos show telemetry in uGUI rows
+  instead — never build demo or game UI with IMGUI.
+
+## New in 10.18.1
+
+- `NetworkContextActionRelay`: handlers live only while >= 1 relay is enabled (last disable
+  unregisters + clears budgets; restart/disconnect safe). Server checks a live authenticated Ready
+  owned-player connection first, then a 5-burst / 5-per-second per-connection budget; spawned-dict
+  only, exact component index (no fallback), relay authority preserved, other-owned contexts rejected
+  (unowned contexts allowed), quiet when disabled.
+- `NeoNetworkManager`: throwing `UnityEvent` listeners are caught/logged (manager continuation +
+  base cleanup protected; in-event listener semantics unchanged); null host sender fixed. New optional `TelepathyQueueLimit` + `ApplyTransportQueueLimits()`
+  caps the four root Telepathy queues (`0` = keep authored, `256` recommended; never raises positive
+  limits; no-op on unsupported / root Multiplex; explicit call before startup needed when starting via
+  `StartHost()` / `StartServer()` / `StartClient()` on a Mirror base-typed reference; no packet-size/timeout changes).
+- Unchanged: Mirror malformed-batch parsing, retained-batch queue growth, raw-socket admission. Queue cap is a
+  partial memory-capacity mitigation; deadline / pending-cap is a proposal, not shipped.
+
+## New in 10.18.0
+
+- Realtime IO toolkit, `NeoNetworkBootstrap`, telemetry, handshake/event guarantees on `NeoNetworkManager`
+  (see the sections above and the changelog).
+
+## New in 9.7.0
+
+- `NetworkReactiveSync` — NoCode replication of `ReactivePropertyFloat/Int/Bool` (e.g. `Money.CurrentMoney`)
+  from the inspector: target component + field name + direction. Inert without Mirror. Use instead of
+  hand-written SyncVar bridges for wallets/score/HP.
+- `NetworkPlayerName` — replicated nickname: `SetLocalName(v)` on the local player, `OnNameChanged(string)`
+  → TMP label; trimmed + length-capped server-side, rate-limited.
+- `NeoNetworkDiscovery.QuickPlay()` — one-button LAN: auto-join first found server or host after
+  `Host If None Found After` seconds; `OnQuickPlayResolved(bool becameHost)`.
+- `NetworkEventDispatcher` — payload variants `DispatchGlobalInt/Float/String` + matching UnityEvents;
+  all commands rate-limited per connection.
+- `NetworkPropertySync` — `Skip Hook On Owner` prevents rubber-band in OwnerToServer mode;
+  `Sync Interval` has a 0.1s floor.

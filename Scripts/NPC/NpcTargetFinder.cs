@@ -1,0 +1,158 @@
+﻿using UnityEngine;
+
+namespace Neo.NPC
+{
+    /// <summary>
+    /// Automatically finds a target by tag or name and assigns it to NpcNavigation.
+    /// </summary>
+    [RequireComponent(typeof(NpcNavigation))]
+    [CreateFromMenu("Neoxider/NPC/NpcTargetFinder")]
+    [AddComponentMenu("Neoxider/NPC/NpcTargetFinder")]
+    [NeoDoc("NPC/NpcTargetFinder.md")]
+    public class NpcTargetFinder : MonoBehaviour
+    {
+        private const float DefaultRetryInterval = 1f;
+
+        [Header("Override")]
+        [Tooltip("Explicit target. When assigned, scene search by tag/name is skipped.")]
+        [SerializeField]
+        private Transform _targetOverride;
+
+        [Header("Search Settings")] [SerializeField]
+        private bool _findByTag = true;
+
+        [SerializeField] private string _targetTag = "Player";
+
+        [SerializeField] private bool _findByName = false;
+        [SerializeField] private string _targetName = "Player";
+
+        [Header("Behavior")] [SerializeField] private bool _setModeToFollowOnFind = true;
+        [SerializeField] private bool _findOnAwake = true;
+        [SerializeField] [Min(0f)] private float _retryInterval = DefaultRetryInterval;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _debugLogMissingTarget;
+
+        private NpcNavigation _navigation;
+        private float _nextSearchTime;
+        private bool _hasWarnedMissingTarget;
+        private Transform _appliedTarget;
+
+        public Transform TargetOverride
+        {
+            get => _targetOverride;
+            set
+            {
+                if (_targetOverride == value)
+                {
+                    return;
+                }
+
+                _targetOverride = value;
+                _appliedTarget = null;
+                _nextSearchTime = 0f;
+            }
+        }
+
+        private void Awake()
+        {
+            _navigation = GetComponent<NpcNavigation>();
+            if (_findOnAwake)
+            {
+                FindAndSetTarget();
+            }
+        }
+
+        // WHY: keep retrying (throttled by _retryInterval) until a target is bound, and
+        // resume searching automatically if the bound target is destroyed at runtime.
+        private void Update()
+        {
+            if (_appliedTarget != null)
+            {
+                return;
+            }
+
+            FindAndSetTarget();
+        }
+
+        /// <summary>
+        /// Forces to find target using configured rules and applies it to NpcNavigation.
+        /// </summary>
+        public void FindAndSetTarget()
+        {
+            if (_targetOverride != null)
+            {
+                ApplyTarget(_targetOverride);
+                return;
+            }
+
+            if (_retryInterval > 0f && Time.realtimeSinceStartup < _nextSearchTime)
+            {
+                return;
+            }
+
+            _nextSearchTime = Time.realtimeSinceStartup + Mathf.Max(0f, _retryInterval);
+            Transform target = null;
+
+            if (_findByTag && !string.IsNullOrEmpty(_targetTag))
+            {
+                try
+                {
+                    GameObject targetObj = GameObject.FindGameObjectWithTag(_targetTag);
+                    if (targetObj != null)
+                    {
+                        target = targetObj.transform;
+                    }
+                }
+                catch (UnityException)
+                {
+                    // WHY: an undefined project tag must not prevent the configured name fallback.
+                }
+            }
+
+            if (target == null && _findByName && !string.IsNullOrEmpty(_targetName))
+            {
+                GameObject targetObj = GameObject.Find(_targetName);
+                if (targetObj != null)
+                {
+                    target = targetObj.transform;
+                }
+            }
+
+            if (target != null)
+            {
+                ApplyTarget(target);
+                return;
+            }
+
+            if (_debugLogMissingTarget && !_hasWarnedMissingTarget)
+            {
+                _hasWarnedMissingTarget = true;
+                NeoDiagnostics.LogWarning($"[NpcTargetFinder] Target not found on '{name}'.", this);
+            }
+        }
+
+        private void ApplyTarget(Transform target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            _navigation ??= GetComponent<NpcNavigation>();
+            if (_navigation == null)
+            {
+                return;
+            }
+
+            _hasWarnedMissingTarget = false;
+            _appliedTarget = target;
+            _navigation.SetFollowTarget(target);
+
+            if (_setModeToFollowOnFind)
+            {
+                _navigation.SetMode(NpcNavigation.NavigationMode.FollowTarget);
+            }
+        }
+    }
+}

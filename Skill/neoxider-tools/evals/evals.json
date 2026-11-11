@@ -1,0 +1,61 @@
+{
+  "skill_name": "neoxider-tools",
+  "evals": [
+    {
+      "id": 0,
+      "name": "coin-pickup-audio-money-save",
+      "prompt": "I'm building a 2D collector game in this Unity project. Add a CoinPickup MonoBehaviour: when the player enters its 2D trigger, play a pickup sound, add 10 to the player's coins/money, persist the new total so it survives an app restart, and remove the coin from the scene. Write the script.",
+      "expected_output": "A C# script that uses NeoxiderTools: AM for the sound, Money for coins, the Save system for persistence, code-first (no NeoCondition/NoCode components, no raw PlayerPrefs/PlayClipAtPoint).",
+      "files": [],
+      "assertions": [
+        "Plays the pickup sound through the NeoxiderTools audio manager (AM.I.Play...) rather than a raw AudioSource / AudioSource.PlayClipAtPoint",
+        "Adds coins through the NeoxiderTools Money manager (Money.I.Add...) rather than an ad-hoc int field with no manager",
+        "Persists the total through the NeoxiderTools save system ([SaveField] / SaveManager / SaveableBehaviour) rather than raw PlayerPrefs",
+        "Does NOT introduce a NeoCondition or any NoCode/*NoCodeAction inspector-wiring component",
+        "Removes the coin after pickup (Destroy, pool release, or Despawner)"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "pooled-wave-spawner",
+      "prompt": "Write an EnemyWaveSpawner for this Unity project: each wave spawns `count` enemies from an enemy prefab, one every `spawnDelay` seconds, each at a random spawn point picked from a Transform[] spawnPoints. Enemies are spawned a lot, so don't thrash the GC. Expose a StartWave(int count) method.",
+      "expected_output": "A C# script that pools enemies via PoolManager.Get, picks the spawn point with a Neo.Extensions random helper, and times spawns with a Neo coroutine/delay extension or coroutine. Exposes StartWave(int).",
+      "files": [],
+      "assertions": [
+        "Spawns enemies via the NeoxiderTools pool (PoolManager.Get / NeoObjectPool) instead of plain Instantiate for the per-wave spawning",
+        "Picks the random spawn point using a Neo.Extensions helper (GetRandomElement / GetRandomIndex) rather than a hand-written Random.Range index",
+        "Times the spawnDelay using a Neo coroutine/delay helper (this.Delay / WaitUntil) or a coroutine, not a busy loop",
+        "Exposes a StartWave(int count) method as requested"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "reactive-health-fly-damage",
+      "prompt": "In my action game (this Unity project), when the player takes damage I want the on-screen health bar to update automatically and a floating damage number to fly up from the hit point to a UI counter. Wire up the player health side and the damage-number effect in code.",
+      "expected_output": "A C# script using NeoxiderTools: HealthComponent or ReactiveProperty for health (subscribed in code via AddListener/OnChanged), AnimationFly for the flying damage number, code-first (no NeoCondition / NoCode binding).",
+      "files": [],
+      "assertions": [
+        "Drives health with a NeoxiderTools type (HealthComponent or ReactiveProperty*) rather than a plain float + manual event",
+        "Subscribes to health changes from code (AddListener / OnChanged += ...) rather than relying on inspector-only wiring",
+        "Uses AnimationFly (AnimationFly.I) for the flying damage number rather than a hand-rolled tween/coroutine mover",
+        "Does NOT introduce a NeoCondition or NoCodeBindText/SetProgress binding component for the health bar"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "mobile-win-reward-flight-audio-haptics",
+      "prompt": "Mobile puzzle game in this Unity project (NeoxiderPages is imported). When a level is won, the Win popup grants 45 coins; after the player taps Next, the popup closes and the menu opens. Make the coins fly into the menu's coin counter, play a win sound with a success vibration that respects the vibration setting, and make sure music pauses while the app is in the background. Write the code.",
+      "expected_output": "Code-first C# using NeoxiderTools: the balance is saved when the reward is granted, the flight is queued and played on the menu after it opens via AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest{...}) with OnItemArrived ticking the counter from the old balance, AM for the sound, Neo.Haptics with Haptics.EnabledProvider bound to the setting, and one owner of AudioListener.pause driven by OnApplicationPause/OnApplicationFocus.",
+      "files": [],
+      "assertions": [
+        "Saves the new balance when the reward is granted, not when the flight lands",
+        "Plays the flight on the destination (menu) page after it opens, not on the closing Win popup",
+        "Uses AnimationFly (Neo.UI) rather than a hand-written tween loop for the flying coins",
+        "Ticks the counter per arrival from the old balance and ends exactly on the saved balance",
+        "Uses Neo.Haptics (Haptics.Play + EnabledProvider) rather than Handheld.Vibrate",
+        "Pauses audio in the background through AudioListener.pause with a single owner",
+        "Does not use the NoCode layer and does not use var in NeoxiderTools-style code"
+      ]
+    }
+  ]
+}

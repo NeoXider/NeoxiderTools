@@ -1,0 +1,2416 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+namespace Neo.Bonus
+{
+    /// <summary>
+    ///     Spin orchestrator:
+    ///     - Arranges rows and their parameters (spaceY, offsetY, speedControll)
+    ///     - Starts row spins and waits until all rows stop
+    ///     - Reads visible symbols in each column window into finalVisuals (y=0 bottom)
+    ///     - Evaluates win/lose and raises events
+    ///     - Exposes payline queries: window-row matrix, symbol IDs per line, <see cref="SlotElement"/> chains,
+    ///       and last-spin winning indices / element lists for animations
+    ///     - Optional win-line playback via assigned LineRenderer(s) after a winning spin
+    ///     No spin animation here - rotation/braking lives in Row.
+    /// </summary>
+    [NeoDoc("Bonus/Slot/SpinController.md")]
+    [CreateFromMenu("Neoxider/Bonus/SpinController", "Prefabs/Bonus/Slot/SlotUI.prefab")]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(SpinController))]
+    public class SpinController : MonoBehaviour
+    {
+        [SerializeField] public CheckSpin checkSpin = new();
+        /// <summary>Optional bet table; may be null.</summary>
+        [SerializeField] public BetsData betsData;
+        /// <summary>Optional symbol sprite set; may be null.</summary>
+        [SerializeField] public SpritesData allSpritesData;
+
+        [Tooltip("Optional shared symbol economy used by PickEconomySymbolId (weights, payouts).")]
+        [SerializeField]
+        private SlotEconomyDefinition _economy;
+
+        [Tooltip("Local per-machine symbol weight table over the shared economy (enable to override).")]
+        [SerializeField]
+        private SlotSymbolWeightOverrides _symbolWeightOverrides = new();
+
+        [Space] [Header("Settings")] [SerializeField] [RequireInterface(typeof(IMoneySpend))]
+        private GameObject _moneyGameObject;
+
+        [SerializeField] private bool _priceOnLine = true;
+
+        [Tooltip("Credit winnings to the wallet automatically. Turn off only if OnWin already pays the player.")]
+        [SerializeField]
+        private bool _autoPayout = true;
+
+        [Tooltip("Visible window height in symbol rows (maps to Row.countSlotElement).")] [SerializeField]
+        private int _countVerticalElements = 3;
+
+        [SerializeField] private Row[] _rows;
+
+        [SerializeField] private bool _isSingleSpeed = true;
+
+        [FormerlySerializedAs("chanseWin")] [Range(0f, 1f)] [SerializeField]
+        private float chanceWin = 0.5f;
+
+        /// <summary>Probability [0..1] that the spin plan favors a win when CheckSpin is active.</summary>
+        public float ChanceWin
+        {
+            get => chanceWin;
+            set => chanceWin = Mathf.Clamp01(value);
+        }
+
+        [Obsolete("Use " + nameof(ChanceWin) + " (field renamed from chanseWin).")]
+        public float chanseWin
+        {
+            get => chanceWin;
+            set => chanceWin = Mathf.Clamp01(value);
+        }
+
+        [Space] [Header("Visual")] [SerializeField]
+        private float _delaySpinRoll = 0.2f;
+
+        [Tooltip("Unscaled seconds before a non-settling reel is completed synchronously. Prevents a broken reel from stranding the spin lifecycle.")]
+        [SerializeField]
+        [Min(0.1f)]
+        private float _spinTimeoutSeconds = 30f;
+
+        [SerializeField] private SpeedControll _speedControll = new()
+        {
+            speed = 5000,
+            timeSpin = 1
+        };
+
+        [SerializeField] private bool _setSpace;
+        [SerializeField] private Vector2 _space = Vector2.one;
+        [SerializeField] private float offsetY;
+        [SerializeField] private VisualSlotLines _lineSlot = new();
+
+        [Space] [Header("Win line (optional LineRenderer)")] [SerializeField]
+        private WinLineRendererPlayback _winLinePlayback = new();
+
+        [Space] [Header("Text")] [SerializeField]
+        private TMP_Text _textCountLine;
+
+        [Space] public UnityEvent OnStartSpin = new();
+
+        public UnityEvent OnEndSpin = new();
+
+        /// <summary>Invoked with true when the spin is a win.</summary>
+        public UnityEvent<bool> OnEnd = new();
+
+        [Space] public UnityEvent<int> OnWin = new();
+        public UnityEvent<int[]> OnWinLines = new();
+        public UnityEvent OnLose = new();
+
+        [Space] public UnityEvent<string> OnChangeBet = new();
+        public UnityEvent<string> OnChangeMoneyWin = new();
+
+        [Space] [Header("Debug")] [SerializeField]
+        private bool _firstWin;
+
+        [Tooltip(
+            "How many paylines are active for betting and evaluation (first N definitions from Lines Data or fallback).")]
+        [SerializeField]
+        [Min(1)]
+        private int _countLine = 1;
+
+        [SerializeField] [Min(0)] private int _betsId;
+        [SerializeField] private bool _logFinalVisuals;
+        [SerializeField] private bool _debugLogWarnings;
+
+        [Tooltip("From which index to print coordinates in Debug: 0 (default) or 1, etc.")] [SerializeField]
+        private int _gridIndexBase = 1;
+
+        [Tooltip("Master Scene view debug toggle for slot overlays (paylines and cell labels).")] [SerializeField]
+        private bool _slotSceneDebugEnabled = true;
+
+        [Tooltip(
+            "Draw payline gizmos in Scene view when this object is selected and the master debug toggle is enabled.")]
+        [SerializeField]
+        private bool _drawPaylineGizmos = true;
+
+        [Tooltip("Draw SlotElement labels and markers ([col,row]) for this controller's reels.")] [SerializeField]
+        private bool _drawSlotElementGizmos = true;
+
+        [SerializeField] private Color _gizmoPaylineColor = new(0.2f, 1f, 0.4f, 0.85f);
+
+        [Tooltip("Payline polyline width in Scene view (anti-aliased).")] [SerializeField] [Min(1f)]
+        private float _gizmoPaylineWidth = 8f;
+
+        [Tooltip("Joint disc radius as a fraction of HandleUtility.GetHandleSize at each cell.")]
+        [SerializeField]
+        [Min(0.02f)]
+        private float _gizmoJointRadiusMultiplier = 0.16f;
+
+        [Tooltip("Payline banner: vertical lift x HandleUtility.GetHandleSize(SpinController transform).")]
+        [SerializeField]
+        [Min(0.05f)]
+        private float _gizmoBannerRaiseHandles = 2.45f;
+
+        [SerializeField] [Min(8)] private int _gizmoBannerFontSize = 18;
+
+        [SerializeField] private Color _gizmoBannerTextColor = new(0.95f, 1f, 0.72f, 1f);
+
+        [SerializeField] [Min(8)] private int _gizmoPaylineCaptionFontSize = 13;
+
+        [SerializeField] private Color _gizmoPaylineCaptionColor = new(1f, 1f, 1f, 1f);
+
+        [Tooltip("Per-line \"Line N\" label lift x GetHandleSize(midpoint).")] [SerializeField] [Min(0.02f)]
+        private float _gizmoPaylineCaptionRaiseHandles = 0.4f;
+
+        [SerializeField] private Color _gizmoPaylineWarningColor = new(1f, 0.52f, 0.32f, 1f);
+
+        [Tooltip("Warning label offset below banner x GetHandleSize(SpinController).")] [SerializeField] [Min(0.05f)]
+        private float _gizmoBannerWarningDownHandles = 0.7f;
+
+        /// <summary>Symbols read back from the screen after the reels stop.</summary>
+        public SlotVisualData[,] finalVisuals;
+        public IMoneySpend moneySpend;
+
+        /// <summary>
+        ///     Wallet used to pay out winnings and to refund a cancelled spin. Resolved from the same object as
+        ///     <see cref="moneySpend" /> when that wallet also implements <see cref="IMoneyAdd" />.
+        /// </summary>
+        public IMoneyAdd moneyAdd;
+
+        /// <summary>Amount paid for the spin that is currently running; used to refund a cancellation.</summary>
+        private int _paidForActiveSpin;
+
+        private int price;
+
+        /// <summary>Master Scene-debug toggle (paylines + cell labels).</summary>
+        public bool SlotSceneDebugEnabled => _slotSceneDebugEnabled;
+
+        /// <summary>Payline overlay when this <see cref="SpinController"/> is selected.</summary>
+        public bool DrawPaylineGizmosInScene => _slotSceneDebugEnabled && _drawPaylineGizmos;
+
+        /// <summary><see cref="SlotElement"/> gizmos for reels under this controller.</summary>
+        public bool DrawSlotElementGizmosInScene => _slotSceneDebugEnabled && _drawSlotElementGizmos;
+
+        /// <summary>Visible window height (at least 1).</summary>
+        public int WindowHeight => Mathf.Max(1, _countVerticalElements);
+
+        /// <summary>Display offset applied to debug grid coordinates in console and scene gizmos.</summary>
+        public int GridIndexBase => _gridIndexBase;
+
+        /// <summary>
+        ///     2D matrix of references to actual visible elements:
+        ///     Elements[x,y] with y=0 bottom. Filled after spin stops.
+        /// </summary>
+        public SlotElement[,] Elements { get; private set; }
+
+        private Coroutine _winLineCoroutine;
+        private Coroutine _spinCoroutine;
+        private bool _spinInProgress;
+        private bool _startingSpin;
+        private int _activeSpinSequence;
+        private float _activeSpinDeadline;
+        private int[,] _activeSpinPlanIds;
+        private bool[] _activeRowsStarted;
+
+        private int[] _lastWinningPaylineIndices = Array.Empty<int>();
+        private int[] _lastWinningReadOnlySource;
+        private IReadOnlyList<int> _lastWinningReadOnly;
+        private int[] _columnTargetBuffer;
+        private int[] _activeLineIndices;
+
+        private int _lastPayout;
+
+        /// <summary>
+        ///     If set, the next <see cref="StartSpin"/> uses this matrix as the outcome instead of randomized plan
+        ///     (and bypasses CheckSpin shaping). Cleared after one spin.
+        ///     Shape: <c>[columns, rows]</c>, y=0 bottom, values are symbol IDs from <see cref="allSpritesData"/>.
+        /// </summary>
+        private int[,] _forcedNextOutcome;
+
+        /// <summary>True while a forced outcome is queued for the next spin.</summary>
+        public bool HasForcedNextOutcome => _forcedNextOutcome != null;
+
+        /// <summary>ID matrix (same orientation as Elements): y=0 bottom.</summary>
+        public int[,] FinalElementIDs
+        {
+            get
+            {
+                if (finalVisuals == null)
+                {
+                    return new int[0, 0];
+                }
+
+                int cols = finalVisuals.GetLength(0);
+                int rows = finalVisuals.GetLength(1);
+                int[,] ids = new int[cols, rows];
+                for (int x = 0; x < cols; x++)
+                for (int y = 0; y < rows; y++)
+                {
+                    ids[x, y] = finalVisuals[x, y]?.id ?? -1;
+                }
+
+                return ids;
+            }
+        }
+
+        /// <summary>
+        ///     Definition indices that won on the last completed spin (empty after a new spin starts or on lose).
+        ///     Matches indices into <see cref="GetPaylineDefinitionsSnapshot"/>.
+        /// </summary>
+        public IReadOnlyList<int> LastWinningPaylineIndices
+        {
+            get
+            {
+                // WHY: cache the read-only wrapper per result array; the getter is typically polled by UI.
+                if (!ReferenceEquals(_lastWinningReadOnlySource, _lastWinningPaylineIndices))
+                {
+                    _lastWinningReadOnlySource = _lastWinningPaylineIndices;
+                    _lastWinningReadOnly = Array.AsReadOnly(_lastWinningPaylineIndices);
+                }
+
+                return _lastWinningReadOnly;
+            }
+        }
+
+        /// <summary>
+        ///     Coin payout awarded on the last completed spin (0 after a new spin starts or on lose).
+        ///     Same value as the one broadcast through <see cref="OnWin"/>.
+        /// </summary>
+        public int LastPayout => _lastPayout;
+
+        /// <summary>True from accepted spin input until its result callbacks have completed.</summary>
+        public bool IsSpinInProgress => _spinInProgress;
+
+        /// <summary>
+        ///     Unscaled safety deadline for a spin. When exceeded, all reels settle to the planned outcome
+        ///     and normal result callbacks run exactly once.
+        /// </summary>
+        public float SpinTimeoutSeconds
+        {
+            get => _spinTimeoutSeconds;
+            set => _spinTimeoutSeconds = Mathf.Max(0.1f, value);
+        }
+
+        /// <summary>
+        ///     How many payline definitions participate in evaluation (<see cref="_countLine"/> capped by available definitions).
+        /// </summary>
+        public int EvaluatedPaylineDefinitionCount => ComputeEvaluatedPaylineDefinitionCount();
+
+        /// <summary>Assigned reel columns (left->right). Replace only while idle.</summary>
+        public Row[] Rows
+        {
+            get => _rows;
+            set
+            {
+                if (_spinInProgress || _startingSpin || !IsStop())
+                {
+                    return;
+                }
+
+                _rows = value;
+                SetSpace();
+                ClampPaylineCountToDefinitions();
+                SetPrice();
+            }
+        }
+
+        /// <summary>How many paylines are active for bets/check (clamped to available definitions).</summary>
+        public int ActivePaylineCount
+        {
+            get => _countLine;
+            set
+            {
+                if (_spinInProgress || _startingSpin || !IsStop())
+                {
+                    return;
+                }
+
+                int cap = GetPaylineDefinitionCapInternal();
+                _countLine = Mathf.Clamp(Mathf.Max(1, value), 1, cap);
+                SetPrice();
+            }
+        }
+
+        /// <summary>Visible symbol rows in the window (maps to each Row.countSlotElement).</summary>
+        public int VisibleWindowRows
+        {
+            get => _countVerticalElements;
+            set
+            {
+                if (_spinInProgress || _startingSpin || !IsStop())
+                {
+                    return;
+                }
+
+                _countVerticalElements = Mathf.Max(1, value);
+                SetSpace();
+                ClampPaylineCountToDefinitions();
+                SetPrice();
+            }
+        }
+
+        /// <summary>Index into <see cref="betsData.bets"/> (clamped when bets exist).</summary>
+        public int BetSelectionIndex
+        {
+            get => _betsId;
+            set
+            {
+                if (_spinInProgress || _startingSpin || !IsStop())
+                {
+                    return;
+                }
+
+                if (betsData?.bets == null || betsData.bets.Length == 0)
+                {
+                    _betsId = 0;
+                }
+                else
+                {
+                    _betsId = Mathf.Clamp(value, 0, betsData.bets.Length - 1);
+                }
+
+                SetPrice();
+            }
+        }
+
+        /// <summary>Delay between starting each column spin.</summary>
+        public float DelayBetweenColumnSpins
+        {
+            get => _delaySpinRoll;
+            set => _delaySpinRoll = Mathf.Max(0f, value);
+        }
+
+        /// <summary>Optional LineRenderer win-line playback settings (mutate fields from code).</summary>
+        public WinLineRendererPlayback WinLinePlayback => _winLinePlayback;
+
+        /// <summary>Current spin price after last <see cref="SetPrice"/> (same basis as next <see cref="StartSpin"/>).</summary>
+        public int CurrentSpinPrice => price;
+
+        /// <summary>Shared symbol economy assigned to this machine (may be null).</summary>
+        public SlotEconomyDefinition Economy => _economy;
+
+        /// <summary>Local weight table over <see cref="Economy"/>; enable it to override drop weights per machine.</summary>
+        public SlotSymbolWeightOverrides SymbolWeightOverrides => _symbolWeightOverrides;
+
+        /// <summary>
+        ///     Weighted symbol id from <see cref="Economy"/> honoring the local
+        ///     <see cref="SymbolWeightOverrides"/> table when enabled. Call once per reel when building
+        ///     an economy-driven outcome (then <see cref="SlotEconomyDefinition.ApplySpecialRule"/> +
+        ///     <see cref="ForceNextOutcome"/>). Returns 0 when no economy is assigned.
+        /// </summary>
+        public int PickEconomySymbolId()
+        {
+            if (_economy == null)
+            {
+                LogWarning($"No {nameof(SlotEconomyDefinition)} assigned; PickEconomySymbolId returns 0.");
+                return 0;
+            }
+
+            return _symbolWeightOverrides != null
+                ? _symbolWeightOverrides.PickWeightedId(_economy)
+                : _economy.PickWeightedId();
+        }
+
+        /// <summary>
+        ///     Builds a full economy-driven outcome matrix <c>[columns, rows]</c> (y=0 bottom): every
+        ///     cell is a weighted pick from <see cref="Economy"/> (honoring
+        ///     <see cref="SymbolWeightOverrides"/>), then
+        ///     <see cref="SlotEconomyDefinition.ApplySpecialRule"/> runs along each active payline.
+        ///     Returns an empty matrix (and warns) when no economy or no reels are assigned.
+        ///     Symbol ids must match <see cref="allSpritesData"/> visual ids to be displayable.
+        /// </summary>
+        public int[,] BuildEconomyOutcomeMatrix()
+        {
+            return BuildEconomyOutcomeMatrix(null);
+        }
+
+        /// <summary>
+        ///     Deterministic variant of <see cref="BuildEconomyOutcomeMatrix()"/>:
+        ///     <paramref name="symbolPicker"/> supplies each cell's symbol id (column-major, y=0 bottom
+        ///     first). Intended for tests, replays, and server-authored outcomes.
+        /// </summary>
+        public int[,] BuildEconomyOutcomeMatrix(Func<int> symbolPicker)
+        {
+            int cols = _rows?.Length ?? 0;
+            int rowsCount = WindowHeight;
+            if (_economy == null || cols == 0)
+            {
+                LogWarning("BuildEconomyOutcomeMatrix needs an assigned Economy and at least one Row.");
+                return new int[0, 0];
+            }
+
+            int[,] outcome = new int[cols, rowsCount];
+            for (int x = 0; x < cols; x++)
+            for (int y = 0; y < rowsCount; y++)
+            {
+                outcome[x, y] = symbolPicker != null ? symbolPicker() : PickEconomySymbolId();
+            }
+
+            // WHY: special-symbol conversion runs per active payline in definition order; overlapping
+            // paylines see the writes of earlier lines (classic wild cascade).
+            int[,] lineRows = GetActivePaylineWindowRowsMatrix();
+            int lineCount = lineRows.GetLength(0);
+            for (int li = 0; li < lineCount; li++)
+            {
+                int[] lineIds = new int[cols];
+                bool valid = true;
+                for (int c = 0; c < cols; c++)
+                {
+                    int y = lineRows[li, c];
+                    if ((uint)y >= (uint)rowsCount)
+                    {
+                        valid = false;
+                        break;
+                    }
+
+                    lineIds[c] = outcome[c, y];
+                }
+
+                if (!valid)
+                {
+                    continue;
+                }
+
+                _economy.ApplySpecialRule(lineIds);
+                for (int c = 0; c < cols; c++)
+                {
+                    outcome[c, lineRows[li, c]] = lineIds[c];
+                }
+            }
+
+            return outcome;
+        }
+
+        /// <summary>
+        ///     One-call economy spin: builds the outcome from <see cref="Economy"/>
+        ///     (<see cref="BuildEconomyOutcomeMatrix()"/>), queues it with
+        ///     <see cref="ForceNextOutcome"/>, and starts the spin. Returns false when the outcome
+        ///     could not be built or the reels are still spinning.
+        /// </summary>
+        public bool StartEconomySpin()
+        {
+            if (_spinInProgress || _startingSpin || !IsStop())
+            {
+                return false;
+            }
+
+            int[,] outcome = BuildEconomyOutcomeMatrix();
+            if (outcome.Length == 0)
+            {
+                return false;
+            }
+
+            ForceNextOutcome(outcome);
+            StartSpin();
+            // WHY: StartSpin consumes the queued outcome, so one still queued means the spin did not start.
+            return HasForcedNextOutcome == false;
+        }
+
+        /// <summary>
+        ///     Evaluates every active payline of the settled grid against <see cref="Economy"/>:
+        ///     one <see cref="SlotEconomyDefinition.LineResult"/> per line (payouts, special flag).
+        ///     Empty when no economy is assigned or nothing has settled yet.
+        /// </summary>
+        public SlotEconomyDefinition.LineResult[] EvaluateActivePaylinesWithEconomy(bool refreshIfIdle = true)
+        {
+            if (_economy == null)
+            {
+                LogWarning("EvaluateActivePaylinesWithEconomy needs an assigned Economy.");
+                return Array.Empty<SlotEconomyDefinition.LineResult>();
+            }
+
+            int[,] ids = GetActivePaylineSymbolIdsMatrix(refreshIfIdle);
+            int lineCount = ids.GetLength(0);
+            if (lineCount == 0)
+            {
+                return Array.Empty<SlotEconomyDefinition.LineResult>();
+            }
+
+            int cols = ids.GetLength(1);
+            SlotEconomyDefinition.LineResult[] results = new SlotEconomyDefinition.LineResult[lineCount];
+            int[] buffer = new int[cols];
+            for (int li = 0; li < lineCount; li++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    buffer[c] = ids[li, c];
+                }
+
+                results[li] = _economy.EvaluateLine(buffer);
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        ///     Normalizes all positive local override weights to a total of 1 (Inspector context menu).
+        /// </summary>
+        [ContextMenu("Normalize Weights")]
+        public void NormalizeSymbolWeightOverrides()
+        {
+            if (_symbolWeightOverrides == null)
+            {
+                return;
+            }
+
+            _symbolWeightOverrides.SyncWith(_economy);
+            bool normalized = _symbolWeightOverrides.NormalizeWeights();
+            if (!normalized)
+            {
+                LogWarning("Normalize Weights skipped: no positive override weight found.");
+            }
+
+#if UNITY_EDITOR
+            if (normalized)
+            {
+                EditorUtility.SetDirty(this);
+            }
+#endif
+        }
+
+        /// <summary>
+        ///     Batch-configure window height, active lines, and fallback row range on <see cref="checkSpin"/>.
+        ///     Clears migrated legacy single-row binding when updating fallback bounds (same as <see cref="CheckSpin.SetFallbackPaylineWindowRows"/>).
+        /// </summary>
+        public void ConfigureSlotRuntime(int visibleWindowRows, int activePaylineCount,
+            int fallbackMinInclusiveOrMinusOneAuto = -1, int fallbackMaxInclusiveOrMinusOneAuto = -1)
+        {
+            if (_spinInProgress || _startingSpin || !IsStop())
+            {
+                return;
+            }
+
+            _countVerticalElements = Mathf.Max(1, visibleWindowRows);
+            checkSpin?.SetFallbackPaylineWindowRows(fallbackMinInclusiveOrMinusOneAuto,
+                fallbackMaxInclusiveOrMinusOneAuto);
+
+            SetSpace();
+            int cap = GetPaylineDefinitionCapInternal();
+            _countLine = Mathf.Clamp(Mathf.Max(1, activePaylineCount), 1, cap);
+            SetPrice();
+        }
+
+        /// <summary>Immutable snapshot for UI, saves, or gameplay logic.</summary>
+        public SpinRuntimeSnapshot GetRuntimeSnapshot(bool refreshMatricesIfIdle = true)
+        {
+            if (refreshMatricesIfIdle && !_spinInProgress && IsStop())
+            {
+                BuildVisibleMatrices();
+            }
+
+            int cols = _rows?.Length ?? 0;
+            int winH = WindowHeight;
+            int totalDefs = checkSpin != null && cols > 0
+                ? checkSpin.GetPaylineDefinitionCount(cols, winH)
+                : 0;
+            bool fbOnly = checkSpin != null && cols > 0 && checkSpin.UsesFallbackPaylinesOnly(cols, winH);
+            int fbMn = 0;
+            int fbMx = 0;
+            if (checkSpin != null && cols > 0)
+            {
+                checkSpin.GetResolvedFallbackWindowRowRange(winH, out fbMn, out fbMx);
+            }
+
+            int[] winCopy = _lastWinningPaylineIndices.Length > 0
+                ? (int[])_lastWinningPaylineIndices.Clone()
+                : Array.Empty<int>();
+
+            return new SpinRuntimeSnapshot(
+                IsStop(),
+                winH,
+                cols,
+                _countLine,
+                ComputeEvaluatedPaylineDefinitionCount(),
+                totalDefs,
+                _betsId,
+                price,
+                checkSpin != null && checkSpin.isActive,
+                fbOnly,
+                checkSpin?.FallbackWindowRowMinRaw ?? -1,
+                checkSpin?.FallbackWindowRowMaxRaw ?? -1,
+                fbMn,
+                fbMx,
+                winCopy);
+        }
+
+        /// <summary>
+        ///     One coherent, immutable summary of the last completed spin, assembled from the existing
+        ///     accessors (<see cref="GetElementIDsMatrix"/>, <see cref="LastWinningPaylineIndices"/>,
+        ///     <see cref="GetLastWinningPaylinesSymbolIds"/>, <see cref="LastPayout"/>).
+        ///     Returns an empty <see cref="SpinResult"/> before the first spin completes.
+        /// </summary>
+        /// <param name="refreshIfIdle">
+        ///     When true (default) and the reels are idle, the symbol matrices are rebuilt before sampling,
+        ///     matching the behaviour of the underlying matrix accessors.
+        /// </param>
+        public SpinResult GetLastResult(bool refreshIfIdle = true)
+        {
+            int[,] symbolIds = GetElementIDsMatrix(refreshIfIdle);
+
+            int[] winningLines = _lastWinningPaylineIndices.Length > 0
+                ? (int[])_lastWinningPaylineIndices.Clone()
+                : Array.Empty<int>();
+
+            int[,] winningLineSymbolIds = GetLastWinningPaylinesSymbolIds(refreshIfIdle);
+
+            return new SpinResult(symbolIds, winningLines, winningLineSymbolIds, _lastPayout);
+        }
+
+        private void Awake()
+        {
+            if (_moneyGameObject != null)
+            {
+                moneySpend ??= _moneyGameObject.GetComponent<IMoneySpend>();
+                moneyAdd ??= _moneyGameObject.GetComponent<IMoneyAdd>();
+            }
+
+            // WHY: most wallets (including Neo.Shop.Money) implement both halves on one component, so a single
+            // reference is enough to both charge the bet and pay the winnings.
+            moneyAdd ??= moneySpend as IMoneyAdd;
+        }
+
+        private void Start()
+        {
+            SetSpace();
+
+            if (_rows != null && allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0)
+            {
+                SlotVisualData initial = allSpritesData.visuals[0];
+                foreach (Row row in _rows)
+                {
+                    if (row != null)
+                    {
+                        row.SetVisuals(initial);
+                    }
+                }
+            }
+
+            SetPrice();
+            _lineSlot?.LineActiv(false);
+            StopWinLinePlayback();
+        }
+
+        private void OnEnable()
+        {
+            if (_spinInProgress)
+            {
+                CompleteActiveSpinImmediately();
+            }
+        }
+
+        private void OnDisable()
+        {
+            StopWinLinePlayback();
+            if (!_spinInProgress)
+            {
+                return;
+            }
+
+            if (_spinCoroutine != null)
+            {
+                StopCoroutine(_spinCoroutine);
+                _spinCoroutine = null;
+            }
+
+            SettleAllRowsToActivePlan();
+        }
+
+        private void Update()
+        {
+            if (!_spinInProgress || Time.realtimeSinceStartup < _activeSpinDeadline)
+            {
+                return;
+            }
+
+            LogWarning($"Spin exceeded {_spinTimeoutSeconds:0.###} unscaled seconds; settling reels to the planned outcome.");
+            CompleteActiveSpinImmediately();
+        }
+
+        [Button(PlayModeOnly = true)]
+        public void StartSpin()
+        {
+            if (!isActiveAndEnabled || _startingSpin || _spinInProgress || !IsStop())
+            {
+                return;
+            }
+
+            if (_rows == null || _rows.Length == 0)
+            {
+                LogWarning("No Row assigned.");
+                return;
+            }
+
+            if (!HasCompleteVisuals())
+            {
+                LogWarning($"{nameof(SpritesData)} or visuals missing; every visual entry must be assigned.");
+                return;
+            }
+
+            _startingSpin = true;
+            try
+            {
+                SetPrice();
+                if (!isActiveAndEnabled || !TryPayForSpin())
+                {
+                    return;
+                }
+
+                if (!isActiveAndEnabled)
+                {
+                    RefundActiveSpin();
+                    return;
+                }
+
+                BeginSpinLifecycle();
+                OnChangeMoneyWin?.Invoke("");
+                OnStartSpin?.Invoke();
+            }
+            finally
+            {
+                _startingSpin = false;
+            }
+        }
+
+        private void BeginSpinLifecycle()
+        {
+            _lastWinningPaylineIndices = Array.Empty<int>();
+            _lastPayout = 0;
+            StopWinLinePlayback();
+            _lineSlot?.LineActiv(false);
+
+            _activeSpinPlanIds = BuildPlanIdMatrix();
+            _activeRowsStarted = new bool[_rows.Length];
+            _spinInProgress = true;
+            float staggerAllowance = Mathf.Max(0f, _delaySpinRoll) * _rows.Length;
+            _activeSpinDeadline = Time.realtimeSinceStartup + staggerAllowance +
+                                  Mathf.Max(0.1f, _spinTimeoutSeconds);
+            int sequence = ++_activeSpinSequence;
+            _spinCoroutine = StartCoroutine(StartSpinCoroutine(sequence));
+        }
+
+        /// <summary>
+        ///     Pays the current spin price. Price 0 or lower is explicit free mode; positive prices require a wallet.
+        /// </summary>
+        public bool TryPayForSpin()
+        {
+            if (price <= 0)
+            {
+                _paidForActiveSpin = 0;
+                return true;
+            }
+
+            if (moneySpend == null || !moneySpend.Spend(price))
+            {
+                _paidForActiveSpin = 0;
+                return false;
+            }
+
+            // WHY: remembered so a cancelled spin can hand the bet back instead of silently keeping it.
+            _paidForActiveSpin = price;
+            return true;
+        }
+
+        /// <summary>
+        ///     Credits a payout to the wallet. Called automatically after a winning spin when
+        ///     <see cref="_autoPayout" /> is on; safe to call manually otherwise.
+        /// </summary>
+        /// <param name="payout">Amount to add. Values of zero or less are ignored.</param>
+        /// <returns><c>true</c> when the wallet received the money.</returns>
+        public bool TryPayout(int payout)
+        {
+            if (payout <= 0)
+            {
+                return false;
+            }
+
+            if (moneyAdd == null)
+            {
+                NeoDiagnostics.LogWarningThrottled(
+                    "Neo.Bonus.SpinController.NoWallet." + NeoDiagnostics.StableId(this),
+                    $"[SpinController] Won {payout} but no IMoneyAdd wallet is assigned, so nothing was credited. " +
+                    "Assign a wallet that implements IMoneyAdd, or turn off Auto Payout and handle OnWin yourself.",
+                    this);
+                return false;
+            }
+
+            moneyAdd.Add(payout);
+            return true;
+        }
+
+        private IEnumerator StartSpinCoroutine(int sequence)
+        {
+            WaitForSecondsRealtime delay = new(Mathf.Max(0f, _delaySpinRoll));
+            int v = WindowHeight;
+
+            for (int x = 0; x < _rows.Length; x++)
+            {
+                Row row = _rows[x];
+                if (row == null)
+                {
+                    yield return delay;
+                    continue;
+                }
+
+                row.Spin(allSpritesData, FillColumnTargets(x, v));
+                _activeRowsStarted[x] = true;
+                yield return delay;
+            }
+
+            while (!IsStop())
+            {
+                if (Time.realtimeSinceStartup >= _activeSpinDeadline)
+                {
+                    SettleAllRowsToActivePlan();
+                    break;
+                }
+
+                yield return null;
+            }
+
+            CompleteSpinLifecycle(sequence);
+        }
+
+        /// <summary>
+        ///     Settles an accepted spin to its planned outcome and runs the same result callbacks as normal
+        ///     completion. Safe to call repeatedly; callbacks are emitted at most once per spin.
+        /// </summary>
+        public bool CompleteActiveSpinImmediately()
+        {
+            if (!_spinInProgress)
+            {
+                return false;
+            }
+
+            int sequence = _activeSpinSequence;
+            if (_spinCoroutine != null)
+            {
+                StopCoroutine(_spinCoroutine);
+                _spinCoroutine = null;
+            }
+
+            SettleAllRowsToActivePlan();
+            CompleteSpinLifecycle(sequence);
+            return true;
+        }
+
+        /// <summary>
+        ///     Abandons the active presentation without result callbacks. Intended for an owning durable
+        ///     lifecycle that will void/refund its own transaction. Ordinary disable/enable must not use it:
+        ///     a disabled controller preserves the planned result and completes after reactivation.
+        /// </summary>
+        public bool CancelActiveSpin()
+        {
+            if (!_spinInProgress)
+            {
+                return false;
+            }
+
+            if (_spinCoroutine != null)
+            {
+                StopCoroutine(_spinCoroutine);
+                _spinCoroutine = null;
+            }
+
+            SettleAllRowsToActivePlan();
+            _spinInProgress = false;
+            _activeSpinDeadline = 0f;
+            _activeSpinPlanIds = null;
+            _activeRowsStarted = null;
+            RefundActiveSpin();
+            return true;
+        }
+
+        /// <summary>
+        ///     Returns the bet of a spin that was cancelled before it produced a result.
+        ///     WHY: the price is taken up front, so abandoning the presentation without this would simply keep
+        ///     the player's money.
+        /// </summary>
+        private void RefundActiveSpin()
+        {
+            if (_paidForActiveSpin <= 0)
+            {
+                return;
+            }
+
+            int refund = _paidForActiveSpin;
+            _paidForActiveSpin = 0;
+
+            if (moneyAdd == null)
+            {
+                NeoDiagnostics.LogWarningThrottled(
+                    "Neo.Bonus.SpinController.NoRefundWallet." + NeoDiagnostics.StableId(this),
+                    $"[SpinController] Spin cancelled but {refund} could not be refunded: the wallet does not " +
+                    "implement IMoneyAdd.", this);
+                return;
+            }
+
+            moneyAdd.Add(refund);
+        }
+
+        private void SettleAllRowsToActivePlan()
+        {
+            if (_rows == null || _activeSpinPlanIds == null)
+            {
+                return;
+            }
+
+            int v = WindowHeight;
+            for (int x = 0; x < _rows.Length; x++)
+            {
+                Row row = _rows[x];
+                if (row == null)
+                {
+                    continue;
+                }
+
+                bool wasStarted = _activeRowsStarted != null && x < _activeRowsStarted.Length &&
+                                  _activeRowsStarted[x];
+                if (!wasStarted)
+                {
+                    row.Spin(allSpritesData, FillColumnTargets(x, v));
+                    if (_activeRowsStarted != null && x < _activeRowsStarted.Length)
+                    {
+                        _activeRowsStarted[x] = true;
+                    }
+                }
+
+                row.CompleteSpinImmediately();
+            }
+        }
+
+        private void CompleteSpinLifecycle(int sequence)
+        {
+            if (!_spinInProgress || sequence != _activeSpinSequence)
+            {
+                return;
+            }
+
+            _spinInProgress = false;
+            _spinCoroutine = null;
+            _activeSpinDeadline = 0f;
+
+            BuildVisibleMatrices();
+
+            // WHY: clear lifecycle data before callbacks so a callback may safely start the next spin.
+            _activeSpinPlanIds = null;
+            _activeRowsStarted = null;
+
+            ProcessSpinResult();
+        }
+
+        /// <summary>
+        ///     Fills Elements[x,y] (references to visible elements) and finalVisuals[x,y] (data) from the screen.
+        ///     y=0 bottom.
+        /// </summary>
+        private void BuildVisibleMatrices()
+        {
+            if (_rows == null || _rows.Length == 0)
+            {
+                Elements = null;
+                finalVisuals = null;
+                return;
+            }
+
+            int cols = _rows.Length;
+            int rows = WindowHeight;
+
+            Elements = new SlotElement[cols, rows];
+            finalVisuals = new SlotVisualData[cols, rows];
+
+            for (int x = 0; x < cols; x++)
+            {
+                Row row = _rows[x];
+                if (row == null)
+                {
+                    for (int y = 0; y < rows; y++)
+                    {
+                        Elements[x, y] = null;
+                        finalVisuals[x, y] = null;
+                    }
+
+                    continue;
+                }
+
+                SlotElement[] visibleTopDown = row.GetVisibleTopDown();
+                int take = Mathf.Min(rows, visibleTopDown.Length);
+
+                for (int y = 0; y < rows; y++)
+                {
+                    // WHY: index inside the row's own window; a Row window smaller than the
+                    // controller's WindowHeight would otherwise throw IndexOutOfRangeException.
+                    SlotElement se = y < take ? visibleTopDown[take - 1 - y] : null;
+                    Elements[x, y] = se;
+
+                    finalVisuals[x, y] = se != null ? FindVisualById(se.id) : null;
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Public accessor for the element matrix.
+        ///     When idle, refreshes from the screen; during spin returns the last cache.
+        /// </summary>
+        public SlotElement[,] GetElementsMatrix(bool refreshIfIdle = true)
+        {
+            if (refreshIfIdle && !_spinInProgress && IsStop())
+            {
+                BuildVisibleMatrices();
+            }
+
+            return Elements;
+        }
+
+        /// <summary>
+        ///     Public accessor for the ID matrix (same orientation as Elements): y=0 is bottom.
+        /// </summary>
+        public int[,] GetElementIDsMatrix(bool refreshIfIdle = true)
+        {
+            if (refreshIfIdle && !_spinInProgress && IsStop())
+            {
+                BuildVisibleMatrices();
+            }
+
+            return FinalElementIDs;
+        }
+
+        /// <summary>Effective payline definitions for current grid (Lines Data or fallback). Order matches line indices.</summary>
+        public LinesData.InnerArray[] GetPaylineDefinitionsSnapshot()
+        {
+            if (_rows == null || _rows.Length == 0 || checkSpin == null)
+            {
+                return Array.Empty<LinesData.InnerArray>();
+            }
+
+            return checkSpin.GetEffectiveLines(_rows.Length, WindowHeight);
+        }
+
+        /// <summary>
+        ///     Matrix <c>[lineDefinitionIndex, column]</c> = window row from bottom (same as <c>corY</c> in Lines Data).
+        /// </summary>
+        public int[,] GetPaylineWindowRowsMatrix()
+        {
+            LinesData.InnerArray[] defs = GetPaylineDefinitionsSnapshot();
+            int cols = _rows?.Length ?? 0;
+            if (defs.Length == 0 || cols <= 0)
+            {
+                return new int[0, 0];
+            }
+
+            int[,] m = new int[defs.Length, cols];
+            for (int li = 0; li < defs.Length; li++)
+            {
+                int[] cor = defs[li]?.corY;
+                if (cor == null || cor.Length != cols)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        m[li, c] = -1;
+                    }
+
+                    continue;
+                }
+
+                for (int c = 0; c < cols; c++)
+                {
+                    m[li, c] = cor[c];
+                }
+            }
+
+            return m;
+        }
+
+        /// <summary>
+        ///     Same as <see cref="GetPaylineWindowRowsMatrix"/> but only the first <see cref="EvaluatedPaylineDefinitionCount"/> lines (bet/eval scope).
+        /// </summary>
+        public int[,] GetActivePaylineWindowRowsMatrix()
+        {
+            int take = ComputeEvaluatedPaylineDefinitionCount();
+            return SlicePaylineMajorDimension(GetPaylineWindowRowsMatrix(), take);
+        }
+
+        /// <summary>
+        ///     Symbol IDs along each payline: <c>[lineDefinitionIndex, column]</c> from the visible grid (<c>y=0</c> bottom).
+        /// </summary>
+        public int[,] GetPaylineSymbolIdsMatrix(bool refreshIfIdle = true)
+        {
+            int[,] grid = GetElementIDsMatrix(refreshIfIdle);
+            LinesData.InnerArray[] defs = GetPaylineDefinitionsSnapshot();
+            int cols = _rows?.Length ?? 0;
+            if (defs.Length == 0 || cols <= 0 || grid.Length == 0)
+            {
+                return new int[0, 0];
+            }
+
+            int gh = grid.GetLength(1);
+            int[,] m = new int[defs.Length, cols];
+            for (int li = 0; li < defs.Length; li++)
+            {
+                int[] cor = defs[li]?.corY;
+                if (cor == null || cor.Length != cols)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        m[li, c] = -1;
+                    }
+
+                    continue;
+                }
+
+                for (int c = 0; c < cols; c++)
+                {
+                    int y = cor[c];
+                    m[li, c] = (uint)y < (uint)gh ? grid[c, y] : -1;
+                }
+            }
+
+            return m;
+        }
+
+        /// <summary>
+        ///     Same as <see cref="GetPaylineSymbolIdsMatrix"/> restricted to evaluated (active) paylines.
+        /// </summary>
+        public int[,] GetActivePaylineSymbolIdsMatrix(bool refreshIfIdle = true)
+        {
+            int take = ComputeEvaluatedPaylineDefinitionCount();
+            return SlicePaylineMajorDimension(GetPaylineSymbolIdsMatrix(refreshIfIdle), take);
+        }
+
+        /// <summary>
+        ///     Visible <see cref="SlotElement"/> along payline <paramref name="lineDefinitionIndex"/> (column order).
+        /// </summary>
+        public bool TryGetPaylineSlotElements(int lineDefinitionIndex, out SlotElement[] elements,
+            bool refreshIfIdle = true)
+        {
+            elements = null;
+            SlotElement[,] mat = GetElementsMatrix(refreshIfIdle);
+            LinesData.InnerArray[] defs = GetPaylineDefinitionsSnapshot();
+            int cols = _rows?.Length ?? 0;
+            if (mat == null || defs.Length == 0 || cols <= 0 || (uint)lineDefinitionIndex >= (uint)defs.Length)
+            {
+                return false;
+            }
+
+            int[] cor = defs[lineDefinitionIndex]?.corY;
+            if (cor == null || cor.Length != cols)
+            {
+                return false;
+            }
+
+            int gh = mat.GetLength(1);
+            elements = new SlotElement[cols];
+            for (int c = 0; c < cols; c++)
+            {
+                int y = cor[c];
+                elements[c] = (uint)y < (uint)gh ? mat[c, y] : null;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     For each entry in <see cref="LastWinningPaylineIndices"/>, elements along that payline (after last spin).
+        /// </summary>
+        public SlotElement[][] GetLastWinningPaylinesSlotElements(bool refreshIfIdle = true)
+        {
+            if (_lastWinningPaylineIndices.Length == 0)
+            {
+                return Array.Empty<SlotElement[]>();
+            }
+
+            SlotElement[][] rows = new SlotElement[_lastWinningPaylineIndices.Length][];
+            for (int i = 0; i < _lastWinningPaylineIndices.Length; i++)
+            {
+                int defIx = _lastWinningPaylineIndices[i];
+                rows[i] = TryGetPaylineSlotElements(defIx, out SlotElement[] els, refreshIfIdle)
+                    ? els
+                    : Array.Empty<SlotElement>();
+            }
+
+            return rows;
+        }
+
+        /// <summary>
+        ///     Symbol IDs on winning paylines from last spin: <c>[whichWin, column]</c> (parallel to <see cref="LastWinningPaylineIndices"/>).
+        /// </summary>
+        public int[,] GetLastWinningPaylinesSymbolIds(bool refreshIfIdle = true)
+        {
+            int[,] full = GetPaylineSymbolIdsMatrix(refreshIfIdle);
+            if (_lastWinningPaylineIndices.Length == 0 || full.Length == 0)
+            {
+                return new int[0, 0];
+            }
+
+            int cols = full.GetLength(1);
+            int[,] m = new int[_lastWinningPaylineIndices.Length, cols];
+            int lineCount = full.GetLength(0);
+            for (int i = 0; i < _lastWinningPaylineIndices.Length; i++)
+            {
+                int li = _lastWinningPaylineIndices[i];
+                if ((uint)li >= (uint)lineCount)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        m[i, c] = -1;
+                    }
+
+                    continue;
+                }
+
+                for (int c = 0; c < cols; c++)
+                {
+                    m[i, c] = full[li, c];
+                }
+            }
+
+            return m;
+        }
+
+        /// <summary>
+        ///     Window rows for winning paylines from last spin: <c>[whichWin, column]</c>.
+        /// </summary>
+        public int[,] GetLastWinningPaylinesWindowRows()
+        {
+            int[,] full = GetPaylineWindowRowsMatrix();
+            if (_lastWinningPaylineIndices.Length == 0 || full.Length == 0)
+            {
+                return new int[0, 0];
+            }
+
+            int cols = full.GetLength(1);
+            int[,] m = new int[_lastWinningPaylineIndices.Length, cols];
+            int lineCount = full.GetLength(0);
+            for (int i = 0; i < _lastWinningPaylineIndices.Length; i++)
+            {
+                int li = _lastWinningPaylineIndices[i];
+                if ((uint)li >= (uint)lineCount)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        m[i, c] = -1;
+                    }
+
+                    continue;
+                }
+
+                for (int c = 0; c < cols; c++)
+                {
+                    m[i, c] = full[li, c];
+                }
+            }
+
+            return m;
+        }
+
+        private int GetPaylineDefinitionCapInternal()
+        {
+            if (_rows == null || _rows.Length == 0 || checkSpin == null)
+            {
+                return 1;
+            }
+
+            return Mathf.Max(1, checkSpin.GetPaylineDefinitionCount(_rows.Length, WindowHeight));
+        }
+
+        private void ClampPaylineCountToDefinitions()
+        {
+            int cap = GetPaylineDefinitionCapInternal();
+            _countLine = Mathf.Clamp(Mathf.Max(1, _countLine), 1, cap);
+        }
+
+        private int ComputeEvaluatedPaylineDefinitionCount()
+        {
+            if (_rows == null || _rows.Length == 0 || checkSpin == null)
+            {
+                return 0;
+            }
+
+            int defs = GetPaylineDefinitionCapInternal();
+            return Mathf.Min(Mathf.Max(1, _countLine), defs);
+        }
+
+        private static int[,] SlicePaylineMajorDimension(int[,] full, int takeLines)
+        {
+            if (full.Length == 0 || takeLines <= 0)
+            {
+                return new int[0, 0];
+            }
+
+            int major = full.GetLength(0);
+            int cols = full.GetLength(1);
+            takeLines = Mathf.Min(takeLines, major);
+            int[,] sliced = new int[takeLines, cols];
+            for (int i = 0; i < takeLines; i++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    sliced[i, c] = full[i, c];
+                }
+            }
+
+            return sliced;
+        }
+
+        /// <summary>
+        ///     Forces the next spin to land on the supplied outcome. <paramref name="idsBottomUp"/> is
+        ///     <c>[columns, rows]</c> with <c>y=0</c> at the bottom of the visible window. Ids must exist in
+        ///     <see cref="allSpritesData"/>. Pass <c>null</c> to clear a previously queued forced outcome.
+        ///     Bypasses CheckSpin win/lose shaping for that single spin (your matrix is the truth).
+        /// </summary>
+        public void ForceNextOutcome(int[,] idsBottomUp)
+        {
+            if (idsBottomUp == null)
+            {
+                _forcedNextOutcome = null;
+                return;
+            }
+
+            int cols = _rows?.Length ?? 0;
+            int rows = WindowHeight;
+            if (idsBottomUp.GetLength(0) != cols || idsBottomUp.GetLength(1) != rows)
+            {
+                LogWarning(
+                    $"ForceNextOutcome shape [{idsBottomUp.GetLength(0)},{idsBottomUp.GetLength(1)}] " +
+                    $"does not match grid [{cols},{rows}]. Outcome ignored.");
+                _forcedNextOutcome = null;
+                return;
+            }
+
+            _forcedNextOutcome = (int[,])idsBottomUp.Clone();
+        }
+
+        /// <summary>
+        ///     Convenience: force the next spin to be a winning combination on a given payline definition,
+        ///     filling that line with <paramref name="symbolId"/> and the rest with non-matching ids.
+        ///     Returns false if <paramref name="lineDefinitionIndex"/> is out of range or symbols cannot be picked.
+        /// </summary>
+        public bool ForceNextOutcomeOnPayline(int lineDefinitionIndex, int symbolId)
+        {
+            int cols = _rows?.Length ?? 0;
+            int rows = WindowHeight;
+            if (cols <= 0 || rows <= 0 || !HasCompleteVisuals())
+            {
+                return false;
+            }
+
+            LinesData.InnerArray[] defs = GetPaylineDefinitionsSnapshot();
+            if (lineDefinitionIndex < 0 || lineDefinitionIndex >= defs.Length)
+            {
+                return false;
+            }
+
+            int[] cor = defs[lineDefinitionIndex]?.corY;
+            if (cor == null || cor.Length != cols)
+            {
+                return false;
+            }
+
+            int[,] outcome = new int[cols, rows];
+            int nSym = allSpritesData.visuals.Length;
+
+            for (int x = 0; x < cols; x++)
+            for (int y = 0; y < rows; y++)
+            {
+                int rid;
+                int guard = 0;
+                do
+                {
+                    rid = allSpritesData.visuals[Random.Range(0, nSym)].id;
+                } while (rid == symbolId && ++guard < 16 && nSym > 1);
+
+                outcome[x, y] = rid == symbolId ? FindAlternativeId(symbolId) : rid;
+            }
+
+            for (int x = 0; x < cols; x++)
+            {
+                int y = cor[x];
+                if ((uint)y < (uint)rows)
+                {
+                    outcome[x, y] = symbolId;
+                }
+            }
+
+            ForceNextOutcome(outcome);
+            return true;
+        }
+
+        private int FindAlternativeId(int avoidId)
+        {
+            int n = allSpritesData?.visuals?.Length ?? 0;
+            for (int i = 0; i < n; i++)
+            {
+                int candidate = allSpritesData.visuals[i].id;
+                if (candidate != avoidId)
+                {
+                    return candidate;
+                }
+            }
+
+            return avoidId;
+        }
+
+        /// <summary>Random plan plus optional win/lose shaping for CheckSpin.</summary>
+        private int[,] BuildPlanIdMatrix()
+        {
+            int cols = _rows?.Length ?? 0;
+            int vr = WindowHeight;
+            int[,] planIds = new int[cols, vr];
+
+            if (allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0)
+            {
+                return planIds;
+            }
+
+            // WHY: a forced outcome bypasses the random plan and CheckSpin shaping entirely.
+            if (_forcedNextOutcome != null
+                && _forcedNextOutcome.GetLength(0) == cols
+                && _forcedNextOutcome.GetLength(1) == vr)
+            {
+                for (int x = 0; x < cols; x++)
+                for (int y = 0; y < vr; y++)
+                {
+                    planIds[x, y] = _forcedNextOutcome[x, y];
+                }
+
+                _forcedNextOutcome = null;
+                return planIds;
+            }
+
+            _forcedNextOutcome = null;
+
+            int nSym = allSpritesData.visuals.Length;
+            for (int x = 0; x < cols; x++)
+            for (int y = 0; y < vr; y++)
+            {
+                planIds[x, y] = allSpritesData.visuals[Random.Range(0, nSym)].id;
+            }
+
+            if (checkSpin != null && checkSpin.isActive)
+            {
+                try
+                {
+                    int totalIdCount = nSym;
+                    if (_firstWin || Random.Range(0f, 1f) < chanceWin)
+                    {
+                        _firstWin = false;
+                        checkSpin.SetWin(planIds, totalIdCount, _countLine);
+                    }
+                    else
+                    {
+                        int[] lines = checkSpin.GetWinningLines(planIds, _countLine);
+                        if (lines.Length > 0)
+                        {
+                            checkSpin.SetLose(planIds, lines, totalIdCount, _countLine);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogWarning($"Plan build failed: {ex.Message}");
+                }
+            }
+
+            return planIds;
+        }
+
+        private void ProcessSpinResult()
+        {
+            if (_logFinalVisuals && finalVisuals != null)
+            {
+                StringBuilder sb = new();
+                sb.Append("--- Final Visuals Table (top -> bottom, y=0 bottom) --- ");
+                int cols = finalVisuals.GetLength(0);
+                int rows = finalVisuals.GetLength(1);
+
+                for (int y = rows - 1; y >= 0; y--)
+                {
+                    List<string> parts = new(cols);
+                    for (int x = 0; x < cols; x++)
+                    {
+                        int id = finalVisuals[x, y]?.id ?? -1;
+                        parts.Add($"[{x + _gridIndexBase},{y + _gridIndexBase}] = {id}");
+                    }
+
+                    if (y < rows - 1)
+                    {
+                        sb.Append(" | ");
+                    }
+
+                    sb.Append("Y=");
+                    sb.Append(y + _gridIndexBase);
+                    sb.Append(": ");
+                    sb.Append(string.Join(", ", parts));
+                }
+
+                NeoDiagnostics.Log(sb.ToString(), this, true);
+            }
+
+            bool hasWon = false;
+
+            if (finalVisuals == null || checkSpin == null || !checkSpin.isActive)
+            {
+                _lastWinningPaylineIndices = Array.Empty<int>();
+                _lastPayout = 0;
+                Lose();
+                OnEndSpin?.Invoke();
+                OnEnd?.Invoke(false);
+                return;
+            }
+
+            try
+            {
+                int[,] finalIds = FinalElementIDs;
+                int[] lines = checkSpin.GetWinningLines(finalIds, _countLine);
+
+                if (lines.Length > 0)
+                {
+                    _lastWinningPaylineIndices = (int[])lines.Clone();
+                    float[] mult = checkSpin.GetMultiplayers(finalIds, _countLine, lines);
+                    Win(lines, mult);
+                    hasWon = true;
+                }
+                else
+                {
+                    _lastWinningPaylineIndices = Array.Empty<int>();
+                    _lastPayout = 0;
+                    Lose();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogWarning($"Result evaluation failed: {ex.Message}");
+                _lastWinningPaylineIndices = Array.Empty<int>();
+                _lastPayout = 0;
+                Lose();
+            }
+
+            OnEndSpin?.Invoke();
+            OnEnd?.Invoke(hasWon);
+        }
+
+        #region SimpleMethods
+
+        public bool IsStop()
+        {
+            if (_rows == null)
+            {
+                return true;
+            }
+
+            // WHY: polled every frame while a spin settles; LINQ All over the array allocated on each poll.
+            for (int i = 0; i < _rows.Length; i++)
+            {
+                Row row = _rows[i];
+                if (row != null && row.is_spinning)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void Win(int[] lines, float[] mult)
+        {
+            StopWinLinePlayback();
+
+            _lineSlot?.LineActiv(lines);
+
+            if (_winLinePlayback.IsActive)
+            {
+                _winLineCoroutine = StartCoroutine(WinLinePlaybackRoutine(lines));
+            }
+
+            int linePrice = 0;
+
+            if (betsData?.bets != null && betsData.bets.Length > 0 && _betsId >= 0 && _betsId < betsData.bets.Length)
+            {
+                linePrice = betsData.bets[_betsId];
+            }
+
+            int payout = SlotSpinMath.ComputePayout(mult, linePrice);
+            _lastPayout = payout;
+            _paidForActiveSpin = 0;
+
+            // WHY: the bet is taken by TryPayForSpin, so the win has to be credited here. Previously the payout
+            // only reached OnWin, which meant a machine wired without a listener silently ate every win.
+            if (_autoPayout)
+            {
+                TryPayout(payout);
+            }
+
+            OnChangeMoneyWin?.Invoke(payout.ToString());
+            OnWin?.Invoke(payout);
+            OnWinLines?.Invoke(lines);
+        }
+
+        private void Lose()
+        {
+            OnChangeMoneyWin?.Invoke(0.ToString());
+            OnLose?.Invoke();
+        }
+
+        private void SetPrice()
+        {
+            int linePrice = 0;
+
+            if (betsData?.bets != null && betsData.bets.Length > 0)
+            {
+                if (_betsId < 0 || _betsId >= betsData.bets.Length)
+                {
+                    _betsId = 0;
+                }
+
+                linePrice = betsData.bets[_betsId];
+            }
+
+            price = SlotSpinMath.ComputeSpinPrice(linePrice, _countLine, _priceOnLine);
+
+            if (_textCountLine != null)
+            {
+                _textCountLine.text = _countLine.ToString();
+            }
+
+            OnChangeBet?.Invoke(price.ToString());
+
+            UpdatePaylineVisualHighlight();
+        }
+
+        /// <summary>Highlights payline UI objects for the first N active logical lines.</summary>
+        private void UpdatePaylineVisualHighlight()
+        {
+            if (_lineSlot?.lines == null || _lineSlot.lines.Length == 0 || _rows == null || _rows.Length == 0)
+            {
+                return;
+            }
+
+            int defCount = checkSpin != null
+                ? checkSpin.GetPaylineDefinitionCount(_rows.Length, WindowHeight)
+                : 1;
+
+            int active = Mathf.Min(_countLine, Mathf.Min(defCount, _lineSlot.lines.Length));
+            if (active <= 0)
+            {
+                return;
+            }
+
+            if (_activeLineIndices == null || _activeLineIndices.Length != active)
+            {
+                _activeLineIndices = new int[active];
+                for (int i = 0; i < active; i++)
+                {
+                    _activeLineIndices[i] = i;
+                }
+            }
+
+            _lineSlot.LineActiv(_activeLineIndices);
+        }
+
+        [Button(PlayModeOnly = true)]
+        public void AddLine()
+        {
+            if (_spinInProgress || _startingSpin || !IsStop())
+            {
+                return;
+            }
+
+            int maxDefs = GetMaxPaylineCountForUi();
+            _countLine = _countLine >= maxDefs ? 1 : Mathf.Max(1, _countLine + 1);
+
+            SetPrice();
+        }
+
+        [Button(PlayModeOnly = true)]
+        public void RemoveLine()
+        {
+            if (_spinInProgress || _startingSpin || !IsStop())
+            {
+                return;
+            }
+
+            _countLine--;
+            int maxDefs = GetMaxPaylineCountForUi();
+            if (maxDefs > 0 && _countLine < 1)
+            {
+                _countLine = maxDefs;
+            }
+
+            if (_countLine < 1)
+            {
+                _countLine = 1;
+            }
+
+            SetPrice();
+        }
+
+        private int GetMaxPaylineCountForUi()
+        {
+            int fromCheck = checkSpin != null && _rows != null && _rows.Length > 0
+                ? checkSpin.GetPaylineDefinitionCount(_rows.Length, WindowHeight)
+                : 1;
+
+            int fromVisual = _lineSlot?.lines?.Length ?? 0;
+            return Mathf.Max(1, fromVisual > 0 ? Mathf.Min(fromCheck, fromVisual) : fromCheck);
+        }
+
+        [Button(PlayModeOnly = true)]
+        public void SetMaxBet()
+        {
+            if (_spinInProgress || _startingSpin || !IsStop())
+            {
+                return;
+            }
+
+            if (betsData?.bets != null && betsData.bets.Length > 0)
+            {
+                _betsId = betsData.bets.Length - 1;
+            }
+            else
+            {
+                _betsId = 0;
+            }
+
+            SetPrice();
+        }
+
+        [Button(PlayModeOnly = true)]
+        public void AddBet()
+        {
+            if (_spinInProgress || _startingSpin || !IsStop())
+            {
+                return;
+            }
+
+            if (betsData?.bets != null && betsData.bets.Length > 0)
+            {
+                _betsId++;
+                if (_betsId >= betsData.bets.Length)
+                {
+                    _betsId = 0;
+                }
+            }
+            else
+            {
+                _betsId = 0;
+            }
+
+            SetPrice();
+        }
+
+        [Button(PlayModeOnly = true)]
+        public void RemoveBet()
+        {
+            if (_spinInProgress || _startingSpin || !IsStop())
+            {
+                return;
+            }
+
+            if (betsData?.bets != null && betsData.bets.Length > 0)
+            {
+                _betsId--;
+                if (_betsId < 0)
+                {
+                    _betsId = betsData.bets.Length - 1;
+                }
+            }
+            else
+            {
+                _betsId = 0;
+            }
+
+            SetPrice();
+        }
+
+        private void OnValidate()
+        {
+            _symbolWeightOverrides?.SyncWith(_economy);
+            _rows ??= GetComponentsInChildren<Row>(true);
+            if (_rows != null)
+            {
+                SetSpace();
+            }
+
+            // WHY: keeps serialized line count consistent with Lines Data / fallback geometry (also matches gizmo eval cap).
+            ClampPaylineCountToDefinitions();
+        }
+
+        private void SetSpace()
+        {
+            if (!_setSpace || _rows == null || _rows.Length == 0)
+            {
+                return;
+            }
+
+            bool isUI = _rows[0] != null && _rows[0].TryGetComponent<RectTransform>(out _);
+
+            for (int i = 0; i < _rows.Length; i++)
+            {
+                Row row = _rows[i];
+                if (row == null)
+                {
+                    continue;
+                }
+
+                if (i > 0 && _rows[i - 1] != null)
+                {
+                    Row prevRow = _rows[i - 1];
+                    if (isUI && row.transform is RectTransform rt && prevRow.transform is RectTransform prevRt)
+                    {
+                        rt.anchoredPosition =
+                            new Vector2(prevRt.anchoredPosition.x + _space.x, prevRt.anchoredPosition.y);
+                    }
+                    else
+                    {
+                        row.transform.localPosition = new Vector3(prevRow.transform.localPosition.x + _space.x,
+                            prevRow.transform.localPosition.y, row.transform.localPosition.z);
+                    }
+                }
+
+                row.countSlotElement = _countVerticalElements;
+                row.spaceY = _space.y;
+                row.offsetY = offsetY;
+
+                // WHY: predictive id assignment requires extraStepsAtDecel >= visible window height.
+                if (row.extraStepsAtDecel < _countVerticalElements)
+                {
+                    row.extraStepsAtDecel = _countVerticalElements;
+                }
+
+                row.ApplyLayout();
+
+                if (row.SlotElements != null && row.SlotElements.Length > 0
+                                             && row.SlotElements.Length < _countVerticalElements + 1)
+                {
+                    LogWarning(
+                        $"Row '{row.name}' has only {row.SlotElements.Length} SlotElement(s) " +
+                        $"but window height is {_countVerticalElements}. Need at least {_countVerticalElements + 1} for buffer wraps.",
+                        row);
+                }
+
+                if (_isSingleSpeed)
+                {
+                    row.speedControll = _speedControll;
+                }
+            }
+        }
+
+        private void StopWinLinePlayback()
+        {
+            if (_winLineCoroutine != null)
+            {
+                StopCoroutine(_winLineCoroutine);
+                _winLineCoroutine = null;
+            }
+
+            _winLinePlayback?.ClearAll();
+        }
+
+        private IEnumerator WinLinePlaybackRoutine(int[] winningLineIndices)
+        {
+            if (!_winLinePlayback.IsActive || winningLineIndices == null || winningLineIndices.Length == 0 ||
+                checkSpin == null || _rows == null || _rows.Length == 0)
+            {
+                yield break;
+            }
+
+            int winH = WindowHeight;
+            LinesData.InnerArray[] defs = checkSpin.GetEffectiveLines(_rows.Length, winH);
+
+            while (true)
+            {
+                bool parallelFeasible = _winLinePlayback.layout ==
+                                        WinLineRendererPlayback.LayoutMode.ParallelWhenPossible &&
+                                        winningLineIndices.Length > 1 &&
+                                        _winLinePlayback.CountAssignedRenderers() >= winningLineIndices.Length;
+
+                if (parallelFeasible)
+                {
+                    bool orderedOk = true;
+                    for (int i = 0; i < winningLineIndices.Length; i++)
+                    {
+                        if (_winLinePlayback.RendererAt(i) == null)
+                        {
+                            orderedOk = false;
+                            break;
+                        }
+                    }
+
+                    if (orderedOk)
+                    {
+                        yield return PlayWinLinesParallel(winningLineIndices, defs);
+                    }
+                    else
+                    {
+                        yield return PlayWinLinesSequential(winningLineIndices, defs);
+                    }
+                }
+                else
+                {
+                    yield return PlayWinLinesSequential(winningLineIndices, defs);
+                }
+
+                if (!_winLinePlayback.loopUntilNextSpin)
+                {
+                    break;
+                }
+
+                if (_winLinePlayback.cycleGapSeconds > 0f)
+                {
+                    yield return new WaitForSeconds(_winLinePlayback.cycleGapSeconds);
+                }
+            }
+
+            _winLinePlayback.ClearAll();
+        }
+
+        private IEnumerator PlayWinLinesSequential(int[] winningLineIndices, LinesData.InnerArray[] defs)
+        {
+            LineRenderer lr = _winLinePlayback.FirstRenderer();
+            if (lr == null)
+            {
+                yield break;
+            }
+
+            foreach (int lineIx in winningLineIndices)
+            {
+                if (lineIx < 0 || lineIx >= defs.Length)
+                {
+                    continue;
+                }
+
+                LinesData.InnerArray def = defs[lineIx];
+                Vector3[] pts = BuildPaylineWorldPoints(def);
+                if (pts == null || pts.Length < 2)
+                {
+                    continue;
+                }
+
+                _winLinePlayback.ConfigurePolyline(lr, pts);
+
+                float elapsed = 0f;
+                while (elapsed < _winLinePlayback.holdSeconds)
+                {
+                    elapsed += Time.deltaTime;
+                    _winLinePlayback.ApplyVisualFrame(lr, elapsed);
+                    yield return null;
+                }
+
+                lr.enabled = false;
+                lr.positionCount = 0;
+
+                if (_winLinePlayback.stepGapSeconds > 0f)
+                {
+                    yield return new WaitForSeconds(_winLinePlayback.stepGapSeconds);
+                }
+            }
+        }
+
+        private IEnumerator PlayWinLinesParallel(int[] winningLineIndices, LinesData.InnerArray[] defs)
+        {
+            int n = winningLineIndices.Length;
+            LineRenderer[] active = new LineRenderer[n];
+            float phaseSkew = 0.09f;
+
+            for (int i = 0; i < n; i++)
+            {
+                LineRenderer lr = _winLinePlayback.RendererAt(i);
+                int lineIx = winningLineIndices[i];
+                if (lr == null || lineIx < 0 || lineIx >= defs.Length)
+                {
+                    _winLinePlayback.ClearAll();
+                    yield break;
+                }
+
+                Vector3[] pts = BuildPaylineWorldPoints(defs[lineIx]);
+                if (pts == null || pts.Length < 2)
+                {
+                    _winLinePlayback.ClearAll();
+                    yield break;
+                }
+
+                _winLinePlayback.ConfigurePolyline(lr, pts);
+                active[i] = lr;
+            }
+
+            float elapsed = 0f;
+            while (elapsed < _winLinePlayback.holdSeconds)
+            {
+                elapsed += Time.deltaTime;
+                for (int i = 0; i < n; i++)
+                {
+                    if (active[i] != null && active[i].enabled)
+                    {
+                        _winLinePlayback.ApplyVisualFrame(active[i], elapsed + i * phaseSkew);
+                    }
+                }
+
+                yield return null;
+            }
+
+            _winLinePlayback.ClearAll();
+        }
+
+        private Vector3[] BuildPaylineWorldPoints(LinesData.InnerArray line)
+        {
+            if (_rows == null || line.corY == null || line.corY.Length != _rows.Length)
+            {
+                return null;
+            }
+
+            Vector3[] pts = new Vector3[line.corY.Length];
+            Vector3 off = _winLinePlayback.worldOffset;
+
+            for (int col = 0; col < line.corY.Length; col++)
+            {
+                Row row = _rows[col];
+                if (row == null)
+                {
+                    return null;
+                }
+
+                pts[col] = PaylineLineGeometry.GetCellWorld(row, line.corY[col]) + off;
+            }
+
+            return pts;
+        }
+
+        private bool HasCompleteVisuals()
+        {
+            SlotVisualData[] visuals = allSpritesData != null ? allSpritesData.visuals : null;
+            if (visuals == null || visuals.Length == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < visuals.Length; i++)
+            {
+                if (visuals[i] == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private SlotVisualData FindVisualById(int id)
+        {
+            SlotVisualData[] visuals = allSpritesData != null ? allSpritesData.visuals : null;
+            if (visuals == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < visuals.Length; i++)
+            {
+                SlotVisualData visual = visuals[i];
+                if (visual != null && visual.id == id)
+                {
+                    return visual;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Copies one plan column into a reused buffer; <see cref="Row.Spin"/> copies it into its own storage.</summary>
+        private int[] FillColumnTargets(int column, int windowHeight)
+        {
+            if (_columnTargetBuffer == null || _columnTargetBuffer.Length != windowHeight)
+            {
+                _columnTargetBuffer = new int[windowHeight];
+            }
+
+            for (int y = 0; y < windowHeight; y++)
+            {
+                _columnTargetBuffer[y] = _activeSpinPlanIds[column, y];
+            }
+
+            return _columnTargetBuffer;
+        }
+
+        private void LogWarning(string message, UnityEngine.Object context = null)
+        {
+            if (_debugLogWarnings)
+            {
+                NeoDiagnostics.LogWarning(
+                    $"[{nameof(SpinController)}] {message}",
+                    context != null ? context : this,
+                    true);
+            }
+        }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmos()
+        {
+            if (IsThisOrChildSelectedInEditor())
+            {
+                DrawPaylineGizmosScene();
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            DrawPaylineGizmosScene();
+        }
+
+        private bool IsThisOrChildSelectedInEditor()
+        {
+            Transform selected = Selection.activeTransform;
+            return selected != null && (selected == transform || selected.IsChildOf(transform));
+        }
+
+        private void DrawPaylineGizmosScene()
+        {
+            if (!DrawPaylineGizmosInScene || _rows == null || _rows.Length == 0 || checkSpin == null)
+            {
+                return;
+            }
+
+            int winH = WindowHeight;
+            LinesData.InnerArray[] defs = checkSpin.GetEffectiveLines(_rows.Length, winH);
+            if (defs.Length == 0)
+            {
+                return;
+            }
+
+            int eval = Mathf.Min(Mathf.Max(1, _countLine), defs.Length);
+            bool fbOnly = checkSpin.UsesFallbackPaylinesOnly(_rows.Length, winH);
+            checkSpin.GetResolvedFallbackWindowRowRange(winH, out int fbMin, out int fbMax);
+            int drawn = 0;
+
+            Vector3 hdrPos = transform.position;
+            float hdrScale = HandleUtility.GetHandleSize(hdrPos);
+
+            GUIStyle hdrStyle = new(EditorStyles.boldLabel)
+            {
+                fontSize = Mathf.Max(8, _gizmoBannerFontSize),
+                alignment = TextAnchor.MiddleCenter,
+                richText = true
+            };
+            hdrStyle.normal.textColor = _gizmoBannerTextColor;
+
+            string fbRowsTxt = fbMin == fbMax
+                ? "row <b>Y=" + fbMin + "</b>"
+                : "rows <b>Y=" + fbMin + "-" + fbMax + "</b>";
+
+            string srcLine = fbOnly
+                ? "<color=#FFF59D>Fallback:</color> horizontal - " + fbRowsTxt +
+                  " <i>(0 = bottom row)</i>"
+                : "<color=#A8E7FF>Lines Data</color> (ScriptableObject)";
+
+            string hdr = "<size=14><b>Neo.Bonus - paylines</b></size>\n" +
+                         "Gizmos: <b>" + eval + "</b> of <b>" + defs.Length +
+                         "</b> definitions - active bet lines: <b>" +
+                         _countLine + "</b> - sequence length: " + checkSpin.SequenceLength + "\n" +
+                         "<i>Scene line count = min(active lines, definitions). Fallback creates one horizontal payline per clamped visible row.</i>\n" +
+                         srcLine;
+
+            Handles.Label(hdrPos + Vector3.up * (hdrScale * _gizmoBannerRaiseHandles), hdr, hdrStyle);
+
+            GUIStyle lineLbl = new(EditorStyles.boldLabel)
+            {
+                fontSize = Mathf.Max(8, _gizmoPaylineCaptionFontSize),
+                alignment = TextAnchor.MiddleCenter,
+                richText = true
+            };
+            lineLbl.normal.textColor = _gizmoPaylineCaptionColor;
+
+            for (int li = 0; li < eval; li++)
+            {
+                LinesData.InnerArray line = defs[li];
+                if (line.corY == null || line.corY.Length != _rows.Length)
+                {
+                    continue;
+                }
+
+                Color hsl = Color.HSVToRGB(li * 0.17f % 1f, 0.92f, 1f);
+                Color lineCol = _gizmoPaylineColor;
+                lineCol.r = hsl.r;
+                lineCol.g = hsl.g;
+                lineCol.b = hsl.b;
+
+                List<Vector3> pts = new(_rows.Length);
+                for (int col = 0; col < _rows.Length; col++)
+                {
+                    Row row = _rows[col];
+                    if (row == null)
+                    {
+                        continue;
+                    }
+
+                    int rowFromBottom = line.corY[col];
+                    Vector3 p = PaylineLineGeometry.GetCellWorld(row, rowFromBottom) +
+                                Vector3.forward * (0.03f + li * 0.0025f);
+                    pts.Add(p);
+                }
+
+                if (pts.Count < 2)
+                {
+                    continue;
+                }
+
+                Handles.color = lineCol;
+                Handles.DrawAAPolyLine(_gizmoPaylineWidth, pts.ToArray());
+
+                foreach (Vector3 p in pts)
+                {
+                    float rh = HandleUtility.GetHandleSize(p) * _gizmoJointRadiusMultiplier;
+                    Handles.DrawSolidDisc(p, Vector3.forward, rh);
+                }
+
+                Vector3 mid = Vector3.zero;
+                foreach (Vector3 q in pts)
+                {
+                    mid += q;
+                }
+
+                mid /= pts.Count;
+
+                string corDesc = string.Join(", ", line.corY);
+                string hex = ColorUtility.ToHtmlStringRGBA(lineCol);
+                string caption = "<color=#" + hex + ">Line " + li + "</color>\n" + "corY: [" + corDesc + "]";
+                if (fbOnly && defs.Length == 1 && li == 0)
+                {
+                    caption += "\n<i>Single fallback line (no Lines Data).</i>";
+                }
+                else if (fbOnly && defs.Length > 1 && li == 0)
+                {
+                    caption += "\n<i>Fallback: several horizontal lines from the configured row range.</i>";
+                }
+
+                Handles.Label(
+                    mid + Vector3.up * (HandleUtility.GetHandleSize(mid) * _gizmoPaylineCaptionRaiseHandles),
+                    caption,
+                    lineLbl);
+                drawn++;
+            }
+
+            if (drawn < eval)
+            {
+                GUIStyle warn = new(EditorStyles.boldLabel)
+                {
+                    fontSize = Mathf.Max(8, _gizmoPaylineCaptionFontSize),
+                    alignment = TextAnchor.MiddleCenter,
+                    richText = true
+                };
+                warn.normal.textColor = _gizmoPaylineWarningColor;
+                Handles.Label(
+                    hdrPos + Vector3.down * (hdrScale * _gizmoBannerWarningDownHandles),
+                    "<b>Warning:</b> expected to draw " + eval + " paylines, actually drew " + drawn +
+                    " - check null Row entries or corY length.",
+                    warn);
+            }
+        }
+#endif
+
+        /// <summary>
+        ///     Immutable, buyer-friendly summary of a completed spin from <see cref="GetLastResult"/>.
+        ///     Bundles the final symbol grid, the winning paylines, their per-line symbol ids and the
+        ///     coin payout into a single value so callers do not have to stitch the individual accessors together.
+        /// </summary>
+        public readonly struct SpinResult
+        {
+            public SpinResult(int[,] symbolIds, int[] winningLines, int[,] winningLineSymbolIds, int payout)
+            {
+                SymbolIds = symbolIds ?? new int[0, 0];
+                WinningLines = winningLines ?? Array.Empty<int>();
+                WinningLineSymbolIds = winningLineSymbolIds ?? new int[0, 0];
+                Payout = payout;
+            }
+
+            /// <summary>Final symbol-id grid, <c>[columns, rows]</c> with y=0 bottom (from <see cref="GetElementIDsMatrix"/>).</summary>
+            public int[,] SymbolIds { get; }
+
+            /// <summary>Definition indices of the paylines that won (from <see cref="LastWinningPaylineIndices"/>).</summary>
+            public int[] WinningLines { get; }
+
+            /// <summary>
+            ///     Per-winning-line symbol ids, <c>[lineIndex, column]</c> (from <see cref="GetLastWinningPaylinesSymbolIds"/>).
+            /// </summary>
+            public int[,] WinningLineSymbolIds { get; }
+
+            /// <summary>Coin payout awarded for this spin (from <see cref="LastPayout"/>).</summary>
+            public int Payout { get; }
+
+            /// <summary>True when at least one payline won on this spin.</summary>
+            public bool IsWin => WinningLines != null && WinningLines.Length > 0;
+        }
+
+        /// <summary>Immutable snapshot from <see cref="GetRuntimeSnapshot"/>.</summary>
+        public readonly struct SpinRuntimeSnapshot
+        {
+            public SpinRuntimeSnapshot(
+                bool isIdle,
+                int windowHeight,
+                int columnCount,
+                int activePaylineCount,
+                int evaluatedPaylineCount,
+                int totalPaylineDefinitionCount,
+                int betIndex,
+                int spinPrice,
+                bool checkSpinActive,
+                bool usesFallbackPaylinesOnly,
+                int fallbackMinRaw,
+                int fallbackMaxRaw,
+                int fallbackResolvedMinRow,
+                int fallbackResolvedMaxRow,
+                int[] lastWinningPaylineIndicesCopy)
+            {
+                IsIdle = isIdle;
+                WindowHeight = windowHeight;
+                ColumnCount = columnCount;
+                ActivePaylineCount = activePaylineCount;
+                EvaluatedPaylineCount = evaluatedPaylineCount;
+                TotalPaylineDefinitionCount = totalPaylineDefinitionCount;
+                BetIndex = betIndex;
+                SpinPrice = spinPrice;
+                CheckSpinActive = checkSpinActive;
+                UsesFallbackPaylinesOnly = usesFallbackPaylinesOnly;
+                FallbackMinRaw = fallbackMinRaw;
+                FallbackMaxRaw = fallbackMaxRaw;
+                FallbackResolvedMinRow = fallbackResolvedMinRow;
+                FallbackResolvedMaxRow = fallbackResolvedMaxRow;
+                LastWinningPaylineIndicesCopy = lastWinningPaylineIndicesCopy ?? Array.Empty<int>();
+            }
+
+            public bool IsIdle { get; }
+
+            public int WindowHeight { get; }
+
+            public int ColumnCount { get; }
+
+            public int ActivePaylineCount { get; }
+
+            public int EvaluatedPaylineCount { get; }
+
+            public int TotalPaylineDefinitionCount { get; }
+
+            public int BetIndex { get; }
+
+            public int SpinPrice { get; }
+
+            public bool CheckSpinActive { get; }
+
+            public bool UsesFallbackPaylinesOnly { get; }
+
+            public int FallbackMinRaw { get; }
+
+            public int FallbackMaxRaw { get; }
+
+            public int FallbackResolvedMinRow { get; }
+
+            public int FallbackResolvedMaxRow { get; }
+
+            /// <summary>Copy of last winning line definition indices (allocate sparingly).</summary>
+            public int[] LastWinningPaylineIndicesCopy { get; }
+        }
+
+        #endregion
+    }
+}

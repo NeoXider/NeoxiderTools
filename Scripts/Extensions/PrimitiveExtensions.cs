@@ -1,0 +1,563 @@
+using System;
+using System.Globalization;
+using UnityEngine;
+
+namespace Neo.Extensions
+{
+    /// <summary>
+    ///     Extension methods for primitive data types like float, int, and bool.
+    /// </summary>
+    public static class PrimitiveExtensions
+    {
+        #region Bool Extensions
+
+        /// <summary>
+        ///     Converts a boolean value to an integer (1 for true, 0 for false).
+        /// </summary>
+        public static int ToInt(this bool value)
+        {
+            return value ? 1 : 0;
+        }
+
+        #endregion
+
+        #region Constants
+
+        /// <summary>
+        ///     Default minimum value for normalization operations.
+        /// </summary>
+        public const float DefaultMinValue = -1000000f;
+
+        /// <summary>
+        ///     Default maximum value for normalization operations.
+        /// </summary>
+        public const float DefaultMaxValue = 1000000f;
+
+        #endregion
+
+        #region Float Extensions
+
+        /// <summary>
+        ///     Rounds a float value to a specified number of decimal places.
+        /// </summary>
+        public static float RoundToDecimal(this float value, int places)
+        {
+            if (places < 0)
+            {
+                throw new ArgumentException("Number of decimal places cannot be negative", nameof(places));
+            }
+
+            if (places > 45 || float.IsNaN(value) || float.IsInfinity(value))
+            {
+                return value;
+            }
+
+            float multiplier = Mathf.Pow(10.0f, places);
+            float scaled = value * multiplier;
+            if (!float.IsInfinity(multiplier) && !float.IsInfinity(scaled))
+            {
+                return Mathf.Round(scaled) / multiplier;
+            }
+
+            // WHY: A finite float can overflow during scaling even though its rounded result fits.
+            double wideMultiplier = Math.Pow(10d, places);
+            return (float)(Math.Round((double)value * wideMultiplier) / wideMultiplier);
+        }
+
+        /// <summary>
+        ///     Formats a time value in seconds to a string representation.
+        /// </summary>
+        public static string FormatTime(this float timeSeconds, TimeFormat format = TimeFormat.Seconds,
+            string separator = ":")
+        {
+            return timeSeconds.FormatTime(format, separator, false);
+        }
+
+        /// <summary>
+        ///     Formats a time value in seconds to a string representation.
+        /// </summary>
+        /// <param name="timeSeconds">Duration in seconds; NaN/negative values become zero and values above int.MaxValue saturate.</param>
+        /// <param name="format">Output time format.</param>
+        /// <param name="separator">Separator between time parts.</param>
+        /// <param name="trimLeadingZeros">If true, trims leading zeros from the first token (e.g. "01:05" -> "1:05").</param>
+        /// <returns>Formatted time string.</returns>
+        public static string FormatTime(this float timeSeconds, TimeFormat format, string separator,
+            bool trimLeadingZeros)
+        {
+            double safeSeconds = float.IsNaN(timeSeconds) || timeSeconds < 0f
+                ? 0d
+                : Math.Min((double)timeSeconds, int.MaxValue);
+
+            if (string.IsNullOrEmpty(separator))
+            {
+                separator = ":";
+            }
+
+            int totalSeconds = (int)safeSeconds;
+            float fractional = (float)(safeSeconds - totalSeconds);
+            if (fractional < 0f)
+            {
+                fractional = 0f;
+            }
+
+            // WHY: existing formats use 2-digit fractional (centiseconds). Keep behavior for compatibility.
+            int centiseconds = (int)(fractional * 100f);
+            if (centiseconds < 0)
+            {
+                centiseconds = 0;
+            }
+
+            if (centiseconds > 99)
+            {
+                centiseconds = 99;
+            }
+
+            // WHY: true milliseconds (0..999) for the new MM:SS:ms mode.
+            int milliseconds = (int)(fractional * 1000f);
+            if (milliseconds < 0)
+            {
+                milliseconds = 0;
+            }
+
+            if (milliseconds > 999)
+            {
+                milliseconds = 999;
+            }
+
+            int totalMinutes = totalSeconds / 60;
+            int totalHours = totalSeconds / 3600;
+            int days = totalSeconds / 86400;
+
+            int hoursPart = totalSeconds % 86400 / 3600;
+            int minutesPart = totalSeconds % 3600 / 60;
+            int secondsPart = totalSeconds % 60;
+
+            if (separator.Length == 1)
+            {
+                char sep = separator[0];
+
+                // WHY: fast path only when all components fit into 2 digits (and ms into 3 digits).
+                string result = format switch
+                {
+                    TimeFormat.Milliseconds => centiseconds < 100 ? Create2(centiseconds) : centiseconds.ToString("D2"),
+                    TimeFormat.SecondsMilliseconds => totalSeconds < 100
+                        ? Create2Sep2(totalSeconds, sep, centiseconds)
+                        : totalSeconds.ToString("D2") + sep + centiseconds.ToString("D2"),
+                    TimeFormat.Seconds => totalSeconds < 100 ? Create2(totalSeconds) : totalSeconds.ToString("D2"),
+                    TimeFormat.Minutes => totalMinutes < 100 ? Create2(totalMinutes) : totalMinutes.ToString("D2"),
+                    TimeFormat.MinutesSeconds => totalMinutes < 100
+                        ? Create2Sep2(totalMinutes, sep, secondsPart)
+                        : totalMinutes.ToString("D2") + sep + secondsPart.ToString("D2"),
+                    TimeFormat.MinutesSecondsMilliseconds => totalMinutes < 100
+                        ? Create2Sep2Sep3(totalMinutes, sep, secondsPart, milliseconds)
+                        : totalMinutes.ToString("D2") + sep + secondsPart.ToString("D2") + sep +
+                          milliseconds.ToString("D3"),
+                    TimeFormat.Hours => totalHours < 100 ? Create2(totalHours) : totalHours.ToString("D2"),
+                    TimeFormat.HoursMinutes => totalHours < 100
+                        ? Create2Sep2(totalHours, sep, minutesPart)
+                        : totalHours.ToString("D2") + sep + minutesPart.ToString("D2"),
+                    TimeFormat.HoursMinutesSeconds => totalHours < 100
+                        ? Create2Sep2Sep2(totalHours, sep, minutesPart, secondsPart)
+                        : totalHours.ToString("D2") + sep + minutesPart.ToString("D2") + sep +
+                          secondsPart.ToString("D2"),
+                    TimeFormat.Days => days < 100 ? Create2(days) : days.ToString("D2"),
+                    TimeFormat.DaysHours => days < 100
+                        ? Create2Sep2(days, sep, hoursPart)
+                        : days.ToString("D2") + sep + hoursPart.ToString("D2"),
+                    TimeFormat.DaysHoursMinutes => days < 100
+                        ? Create2Sep2Sep2(days, sep, hoursPart, minutesPart)
+                        : days.ToString("D2") + sep + hoursPart.ToString("D2") + sep + minutesPart.ToString("D2"),
+                    TimeFormat.DaysHoursMinutesSeconds => days < 100
+                        ? Create2Sep2Sep2Sep2(days, sep, hoursPart, minutesPart, secondsPart)
+                        : days.ToString("D2") + sep + hoursPart.ToString("D2") + sep + minutesPart.ToString("D2") +
+                          sep +
+                          secondsPart.ToString("D2"),
+                    _ => "00"
+                };
+                return trimLeadingZeros ? TrimLeadingZeros(result, sep) : result;
+            }
+
+            // WHY: fallback for multi-character separator; less efficient but keeps compatibility.
+            string fallback = format switch
+            {
+                TimeFormat.Milliseconds => centiseconds.ToString("D2"),
+                TimeFormat.SecondsMilliseconds => totalSeconds.ToString("D2") + separator + centiseconds.ToString("D2"),
+                TimeFormat.Seconds => totalSeconds.ToString("D2"),
+                TimeFormat.Minutes => totalMinutes.ToString("D2"),
+                TimeFormat.MinutesSeconds => totalMinutes.ToString("D2") + separator + secondsPart.ToString("D2"),
+                TimeFormat.MinutesSecondsMilliseconds =>
+                    totalMinutes.ToString("D2") + separator + secondsPart.ToString("D2") + separator +
+                    milliseconds.ToString("D3"),
+                TimeFormat.Hours => totalHours.ToString("D2"),
+                TimeFormat.HoursMinutes => totalHours.ToString("D2") + separator + minutesPart.ToString("D2"),
+                TimeFormat.HoursMinutesSeconds =>
+                    totalHours.ToString("D2") + separator + minutesPart.ToString("D2") + separator +
+                    secondsPart.ToString("D2"),
+                TimeFormat.Days => days.ToString("D2"),
+                TimeFormat.DaysHours => days.ToString("D2") + separator + hoursPart.ToString("D2"),
+                TimeFormat.DaysHoursMinutes =>
+                    days.ToString("D2") + separator + hoursPart.ToString("D2") + separator + minutesPart.ToString("D2"),
+                TimeFormat.DaysHoursMinutesSeconds =>
+                    days.ToString("D2") + separator + hoursPart.ToString("D2") + separator +
+                    minutesPart.ToString("D2") +
+                    separator + secondsPart.ToString("D2"),
+                _ => "00"
+            };
+            return trimLeadingZeros && separator.Length > 0 ? TrimLeadingZeros(fallback, separator[0]) : fallback;
+        }
+
+        private static string TrimLeadingZeros(string value, char separator)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            int idx = value.IndexOf(separator);
+            if (idx <= 0)
+            {
+                return value;
+            }
+
+            string first = value.Substring(0, idx);
+            int i = 0;
+            while (i < first.Length && first[i] == '0')
+            {
+                i++;
+            }
+
+            if (i == first.Length)
+            {
+                i = Math.Max(0, first.Length - 1);
+            }
+
+            return first.Substring(i) + value.Substring(idx);
+        }
+
+        private static string Create2(int a)
+        {
+            return string.Create(2, a, static (span, value) => Write2(span, value));
+        }
+
+        private static string Create2Sep2(int a, char sep, int b)
+        {
+            return string.Create(5, (a, sep, b), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.a);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.b);
+            });
+        }
+
+        private static string Create2Sep2Sep2(int a, char sep, int b, int c)
+        {
+            return string.Create(8, (a, sep, b, c), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.a);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.b);
+                span[5] = state.sep;
+                Write2(span.Slice(6, 2), state.c);
+            });
+        }
+
+        private static string Create2Sep2Sep3(int minutes, char sep, int seconds, int milliseconds)
+        {
+            return string.Create(9, (minutes, sep, seconds, milliseconds), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.minutes);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.seconds);
+                span[5] = state.sep;
+                Write3(span.Slice(6, 3), state.milliseconds);
+            });
+        }
+
+        private static string Create2Sep2Sep2Sep2(int a, char sep, int b, int c, int d)
+        {
+            return string.Create(11, (a, sep, b, c, d), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.a);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.b);
+                span[5] = state.sep;
+                Write2(span.Slice(6, 2), state.c);
+                span[8] = state.sep;
+                Write2(span.Slice(9, 2), state.d);
+            });
+        }
+
+        private static void Write2(Span<char> span, int value)
+        {
+            value = Mathf.Abs(value) % 100;
+            span[0] = (char)('0' + value / 10);
+            span[1] = (char)('0' + value % 10);
+        }
+
+        private static void Write3(Span<char> span, int value)
+        {
+            value = Mathf.Abs(value) % 1000;
+            span[0] = (char)('0' + value / 100);
+            span[1] = (char)('0' + value / 10 % 10);
+            span[2] = (char)('0' + value % 10);
+        }
+
+        /// <summary>
+        ///     Formats a float number with a separator every three digits and specified decimal places.
+        /// </summary>
+        public static string FormatWithSeparator(this float number, string separator = "", int decimalPlaces = 2)
+        {
+            if (decimalPlaces < 0)
+            {
+                throw new ArgumentException("Decimal places cannot be negative", nameof(decimalPlaces));
+            }
+
+            // WHY: invariant culture guarantees ',' groups and '.' decimals; the current culture
+            // may use ',' as the DECIMAL separator, and Replace would corrupt the number.
+            if (string.IsNullOrEmpty(separator))
+            {
+                return number.ToString($"F{decimalPlaces}", CultureInfo.InvariantCulture);
+            }
+
+            string format = $"N{decimalPlaces}";
+            return number.ToString(format, CultureInfo.InvariantCulture).Replace(",", separator);
+        }
+
+        #endregion
+
+        #region Normalization Extensions (for Float)
+
+        /// <summary>
+        ///     Normalizes a value to the range [0, 1] using default min/max values.
+        /// </summary>
+        public static float NormalizeToUnit(this float x)
+        {
+            return x.NormalizeToUnit(DefaultMinValue, DefaultMaxValue);
+        }
+
+        /// <summary>
+        ///     Normalizes a value to the range [-1, 1] using default min/max values.
+        /// </summary>
+        public static float NormalizeToRange(this float x)
+        {
+            return x.NormalizeToRange(DefaultMinValue, DefaultMaxValue);
+        }
+
+        /// <summary>
+        ///     Normalizes a value to the range [-1, 1] using specified min/max values.
+        /// </summary>
+        public static float NormalizeToRange(this float x, float min, float max)
+        {
+            return Mathf.Clamp(2.0f * x.NormalizeToUnit(min, max) - 1.0f, -1f, 1f);
+        }
+
+        /// <summary>
+        ///     Normalizes a value to the range [0, 1] using specified min/max values.
+        /// </summary>
+        public static float NormalizeToUnit(this float x, float min, float max)
+        {
+            if (float.IsNaN(x) || float.IsInfinity(x))
+            {
+                throw new ArgumentException("Value must be a finite number", nameof(x));
+            }
+
+            if (float.IsNaN(min) || float.IsInfinity(min))
+            {
+                throw new ArgumentException("Min must be a finite number", nameof(min));
+            }
+
+            if (float.IsNaN(max) || float.IsInfinity(max))
+            {
+                throw new ArgumentException("Max must be a finite number", nameof(max));
+            }
+
+            if (min >= max)
+            {
+                throw new ArgumentException($"Min value ({min}) must be less than max value ({max})");
+            }
+
+            return (float)Math.Max(0d, Math.Min(1d, ((double)x - min) / ((double)max - min)));
+        }
+
+        /// <summary>
+        ///     Denormalizes a value from [0, 1] range to the specified range.
+        /// </summary>
+        public static float Denormalize(this float normalizedValue, float min, float max)
+        {
+            if (float.IsNaN(normalizedValue) || float.IsInfinity(normalizedValue))
+            {
+                throw new ArgumentException("Normalized value must be a finite number", nameof(normalizedValue));
+            }
+
+            if (float.IsNaN(min) || float.IsInfinity(min))
+            {
+                throw new ArgumentException("Min must be a finite number", nameof(min));
+            }
+
+            if (float.IsNaN(max) || float.IsInfinity(max))
+            {
+                throw new ArgumentException("Max must be a finite number", nameof(max));
+            }
+
+            if (normalizedValue < 0f || normalizedValue > 1f)
+            {
+                throw new ArgumentException("Normalized value must be between 0 and 1", nameof(normalizedValue));
+            }
+
+            if (min >= max)
+            {
+                throw new ArgumentException($"Min value ({min}) must be less than max value ({max})");
+            }
+
+            return (float)(min + ((double)max - min) * normalizedValue);
+        }
+
+        /// <summary>
+        ///     Remaps a value from one range to another.
+        /// </summary>
+        public static float Remap(this float value, float fromMin, float fromMax, float toMin, float toMax)
+        {
+            float normalizedValue = value.NormalizeToUnit(fromMin, fromMax);
+            return normalizedValue.Denormalize(toMin, toMax);
+        }
+
+        #endregion
+
+        #region Int Extensions
+
+        /// <summary>
+        ///     Converts an integer value to a boolean (non-zero = true, zero = false).
+        /// </summary>
+        public static bool ToBool(this int value)
+        {
+            return value != 0;
+        }
+
+        /// <summary>
+        ///     Formats an integer with a separator every three digits.
+        /// </summary>
+        public static string FormatWithSeparator(this int number, string separator)
+        {
+            if (string.IsNullOrEmpty(separator))
+            {
+                return number.ToString(CultureInfo.InvariantCulture);
+            }
+
+            // WHY: invariant culture keeps ',' as the group separator regardless of the OS locale.
+            return number.ToString("N0", CultureInfo.InvariantCulture).Replace(",", separator);
+        }
+
+        #endregion
+
+        #region Math Extensions
+
+        /// <summary>
+        ///     Snaps a value to the nearest multiple of <paramref name="step" /> (e.g. grid/angle snapping).
+        ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        ///     Finite results outside the float range saturate to its closest bound.
+        /// </summary>
+        public static float Snap(this float value, float step)
+        {
+            if (step <= 0f || float.IsNaN(value) || float.IsInfinity(value))
+            {
+                return value;
+            }
+
+            float quotient = value / step;
+            float snapped = Mathf.Round(quotient) * step;
+            if (!float.IsInfinity(quotient) && !float.IsInfinity(snapped))
+            {
+                return snapped;
+            }
+
+            double wideSnapped = Math.Round((double)value / step) * step;
+            return (float)Math.Max(-float.MaxValue, Math.Min(float.MaxValue, wideSnapped));
+        }
+
+        /// <summary>
+        ///     Snaps an integer to the nearest multiple of <paramref name="step" />.
+        ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        ///     Midpoints round to even; results outside the int range saturate to its closest bound.
+        /// </summary>
+        public static int Snap(this int value, int step)
+        {
+            if (step <= 0)
+            {
+                return value;
+            }
+
+            long quotient = value / step;
+            long remainder = (long)value % step;
+            long twiceRemainder = Math.Abs(remainder) * 2;
+            if (twiceRemainder > step || twiceRemainder == step && quotient % 2 != 0)
+            {
+                quotient += Math.Sign(value);
+            }
+
+            long snapped = quotient * step;
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, snapped));
+        }
+
+        /// <summary>
+        ///     Wraps an integer into the half-open range [min, max) so it never falls outside (handles negatives),
+        ///     e.g. cycling a selection index. Returns <paramref name="min" /> when the range is empty.
+        /// </summary>
+        public static int Wrap(this int value, int min, int max)
+        {
+            long range = (long)max - min;
+            if (range <= 0)
+            {
+                return min;
+            }
+
+            long offset = ((long)value - min) % range;
+            if (offset < 0)
+            {
+                offset += range;
+            }
+
+            return (int)(min + offset);
+        }
+
+        /// <summary>
+        ///     Integer ping-pong over [0, length]: counts up then back down, like <see cref="Mathf.PingPong" />.
+        ///     Returns 0 when <paramref name="length" /> is zero or negative.
+        /// </summary>
+        public static int PingPong(this int value, int length)
+        {
+            if (length <= 0)
+            {
+                return 0;
+            }
+
+            long cycle = (long)length * 2;
+            long t = value % cycle;
+            if (t < 0)
+            {
+                t += cycle;
+            }
+
+            return (int)(t <= length ? t : cycle - t);
+        }
+
+        /// <summary>
+        ///     Convenience wrapper over <see cref="Mathf.Approximately" /> — true when two floats are
+        ///     effectively equal (avoids the brittle <c>a == b</c> on floats).
+        /// </summary>
+        public static bool Approximately(this float a, float b)
+        {
+            return Mathf.Approximately(a, b);
+        }
+
+        /// <summary>
+        ///     Returns true when <paramref name="a" /> and <paramref name="b" /> differ by at most
+        ///     <paramref name="tolerance" />.
+        /// </summary>
+        public static bool Approximately(this float a, float b, float tolerance)
+        {
+            return Mathf.Abs(a - b) <= Mathf.Abs(tolerance);
+        }
+
+        #endregion
+    }
+}

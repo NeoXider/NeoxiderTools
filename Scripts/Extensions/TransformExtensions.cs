@@ -1,0 +1,574 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using Object = UnityEngine.Object;
+
+namespace Neo.Extensions
+{
+    /// <summary>
+    ///     Extension methods for the Unity Transform component.
+    /// </summary>
+    /// <remarks>
+    ///     Most methods in this class are null-safe and become no-op when <see cref="Transform" /> is null.
+    /// </remarks>
+    public static class TransformExtensions
+    {
+        #region Position Methods
+
+        /// <summary>
+        ///     Sets the transform's position with optional individual components.
+        /// </summary>
+        public static void SetPosition(this Transform transform, Vector3? position = null, float? x = null,
+            float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 newPosition = position ?? transform.position;
+            if (x.HasValue)
+            {
+                newPosition.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                newPosition.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                newPosition.z = z.Value;
+            }
+
+            transform.position = newPosition;
+        }
+
+        /// <summary>
+        ///     Adds to the transform's position with optional individual components.
+        /// </summary>
+        public static void AddPosition(this Transform transform, Vector3? delta = null, float? x = null,
+            float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 currentPosition = transform.position;
+            Vector3 finalDelta = delta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
+
+            transform.position = currentPosition + finalDelta;
+        }
+
+        #endregion
+
+        #region Local Position Methods
+
+        /// <summary>
+        ///     Sets the transform's local position with optional individual components.
+        /// </summary>
+        public static void SetLocalPosition(this Transform transform, Vector3? position = null, float? x = null,
+            float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 newPosition = position ?? transform.localPosition;
+            if (x.HasValue)
+            {
+                newPosition.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                newPosition.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                newPosition.z = z.Value;
+            }
+
+            transform.localPosition = newPosition;
+        }
+
+        /// <summary>
+        ///     Adds to the transform's local position with optional individual components.
+        /// </summary>
+        public static void AddLocalPosition(this Transform transform, Vector3? delta = null, float? x = null,
+            float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 currentPosition = transform.localPosition;
+            Vector3 finalDelta = delta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
+
+            transform.localPosition = currentPosition + finalDelta;
+        }
+
+        #endregion
+
+        #region Rotation Methods
+
+        /// <summary>
+        ///     Sets the transform's rotation with optional individual components.
+        /// </summary>
+        public static void SetRotation(this Transform transform, Quaternion? rotation = null,
+            Vector3? eulerAngles = null, float? x = null, float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            if (rotation.HasValue)
+            {
+                transform.rotation = rotation.Value;
+                return;
+            }
+
+            Vector3 angles = eulerAngles ?? transform.eulerAngles;
+            if (x.HasValue)
+            {
+                angles.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                angles.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                angles.z = z.Value;
+            }
+
+            transform.rotation = Quaternion.Euler(angles);
+        }
+
+        /// <summary>
+        ///     Adds to the transform's rotation with optional individual components.
+        /// </summary>
+        public static void AddRotation(this Transform transform, Quaternion? delta = null, Vector3? eulerDelta = null,
+            float? x = null, float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            if (delta.HasValue)
+            {
+                transform.rotation *= delta.Value;
+                return;
+            }
+
+            Vector3 currentAngles = transform.eulerAngles;
+            Vector3 finalDelta = eulerDelta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
+
+            transform.rotation = Quaternion.Euler(currentAngles + finalDelta);
+        }
+
+        #endregion
+
+        #region Local Rotation Methods
+
+        /// <summary>
+        ///     Sets the transform's local rotation with optional individual components.
+        /// </summary>
+        public static void SetLocalRotation(this Transform transform, Quaternion? rotation = null,
+            Vector3? eulerAngles = null, float? x = null, float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            if (rotation.HasValue)
+            {
+                transform.localRotation = rotation.Value;
+                return;
+            }
+
+            Vector3 angles = eulerAngles ?? transform.localEulerAngles;
+            if (x.HasValue)
+            {
+                angles.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                angles.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                angles.z = z.Value;
+            }
+
+            transform.localRotation = Quaternion.Euler(angles);
+        }
+
+        /// <summary>
+        ///     Adds to the transform's local rotation with optional individual components.
+        /// </summary>
+        public static void AddLocalRotation(this Transform transform, Quaternion? delta = null,
+            Vector3? eulerDelta = null, float? x = null, float? y = null, float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            if (delta.HasValue)
+            {
+                transform.localRotation *= delta.Value;
+                return;
+            }
+
+            Vector3 currentAngles = transform.localEulerAngles;
+            Vector3 finalDelta = eulerDelta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
+
+            transform.localRotation = Quaternion.Euler(currentAngles + finalDelta);
+        }
+
+        #endregion
+
+        #region Scale Methods
+
+        /// <summary>
+        ///     Sets the transform's scale with optional individual components.
+        /// </summary>
+        public static void SetScale(this Transform transform, Vector3? scale = null, float? x = null, float? y = null,
+            float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 newScale = scale ?? transform.localScale;
+            if (x.HasValue)
+            {
+                newScale.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                newScale.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                newScale.z = z.Value;
+            }
+
+            transform.localScale = newScale;
+        }
+
+        /// <summary>
+        ///     Adds to the transform's scale with optional individual components.
+        /// </summary>
+        public static void AddScale(this Transform transform, Vector3? delta = null, float? x = null, float? y = null,
+            float? z = null)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 currentScale = transform.localScale;
+            Vector3 finalDelta = delta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
+
+            transform.localScale = currentScale + finalDelta;
+        }
+
+        #endregion
+
+        #region Utility Methods
+
+        /// <summary>
+        ///     Rotates the transform to look at a specified position in 2D space (on the XY plane).
+        /// </summary>
+        /// <remarks>
+        ///     The sprite's "up" faces the target (angle - 90). A null transform or a target on the transform's
+        ///     XY position leaves the rotation unchanged instead of snapping to an arbitrary angle.
+        /// </remarks>
+        /// <param name="offset">Additional rotation angle in degrees applied to the final Z rotation.</param>
+        public static void LookAt2D(this Transform transform, Vector3 targetPosition, float offset = 0f)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            Vector3 direction = targetPosition - transform.position;
+            if (direction.x * direction.x + direction.y * direction.y <= Mathf.Epsilon)
+            {
+                return;
+            }
+
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0f, 0f, angle - 90 + offset);
+        }
+
+        /// <summary>
+        ///     Returns a coroutine that smoothly rotates the transform to look at a target.
+        /// </summary>
+        /// <remarks>
+        ///     Run with StartCoroutine() or CoroutineExtensions.Start(). Ends when the transform is destroyed;
+        ///     an absent transform or a coincident target leaves the rotation unchanged.
+        /// </remarks>
+        /// <param name="target">The world position to look at.</param>
+        /// <param name="speed">The speed of the rotation.</param>
+        /// <returns>An IEnumerator to be used in a coroutine.</returns>
+        public static IEnumerator SmoothLookAtRoutine(this Transform transform, Vector3 target, float speed)
+        {
+            if (transform == null)
+            {
+                yield break;
+            }
+
+            Vector3 direction = target - transform.position;
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+            {
+                yield break;
+            }
+
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            while (transform != null && Quaternion.Angle(transform.rotation, targetRotation) > 0.01f)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
+                yield return null;
+            }
+
+            if (transform != null)
+            {
+                transform.rotation = targetRotation;
+            }
+        }
+
+        /// <summary>
+        ///     Finds the closest Transform from a collection of other transforms.
+        /// </summary>
+        /// <param name="others">A collection of transforms to compare against.</param>
+        /// <returns>
+        ///     The closest transform, or null if the collection is empty, contains only null/destroyed entries and
+        ///     the transform itself, or when <paramref name="transform" /> is null.
+        /// </returns>
+        /// <remarks>Lists and arrays are scanned by index without allocating; the transform itself is skipped.</remarks>
+        public static Transform GetClosest(this Transform transform, IEnumerable<Transform> others)
+        {
+            if (transform == null || others == null)
+            {
+                return null;
+            }
+
+            Vector3 origin = transform.position;
+            Transform closest = null;
+            float minDistanceSqr = float.PositiveInfinity;
+
+            if (others is IList<Transform> list)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    ConsiderClosest(list[i], transform, origin, ref closest, ref minDistanceSqr);
+                }
+
+                return closest;
+            }
+
+            foreach (Transform other in others)
+            {
+                ConsiderClosest(other, transform, origin, ref closest, ref minDistanceSqr);
+            }
+
+            return closest;
+        }
+
+        private static void ConsiderClosest(Transform candidate, Transform self, Vector3 origin, ref Transform closest,
+            ref float minDistanceSqr)
+        {
+            if (candidate == null || ReferenceEquals(candidate, self))
+            {
+                return;
+            }
+
+            float distSqr = (origin - candidate.position).sqrMagnitude;
+            // WHY: the equality branch keeps a result when every candidate is so far away that the square overflows.
+            if (distSqr < minDistanceSqr || (ReferenceEquals(closest, null) && distSqr == minDistanceSqr))
+            {
+                minDistanceSqr = distSqr;
+                closest = candidate;
+            }
+        }
+
+        /// <summary>
+        ///     Returns all immediate child transforms of the current transform.
+        /// </summary>
+        public static Transform[] GetChildTransforms(this Transform transform)
+        {
+            if (transform == null)
+            {
+                return Array.Empty<Transform>();
+            }
+
+            Transform[] children = new Transform[transform.childCount];
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                children[i] = transform.GetChild(i);
+            }
+
+            return children;
+        }
+
+        /// <summary>
+        ///     Resets the transform's position, rotation, and scale to default values.
+        /// </summary>
+        public static void ResetTransform(this Transform transform)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            transform.position = Vector3.zero;
+            transform.rotation = Quaternion.identity;
+            transform.localScale = Vector3.one;
+        }
+
+        /// <summary>
+        ///     Resets the transform's local position, rotation, and scale to default values.
+        /// </summary>
+        public static void ResetLocalTransform(this Transform transform)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+            transform.localScale = Vector3.one;
+        }
+
+        /// <summary>
+        ///     Copies position, rotation, and scale from a source transform to this transform.
+        /// </summary>
+        public static void CopyFrom(this Transform transform, Transform source)
+        {
+            if (source == null || transform == null)
+            {
+                return;
+            }
+
+            transform.position = source.position;
+            transform.rotation = source.rotation;
+            transform.localScale = source.localScale;
+        }
+
+        /// <summary>
+        ///     Destroys all child objects of the transform.
+        /// </summary>
+        public static void DestroyChildren(this Transform transform)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (Application.isPlaying)
+                {
+                    Object.Destroy(child.gameObject);
+                }
+                else
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
+            }
+        }
+
+        #endregion
+    }
+}

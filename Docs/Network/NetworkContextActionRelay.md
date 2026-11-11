@@ -1,0 +1,153 @@
+# NetworkContextActionRelay
+
+**What it is:** a `NeoNetworkComponent` that turns ordinary `UnityEvent`s into **context-aware** network actions. Instead of hard-wiring an inspector reference to a single template `GameObject`, the relay resolves the **same networked entity on every client** by `netId` and applies an action to a child target (e.g. `Sphere`).
+
+**How to use:**
+1. Add the relay to an object with a `NetworkIdentity` (or under one) and tick **Is Networked**.
+2. Pick **Context Source**, **Root Mode**, **Target Mode** and **Action** (see the patterns below).
+3. Wire any `UnityEvent` to `Trigger()`, `Trigger(Collider)` or `Trigger(GameObject)`; from C# call the same methods.
+
+---
+
+**Where:** `Assets/Neoxider/Scripts/Network/Core/NetworkContextActionRelay.cs`, menu `Neoxider/Network/Network Context Action Relay`.
+
+**Inspector:** dedicated (`Assets/Neoxider/Editor/Network/NetworkContextActionRelayEditor.cs`) — inherits `CustomEditorBase` (same look as `NeoCondition`), draws sectioned Context / Target / Action / Networking / Diagnostics / Editor Helpers / Events with reflection-driven dropdowns for component and method selection (shared helpers in `ComponentBindingInspectorShared`).
+
+## When to use
+
+- **Pickup** on the scene: the trigger disappears for everyone on touch (`ContextSource = Self`, `Action = SetActive(false)`).
+- **Buff on the entering player**: the trigger enables a child object **on the player whose collider entered** (`ContextSource = Event Argument`, `Target Mode = Child By Name`).
+- Multiple relays on one trigger: you can attach two or more `NetworkContextActionRelay`s on a single `NetworkIdentity` — pickup-self + bonus-on-player. Messages are disambiguated by `relayComponentIndex` (Mirror's `NetworkBehaviour.ComponentIndex`).
+- UI `Button`: `Button.onClick → Trigger()` with `Local Player` as the context source.
+- `InteractiveObject`, `NeoCondition`, any zero-parameter `UnityEvent`: `→ Trigger()` or `→ TriggerLocalPlayer()`.
+
+## Pickup pattern (shared object disappears for all)
+
+1. Add `NetworkContextActionRelay` to a scene object with `NetworkIdentity` (the trigger cube).
+2. **Context Source:** `Self`, **Root Mode:** `Source Object`, **Target Mode:** `Root`.
+3. **Action:** `Set Active`, **Bool Value:** `false`.
+4. **Scope:** `All Clients`.
+5. Wire `PhysicsEvents3D.onTriggerEnter → Trigger(Collider)`.
+
+## Buff pattern (Sphere on the entering player)
+
+1. A second `NetworkContextActionRelay` (on the same object if you want it together with pickup).
+2. **Context Source:** `Event Argument`, **Root Mode:** `Network Identity In Parents`.
+3. **Target Mode:** `Child By Name`, **Target Name:** `Sphere`.
+4. **Action:** `Set Active`, **Bool Value:** `true`.
+5. **Scope:** `All Clients`, **Trigger Only For Local Context:** `true` (recommended — filter by entering collider, suppresses duplicate dispatches from other clients' physics).
+
+> **⚠ Heads-up:** if the target is a child of `First Person Camera` (or any object inside `NeoNetworkPlayer._localOnlyObjects`), it will be invisible on remote players because the parent is disabled (`activeInHierarchy = false`). Move the target into a part of the hierarchy that stays active on remote players.
+
+## Fields
+
+| Field | Description |
+|---|---|
+| **Is Networked** | Enables network dispatch. When `false` the action applies locally only. |
+| **Context Source** | Where the context comes from: `Self`, `Local Player`, `Owner`, `Event Argument`, `Explicit Object`. |
+| **Root Mode** | How to climb to a root: source object, `NetworkIdentity` in parents, `NeoNetworkPlayer` in parents. |
+| **Explicit Context** | The fixed object for `Explicit Object`. |
+| **Target Mode** | Where to find the target: root, child by name, child by `Transform.Find` path, child by component type. |
+| **Target Name / Path / Component Type** | Target-finding parameters. The custom inspector exposes a component-type dropdown driven by the editor Preview Target. |
+| **Include Inactive** | Include inactive children during search. |
+| **Action** | `Invoke Events Only`, `Set Active`, `Send Message`, `Invoke Component Method`. |
+| **Bool / Float / String Value** | Action arguments. The inspector only shows the field relevant to the chosen `Action` / `Method Argument Mode`. |
+| **Send Message Name** | Method name for `Send Message`. |
+| **Method Component Type / Method Name / Method Argument Mode** | For `Invoke Component Method` — component, method, and argument kind. Reflection-driven dropdowns in the inspector. |
+| **Scope** | `AllClients` / `ServerOnly` / `OthersOnly`. |
+| **Authority Mode** | `None` / `OwnerOnly` / `ServerOnly` — sender validation for `Command`. |
+| **Trigger Only For Local Context** | (default `true`) Input-side filter: every client runs physics on every replicated collider, so without this filter `N` clients dispatch the same trigger. When on, only the client that owns the entering collider dispatches; remotes wait for the server broadcast. |
+| **Verbose Logging** | Trace the whole hop chain: `Trigger → Send → OnServer → Broadcast → OnClient → Apply`. |
+| **Editor Preview Target** | Editor-only reference for inspector dropdowns; never read at runtime. |
+
+## Events (UnityEvent bridge)
+
+- **On Network Triggered** — networked parameterless `UnityEvent` after server validation.
+- **On Context Resolved (GameObject)** — the resolved context root (e.g. the entering player).
+- **On Target Resolved (GameObject)** — the resolved target.
+
+For **per-player** effects use `On Target Resolved` or the built-in **Action** — don't drag the template `Sphere` from the inspector again.
+
+For `Invoke Component Method`, **Method Argument Mode** selects the method signature, including when
+the configured string is `null`: `String` invokes `Method(string)` with null, while `None` invokes
+`Method()`. The same contract applies from C#: set `MethodArgumentMode`, `MethodName` and
+`MethodComponentTypeName`, then call `Trigger(...)`. An empty method name is ignored.
+
+## How the network path works
+
+1. The client calls `Trigger(...)`. `relayComponentIndex` is taken from `NetworkBehaviour.ComponentIndex`, which is identical on every peer thanks to Mirror's deterministic order.
+2. A pure client sends `NetworkContextActionMessage(relayNetId, relayComponentIndex, contextNetId)` to the server.
+3. The server sends the message to the **observers of the relay's `NetworkIdentity`** (the connections Mirror
+   spawned the relay's object on, spectators without a player included), skipping the host's local connection,
+   and then applies the action locally on a host. Remote observers are served first, so an exception in a host-side
+   listener cannot leave them out of sync. Every other connection is skipped: a client that is still loading, or
+   one whose relay object is hidden by interest management, has no relay to apply the action and often no handler
+   for the message (hiding a scene object disables it, and the last disabled relay unregisters the handler), and
+   Mirror would disconnect it for an unknown message id.
+4. Each client resolves the exact relay via `NetworkIdentity.NetworkBehaviours[componentIndex]` and applies the action to its local copy of `contextNetId`.
+
+The relay uses one Mirror message type in both directions, and `relayComponentIndex` picks the exact relay on an
+object that carries several. Its audience is the one a `[ClientRpc]` would reach: the relay's observers.
+
+Listener exceptions: an exception thrown by a relay listener, `SendMessage` receiver or configured method while a
+**received message** is applied is logged (`Debug.LogException`) instead of escaping into Mirror, which would
+otherwise disconnect the peer that sent a valid message. A local (host-side or offline) `Trigger` call still lets
+the exception reach its caller; on a host the remote observers have already been sent the action by then.
+
+Reflection: component types named in **Target Component Type** / **Method Component Type** are resolved once per
+name and the configured method is cached per relay until its component type, name or argument mode changes, so a
+frequently fired relay no longer walks every loaded assembly on each apply. A name that does not resolve is
+remembered too, but scanned again after another assembly loads (`AppDomain.AssemblyLoad`), so a type from a mod
+or hot-update DLL loaded at runtime is still found. Both caches are cleared at play start.
+
+## Runtime API (10.18.1 hardening)
+
+Handler registration is automatic and lifecycle-driven — no inspector setup needed:
+
+- Mirror handlers exist only while at least one relay is enabled (`Awake` / `OnEnable` track,
+  `OnDisable` / `OnDestroy` untrack with stale-entry pruning). The last disable unregisters both
+  handlers and clears per-connection ingress budgets. Restarts and session resets clear budgets;
+  disconnects forget the peer.
+- `RegisterMirrorHandlers()` is still the entry point (called by `NeoNetworkManager` on start and by
+  the relay itself); with zero enabled relays it unregisters instead of registering.
+
+Server validation before dispatch in `OnServerMessage` (only the liveness and ingress-budget checks run before any relay/context lookup):
+
+1. Live, authenticated, Ready connection that owns its player object (checked against the live
+   `NetworkServer.connections` reference).
+2. Per-connection token budget: 5 burst / 5 per second (throttled messages are dropped silently).
+3. Relay resolves from the **server** spawned dict by exact `NetworkBehaviours` component index —
+   out-of-range or mismatched indexes resolve to nothing, never to a different action; the relay must
+   be enabled and networked. Context resolves from the **server** spawned dict only.
+4. Relay `AuthorityMode` check is preserved, then context ownership: a context owned by another
+   connection is rejected, while unowned (shared scene) contexts and the sender's own context stay usable.
+5. Disabled-state and rejection logs are gated (`RuntimeWarningsEnabled` / verbose flags), so quiet
+   relays build no strings.
+
+| Member | Description |
+|--------|-------------|
+| `static void RegisterMirrorHandlers()` | Register handlers when at least one relay is enabled; otherwise unregister. Called automatically. |
+| `static void ResetServerIngressState()` | Clear all per-connection ingress budgets (session reset / last-relay removal). |
+| `Trigger(...)`, `TriggerLocalPlayer()` | Client entry points; unchanged. |
+
+Inspector use is unchanged: pick **Context Source** / **Root Mode** / **Target Mode** / **Action** /
+**Scope** as before. Keep **Verbose Logging** off in production — every hop log is skipped unless it is on.
+
+## Limitations
+
+- A "stays on forever" state after pickup is **not auto-synced for late joiners**. For durable state use `SyncVar` / `NetworkPropertySync` / a dedicated networked state holder.
+- The action target must live in a part of the hierarchy that remains active on remote players (not under `_localOnlyObjects`).
+- Keep relay components enabled on clients while their object is spawned. The client handler exists only while at
+  least one relay is enabled there, so a client that disabled every relay (`enabled = false`) but still observes a
+  relay's object has no handler, and Mirror disconnects it when that relay fires. Use **Is Networked** to switch a
+  relay off instead.
+- **Unchanged by this release:** Mirror malformed-batch parsing, retained-batch queue growth, and
+  raw-socket admission behavior. The per-connection ingress budget above only bounds relay-message
+  ingress rate; it does not cap transport memory. Deadline / pending-cap behavior is a proposal,
+  not shipped code.
+
+## See also
+
+- [NetworkActionRelay](NetworkActionRelay.md)
+- [NoCode_Network_Spec](NoCode_Network_Spec.md)
+- [Multiplayer_Guide](Multiplayer_Guide.md)

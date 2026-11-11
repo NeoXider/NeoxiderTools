@@ -1,0 +1,596 @@
+#if SPINE_UNITY
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Neo;
+using Spine;
+using Spine.Unity;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
+
+[DisallowMultipleComponent]
+[NeoDoc("Tools/Other/SpineController.md")]
+[CreateFromMenu("Neoxider/Tools/Other/SpineController")]
+[AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
+public sealed class SpineController : MonoBehaviour
+{
+
+    [Header("References")]
+    [SerializeField, FormerlySerializedAs("_skeletonAnim")] private SkeletonAnimation skeletonAnimation;
+    [SerializeField, FormerlySerializedAs("_spineData")] private SkeletonDataAsset skeletonDataAsset;
+
+    [Header("Animations")]
+    [SerializeField] private bool autoPopulateAnimations = true;
+    [SerializeField, FormerlySerializedAs("_animationName")] private List<string> animationNames = new();
+    [SerializeField, Tooltip("Animation name to play in idle mode.")]
+    private string defaultAnimationName = string.Empty;
+    [SerializeField, FormerlySerializedAs("_idleId"), Tooltip("Default animation index in list (used when name is not set)."), Min(0)]
+    private int defaultAnimationIndex;
+    [SerializeField, Tooltip("Play default animation when component is enabled.")]
+    private bool playDefaultOnEnable = true;
+    [SerializeField, Tooltip("Auto-return to default animation after non-looping animation ends.")]
+    private bool queueDefaultAfterNonLooping = true;
+
+    [Header("Skins")]
+    [SerializeField] private bool autoPopulateSkins = true;
+    [SerializeField, FormerlySerializedAs("_skinNames")] private List<string> skinNames = new();
+    [SerializeField, FormerlySerializedAs("startSkin"), Tooltip("Default skin index in list.")]
+    private int defaultSkinIndex;
+    [SerializeField, Tooltip("Save selected skin in PlayerPrefs.")]
+    private bool persistSkinSelection = true;
+    [SerializeField, FormerlySerializedAs("_keySaveSkin"), Tooltip("PlayerPrefs key used to save selected skin. Set per controller to avoid collisions.")]
+    private string skinPrefsKey = "SkinChanger";
+    [SerializeField, Tooltip("Additional index offset (e.g. when first skin in list is utility)."), FormerlySerializedAs("skinIndexOffset")] private int skinIndexOffset;
+    [SerializeField, FormerlySerializedAs("addId"), Tooltip("Deprecated index offset toggle. Use 'Skin Index Offset' instead.")]
+    private bool legacyAddIndex;
+
+    public UnityEvent OnSwapSkin;
+
+    public IReadOnlyList<string> Animations => animationNames;
+    public IReadOnlyList<string> Skins => skinNames;
+    public SkeletonAnimation SkeletonAnimation => skeletonAnimation;
+    public string CurrentAnimationName => currentEntry?.Animation?.Name ?? defaultAnimationName;
+    public int CurrentSkinIndex { get; private set; } = -1;
+    public string CurrentSkinName { get; private set; }
+
+    private bool initialized;
+    private TrackEntry currentEntry;
+
+    private void Reset()
+    {
+        skeletonAnimation = GetComponent<SkeletonAnimation>();
+        skeletonDataAsset = skeletonAnimation != null ? skeletonAnimation.SkeletonDataAsset : null;
+        autoPopulateAnimations = true;
+        autoPopulateSkins = true;
+    }
+
+    private void Awake()
+    {
+        EnsureInitialized();
+    }
+
+    private void OnEnable()
+    {
+        EnsureInitialized();
+
+        if (playDefaultOnEnable && !string.IsNullOrEmpty(DefaultAnimation))
+        {
+            Play(DefaultAnimation, true, 0f, false);
+        }
+    }
+
+    private void Start()
+    {
+        EnsureInitialized();
+        ApplyInitialSkin();
+    }
+
+    private void OnDestroy()
+    {
+        UnsubscribeFromEntryEvents();
+    }
+
+    private void OnValidate()
+    {
+        // WHY: explicit Unity null checks; ??= ignores destroyed/missing references ("fake null").
+        if (skeletonAnimation == null)
+        {
+            skeletonAnimation = GetComponent<SkeletonAnimation>();
+        }
+
+        if (skeletonDataAsset == null && skeletonAnimation != null)
+        {
+            skeletonDataAsset = skeletonAnimation.SkeletonDataAsset;
+        }
+
+        if (!Application.isPlaying)
+        {
+            PopulateLookups();
+            NormalizeDefaultAnimation();
+        }
+    }
+
+    #region Animation API
+
+    public TrackEntry Play(int animationIndex, bool loop = false, float mixDuration = 0f, bool queueDefault = true)
+    {
+        EnsureInitialized();
+        if (animationNames == null || !IsValidIndex(animationIndex, animationNames.Count))
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation index '{animationIndex}' is out of range.", this);
+            return null;
+        }
+
+        return Play(animationNames[animationIndex], loop, mixDuration, queueDefault);
+    }
+
+    public void PlayAnimationByIndex(int animationIndex)
+    {
+        Play(animationIndex, false);
+    }
+
+    public void PlayAnimationLoopByIndex(int animationIndex)
+    {
+        Play(animationIndex, true);
+    }
+
+    public void PlayAnimationByName(string animationName)
+    {
+        Play(animationName, false);
+    }
+
+    public void PlayAnimationLoopByName(string animationName)
+    {
+        Play(animationName, true);
+    }
+
+    public TrackEntry Play(string animationName, bool loop = false, float mixDuration = 0f, bool queueDefault = true)
+    {
+        EnsureInitialized();
+        if (skeletonAnimation == null)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(animationName))
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation name is empty.", this);
+            return null;
+        }
+
+        Spine.AnimationState state = skeletonAnimation.AnimationState;
+        if (state == null)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation state is missing.", this);
+            return null;
+        }
+
+        if (skeletonAnimation.Skeleton == null ||
+            skeletonAnimation.Skeleton.Data.FindAnimation(animationName) == null)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation '{animationName}' not found.", this);
+            return null;
+        }
+
+        UnsubscribeFromEntryEvents();
+
+        currentEntry = state.SetAnimation(0, animationName, loop);
+        if (currentEntry != null && mixDuration > 0f)
+        {
+            currentEntry.MixDuration = mixDuration;
+        }
+
+        if (currentEntry != null && !loop && queueDefault && queueDefaultAfterNonLooping && !string.IsNullOrEmpty(DefaultAnimation))
+        {
+            currentEntry.Complete += HandleTrackComplete;
+        }
+
+        return currentEntry;
+    }
+
+    public void PlayDefault(bool forceRestart = false)
+    {
+        EnsureInitialized();
+        if (string.IsNullOrEmpty(DefaultAnimation))
+        {
+            return;
+        }
+
+        if (!forceRestart && currentEntry != null &&
+            string.Equals(CurrentAnimationName, DefaultAnimation, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Play(DefaultAnimation, true, 0f, false);
+    }
+
+    [Button(PlayModeOnly = true)]
+    public void PlayDefault()
+    {
+        PlayDefault(false);
+    }
+
+    [Button(PlayModeOnly = true)]
+    public void PlayDefaultForced()
+    {
+        PlayDefault(true);
+    }
+
+    public void SetDefaultAnimationByIndex(int animationIndex, bool playImmediately = true)
+    {
+        EnsureInitialized();
+        if (animationNames == null || !IsValidIndex(animationIndex, animationNames.Count))
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Cannot set idle animation by index '{animationIndex}'.", this);
+            return;
+        }
+
+        defaultAnimationIndex = animationIndex;
+        defaultAnimationName = animationNames[animationIndex];
+
+        if (playImmediately)
+        {
+            PlayDefault(true);
+        }
+    }
+
+    public void SetDefaultAnimationByIndex(int animationIndex)
+    {
+        SetDefaultAnimationByIndex(animationIndex, true);
+    }
+
+    public void SetDefaultAnimation(string animationName, bool playImmediately = true)
+    {
+        if (string.IsNullOrEmpty(animationName))
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Default animation name is empty.", this);
+            return;
+        }
+
+        defaultAnimationName = animationName;
+        defaultAnimationIndex = animationNames.IndexOf(animationName);
+
+        if (playImmediately)
+        {
+            PlayDefault(true);
+        }
+    }
+
+    public void SetDefaultAnimation(string animationName)
+    {
+        SetDefaultAnimation(animationName, true);
+    }
+
+    [Button(PlayModeOnly = true)]
+    public void Stop()
+    {
+        UnsubscribeFromEntryEvents();
+        if (skeletonAnimation == null || skeletonAnimation.AnimationState == null)
+        {
+            return;
+        }
+
+        skeletonAnimation.AnimationState.ClearTracks();
+    }
+
+    #endregion
+
+    #region Skin API
+
+    public void SetSkinByIndex(int skinIndex)
+    {
+        SetSkinByIndex(skinIndex, persistSkinSelection);
+    }
+
+    public void SetSkinByIndex(int skinIndex, bool persist)
+    {
+        if (!EnsureSkinAvailable())
+        {
+            return;
+        }
+
+        int logicalCount = GetLogicalSkinCount();
+        if (logicalCount == 0)
+        {
+            return;
+        }
+
+        skinIndex = Mathf.Clamp(skinIndex, 0, logicalCount - 1);
+        int actualIndex = Mathf.Clamp(skinIndex + GetIndexOffset(), 0, skinNames.Count - 1);
+        string skinName = skinNames[actualIndex];
+
+        if (!ApplySkinInternal(skinName))
+        {
+            return;
+        }
+
+        CurrentSkinIndex = skinIndex;
+        CurrentSkinName = skinName;
+
+        if (persist && persistSkinSelection)
+        {
+            PlayerPrefs.SetInt(GetSkinPrefsKey(), skinIndex);
+        }
+
+        OnSwapSkin?.Invoke();
+    }
+
+    public void SetSkin(string skinName)
+    {
+        SetSkin(skinName, persistSkinSelection);
+    }
+
+    public void SetSkin(string skinName, bool persist)
+    {
+        if (!EnsureSkinAvailable())
+        {
+            return;
+        }
+
+        int logicalIndex = GetLogicalSkinIndex(skinName);
+        if (logicalIndex < 0)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Skin '{skinName}' not found.", this);
+            return;
+        }
+
+        SetSkinByIndex(logicalIndex, persist);
+    }
+
+    [Button(PlayModeOnly = true)]
+    public void NextSkin()
+    {
+        if (!EnsureSkinAvailable()) return;
+        int logicalCount = GetLogicalSkinCount();
+        if (logicalCount == 0) return;
+        int nextIndex = (CurrentSkinIndex + 1 + logicalCount) % logicalCount;
+        SetSkinByIndex(nextIndex);
+    }
+
+    public void PreviousSkin()
+    {
+        if (!EnsureSkinAvailable()) return;
+        int logicalCount = GetLogicalSkinCount();
+        if (logicalCount == 0) return;
+        int previousIndex = (CurrentSkinIndex - 1 + logicalCount) % logicalCount;
+        SetSkinByIndex(previousIndex);
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private void ApplyInitialSkin()
+    {
+        if (!EnsureSkinAvailable())
+        {
+            return;
+        }
+
+        int skinIndex =
+ persistSkinSelection ? PlayerPrefs.GetInt(GetSkinPrefsKey(), GetDefaultSkinIndex()) : GetDefaultSkinIndex();
+        SetSkinByIndex(skinIndex, false);
+    }
+
+    private bool ApplySkinInternal(string skinName)
+    {
+        EnsureInitialized();
+        if (skeletonAnimation == null)
+        {
+            return false;
+        }
+
+        Skeleton skeleton = skeletonAnimation.Skeleton;
+        if (skeleton == null)
+        {
+            skeletonAnimation.Initialize(true);
+            skeleton = skeletonAnimation.Skeleton;
+        }
+
+        SkeletonData skeletonData = skeleton?.Data;
+        if (skeleton == null || skeletonData == null)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Unable to access skeleton data.", this);
+            return false;
+        }
+
+        Skin skin = skeletonData.FindSkin(skinName);
+        if (skin == null)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Skin '{skinName}' not found in skeleton data.", this);
+            return false;
+        }
+
+        skeleton.SetSkin(skin);
+        skeleton.SetSlotsToSetupPose();
+        skeletonAnimation.AnimationState?.Apply(skeleton);
+        return true;
+    }
+
+    private void HandleTrackComplete(TrackEntry trackEntry)
+    {
+        trackEntry.Complete -= HandleTrackComplete;
+        if (!queueDefaultAfterNonLooping || string.IsNullOrEmpty(DefaultAnimation))
+        {
+            return;
+        }
+        Play(DefaultAnimation, true, 0f, false);
+    }
+
+    private void UnsubscribeFromEntryEvents()
+    {
+        if (currentEntry != null)
+        {
+            currentEntry.Complete -= HandleTrackComplete;
+            currentEntry = null;
+        }
+    }
+
+    private void EnsureInitialized()
+    {
+        if (initialized)
+        {
+            return;
+        }
+
+        if (skeletonAnimation == null)
+        {
+            skeletonAnimation = GetComponent<SkeletonAnimation>();
+        }
+
+        if (skeletonAnimation == null)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] {nameof(SkeletonAnimation)} reference is missing.", this);
+            return;
+        }
+
+        if (skeletonDataAsset == null)
+        {
+            skeletonDataAsset = skeletonAnimation.SkeletonDataAsset;
+        }
+
+        if (skeletonAnimation.Skeleton == null)
+        {
+            skeletonAnimation.Initialize(true);
+            if (skeletonAnimation.Skeleton == null)
+            {
+                return;
+            }
+        }
+
+        PopulateLookups();
+        NormalizeDefaultAnimation();
+
+        initialized = true;
+    }
+
+    private void PopulateLookups()
+    {
+        SkeletonData data = skeletonAnimation != null && skeletonAnimation.Skeleton != null
+            ? skeletonAnimation.Skeleton.Data
+            : skeletonDataAsset != null ? skeletonDataAsset.GetSkeletonData(false) : null;
+
+        if (data == null)
+        {
+            return;
+        }
+
+        if (autoPopulateAnimations)
+        {
+            animationNames = data.Animations.Select(a => a.Name).Distinct().ToList();
+        }
+
+        if (autoPopulateSkins)
+        {
+            skinNames = data.Skins.Select(s => s.Name).Distinct().ToList();
+        }
+    }
+
+    private void NormalizeDefaultAnimation()
+    {
+        if (animationNames == null || animationNames.Count == 0)
+        {
+            defaultAnimationName = string.Empty;
+            defaultAnimationIndex = 0;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(defaultAnimationName) || !animationNames.Contains(defaultAnimationName))
+        {
+            defaultAnimationIndex = Mathf.Clamp(defaultAnimationIndex, 0, animationNames.Count - 1);
+            defaultAnimationName = animationNames[defaultAnimationIndex];
+        }
+        else
+        {
+            defaultAnimationIndex = animationNames.IndexOf(defaultAnimationName);
+        }
+    }
+
+    private string DefaultAnimation => defaultAnimationName;
+
+    private int GetDefaultSkinIndex()
+    {
+        int logicalCount = GetLogicalSkinCount();
+        if (logicalCount == 0)
+        {
+            return 0;
+        }
+
+        return Mathf.Clamp(defaultSkinIndex, 0, logicalCount - 1);
+    }
+
+    private int GetLogicalSkinCount()
+    {
+        if (skinNames == null)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(0, skinNames.Count - GetIndexOffset());
+    }
+
+    private int GetIndexOffset()
+    {
+        int count = skinNames != null ? skinNames.Count : 0;
+        int offset = Mathf.Clamp(skinIndexOffset, 0, count);
+        return legacyAddIndex && offset < count ? offset + 1 : offset;
+    }
+
+    private string GetSkinPrefsKey()
+    {
+        return string.IsNullOrWhiteSpace(skinPrefsKey) ? "SkinChanger" : skinPrefsKey;
+    }
+
+    private int GetLogicalSkinIndex(string skinName)
+    {
+        if (skinNames == null)
+        {
+            return -1;
+        }
+
+        int actualIndex = skinNames.IndexOf(skinName);
+        if (actualIndex < 0)
+        {
+            return -1;
+        }
+
+        return actualIndex - GetIndexOffset();
+    }
+
+    private bool EnsureSkinAvailable()
+    {
+        EnsureInitialized();
+        if (skinNames == null || skinNames.Count == 0)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] No skins available for skeleton.", this);
+            return false;
+        }
+        return true;
+    }
+
+    private static bool IsValidIndex(int index, int collectionCount)
+    {
+        return index >= 0 && index < collectionCount;
+    }
+
+    #endregion
+}
+#else
+using UnityEngine;
+
+[Neo.NeoDoc("Tools/Other/SpineController.md")]
+[AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
+public sealed class SpineController : MonoBehaviour
+{
+    [SerializeField]
+    private string message = "Spine package is missing. Install Spine Unity Runtime to use SpineController.";
+
+    private void Awake()
+    {
+        NeoDiagnostics.LogWarning(message, this);
+        enabled = false;
+    }
+}
+#endif

@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Rpg.ConditionBridge",
+    "rootNamespace": "Neo.Rpg",
+    "references": [
+        "Neo.Rpg",
+        "Neo.Condition",
+        "Neo.Reactive",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

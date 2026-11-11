@@ -1,0 +1,560 @@
+﻿using System;
+using System.Collections.Generic;
+using Neo.Network;
+using UnityEngine;
+using UnityEngine.Events;
+#if MIRROR
+using Mirror;
+#endif
+
+namespace Neo.Tools
+{
+    /// <summary>
+    ///     Rigidbody2D-based side-scroller controller with run, jump and optional camera follow.
+    /// </summary>
+    /// <remarks>
+    ///     With Mirror, this type is a <see cref="Mirror.NetworkBehaviour"/> and expects a networked player prefab.
+    ///     Add <see cref="Mirror.NetworkRigidbodyUnreliable2D"/> on the same GameObject yourself when you need replication;
+    ///     typical settings: <c>syncDirection = ClientToServer</c>.
+    ///     Leave <c>NetworkRigidbodyUnreliable2D.useFixedUpdate</c> disabled on stock Mirror (same shadow-<c>FixedUpdate</c> issue as 3D).
+    ///     <see cref="Awake"/> assigns <c>NetworkRigidbodyUnreliable2D.target</c> to this character's <see cref="Rigidbody2D"/> transform
+    ///     so a wrong child target in the Inspector cannot break replication.
+    ///     Uses <see cref="DefaultExecutionOrderAttribute"/> so this <c>Awake</c> runs before <c>NetworkRigidbodyUnreliable2D.Awake</c>.
+    /// </remarks>
+    [DefaultExecutionOrder(-100)]
+    [RequireComponent(typeof(Rigidbody2D))]
+#if MIRROR
+    [RequireComponent(typeof(NetworkIdentity))]
+#endif
+    [NeoDoc("Tools/Move/PlayerController2DPhysics.md")]
+    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController2DPhysics")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DPhysics))]
+    public class PlayerController2DPhysics :
+#if MIRROR
+        NetworkBehaviour,
+#else
+        MonoBehaviour,
+#endif
+        INeoOptionalNetworked
+    {
+        bool INeoOptionalNetworked.IsNetworked => false;
+
+        [Header("References")] [SerializeField]
+        private Rigidbody2D _rigidbody;
+
+        [SerializeField] private Transform _groundCheck;
+        [SerializeField] private Camera _followCamera;
+
+        [Header("Movement")] [SerializeField] private float _walkSpeed = 5f;
+        [SerializeField] private float _runSpeed = 8f;
+        [SerializeField] private float _acceleration = 55f;
+        [SerializeField] private float _deceleration = 70f;
+        [SerializeField] private bool _canRun = true;
+        [SerializeField] private bool _flipByVelocityX = true;
+
+        [Header("Jump")] [Tooltip("Allow jump. Can be changed at runtime via SetJumpEnabled(bool).")] [SerializeField]
+        private bool _canJump = true;
+
+        [SerializeField] private float _jumpImpulse = 10f;
+        [SerializeField] private float _coyoteTime = 0.1f;
+        [SerializeField] private float _jumpBufferTime = 0.1f;
+
+        [Header("Grounding")] [SerializeField] private LayerMask _groundMask = ~0;
+        [SerializeField] private float _groundCheckRadius = 0.2f;
+
+        [Header("Camera Follow")] [SerializeField]
+        private bool _followCameraEnabled = true;
+
+        [SerializeField] private Vector3 _cameraOffset = new(0f, 1.5f, -10f);
+        [SerializeField] private float _cameraFollowSpeed = 10f;
+
+        [Header("Input")] [SerializeField] private InputBackend _inputBackend = InputBackend.AutoPreferNew;
+        [SerializeField] private string _horizontalAxis = "Horizontal";
+        [SerializeField] private string _jumpButton = "Jump";
+        [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logSetupWarnings = true;
+
+        [SerializeField] private bool _logInputFallbackWarnings;
+
+        [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
+
+        [SerializeField] private UnityEvent _onLanded = new();
+        [SerializeField] private UnityEvent _onMoveStart = new();
+        [SerializeField] private UnityEvent _onMoveStop = new();
+        private readonly List<Collider2D> _groundHits = new List<Collider2D>();
+        private float _coyoteTimer;
+        private float _jumpBufferTimer;
+        private bool _jumpPressedThisFrame;
+        private bool _legacyInputUnavailableWarningShown;
+
+        private float _moveInputX;
+
+        [Tooltip("Process movement and jump input. Toggle via SetMovementEnabled(bool).")] [SerializeField]
+        private bool _movementEnabled = true;
+
+        private bool _newInputUnavailableWarningShown;
+        private bool _wasGrounded;
+        private bool _wasMoving;
+
+        // WHY: External input overrides (for on-screen joystick / touch controls)
+        private float? _externalMoveInputX;
+        private bool _externalJumpPressed;
+        private bool _externalRunHeld;
+
+        private bool HasInputAuthority
+        {
+            get
+            {
+#if MIRROR
+                return !IsMirrorNetworkActive() || isLocalPlayer;
+#else
+                return true;
+#endif
+            }
+        }
+
+#if MIRROR
+        private static bool IsMirrorNetworkActive()
+        {
+            return NetworkClient.active || NetworkServer.active;
+        }
+#endif
+
+        /// <summary>
+        ///     Gets whether the character is currently grounded.
+        /// </summary>
+        public bool IsGrounded { get; private set; }
+
+        /// <summary>
+        ///     Gets whether sprint input is active.
+        /// </summary>
+        public bool IsRunning { get; private set; }
+
+        /// <summary>
+        ///     Gets whether horizontal movement input is processed. Change via <see cref="SetMovementEnabled" />.
+        /// </summary>
+        public bool MovementEnabled => _movementEnabled;
+
+        /// <summary>
+        ///     Gets whether jump input and jump execution are allowed. Change via <see cref="SetJumpEnabled" />.
+        /// </summary>
+        public bool JumpEnabled => _canJump;
+
+        private void Awake()
+        {
+            if (_rigidbody == null)
+            {
+                _rigidbody = GetComponent<Rigidbody2D>();
+            }
+
+            if (_followCamera == null)
+            {
+                _followCamera = Camera.main;
+            }
+
+            if (_groundCheck == null && _logSetupWarnings)
+            {
+                NeoDiagnostics.LogWarning(
+                    "[PlayerController2DPhysics] Ground Check transform is not set. Ground detection will use transform position.",
+                    this);
+            }
+
+#if MIRROR
+            NetworkRigidbodyUnreliable2D netRb = GetComponent<NetworkRigidbodyUnreliable2D>();
+            if (netRb != null && netRb.target != _rigidbody.transform)
+            {
+                netRb.target = _rigidbody.transform;
+            }
+#endif
+        }
+
+        private void Update()
+        {
+            CaptureInput();
+            UpdateGroundState();
+            UpdateJumpTimers();
+            TryConsumeJump();
+            bool movingNow = _movementEnabled && Mathf.Abs(_moveInputX) > 0.01f;
+            if (movingNow != _wasMoving)
+            {
+                _wasMoving = movingNow;
+                if (movingNow)
+                {
+                    _onMoveStart?.Invoke();
+                }
+                else
+                {
+                    _onMoveStop?.Invoke();
+                }
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (HasInputAuthority)
+            {
+                HandleMovement(Time.fixedDeltaTime);
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (HasInputAuthority)
+            {
+                UpdateCameraFollow(Time.deltaTime);
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Vector2 checkPos = _groundCheck != null
+                ? _groundCheck.position
+                : (Vector2)transform.position + Vector2.down * 0.5f;
+            Gizmos.color = IsGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(checkPos, _groundCheckRadius);
+        }
+
+        /// <summary>
+        ///     Enables or disables movement processing.
+        /// </summary>
+        /// <param name="enabled">True to process input and movement; otherwise false.</param>
+        public void SetMovementEnabled(bool enabled)
+        {
+            _movementEnabled = enabled;
+            if (!enabled)
+            {
+                _moveInputX = 0f;
+                IsRunning = false;
+                _jumpPressedThisFrame = false;
+                _jumpBufferTimer = 0f;
+            }
+        }
+
+        /// <summary>
+        ///     Enables or disables jump (input and applying impulse). Clears jump buffer when disabling.
+        /// </summary>
+        public void SetJumpEnabled(bool enabled)
+        {
+            _canJump = enabled;
+            if (!enabled)
+            {
+                _jumpPressedThisFrame = false;
+                _jumpBufferTimer = 0f;
+            }
+        }
+
+        /// <summary>
+        ///     Enables or disables camera follow behavior.
+        /// </summary>
+        /// <param name="enabled">True to follow the player with camera; otherwise false.</param>
+        public void SetCameraFollowEnabled(bool enabled)
+        {
+            _followCameraEnabled = enabled;
+        }
+
+        /// <summary>
+        ///     Teleports the character and optionally resets current velocity.
+        /// </summary>
+        /// <param name="worldPosition">Destination world position.</param>
+        /// <param name="resetVelocity">When true velocity is reset.</param>
+        public void Teleport(Vector3 worldPosition, bool resetVelocity = true)
+        {
+            transform.position = worldPosition;
+            if (_rigidbody == null)
+            {
+                return;
+            }
+
+            // WHY: with interpolation the body would otherwise blend from its old simulated pose for one step.
+            _rigidbody.position = worldPosition;
+            if (resetVelocity)
+            {
+                _rigidbody.linearVelocity = Vector2.zero;
+            }
+        }
+
+        /// <summary>
+        ///     Inject horizontal movement from an external source (on-screen joystick).
+        ///     When set, built-in horizontal input reading is bypassed.
+        ///     Pass null to revert to built-in input.
+        /// </summary>
+        /// <param name="input">Horizontal input (-1..1), or Vector2 (only x is used).</param>
+        public void SetMoveInput(float? input)
+        {
+            _externalMoveInputX = input.HasValue ? Mathf.Clamp(input.Value, -1f, 1f) : (float?)null;
+        }
+
+        /// <summary>
+        ///     Inject horizontal movement from a Vector2 (only x component is used).
+        ///     Convenient when your joystick outputs Vector2.
+        /// </summary>
+        public void SetMoveInput(Vector2? input)
+        {
+            _externalMoveInputX = input.HasValue ? Mathf.Clamp(input.Value.x, -1f, 1f) : (float?)null;
+        }
+
+        /// <summary>
+        ///     Inject a one-shot jump command from an external source (on-screen button).
+        ///     Resets automatically after being consumed.
+        /// </summary>
+        [Button("Jump", PlayModeOnly = true)]
+        public void SetJumpInput()
+        {
+            _externalJumpPressed = true;
+        }
+
+        /// <summary>
+        ///     Inject run (sprint) state from an external source (on-screen toggle/button).
+        /// </summary>
+        /// <param name="held">True while running.</param>
+        public void SetRunInput(bool held)
+        {
+            _externalRunHeld = held;
+        }
+
+        private void CaptureInput()
+        {
+            if (!HasInputAuthority)
+            {
+                _moveInputX = 0f;
+                IsRunning = false;
+                _jumpPressedThisFrame = false;
+                return;
+            }
+
+            if (_movementEnabled)
+            {
+                _moveInputX = _externalMoveInputX ?? ReadMoveXInput();
+                bool runHeld = _externalMoveInputX.HasValue ? _externalRunHeld : ReadRunHeld();
+                IsRunning = _canRun && runHeld && Mathf.Abs(_moveInputX) > 0.01f;
+                bool jumpFromExternal = _externalJumpPressed;
+                _externalJumpPressed = false;
+                _jumpPressedThisFrame = _movementEnabled && _canJump && (jumpFromExternal || ReadJumpPressed());
+            }
+            else
+            {
+                _moveInputX = 0f;
+                IsRunning = false;
+                _jumpPressedThisFrame = false;
+            }
+        }
+
+        private bool ShouldUseNewInput()
+        {
+            if (_inputBackend == InputBackend.LegacyInputManager)
+            {
+                return false;
+            }
+
+            if (OptionalInputSystemBridge.IsAvailable)
+            {
+                return true;
+            }
+
+            // WHY: cached probe; this runs several times per frame and must not touch Input or throw each time.
+            if (!NeoInputAvailability.IsLegacyInputAvailable())
+            {
+                return true;
+            }
+
+            if ((_inputBackend == InputBackend.NewInputSystem || _inputBackend == InputBackend.AutoPreferNew) &&
+                _logInputFallbackWarnings &&
+                !_newInputUnavailableWarningShown)
+            {
+                NeoDiagnostics.LogWarning(
+                    "[PlayerController2DPhysics] New Input System is not available. Falling back to Legacy Input Manager.");
+                _newInputUnavailableWarningShown = true;
+            }
+
+            return false;
+        }
+
+        private float ReadMoveXInput()
+        {
+            if (ShouldUseNewInput())
+            {
+                return OptionalInputSystemBridge.ReadMove().x;
+            }
+
+            try
+            {
+                return Input.GetAxisRaw(_horizontalAxis);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.IsAvailable ? OptionalInputSystemBridge.ReadMove().x : 0f;
+            }
+        }
+
+        private bool ReadJumpPressed()
+        {
+            if (ShouldUseNewInput())
+            {
+                return OptionalInputSystemBridge.ReadJumpPressed();
+            }
+
+            try
+            {
+                return Input.GetButtonDown(_jumpButton);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.ReadJumpPressed();
+            }
+        }
+
+        private bool ReadRunHeld()
+        {
+            if (ShouldUseNewInput())
+            {
+                return OptionalInputSystemBridge.ReadRunHeld();
+            }
+
+            try
+            {
+                return Input.GetKey(_runKey);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.ReadRunHeld() || OptionalInputSystemBridge.ReadKeyHeld(_runKey);
+            }
+        }
+
+        private void WarnLegacyInputUnavailable()
+        {
+            if (_legacyInputUnavailableWarningShown || !_logInputFallbackWarnings)
+            {
+                return;
+            }
+
+            NeoDiagnostics.LogWarning(
+                "[PlayerController2DPhysics] Legacy Input Manager is unavailable in current Player Settings. Falling back to New Input System where possible.",
+                this);
+            _legacyInputUnavailableWarningShown = true;
+        }
+
+        private void UpdateGroundState()
+        {
+            _wasGrounded = IsGrounded;
+            Vector2 checkPos = _groundCheck != null
+                ? _groundCheck.position
+                : (Vector2)transform.position + Vector2.down * 0.5f;
+            ContactFilter2D filter = new ContactFilter2D();
+            filter.SetLayerMask(_groundMask);
+            filter.useTriggers = Physics2D.queriesHitTriggers;
+            int hitCount = Physics2D.OverlapCircle(checkPos, _groundCheckRadius, filter, _groundHits);
+            IsGrounded = false;
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider2D hit = _groundHits[i];
+                if (hit != null && !hit.transform.IsChildOf(transform))
+                {
+                    IsGrounded = true;
+                    break;
+                }
+            }
+            if (!_wasGrounded && IsGrounded)
+            {
+                _onLanded?.Invoke();
+            }
+        }
+
+        private void UpdateJumpTimers()
+        {
+            if (IsGrounded)
+            {
+                _coyoteTimer = _coyoteTime;
+            }
+            else
+            {
+                _coyoteTimer -= Time.deltaTime;
+            }
+
+            if (_jumpPressedThisFrame)
+            {
+                _jumpBufferTimer = _jumpBufferTime;
+            }
+            else
+            {
+                _jumpBufferTimer -= Time.deltaTime;
+            }
+        }
+
+        private void TryConsumeJump()
+        {
+            if (!HasInputAuthority)
+            {
+                return;
+            }
+
+            if (!_canJump)
+            {
+                return;
+            }
+
+            if (_coyoteTimer <= 0f || _jumpBufferTimer <= 0f)
+            {
+                return;
+            }
+
+            Vector2 velocity = _rigidbody.linearVelocity;
+            if (velocity.y < 0f)
+            {
+                velocity.y = 0f;
+            }
+
+            _rigidbody.linearVelocity = velocity;
+            _rigidbody.AddForce(Vector2.up * _jumpImpulse, ForceMode2D.Impulse);
+            _coyoteTimer = 0f;
+            _jumpBufferTimer = 0f;
+            _onJumped?.Invoke();
+        }
+
+        private void HandleMovement(float deltaTime)
+        {
+            float maxSpeed = IsRunning ? _runSpeed : _walkSpeed;
+            float targetSpeedX = _moveInputX * maxSpeed;
+
+            float currentSpeedX = _rigidbody.linearVelocity.x;
+            float acceleration = Mathf.Abs(_moveInputX) > 0.01f ? _acceleration : _deceleration;
+            float nextSpeedX = Mathf.MoveTowards(currentSpeedX, targetSpeedX, acceleration * deltaTime);
+
+            _rigidbody.linearVelocity = new Vector2(nextSpeedX, _rigidbody.linearVelocity.y);
+
+            if (_flipByVelocityX && Mathf.Abs(nextSpeedX) > 0.01f)
+            {
+                Vector3 scale = transform.localScale;
+                float flippedX = Mathf.Abs(scale.x) * Mathf.Sign(nextSpeedX);
+                if (scale.x != flippedX)
+                {
+                    scale.x = flippedX;
+                    transform.localScale = scale;
+                }
+            }
+        }
+
+        private void UpdateCameraFollow(float deltaTime)
+        {
+            if (!_followCameraEnabled || _followCamera == null)
+            {
+                return;
+            }
+
+            Vector3 target = transform.position + _cameraOffset;
+            _followCamera.transform.position = Vector3.Lerp(_followCamera.transform.position, target,
+                1f - Mathf.Exp(-_cameraFollowSpeed * deltaTime));
+        }
+
+        private enum InputBackend
+        {
+            AutoPreferNew,
+            NewInputSystem,
+            LegacyInputManager
+        }
+    }
+}

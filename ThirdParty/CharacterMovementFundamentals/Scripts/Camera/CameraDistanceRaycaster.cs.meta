@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 565561f3eb0d38848ad3d1fe2a49b2b1
+timeCreated: 1525095732
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Scripts/Camera/CameraDistanceRaycaster.cs
+  uploadId: 426944

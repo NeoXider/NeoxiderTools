@@ -1,0 +1,29 @@
+{
+    "name": "Neo.Condition",
+    "rootNamespace": "Neo.Condition",
+    "references": [
+        "Neo.PropertyAttribute",
+        "Neo.Extensions",
+        "Mirror",
+        "Neo.Network"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+        {
+            "name": "com.mirrornetworking.mirror",
+            "expression": "",
+            "define": "MIRROR"
+        }
+    ],
+    "noEngineReferences": false
+}

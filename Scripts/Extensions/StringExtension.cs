@@ -1,0 +1,329 @@
+using System;
+using System.Globalization;
+using System.Text;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+namespace Neo.Extensions
+{
+    /// <summary>
+    ///     Extension methods and helpers for string transformation, parsing and rich text formatting.
+    /// </summary>
+    public static class StringExtension
+    {
+        /// <summary>
+        ///     Splits camelCase string into spaced words.
+        /// </summary>
+        public static string SplitCamelCase(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            StringBuilder sb = new();
+            sb.Append(input[0]);
+
+            for (int i = 1; i < input.Length; i++)
+            {
+                if (char.IsUpper(input[i]))
+                {
+                    sb.Append(' ');
+                }
+
+                sb.Append(input[i]);
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Checks if string is null or empty after trimming whitespace.
+        /// </summary>
+        public static bool IsNullOrEmptyAfterTrim(this string input)
+        {
+            // WHY: same answer as Trim()+IsNullOrEmpty without allocating the trimmed copy.
+            return string.IsNullOrWhiteSpace(input);
+        }
+
+        /// <summary>
+        ///     Converts HEX string to Unity Color.
+        /// </summary>
+        public static Color ToColor(this string hex)
+        {
+            if (!TryParseColor(hex, out Color color))
+            {
+                return default;
+            }
+
+            return color;
+        }
+
+        /// <summary>
+        ///     Tries to convert HEX string to Unity Color.
+        /// </summary>
+        public static bool ToColorSafe(this string hex, out Color color)
+        {
+            return TryParseColor(hex, out color);
+        }
+
+        /// <summary>
+        ///     Converts string to camelCase format.
+        /// </summary>
+        public static string ToCamelCase(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            return char.ToLowerInvariant(input[0]) + input.Substring(1);
+        }
+
+        /// <summary>
+        ///     Truncates string to max length with ellipsis.
+        /// </summary>
+        public static string Truncate(this string input, int maxLength)
+        {
+            if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
+            {
+                return input;
+            }
+
+            // WHY: the ellipsis needs 3 chars; smaller budgets get a hard cut instead of a negative Substring length.
+            if (maxLength < 3)
+            {
+                return input.Substring(0, maxLength < 0 ? 0 : maxLength);
+            }
+
+            return input.Substring(0, maxLength - 3) + "...";
+        }
+
+        /// <summary>
+        ///     Checks if string contains only digits.
+        /// </summary>
+        public static bool IsNumeric(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (!char.IsDigit(input[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Generates a random string with specified length.
+        /// </summary>
+        public static string RandomString(int length, string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        {
+            StringBuilder sb = new();
+            for (int i = 0; i < length; i++)
+            {
+                sb.Append(chars[Random.Range(0, chars.Length)]);
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Reverses the string.
+        /// </summary>
+        public static string Reverse(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            char[] arr = input.ToCharArray();
+            Array.Reverse(arr);
+            return new string(arr);
+        }
+
+        /// <summary>
+        ///     Converts string to boolean: <c>"true"</c>, <c>"yes"</c> and <c>"1"</c> (ordinal, case insensitive) are true.
+        /// </summary>
+        public static bool ToBool(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return false;
+            }
+
+            // WHY: ordinal comparison does not allocate a lowered copy and does not depend on the OS culture.
+            return string.Equals(input, "true", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(input, "yes", StringComparison.OrdinalIgnoreCase) ||
+                   input == "1";
+        }
+
+        /// <summary>
+        ///     Safely parses a string to an integer. The invariant culture is tried first, then the current culture.
+        /// </summary>
+        /// <returns>The parsed integer, or the default value if parsing fails.</returns>
+        public static int ToInt(this string input, int defaultValue = 0)
+        {
+            if (int.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result) ||
+                int.TryParse(input, out result))
+            {
+                return result;
+            }
+
+            return defaultValue;
+        }
+
+        /// <summary>
+        ///     Safely parses a string to a float. The invariant culture (<c>'.'</c> decimal separator, no grouping)
+        ///     is tried first, so <c>"1.5"</c> parses on every OS locale; the current culture is the fallback, so a
+        ///     locale-formatted input such as <c>"1,5"</c> on a comma-decimal system still parses.
+        /// </summary>
+        /// <returns>The parsed float, or the default value if parsing fails.</returns>
+        public static float ToFloat(this string input, float defaultValue = 0f)
+        {
+            if (float.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out float result) ||
+                float.TryParse(input, out result))
+            {
+                return result;
+            }
+
+            return defaultValue;
+        }
+
+        private static bool TryParseColor(string hex, out Color color)
+        {
+            color = default;
+            if (string.IsNullOrWhiteSpace(hex))
+            {
+                return false;
+            }
+
+            string normalized = hex.Trim();
+            if (normalized[0] != '#')
+            {
+                normalized = "#" + normalized;
+            }
+
+            return ColorUtility.TryParseHtmlString(normalized, out color);
+        }
+
+        #region Rich Text
+
+        /// <summary>
+        ///     Wraps the string in <b></b> tags.
+        /// </summary>
+        public static string Bold(this string input)
+        {
+            return $"<b>{input}</b>";
+        }
+
+        /// <summary>
+        ///     Wraps the string in <i></i> tags.
+        /// </summary>
+        public static string Italic(this string input)
+        {
+            return $"<i>{input}</i>";
+        }
+
+        /// <summary>
+        ///     Wraps the string in <size=></size> tags.
+        /// </summary>
+        public static string Size(this string input, int size)
+        {
+            return $"<size={size}>{input}</size>";
+        }
+
+        /// <summary>
+        ///     Wraps the string in <color=></color> tags.
+        /// </summary>
+        public static string SetColor(this string input, Color color)
+        {
+            string hexColor = ColorUtility.ToHtmlStringRGB(color);
+            return $"<color=#{hexColor}>{input}</color>";
+        }
+
+        /// <summary>
+        ///     Applies a rainbow effect to the text, coloring each character differently.
+        /// </summary>
+        public static string Rainbow(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            StringBuilder sb = new();
+            for (int i = 0; i < input.Length; i++)
+            {
+                Color color = Color.HSVToRGB((float)i / input.Length, 1, 1);
+                string hexColor = ColorUtility.ToHtmlStringRGB(color);
+                sb.Append("<color=#");
+                sb.Append(hexColor);
+                sb.Append(">");
+                sb.Append(input[i]);
+                sb.Append("</color>");
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Applies a gradient to the text between two colors. A single character uses the start color.
+        /// </summary>
+        public static string Gradient(this string input, Color startColor, Color endColor)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            StringBuilder sb = new();
+            for (int i = 0; i < input.Length; i++)
+            {
+                float progress = input.Length > 1 ? (float)i / (input.Length - 1) : 0f;
+                Color color = Color.Lerp(startColor, endColor, progress);
+                string hexColor = ColorUtility.ToHtmlStringRGB(color);
+                sb.Append("<color=#");
+                sb.Append(hexColor);
+                sb.Append(">");
+                sb.Append(input[i]);
+                sb.Append("</color>");
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Applies a random color to each character of the text.
+        /// </summary>
+        public static string RandomColors(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            StringBuilder sb = new(input.Length * 24);
+            for (int i = 0; i < input.Length; i++)
+            {
+                Color color = new(Random.value, Random.value, Random.value);
+                sb.Append("<color=#");
+                sb.Append(ColorUtility.ToHtmlStringRGB(color));
+                sb.Append('>');
+                sb.Append(input[i]);
+                sb.Append("</color>");
+            }
+
+            return sb.ToString();
+        }
+
+        #endregion
+    }
+}

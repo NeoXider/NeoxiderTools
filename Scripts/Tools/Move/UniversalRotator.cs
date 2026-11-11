@@ -1,0 +1,604 @@
+using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+namespace Neo.Tools
+{
+    /// <summary>
+    ///     Flexible rotation controller for 2D and 3D use-cases.
+    ///     Can aim at a Transform, a world point / direction, or mouse position (via plane or physics raycast),
+    ///     with optional axis limits and selectable update loop.
+    /// </summary>
+    [NeoDoc("Tools/Move/UniversalRotator.md")]
+    [CreateFromMenu("Neoxider/Tools/Movement/UniversalRotator")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UniversalRotator))]
+    public class UniversalRotator : MonoBehaviour
+    {
+        public enum AimSource
+        {
+            None,
+            Transform,
+            WorldPoint,
+            Mouse
+        }
+
+        public enum Axis
+        {
+            X,
+            Y,
+            Z
+        }
+
+        public enum Mouse3DMode
+        {
+            PlaneThroughObject,
+            PhysicsRaycast
+        }
+
+        public enum RotationMode
+        {
+            Mode3D,
+            Mode2D
+        }
+
+        public enum UpdateMode
+        {
+            Update,
+            FixedUpdate,
+            LateUpdate
+        }
+
+        [Header("Mode")]
+        [Tooltip("Rotation mode: 3D (along forward) or 2D (XY plane, Z rotation).")]
+#if ODIN_INSPECTOR
+        [LabelText("Rotation Mode")]
+#endif
+        [SerializeField]
+        private RotationMode rotationMode = RotationMode.Mode3D;
+
+        [Tooltip("Where to run rotation logic.")]
+        public UpdateMode updateMode = UpdateMode.Update;
+
+        [Tooltip("Use unscaled time.")] public bool useUnscaledTime;
+
+        [Header("Speed")]
+#if ODIN_INSPECTOR
+        [LabelText("Speed (°/sec)")]
+#endif
+        [Tooltip("Rotation speed (deg/sec).")]
+        [Min(0f)]
+        public float rotationSpeed = 360f;
+
+        [Tooltip("Rotation offset. In 3D — full Euler. In 2D only Z is used.")]
+#if ODIN_INSPECTOR
+        [ShowIf("@rotationMode == RotationMode.Mode3D")]
+        [LabelText("Offset (Euler)")]
+#endif
+        public Vector3 rotationOffsetEuler = Vector3.zero;
+
+        [Header("Limits")]
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Limits")]
+        [InfoBox("A range spanning 360 degrees or more ([0..360], [-180..180], [-360..360]) disables limits.",
+            InfoMessageType.None)]
+        [LabelText("Limited Axis (Local)")]
+        [ShowIf("@rotationMode == RotationMode.Mode3D")]
+#endif
+        public Axis limitedAxis3D = Axis.Y;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Limits")] [LabelText("Range (°)")] [MinMaxSlider(-360f, 360f, true)]
+#endif
+        [Tooltip("Allowed angle range on the limited axis, in degrees. A range spanning 360 degrees or more " +
+                 "([0, 360], [-180, 180], [-360, 360]) disables limits.")]
+        public Vector2 limitRange = new(0f, 360f);
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Limits")]
+        [LabelText("Relative to Initial Pose")]
+#endif
+        [Tooltip("If enabled — range is from local eulers at start; otherwise from 0.")]
+        public bool limitsRelativeToInitial = true;
+
+        [Header("Targeting")]
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting")]
+        [ToggleLeft]
+        [LabelText("Use Mouse World Position")]
+        [OnValueChanged(nameof(OnUseMouseToggled))]
+#endif
+        public bool useMouseWorld;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting")] [ShowIf("@!useMouseWorld")] [LabelText("Target (Transform)")]
+#endif
+        public Transform target;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting")]
+        [ShowIf("@useMouseWorld")]
+        [InlineButton(nameof(UseMainCamera), "Main")]
+#endif
+
+        [Tooltip("Camera for mouse mode. If empty — Camera.main is used.")]
+        public Camera targetCamera;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting/MOUSE 3D")]
+        [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
+        [LabelText("Mouse 3D Mode")]
+#endif
+        public Mouse3DMode mouse3DMode = Mouse3DMode.PlaneThroughObject;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting/MOUSE 3D")]
+        [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
+        [LabelText("Plane Normal")]
+#endif
+
+        [Tooltip("For PlaneThroughObject. Y = horizontal plane.")]
+        public Axis planeAxis = Axis.Y;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting/MOUSE 3D")]
+        [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
+        [LabelText("Raycast Layers (3D)")]
+#endif
+        public LayerMask mouseRaycastMask = Physics.DefaultRaycastLayers;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting/3D")]
+        [ShowIf("@rotationMode == RotationMode.Mode3D")]
+        [LabelText("World Up")]
+#endif
+
+        [Tooltip("Up vector for LookRotation in 3D.")]
+        public Vector3 worldUp = Vector3.up;
+
+#if ODIN_INSPECTOR
+        [ShowInInspector] [ReadOnly] [FoldoutGroup("Debug")] [LabelText("Current Aim Source")]
+#endif
+        private AimSource currentAim = AimSource.None;
+
+        private Vector3 initialLocalEuler;
+        private Camera cachedFallbackCamera;
+
+        private Vector3 manualWorldPoint;
+
+        // WHY: In 2D we expose a separate Z slider mapped to rotationOffsetEuler.z
+#if ODIN_INSPECTOR
+        [ShowInInspector]
+        [ShowIf("@rotationMode == RotationMode.Mode2D")]
+        [LabelText("Offset Z (2D)")]
+        [PropertyRange(-180, 180)]
+#endif
+
+        [Tooltip("Z offset for 2D (sprites).")]
+        public float rotationOffsetZ2D
+        {
+            get => rotationOffsetEuler.z;
+            set => rotationOffsetEuler.z = value;
+        }
+
+        private void Awake()
+        {
+            initialLocalEuler = transform.localEulerAngles;
+
+            TryAssignMainCameraIfNull();
+
+            currentAim = useMouseWorld ? AimSource.Mouse
+                : target != null ? AimSource.Transform
+                : AimSource.None;
+        }
+
+        private void Reset()
+        {
+            TryAssignMainCameraIfNull(); // WHY: populate a sensible default in Inspector
+        }
+
+        private void Update()
+        {
+            if (updateMode == UpdateMode.Update)
+            {
+                Tick(GetDeltaTime());
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (updateMode == UpdateMode.FixedUpdate)
+            {
+                Tick(GetDeltaTime());
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (updateMode == UpdateMode.LateUpdate)
+            {
+                Tick(GetDeltaTime());
+            }
+        }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            if (rotationMode == RotationMode.Mode3D && useMouseWorld && mouse3DMode == Mouse3DMode.PlaneThroughObject)
+            {
+                Vector3 n = AxisToWorldVector(planeAxis);
+                Handles.color = new Color(0.2f, 0.7f, 1f, 0.3f);
+                Handles.DrawSolidDisc(transform.position, n, 0.5f);
+            }
+        }
+#endif
+        private void OnValidate()
+        {
+            TryAssignMainCameraIfNull();
+            // WHY: Normalize range (guard against NaN/Inf)
+            limitRange.x = Mathf.Clamp(limitRange.x, -360f, 360f);
+            limitRange.y = Mathf.Clamp(limitRange.y, -360f, 360f);
+        }
+
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting")]
+        [DisableInEditorMode]
+#endif
+        [Button]
+        private void ClearTargetButton()
+        {
+            ClearTarget();
+        }
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Targeting")]
+        [ShowIf("@target != null && !useMouseWorld")]
+#endif
+        [Button("Look at Target Instantly")]
+        private void LookAtTargetInstant()
+        {
+            SetTarget(target);
+            if (target != null)
+            {
+                RotateTo(target.position, true);
+            }
+        }
+
+        /// <summary>Sets a target Transform. Disables mouse mode.</summary>
+        public void SetTarget(Transform newTarget)
+        {
+            target = newTarget;
+            useMouseWorld = false;
+            currentAim = target ? AimSource.Transform : AimSource.None;
+        }
+
+        /// <summary>Clears the current target. If mouse mode is enabled, mouse becomes the aim source.</summary>
+        public void ClearTarget()
+        {
+            target = null;
+            currentAim = useMouseWorld ? AimSource.Mouse : AimSource.None;
+        }
+
+        /// <summary>
+        ///     Aims at a world point. If <paramref name="instant" /> is true, applies rotation immediately; otherwise rotates
+        ///     smoothly.
+        /// </summary>
+        public void RotateTo(Vector3 worldPoint, bool instant = false)
+        {
+            manualWorldPoint = worldPoint;
+            currentAim = AimSource.WorldPoint;
+
+            if (instant)
+            {
+                Quaternion desired = ComputeDesiredWorldRotation(worldPoint, out _);
+                ApplyRotationInstant(desired);
+            }
+        }
+
+        /// <summary>Aims at a world direction (vector), converted internally to a point.</summary>
+        public void RotateToDirection(Vector3 worldDirection, bool instant = false)
+        {
+            if (worldDirection.sqrMagnitude < 1e-8f)
+            {
+                return;
+            }
+
+            RotateTo(transform.position + worldDirection, instant);
+        }
+
+        /// <summary>Rotates by <paramref name="deltaDegrees" /> around the working axis (Z in 2D, <c>limitedAxis3D</c> in 3D).</summary>
+        public void RotateBy(float deltaDegrees)
+        {
+            Axis axisUsed = GetActiveAxis();
+            Vector3 delta = AxisToVector(axisUsed) * deltaDegrees;
+            RotateBy(delta);
+        }
+
+        /// <summary>Rotates by local Euler delta. Limits are applied.</summary>
+        public void RotateBy(Vector3 eulerDelta)
+        {
+            Vector3 local = transform.localEulerAngles;
+            local += eulerDelta;
+
+            if (LimitsActive())
+            {
+                Axis axisUsed = GetActiveAxis();
+                int i = AxisIndex(axisUsed);
+                float baseline = limitsRelativeToInitial ? initialLocalEuler[i] : 0f;
+                float relative = Normalize180(local[i] - baseline);
+                float clamped = ClampAngleToRange(relative, limitRange.x, limitRange.y);
+                local[i] = baseline + clamped;
+            }
+
+            transform.localRotation = Quaternion.Euler(local);
+        }
+
+        private void Tick(float dt)
+        {
+            Vector3? maybePoint = GetAimPointWorld();
+            if (!maybePoint.HasValue)
+            {
+                return;
+            }
+
+            Quaternion desiredWorld =
+                ComputeDesiredWorldRotation(maybePoint.Value, out Quaternion desiredLocalBeforeLimits);
+
+            if (LimitsActive())
+            {
+                Quaternion limitedLocal = ApplyAxisLimit(desiredLocalBeforeLimits);
+                desiredWorld = ToWorld(limitedLocal);
+            }
+
+            float maxStep = rotationSpeed * dt;
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, desiredWorld, maxStep);
+        }
+
+        private Vector3? GetAimPointWorld()
+        {
+            if (useMouseWorld)
+            {
+                currentAim = AimSource.Mouse;
+            }
+
+            switch (currentAim)
+            {
+                case AimSource.Mouse:
+                    return rotationMode == RotationMode.Mode2D ? GetMouseWorldPoint2D() : GetMouseWorldPoint3D();
+                case AimSource.Transform:
+                    return target ? target.position : null;
+                case AimSource.WorldPoint:
+                    return manualWorldPoint;
+                default:
+                    return null;
+            }
+        }
+
+        private Quaternion ComputeDesiredWorldRotation(Vector3 aimPoint, out Quaternion desiredLocalBeforeLimits)
+        {
+            if (rotationMode == RotationMode.Mode2D)
+            {
+                Vector3 to = aimPoint - transform.position;
+                Vector2 to2D = new(to.x, to.y);
+                if (to2D.sqrMagnitude < 1e-8f)
+                {
+                    desiredLocalBeforeLimits = transform.localRotation;
+                    return transform.rotation;
+                }
+
+                float angle = Mathf.Atan2(to2D.y, to2D.x) * Mathf.Rad2Deg;
+                float z = angle + rotationOffsetEuler.z;
+
+                Quaternion worldDesired2D = Quaternion.Euler(0f, 0f, z);
+                desiredLocalBeforeLimits = ToLocal(worldDesired2D);
+                return worldDesired2D;
+            }
+
+            Vector3 dir = aimPoint - transform.position;
+            if (dir.sqrMagnitude < 1e-10f)
+            {
+                desiredLocalBeforeLimits = transform.localRotation;
+                return transform.rotation;
+            }
+
+            Quaternion look = Quaternion.LookRotation(dir.normalized,
+                worldUp.sqrMagnitude > 0.0001f ? worldUp.normalized : Vector3.up);
+            Quaternion offset = Quaternion.Euler(rotationOffsetEuler);
+            Quaternion worldDesired = look * offset;
+
+            desiredLocalBeforeLimits = ToLocal(worldDesired);
+            return worldDesired;
+        }
+
+        private Quaternion ApplyAxisLimit(Quaternion desiredLocal)
+        {
+            Vector3 euler = desiredLocal.eulerAngles;
+
+            Axis axisUsed = GetActiveAxis();
+            int i = AxisIndex(axisUsed);
+            float baseline = limitsRelativeToInitial ? initialLocalEuler[i] : 0f;
+            float relative = Normalize180(euler[i] - baseline);
+            float clamped = ClampAngleToRange(relative, limitRange.x, limitRange.y);
+            euler[i] = baseline + clamped;
+
+            return Quaternion.Euler(euler);
+        }
+
+        private bool LimitsActive()
+        {
+            return !AngleSector.SpansFullTurn(limitRange.x, limitRange.y);
+        }
+
+        private void ApplyRotationInstant(Quaternion desiredWorld)
+        {
+            if (LimitsActive())
+            {
+                Quaternion desiredLocal = ToLocal(desiredWorld);
+                Quaternion limitedLocal = ApplyAxisLimit(desiredLocal);
+                desiredWorld = ToWorld(limitedLocal);
+            }
+
+            transform.rotation = desiredWorld;
+        }
+
+        private Vector3? GetMouseWorldPoint2D()
+        {
+            Camera cam = GetCamera();
+            if (!cam || !MouseInputCompat.TryGetPosition(out Vector3 sp))
+            {
+                return null;
+            }
+
+            float depth = Mathf.Abs(cam.WorldToScreenPoint(transform.position).z);
+            Vector3 wp = cam.ScreenToWorldPoint(new Vector3(sp.x, sp.y, depth));
+            wp.z = transform.position.z;
+            return wp;
+        }
+
+        private Vector3? GetMouseWorldPoint3D()
+        {
+            Camera cam = GetCamera();
+            if (!cam || !MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
+            {
+                return null;
+            }
+
+            Ray ray = cam.ScreenPointToRay(mousePosition);
+
+            if (mouse3DMode == Mouse3DMode.PhysicsRaycast)
+            {
+                if (Physics.Raycast(ray, out RaycastHit hit, 10000f, mouseRaycastMask, QueryTriggerInteraction.Ignore))
+                {
+                    return hit.point;
+                }
+            }
+
+            Vector3 normal = AxisToWorldVector(planeAxis);
+            Plane plane = new(normal, transform.position);
+
+            if (plane.Raycast(ray, out float dist))
+            {
+                return ray.GetPoint(dist);
+            }
+
+            return null;
+        }
+
+        private Axis GetActiveAxis()
+        {
+            return rotationMode == RotationMode.Mode2D ? Axis.Z : limitedAxis3D;
+        }
+
+        private static int AxisIndex(Axis a)
+        {
+            return a == Axis.X ? 0 : a == Axis.Y ? 1 : 2;
+        }
+
+        private static Vector3 AxisToVector(Axis a)
+        {
+            return a == Axis.X ? new Vector3(1, 0, 0) : a == Axis.Y ? new Vector3(0, 1, 0) : new Vector3(0, 0, 1);
+        }
+
+        private static Vector3 AxisToWorldVector(Axis a)
+        {
+            return a == Axis.X ? Vector3.right : a == Axis.Y ? Vector3.up : Vector3.forward;
+        }
+
+        private float GetDeltaTime()
+        {
+            if (updateMode == UpdateMode.FixedUpdate)
+            {
+                return useUnscaledTime ? Time.fixedUnscaledDeltaTime : Time.fixedDeltaTime;
+            }
+
+            return useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+        }
+
+        private Camera GetCamera()
+        {
+            if (targetCamera)
+            {
+                return targetCamera;
+            }
+
+            return ResolveFallbackCamera();
+        }
+
+        private void TryAssignMainCameraIfNull()
+        {
+            if (targetCamera == null)
+            {
+                Camera cam = ResolveFallbackCamera();
+                if (cam != null)
+                {
+                    targetCamera = cam;
+                }
+            }
+        }
+
+        private void UseMainCamera()
+        {
+            Camera cam = ResolveFallbackCamera();
+            if (cam != null)
+            {
+                targetCamera = cam;
+            }
+        }
+
+        private Camera ResolveFallbackCamera()
+        {
+            if (cachedFallbackCamera == null)
+            {
+                cachedFallbackCamera = Camera.main;
+            }
+
+            return cachedFallbackCamera;
+        }
+
+        private void OnUseMouseToggled()
+        {
+            currentAim = useMouseWorld ? AimSource.Mouse : target ? AimSource.Transform : AimSource.None;
+        }
+
+        private Quaternion ToLocal(Quaternion worldRot)
+        {
+            Transform parent = transform.parent;
+            if (parent != null)
+            {
+                return Quaternion.Inverse(parent.rotation) * worldRot;
+            }
+
+            return worldRot;
+        }
+
+        private Quaternion ToWorld(Quaternion localRot)
+        {
+            Transform parent = transform.parent;
+            if (parent != null)
+            {
+                return parent.rotation * localRot;
+            }
+
+            return localRot;
+        }
+
+        private static float Normalize180(float angle)
+        {
+            angle %= 360f;
+            if (angle > 180f)
+            {
+                angle -= 360f;
+            }
+
+            if (angle < -180f)
+            {
+                angle += 360f;
+            }
+
+            return angle;
+        }
+
+        /// <summary>
+        ///     Limits <paramref name="a" /> to the sector from <paramref name="min" /> to <paramref name="max" />
+        ///     (degrees) with the sector rules of <see cref="AngleSector" />, shared with <see cref="Follow" />: the
+        ///     sector may cross 180, a range whose max is below its min wraps through 180, an angle outside the sector
+        ///     returns the nearer edge by angular distance, and a range of a full turn or more returns the angle
+        ///     unchanged. The result is normalized to [-180, 180].
+        /// </summary>
+        internal static float ClampAngleToRange(float a, float min, float max)
+        {
+            return Normalize180(AngleSector.Clamp(Normalize180(a), min, max));
+        }
+    }
+}

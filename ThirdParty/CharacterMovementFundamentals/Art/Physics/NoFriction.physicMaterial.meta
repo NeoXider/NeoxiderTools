@@ -1,0 +1,11 @@
+fileFormatVersion: 2
+guid: e22c35a45fac28e4eb8a295407e775b7
+NativeFormatImporter:
+  userData: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Misc/Physics Materials/NoFriction.physicMaterial
+  uploadId: 426944

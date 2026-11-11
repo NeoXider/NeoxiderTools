@@ -1,0 +1,22 @@
+{
+    "name": "Neo.Tools.Managers",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Extensions",
+        "Neo.PropertyAttribute"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

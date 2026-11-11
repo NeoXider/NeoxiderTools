@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Tools.Dialogue",
+    "rootNamespace": "",
+    "references": [
+        "Unity.TextMeshPro",
+        "UniTask",
+        "Neo.Tools.Components",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

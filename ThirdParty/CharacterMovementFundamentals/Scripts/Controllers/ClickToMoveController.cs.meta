@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 0c44a9caf002ec44d827c53434b77fc0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Scripts/Controllers/ClickToMoveController.cs
+  uploadId: 426944

@@ -1,0 +1,36 @@
+{
+    "name": "Neo.Tools.View",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Network.Contracts",
+        "Neo.Reactive",
+        "Neo.Tools.Managers",
+        "Neo.UI",
+        "Neo.Extensions",
+        "Neo.PropertyAttribute",
+        "Neo.Animations",
+        "Neo.Tools.Components",
+        "Neo.Save",
+        "Mirror",
+        "Neo.Network"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+        {
+            "name": "com.mirrornetworking.mirror",
+            "expression": "",
+            "define": "MIRROR"
+        }
+    ],
+    "noEngineReferences": false
+}

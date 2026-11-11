@@ -1,0 +1,59 @@
+﻿# InventoryView
+
+**What it is:** UI `MonoBehaviour` that lists inventory contents, spawning [InventoryItemView](InventoryItemView.md) cells from a prefab or updating pre-placed cells (Manual Mode). `Scripts/Tools/Inventory/UI/InventoryView.cs`, namespace `Neo.Tools`.
+
+**How to use:**
+1. Add it to a layout container and assign **Inventory** (or rely on the default inventory).
+2. Choose **View Mode**: assign an **Item View Prefab** for spawn mode, or fill **Manual Views**.
+3. Choose **Source Mode** (database items, current snapshot, or both); it refreshes on inventory changes.
+
+---
+
+## Fields (Inspector)
+
+| Field | Description |
+|-------|-------------|
+| **Inventory** | Reference to `InventoryComponent`. Auto-finds if left empty. |
+| **View Mode** | `SpawnFromPrefab` — dynamically creates cells. `ManualList` — updates only your pre-placed `InventoryItemView` list. |
+| **Source Mode** | Where to pull the item list: `DatabaseItems` (all from DB), `SnapshotItems` (only owned), `Hybrid` (merged). |
+| **Show Only Non Zero** | Hide cells for items with a count of 0. |
+| **Item View Prefab** | Cell prefab (with `InventoryItemView`) for `SpawnFromPrefab` mode. |
+| **Items Root** | Container for spawned cells. Defaults to this Transform. |
+| **Manual Views** | List of pre-placed `InventoryItemView` for `ManualList` mode. |
+
+## API
+
+| Method / Property | Description |
+|-------------------|-------------|
+| `void SetInventory(InventoryComponent inventory)` | Bind to a different inventory and refresh the UI. |
+| `void Refresh()` | Force a redraw of all cells. |
+
+Snapshot and hybrid lists hide cached rows when an id disappears or the source inventory changes.
+Manual rows can become visible again after `Clear()` when the item is added back. Calling
+`SetInventory` while the component is disabled performs the immediate refresh without subscribing it
+to future mutations; enable it or call `Refresh()` explicitly for subsequent updates.
+
+The component owns prefab-spawned rows and destroys them with itself, including rows under an external
+Items Root. Pre-placed Manual Views and unrelated children are not destroyed.
+
+## Examples
+
+### No-Code Example (Inspector)
+Create a UI panel with a `Vertical Layout Group`. Attach `InventoryView`. Drag your row prefab (with `InventoryItemView`) into `Item View Prefab`. Set `Source Mode = Hybrid`, `Show Only Non Zero = true`. On play, the panel will automatically show your inventory items.
+
+### Code Example
+```csharp
+[SerializeField] private InventoryView _shopView;
+
+public void OpenShopUI(InventoryComponent shopInventory)
+{
+    _shopView.SetInventory(shopInventory);
+    _shopView.gameObject.SetActive(true);
+}
+```
+
+## See Also
+- [InventoryItemView](InventoryItemView.md)
+- [InventorySlotGridView](InventorySlotGridView.md)
+- [InventoryComponent](InventoryComponent.md)
+- ← [Tools/Inventory](README.md)

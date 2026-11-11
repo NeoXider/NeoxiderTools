@@ -1,0 +1,337 @@
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using Neo.Reactive;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neo.Tools
+{
+    /// <summary>How <see cref="TypewriterEffectComponent" /> shows the typed portion of the text.</summary>
+    public enum TypewriterRevealMode
+    {
+        /// <summary>Assigns the typed prefix as a new string every step (layout reflows while typing).</summary>
+        RebuildText = 0,
+
+        /// <summary>
+        ///     Assigns the full text once and raises <c>TMP_Text.maxVisibleCharacters</c>: no per-character
+        ///     allocation and words never jump between lines while they are typed.
+        /// </summary>
+        MaxVisibleCharacters = 1
+    }
+
+    /// <summary>
+    ///     MonoBehaviour wrapper for TypewriterEffect (UniTask).
+    /// </summary>
+    [NeoDoc("Tools/Components/TypewriterEffect.md")]
+    [CreateFromMenu("Neoxider/Tools/Components/TypewriterEffectComponent")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(TypewriterEffectComponent))]
+    public class TypewriterEffectComponent : MonoBehaviour
+    {
+        // WHY: TMP's own default for maxVisibleCharacters, i.e. "no limit".
+        private const int UnlimitedVisibleCharacters = 99999;
+
+        [Header("Target")] [Tooltip("Text component for output. If not set, searched on this object")] [SerializeField]
+        private TMP_Text _targetText;
+
+        [Tooltip(
+            "RebuildText assigns a growing string every character. MaxVisibleCharacters assigns the full text once and " +
+            "reveals it: allocation-free and without word-wrap jumps (sprites and <br> may reveal one step early/late).")]
+        [SerializeField]
+        private TypewriterRevealMode _revealMode = TypewriterRevealMode.RebuildText;
+
+        [Header("Settings")] [Tooltip("Auto-start effect on Start")] [SerializeField]
+        private bool _autoStart = true;
+
+        [Tooltip("Start effect every time on OnEnable")] [SerializeField]
+        private bool _playOnEnable;
+
+        [Tooltip("Text for auto-start. If empty, taken from TargetText")] [SerializeField] [TextArea(2, 5)]
+        private string _autoStartText;
+
+        [SerializeField] private TypewriterEffect _effect = new();
+
+        public UnityEvent OnStart;
+
+        public UnityEvent OnComplete;
+        public UnityEvent<char> OnCharacterTyped;
+
+        [Tooltip("Reactive progress (0-1); subscribe via Progress.OnChanged")]
+        public ReactivePropertyFloat Progress = new();
+
+        private CancellationTokenSource _cts;
+        private bool _hasStarted;
+
+        // WHY: tracks whether this component lowered TMP's maxVisibleCharacters, independent of the current
+        // RevealMode, so switching the mode mid-run or stopping a reveal never leaves the label truncated.
+        private bool _limitsVisibleCharacters;
+
+        public TypewriterEffect Effect => _effect;
+
+        public TMP_Text TargetText
+        {
+            get => _targetText;
+            set => _targetText = value;
+        }
+
+        /// <summary>How typed text is shown; applies to the next Play call.</summary>
+        public TypewriterRevealMode RevealMode
+        {
+            get => _revealMode;
+            set => _revealMode = value;
+        }
+
+        public bool IsTyping => _effect?.IsTyping ?? false;
+        public float ProgressValue => Progress.CurrentValue;
+
+        private void Awake()
+        {
+            if (_targetText == null)
+            {
+                _targetText = GetComponent<TMP_Text>();
+            }
+
+            if (_effect == null)
+            {
+                _effect = new TypewriterEffect();
+            }
+
+            _effect.RebuildPauseMap();
+
+            _effect.OnStart += HandleStarted;
+            _effect.OnComplete += HandleCompleted;
+            _effect.OnCharacterTyped += HandleCharacterTyped;
+            _effect.OnProgressChanged += HandleProgressChanged;
+
+            if (string.IsNullOrEmpty(_autoStartText) && _targetText != null && !string.IsNullOrEmpty(_targetText.text))
+            {
+                _autoStartText = _targetText.text;
+            }
+        }
+
+        private void Start()
+        {
+            _hasStarted = true;
+            if (_autoStart || _playOnEnable)
+            {
+                PlayAutoText();
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (_playOnEnable && _hasStarted)
+            {
+                PlayAutoText();
+            }
+        }
+
+        private void OnDisable()
+        {
+            Stop();
+        }
+
+        private void OnDestroy()
+        {
+            Stop();
+            if (_effect != null)
+            {
+                _effect.OnStart -= HandleStarted;
+                _effect.OnComplete -= HandleCompleted;
+                _effect.OnCharacterTyped -= HandleCharacterTyped;
+                _effect.OnProgressChanged -= HandleProgressChanged;
+            }
+        }
+
+        private void HandleStarted()
+        {
+            OnStart?.Invoke();
+        }
+
+        private void HandleCompleted()
+        {
+            // WHY: the run's visible count can differ from TMP's (sprites, <br>); finish fully revealed.
+            RestoreVisibleCharacters();
+            OnComplete?.Invoke();
+        }
+
+        private void HandleCharacterTyped(char character)
+        {
+            OnCharacterTyped?.Invoke(character);
+        }
+
+        private void HandleProgressChanged(float progress)
+        {
+            Progress.Value = progress;
+        }
+
+        /// <summary>
+        ///     Starts the effect using AutoStartText or TargetText.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void PlayAutoText()
+        {
+            if (_targetText == null)
+            {
+                NeoDiagnostics.LogWarning(
+                    $"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_autoStartText))
+            {
+                NeoDiagnostics.LogWarning($"[TypewriterEffectComponent] AutoStartText is empty on {gameObject.name}",
+                    this);
+                return;
+            }
+
+            Stop();
+            _cts = new CancellationTokenSource();
+            PlayInternalAsync(_autoStartText, _cts.Token).Forget();
+        }
+
+        /// <summary>
+        ///     Starts the typewriter effect.
+        ///     If text is empty, uses TargetText content.
+        /// </summary>
+        public void Play(string text = "")
+        {
+            if (_targetText == null)
+            {
+                NeoDiagnostics.LogWarning(
+                    $"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(text))
+            {
+                text = _targetText.text;
+                if (string.IsNullOrEmpty(text))
+                {
+                    NeoDiagnostics.LogWarning($"[TypewriterEffectComponent] Text is empty on {gameObject.name}", this);
+                    return;
+                }
+
+                _targetText.text = string.Empty;
+            }
+
+            Stop();
+            _cts = new CancellationTokenSource();
+            PlayInternalAsync(text, _cts.Token).Forget();
+        }
+
+        private async UniTaskVoid PlayInternalAsync(string text, CancellationToken token)
+        {
+            if (_revealMode == TypewriterRevealMode.MaxVisibleCharacters)
+            {
+                _limitsVisibleCharacters = true;
+                _targetText.maxVisibleCharacters = 0;
+                _targetText.text = text;
+                await _effect.PlayRevealAsync(text, ApplyVisibleCharacters, token);
+                return;
+            }
+
+            // WHY: a stopped reveal run keeps its partial limit; a text run must not inherit it.
+            RestoreVisibleCharacters();
+            await _effect.PlayAsync(text, ApplyTypedText, token);
+        }
+
+        private void ApplyTypedText(string typedText)
+        {
+            if (_targetText != null)
+            {
+                _targetText.text = typedText;
+            }
+        }
+
+        private void ApplyVisibleCharacters(int visibleCharacters)
+        {
+            if (_targetText != null)
+            {
+                _limitsVisibleCharacters = true;
+                _targetText.maxVisibleCharacters = visibleCharacters;
+            }
+        }
+
+        private void RestoreVisibleCharacters()
+        {
+            if (!_limitsVisibleCharacters)
+            {
+                return;
+            }
+
+            _limitsVisibleCharacters = false;
+            if (_targetText != null)
+            {
+                _targetText.maxVisibleCharacters = UnlimitedVisibleCharacters;
+            }
+        }
+
+        /// <summary>
+        ///     Stops the effect and shows full text.
+        /// </summary>
+        public void Complete()
+        {
+            CancelToken();
+            if (_effect != null && _targetText != null)
+            {
+                _targetText.text = _effect.FullText;
+                RestoreVisibleCharacters();
+                _effect.Complete();
+            }
+        }
+
+        /// <summary>
+        ///     Stops the effect, keeping current visible text.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void Stop()
+        {
+            _effect?.Stop();
+            CancelToken();
+        }
+
+        private void CancelToken()
+        {
+            CancellationTokenSource source = _cts;
+            _cts = null;
+            if (source != null)
+            {
+                source.Cancel();
+                source.Dispose();
+            }
+        }
+
+        /// <summary>
+        ///     Clears text.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void Clear()
+        {
+            Stop();
+            _effect?.Reset();
+            if (_targetText != null)
+            {
+                _targetText.text = string.Empty;
+            }
+
+            RestoreVisibleCharacters();
+
+            Progress.Value = 0f;
+        }
+
+        /// <summary>
+        ///     If typing, completes instantly; otherwise returns false.
+        /// </summary>
+        public bool TrySkip()
+        {
+            if (!IsTyping)
+            {
+                return false;
+            }
+
+            Complete();
+            return true;
+        }
+    }
+}

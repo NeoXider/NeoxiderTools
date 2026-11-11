@@ -1,0 +1,26 @@
+{
+    "name": "Neo.Tools.Draw",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Reactive",
+        "Neo.Extensions",
+        "Neo.PropertyAttribute",
+        "Neo.Tools.Spawner",
+        "Neo.Tools.Managers",
+        "Neo.Tools.Input"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

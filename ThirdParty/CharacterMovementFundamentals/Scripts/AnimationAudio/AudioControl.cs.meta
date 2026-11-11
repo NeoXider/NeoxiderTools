@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 2d296f3412ce1434a84b75a9a8ec966e
+timeCreated: 1547565122
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Scripts/Animation & Audio/AudioControl.cs
+  uploadId: 426944

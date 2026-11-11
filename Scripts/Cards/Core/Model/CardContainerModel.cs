@@ -1,0 +1,67 @@
+using System;
+using System.Collections.Generic;
+
+namespace Neo.Cards
+{
+    /// <summary>
+    ///     Base card container model.
+    /// </summary>
+    public class CardContainerModel : ICardContainer
+    {
+        protected readonly List<CardData> CardsInternal = new();
+
+        public CardContainerModel(CardLocation location)
+        {
+            Location = location;
+        }
+
+        public List<CardData> Mutable => CardsInternal;
+
+        public CardLocation Location { get; }
+        public int Count => CardsInternal.Count;
+        public IReadOnlyList<CardData> Data => CardsInternal;
+
+        public event Action OnChanged;
+
+        public virtual bool CanAdd(CardData card)
+        {
+            return true;
+        }
+
+        public virtual void Add(CardData card)
+        {
+            if (!CanAdd(card))
+            {
+                throw new InvalidOperationException("Cannot add card because the container rejected it.");
+            }
+
+            CardsInternal.Add(card);
+            OnChanged?.Invoke();
+        }
+
+        public virtual bool Remove(CardData card)
+        {
+            bool removed = CardsInternal.Remove(card);
+            if (removed)
+            {
+                OnChanged?.Invoke();
+            }
+
+            return removed;
+        }
+
+        public virtual List<CardData> RemoveAll()
+        {
+            List<CardData> snapshot = new(CardsInternal);
+            CardsInternal.Clear();
+            OnChanged?.Invoke();
+            return snapshot;
+        }
+
+        public virtual void Clear()
+        {
+            CardsInternal.Clear();
+            OnChanged?.Invoke();
+        }
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Tools.FakeLeaderboard",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Tools.Managers",
+        "Neo.Extensions",
+        "Unity.TextMeshPro",
+        "Neo.Save",
+        "Neo.PropertyAttribute"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

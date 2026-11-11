@@ -1,0 +1,22 @@
+{
+    "name": "Neo.Reactive",
+    "rootNamespace": "Neo.Reactive",
+    "references": [
+        "Unity.TextMeshPro",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

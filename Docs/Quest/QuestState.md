@@ -1,0 +1,44 @@
+﻿# QuestState
+
+**What it is:** a `[Serializable]` class (`Scripts/Quest/QuestState.cs`) that stores the runtime state (status and per-objective progress) of one quest. `QuestManager` creates it when the player accepts a quest, keeps it in memory, and serializes it to JSON for save files.
+
+**How to use:** read it through `QuestManager.GetState(...)`, `AllQuests` or `GetActiveQuests(buffer)`; change it only through `QuestManager` methods.
+
+---
+
+## Description
+
+`QuestState` is not configured directly in the Inspector (except for debugging if you inspect the array inside QuestManager). It is purely a runtime object.
+
+It stores:
+1. The quest identifier (`_questId`).
+2. The current status (`_status`: NotStarted, Active, Completed, Failed).
+3. A list of current progress values for each objective (e.g., how many boars killed).
+4. A list of completion flags for each objective (`true`/`false`).
+
+Counter progress is the credited count, clamped to `RequiredCount`. A completed `CustomCondition`, `ReachPoint`, or `Talk` objective has progress `1`; its progress and completion flag are already available inside progress callbacks. Out-of-range progress queries return `0`, and out-of-range completion queries return `false`.
+
+Loading repairs missing/unequal lists, preserves saved entries, and appends zero/false entries for added config objectives. Registering a config after load also grows its restored state. Objectives are identified by index: reordering or inserting them in the middle requires your own save migration. Prefer appending objectives to a released config.
+
+## Code Usage
+
+Usually, you do not modify `QuestState` manually. You interact with it via `QuestManager`.
+However, if you want to display progress in the UI, you can retrieve it:
+
+```csharp
+// Get the state of an active quest
+QuestState state = QuestManager.I.GetState("kill_boars");
+
+if (state != null) {
+    // Check how many items we've collected for the first objective (index 0)
+    int currentAmount = state.GetObjectiveProgress(0);
+    
+    // Check if the objective is completed
+    bool isDone = state.IsObjectiveCompleted(0);
+}
+```
+
+## See Also
+
+- [QuestManager](QuestManager.md)
+- [QuestConfig](QuestConfig.md)

@@ -1,0 +1,574 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Neo.Rpg.Runtime
+{
+    /// <summary>
+    ///     Single source of truth for active buffs / status effects on a runtime character.
+    ///     <para>Replaces the duplicated <c>_activeBuffs</c> / <c>_activeStatuses</c> lists that used to
+    ///     live in multiple components; <c>RpgCharacter</c> holds ONE shelf and the
+    ///     lifecycle code (apply / refresh / expire / tick) exists exactly once.</para>
+    ///     Pure C# - not a MonoBehaviour, so it never adds an extra hierarchy entry.
+    /// </summary>
+    public sealed class RpgEffectShelf
+    {
+        private readonly Dictionary<string, BuffDefinition> _buffLibrary = new();
+        private readonly Dictionary<string, StatusEffectDefinition> _statusLibrary = new();
+        private readonly Dictionary<string, InlineBuffEntry> _inlineLibrary = new();
+
+        private readonly List<ActiveBuffEntry> _activeBuffs = new();
+        private readonly List<ActiveStatusEntry> _activeStatuses = new();
+        private readonly Dictionary<string, float> _statusTickAccumulators = new();
+        private int _mutationVersion;
+        private bool _isTicking;
+
+        public IReadOnlyList<ActiveBuffEntry> ActiveBuffs => _activeBuffs;
+        public IReadOnlyList<ActiveStatusEntry> ActiveStatuses => _activeStatuses;
+
+
+        /// <summary>Populates the buff library from a definition array (usually template + character extras).</summary>
+        public void RegisterBuffLibrary(IEnumerable<BuffDefinition> defs)
+        {
+            _buffLibrary.Clear();
+            if (defs == null)
+            {
+                return;
+            }
+
+            foreach (BuffDefinition def in defs)
+            {
+                if (def == null || string.IsNullOrWhiteSpace(def.Id))
+                {
+                    continue;
+                }
+
+                _buffLibrary[def.Id] = def;
+            }
+        }
+
+        public void RegisterStatusLibrary(IEnumerable<StatusEffectDefinition> defs)
+        {
+            _statusLibrary.Clear();
+            if (defs == null)
+            {
+                return;
+            }
+
+            foreach (StatusEffectDefinition def in defs)
+            {
+                if (def == null || string.IsNullOrWhiteSpace(def.Id))
+                {
+                    continue;
+                }
+
+                _statusLibrary[def.Id] = def;
+            }
+        }
+
+        /// <summary>Adds inline buff entries to the lookup table so ApplyBuffById / projection works.</summary>
+        public void RegisterInlineBuffs(IEnumerable<InlineBuffEntry> entries)
+        {
+            _inlineLibrary.Clear();
+            if (entries == null)
+            {
+                return;
+            }
+
+            foreach (InlineBuffEntry entry in entries)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.Id))
+                {
+                    continue;
+                }
+
+                _inlineLibrary[entry.Id] = entry;
+            }
+        }
+
+        public bool TryGetBuff(string id, out BuffDefinition def)
+        {
+            return _buffLibrary.TryGetValue(id ?? string.Empty, out def);
+        }
+
+        public bool TryGetStatus(string id, out StatusEffectDefinition def)
+        {
+            return _statusLibrary.TryGetValue(id ?? string.Empty, out def);
+        }
+
+        public bool TryGetInlineBuff(string id, out InlineBuffEntry entry)
+        {
+            return _inlineLibrary.TryGetValue(id ?? string.Empty, out entry);
+        }
+
+
+        /// <summary>Apply a buff. Returns the active entry (new or stacked) and whether it was newly added.</summary>
+        public ApplyResult<ActiveBuffEntry> ApplyBuff(BuffDefinition def)
+        {
+            if (def == null || string.IsNullOrWhiteSpace(def.Id))
+            {
+                return ApplyResult<ActiveBuffEntry>.Failed("Definition is null or has empty Id.");
+            }
+
+            // WHY: ensure library lookup works for buffs applied at runtime.
+            _mutationVersion++;
+            _buffLibrary[def.Id] = def;
+            double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, def.Duration);
+
+            ActiveBuffEntry existing = FindBuff(def.Id);
+            if (existing != null)
+            {
+                int maxStacks = Mathf.Max(1, def.MaxStacks);
+                existing.Stacks = def.Stackable ? existing.Stacks >= maxStacks ? maxStacks : existing.Stacks + 1 : 1;
+
+                // WHY: refreshing an existing buff extends its timer, matching typical stacking-buff expectations.
+                existing.ExpiresAtUtc = expiresAt;
+                return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
+            }
+
+            ActiveBuffEntry entry = new() { BuffId = def.Id, ExpiresAtUtc = expiresAt, Stacks = 1 };
+            _activeBuffs.Add(entry);
+            return ApplyResult<ActiveBuffEntry>.Ok(entry, true);
+        }
+
+        /// <summary>Applies an inline (non-SO) buff. Same lifecycle as the SO variant.</summary>
+        public ApplyResult<ActiveBuffEntry> ApplyInlineBuff(InlineBuffEntry inline)
+        {
+            if (inline == null || string.IsNullOrWhiteSpace(inline.Id))
+            {
+                return ApplyResult<ActiveBuffEntry>.Failed("InlineBuffEntry is null or has empty Id.");
+            }
+
+            _mutationVersion++;
+            _inlineLibrary[inline.Id] = inline;
+            double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, inline.Duration);
+
+            ActiveBuffEntry existing = FindBuff(inline.Id);
+            if (existing != null)
+            {
+                int maxStacks = Mathf.Max(1, inline.MaxStacks);
+                existing.Stacks = inline.Stackable ? existing.Stacks >= maxStacks ? maxStacks : existing.Stacks + 1 : 1;
+
+                existing.ExpiresAtUtc = expiresAt;
+                return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
+            }
+
+            ActiveBuffEntry entry = new() { BuffId = inline.Id, ExpiresAtUtc = expiresAt, Stacks = 1 };
+            _activeBuffs.Add(entry);
+            return ApplyResult<ActiveBuffEntry>.Ok(entry, true);
+        }
+
+        public bool RemoveBuff(string id)
+        {
+            ActiveBuffEntry entry = FindBuff(id);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            _activeBuffs.Remove(entry);
+            _mutationVersion++;
+            return true;
+        }
+
+        public void ClearAllBuffs()
+        {
+            _activeBuffs.Clear();
+            _mutationVersion++;
+        }
+
+        public ApplyResult<ActiveStatusEntry> ApplyStatus(StatusEffectDefinition def)
+        {
+            if (def == null || string.IsNullOrWhiteSpace(def.Id))
+            {
+                return ApplyResult<ActiveStatusEntry>.Failed("Definition is null or has empty Id.");
+            }
+
+            _mutationVersion++;
+            _statusLibrary[def.Id] = def;
+            double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, def.Duration);
+
+            ActiveStatusEntry existing = FindStatus(def.Id);
+            if (existing != null)
+            {
+                if (def.Stackable && existing.Stacks < Mathf.Max(1, def.MaxStacks))
+                {
+                    existing.Stacks++;
+                }
+
+                existing.ExpiresAtUtc = expiresAt;
+                return ApplyResult<ActiveStatusEntry>.Ok(existing, false);
+            }
+
+            ActiveStatusEntry entry = new() { StatusId = def.Id, ExpiresAtUtc = expiresAt, Stacks = 1 };
+            _activeStatuses.Add(entry);
+            return ApplyResult<ActiveStatusEntry>.Ok(entry, true);
+        }
+
+        public bool RemoveStatus(string id)
+        {
+            ActiveStatusEntry entry = FindStatus(id);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            _activeStatuses.Remove(entry);
+            _mutationVersion++;
+            _statusTickAccumulators.Remove(entry.StatusId);
+            return true;
+        }
+
+        public void ClearAllStatuses()
+        {
+            _activeStatuses.Clear();
+            _statusTickAccumulators.Clear();
+            _mutationVersion++;
+        }
+
+        public bool HasBuff(string id)
+        {
+            return FindBuff(id) != null;
+        }
+
+        public bool HasStatus(string id)
+        {
+            return FindStatus(id) != null;
+        }
+
+        /// <summary>
+        ///     Product of <see cref="StatusEffectDefinition.MovementSpeedMultiplier" /> (clamped at 0) over every
+        ///     active status with a known definition. 1 when nothing slows the character.
+        /// </summary>
+        public float GetStatusMovementMultiplier()
+        {
+            float multiplier = 1f;
+            for (int i = 0; i < _activeStatuses.Count; i++)
+            {
+                if (TryGetStatus(_activeStatuses[i].StatusId, out StatusEffectDefinition definition) &&
+                    definition != null)
+                {
+                    multiplier *= Mathf.Max(0f, definition.MovementSpeedMultiplier);
+                }
+            }
+
+            return multiplier;
+        }
+
+        /// <summary>True when any active status with a known definition has <see cref="StatusEffectDefinition.BlocksActions" />.</summary>
+        public bool HasBlockingStatus()
+        {
+            for (int i = 0; i < _activeStatuses.Count; i++)
+            {
+                if (TryGetStatus(_activeStatuses[i].StatusId, out StatusEffectDefinition definition) &&
+                    definition != null && definition.BlocksActions)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal int GetBuffStackCount(string id)
+        {
+            ActiveBuffEntry entry = FindBuff(id);
+            return entry == null ? 0 : ClampBuffStacks(id, entry.Stacks);
+        }
+
+        internal bool IsCurrentBuff(ActiveBuffEntry entry, int stacks)
+        {
+            return ReferenceEquals(FindBuff(entry.BuffId), entry) && GetBuffStackCount(entry.BuffId) == stacks;
+        }
+
+
+        /// <summary>
+        ///     Advance time. Removes expired entries (calls expire callbacks), accumulates status tick damage
+        ///     and invokes <paramref name="statusDamageCallback"/> for each tick of damage.
+        /// </summary>
+        public void Tick(float deltaTime, Action<string> onBuffExpired, Action<string> onStatusExpired,
+            Action<StatusEffectDefinition, float> statusDamageCallback)
+        {
+            if (_isTicking)
+            {
+                return;
+            }
+
+            _isTicking = true;
+            try
+            {
+                TickCore(deltaTime, onBuffExpired, onStatusExpired, statusDamageCallback);
+            }
+            finally
+            {
+                _isTicking = false;
+            }
+        }
+
+        private void TickCore(float deltaTime, Action<string> onBuffExpired, Action<string> onStatusExpired,
+            Action<StatusEffectDefinition, float> statusDamageCallback)
+        {
+            double now = RpgTimeUtility.GetCurrentUnixTimestamp();
+
+            for (int i = _activeBuffs.Count - 1; i >= 0; i--)
+            {
+                if (_activeBuffs[i].ExpiresAtUtc > now)
+                {
+                    continue;
+                }
+
+                string id = _activeBuffs[i].BuffId;
+                _activeBuffs.RemoveAt(i);
+                int version = ++_mutationVersion;
+                onBuffExpired?.Invoke(id);
+                if (version != _mutationVersion)
+                {
+                    return;
+                }
+            }
+
+            for (int i = _activeStatuses.Count - 1; i >= 0; i--)
+            {
+                ActiveStatusEntry entry = _activeStatuses[i];
+
+                if (statusDamageCallback != null &&
+                    TryGetStatus(entry.StatusId, out StatusEffectDefinition def) &&
+                    def != null && def.TickDamagePerSecond > 0f && def.Duration > 0f)
+                {
+                    if (!_statusTickAccumulators.TryGetValue(entry.StatusId, out float acc))
+                    {
+                        acc = 0f;
+                    }
+
+                    float interval = def.TickInterval;
+                    int pending = RpgTickUtility.Consume(acc, deltaTime, interval, out float phase);
+                    _statusTickAccumulators[entry.StatusId] = phase;
+                    if (!RpgTickUtility.TryAmount((double)def.TickDamagePerSecond * interval *
+                            Mathf.Max(1, entry.Stacks), out float amount) || amount <= 0f)
+                    {
+                        pending = 0;
+                    }
+
+                    while (pending > 0)
+                    {
+                        pending--;
+                        int version = _mutationVersion;
+                        statusDamageCallback(def, amount);
+                        if (version != _mutationVersion)
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                if (entry.ExpiresAtUtc <= now)
+                {
+                    string id = entry.StatusId;
+                    _activeStatuses.RemoveAt(i);
+                    _statusTickAccumulators.Remove(id);
+                    int version = ++_mutationVersion;
+                    onStatusExpired?.Invoke(id);
+                    if (version != _mutationVersion)
+                    {
+                        return;
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        ///     Projects each active buff's <c>BuffStatModifier[]</c> into a flat list of
+        ///     <see cref="BuffStatModifierApplication"/> for <see cref="RpgStatResolver"/>.
+        ///     Caller is expected to reuse the list (we Clear and fill).
+        /// </summary>
+        public void BuildModifierApplications(List<BuffStatModifierApplication> buffer)
+        {
+            buffer.Clear();
+            for (int i = 0; i < _activeBuffs.Count; i++)
+            {
+                string id = _activeBuffs[i].BuffId;
+
+                if (TryGetBuff(id, out BuffDefinition def) && def != null && def.Modifiers != null)
+                {
+                    AppendModifiers(buffer, def.Modifiers, ClampBuffStacks(id, _activeBuffs[i].Stacks));
+                    continue;
+                }
+
+                if (TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null && inline.Modifiers != null)
+                {
+                    AppendModifiers(buffer, inline.Modifiers, ClampBuffStacks(id, _activeBuffs[i].Stacks));
+                }
+            }
+        }
+
+        private static void AppendModifiers(List<BuffStatModifierApplication> buffer, BuffStatModifier[] mods,
+            int stacks)
+        {
+            for (int j = 0; j < mods.Length; j++)
+            {
+                BuffStatModifier m = mods[j];
+                if (m == null)
+                {
+                    continue;
+                }
+
+                buffer.Add(new BuffStatModifierApplication(
+                    m.StatType,
+                    m.TargetIdValue,
+                    m.SpecificDamageType,
+                    m.Value,
+                    stacks));
+            }
+        }
+
+
+        /// <summary>Copies the active entries into save/snapshot collections.</summary>
+        public void CopyActiveEffectsTo(ICollection<ActiveBuffEntry> buffs, ICollection<ActiveStatusEntry> statuses)
+        {
+            buffs?.Clear();
+            statuses?.Clear();
+
+            foreach (ActiveBuffEntry e in _activeBuffs)
+            {
+                buffs?.Add(new ActiveBuffEntry
+                {
+                    BuffId = e.BuffId,
+                    ExpiresAtUtc = e.ExpiresAtUtc,
+                    Stacks = ClampBuffStacks(e.BuffId, e.Stacks)
+                });
+            }
+
+            foreach (ActiveStatusEntry e in _activeStatuses)
+            {
+                statuses?.Add(new ActiveStatusEntry
+                {
+                    StatusId = e.StatusId, ExpiresAtUtc = e.ExpiresAtUtc, Stacks = e.Stacks
+                });
+            }
+        }
+
+        /// <summary>Restores active entries from save/snapshot collections.</summary>
+        public void RestoreActiveEffects(IEnumerable<ActiveBuffEntry> buffs, IEnumerable<ActiveStatusEntry> statuses)
+        {
+            _mutationVersion++;
+            _activeBuffs.Clear();
+            _activeStatuses.Clear();
+            _statusTickAccumulators.Clear();
+            if (buffs != null)
+            {
+                foreach (ActiveBuffEntry e in buffs)
+                {
+                    if (e == null || string.IsNullOrWhiteSpace(e.BuffId))
+                    {
+                        continue;
+                    }
+
+                    _activeBuffs.Add(new ActiveBuffEntry
+                    {
+                        BuffId = e.BuffId,
+                        ExpiresAtUtc = e.ExpiresAtUtc,
+                        Stacks = ClampBuffStacks(e.BuffId, e.Stacks)
+                    });
+                }
+            }
+
+            if (statuses != null)
+            {
+                foreach (ActiveStatusEntry e in statuses)
+                {
+                    if (e == null || string.IsNullOrWhiteSpace(e.StatusId))
+                    {
+                        continue;
+                    }
+
+                    _activeStatuses.Add(new ActiveStatusEntry
+                    {
+                        StatusId = e.StatusId,
+                        ExpiresAtUtc = e.ExpiresAtUtc,
+                        Stacks = e.Stacks
+                    });
+                }
+            }
+        }
+
+        private int ClampBuffStacks(string id, int stacks)
+        {
+            int safeStacks = Mathf.Max(1, stacks);
+            if (TryGetBuff(id, out BuffDefinition def) && def != null)
+            {
+                return def.Stackable ? Mathf.Min(safeStacks, Mathf.Max(1, def.MaxStacks)) : 1;
+            }
+
+            if (TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null)
+            {
+                return inline.Stackable ? Mathf.Min(safeStacks, Mathf.Max(1, inline.MaxStacks)) : 1;
+            }
+
+            return safeStacks;
+        }
+
+
+        private ActiveBuffEntry FindBuff(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return null;
+            }
+
+            for (int i = 0; i < _activeBuffs.Count; i++)
+            {
+                if (_activeBuffs[i].BuffId == id)
+                {
+                    return _activeBuffs[i];
+                }
+            }
+
+            return null;
+        }
+
+        private ActiveStatusEntry FindStatus(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return null;
+            }
+
+            for (int i = 0; i < _activeStatuses.Count; i++)
+            {
+                if (_activeStatuses[i].StatusId == id)
+                {
+                    return _activeStatuses[i];
+                }
+            }
+
+            return null;
+        }
+
+        public readonly struct ApplyResult<T> where T : class
+        {
+            public readonly T Entry;
+            public readonly bool Success;
+            public readonly bool IsNew;
+            public readonly string FailureReason;
+
+            private ApplyResult(T entry, bool success, bool isNew, string failureReason)
+            {
+                Entry = entry;
+                Success = success;
+                IsNew = isNew;
+                FailureReason = failureReason;
+            }
+
+            public static ApplyResult<T> Ok(T entry, bool isNew)
+            {
+                return new ApplyResult<T>(entry, true, isNew, null);
+            }
+
+            public static ApplyResult<T> Failed(string reason)
+            {
+                return new ApplyResult<T>(null, false, false, reason);
+            }
+        }
+    }
+}

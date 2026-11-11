@@ -1,0 +1,112 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Neo.Bonus
+{
+    /// <summary>
+    ///     ScriptableObject holding win multipliers by symbol match count.
+    ///     Supports auto-generating multipliers from SpritesData.
+    /// </summary>
+    [CreateAssetMenu(fileName = "Sprite Multiplier Data", menuName = "Neoxider/Bonus/Slot/Sprite Multiplier Data",
+        order = 4)]
+    [NeoDoc("Bonus/Slot/Data/SpriteMultiplayerData.md")]
+    public class SpriteMultiplayerData : ScriptableObject
+    {
+        [Tooltip("Multiplier config per symbol")] [SerializeField]
+        private SpritesMultiplier _spritesMultiplier;
+
+        [Space]
+        [Header("Auto Generate")]
+        [Tooltip("Enable auto-generation of multipliers from SpritesData")]
+        [SerializeField]
+        private bool _generate;
+
+        [Tooltip("Min number of symbols to generate")] [SerializeField]
+        private int _minCount = 3;
+
+        [Tooltip("Max number of symbols to generate")] [SerializeField]
+        private int _maxCount = 3;
+
+        [Tooltip("Default multiplier for all combinations")] [SerializeField]
+        private int defaultMultiplayer = 1;
+
+        [Tooltip("Reference to SpritesData for auto-generation")] [SerializeField]
+        private SpritesData _spritesData;
+
+        /// <summary>
+        ///     Multiplier configuration.
+        /// </summary>
+        public SpritesMultiplier spritesMultiplier => _spritesMultiplier;
+
+
+        private void OnValidate()
+        {
+            if (_generate)
+            {
+                _generate = false;
+
+                if (_spritesData != null)
+                {
+                    AutoGenerateSpriteMultiplayer();
+                }
+            }
+        }
+
+        private void AutoGenerateSpriteMultiplayer()
+        {
+            List<IdMult> list = new();
+
+            if (_spritesData.visuals == null)
+            {
+                return;
+            }
+
+            for (int s = 0; s < _spritesData.visuals.Length; s++)
+            {
+                if (_spritesData.visuals[s] == null)
+                {
+                    continue;
+                }
+
+                List<CountMultiplayer> countList = new();
+
+                for (int i = _minCount; i <= _maxCount; i++)
+                {
+                    countList.Add(new CountMultiplayer { count = i, mult = defaultMultiplayer });
+                }
+
+                list.Add(new IdMult { id = _spritesData.visuals[s].id, countMult = countList.ToArray() });
+            }
+
+            _spritesMultiplier ??= new SpritesMultiplier();
+            _spritesMultiplier.spriteMults = list.ToArray();
+        }
+
+        #region structs
+
+        [Serializable]
+        public class SpritesMultiplier
+        {
+            public IdMult[] spriteMults;
+        }
+
+        [Serializable]
+        public struct IdMult
+        {
+            [Tooltip("Element ID from SpritesData")]
+            public int id;
+
+            public CountMultiplayer[] countMult;
+        }
+
+        [Serializable]
+        public struct CountMultiplayer
+        {
+            public int count;
+            public float mult;
+        }
+
+        #endregion
+    }
+}

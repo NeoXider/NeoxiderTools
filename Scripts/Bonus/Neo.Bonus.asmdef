@@ -1,0 +1,27 @@
+{
+    "name": "Neo.Bonus",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Reactive",
+        "Unity.TextMeshPro",
+        "Neo.Shop",
+        "Neo.Tools.Managers",
+        "Neo.PropertyAttribute",
+        "Neo.Save",
+        "Neo.Extensions",
+        "Neo.Tools.Time",
+        "Neo.Tools.Random",
+        "Neo.Network",
+        "Mirror",
+        "Neo.Tools.Text"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,36 @@
+# Save Project Zip Utility
+
+**What it is:** This is a simple but extremely useful tool that adds a single command to the Unity menu for creating a ZIP archive of the entire project. It's a convenient way to quickly make a backup or share the proj...
+
+**How to use:** choose **Neoxider > Tools > Save Project Zip**, pick where to save the archive (the project folder and name are suggested); `Assets`, `ProjectSettings` and `Packages` are packed and the file is revealed when done.
+
+---
+
+
+## 1. Introduction
+
+This is a simple but extremely useful tool that adds a single command to the Unity menu for creating a ZIP archive of the entire project. It's a convenient way to quickly make a backup or share the project with someone.
+
+The utility automatically finds the key project folders (`Assets`, `ProjectSettings`, `Packages`) and packs them into a single ZIP file.
+
+---
+
+## 2. Tool Description
+
+### SaveProjectZip
+- **Namespace**: `(global)`
+- **File path**: `Assets/Neoxider/Editor/SaveProjectZip.cs`
+- **Menu access**: `Neoxider/Tools/Save Project Zip`
+
+**Description**
+A static class that adds project-to-ZIP archiving functionality to the editor menu.
+
+**Key features**
+- **Simplicity**: One menu button performs the whole process.
+- **Key folders**: Archives the most important folders of any Unity project: `Assets`, `ProjectSettings`, and `Packages`.
+- **Standard dialog**: Uses the standard file save window, letting you pick the archive's name and location.
+- **Output inside the project**: A ZIP placed inside an archived folder is excluded from its own contents, together with the staging file.
+- **Failure handling**: The archive is completed in a temporary file beside the destination. An existing backup is replaced only after successful compression; a failed export cleans up its incomplete staging file and retains the previous backup.
+
+**Public methods**
+- This class has no public methods intended to be called from other scripts. All logic is internal and invoked via `MenuItem`.

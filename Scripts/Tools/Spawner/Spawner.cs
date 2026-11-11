@@ -1,0 +1,1006 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using Neo.Extensions;
+using Neo.Network;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
+#if MIRROR
+using Mirror;
+#endif
+
+namespace Neo.Tools
+{
+    public enum SpawnMode { Loop, Waves }
+
+    /// <summary>
+    ///     Spawns prefabs with configurable delays, per-axis Euler rotation ranges,
+    ///     optional parent, and local or world rotation application.
+    /// </summary>
+    [NeoDoc("Tools/Spawner/Spawner.md")]
+    [CreateFromMenu("Neoxider/Tools/Spawner/Spawner")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Spawner))]
+    public class Spawner : NeoNetworkComponent
+    {
+        [Header("Spawn Settings")] [SerializeField]
+        private GameObject[] _prefabs;
+
+        [Tooltip(
+            "If true, spawn via PoolManager or an automatic fallback pool. Otherwise uses Instantiate.")]
+        [SerializeField]
+        private bool _useObjectPool = true;
+
+        [FormerlySerializedAs("_destroyDelay")]
+        [SerializeField]
+        [Tooltip("Delay before destroying object. If 0, object will not be destroyed automatically.")]
+        public float destroyDelay;
+
+        /// <summary>
+        ///     UnityEvent invoked after a GameObject is successfully spawned.
+        /// </summary>
+        public UnityEvent<GameObject> OnObjectSpawned;
+
+        [Space] [Header("If spawnLimit is zero then infinite spawn")]
+        public int spawnLimit;
+
+        [FormerlySerializedAs("_minSpawnDelay")] [SerializeField]
+        public float minSpawnDelay = 0.5f;
+
+        [FormerlySerializedAs("_maxSpawnDelay")] [SerializeField]
+        public float maxSpawnDelay = 2f;
+
+        /// <summary>Rotation range around X (pitch), degrees.</summary>
+        [Header("Rotation Settings")]
+        [SerializeField]
+        private Vector2 _rotationX = Vector2.zero;
+
+        /// <summary>Rotation range around Y (yaw), degrees.</summary>
+        [SerializeField] private Vector2 _rotationY = Vector2.zero;
+
+        /// <summary>Rotation range around Z (roll), degrees.</summary>
+        [SerializeField] private Vector2 _rotationZ = Vector2.zero;
+
+        [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false  - in world space.")]
+        private bool _useLocalRotation = true;
+
+        [SerializeField] [Tooltip("If true, takes rotation from the active spawn point")]
+        private bool _useParentRotation;
+
+        [Header("Mode & Wave Settings")] [SerializeField] [Tooltip("Spawn mode: Loop (classic continuous) or Waves.")]
+        public SpawnMode spawnMode = SpawnMode.Loop;
+
+        [SerializeField] [Tooltip("Number of objects to spawn in the first wave.")]
+        private int _baseWaveCount = 3;
+
+        [SerializeField] [Tooltip("How many MORE objects to spawn each subsequent wave.")]
+        private int _countPerWave = 2;
+
+        [SerializeField] [Tooltip("Time to wait after a wave finishes before starting the next one.")]
+        private float _timeBetweenWaves = 5f;
+
+        [Tooltip("Maximum allowed waves limit. 0 for infinite waves.")]
+        public int maxWaves;
+
+        /// <summary>
+        /// Invoked when a new wave starts. Passes the current wave number.
+        /// </summary>
+        public UnityEvent<int> OnWaveStarted;
+
+        /// <summary>
+        /// Invoked after a GameObject is spawned during a wave. Passes the object and wave index.
+        /// </summary>
+        public UnityEvent<GameObject, int> OnWaveObjectSpawned;
+
+        /// <summary>
+        /// Spawn points. If empty, uses this spawner's transform. If several, a random one is chosen per spawn.
+        /// </summary>
+        [Space] [Header("Other Settings")] [SerializeField]
+        [Tooltip("Spawn points. Empty = use this spawner's own transform. With several, a random point is picked per spawn.")]
+        private Transform[] _spawnPoints;
+
+        // WHY: Point chosen for the current spawn (position and rotation must agree). Set in GetSpawnPosition.
+        private Transform _activeSpawnPoint;
+
+        [SerializeField] private bool _spawnOnAwake;
+
+        /// <summary>
+        /// Parent for spawned objects. If null, spawned objects have no parent.
+        /// </summary>
+        [Header("Parenting")] [SerializeField] [Tooltip("Parent for spawned objects. If null  - spawn without parent.")]
+        private Transform _parentTransform;
+
+        [Header("Spawn Area")] [SerializeField]
+        private Collider _spawnAreaCollider;
+
+        [SerializeField] private Collider2D _spawnAreaCollider2D;
+
+        [Tooltip("Areas where spawning is forbidden (3D). Candidates inside any deny zone are re-rolled.")]
+        [SerializeField]
+        private Collider[] _denyAreas = Array.Empty<Collider>();
+
+        [Tooltip("Areas where spawning is forbidden (2D). Candidates inside any deny zone are re-rolled.")]
+        [SerializeField]
+        private Collider2D[] _denyAreas2D = Array.Empty<Collider2D>();
+
+        [Tooltip("How many times to re-roll a candidate that landed inside a deny zone before giving up " +
+                 "and using the last candidate anyway.")]
+        [SerializeField] [Min(1)]
+        private int _maxRejectionTries = 8;
+
+        private int _spawnedCount;
+
+        // WHY: Handle of the running spawn loop only, so OnDisable can stop it without touching the
+        // pending delayed-destroy coroutines started by SpawnObject.
+        private Coroutine _spawnRoutine;
+        private ulong _productionGeneration;
+        private readonly Dictionary<GameObject, int> _spawnGenerations = new();
+        private readonly ReusableWait _spawnDelayWait = new();
+        private readonly ReusableWait _waveDelayWait = new();
+        private readonly ReusableWait _destroyDelayWait = new();
+
+        /// <summary>
+        ///     Prefab array to spawn from. Validated on assignment.
+        /// </summary>
+        public GameObject[] prefabs
+        {
+            get => _prefabs;
+            set => _prefabs = value ?? Array.Empty<GameObject>();
+        }
+
+        public bool isSpawning { get; private set; }
+
+        public int CurrentWave { get; private set; } = 1;
+
+        public List<GameObject> SpawnedObjects { get; } = new();
+
+        private void Start()
+        {
+            if (_spawnOnAwake)
+            {
+                StartSpawn();
+            }
+        }
+
+        private void OnDisable()
+        {
+            _productionGeneration++;
+            // WHY: Unity kills the spawn coroutine on disable, so the tail that clears isSpawning never
+            // runs; without this reset StartSpawn is blocked by its own guard after any disable/enable
+            // cycle (pause, pooling, room streaming).
+            if (_spawnRoutine != null)
+            {
+                StopCoroutine(_spawnRoutine);
+                _spawnRoutine = null;
+            }
+
+            isSpawning = false;
+        }
+
+#if MIRROR
+        protected override void OnValidate()
+        {
+            if (isNetworked)
+            {
+                base.OnValidate();
+            }
+#else
+        private void OnValidate()
+        {
+#endif
+            if (minSpawnDelay < 0)
+            {
+                minSpawnDelay = 0;
+            }
+
+            if (maxSpawnDelay < minSpawnDelay)
+            {
+                maxSpawnDelay = minSpawnDelay;
+            }
+
+            if (_prefabs != null)
+            {
+                for (int i = 0; i < _prefabs.Length; i++)
+                {
+                    if (_prefabs[i] == null)
+                    {
+                        NeoDiagnostics.LogWarning($"[Spawner] Prefab at index {i} is null on {gameObject.name}!", this);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Starts spawning (coroutine) if not already running.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void StartSpawn()
+        {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdStartSpawn();
+                    return;
+                }
+            }
+#endif
+            if (isSpawning)
+            {
+                return;
+            }
+
+            _spawnedCount = 0;
+            ulong generation = ++_productionGeneration;
+            isSpawning = true;
+            Coroutine routine = StartCoroutine(RunSpawnProduction(generation));
+            // WHY: StartCoroutine runs callbacks before returning this handle. A callback may already own a new session.
+            if (generation == _productionGeneration && isSpawning)
+            {
+                _spawnRoutine = routine;
+                if (routine == null)
+                {
+                    isSpawning = false;
+                }
+            }
+            else if (routine != null)
+            {
+                StopCoroutine(routine);
+            }
+        }
+
+        /// <summary>
+        ///     Stops spawning. Existing instances stay in the scene.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void StopSpawn()
+        {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdStopSpawn();
+                    return;
+                }
+            }
+#endif
+            _productionGeneration++;
+            isSpawning = false;
+            if (_spawnRoutine != null)
+            {
+                StopCoroutine(_spawnRoutine);
+                _spawnRoutine = null;
+            }
+        }
+
+        /// <summary>
+        ///     Main spawn coroutine; spawns at random intervals in [minSpawnDelay, maxSpawnDelay].
+        /// </summary>
+        public IEnumerator SpawnObjects()
+        {
+            ulong generation = ++_productionGeneration;
+            IEnumerator routine = RunSpawnProduction(generation);
+            while (routine.MoveNext())
+            {
+                yield return routine.Current;
+            }
+        }
+
+        private bool IsCurrentProduction(ulong generation)
+        {
+            return generation == _productionGeneration && isSpawning;
+        }
+
+        private IEnumerator RunSpawnProduction(ulong generation)
+        {
+            if (generation != _productionGeneration)
+            {
+                yield break;
+            }
+
+            isSpawning = true;
+            CurrentWave = 1;
+
+            if (spawnMode == SpawnMode.Waves)
+            {
+                while (IsCurrentProduction(generation) && (maxWaves == 0 || CurrentWave <= maxWaves))
+                {
+                    int wave = CurrentWave;
+                    OnWaveStarted?.Invoke(wave);
+                    if (!IsCurrentProduction(generation))
+                    {
+                        yield break;
+                    }
+
+#if MIRROR
+                    if (isNetworked && NeoNetworkState.IsServer)
+                    {
+                        RpcNotifyWaveStarted(wave);
+                    }
+#endif
+                    int spawnAmount = _baseWaveCount + (CurrentWave - 1) * _countPerWave;
+
+                    for (int i = 0; i < spawnAmount; i++)
+                    {
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
+
+                        SpawnRandomObject();
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
+
+                        float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+                        yield return _spawnDelayWait.Get(delay);
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
+                    }
+
+                    if (IsCurrentProduction(generation) && (maxWaves == 0 || CurrentWave < maxWaves))
+                    {
+                        CurrentWave++;
+                        yield return _waveDelayWait.Get(_timeBetweenWaves);
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                while (IsCurrentProduction(generation) && (spawnLimit == 0 || _spawnedCount < spawnLimit))
+                {
+                    SpawnRandomObject();
+                    if (!IsCurrentProduction(generation))
+                    {
+                        yield break;
+                    }
+
+                    _spawnedCount++;
+                    float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+                    yield return _spawnDelayWait.Get(delay);
+                    if (!IsCurrentProduction(generation))
+                    {
+                        yield break;
+                    }
+                }
+            }
+
+            if (generation == _productionGeneration)
+            {
+                isSpawning = false;
+                _spawnRoutine = null;
+            }
+        }
+
+        /// <summary>
+        ///     Spawns a random prefab using current position, rotation, and parent settings.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public GameObject SpawnRandomObject()
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                if (_prefabs == null || _prefabs.Length == 0)
+                {
+                    return null;
+                }
+
+                int rIndex = _prefabs.GetRandomIndex();
+                CmdSpawnById(rIndex, GetSpawnPosition(), GetSpawnRotation());
+                return null;
+            }
+#endif
+            if (_prefabs == null || _prefabs.Length == 0)
+            {
+                NeoDiagnostics.LogWarning(
+                    $"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
+                return null;
+            }
+
+            int randomIndex = _prefabs.GetRandomIndex();
+            GameObject prefabToSpawn = _prefabs[randomIndex];
+
+            if (prefabToSpawn == null)
+            {
+                NeoDiagnostics.LogWarning($"[Spawner] Prefab at index {randomIndex} is null on {gameObject.name}.",
+                    this);
+                return null;
+            }
+
+            return SpawnObject(prefabToSpawn, GetSpawnPosition(), GetSpawnRotation(), _parentTransform);
+        }
+
+        // WHY: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
+        /// <summary>
+        ///     Spawns the prefab at <paramref name="prefabId" /> at the given position.
+        ///     Rotation and parent come from spawner settings.
+        /// </summary>
+        /// <param name="prefabId">Index in <see cref="prefabs" />.</param>
+        /// <param name="position">World spawn position.</param>
+        [Button(PlayModeOnly = true)]
+        public GameObject SpawnById(int prefabId, Vector3 position)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdSpawnById(prefabId, position, GetSpawnRotation());
+                return null;
+            }
+#endif
+            if (_prefabs == null || _prefabs.Length == 0)
+            {
+                NeoDiagnostics.LogError($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.",
+                    this);
+                return null;
+            }
+
+            if (prefabId < 0 || prefabId >= _prefabs.Length)
+            {
+                NeoDiagnostics.LogError(
+                    $"[Spawner] Prefab ID {prefabId} is out of range. Max ID is {_prefabs.Length - 1} on {gameObject.name}.",
+                    this);
+                return null;
+            }
+
+            GameObject prefabToSpawn = _prefabs[prefabId];
+            if (prefabToSpawn == null)
+            {
+                NeoDiagnostics.LogError($"[Spawner] Prefab at index {prefabId} is null on {gameObject.name}.", this);
+                return null;
+            }
+
+            return SpawnObject(prefabToSpawn, position, GetSpawnRotation(), _parentTransform);
+        }
+
+        /// <summary>
+        ///     Core spawn path: uses <see cref="SpawnUtility" /> when pooling is enabled
+        ///     (<see cref="_useObjectPool" />), otherwise Instantiate.
+        /// </summary>
+        /// <param name="prefab">Prefab to spawn.</param>
+        /// <param name="position">World position.</param>
+        /// <param name="rotation">World rotation.</param>
+        /// <param name="parent">Parent transform, or null for no parent.</param>
+        public GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                NeoDiagnostics.LogWarning(
+                    "[Spawner] Client cannot explicitly SpawnObject with a direct GameObject reference. Please use SpawnById or SpawnRandomObject which are safely routed to the Server.",
+                    this);
+                return null;
+            }
+#endif
+            if (prefab == null)
+            {
+                return null;
+            }
+
+            ulong generation = _productionGeneration;
+            int wave = CurrentWave;
+            bool pooled = _useObjectPool;
+            GameObject spawnedObject = pooled
+                ? SpawnUtility.Spawn(prefab, position, rotation, parent)
+                : Instantiate(prefab, position, rotation, parent);
+
+            if (spawnedObject == null)
+            {
+                return null;
+            }
+
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                if (spawnedObject.TryGetComponent(out NetworkIdentity _))
+                {
+                    NetworkServer.Spawn(spawnedObject);
+                }
+                else
+                {
+                    NeoDiagnostics.LogWarning(
+                        $"[Spawner] Spawned object {spawnedObject.name} has no NetworkIdentity. Mirror cannot replicate it.",
+                        this);
+                }
+            }
+#endif
+
+            TrackSpawnedObject(spawnedObject, pooled);
+
+            if (destroyDelay > 0)
+            {
+                StartCoroutine(DelayedDestroy(spawnedObject, destroyDelay));
+            }
+
+            if (generation != _productionGeneration)
+            {
+                return spawnedObject;
+            }
+
+            OnObjectSpawned?.Invoke(spawnedObject);
+            if (generation != _productionGeneration)
+            {
+                return spawnedObject;
+            }
+
+            if (spawnMode == SpawnMode.Waves)
+            {
+                OnWaveObjectSpawned?.Invoke(spawnedObject, wave);
+                if (generation != _productionGeneration)
+                {
+                    return spawnedObject;
+                }
+            }
+
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                if (spawnedObject.TryGetComponent(out NetworkIdentity netId))
+                {
+                    RpcNotifyObjectSpawned(netId.gameObject, wave);
+                }
+            }
+#endif
+
+            return spawnedObject;
+        }
+
+#if MIRROR
+        [ClientRpc]
+        private void RpcNotifyWaveStarted(int wave)
+        {
+            if (isServer)
+            {
+                return;
+            }
+
+            CurrentWave = wave;
+            OnWaveStarted?.Invoke(wave);
+        }
+
+        [ClientRpc]
+        private void RpcNotifyObjectSpawned(GameObject netObj, int wave)
+        {
+            if (isServer || netObj == null)
+            {
+                return;
+            }
+
+            TrackSpawnedObject(netObj);
+
+            OnObjectSpawned?.Invoke(netObj);
+
+            if (spawnMode == SpawnMode.Waves)
+            {
+                OnWaveObjectSpawned?.Invoke(netObj, wave);
+            }
+        }
+#endif
+
+        /// <summary>
+        ///     Reuses one <see cref="WaitForSeconds" /> while the requested duration repeats, so fixed delays (equal
+        ///     min/max spawn delay, the wave pause, the destroy delay) allocate once instead of on every wait. Unity
+        ///     reads the duration when a coroutine yields it, so concurrent coroutines can share one instance.
+        /// </summary>
+        private sealed class ReusableWait
+        {
+            private WaitForSeconds _wait;
+            private float _seconds;
+
+            public WaitForSeconds Get(float seconds)
+            {
+                if (_wait == null || _seconds != seconds)
+                {
+                    _seconds = seconds;
+                    _wait = new WaitForSeconds(seconds);
+                }
+
+                return _wait;
+            }
+        }
+
+        private IEnumerator DelayedDestroy(GameObject objectToDestroy, float delay)
+        {
+            // WHY: Snapshot the spawn generation before waiting; a pooled instance can be returned
+            // and re-issued while this coroutine sleeps, and a stale handle must never despawn the
+            // newer spawn (nor double-release an instance that is already back in the pool).
+            int generation = 0;
+            if (objectToDestroy != null && objectToDestroy.TryGetComponent(out PooledObjectInfo scheduledInfo))
+            {
+                generation = scheduledInfo.SpawnGeneration;
+            }
+
+            yield return _destroyDelayWait.Get(delay);
+
+            if (objectToDestroy == null)
+            {
+                ForgetSpawnedObject(objectToDestroy);
+                yield break;
+            }
+
+            if (objectToDestroy.TryGetComponent(out PooledObjectInfo info))
+            {
+                if (info.SpawnGeneration != generation || info.IsInPool)
+                {
+                    yield break;
+                }
+
+                ForgetSpawnedObject(objectToDestroy);
+                SpawnUtility.Despawn(objectToDestroy);
+                yield break;
+            }
+
+            ForgetSpawnedObject(objectToDestroy);
+
+            if (_useObjectPool)
+            {
+                SpawnUtility.Despawn(objectToDestroy);
+            }
+            else
+            {
+                NeoObjectPool.DestroyPoolObject(objectToDestroy);
+            }
+        }
+
+        /// <summary>
+        ///     Resolves the spawn point for the current spawn: a random non-null entry from
+        ///     <see cref="_spawnPoints" />, or this spawner's transform when the list is empty.
+        /// </summary>
+        public Transform ResolveSpawnPoint()
+        {
+            if (_spawnPoints != null && _spawnPoints.Length > 0)
+            {
+                int start = Random.Range(0, _spawnPoints.Length);
+                for (int i = 0; i < _spawnPoints.Length; i++)
+                {
+                    Transform p = _spawnPoints[(start + i) % _spawnPoints.Length];
+                    if (p != null) return p;
+                }
+            }
+
+            return transform;
+        }
+
+        /// <summary>
+        ///     Picks the spawn point for the next spawn and returns its position, or a random allowed point inside
+        ///     the 3D/2D spawn area when one is assigned. Allocation-free.
+        /// </summary>
+        public Vector3 GetSpawnPosition()
+        {
+            _activeSpawnPoint = ResolveSpawnPoint();
+
+            if (_spawnAreaCollider != null)
+            {
+                return ResolveAllowedPosition(true);
+            }
+
+            if (_spawnAreaCollider2D != null)
+            {
+                return ResolveAllowedPosition(false);
+            }
+
+            return _activeSpawnPoint.position;
+        }
+
+        /// <summary>
+        ///     Whether the position is outside every configured deny zone.
+        ///     With no deny zones configured, every position is allowed.
+        /// </summary>
+        public bool IsPositionAllowed(Vector3 position)
+        {
+            for (int i = 0; i < _denyAreas.Length; i++)
+            {
+                Collider deny = _denyAreas[i];
+                if (deny != null && deny.ClosestPoint(position) == position)
+                {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < _denyAreas2D.Length; i++)
+            {
+                Collider2D deny = _denyAreas2D[i];
+                if (deny != null && deny.OverlapPoint(position))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // WHY: Re-rolls candidates that land inside a deny zone, up to _maxRejectionTries; the last
+        // candidate is used as-is when every try was denied (spawning must not silently stop).
+        // The area is chosen by flag instead of a Func so every spawn stays free of closure allocations.
+        private Vector3 ResolveAllowedPosition(bool useArea3D)
+        {
+            bool hasDenyZones = _denyAreas.Length > 0 || _denyAreas2D.Length > 0;
+            Vector3 candidate = SampleSpawnArea(useArea3D);
+            if (!hasDenyZones)
+            {
+                return candidate;
+            }
+
+            for (int attempt = 1; attempt < _maxRejectionTries && !IsPositionAllowed(candidate); attempt++)
+            {
+                candidate = SampleSpawnArea(useArea3D);
+            }
+
+            return candidate;
+        }
+
+        private Vector3 SampleSpawnArea(bool useArea3D)
+        {
+            return useArea3D
+                ? GetRandomPointInCollider(_spawnAreaCollider)
+                : GetRandomPointInCollider2D(_spawnAreaCollider2D);
+        }
+
+        /// <summary>
+        ///     Spawn rotation. If all axis ranges are zero, returns base rotation
+        ///     (local: spawn point rotation; world: Quaternion.identity).
+        /// </summary>
+        private Quaternion GetSpawnRotation()
+        {
+            Transform sp = _activeSpawnPoint != null ? _activeSpawnPoint : transform;
+
+            if (_useParentRotation)
+            {
+                return sp.rotation;
+            }
+
+            bool zeroX = _rotationX == Vector2.zero;
+            bool zeroY = _rotationY == Vector2.zero;
+            bool zeroZ = _rotationZ == Vector2.zero;
+
+            Quaternion baseRot = sp.rotation;
+
+            if (zeroX && zeroY && zeroZ)
+            {
+                return _useLocalRotation ? baseRot : Quaternion.identity;
+            }
+
+            float rx = zeroX
+                ? 0f
+                : Random.Range(Mathf.Min(_rotationX.x, _rotationX.y), Mathf.Max(_rotationX.x, _rotationX.y));
+            float ry = zeroY
+                ? 0f
+                : Random.Range(Mathf.Min(_rotationY.x, _rotationY.y), Mathf.Max(_rotationY.x, _rotationY.y));
+            float rz = zeroZ
+                ? 0f
+                : Random.Range(Mathf.Min(_rotationZ.x, _rotationZ.y), Mathf.Max(_rotationZ.x, _rotationZ.y));
+
+            Quaternion offset = Quaternion.Euler(rx, ry, rz);
+            return _useLocalRotation ? baseRot * offset : offset;
+        }
+
+        [Button(PlayModeOnly = true)]
+        public void Clear()
+        {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdClear();
+                    return;
+                }
+            }
+#endif
+            _productionGeneration++;
+            StopAllCoroutines(); // WHY: also cancels pending delayed-destroy coroutines, not just spawning
+            _spawnRoutine = null;
+            isSpawning = false;
+
+            GameObject[] spawnedObjects = SpawnedObjects.ToArray();
+            Dictionary<GameObject, int> generations = new(_spawnGenerations);
+            SpawnedObjects.Clear();
+            _spawnGenerations.Clear();
+
+            foreach (GameObject obj in spawnedObjects)
+            {
+                if (IsCurrentSpawn(obj, generations))
+                {
+                    if (_useObjectPool)
+                    {
+                        SpawnUtility.Despawn(obj);
+                    }
+                    else
+                    {
+                        NeoObjectPool.DestroyPoolObject(obj);
+                    }
+                }
+            }
+        }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdStartSpawn()
+        {
+            StartSpawn();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdStopSpawn()
+        {
+            StopSpawn();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdClear()
+        {
+            Clear();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdSpawnById(int prefabId, Vector3 position, Quaternion rotation)
+        {
+            if (_prefabs == null || prefabId < 0 || prefabId >= _prefabs.Length)
+            {
+                return;
+            }
+
+            GameObject prefabToSpawn = _prefabs[prefabId];
+            if (prefabToSpawn != null)
+            {
+                SpawnObject(prefabToSpawn, position, rotation, _parentTransform);
+            }
+        }
+#endif
+
+        /// <summary>Number of tracked spawns that are still current and active in the hierarchy.</summary>
+        public int GetActiveObjectCount()
+        {
+            PruneSpawnedObjects();
+            int active = 0;
+            for (int i = 0; i < SpawnedObjects.Count; i++)
+            {
+                if (SpawnedObjects[i].activeInHierarchy)
+                {
+                    active++;
+                }
+            }
+
+            return active;
+        }
+
+        private void TrackSpawnedObject(GameObject instance, bool mayAlreadyBeTracked = true)
+        {
+            if (SpawnedObjects.Count % 10 == 0)
+            {
+                PruneSpawnedObjects();
+            }
+
+            // WHY: A reused pool rental (or a replicated object) can still sit in the list from an earlier spawn;
+            // a fresh Instantiate result cannot, so it skips the linear List.Remove scan.
+            if (mayAlreadyBeTracked)
+            {
+                SpawnedObjects.Remove(instance);
+            }
+
+            if (instance.TryGetComponent(out PooledObjectInfo info) && info.OwnerPool != null)
+            {
+                _spawnGenerations[instance] = info.SpawnGeneration;
+            }
+
+            SpawnedObjects.Add(instance);
+        }
+
+        private void ForgetSpawnedObject(GameObject instance)
+        {
+            SpawnedObjects.Remove(instance);
+            _spawnGenerations.Remove(instance);
+        }
+
+        private void PruneSpawnedObjects()
+        {
+            for (int i = SpawnedObjects.Count - 1; i >= 0; i--)
+            {
+                GameObject instance = SpawnedObjects[i];
+                if (!IsCurrentSpawn(instance, _spawnGenerations))
+                {
+                    SpawnedObjects.RemoveAt(i);
+                    if (!ReferenceEquals(instance, null))
+                    {
+                        _spawnGenerations.Remove(instance);
+                    }
+                }
+            }
+        }
+
+        private static bool IsCurrentSpawn(GameObject instance, Dictionary<GameObject, int> generations)
+        {
+            if (instance == null)
+            {
+                return false;
+            }
+
+            return !generations.TryGetValue(instance, out int generation)
+                   || instance.TryGetComponent(out PooledObjectInfo info)
+                   && !info.IsInPool && info.SpawnGeneration == generation;
+        }
+
+        private Vector3 GetRandomPointInCollider2D(Collider2D collider)
+        {
+            if (collider is BoxCollider2D boxCollider)
+            {
+                Vector2 center = boxCollider.offset;
+                Vector2 size = boxCollider.size;
+                Vector2 randomPoint = new(
+                    Random.Range(center.x - size.x / 2, center.x + size.x / 2),
+                    Random.Range(center.y - size.y / 2, center.y + size.y / 2)
+                );
+                return boxCollider.transform.TransformPoint(randomPoint);
+            }
+
+            if (collider is CircleCollider2D circleCollider)
+            {
+                Vector2 center = circleCollider.offset;
+                float radius = circleCollider.radius;
+                Vector2 randomPoint = Random.insideUnitCircle * radius + center;
+                return circleCollider.transform.TransformPoint(randomPoint);
+            }
+
+            NeoDiagnostics.LogWarning("Unsupported 2D collider type for spawning.");
+            return _activeSpawnPoint != null ? _activeSpawnPoint.position : transform.position;
+        }
+
+        private Vector3 GetRandomPointInCollider(Collider collider)
+        {
+            if (collider is BoxCollider boxCollider)
+            {
+                Vector3 center = boxCollider.center;
+                Vector3 size = boxCollider.size;
+                Vector3 randomPoint = new(
+                    Random.Range(center.x - size.x / 2, center.x + size.x / 2),
+                    Random.Range(center.y - size.y / 2, center.y + size.y / 2),
+                    Random.Range(center.z - size.z / 2, center.z + size.z / 2)
+                );
+                return boxCollider.transform.TransformPoint(randomPoint);
+            }
+
+            if (collider is SphereCollider sphereCollider)
+            {
+                Vector3 center = sphereCollider.center;
+                float radius = sphereCollider.radius;
+                Vector3 randomPoint = Random.insideUnitSphere * radius + center;
+                return sphereCollider.transform.TransformPoint(randomPoint);
+            }
+
+            if (collider is CapsuleCollider capsuleCollider)
+            {
+                Transform capsuleTransform = capsuleCollider.transform;
+                Vector3 scale = capsuleTransform.lossyScale;
+                int direction = capsuleCollider.direction;
+                float axisScale = Mathf.Abs(scale[direction]);
+                float radiusScale = Mathf.Max(Mathf.Abs(scale[(direction + 1) % 3]),
+                    Mathf.Abs(scale[(direction + 2) % 3]));
+                float radius = capsuleCollider.radius * radiusScale;
+                float halfSegment = Mathf.Max(0f, capsuleCollider.height * axisScale / 2f - radius);
+                Vector3 localAxis = Vector3.zero;
+                localAxis[direction] = 1f;
+                Vector3 axis = capsuleTransform.TransformDirection(localAxis);
+                Vector3 center = capsuleTransform.TransformPoint(capsuleCollider.center);
+                return center + Random.insideUnitSphere * radius
+                              + axis * Random.Range(-halfSegment, halfSegment);
+            }
+
+            NeoDiagnostics.LogWarning("Unsupported 3D collider type for spawning.");
+            return _activeSpawnPoint != null ? _activeSpawnPoint.position : transform.position;
+        }
+    }
+}

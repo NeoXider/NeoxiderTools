@@ -1,0 +1,196 @@
+using Neo.Reactive;
+using Neo.Rpg.Components;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neo.Rpg
+{
+    /// <summary>
+    ///     RPG-native evade ability with cooldown and optional invulnerability window.
+    /// </summary>
+    [NeoDoc("Rpg/RpgEvadeController.md")]
+    [CreateFromMenu("Neoxider/RPG/RpgEvadeController")]
+    [AddComponentMenu("Neoxider/RPG/" + nameof(RpgEvadeController))]
+    public sealed class RpgEvadeController : MonoBehaviour
+    {
+        [Header("Setup")]
+        [Tooltip("Character to drive invulnerability while evading. If empty, searches this GO.")]
+        [SerializeField]
+        private RpgCharacter _character;
+
+        [Header("Built-in Input")] [SerializeField]
+        private bool _enableBuiltInInput = true;
+
+        [SerializeField] private RpgButtonBinding _evadeBinding = RpgButtonBinding.CreateEvadeDefault();
+
+        [Header("Timings")] [SerializeField] [Min(0.01f)]
+        private float _evadeDuration = 0.35f;
+
+        [SerializeField] [Min(0.01f)] private float _cooldown = 1.5f;
+        [SerializeField] private bool _grantInvulnerability = true;
+
+        [Header("Reactive State")] public ReactivePropertyBool IsEvadingState = new(false);
+
+        public ReactivePropertyFloat RemainingCooldownState = new(0f);
+
+        [Header("Events")] [SerializeField] private UnityEvent _onEvadeStarted = new();
+
+        [SerializeField] private UnityEvent _onEvadeFinished = new();
+        [SerializeField] private UnityEvent _onCooldownReady = new();
+
+        private float _cooldownReadyAt;
+        private bool _cooldownReadyInvoked = true;
+        private float _evadeEndAt;
+        private bool _grantedInvulnerability;
+        private IRpgCombatReceiver _invulnerabilityReceiver;
+        private bool _publishStateOnNextUpdate = true;
+
+        /// <summary>
+        ///     Gets whether evade is active right now.
+        /// </summary>
+        public bool IsEvading => Time.time < _evadeEndAt;
+
+        /// <summary>
+        ///     Gets whether the ability can be started right now.
+        /// </summary>
+        public bool CanEvade =>
+            isActiveAndEnabled && !IsEvading && GetRemainingCooldown() <= 0f &&
+            ResolveReceiver()?.CanPerformActions != false;
+
+        /// <summary>
+        ///     Gets or sets whether the built-in input listener is enabled.
+        /// </summary>
+        public bool EnableBuiltInInput
+        {
+            get => _enableBuiltInInput;
+            set => _enableBuiltInInput = value;
+        }
+
+        private void Update()
+        {
+            if (_enableBuiltInInput && _evadeBinding != null && _evadeBinding.IsPressedThisFrame())
+            {
+                TryStartEvade();
+            }
+
+            if (_publishStateOnNextUpdate)
+            {
+                // WHY: the first frame after enable still publishes both states so bound UI starts in sync.
+                _publishStateOnNextUpdate = false;
+                RemainingCooldownState.SetValueWithoutNotify(GetRemainingCooldown());
+                IsEvadingState.SetValueWithoutNotify(IsEvading);
+                RemainingCooldownState.ForceNotify();
+                IsEvadingState.ForceNotify();
+            }
+            else
+            {
+                // WHY: later frames notify only on change; forcing both every frame invoked idle UI listeners per frame.
+                RemainingCooldownState.Value = GetRemainingCooldown();
+                IsEvadingState.Value = IsEvading;
+            }
+
+            if (_grantedInvulnerability && !IsEvading)
+            {
+                _grantedInvulnerability = false;
+                IRpgCombatReceiver receiver = _invulnerabilityReceiver;
+                _invulnerabilityReceiver = null;
+                receiver?.RemoveInvulnerabilityLock();
+            }
+
+            if (!_cooldownReadyInvoked && GetRemainingCooldown() <= 0f)
+            {
+                _cooldownReadyInvoked = true;
+                _onCooldownReady?.Invoke();
+            }
+        }
+
+        private void OnEnable()
+        {
+            _publishStateOnNextUpdate = true;
+        }
+
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(FinishEvade));
+            if (IsEvading || _grantedInvulnerability)
+            {
+                FinishEvade();
+            }
+        }
+
+        /// <summary>
+        ///     Starts evade if the controller is ready.
+        /// </summary>
+        [Button]
+        public bool TryStartEvade()
+        {
+            if (!CanEvade)
+            {
+                return false;
+            }
+
+            _evadeEndAt = Time.time + _evadeDuration;
+            _cooldownReadyAt = Time.time + _cooldown;
+            _cooldownReadyInvoked = false;
+
+            IRpgCombatReceiver receiver = ResolveReceiver();
+            if (_grantInvulnerability && receiver != null)
+            {
+                _invulnerabilityReceiver = receiver;
+                _grantedInvulnerability = true;
+                receiver.AddInvulnerabilityLock();
+            }
+
+            CancelInvoke(nameof(FinishEvade));
+            Invoke(nameof(FinishEvade), _evadeDuration);
+            IsEvadingState.Value = IsEvading;
+            _onEvadeStarted?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        ///     Returns the remaining cooldown in seconds.
+        /// </summary>
+        public float GetRemainingCooldown()
+        {
+            return Mathf.Max(0f, _cooldownReadyAt - Time.time);
+        }
+
+        /// <summary>
+        ///     Clears the active cooldown immediately.
+        /// </summary>
+        [Button]
+        public void ResetCooldown()
+        {
+            _cooldownReadyAt = 0f;
+            RemainingCooldownState.Value = 0f;
+            _cooldownReadyInvoked = true;
+        }
+
+        private void FinishEvade()
+        {
+            _evadeEndAt = 0f;
+            IsEvadingState.Value = false;
+            if (_grantedInvulnerability)
+            {
+                _grantedInvulnerability = false;
+                IRpgCombatReceiver receiver = _invulnerabilityReceiver;
+                _invulnerabilityReceiver = null;
+                receiver?.RemoveInvulnerabilityLock();
+            }
+
+            _onEvadeFinished?.Invoke();
+        }
+
+        private IRpgCombatReceiver ResolveReceiver()
+        {
+            if (_character != null)
+            {
+                return _character;
+            }
+
+            // WHY: TryGetComponent avoids the editor fake-null that would short-circuit the parent fallback.
+            return TryGetComponent(out RpgCharacter own) ? own : GetComponentInParent<RpgCharacter>();
+        }
+    }
+}

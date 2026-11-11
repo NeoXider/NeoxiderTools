@@ -1,0 +1,21 @@
+{
+    "name": "Neo.Extensions",
+    "rootNamespace": "",
+    "references": [
+        "Neo.PropertyAttribute"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

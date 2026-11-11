@@ -1,0 +1,26 @@
+{
+    "name": "Neo.Audio",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Reactive",
+        "Neo.Tools.Managers",
+        "Neo.Extensions",
+        "Neo.PropertyAttribute",
+        "UniTask",
+        "Neo.Save"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

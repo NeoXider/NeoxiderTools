@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+using Neo.Core.Resources;
+
+namespace Neo.Abilities
+{
+    /// <summary>
+    ///     Domain entity of the ability system: identity, team, resource pools (reuses
+    ///     <see cref="ResourcePoolModel" /> from Neo.Core), base property values, permanent states,
+    ///     and cached property/state aggregation over the system's <see cref="ModifierEngine" />.
+    ///     Pure C#; the scene wrapper is <c>AbilityUnitBehaviour</c>.
+    /// </summary>
+    public sealed class AbilityUnit
+    {
+        private readonly Dictionary<string, float> _baseProperties =
+            new Dictionary<string, float>(AbilityIdComparer.Instance);
+
+        private readonly HashSet<string> _permanentStates = new HashSet<string>(AbilityIdComparer.Instance);
+
+        private readonly Dictionary<string, CachedProperty> _propertyCache =
+            new Dictionary<string, CachedProperty>(AbilityIdComparer.Instance);
+
+        private readonly List<ResolvedContribution> _contributionScratch = new List<ResolvedContribution>(8);
+
+        private int _baseVersion;
+        private int _rulesVersionSeen;
+        private float _appliedMaxHealthBonus;
+        private float _appliedMaxManaBonus;
+
+        internal AbilityUnit(UnitId id, AbilitySystem system)
+        {
+            Id = id;
+            System = system;
+            Resources = new ResourcePoolModel();
+        }
+
+        public UnitId Id { get; }
+        public AbilitySystem System { get; }
+        public TeamId Team { get; set; }
+        public string DisplayName { get; set; }
+        public ResourcePoolModel Resources { get; }
+        public bool IsAlive { get; internal set; } = true;
+
+        public float Health => Resources.GetCurrent(AbilityResourceIds.Health);
+        public float MaxHealth => Resources.GetMax(AbilityResourceIds.Health);
+
+        /// <summary>
+        ///     Unit level for data-driven per-unit-level scaling (see <see cref="LeveledValue" /> with
+        ///     <see cref="LevelSource.CasterUnitLevel" /> / <see cref="LevelSource.TargetUnitLevel" />).
+        ///     Clamped to at least 1. Bridge it from a <c>Neo.Core.Level.LevelComponent</c> in the scene layer.
+        /// </summary>
+        public int Level { get; private set; } = 1;
+
+        /// <summary>Sets the unit level (clamped to at least 1) and invalidates level-dependent property caches.</summary>
+        public void SetLevel(int level)
+        {
+            int clamped = level < 1 ? 1 : level;
+            if (clamped == Level)
+            {
+                return;
+            }
+
+            Level = clamped;
+            _baseVersion++;
+        }
+
+        /// <summary>Sets the base value of a property (before modifiers).</summary>
+        public void SetBaseProperty(string propertyId, float value)
+        {
+            if (string.IsNullOrEmpty(propertyId))
+            {
+                return;
+            }
+
+            _baseProperties[propertyId] = value;
+            _baseVersion++;
+            if (AbilityIdComparer.Same(propertyId, AbilityProperties.MaxHealthBonus) ||
+                AbilityIdComparer.Same(propertyId, AbilityProperties.MaxManaBonus))
+            {
+                SyncResourceMaxBonuses();
+            }
+        }
+
+        public float GetBaseProperty(string propertyId, float defaultValue = 0f)
+        {
+            return _baseProperties.TryGetValue(propertyId, out float v) ? v : defaultValue;
+        }
+
+        /// <summary>
+        ///     Final property value through <see cref="AbilityRules.Aggregator" /> (default: (base + sum Add) * product
+        ///     Mul, raised to Max floors), rounded by <see cref="AbilityRules.Numeric" />. Cached until modifiers, base
+        ///     values or the rules change.
+        /// </summary>
+        public float GetProperty(string propertyId, float defaultBase = 0f)
+        {
+            if (string.IsNullOrEmpty(propertyId))
+            {
+                return defaultBase;
+            }
+
+            int modVersion = System.Modifiers.VersionOf(Id);
+            AbilityRules rules = System.Rules;
+            if (rules.Version != _rulesVersionSeen)
+            {
+                // WHY: a rule swap invalidates through the base version, so the cache entry keeps four fields
+                // (the JIT promotes structs of at most four fields; a fifth made every cached read slower).
+                _rulesVersionSeen = rules.Version;
+                _baseVersion++;
+            }
+
+            if (_propertyCache.TryGetValue(propertyId, out CachedProperty cached) &&
+                cached.ModifierVersion == modVersion && cached.BaseVersion == _baseVersion &&
+                cached.DefaultBase.Equals(defaultBase))
+            {
+                return cached.Value;
+            }
+
+            float baseValue = GetBaseProperty(propertyId, defaultBase);
+            _contributionScratch.Clear();
+            System.Modifiers.CollectContributions(Id, propertyId, _contributionScratch);
+            float value = rules.Numeric.Quantize(rules.Aggregator.Compute(propertyId, baseValue, _contributionScratch));
+            _propertyCache[propertyId] = new CachedProperty(modVersion, _baseVersion, defaultBase, value);
+            return value;
+        }
+
+        /// <summary>
+        ///     Re-applies the max_health_bonus / max_mana_bonus property totals onto the resource pool
+        ///     maxima (base max + bonus). The system calls this whenever the unit's modifier set changes.
+        /// </summary>
+        internal void SyncResourceMaxBonuses()
+        {
+            ApplyMaxBonus(AbilityResourceIds.Health, AbilityProperties.MaxHealthBonus, ref _appliedMaxHealthBonus);
+            ApplyMaxBonus(AbilityResourceIds.Mana, AbilityProperties.MaxManaBonus, ref _appliedMaxManaBonus);
+        }
+
+        private void ApplyMaxBonus(string resourceId, string propertyId, ref float applied)
+        {
+            float currentMax = Resources.GetMax(resourceId);
+            if (currentMax <= 0f && applied == 0f)
+            {
+                // WHY: no such pool registered (or an empty one) — nothing to scale.
+                return;
+            }
+
+            // WHY: the pool stores base + previously applied bonus; subtracting the tracked delta
+            // recovers the base so re-syncs never compound.
+            float baseMax = currentMax - applied;
+            float target = baseMax + GetProperty(propertyId);
+            if (target < 0f)
+            {
+                target = 0f;
+            }
+
+            // WHY: SetMax publishes resource callbacks synchronously; track the delta first so a
+            // callback changing a bonus recovers the same base instead of applying the bonus twice.
+            applied = target - baseMax;
+            if (!target.Equals(currentMax))
+            {
+                Resources.SetMax(resourceId, target);
+            }
+        }
+
+        /// <summary>Grants a state permanently (unit-intrinsic, independent of modifiers).</summary>
+        public void SetPermanentState(string stateId, bool enabled)
+        {
+            if (string.IsNullOrEmpty(stateId))
+            {
+                return;
+            }
+
+            bool changed = enabled ? _permanentStates.Add(stateId) : _permanentStates.Remove(stateId);
+            if (changed)
+            {
+                System.OnPermanentStateChanged(Id);
+            }
+        }
+
+        /// <summary>True when any active modifier or a permanent flag declares the state (any-true-wins).</summary>
+        public bool HasState(string stateId)
+        {
+            if (string.IsNullOrEmpty(stateId))
+            {
+                return false;
+            }
+
+            return _permanentStates.Contains(stateId) || System.Modifiers.HasState(Id, stateId);
+        }
+
+        private readonly struct CachedProperty
+        {
+            public readonly int ModifierVersion;
+            public readonly int BaseVersion;
+            public readonly float DefaultBase;
+            public readonly float Value;
+
+            public CachedProperty(int modifierVersion, int baseVersion, float defaultBase, float value)
+            {
+                ModifierVersion = modifierVersion;
+                BaseVersion = baseVersion;
+                DefaultBase = defaultBase;
+                Value = value;
+            }
+        }
+    }
+}

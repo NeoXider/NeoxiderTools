@@ -1,0 +1,151 @@
+# Inspector Scenarios
+
+**What it is:** step-by-step scenarios for setting up quests in the Inspector: `QuestManager`, `QuestNoCodeAction`, `NeoCondition`. Which objects to create, where to attach components, and what to wire in `UnityEvent`.
+
+**How to use:** Make sure the scene contains a `QuestManager` with the needed `QuestConfig`s in **Known Quests**; assign a **Condition Context** if quests have Start Conditions. Choose a scenario below and follow the steps; verify with the Inspector buttons or in Play mode.
+
+---
+
+## Scenario 1: Accept a Quest on Button Press
+
+**Goal:** accept a selected quest when the player clicks a UI button.
+
+1. Select the GameObject with a `Button` component (or the panel that holds the button).
+2. **Add Component > Neoxider > Quest > Quest NoCode Action**.
+3. Set **Action Type** to `Accept` and drag your `QuestConfig` into the **Quest** field.
+4. In the Button's **On Click ()**, add a call: Object = this same GameObject, Function = **QuestNoCodeAction → Execute()**.
+
+**Verify:** enter Play Mode, then click **[Execute Action]** in the `QuestNoCodeAction` Inspector or press the UI button.
+If the quest is not accepted: check that the quest is assigned, the ID is not empty, the quest has not already been accepted, and all Start Conditions evaluate to `true` for the Condition Context. The bridge accepts by config and registers it automatically; ID-based calls require registration first.
+
+---
+
+## Scenario 2: Complete an Objective When a Condition Is Met (NeoCondition)
+
+**Goal:** when a condition (health, counter, flag) becomes true — complete one quest objective.
+
+1. Select or create a `GameObject`.
+2. **Add Component > Neoxider > Condition > NeoCondition**. Configure **Conditions** (object, component, property, operator, threshold) per [NeoCondition](../Condition/NeoCondition.md).
+3. On the same object: **Add Component > Neoxider > Quest > Quest NoCode Action**.
+4. Set **Action Type** = `CompleteObjective`, **Quest** = your `QuestConfig`, **Objective Index** = the target index (0, 1, 2, …).
+5. In `NeoCondition` under **Events → On True**, add a call: Object = this object, Function = **QuestNoCodeAction → Execute()**.
+
+When `NeoCondition.On True` fires, the manager completes a binary objective or adds **Amount** (default 1) to a counter objective, clamped to `RequiredCount`. The quest must be active and the objective unfinished. To evaluate a `CustomCondition` stored directly in `QuestObjectiveData`, call `QuestManager.EvaluateObjectiveConditions()` instead.
+**Verify:** use the **[Execute Action]** button on `QuestNoCodeAction` in Play Mode.
+
+---
+
+## Scenario 3: Show UI When a Quest Is Completed
+
+**Goal:** when any quest is completed (all objectives done), show a panel or play an animation.
+
+1. Select `QuestManager` in the scene.
+2. In the Inspector, find **On Any Quest Completed** (`UnityEvent` with no arguments).
+3. Add a call: drag the UI object (panel, popup), choose the show/animation function. No parameters are passed.
+
+If you need different reactions per `questId`: use **On Quest Completed** (`UnityEvent<string>`) and wire a method on your script that accepts one `string` parameter.
+
+---
+
+## Scenario 4: React to Quest Acceptance (Sound, Hint)
+
+1. On `QuestManager`, find **On Any Quest Accepted** (no arguments).
+2. Add a call: sound, animation, tooltip display. Fires on any quest acceptance.
+
+---
+
+## Scenario 5: Update UI When a Single Objective Is Completed
+
+**Goal:** when one objective is completed (e.g. "collect the key") — immediately check it off in the objectives list.
+
+1. On `QuestManager`, find **On Objective Completed** (`UnityEvent<string, int>`: questId, objectiveIndex).
+2. Wire a method on your script with two parameters (`string`, `int`). In the method, use `questId` and `objectiveIndex` to update the correct UI element.
+
+---
+
+## Scenario 6: React to a Quest Failure
+
+1. On `QuestManager`, find **On Quest Failed** (`UnityEvent<string>`).
+2. Wire a call: "Quest failed" message, hide the quest from the journal, play a sound, etc. This event fires only when `FailQuest` is called explicitly (from code or another component).
+
+---
+
+## Scenario 7: Restart a Failed or Completed Quest
+
+1. Add a "Restart" button to your UI.
+2. In the button handler, call `QuestManager.RestartQuest(quest)` or `RestartQuest(questId)`.
+3. The manager resets the old quest state and re-attempts acceptance with Start Condition checks.
+
+If start conditions now fail, the previous state remains removed. Disable restart UI when that loss of progress is inappropriate for your game.
+
+---
+
+## Scenario 8: Reset All Quests (New Game)
+
+1. Add a "Reset All Quests" button to your menu/settings.
+2. In the button handler, call `QuestManager.ResetAllQuests()`.
+3. Afterwards, your UI re-reads state via `GetState`/`AllQuests` and shows all quests as `NotStarted`.
+
+---
+
+## Scenario 9: Linear vs. Independent Quests
+
+1. Create a `QuestFlowConfig` and add quests to **Chains** (for linear sequences) and **Standalone Quests** (for independent quests).
+2. For a linear chain, enable **Strict Order**.
+3. Before calling `AcceptQuest` in the UI, check availability via `QuestFlowConfig.CanAcceptQuest(...)`.
+4. In the journal, mark blocked quests as `Locked` (until the previous quest is completed).
+
+---
+
+## Scenario 10: Full No-Code Quest Management (via QuestNoCodeAction)
+
+1. Add a `QuestNoCodeAction` component to a UI button.
+2. Choose an **Action Type**:
+   - `Accept` — accept a quest
+   - `CompleteObjective` — complete an objective (counters add **Amount**)
+   - `Fail` — fail a quest
+   - `Restart` — restart a quest
+   - `Reset` — reset one quest
+   - `ResetAll` — reset all quests
+   - `NotifyKill` / `NotifyCollect` / `NotifyReachPoint` / `NotifyTalk` — credit objectives by **Target Id** (see Scenario 11)
+   - `EvaluateObjectiveConditions` — re-check `CustomCondition` objectives
+3. Assign **Quest** (and **Objective Index** if needed), or **Target Id** for the Notify actions.
+4. Optionally assign a **Flow Config** to check sequence order on `Accept`.
+5. In **Button.OnClick**, call `QuestNoCodeAction.Execute()`.
+6. Wire **On Success / On Failed / On Result Message** to your UI (logs, popups, indicators).
+
+An invalid index, an already completed objective, or an inactive quest reports failure. Counter credit reports success even when more credit is still needed. Result messages are available for both paths.
+
+---
+
+## Scenario 11: Count Kills, Pickups and Visits Without Scene References
+
+**Goal:** enemy prefabs, pickups and trigger volumes credit quests by id, without knowing which quests are active.
+
+1. In the `QuestConfig`, set the objective **Type** (`KillCount`, `CollectCount`, `ReachPoint` or `Talk`) and **Target Id** (for example `boar`, `herb`, `old_mill`, `elder`).
+2. On the enemy prefab (or pickup / trigger / NPC), add `QuestNoCodeAction`.
+3. Set **Action Type** to `NotifyKill` (or `NotifyCollect`, `NotifyReachPoint`, `NotifyTalk`), **Target Id** to the same id, and **Amount** for counters (usually 1).
+4. Call `QuestNoCodeAction → Execute()` from the death/pickup/enter event.
+
+Every active quest with a matching objective is credited; quests that do not track the id are unaffected. `On Failed` reports when nothing matched, which is normal for untracked kills. An empty **Target Id** credits nothing. To pass the id from the event itself, wire `SetTargetId(string)` before `Execute()`. Alternatively bind the one-argument `QuestManager.NotifyKill(string)` / `NotifyCollect(string)` / `NotifyReachPoint(string)` / `NotifyTalk(string)` directly when the event source can reference the manager.
+
+The bridge reuses its last result message while the type, Target Id and credited count repeat, so a pooled enemy that notifies the same id does not allocate once warm. A new Target Id (for example one set through `SetTargetId` per kill) formats a new message. For the strictly allocation-free path, call `QuestManager.NotifyKill(string)` from code or bind it directly.
+
+**Verify:** in Play Mode press **[Execute Action]** and watch the objective progress in **On Objective Progress** or the quest journal.
+
+---
+
+## Inspector Buttons
+
+Enter Play Mode before using these runtime action buttons. They can write saved quest progress when Auto Save is enabled.
+
+- **QuestManager**, Editor block: **Editor Quest Id**, **Editor Objective Index**, and the buttons **Accept Quest (Editor Id)** / **Complete Objective (Editor)** — test acceptance and objective completion without gameplay actions.
+- **QuestNoCodeAction:** **[Execute Action]** for the selected Action Type.
+
+---
+
+## Limitations
+
+- Different reactions for different quests (by `questId`) — requires a method on your script with a `string` parameter, wired to **On Quest Completed**.
+- Check availability without accepting via `QuestManager.CanAcceptQuest(config, out reason)`. Use `QuestFlowConfig.CanAcceptQuest(manager, config, out reason)` when UI must also enforce chain order.
+- Complex reward distribution or dialogue branching — easier to handle in code via the `QuestCompleted` / `ObjectiveProgress` events.

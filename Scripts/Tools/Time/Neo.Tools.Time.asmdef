@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Tools.Time",
+    "references": [
+        "Neo.Reactive",
+        "Neo.PropertyAttribute",
+        "UniTask",
+        "Neo.Save",
+        "Neo.Extensions",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

@@ -1,0 +1,22 @@
+{
+    "name": "Neo.Abilities.Editor",
+    "rootNamespace": "Neo.Abilities.Editor",
+    "references": [
+        "Neo.Abilities"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

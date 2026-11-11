@@ -1,0 +1,36 @@
+{
+    "name": "Neo.Tools.Components",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Reactive",
+        "Neo.Shop",
+        "Unity.TextMeshPro",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions",
+        "UniTask",
+        "Neo.Tools.Managers",
+        "Neo.Tools.Text",
+        "Neo.Save",
+        "Mirror",
+        "Neo.Network"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+        {
+            "define": "MIRROR",
+            "name": "com.mirrornetworking.mirror",
+            "expression": ""
+        }
+    ],
+    "noEngineReferences": false
+}

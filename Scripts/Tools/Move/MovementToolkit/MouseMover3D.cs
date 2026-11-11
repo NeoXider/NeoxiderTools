@@ -1,0 +1,405 @@
+﻿using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neo.Tools
+{
+    /// <summary>
+    ///     Mouse-driven mover for 3D scenes: pointer input is read in Update and motion is applied in FixedUpdate.
+    /// </summary>
+    /// <remarks>
+    ///     Movement runs once per physics tick: input (delta modes only) is sampled in Update, while FixedUpdate
+    ///     drives Rigidbody.MovePosition, which keeps motion physics-friendly and free of jitter.
+    /// </remarks>
+    [RequireComponent(typeof(Transform))]
+    [NeoDoc("Tools/Move/MovementToolkit/MouseMover3D.md")]
+    [CreateFromMenu("Neoxider/Tools/Movement/MouseMover3D")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MouseMover3D))]
+    public class MouseMover3D : MonoBehaviour, IMover
+    {
+        public enum AxisPlane
+        {
+            XZ,
+            XY,
+            YZ,
+            X,
+            Y,
+            Z
+        }
+
+        public enum MoveMode
+        {
+            DeltaNormalized,
+            DeltaRaw,
+            MoveToPointHold,
+            ClickToPoint,
+            Direction
+        }
+
+        [Header("Mode")] [SerializeField] private MoveMode mode = MoveMode.DeltaNormalized;
+
+        [Header("Plane / Axis")] [SerializeField]
+        private AxisPlane plane = AxisPlane.XZ;
+
+        [Header("Speed (u/s)")] [SerializeField]
+        private float speed = 6f;
+
+        [Header("Delta-sensitivity")] [SerializeField]
+        private float pxToWorld = 0.01f;
+
+        [Header("Raycast mask (optional ground)")] [SerializeField]
+        private LayerMask groundMask;
+
+        [Header("Mouse")] [Tooltip("Mouse button index (0=left, 1=right, 2=middle).")] [SerializeField]
+        private int mouseButton;
+
+        [Tooltip(
+            "If true, Delta modes only move while this mouse button is held. If false, movement follows mouse constantly.")]
+        [SerializeField]
+        private bool deltaOnlyWhenButtonHeld = true;
+
+        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right -> move left).")] [SerializeField]
+        private bool invertDeltaX;
+
+        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up -> move down).")] [SerializeField]
+        private bool invertDeltaY;
+
+        [Tooltip("Distance to target below which movement is considered arrived.")] [SerializeField]
+        private float arrivalThreshold = 0.05f;
+
+        public UnityEvent OnMoveStart;
+        public UnityEvent OnMoveStop;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logMissingCameraWarning;
+
+        private bool _cameraWarningShown;
+
+        private Camera cam;
+        private Vector3 clickPoint; // WHY: used by Direction mode
+
+        private Vector3 desiredVel; // WHY: m/s (delta modes only)
+        private bool hasTarget;
+        private Vector3 lastMousePos;
+        private Rigidbody rb;
+        private Vector3 targetPoint; // WHY: used by ClickToPoint mode
+        private bool wasMoving;
+
+        private void Awake()
+        {
+            if (cam == null)
+            {
+                cam = Camera.main;
+            }
+
+            if (cam == null && _logMissingCameraWarning && !_cameraWarningShown)
+            {
+                _cameraWarningShown = true;
+                NeoDiagnostics.LogWarning(
+                    "[MouseMover3D] No camera assigned and Camera.main is null. Raycast and plane projection may fail.",
+                    this);
+            }
+
+            rb = GetComponent<Rigidbody>();
+            MouseInputCompat.TryGetPosition(out lastMousePos);
+        }
+
+        private void Update()
+        {
+            ReadInput(); // WHY: no physics move here
+        }
+
+        private void FixedUpdate()
+        {
+            Vector3 step = ComputeStep(Time.fixedDeltaTime);
+            ApplyStep(step);
+        }
+
+        public bool IsMoving { get; private set; }
+
+        public void MoveDelta(Vector2 delta)
+        {
+            Vector3 d = MapVector2ToPlaneDelta(delta);
+            if (rb)
+            {
+                rb.MovePosition(rb.position + d);
+            }
+            else
+            {
+                transform.Translate(d, Space.World);
+            }
+        }
+
+        public void MoveToPoint(Vector2 worldTarget)
+        {
+            Vector3 pos = Vector2ToPlanePosition(worldTarget);
+            if (rb)
+            {
+                rb.MovePosition(pos);
+            }
+            else
+            {
+                transform.position = pos;
+            }
+        }
+
+        private void ReadInput()
+        {
+            if (MouseInputCompat.TryGetButtonDown(mouseButton, out bool buttonDown) && buttonDown)
+            {
+                if (mode == MoveMode.ClickToPoint)
+                {
+                    if (RaycastCursor(out Vector3 pt))
+                    {
+                        targetPoint = pt;
+                        hasTarget = true;
+                    }
+                }
+                else if (mode == MoveMode.Direction)
+                {
+                    RaycastCursor(out clickPoint);
+                }
+            }
+
+            if (mode == MoveMode.DeltaNormalized || mode == MoveMode.DeltaRaw)
+            {
+                if (!MouseInputCompat.TryGetPosition(out Vector3 cur))
+                {
+                    desiredVel = Vector3.zero;
+                    return;
+                }
+
+                bool held = MouseInputCompat.TryGetButton(mouseButton, out bool pressed) && pressed;
+                if (deltaOnlyWhenButtonHeld && !held)
+                {
+                    lastMousePos = cur;
+                    desiredVel = Vector3.zero;
+                }
+                // WHY: Time.deltaTime is 0 while timeScale == 0; dividing by it would store an
+                // Infinity velocity that teleports the object on the first physics step after unpause.
+                else if (Time.deltaTime <= 0f)
+                {
+                    lastMousePos = cur;
+                    desiredVel = Vector3.zero;
+                }
+                else
+                {
+                    Vector2 px = (Vector2)cur - (Vector2)lastMousePos;
+                    if (invertDeltaX)
+                    {
+                        px.x = -px.x;
+                    }
+
+                    if (invertDeltaY)
+                    {
+                        px.y = -px.y;
+                    }
+
+                    lastMousePos = cur;
+
+                    Vector3 vel = PxToWorld(px) / Time.deltaTime;
+                    if (mode == MoveMode.DeltaNormalized && vel.sqrMagnitude > 1e-4f)
+                    {
+                        vel = vel.normalized * speed;
+                    }
+
+                    desiredVel = RestrictAxes(vel);
+                }
+            }
+        }
+
+        private Vector3 ComputeStep(float dt)
+        {
+            switch (mode)
+            {
+                case MoveMode.DeltaNormalized:
+                case MoveMode.DeltaRaw:
+                    return desiredVel * dt;
+
+                case MoveMode.MoveToPointHold:
+                {
+                    if (!MouseInputCompat.TryGetButton(mouseButton, out bool held) || !held ||
+                        !RaycastCursor(out Vector3 cur))
+                    {
+                        return Vector3.zero;
+                    }
+
+                    return MoveTowards(cur, dt);
+                }
+
+                case MoveMode.ClickToPoint:
+                {
+                    if (!hasTarget)
+                    {
+                        return Vector3.zero;
+                    }
+
+                    Vector3 d = MoveTowards(targetPoint, dt);
+                    if (d.sqrMagnitude == 0f)
+                    {
+                        hasTarget = false;
+                    }
+
+                    return d;
+                }
+
+                case MoveMode.Direction:
+                {
+                    if (!MouseInputCompat.TryGetButton(mouseButton, out bool held) || !held ||
+                        !RaycastCursor(out Vector3 cur))
+                    {
+                        return Vector3.zero;
+                    }
+
+                    Vector3 dir = RestrictAxes(cur - clickPoint);
+                    if (dir.sqrMagnitude < 1e-4f)
+                    {
+                        return Vector3.zero;
+                    }
+
+                    return dir.normalized * speed * dt;
+                }
+            }
+
+            return Vector3.zero;
+        }
+
+        private void ApplyStep(Vector3 delta)
+        {
+            bool movingNow = delta.sqrMagnitude > 0f;
+            if (movingNow && !wasMoving)
+            {
+                OnMoveStart?.Invoke();
+            }
+
+            if (!movingNow && wasMoving)
+            {
+                OnMoveStop?.Invoke();
+            }
+
+            IsMoving = movingNow;
+            wasMoving = movingNow;
+
+            if (!movingNow)
+            {
+                return;
+            }
+
+            if (rb)
+            {
+                rb.MovePosition(rb.position + delta);
+            }
+            else
+            {
+                transform.Translate(delta, Space.World);
+            }
+        }
+
+        private Vector3 MoveTowards(Vector3 target, float dt)
+        {
+            Vector3 diff = RestrictAxes(target - transform.position);
+            if (diff.magnitude < arrivalThreshold)
+            {
+                return Vector3.zero;
+            }
+
+            float step = speed * dt;
+            return diff.normalized * Mathf.Min(step, diff.magnitude);
+        }
+
+        private Vector3 PxToWorld(Vector2 px)
+        {
+            return plane switch
+            {
+                AxisPlane.XZ => new Vector3(px.x, 0, px.y) * pxToWorld,
+                AxisPlane.XY => new Vector3(px.x, px.y, 0) * pxToWorld,
+                AxisPlane.YZ => new Vector3(0, px.x, px.y) * pxToWorld,
+                AxisPlane.X => new Vector3(px.x, 0, 0) * pxToWorld,
+                AxisPlane.Y => new Vector3(0, px.y, 0) * pxToWorld,
+                AxisPlane.Z => new Vector3(0, 0, px.y) * pxToWorld,
+                _ => Vector3.zero
+            };
+        }
+
+        private Vector3 RestrictAxes(Vector3 v)
+        {
+            return plane switch
+            {
+                AxisPlane.XZ => new Vector3(v.x, 0, v.z),
+                AxisPlane.XY => new Vector3(v.x, v.y, 0),
+                AxisPlane.YZ => new Vector3(0, v.y, v.z),
+                AxisPlane.X => new Vector3(v.x, 0, 0),
+                AxisPlane.Y => new Vector3(0, v.y, 0),
+                AxisPlane.Z => new Vector3(0, 0, v.z),
+                _ => v
+            };
+        }
+
+        private Vector3 MapVector2ToPlaneDelta(Vector2 d)
+        {
+            return plane switch
+            {
+                AxisPlane.XZ => new Vector3(d.x, 0, d.y),
+                AxisPlane.XY => new Vector3(d.x, d.y, 0),
+                AxisPlane.YZ => new Vector3(0, d.x, d.y),
+                AxisPlane.X => new Vector3(d.x, 0, 0),
+                AxisPlane.Y => new Vector3(0, d.y, 0),
+                AxisPlane.Z => new Vector3(0, 0, d.y),
+                _ => new Vector3(d.x, 0, d.y)
+            };
+        }
+
+        private Vector3 Vector2ToPlanePosition(Vector2 p)
+        {
+            Vector3 pos = transform.position;
+            return plane switch
+            {
+                AxisPlane.XZ => new Vector3(p.x, pos.y, p.y),
+                AxisPlane.XY => new Vector3(p.x, p.y, pos.z),
+                AxisPlane.YZ => new Vector3(pos.x, p.x, p.y),
+                AxisPlane.X => new Vector3(p.x, pos.y, pos.z),
+                AxisPlane.Y => new Vector3(pos.x, p.y, pos.z),
+                AxisPlane.Z => new Vector3(pos.x, pos.y, p.y),
+                _ => new Vector3(p.x, pos.y, p.y)
+            };
+        }
+
+        private bool RaycastCursor(out Vector3 world)
+        {
+            // WHY: re-resolve after the cached main camera was destroyed (scene reload, camera swap).
+            if (cam == null)
+            {
+                cam = Camera.main;
+            }
+
+            if (cam == null || !MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
+            {
+                world = Vector3.zero;
+                return false;
+            }
+
+            Ray ray = cam.ScreenPointToRay(mousePosition);
+
+            if (groundMask.value != 0 && Physics.Raycast(ray, out RaycastHit hit, 1000f, groundMask))
+            {
+                world = hit.point;
+                return true;
+            }
+
+            Plane pl = plane switch
+            {
+                AxisPlane.XZ => new Plane(Vector3.up, transform.position),
+                AxisPlane.XY => new Plane(Vector3.forward, transform.position),
+                AxisPlane.YZ => new Plane(Vector3.right, transform.position),
+                _ => new Plane(Vector3.up, transform.position)
+            };
+            if (pl.Raycast(ray, out float t))
+            {
+                world = ray.GetPoint(t);
+                return true;
+            }
+
+            world = Vector3.zero;
+            return false;
+        }
+    }
+}

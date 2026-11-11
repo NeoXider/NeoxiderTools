@@ -1,0 +1,463 @@
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+namespace Neo.Bonus
+{
+    /// <summary>How SlotElement draws row index in scene gizmo labels.</summary>
+    public enum SlotGizmoRowLabelMode
+    {
+        /// <summary>Index among all reel elements sorted by Y (legacy).</summary>
+        FullReelOrderedByY,
+
+        /// <summary>Row within visible window: 0 = bottom … matches LinesData / SpinController matrix.</summary>
+        VisibleWindowBottomUp
+    }
+
+    [NeoDoc("Bonus/Slot/SlotElement.md")]
+    [CreateFromMenu("Neoxider/Bonus/SlotElement", "Prefabs/Bonus/Slot/SlotElement.prefab")]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(SlotElement))]
+    public class SlotElement : MonoBehaviour
+    {
+        [Header("Refs")] [SerializeField] public Image image;
+
+        [SerializeField] public SpriteRenderer spriteRenderer;
+        [SerializeField] public TMP_Text textDescription;
+
+        [Header("Visual transitions")]
+        [Tooltip("Duration of the smooth sprite change (alpha-crossfade). 0 = instant change (as before).")]
+        [Min(0f)]
+        public float crossfadeSeconds = 0.08f;
+
+        [Tooltip("Maximum Y-stretch multiplier for the \"motion-blur\" effect (1 = no stretch).")] [Range(1f, 2f)]
+        public float motionStretchMaxY = 1.0f;
+
+        private float _crossfadeStart = -1f;
+
+        [Header("Debug Gizmo")] [Tooltip("Enable/disable gizmo label above element")]
+        public bool gizmoEnabled = true;
+
+        [Tooltip("Auto-detect [col,row] from hierarchy positions")]
+        public bool gizmoAutoDetect = true;
+
+        [Tooltip("Manual column index (when AutoDetect off)")]
+        public int gizmoManualCol = -1;
+
+        [Tooltip("Manual row index (when AutoDetect off)")]
+        public int gizmoManualRow = -1;
+
+        [Tooltip("World-space tweak after visual center (pivot vs graphic center).")]
+        public Vector3 gizmoLabelOffset = new(0f, 0f, 0f);
+
+        [Tooltip("Gizmo marker dot size")] public float gizmoIconSize = 0.15f;
+
+        [Tooltip("Label text color")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f);
+
+        [Tooltip("Label font size")] public int gizmoFontSize = 22;
+
+        [Tooltip(
+            "Text raise above the graphic center in Scene view pixels (fixed on zoom). Reduce if the text \"hangs\" too high.")]
+        [Min(0f)]
+        public float gizmoLabelRaiseScreenPixels = 12f;
+
+        [Tooltip(
+            "In Visible Window + Auto mode: don't draw the gizmo for symbols outside the mask's visible window (spinning above/below).")]
+        public bool gizmoOnlyVisibleWindowSlots = true;
+
+        [Tooltip("Draw black outline for readability")]
+        public bool gizmoOutline = true;
+
+        [Tooltip("Outline color")] public Color gizmoOutlineColor = new(0f, 0f, 0f, 1f);
+
+        [Tooltip("Outline thickness in screen pixels (Scene view GUI).")] [Min(0)]
+        public int gizmoOutlineScreenPixels = 1;
+
+        [Tooltip("Row label mode for Auto Detect.")]
+        public SlotGizmoRowLabelMode gizmoRowLabelMode = SlotGizmoRowLabelMode.VisibleWindowBottomUp;
+
+        [Tooltip("Added to displayed column and row indices in the label.")]
+        public int gizmoLabelIndexOffset;
+
+        public int id { get; private set; }
+
+        private Vector3 _baseLocalScale = Vector3.one;
+        private bool _baseScaleCaptured;
+
+        private void OnValidate()
+        {
+            spriteRenderer ??= GetComponent<SpriteRenderer>();
+            image ??= GetComponent<Image>();
+            if (textDescription == null)
+            {
+                textDescription = GetComponentInChildren<TMP_Text>();
+            }
+        }
+
+        private void Awake()
+        {
+            CaptureBaseScale();
+        }
+
+        private void Update()
+        {
+            if (_crossfadeStart >= 0f && crossfadeSeconds > 0f)
+            {
+                float t = (Time.unscaledTime - _crossfadeStart) / crossfadeSeconds;
+                if (t >= 1f)
+                {
+                    ApplyAlpha(1f);
+                    _crossfadeStart = -1f;
+                }
+                else
+                {
+                    // WHY: sprite is already swapped, so fake a crossfade with a simple alpha pop (half-fade-out then full visible).
+                    float a = t < 0.5f ? 1f - t * 2f : (t - 0.5f) * 2f;
+                    ApplyAlpha(a);
+                }
+            }
+        }
+
+        /// <summary>Sets vertical stretch for motion-blur feel. Pass 1 for idle.</summary>
+        public void SetMotionStretch(float yScale)
+        {
+            if (!_baseScaleCaptured)
+            {
+                CaptureBaseScale();
+            }
+
+            if (motionStretchMaxY <= 1.0001f)
+            {
+                yScale = 1f;
+            }
+            else
+            {
+                yScale = Mathf.Clamp(yScale, 1f, motionStretchMaxY);
+            }
+
+            transform.localScale = new Vector3(_baseLocalScale.x, _baseLocalScale.y * yScale, _baseLocalScale.z);
+        }
+
+        /// <summary>
+        ///     Sets the element visuals from slot data.
+        /// </summary>
+        public void SetVisuals(SlotVisualData data)
+        {
+            SetVisuals(data, false);
+        }
+
+        /// <summary>
+        ///     Sets visuals; optionally with smooth crossfade (only when sprite actually changes).
+        /// </summary>
+        public void SetVisuals(SlotVisualData data, bool smooth)
+        {
+            if (data == null)
+            {
+                if (image)
+                {
+                    image.enabled = false;
+                }
+
+                if (spriteRenderer)
+                {
+                    spriteRenderer.enabled = false;
+                }
+
+                if (textDescription)
+                {
+                    textDescription.gameObject.SetActive(false);
+                }
+
+                _crossfadeStart = -1f;
+                ApplyAlpha(1f);
+                return;
+            }
+
+            Sprite prevSprite = image != null ? image.sprite : spriteRenderer != null ? spriteRenderer.sprite : null;
+            bool changed = prevSprite != data.sprite || id != data.id;
+
+            id = data.id;
+
+            if (image != null)
+            {
+                image.enabled = true;
+                image.sprite = data.sprite;
+            }
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.enabled = true;
+                spriteRenderer.sprite = data.sprite;
+            }
+
+            if (textDescription != null)
+            {
+                bool hasDescription = !string.IsNullOrEmpty(data.description);
+                GameObject descriptionObject = textDescription.gameObject;
+                if (descriptionObject.activeSelf != hasDescription)
+                {
+                    // WHY: reels swap symbols on every wrap; skipping no-op SetActive avoids hierarchy churn.
+                    descriptionObject.SetActive(hasDescription);
+                }
+
+                if (hasDescription)
+                {
+                    textDescription.text = data.description;
+                }
+            }
+
+            if (smooth && changed && crossfadeSeconds > 0f && Application.isPlaying)
+            {
+                _crossfadeStart = Time.unscaledTime;
+            }
+            else
+            {
+                _crossfadeStart = -1f;
+                ApplyAlpha(1f);
+            }
+        }
+
+        private void CaptureBaseScale()
+        {
+            if (_baseScaleCaptured)
+            {
+                return;
+            }
+
+            _baseLocalScale = transform.localScale;
+            _baseScaleCaptured = true;
+        }
+
+        private void ApplyAlpha(float a)
+        {
+            if (image != null)
+            {
+                Color c = image.color;
+                c.a = a;
+                image.color = c;
+            }
+
+            if (spriteRenderer != null)
+            {
+                Color c = spriteRenderer.color;
+                c.a = a;
+                spriteRenderer.color = c;
+            }
+        }
+
+#if UNITY_EDITOR
+        private static readonly Vector3[] GizmoCorners = new Vector3[4];
+
+        private void OnDrawGizmos()
+        {
+            if (!gizmoEnabled)
+            {
+                return;
+            }
+
+            SpinController owner = GetComponentInParent<SpinController>();
+            if (owner != null && !owner.DrawSlotElementGizmosInScene)
+            {
+                return;
+            }
+
+            if (!ShouldDrawGizmoForSlotPosition())
+            {
+                return;
+            }
+
+            Vector3 anchorWorld = GetVisualAnchorWorld();
+
+            Gizmos.color = gizmoColor;
+            Gizmos.DrawWireSphere(anchorWorld, gizmoIconSize);
+
+            (int col, int row) = gizmoAutoDetect ? AutoDetectColRow() : (gizmoManualCol, gizmoManualRow);
+            int labelIndexOffset = owner != null ? owner.GridIndexBase : gizmoLabelIndexOffset;
+            string label =
+                $"[{col + labelIndexOffset},{row + labelIndexOffset}] id:{id}";
+
+            GUIStyle style = new(EditorStyles.boldLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = Mathf.Max(10, gizmoFontSize)
+            };
+            style.normal.textColor = gizmoColor;
+
+            SceneView sv = SceneView.currentDrawingSceneView;
+            if (sv != null && sv.camera != null && sv.camera.WorldToScreenPoint(anchorWorld).z < 0f)
+            {
+                return;
+            }
+
+            Handles.BeginGUI();
+            try
+            {
+                // WHY: WorldToGUIPoint matches the active Scene view projection, staying stable across zoom when anchor is correct.
+                Vector2 gui = HandleUtility.WorldToGUIPoint(anchorWorld);
+                gui.y -= gizmoLabelRaiseScreenPixels;
+
+                GUIContent content = new(label);
+                Vector2 size = style.CalcSize(content);
+                Rect rect = new(
+                    Mathf.Round(gui.x - size.x * 0.5f),
+                    Mathf.Round(gui.y - size.y),
+                    size.x,
+                    size.y);
+
+                if (gizmoOutline && gizmoOutlineScreenPixels > 0)
+                {
+                    GUIStyle outlineStyle = new(style);
+                    outlineStyle.normal.textColor = gizmoOutlineColor;
+                    int o = gizmoOutlineScreenPixels;
+                    for (int dx = -o; dx <= o; dx++)
+                    {
+                        for (int dy = -o; dy <= o; dy++)
+                        {
+                            if (dx == 0 && dy == 0)
+                            {
+                                continue;
+                            }
+
+                            GUI.Label(
+                                new Rect(rect.x + dx, rect.y + dy, rect.width, rect.height),
+                                label,
+                                outlineStyle);
+                        }
+                    }
+                }
+
+                GUI.Label(rect, label, style);
+            }
+            finally
+            {
+                Handles.EndGUI();
+            }
+        }
+
+        private bool ShouldDrawGizmoForSlotPosition()
+        {
+            if (!gizmoOnlyVisibleWindowSlots || !gizmoAutoDetect ||
+                gizmoRowLabelMode != SlotGizmoRowLabelMode.VisibleWindowBottomUp)
+            {
+                return true;
+            }
+
+            Row rowComp = GetComponentInParent<Row>();
+            return rowComp != null && rowComp.TryGetWindowRowFromBottom(this, out _);
+        }
+
+        /// <summary>
+        ///     UI pivot is often not at the sprite center - the label "drifted" on zoom/offset. Center by rect / bounds.
+        /// </summary>
+        private Vector3 GetVisualAnchorWorld()
+        {
+            RectTransform rt = transform as RectTransform;
+            if (rt == null && image != null)
+            {
+                rt = image.rectTransform;
+            }
+
+            if (rt != null)
+            {
+                Vector3[] wc = GizmoCorners;
+                rt.GetWorldCorners(wc);
+                Vector3 center = (wc[0] + wc[1] + wc[2] + wc[3]) * 0.25f;
+                return center + gizmoLabelOffset;
+            }
+
+            if (spriteRenderer != null)
+            {
+                return spriteRenderer.bounds.center + gizmoLabelOffset;
+            }
+
+            return transform.position + gizmoLabelOffset;
+        }
+
+        private (int col, int row) AutoDetectColRow()
+        {
+            Row rowComp = GetComponentInParent<Row>();
+            int rowIndex = -1;
+            int colIndex = -1;
+
+            if (rowComp != null && gizmoRowLabelMode == SlotGizmoRowLabelMode.VisibleWindowBottomUp &&
+                rowComp.TryGetWindowRowFromBottom(this, out int windowRow))
+            {
+                rowIndex = windowRow;
+            }
+            else if (rowComp != null && rowComp.SlotElements != null && rowComp.SlotElements.Length > 0)
+            {
+                rowIndex = RankByY(rowComp.SlotElements, this);
+            }
+
+            if (rowComp != null && rowComp.transform.parent != null)
+            {
+                Row[] allRows = rowComp.transform.parent.GetComponentsInChildren<Row>(true);
+                colIndex = RankByX(allRows, rowComp);
+            }
+
+            return (colIndex, rowIndex);
+        }
+
+        /// <summary>Position of <paramref name="target"/> in a stable ascending-Y order, without sorting a copy.</summary>
+        private static int RankByY(SlotElement[] elements, SlotElement target)
+        {
+            int targetIndex = Array.IndexOf(elements, target);
+            if (targetIndex < 0)
+            {
+                return -1;
+            }
+
+            float targetY = target.transform.position.y;
+            int rank = 0;
+            for (int i = 0; i < elements.Length; i++)
+            {
+                SlotElement other = elements[i];
+                if (other == null || i == targetIndex)
+                {
+                    continue;
+                }
+
+                float y = other.transform.position.y;
+                if (y < targetY || (y == targetY && i < targetIndex))
+                {
+                    rank++;
+                }
+            }
+
+            return rank;
+        }
+
+        /// <summary>Position of <paramref name="target"/> in a stable ascending-X order, without sorting a copy.</summary>
+        private static int RankByX(Row[] rows, Row target)
+        {
+            int targetIndex = Array.IndexOf(rows, target);
+            if (targetIndex < 0)
+            {
+                return -1;
+            }
+
+            float targetX = target.transform.position.x;
+            int rank = 0;
+            for (int i = 0; i < rows.Length; i++)
+            {
+                Row other = rows[i];
+                if (other == null || i == targetIndex)
+                {
+                    continue;
+                }
+
+                float x = other.transform.position.x;
+                if (x < targetX || (x == targetX && i < targetIndex))
+                {
+                    rank++;
+                }
+            }
+
+            return rank;
+        }
+#endif
+    }
+}

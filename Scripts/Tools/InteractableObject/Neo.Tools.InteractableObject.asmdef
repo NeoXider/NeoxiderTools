@@ -1,0 +1,33 @@
+{
+    "name": "Neo.Tools.InteractableObject",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Tools.InteractableObject.Core",
+        "Neo.Network.Contracts",
+        "Neo.Reactive",
+        "Neo.Tools.Input",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions",
+        "Mirror",
+        "Neo.Network"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+        {
+            "name": "com.mirrornetworking.mirror",
+            "expression": "",
+            "define": "MIRROR"
+        }
+    ],
+    "noEngineReferences": false
+}

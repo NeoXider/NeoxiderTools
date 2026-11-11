@@ -1,0 +1,227 @@
+using System.Collections.Generic;
+using Neo.Quest;
+using UnityEditor;
+using UnityEngine;
+
+namespace Neo.Editor.Quest
+{
+    [CustomEditor(typeof(QuestConfig))]
+    [CanEditMultipleObjects]
+    public sealed class QuestConfigEditor : CustomEditorBase
+    {
+        private readonly DefinitionValidationCache _definitionIssues = new();
+
+        protected override bool UseCustomNeoxiderInspectorGUI => true;
+
+        protected override void ProcessAttributeAssignments()
+        {
+        }
+
+        protected override void DrawCustomNeoxiderInspectorGUI()
+        {
+            serializedObject.Update();
+
+            SerializedProperty idProp = serializedObject.FindProperty("_id");
+            SerializedProperty titleProp = serializedObject.FindProperty("_title");
+            SerializedProperty descriptionProp = serializedObject.FindProperty("_description");
+            SerializedProperty iconProp = serializedObject.FindProperty("_icon");
+            SerializedProperty objectivesProp = serializedObject.FindProperty("_objectives");
+            SerializedProperty startConditionsProp = serializedObject.FindProperty("_startConditions");
+            SerializedProperty nextQuestIdsProp = serializedObject.FindProperty("_nextQuestIds");
+
+            DrawSummary(idProp, titleProp, iconProp, objectivesProp, startConditionsProp, nextQuestIdsProp);
+            DrawValidation(idProp, titleProp, objectivesProp, nextQuestIdsProp);
+
+            NeoxiderEditorGUI.BeginSection("Identity", "Core identifiers and quest display.");
+            EditorGUILayout.PropertyField(idProp);
+            EditorGUILayout.PropertyField(titleProp);
+            DrawGenerateIdButton(idProp, titleProp);
+            NeoxiderEditorGUI.EndSection();
+
+            EditorGUILayout.Space(4f);
+
+            NeoxiderEditorGUI.BeginSection("Display", "Text and visuals for the UI.");
+            EditorGUILayout.PropertyField(descriptionProp);
+            EditorGUILayout.PropertyField(iconProp);
+            NeoxiderEditorGUI.EndSection();
+
+            EditorGUILayout.Space(4f);
+
+            NeoxiderEditorGUI.BeginSection("Objectives", "Objective list; element order defines their index.");
+            EditorGUILayout.PropertyField(objectivesProp, true);
+            NeoxiderEditorGUI.EndSection();
+
+            EditorGUILayout.Space(4f);
+
+            NeoxiderEditorGUI.BeginSection("Flow", "Start conditions and the chain of next quests.");
+            EditorGUILayout.PropertyField(startConditionsProp, true);
+            EditorGUILayout.PropertyField(nextQuestIdsProp, true);
+            NeoxiderEditorGUI.EndSection();
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawSummary(SerializedProperty idProp, SerializedProperty titleProp, SerializedProperty iconProp,
+            SerializedProperty objectivesProp, SerializedProperty startConditionsProp,
+            SerializedProperty nextQuestIdsProp)
+        {
+            string title = string.IsNullOrWhiteSpace(titleProp.stringValue)
+                ? target.name
+                : titleProp.stringValue;
+            string id = string.IsNullOrWhiteSpace(idProp.stringValue)
+                ? "ID will be generated from title"
+                : idProp.stringValue;
+
+            List<NeoxiderEditorGUI.Badge> badges = new()
+            {
+                new NeoxiderEditorGUI.Badge(string.IsNullOrWhiteSpace(idProp.stringValue) ? "Draft" : "Configured",
+                    string.IsNullOrWhiteSpace(idProp.stringValue)
+                        ? new Color(0.76f, 0.48f, 0.16f, 1f)
+                        : new Color(0.18f, 0.62f, 0.32f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Objectives {objectivesProp.arraySize}",
+                    new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Start Conditions {startConditionsProp.arraySize}",
+                    new Color(0.42f, 0.34f, 0.82f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Next Quests {nextQuestIdsProp.arraySize}",
+                    new Color(0.24f, 0.60f, 0.60f, 1f)),
+                new NeoxiderEditorGUI.Badge(iconProp.objectReferenceValue != null ? "Icon Ready" : "No Icon",
+                    iconProp.objectReferenceValue != null
+                        ? new Color(0.28f, 0.62f, 0.56f, 1f)
+                        : new Color(0.38f, 0.38f, 0.42f, 1f))
+            };
+
+            NeoxiderEditorGUI.DrawSummaryCard(title, $"Quest ID: <b>{id}</b>", badges.ToArray());
+            EditorGUILayout.Space(4f);
+        }
+
+        private void DrawValidation(SerializedProperty idProp, SerializedProperty titleProp,
+            SerializedProperty objectivesProp,
+            SerializedProperty nextQuestIdsProp)
+        {
+            if (string.IsNullOrWhiteSpace(titleProp.stringValue))
+            {
+                EditorGUILayout.HelpBox(
+                    "Fill in Title. Without it the quest is hard to read in the UI and the ID cannot be auto-generated.",
+                    MessageType.Warning);
+            }
+
+            // WHY: the runtime's own definition check (empty ids, objectives without targets, bad counts)
+            // was only reachable from code. It is shown here for a single selection and re-run only when the
+            // asset changes.
+            if (!serializedObject.isEditingMultipleObjects && target is QuestConfig quest)
+            {
+                if (_definitionIssues.NeedsRefresh(quest))
+                {
+                    _definitionIssues.Store(quest, quest.ValidateDefinition());
+                }
+
+                IReadOnlyList<string> issues = _definitionIssues.Issues;
+                for (int i = 0; i < issues.Count; i++)
+                {
+                    EditorGUILayout.HelpBox(issues[i], MessageType.Warning);
+                }
+            }
+            else if (objectivesProp.arraySize == 0)
+            {
+                EditorGUILayout.HelpBox("This quest has no objectives yet.", MessageType.Info);
+            }
+
+            if (HasDuplicateValues(nextQuestIdsProp))
+            {
+                EditorGUILayout.HelpBox(
+                    "Next Quest Ids contains duplicates. Prefer a unique transition chain.",
+                    MessageType.Warning);
+            }
+
+            if (string.IsNullOrWhiteSpace(idProp.stringValue) && !string.IsNullOrWhiteSpace(titleProp.stringValue))
+            {
+                EditorGUILayout.HelpBox("ID will be filled from Title when the asset is validated or via Generate ID.",
+                    MessageType.Info);
+            }
+        }
+
+        private void DrawGenerateIdButton(SerializedProperty idProp, SerializedProperty titleProp)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+                bool multiple = serializedObject.isEditingMultipleObjects;
+                EditorGUI.BeginDisabledGroup(!multiple && string.IsNullOrWhiteSpace(titleProp.stringValue));
+                if (GUILayout.Button("Generate ID", GUILayout.Width(110f)))
+                {
+                    if (multiple)
+                    {
+                        GenerateIdsFromOwnTitles();
+                    }
+                    else
+                    {
+                        idProp.stringValue = titleProp.stringValue.Replace(" ", "_");
+                    }
+                }
+
+                EditorGUI.EndDisabledGroup();
+            }
+        }
+
+        /// <summary>
+        ///     Multi-selection variant of Generate ID. The shared property shows the first quest's title, so
+        ///     writing it through <c>idProp</c> gave every selected quest the same id; each quest now derives its
+        ///     id from its own title, as one undo step.
+        /// </summary>
+        private void GenerateIdsFromOwnTitles()
+        {
+            serializedObject.ApplyModifiedProperties();
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            foreach (Object selected in targets)
+            {
+                if (selected == null)
+                {
+                    continue;
+                }
+
+                using (SerializedObject single = new(selected))
+                {
+                    SerializedProperty title = single.FindProperty("_title");
+                    SerializedProperty id = single.FindProperty("_id");
+                    if (title == null || id == null || string.IsNullOrWhiteSpace(title.stringValue))
+                    {
+                        continue;
+                    }
+
+                    id.stringValue = title.stringValue.Replace(" ", "_");
+                    single.ApplyModifiedProperties();
+                }
+            }
+
+            Undo.SetCurrentGroupName("Generate Quest IDs");
+            Undo.CollapseUndoOperations(group);
+            serializedObject.Update();
+        }
+
+        private static bool HasDuplicateValues(SerializedProperty arrayProp)
+        {
+            if (arrayProp == null || !arrayProp.isArray)
+            {
+                return false;
+            }
+
+            HashSet<string> values = new();
+            for (int i = 0; i < arrayProp.arraySize; i++)
+            {
+                string value = arrayProp.GetArrayElementAtIndex(i).stringValue;
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    continue;
+                }
+
+                if (!values.Add(value))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+}

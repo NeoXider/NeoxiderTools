@@ -1,0 +1,23 @@
+{
+    "name": "Neo.StateMachine",
+    "rootNamespace": "Neo.StateMachine",
+    "references": [
+        "Neo.PropertyAttribute",
+        "Neo.Extensions",
+        "Neo.Condition"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

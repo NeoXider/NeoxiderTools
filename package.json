@@ -1,0 +1,35 @@
+{
+  "name": "com.neoxider.tools",
+  "displayName": "NeoxiderTools",
+  "version": "12.2.0",
+  "unity": "6000.0",
+  "unityRelease": "0f1",
+  "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components and module documentation. Demo scenes ship as separate downloads.",
+  "author": {
+    "name": "Neoxider"
+  },
+  "dependencies": {
+    "com.unity.ai.navigation": "2.0.16",
+    "com.unity.inputsystem": "1.20.1",
+    "com.unity.ugui": "2.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NeoXider/NeoxiderTools.git"
+  },
+  "documentationUrl": "https://github.com/NeoXider/NeoxiderTools/tree/main/Assets/Neoxider/Docs",
+  "changelogUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/CHANGELOG.md",
+  "licensesUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/LICENSE.md",
+  "keywords": [
+    "neoxider",
+    "tools",
+    "starter",
+    "extensions",
+    "no-code",
+    "state-machine",
+    "merge",
+    "grid",
+    "dice"
+  ],
+  "license": "PolyForm-Small-Business-1.0.0"
+}

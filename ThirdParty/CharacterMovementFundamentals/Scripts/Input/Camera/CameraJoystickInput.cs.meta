@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: a8729e4e61a368741a29d2f873fbf5ac
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Scripts/Input/Camera/CameraJoystickInput.cs
+  uploadId: 426944

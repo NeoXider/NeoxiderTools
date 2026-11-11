@@ -1,0 +1,469 @@
+using System;
+using Neo.Extensions;
+using Neo.Reactive;
+using Neo.Save;
+using Neo.Tools;
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neo.Bonus
+{
+    /// <summary>
+    ///     Time-based reward with persistent cooldown, built on TimerObject (RealTime countdown).
+    ///     Use this instead of the deprecated TimeReward for new code.
+    /// </summary>
+    [NeoDoc("Bonus/TimeReward/CooldownReward.md")]
+    [CreateFromMenu("Neoxider/Bonus/CooldownReward")]
+    [AddComponentMenu("Neoxider/Bonus/" + nameof(CooldownReward))]
+    public class CooldownReward : TimerObject
+    {
+        private const string LastRewardTimeKeyPrefix = "LastRewardTime";
+
+        [Header("Reward Settings")] [SerializeField] [Min(0)]
+        private float _cooldownSeconds = 60f * 60f;
+
+        [SerializeField] [Min(0.015f)] private float _updateInterval = 0.2f;
+        [SerializeField] private bool _rewardAvailableOnStart;
+
+        [SerializeField] [Tooltip("-1 = take all accumulated; 1 = one per take; N = cap at N per take")]
+        private int _maxRewardsPerTake = 1;
+
+        [SerializeField] private string _addKey = "Bonus1";
+        [SerializeField] private bool _startTakeReward;
+
+        [Tooltip(
+            "Automatically claim the reward as soon as it becomes available (continuous regen). Wire OnRewardClaimed to a wallet/effect.")]
+        [SerializeField] private bool _autoClaim;
+
+        [SerializeField] private bool _startTimerOnStart = true;
+        [SerializeField] private bool _saveTimeOnTakeReward = true;
+        [SerializeField] private bool _saveTimeOnStartWhenSaveOnTakeDisabled = true;
+        [SerializeField] private TimeFormat _displayTimeFormat = TimeFormat.HoursMinutesSeconds;
+        [SerializeField] private string _displaySeparator = ":";
+
+        [Header("Reward Events")] public ReactivePropertyFloat RemainingTime = new();
+
+        [SerializeField] private UnityEvent _onRewardClaimed = new();
+        [SerializeField] private UnityEvent<int> _onRewardsClaimed = new();
+        [SerializeField] private UnityEvent _onRewardAvailable = new();
+        private bool _canTakeReward;
+        private bool _claimInProgress;
+
+        private bool _waitingForManualStart;
+
+        /// <summary>Remaining time in seconds (for NeoCondition and reflection).</summary>
+        public float RemainingTimeValue => RemainingTime.CurrentValue;
+
+        /// <summary>Invoked when reward claim succeeds (once per claim when multiple are given).</summary>
+        public UnityEvent OnRewardClaimed => _onRewardClaimed;
+
+        /// <summary>Invoked once per take with the number of claims given.</summary>
+        public UnityEvent<int> OnRewardsClaimed => _onRewardsClaimed;
+
+        /// <summary>Invoked once when reward becomes available.</summary>
+        public UnityEvent OnRewardAvailable => _onRewardAvailable;
+
+        /// <summary>Whether reward can be claimed right now.</summary>
+        public bool IsRewardAvailable => _canTakeReward && !_waitingForManualStart && !_claimInProgress;
+
+        /// <summary>Full save key used for reward timestamp.</summary>
+        public string RewardTimeKey => GetSaveKey();
+
+        /// <summary>Whether successful claim immediately persists cooldown.</summary>
+        public bool SaveTimeOnTakeReward
+        {
+            get => _saveTimeOnTakeReward;
+            set => _saveTimeOnTakeReward = value;
+        }
+
+        /// <summary>Auto-claim the reward as soon as it becomes available (continuous regen).</summary>
+        public bool AutoClaim
+        {
+            get => _autoClaim;
+            set => _autoClaim = value;
+        }
+
+        /// <summary>Cooldown duration in seconds; also updates the underlying timer duration.</summary>
+        public float CooldownSeconds
+        {
+            get => _cooldownSeconds;
+            set
+            {
+                _cooldownSeconds = Mathf.Max(0f, value);
+                duration = _cooldownSeconds;
+            }
+        }
+
+        /// <summary>Max rewards granted per <see cref="TakeReward"/> (-1 = all accumulated).</summary>
+        public int MaxRewardsPerTake
+        {
+            get => _maxRewardsPerTake;
+            set => _maxRewardsPerTake = value;
+        }
+
+        private void Start()
+        {
+            // WHY: Unity does not guarantee that an unassigned serialized UnityEvent is non-null when
+            // the component is created at runtime (AddComponent), so initialise the hook before
+            // subscribing. Scene/prefab listeners remain untouched when the event is serialized.
+            OnTimerCompleted ??= new UnityEngine.Events.UnityEvent();
+            OnTimerCompleted.AddListener(OnBaseTimerCompleted);
+            Time.OnChanged.AddListener(OnBaseTimeChanged);
+
+            if (_startTakeReward)
+            {
+                TakeReward();
+            }
+
+            if (_startTimerOnStart)
+            {
+                StartTime();
+            }
+            else
+            {
+                RefreshTimeState();
+            }
+
+            if (_autoClaim && CanTakeReward())
+            {
+                TakeReward();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            OnTimerCompleted?.RemoveListener(OnBaseTimerCompleted);
+            Time?.OnChanged.RemoveListener(OnBaseTimeChanged);
+        }
+
+        protected override void OnValidate()
+        {
+            _cooldownSeconds = Mathf.Max(0f, _cooldownSeconds);
+            _updateInterval = Mathf.Max(0.015f, _updateInterval);
+            _addKey = string.IsNullOrWhiteSpace(_addKey) ? "Bonus1" : _addKey.Trim();
+            _displaySeparator = string.IsNullOrEmpty(_displaySeparator) ? ":" : _displaySeparator;
+            SyncTimerConfig();
+            base.OnValidate();
+        }
+
+        protected override string GetSaveKey()
+        {
+            return LastRewardTimeKeyPrefix + _addKey;
+        }
+
+        protected override DateTime GetUtcNow()
+        {
+            return NeoTrustedTime.UtcNow;
+        }
+
+        protected override void Init()
+        {
+            SyncTimerConfig();
+            base.Init();
+            if (!SaveProvider.HasKey(GetSaveKey() + "_rt") && !_rewardAvailableOnStart)
+            {
+                SetTime(duration);
+            }
+        }
+
+        private void SyncTimerConfig()
+        {
+            duration = _cooldownSeconds;
+            updateInterval = _updateInterval;
+            countUp = false;
+            saveProgress = true;
+            saveMode = TimerSaveMode.RealTime;
+            useUnscaledTime = true;
+            pauseOnTimeScaleZero = false;
+            looping = false;
+            initialProgress = _rewardAvailableOnStart ? 1f : 0f;
+            autoStart = _startTimerOnStart;
+        }
+
+        private void OnBaseTimerCompleted()
+        {
+            if (_waitingForManualStart || _claimInProgress)
+            {
+                return;
+            }
+
+            if (GetClaimableCount() < 1)
+            {
+                // WHY: Frame time may reach zero slightly before the persisted UTC deadline.
+                // Keep ticking that remainder instead of leaving auto-claim permanently stopped.
+                if (TryGetEndUtcFromSave(out DateTime endUtc))
+                {
+                    float remaining = Mathf.Clamp((float)(endUtc - NeoTrustedTime.UtcNow).TotalSeconds, 0f, duration);
+                    if (remaining > 0f)
+                    {
+                        SetTime(remaining);
+                        Resume();
+                    }
+                }
+
+                return;
+            }
+
+            if (!_canTakeReward)
+            {
+                _canTakeReward = true;
+                OnRewardAvailable?.Invoke();
+            }
+
+            if (_autoClaim) TakeReward();
+        }
+
+        private void OnBaseTimeChanged(float _)
+        {
+            RemainingTime.Value = GetRemainingTime();
+        }
+
+        /// <summary>Remaining seconds until the next reward is available.</summary>
+        public float GetSecondsUntilReward()
+        {
+            return GetRemainingTime();
+        }
+
+        /// <summary>Formatted remaining time using component format settings.</summary>
+        public string GetFormattedTimeLeft(bool trimLeadingZeros = false)
+        {
+            return GetRemainingTime().FormatTime(_displayTimeFormat, _displaySeparator, trimLeadingZeros);
+        }
+
+        /// <summary>Number of rewards that can be claimed now (capped by max per take).</summary>
+        public int GetClaimableCount()
+        {
+            if (_waitingForManualStart || !float.IsFinite(duration) || duration <= 0f)
+            {
+                return 0;
+            }
+
+            if (!TryGetEndUtcFromSave(out DateTime endUtc))
+            {
+                return CooldownSchedule.CountClaimable(false, default, duration, default, _maxRewardsPerTake,
+                    _rewardAvailableOnStart);
+            }
+
+            DateTime lastRewardUtc = endUtc.AddSeconds(-duration);
+            return CooldownSchedule.CountClaimable(true, lastRewardUtc, duration, NeoTrustedTime.UtcNow,
+                _maxRewardsPerTake, _rewardAvailableOnStart);
+        }
+
+        /// <summary>Attempts to claim reward(s). Returns true when at least one claim succeeds.</summary>
+        [Button]
+        public bool TakeReward()
+        {
+            if (_claimInProgress)
+            {
+                return false;
+            }
+
+            int count = GetClaimableCount();
+            if (count < 1)
+            {
+                return false;
+            }
+
+            _claimInProgress = true;
+            try
+            {
+                // WHY: Consume before callbacks: a UnityEvent may attempt another claim or inspect the saved state.
+                if (_saveTimeOnTakeReward)
+                {
+                    _waitingForManualStart = false;
+                    _canTakeReward = false;
+
+                    // WHY: Re-arm the non-looping timer after completion for continuous regeneration.
+                    if (!IsRunning)
+                    {
+                        Play();
+                    }
+
+                    SetTime(duration);
+                    SaveState();
+                    RefreshTimeState();
+                }
+                else
+                {
+                    _waitingForManualStart = true;
+                    _canTakeReward = false;
+                    RemainingTime.Value = 0f;
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    OnRewardClaimed?.Invoke();
+                }
+
+                OnRewardsClaimed?.Invoke(count);
+                return true;
+            }
+            finally
+            {
+                _claimInProgress = false;
+            }
+        }
+
+        /// <summary>Shortcut for UnityEvent bindings.</summary>
+        public void Take()
+        {
+            TakeReward();
+        }
+
+        /// <summary>Whether at least one reward can be claimed now.</summary>
+        public bool CanTakeReward()
+        {
+            return !_claimInProgress && !_waitingForManualStart && GetClaimableCount() >= 1;
+        }
+
+        /// <summary>Starts timer. If save-on-claim is disabled, optionally starts cooldown from now.</summary>
+        [Button]
+        public void StartTime()
+        {
+            bool restartCooldown = !_saveTimeOnTakeReward && _saveTimeOnStartWhenSaveOnTakeDisabled;
+            if (restartCooldown)
+            {
+                SetTime(duration);
+            }
+
+            _waitingForManualStart = false;
+            if (!IsRunning)
+            {
+                // WHY: TimerObject.Play resets its time. Starting updates must preserve a restored countdown.
+                float remaining = GetRemainingTime();
+                Play();
+                SetTime(remaining);
+            }
+
+            if (restartCooldown || !TryGetEndUtcFromSave(out _))
+            {
+                SaveState();
+            }
+
+            RefreshTimeState();
+        }
+
+        /// <summary>Stops timer updates.</summary>
+        [Button]
+        public void StopTime()
+        {
+            Stop();
+        }
+
+        /// <summary>Pauses timer.</summary>
+        public void PauseTime()
+        {
+            Pause();
+        }
+
+        /// <summary>Resumes timer after pause.</summary>
+        public void ResumeTime()
+        {
+            Resume();
+        }
+
+        /// <summary>Restarts cooldown from current time.</summary>
+        public void RestartTime()
+        {
+            SetTime(duration);
+            SaveState();
+            _waitingForManualStart = false;
+            if (!IsRunning)
+            {
+                Play();
+                // WHY: An initially available reward configures Play to start at zero.
+                SetTime(duration);
+                SaveState();
+            }
+            else
+            {
+                RefreshTimeState();
+            }
+        }
+
+        /// <summary>Clears saved cooldown and makes reward available immediately.</summary>
+        [Button]
+        public void SetRewardAvailableNow()
+        {
+            SaveProvider.DeleteKey(GetSaveKey());
+            SaveProvider.DeleteKey(GetSaveKey() + "_a");
+            _waitingForManualStart = false;
+            // WHY: GetClaimableCount derives availability from the persisted end time; with the key
+            // deleted and _rewardAvailableOnStart disabled it returns 0 and RefreshTimeState/TakeReward
+            // treat the reward as not earned. Persist "cooldown ended just now" so one claim is
+            // available (small back-date guards DateTime.AddSeconds millisecond rounding).
+            SaveProvider.SetString(GetSaveKey() + "_rt", NeoTrustedTime.UtcNow.AddSeconds(-0.05).ToString("o"));
+            SetTime(0f);
+            // WHY: RefreshTimeState raises OnRewardAvailable only on the not-available -> available edge.
+            RefreshTimeState();
+        }
+
+        /// <summary>Forces immediate refresh and event dispatch.</summary>
+        [Button]
+        public void RefreshTimeState()
+        {
+            if (_waitingForManualStart)
+            {
+                RemainingTime.Value = 0f;
+                return;
+            }
+
+            RemainingTime.Value = GetRemainingTime();
+            bool available = GetClaimableCount() >= 1;
+            if (available && !_canTakeReward)
+            {
+                _canTakeReward = true;
+                OnRewardAvailable?.Invoke();
+            }
+            else if (!available)
+            {
+                _canTakeReward = false;
+            }
+        }
+
+        /// <summary>Changes additional save key suffix.</summary>
+        public void SetAdditionalKey(string addKey, bool refreshAfterChange = true)
+        {
+            _addKey = string.IsNullOrWhiteSpace(addKey) ? "Bonus1" : addKey.Trim();
+            if (refreshAfterChange)
+            {
+                _waitingForManualStart = false;
+                RefreshTimeState();
+            }
+        }
+
+        /// <summary>Tries to read last reward UTC from saved end time (endUtc - duration).</summary>
+        public bool TryGetLastRewardTimeUtc(out DateTime lastRewardUtc)
+        {
+            if (!TryGetEndUtcFromSave(out DateTime endUtc))
+            {
+                lastRewardUtc = default;
+                return false;
+            }
+
+            lastRewardUtc = endUtc.AddSeconds(-duration);
+            return true;
+        }
+
+        /// <summary>Elapsed seconds since last reward claim.</summary>
+        public float GetElapsedSinceLastReward()
+        {
+            return TryGetLastRewardTimeUtc(out DateTime lastUtc)
+                ? Mathf.Max(0f, lastUtc.GetSecondsSinceUtc(NeoTrustedTime.UtcNow))
+                : 0f;
+        }
+
+        private bool TryGetEndUtcFromSave(out DateTime endUtc)
+        {
+            endUtc = default;
+            string key = GetSaveKey() + "_rt";
+            if (!SaveProvider.HasKey(key))
+            {
+                return false;
+            }
+
+            string raw = SaveProvider.GetString(key, null);
+            return !string.IsNullOrEmpty(raw) && raw.TryParseUtcRoundTrip(out endUtc);
+        }
+    }
+}

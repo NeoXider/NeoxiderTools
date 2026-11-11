@@ -1,0 +1,437 @@
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
+
+namespace Neo.UI
+{
+    [NeoDoc("UI/VariantView.md")]
+    [CreateFromMenu("Neoxider/UI/VariantView")]
+    [AddComponentMenu("Neoxider/" + "UI/" + nameof(VariantView))]
+    public class VariantView : MonoBehaviour
+    {
+        #region NESTED_CLASSES
+
+        [Serializable]
+        public class ImageVariant
+        {
+            public Image image;
+            public Sprite[] sprites = new Sprite[0];
+        }
+
+        [Serializable]
+        public class ImageColor
+        {
+            public Image image;
+            public Color[] colors = new Color[0];
+        }
+
+        [Serializable]
+        public class TmpColorTextVariant
+        {
+            public TMP_Text tmp;
+            public bool use_text;
+            public Color[] colors = new Color[0];
+            public string[] texts = new string[0];
+        }
+
+        /// <summary>
+        ///     Each GameObjectVariant has one objects array whose length equals the state count (_maxStates).
+        ///     At index i, objects[i] is enabled; all others are disabled.
+        /// </summary>
+        [Serializable]
+        public class GameObjectVariant
+        {
+            public GameObject[] objects = new GameObject[0];
+        }
+
+        #endregion
+
+        #region FIELDS
+
+        [Header("Image / Sprite Variants")] [SerializeField]
+        private ImageVariant[] _imageVariants = new ImageVariant[0];
+
+        [Header("Image / Color Variants")] [SerializeField]
+        private ImageColor[] _imageColors = new ImageColor[0];
+
+        [Header("TMP_Text / Color / Text Variants")] [SerializeField]
+        private TmpColorTextVariant[] _textColorVariants = new TmpColorTextVariant[0];
+
+        [Space] [Header("GameObject Variants (Array)")] [SerializeField]
+        private GameObjectVariant[] _objectVariants = new GameObjectVariant[0];
+
+        [Space] [Header("State Index / Build Settings")] [SerializeField]
+        private int _currentStateIndex;
+
+        [SerializeField] private bool _isBuildPhase;
+
+        [SerializeField] private int _maxStates;
+
+        [Tooltip("Raised with the new index when SetCurrentState/NextState/PreviousState change the state.")]
+        public UnityEvent<int> OnStateChanged = new();
+
+        #endregion
+
+        #region PROPERTIES
+
+        /// <summary>
+        ///     Current state index.
+        /// </summary>
+        public int CurrentStateIndex => _currentStateIndex;
+
+        /// <summary>Legacy camelCase alias of <see cref="CurrentStateIndex" />.</summary>
+        [Obsolete("Use CurrentStateIndex.")]
+        public int currentStateIndex => _currentStateIndex;
+
+        /// <summary>
+        ///     Typed counterpart of <see cref="OnStateChanged" />: raised with the new index, before the UnityEvent,
+        ///     when <see cref="SetCurrentState" />, <see cref="NextState" /> or <see cref="PreviousState" /> change
+        ///     the state. Applying the same index again only refreshes the visuals. The authoring helpers
+        ///     <see cref="AddState" /> and <see cref="ClearAllStates" /> move the index silently.
+        /// </summary>
+        public event Action<int> StateChanged;
+
+        /// <summary>
+        ///     Total maximum number of states (computed in OnValidate).
+        /// </summary>
+        public int MaxStates => _maxStates;
+
+        #endregion
+
+        #region PUBLIC_METHODS
+
+        /// <summary>
+        ///     Advance to the next state (currentStateIndex + 1).
+        /// </summary>
+        public void NextState()
+        {
+            ChangeState(_currentStateIndex + 1);
+        }
+
+        /// <summary>
+        ///     Go to the previous state (currentStateIndex - 1).
+        /// </summary>
+        public void PreviousState()
+        {
+            ChangeState(_currentStateIndex - 1);
+        }
+
+        /// <summary>
+        ///     Set current state by index.
+        /// </summary>
+        public void SetCurrentState(int index)
+        {
+            ChangeState(index);
+        }
+
+        /// <summary>
+        ///     Expand state count to newStateCount (only if greater than current).
+        /// </summary>
+        public void AddState(int newStateCount)
+        {
+            if (!_isBuildPhase)
+            {
+                return;
+            }
+
+            if (newStateCount <= _maxStates)
+            {
+                return;
+            }
+
+            foreach (ImageVariant v in _imageVariants)
+            {
+                Array.Resize(ref v.sprites, newStateCount);
+                if (_currentStateIndex < v.sprites.Length && v.image != null)
+                {
+                    v.sprites[newStateCount - 1] = v.sprites[_currentStateIndex];
+                }
+            }
+
+            foreach (ImageColor c in _imageColors)
+            {
+                Array.Resize(ref c.colors, newStateCount);
+                if (_currentStateIndex < c.colors.Length && c.image != null)
+                {
+                    c.colors[newStateCount - 1] = c.colors[_currentStateIndex];
+                }
+            }
+
+            foreach (TmpColorTextVariant t in _textColorVariants)
+            {
+                Array.Resize(ref t.colors, newStateCount);
+                if (_currentStateIndex < t.colors.Length && t.tmp != null)
+                {
+                    t.colors[newStateCount - 1] = t.colors[_currentStateIndex];
+                }
+
+                if (t.use_text)
+                {
+                    Array.Resize(ref t.texts, newStateCount);
+                    if (_currentStateIndex < t.texts.Length && t.tmp != null)
+                    {
+                        t.texts[newStateCount - 1] = t.texts[_currentStateIndex];
+                    }
+                }
+            }
+
+            foreach (GameObjectVariant gv in _objectVariants)
+            {
+                Array.Resize(ref gv.objects, newStateCount);
+                if (_currentStateIndex < gv.objects.Length && gv.objects[_currentStateIndex] != null)
+                {
+                    gv.objects[newStateCount - 1] = gv.objects[_currentStateIndex];
+                }
+            }
+
+            _maxStates = newStateCount;
+            _currentStateIndex = Math.Min(newStateCount - 1, _maxStates - 1);
+        }
+
+        /// <summary>
+        ///     Clear all variants (arrays length 0), index = 0.
+        /// </summary>
+        public void ClearAllStates()
+        {
+            _currentStateIndex = 0;
+
+            foreach (ImageVariant v in _imageVariants)
+            {
+                v.sprites = new Sprite[0];
+            }
+
+            foreach (ImageColor c in _imageColors)
+            {
+                c.colors = new Color[0];
+            }
+
+            foreach (TmpColorTextVariant t in _textColorVariants)
+            {
+                t.colors = new Color[0];
+                if (t.use_text)
+                {
+                    t.texts = new string[0];
+                }
+            }
+
+            foreach (GameObjectVariant gv in _objectVariants)
+            {
+                gv.objects = new GameObject[0];
+            }
+
+            _maxStates = 0;
+        }
+
+        #endregion
+
+        #region PRIVATE_METHODS
+
+        private void Awake()
+        {
+            // WHY: OnValidate applies the saved index only in the Editor; an instance spawned or loaded in a
+            // player showed whatever its parts were saved with until the first state change.
+            Visual();
+        }
+
+        private void ChangeState(int newIndex)
+        {
+            if (newIndex >= 0 && newIndex < _maxStates)
+            {
+                bool changed = _currentStateIndex != newIndex;
+                _currentStateIndex = newIndex;
+                Visual();
+                if (changed)
+                {
+                    StateChanged?.Invoke(_currentStateIndex);
+                    OnStateChanged?.Invoke(_currentStateIndex);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Applies visual state to all parts (Image, Color, TMP, GameObject).
+        /// </summary>
+        private void Visual()
+        {
+            ImageVisual();
+            ImageColorVisual();
+            TextColorVisual();
+            VariantVisual();
+        }
+
+        private void ImageVisual()
+        {
+            foreach (ImageVariant v in _imageVariants)
+            {
+                if (_currentStateIndex < v.sprites.Length && v.image != null && v.sprites[_currentStateIndex] != null)
+                {
+                    v.image.sprite = v.sprites[_currentStateIndex];
+                }
+            }
+        }
+
+        private void ImageColorVisual()
+        {
+            foreach (ImageColor c in _imageColors)
+            {
+                if (_currentStateIndex < c.colors.Length && c.image != null)
+                {
+                    c.image.color = c.colors[_currentStateIndex];
+                }
+            }
+        }
+
+        private void TextColorVisual()
+        {
+            foreach (TmpColorTextVariant t in _textColorVariants)
+            {
+                if (t.tmp != null)
+                {
+                    if (_currentStateIndex < t.colors.Length)
+                    {
+                        t.tmp.color = t.colors[_currentStateIndex];
+                    }
+
+                    if (t.use_text && _currentStateIndex < t.texts.Length)
+                    {
+                        t.tmp.text = t.texts[_currentStateIndex];
+                    }
+                }
+            }
+        }
+
+        private void VariantVisual()
+        {
+            foreach (GameObjectVariant gv in _objectVariants)
+            {
+                GameObject selected = _currentStateIndex >= 0 && _currentStateIndex < gv.objects.Length
+                    ? gv.objects[_currentStateIndex]
+                    : null;
+                for (int i = 0; i < gv.objects.Length; i++)
+                {
+                    if (gv.objects[i] != null)
+                    {
+                        gv.objects[i].SetActive(gv.objects[i] == selected);
+                    }
+                }
+            }
+        }
+
+        private void OnValidate()
+        {
+            _maxStates = 0;
+
+            foreach (ImageVariant v in _imageVariants)
+            {
+                _maxStates = Math.Max(_maxStates, v.sprites.Length);
+            }
+
+            foreach (ImageColor c in _imageColors)
+            {
+                _maxStates = Math.Max(_maxStates, c.colors.Length);
+            }
+
+            foreach (TmpColorTextVariant t in _textColorVariants)
+            {
+                _maxStates = Math.Max(_maxStates, t.colors.Length);
+                if (t.use_text)
+                {
+                    _maxStates = Math.Max(_maxStates, t.texts.Length);
+                }
+            }
+
+            foreach (GameObjectVariant gv in _objectVariants)
+            {
+                _maxStates = Math.Max(_maxStates, gv.objects.Length);
+            }
+
+            foreach (ImageVariant v in _imageVariants)
+            {
+                ResizeArray(ref v.sprites, _maxStates);
+            }
+
+            foreach (ImageColor c in _imageColors)
+            {
+                ResizeArray(ref c.colors, _maxStates);
+            }
+
+            foreach (TmpColorTextVariant t in _textColorVariants)
+            {
+                ResizeArray(ref t.colors, _maxStates);
+                if (t.use_text)
+                {
+                    ResizeArray(ref t.texts, _maxStates);
+                }
+            }
+
+            foreach (GameObjectVariant gv in _objectVariants)
+            {
+                ResizeArray(ref gv.objects, _maxStates);
+            }
+
+            if (_isBuildPhase && _maxStates > 0)
+            {
+                int lastIndex = _maxStates - 1;
+
+                foreach (ImageVariant v in _imageVariants)
+                {
+                    if (v.sprites.Length > lastIndex && v.image != null)
+                    {
+                        v.sprites[lastIndex] = v.image.sprite;
+                    }
+                }
+
+                foreach (ImageColor c in _imageColors)
+                {
+                    if (c.colors.Length > lastIndex && c.image != null)
+                    {
+                        c.colors[lastIndex] = c.image.color;
+                    }
+                }
+
+                foreach (TmpColorTextVariant t in _textColorVariants)
+                {
+                    if (t.colors.Length > lastIndex && t.tmp != null)
+                    {
+                        t.colors[lastIndex] = t.tmp.color;
+                    }
+
+                    if (t.use_text && t.texts.Length > lastIndex && t.tmp != null)
+                    {
+                        t.texts[lastIndex] = t.tmp.text;
+                    }
+                }
+            }
+
+            _currentStateIndex = _maxStates > 0 ? Mathf.Clamp(_currentStateIndex, 0, _maxStates - 1) : 0;
+
+            ChangeState(_currentStateIndex);
+        }
+
+        private void ResizeArray<T>(ref T[] array, int newSize)
+        {
+            if (newSize < 0)
+            {
+                return;
+            }
+
+            if (array != null && array.Length == newSize)
+            {
+                return;
+            }
+
+            T[] newArray = new T[newSize];
+            int copyCount = array != null ? Math.Min(array.Length, newSize) : 0;
+            for (int i = 0; i < copyCount; i++)
+            {
+                newArray[i] = array[i];
+            }
+
+            array = newArray;
+        }
+
+        #endregion
+    }
+}

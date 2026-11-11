@@ -1,0 +1,236 @@
+using UnityEditor;
+using UnityEngine;
+
+namespace Neo.Editor
+{
+    [FilePath("ProjectSettings/NeoInspectorSettings.asset", FilePathAttribute.Location.ProjectFolder)]
+    internal sealed class NeoInspectorSettings : ScriptableSingleton<NeoInspectorSettings>
+    {
+        [SerializeField] private bool migratedFromEditorPrefs;
+
+        [Header("Animation")]
+        [Tooltip("Master switch for the decorative inspector animation (mascot, rainbow frame, update pulse). " +
+                 "Turn it off if the editor feels slow.")]
+        [SerializeField]
+        private bool enableAnimations = true;
+
+        [Tooltip("Keep animating while the game is running. Off by default so the inspector does not compete " +
+                 "with the game for editor time.")]
+        [SerializeField]
+        private bool animateInPlayMode;
+
+        [Tooltip("Upper limit for inspector animation repaints per second.")]
+        [SerializeField]
+        private int animationFps = NeoInspectorAnimation.DefaultFps;
+
+        [Tooltip("Eased transitions for sections opening and closing, hover highlights and switches. Follows the " +
+                 "master switch and the Play Mode rule.")]
+        [SerializeField]
+        private bool enableTransitions = true;
+
+        [Header("Banner")]
+        [Tooltip("With several Neo components on one GameObject only the first shows the full banner; the others " +
+                 "get the one-row compact header.")]
+        [SerializeField]
+        private bool compactRepeatedBanners = true;
+
+        [Header("Rainbow Effects - Text")] [SerializeField]
+        private bool enableRainbowSignature = true;
+
+        [SerializeField] private bool enableRainbowSignatureAnimation = true;
+
+        [Header("Rainbow Effects - Line")] [SerializeField]
+        private bool enableRainbowOutline = true;
+
+        [SerializeField] private bool enableRainbowComponentOutline = true;
+
+        [SerializeField] private bool enableRainbowLineAnimation = true;
+
+        [Header("Rainbow Settings")] [SerializeField]
+        private float rainbowSpeed = 0.1f;
+
+        [SerializeField] private float rainbowSaturation = 0.8f;
+
+        [SerializeField] private float rainbowBrightness = 1f;
+
+        [SerializeField] private float rainbowOutlineSize = 1.5f;
+
+        [SerializeField] private float rainbowOutlineAlpha = 0.6f;
+
+        [SerializeField] private float rainbowComponentOutlineWidth = 2f;
+
+        [Header("Header")] [SerializeField] private Color scriptNameColor = new(0.35f, 1f, 0.35f, 1f);
+
+        [SerializeField] private int minFieldsForHeaderCategory = 3;
+
+        [Header("Lists & Arrays")]
+        [Tooltip(
+            "Use Unity default list/array drawing. Disable to use Neoxider custom foldouts (can break list logic in some cases).")]
+        [SerializeField]
+        private bool useDefaultListAndArrayDrawing = true;
+
+        public bool UseDefaultListAndArrayDrawing => useDefaultListAndArrayDrawing;
+
+        public bool EnableAnimations => enableAnimations;
+        public bool AnimateInPlayMode => animateInPlayMode;
+        public int AnimationFps => NeoInspectorAnimation.ClampFps(animationFps);
+        public bool EnableTransitions => enableTransitions;
+        public bool CompactRepeatedBanners => compactRepeatedBanners;
+
+        public bool EnableRainbowSignature => enableRainbowSignature;
+        public bool EnableRainbowSignatureAnimation => enableRainbowSignatureAnimation;
+        public bool EnableRainbowOutline => enableRainbowOutline;
+        public bool EnableRainbowComponentOutline => enableRainbowComponentOutline;
+        public bool EnableRainbowLineAnimation => enableRainbowLineAnimation;
+
+        public float RainbowSpeed => rainbowSpeed;
+        public float RainbowSaturation => rainbowSaturation;
+        public float RainbowBrightness => rainbowBrightness;
+        public float RainbowOutlineSize => rainbowOutlineSize;
+        public float RainbowOutlineAlpha => rainbowOutlineAlpha;
+        public float RainbowComponentOutlineWidth => rainbowComponentOutlineWidth;
+        public Color ScriptNameColor => scriptNameColor;
+        public int MinFieldsForHeaderCategory => minFieldsForHeaderCategory;
+
+        public void SetEnableAnimations(bool value)
+        {
+            enableAnimations = value;
+            Save(true);
+        }
+
+        public void SetAnimateInPlayMode(bool value)
+        {
+            animateInPlayMode = value;
+            Save(true);
+        }
+
+        public void SetAnimationFps(int value)
+        {
+            animationFps = NeoInspectorAnimation.ClampFps(value);
+            Save(true);
+        }
+
+        public void SetEnableTransitions(bool value)
+        {
+            enableTransitions = value;
+            Save(true);
+        }
+
+        public void SetCompactRepeatedBanners(bool value)
+        {
+            compactRepeatedBanners = value;
+            Save(true);
+        }
+
+        public void SetRainbowSaturation(float value)
+        {
+            rainbowSaturation = Mathf.Clamp01(value);
+            Save(true);
+        }
+
+        public void SetRainbowBrightness(float value)
+        {
+            rainbowBrightness = Mathf.Clamp01(value);
+            Save(true);
+        }
+
+        public void SetEnableRainbowSignature(bool value)
+        {
+            enableRainbowSignature = value;
+            Save(true);
+        }
+
+        public void SetEnableRainbowSignatureAnimation(bool value)
+        {
+            enableRainbowSignatureAnimation = value;
+            Save(true);
+        }
+
+        public void SetEnableRainbowOutline(bool value)
+        {
+            enableRainbowOutline = value;
+            Save(true);
+        }
+
+        public void SetEnableRainbowComponentOutline(bool value)
+        {
+            enableRainbowComponentOutline = value;
+            Save(true);
+        }
+
+        public void SetEnableRainbowLineAnimation(bool value)
+        {
+            enableRainbowLineAnimation = value;
+            Save(true);
+        }
+
+        public void SetRainbowSpeed(float value)
+        {
+            rainbowSpeed = value;
+            Save(true);
+        }
+
+        public void SetScriptNameColor(Color value)
+        {
+            scriptNameColor = value;
+            Save(true);
+        }
+
+        public void SetMinFieldsForHeaderCategory(int value)
+        {
+            minFieldsForHeaderCategory = Mathf.Max(0, value);
+            Save(true);
+        }
+
+        public void SetUseDefaultListAndArrayDrawing(bool value)
+        {
+            useDefaultListAndArrayDrawing = value;
+            Save(true);
+        }
+
+        public void EnsureMigratedFromEditorPrefs()
+        {
+            if (migratedFromEditorPrefs)
+            {
+                return;
+            }
+
+            bool hasAnyKey =
+                EditorPrefs.HasKey("Neo.EnableRainbowSignature") ||
+                EditorPrefs.HasKey("Neo.EnableRainbowSignatureAnimation") ||
+                EditorPrefs.HasKey("Neo.EnableRainbowOutline") ||
+                EditorPrefs.HasKey("Neo.EnableRainbowComponentOutline") ||
+                EditorPrefs.HasKey("Neo.EnableRainbowLineAnimation") ||
+                EditorPrefs.HasKey("Neo.RainbowSpeed") ||
+                EditorPrefs.HasKey("Neo.RainbowSaturation") ||
+                EditorPrefs.HasKey("Neo.RainbowBrightness") ||
+                EditorPrefs.HasKey("Neo.RainbowOutlineSize") ||
+                EditorPrefs.HasKey("Neo.RainbowOutlineAlpha") ||
+                EditorPrefs.HasKey("Neo.RainbowComponentOutlineWidth");
+
+            if (hasAnyKey)
+            {
+                enableRainbowSignature = EditorPrefs.GetBool("Neo.EnableRainbowSignature", enableRainbowSignature);
+                enableRainbowSignatureAnimation =
+                    EditorPrefs.GetBool("Neo.EnableRainbowSignatureAnimation", enableRainbowSignatureAnimation);
+
+                enableRainbowOutline = EditorPrefs.GetBool("Neo.EnableRainbowOutline", enableRainbowOutline);
+                enableRainbowComponentOutline =
+                    EditorPrefs.GetBool("Neo.EnableRainbowComponentOutline", enableRainbowComponentOutline);
+                enableRainbowLineAnimation =
+                    EditorPrefs.GetBool("Neo.EnableRainbowLineAnimation", enableRainbowLineAnimation);
+
+                rainbowSpeed = EditorPrefs.GetFloat("Neo.RainbowSpeed", rainbowSpeed);
+                rainbowSaturation = EditorPrefs.GetFloat("Neo.RainbowSaturation", rainbowSaturation);
+                rainbowBrightness = EditorPrefs.GetFloat("Neo.RainbowBrightness", rainbowBrightness);
+                rainbowOutlineSize = EditorPrefs.GetFloat("Neo.RainbowOutlineSize", rainbowOutlineSize);
+                rainbowOutlineAlpha = EditorPrefs.GetFloat("Neo.RainbowOutlineAlpha", rainbowOutlineAlpha);
+                rainbowComponentOutlineWidth =
+                    EditorPrefs.GetFloat("Neo.RainbowComponentOutlineWidth", rainbowComponentOutlineWidth);
+            }
+
+            migratedFromEditorPrefs = true;
+            Save(true);
+        }
+    }
+}

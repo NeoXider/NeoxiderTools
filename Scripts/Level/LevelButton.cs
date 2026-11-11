@@ -1,0 +1,119 @@
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
+
+namespace Neo.Level
+{
+        [NeoDoc("Level/LevelButton.md")]
+        [CreateFromMenu("Neoxider/Level/LevelButton")]
+        [AddComponentMenu("Neoxider/" + "Level/" + nameof(LevelButton))]
+        public class LevelButton : MonoBehaviour
+        {
+            [Header("References")] [SerializeField]
+            private Button _button;
+
+            [SerializeField] private GameObject[] _closes = Array.Empty<GameObject>(), _opens = Array.Empty<GameObject>();
+            [SerializeField] private TextMeshProUGUI _textLvl;
+            [SerializeField] private LevelManager _levelManager;
+
+            [Header("Settings")] public bool activ;
+            public int level;
+
+            public UnityEvent<int> OnChangeVisual;
+
+            public UnityEvent OnDisableVisual;
+            public UnityEvent OnEnableVisual;
+            public UnityEvent OnCurrentVisual;
+
+            private void Start()
+            {
+                if (_button == null)
+                {
+                    _button = GetComponent<Button>();
+                }
+
+                if (_button != null)
+                {
+                    _button.onClick.AddListener(Click);
+                }
+            }
+
+            private void OnDestroy()
+            {
+                if (_button != null)
+                {
+                    _button.onClick.RemoveListener(Click);
+                }
+            }
+
+            private void OnValidate()
+            {
+                if (_button == null)
+                {
+                    _button = GetComponent<Button>();
+                }
+            }
+
+            public void Click()
+            {
+                if (activ && _levelManager != null)
+                {
+                    _levelManager.SetLevel(level);
+                }
+            }
+
+            public void SetLevelManager(LevelManager levelManager)
+            {
+                _levelManager = levelManager;
+            }
+
+            public void SetVisual(int idVisual, int level)
+            {
+                activ = idVisual != 0;
+                this.level = level;
+
+                for (int i = 0; _closes != null && i < _closes.Length; i++)
+                {
+                    if (_closes[i] != null)
+                    {
+                        _closes[i].SetActive(!activ);
+                    }
+                }
+
+                for (int i = 0; _opens != null && i < _opens.Length; i++)
+                {
+                    if (_opens[i] != null)
+                    {
+                        _opens[i].SetActive(activ);
+                    }
+                }
+
+                if (_textLvl != null)
+                {
+                    _textLvl.text = ((long)level + 1).ToString();
+                }
+
+                Events(idVisual);
+            }
+
+            private void Events(int idVisual)
+            {
+                OnChangeVisual?.Invoke(idVisual);
+
+                if (idVisual == 0)
+                {
+                    OnDisableVisual?.Invoke();
+                }
+                else if (idVisual == 1)
+                {
+                    OnCurrentVisual?.Invoke();
+                }
+                else if (idVisual == 2)
+                {
+                    OnEnableVisual?.Invoke();
+                }
+            }
+        }
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Neo.GridSystem",
+    "references": [
+        "Neo.PropertyAttribute",
+        "Neo.Extensions",
+        "Neo.Merge"
+    ]
+}

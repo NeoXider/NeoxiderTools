@@ -1,0 +1,99 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Neo.Progression
+{
+    /// <summary>
+    ///     Serializable meta-progression payload stored by the progression manager.
+    /// </summary>
+    [Serializable]
+    public sealed class ProgressionProfileData
+    {
+        [SerializeField] private int _version = 2;
+        [SerializeField] private int _availablePerkPoints;
+        [SerializeField] private bool _hasPremium;
+        [SerializeField] private List<string> _unlockedNodeIds = new();
+        [SerializeField] private List<string> _purchasedPerkIds = new();
+
+        /// <summary>
+        ///     Gets or sets the serialized profile version.
+        /// </summary>
+        public int Version
+        {
+            get => _version;
+            set => _version = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets the currently unspent perk points.
+        /// </summary>
+        public int AvailablePerkPoints
+        {
+            get => _availablePerkPoints;
+            set => _availablePerkPoints = Mathf.Max(0, value);
+        }
+
+        /// <summary>
+        ///     Gets or sets whether the user owns the premium track.
+        /// </summary>
+        public bool HasPremium
+        {
+            get => _hasPremium;
+            set => _hasPremium = value;
+        }
+
+        /// <summary>
+        ///     Gets the unlocked node identifiers.
+        /// </summary>
+        public List<string> UnlockedNodeIds => _unlockedNodeIds;
+
+        /// <summary>
+        ///     Gets the purchased perk identifiers.
+        /// </summary>
+        public List<string> PurchasedPerkIds => _purchasedPerkIds;
+
+        /// <summary>
+        ///     Cleans invalid values and removes empty identifiers.
+        /// </summary>
+        public void Sanitize()
+        {
+            _availablePerkPoints = Mathf.Max(0, _availablePerkPoints);
+            _unlockedNodeIds ??= new List<string>();
+            _purchasedPerkIds ??= new List<string>();
+            RemoveInvalidEntries(_unlockedNodeIds);
+            RemoveInvalidEntries(_purchasedPerkIds);
+        }
+
+        /// <summary>
+        ///     Creates a deep copy of the profile.
+        /// </summary>
+        public ProgressionProfileData Clone()
+        {
+            return new ProgressionProfileData
+            {
+                Version = _version,
+                AvailablePerkPoints = _availablePerkPoints,
+                HasPremium = _hasPremium,
+                _unlockedNodeIds = _unlockedNodeIds != null ? new List<string>(_unlockedNodeIds) : new List<string>(),
+                _purchasedPerkIds = _purchasedPerkIds != null ? new List<string>(_purchasedPerkIds) : new List<string>()
+            };
+        }
+
+        private static void RemoveInvalidEntries(List<string> values)
+        {
+            if (values == null)
+            {
+                return;
+            }
+
+            for (int i = values.Count - 1; i >= 0; i--)
+            {
+                if (string.IsNullOrWhiteSpace(values[i]))
+                {
+                    values.RemoveAt(i);
+                }
+            }
+        }
+    }
+}
