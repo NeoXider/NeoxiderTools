@@ -164,8 +164,8 @@ Supported demo roots are:
 
 Discovery reads `Assets/NeoxiderDemos`; a missing demo tree causes an explicit skip.
 `SampleScenePlaySmokeTests` loads every scene of the demo trees (one case per scene: 12
-frames, no error/assert/exception logs, Filled Images with sprites, no unbuilt demo scene, the authored info card on
-builder scenes) and `AudioDemoScenePlayTests` drives the authored AudioDemo buttons; see
+frames, no error/assert/exception logs, Filled Images with sprites, no demo scene with missing references, the authored info card on
+Demo scenes) and `AudioDemoScenePlayTests` drives the authored AudioDemo buttons; see
 [sample, demo and packaging tests](Testing.md#sample-demo-and-packaging-tests). If several imported versions exist, retain the version intended for testing;
 automatic version selection is not guaranteed. The optional multiplayer tests in
 `MultSceneNetworkTests` need the development project's `Assets/Scenes/Mult.unity` and skip if absent.

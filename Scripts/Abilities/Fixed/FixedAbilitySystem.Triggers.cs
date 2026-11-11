@@ -234,6 +234,7 @@ namespace Neo.Abilities.Fixed
                     context.Origin = FixedEffectOrigin.Reaction;
                     context.SourceStacks = m.Stacks;
                     context.Damage = damage;
+                    m.CopySpentTo(context);
                     if (TryGetAbility(m.SourceAbilityId, out FixedAbilityBlueprint ability))
                     {
                         context.Specials = ability.Specials;

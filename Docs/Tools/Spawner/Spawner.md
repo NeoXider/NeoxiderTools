@@ -24,6 +24,13 @@
 | **Time Between Waves** | Pause duration between waves (in seconds). |
 | **Spawn Points** | Array of spawn points. Empty → spawn from the spawner's own transform; with several, a **random** point is chosen per spawn (position and rotation come from the same point). A `Spawn Area` collider takes priority over points. |
 | **Spawn Area / Spawn Area 2D** | Optional `Collider` / `Collider2D` — spawn a random point inside the collider bounds instead of using `Spawn Points`. Takes priority over `Spawn Points` when assigned. |
+| **Prefab Weights** | Relative weight per prefab, in the order of **Prefabs**. Empty or missing entries count as 1; 0 never spawns. |
+| **Prefab Unlock Seconds** | Seconds after `StartSpawn` before each prefab may spawn (tougher enemies join later). Missing entries count as 0. While nothing is unlocked the loop waits. |
+| **Delay Over Time** | Multiplier on the spawn delay over seconds since `StartSpawn` (x = seconds, y = multiplier). Empty = 1; a curve falling to 0.3 spawns three times as often. |
+| **Max Active** | The loop waits while this many spawned objects are active. 0 = no cap. |
+| **Around Target** / **Ring Min/Max Radius** / **Ring Plane** | Spawn on a ring around a transform (the player in a survivor game), uniform over the ring area, in `XY` (2D) or `XZ` (3D). Wins over spawn points; a spawn area collider still wins over the ring; deny zones re-roll ring points too. |
+
+C#: `PickPrefabIndex()`, `ElapsedSpawnSeconds`, `AroundTarget`, `MaxActive`, `SetRing(min, max, plane)`, `SetSelection(weights, unlockSeconds)`, `SetDelayOverTime(curve)`. The math is the pure `SpawnPlanner` (`PickWeighted`, `RingPoint`, `DelayMultiplier`), usable from game code and covered by `SpawnPlannerTests`.
 | **Deny Areas / Deny Areas 2D** | `Collider[]` / `Collider2D[]` — zones where spawning is forbidden. A candidate position inside any deny zone is rejected and re-rolled (see `IsPositionAllowed`/`Max Rejection Tries` below). Only applies when resolving a position via `Spawn Area`/`Spawn Area 2D`. |
 | **Max Rejection Tries** | How many times to re-roll a candidate that landed inside a deny zone before giving up and using the last candidate anyway (`Min(1)`). |
 | **Max Waves** | Maximum number of waves in `Waves` mode. `0` = infinite waves. |

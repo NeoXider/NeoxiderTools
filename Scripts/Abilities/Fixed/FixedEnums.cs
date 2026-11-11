@@ -106,6 +106,38 @@ namespace Neo.Abilities.Fixed
         TargetUnitLevel = 3
     }
 
+    /// <summary>How the scaling term combines with a leveled amount (the float ScaleAmountMode).</summary>
+    public enum FixedScaleMode
+    {
+        /// <summary>value += k × stat.</summary>
+        Add = 0,
+
+        /// <summary>value × (1 + k × stat), applied last.</summary>
+        Multiply = 1
+    }
+
+    /// <summary>What the scaling term reads (the float ScaleAmountStat).</summary>
+    public enum FixedScaleStat
+    {
+        Property = 0,
+        ResourceCurrent = 1,
+        ResourceMax = 2,
+        ResourceMissing = 3
+    }
+
+    /// <summary>How much of a resource a cost takes (the float AbilityCostMode).</summary>
+    public enum FixedCostMode
+    {
+        /// <summary>Exactly the resolved amount.</summary>
+        Fixed = 0,
+
+        /// <summary>min(available, amount); needs at least MinAmountRaw available.</summary>
+        UpTo = 1,
+
+        /// <summary>Everything available; needs at least MinAmountRaw available.</summary>
+        All = 2
+    }
+
     /// <summary>Flags of one damage application (same bits as the float DamageFlags).</summary>
     [Flags]
     public enum FixedDamageFlags

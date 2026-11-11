@@ -40,7 +40,8 @@ namespace Neo.Abilities
     /// <summary>
     ///     Validates authored abilities and modifiers against the runtime model: unknown ops, payload / cast /
     ///     modifier references, trigger settings (EveryNth, HealthBelow, state watchers, charges, cooldowns), damage
-    ///     hook ops outside hooks, zone and cone geometry, stack policies and cast_ability cycles. Pure C#; the Ability
+    ///     hook ops outside hooks, zone and cone geometry, stack policies, cast_ability cycles, per-level cast parameters,
+    ///     cost modes and keys, per-level node values and the spent / scale terms of leveled values. Pure C#; the Ability
     ///     Designer shows its findings next to its own asset checks.
     /// </summary>
     public static class AbilityContentValidator
@@ -92,8 +93,11 @@ namespace Neo.Abilities
                     }
 
                     context.Owner(false, ability.Id);
+                    context.CurrentAbility = ability;
+                    CheckLeveledCastParameters(context, ability);
                     CheckNodes(context, "Cast", ability.CastEffects, NodeScope.Ability);
                     CheckNodes(context, "Impact", ability.ImpactEffects, NodeScope.Ability);
+                    context.CurrentAbility = null;
                     if (ability.Delivery == AbilityDeliveryType.Projectile && string.IsNullOrEmpty(ability.ProjectileArchetypeId))
                     {
                         context.Warn("Projectile delivery without a ProjectileArchetypeId: the host has nothing to spawn.");
@@ -140,6 +144,22 @@ namespace Neo.Abilities
                 (modifier.DurationByLevel == null || modifier.DurationByLevel.Length == 0))
             {
                 context.Warn("Prolong policy on a permanent modifier has nothing to extend.");
+            }
+
+            if (modifier.Properties != null)
+            {
+                for (int p = 0; p < modifier.Properties.Count; p++)
+                {
+                    float[] byLevel = modifier.Properties[p].ValueByLevel;
+                    if (!AllFinite(byLevel))
+                    {
+                        context.Error("[Property #" + (p + 1) + "] ValueByLevel has a non-finite entry.");
+                    }
+                    else if (modifier.Properties[p].Op == PropertyOp.Mul && AnyNegative(byLevel))
+                    {
+                        context.Warn("[Property #" + (p + 1) + "] a negative Mul ValueByLevel entry flips the property's sign.");
+                    }
+                }
             }
 
             CheckNodes(context, "Tick", modifier.TickEffects, NodeScope.ModifierTick);
@@ -306,6 +326,8 @@ namespace Neo.Abilities
                     context.Warn(prefix + "AmountPerStack only scales modifier ticks and reactions.");
                 }
 
+                CheckNodeLevels(context, prefix, node, scope);
+
                 bool isHookOp = AbilityIdComparer.Same(op, AbilityEffectOps.ModifyDamage) ||
                                 AbilityIdComparer.Same(op, AbilityEffectOps.Reflect);
                 if (isHookOp && scope != NodeScope.DamageHook)
@@ -389,6 +411,233 @@ namespace Neo.Abilities
                     context.Error(prefix + "ModifierId '" + node.ModifierId + "' does not match any modifier.");
                 }
             }
+        }
+
+        private static void CheckLeveledCastParameters(Context context, AbilityBlueprint ability)
+        {
+            CheckNonNegative(context, "RangeByLevel", ability.RangeByLevel);
+            CheckNonNegative(context, "CooldownByLevel", ability.CooldownByLevel);
+            CheckNonNegative(context, "ChargeRestoreTimeByLevel", ability.ChargeRestoreTimeByLevel);
+            CheckNonNegative(context, "ProjectileSpeedByLevel", ability.ProjectileSpeedByLevel);
+            if (ability.MaxChargesByLevel != null)
+            {
+                for (int i = 0; i < ability.MaxChargesByLevel.Length; i++)
+                {
+                    if (ability.MaxChargesByLevel[i] < 0)
+                    {
+                        context.Error("MaxChargesByLevel[" + i + "] is negative.");
+                        break;
+                    }
+                }
+            }
+
+            if (ability.Costs != null)
+            {
+                for (int i = 0; i < ability.Costs.Count; i++)
+                {
+                    CheckCost(context, ability, ability.Costs[i], "[Cost #" + (i + 1) + "] ");
+                }
+            }
+
+            if (ability.Specials != null)
+            {
+                for (int i = 0; i < ability.Specials.Count; i++)
+                {
+                    AbilitySpecialValue special = ability.Specials[i];
+                    CheckLeveled(context, "[Special '" + special.Name + "'] ", special.Value);
+                }
+            }
+        }
+
+        private static void CheckCost(Context context, AbilityBlueprint ability, AbilityCost cost, string prefix)
+        {
+            if (cost.Mode != AbilityCostMode.Fixed && string.IsNullOrWhiteSpace(cost.ResourceId))
+            {
+                context.Error(prefix + cost.Mode + " cost has no ResourceId.");
+            }
+
+            if (!AllFinite(cost.AmountByLevel) || AnyNegative(cost.AmountByLevel))
+            {
+                context.Error(prefix + "AmountByLevel entries must be finite and not negative.");
+            }
+
+            if (!string.IsNullOrEmpty(cost.AmountKey) && !HasSpecial(ability, cost.AmountKey))
+            {
+                context.Error(prefix + "AmountKey '" + cost.AmountKey + "' does not match any special of the ability.");
+            }
+
+            if (float.IsNaN(cost.MinAmount) || float.IsInfinity(cost.MinAmount) || cost.MinAmount < 0f)
+            {
+                context.Error(prefix + "MinAmount must be finite and not negative.");
+            }
+            else if (cost.MinAmount > 0f && cost.Mode == AbilityCostMode.Fixed)
+            {
+                context.Warn(prefix + "MinAmount is only read by the UpTo and All modes.");
+            }
+
+            if (cost.Mode == AbilityCostMode.All &&
+                (cost.Amount != 0f || HasEntries(cost.AmountByLevel) || !string.IsNullOrEmpty(cost.AmountKey)))
+            {
+                context.Warn(prefix + "All spends everything available and ignores the amount.");
+            }
+        }
+
+        private static void CheckNodeLevels(Context context, string prefix, EffectNodeData node, NodeScope scope)
+        {
+            if (node.ChanceByLevel != null)
+            {
+                for (int i = 0; i < node.ChanceByLevel.Length; i++)
+                {
+                    float chance = node.ChanceByLevel[i];
+                    if (!(chance >= 0f) || chance > 1f)
+                    {
+                        context.Error(prefix + "ChanceByLevel[" + i + "] must be in [0, 1].");
+                        break;
+                    }
+                }
+            }
+
+            if (node.MaxTargetsByLevel != null)
+            {
+                for (int i = 0; i < node.MaxTargetsByLevel.Length; i++)
+                {
+                    if (node.MaxTargetsByLevel[i] < 0)
+                    {
+                        context.Error(prefix + "MaxTargetsByLevel[" + i + "] is negative.");
+                        break;
+                    }
+                }
+            }
+
+            bool zone = AbilityIdComparer.Same(node.OpId, AbilityEffectOps.Zone);
+            if (zone)
+            {
+                if (!AllFinite(node.DurationByLevel) || AnyNegative(node.DurationByLevel) ||
+                    !AllFinite(node.IntervalByLevel) || AnyNegative(node.IntervalByLevel))
+                {
+                    context.Error(prefix + "zone DurationByLevel and IntervalByLevel must be finite and not negative.");
+                }
+            }
+            else if (HasEntries(node.DurationByLevel) || HasEntries(node.IntervalByLevel))
+            {
+                context.Warn(prefix + "DurationByLevel / IntervalByLevel are only read by the zone op.");
+            }
+
+            CheckLeveled(context, prefix, node.ToLeveledValue());
+            if (!string.IsNullOrEmpty(node.AmountSpentResource) && scope == NodeScope.Ability &&
+                context.CurrentAbility != null && !PaysResource(context.CurrentAbility, node.AmountSpentResource))
+            {
+                context.Warn(prefix + "AmountSpentResource '" + node.AmountSpentResource +
+                             "' is not paid by any cost of this ability, so the spent term stays 0.");
+            }
+        }
+
+        private static void CheckLeveled(Context context, string prefix, LeveledValue value)
+        {
+            bool hasSpent = !string.IsNullOrEmpty(value.SpentResource);
+            if (float.IsNaN(value.SpentCoefficient) || float.IsInfinity(value.SpentCoefficient))
+            {
+                context.Error(prefix + "the spent coefficient is not a finite number.");
+            }
+            else if (hasSpent && value.SpentCoefficient == 0f)
+            {
+                context.Warn(prefix + "spent resource '" + value.SpentResource + "' has a 0 coefficient and adds nothing.");
+            }
+            else if (!hasSpent && value.SpentCoefficient != 0f)
+            {
+                context.Warn(prefix + "a spent coefficient without a spent resource adds nothing.");
+            }
+
+            if ((value.ScaleMode != ScaleAmountMode.Add || value.ScaleStat != ScaleAmountStat.Property) &&
+                string.IsNullOrEmpty(value.ScaleProperty))
+            {
+                context.Warn(prefix + "Scale Mode / Scale Stat are set but no scale property or resource id is named.");
+            }
+        }
+
+        private static void CheckNonNegative(Context context, string field, float[] values)
+        {
+            if (!AllFinite(values) || AnyNegative(values))
+            {
+                context.Error(field + " entries must be finite and not negative.");
+            }
+        }
+
+        private static bool HasEntries<T>(T[] values)
+        {
+            return values != null && values.Length > 0;
+        }
+
+        private static bool AllFinite(float[] values)
+        {
+            if (values == null)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (float.IsNaN(values[i]) || float.IsInfinity(values[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AnyNegative(float[] values)
+        {
+            if (values == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (values[i] < 0f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasSpecial(AbilityBlueprint ability, string name)
+        {
+            if (ability.Specials == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < ability.Specials.Count; i++)
+            {
+                if (AbilityIdComparer.Same(ability.Specials[i].Name, name))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool PaysResource(AbilityBlueprint ability, string resourceId)
+        {
+            if (ability.Costs == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < ability.Costs.Count; i++)
+            {
+                if (AbilityIdComparer.Same(ability.Costs[i].ResourceId, resourceId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool AllPositive(float[] values)
@@ -476,6 +725,10 @@ namespace Neo.Abilities
             public readonly HashSet<string> AbilityIds;
             public readonly HashSet<string> ModifierIds;
             public readonly EffectOpRegistry Ops;
+
+            /// <summary>The ability whose nodes are being checked (null for modifiers).</summary>
+            public AbilityBlueprint CurrentAbility;
+
             private readonly List<AbilityContentIssue> _results;
             private bool _isModifier;
             private string _ownerId;

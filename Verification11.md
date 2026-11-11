@@ -1,8 +1,8 @@
 # 11.0.0 verification record
 
 > **Historical record for 11.0.0.** The source changed afterwards: the HTML → UI Toolkit converter moved to the
-> separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package and the demo scenes were re-authored by
-> editor scene builders. Nothing below verifies the 12.0.0 source; see [Upgrading to 12](Docs/Migration12.md).
+> separate [HtmlToUitk](https://github.com/NeoXider/HtmlToUitk) package and the demo scenes were re-authored as
+> saved scenes. Nothing below verifies the 12.0.0 source; see [Upgrading to 12](Docs/Migration12.md).
 
 **What it is:** the historical record of the Windows validation performed for the 11.0.0 release.
 

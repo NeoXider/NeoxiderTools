@@ -718,7 +718,7 @@ namespace Neo.Abilities.Editor
                     name.AddToClassList("nad-row-name");
                     name.style.flexGrow = 1f;
                     row.Add(name);
-                    Label op = new Label(contribution.Op + " " + contribution.Value.ToString("0.##"));
+                    Label op = new Label(contribution.Op + " " + ContributionValueText(contribution));
                     op.AddToClassList("nad-prop-op");
                     row.Add(op);
                     if (contribution.PerStackValue != 0f)
@@ -799,6 +799,23 @@ namespace Neo.Abilities.Editor
             Label hint = new Label("Use the inspector on the right to edit lists; this board is a live summary.");
             hint.AddToClassList("nad-empty-note");
             board.Add(hint);
+        }
+
+        private static string ContributionValueText(PropertyContribution contribution)
+        {
+            float[] byLevel = contribution.ValueByLevel;
+            if (byLevel == null || byLevel.Length == 0)
+            {
+                return contribution.Value.ToString("0.##");
+            }
+
+            string[] values = new string[byLevel.Length];
+            for (int i = 0; i < byLevel.Length; i++)
+            {
+                values[i] = byLevel[i].ToString("0.##");
+            }
+
+            return string.Join("/", values) + " by level";
         }
 
         private static VisualElement Section(VisualElement parent, string title, string subtitle)

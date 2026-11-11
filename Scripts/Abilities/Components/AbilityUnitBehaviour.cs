@@ -31,7 +31,14 @@ namespace Neo.Abilities
         [SerializeField] private UnityEvent<string> _onModifierRemoved = new UnityEvent<string>();
         [SerializeField] private UnityEvent<string> _onAbilityCast = new UnityEvent<string>();
 
+        [Tooltip("Raised when the effective move speed changes: the move_speed property, or 0 while stunned, rooted or " +
+                 "frozen. Wire it to a mover (KeyboardMover.SetSpeed, Follow.SetPositionSpeed) so haste and slows move " +
+                 "the object. Checked once per frame only while this event has a listener.")]
+        [SerializeField] private UnityEvent<float> _onMoveSpeedChanged = new UnityEvent<float>();
+
         private LevelComponent _subscribedLevelSource;
+        private bool _trackMoveSpeed;
+        private float _lastMoveSpeed = float.NaN;
 
         // WHY: one cached delegate per component; pooled units subscribe/unsubscribe on every enable cycle.
         private System.Action<AbilityEventArgs> _eventHandler;
@@ -46,6 +53,27 @@ namespace Neo.Abilities
         public UnityEvent<string> OnModifierApplied => _onModifierApplied;
         public UnityEvent<string> OnModifierRemoved => _onModifierRemoved;
         public UnityEvent<string> OnAbilityCast => _onAbilityCast;
+
+        /// <summary>
+        ///     Raised with <see cref="MoveSpeed" /> whenever it changes (and once after each enable). Reading this property
+        ///     from code turns the per-frame check on, so code listeners work like Inspector ones.
+        /// </summary>
+        public UnityEvent<float> OnMoveSpeedChanged
+        {
+            get
+            {
+                _trackMoveSpeed = true;
+                return _onMoveSpeedChanged;
+            }
+        }
+
+        /// <summary>
+        ///     Effective move speed: the unit's <c>move_speed</c> property, or 0 while it cannot move (stunned, rooted,
+        ///     frozen) or is not registered.
+        /// </summary>
+        public float MoveSpeed => Unit != null && MotionSupport.CanMove(Unit)
+            ? Unit.GetProperty(AbilityProperties.MoveSpeed, 0f)
+            : 0f;
 
         public UnitTemplate Template => _template;
 
@@ -93,6 +121,25 @@ namespace Neo.Abilities
             if (Unit == null)
             {
                 Register();
+            }
+
+            _lastMoveSpeed = float.NaN;
+            _trackMoveSpeed |= _onMoveSpeedChanged.GetPersistentEventCount() > 0;
+        }
+
+        private void LateUpdate()
+        {
+            if (!_trackMoveSpeed)
+            {
+                return;
+            }
+
+            float speed = MoveSpeed;
+            // WHY: exact compare is intended; the property is cached and only changes when modifiers or states do.
+            if (speed != _lastMoveSpeed)
+            {
+                _lastMoveSpeed = speed;
+                _onMoveSpeedChanged.Invoke(speed);
             }
         }
 

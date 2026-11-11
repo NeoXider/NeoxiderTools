@@ -92,8 +92,7 @@ made only of the module's components, all saved in the scene:
   `SetRuntimePrice` / `ClearRuntimePrice`, and a reset of the `SaveProvider` keys. `Shop.OnPurchasedId`,
   `OnPurchaseFailedId`, `OnSelectId` and `OnShopChanged` are wired to `Demo Controller` (`ShopDemoController`).
 
-The scene is authored by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Shop/ShopDemoBuilder.cs` (menu
-**Neoxider/Demo/Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ## Tests
 

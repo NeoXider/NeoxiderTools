@@ -31,13 +31,15 @@ namespace Neo.Abilities
 
             string archetype = !string.IsNullOrEmpty(node.ArchetypeId) ? node.ArchetypeId : payload.ProjectileArchetypeId;
             float resolved = LeveledValueResolver.ResolveAmount(node, context, UnitId.None);
-            float speed = resolved > 0f && !float.IsInfinity(resolved) ? resolved : payload.ProjectileSpeed;
+            float speed = resolved > 0f && !float.IsInfinity(resolved)
+                ? resolved
+                : payload.ResolveProjectileSpeed(context.AbilityLevel);
             if (targets.Count == 0)
             {
                 if (context.HasTargetPoint)
                 {
                     system.LaunchProjectile(payload, context.Caster, origin, context.TargetPoint - origin, UnitId.None,
-                        archetype, speed, context.AbilityLevel, NextSeed(context));
+                        archetype, speed, context.AbilityLevel, NextSeed(context), context);
                 }
 
                 return;
@@ -57,7 +59,7 @@ namespace Neo.Abilities
                         ? context.TargetPoint - origin
                         : Vector3.forward;
                 system.LaunchProjectile(payload, context.Caster, origin, direction, target, archetype, speed,
-                    context.AbilityLevel, NextSeed(context));
+                    context.AbilityLevel, NextSeed(context), context);
             }
         }
 
@@ -92,7 +94,8 @@ namespace Neo.Abilities
                     AbilityUnit unit = system.GetUnit(targets[i]);
                     if (unit != null && unit.IsAlive)
                     {
-                        system.Modifiers.Apply(modifier, context.Caster, unit.Id, context.AbilityId, context.AbilityLevel);
+                        system.Modifiers.Apply(modifier, context.Caster, unit.Id, context.AbilityId, context.AbilityLevel,
+                            context);
                     }
                 }
             }
@@ -119,7 +122,7 @@ namespace Neo.Abilities
         public void Execute(EffectContext context, EffectNodeData node, List<UnitId> targets)
         {
             AbilitySystem system = context.System;
-            float radius = LeveledValueResolver.SampleByLevel(node.RadiusByLevel, context.AbilityLevel, node.Radius);
+            float radius = node.ResolveRadius(context.AbilityLevel);
             if (!(radius > 0f))
             {
                 return;
@@ -129,8 +132,8 @@ namespace Neo.Abilities
             {
                 Caster = context.Caster,
                 Radius = radius,
-                Duration = node.Duration,
-                Interval = node.Interval,
+                Duration = node.ResolveDuration(context.AbilityLevel),
+                Interval = node.ResolveInterval(context.AbilityLevel),
                 PayloadAbilityId = node.AbilityId,
                 ModifierId = node.ModifierId,
                 TeamFilter = node.TeamFilter,

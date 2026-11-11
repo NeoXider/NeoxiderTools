@@ -56,7 +56,7 @@
 ## Demo scenes
 
 Both scenes live in the Demo download (`Assets/NeoxiderDemos/Demo/Scenes/`). Their UI, bindings and listeners are saved in the
-scenes by editor builders (`Assets/NeoxiderDemos/Demo/Editor/Builders/Rpg/`), so every connection can be inspected without
+scenes, so every connection can be inspected without
 entering Play Mode.
 
 | Scene | What it shows | Look at in the Inspector | C# equivalent |

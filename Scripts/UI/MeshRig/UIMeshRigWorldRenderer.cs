@@ -204,6 +204,7 @@ namespace Neo.UI
                 _rows,
                 GetCoordinateSpace(),
                 uvRect,
+                UIMeshRigGeometryBuilder.GetSpriteContentBounds(_sprite),
                 IsDeformationActive(),
                 _pointStates,
                 reuse);
@@ -259,12 +260,44 @@ namespace Neo.UI
             MarkGeometryDirty();
             UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
             RebuildIfNeeded();
+#if UNITY_EDITOR
+            UIMeshRigAuthoring.SetAnimationPreviewRefresh(RefreshDuringAnimationPreview, !Application.isPlaying);
+#endif
         }
 
         private void OnDisable()
         {
+#if UNITY_EDITOR
+            UIMeshRigAuthoring.SetAnimationPreviewRefresh(RefreshDuringAnimationPreview, false);
+#endif
             ReleaseRuntimeResources();
         }
+
+        /// <summary>
+        /// Applies point changes and rebuilds the mesh now instead of in the next LateUpdate. Edit Mode tools
+        /// call it after they move points, because the editor does not tick LateUpdate for them.
+        /// </summary>
+        internal void RebuildNow()
+        {
+            SynchronizePointTransforms();
+            RebuildIfNeeded();
+        }
+
+#if UNITY_EDITOR
+        private void RefreshDuringAnimationPreview()
+        {
+            if (this == null)
+            {
+                UIMeshRigAuthoring.SetAnimationPreviewRefresh(RefreshDuringAnimationPreview, false);
+                return;
+            }
+
+            if (UIMeshRigAuthoring.IsAnimationPreviewActive())
+            {
+                RebuildNow();
+            }
+        }
+#endif
 
         private void OnDestroy()
         {
@@ -299,6 +332,7 @@ namespace Neo.UI
         {
             EnsurePointCache();
             bool changed = false;
+            bool rebindAllowed = UIMeshRigAuthoring.IsRebindAllowed(_authoringMode);
             for (int index = 0; index < _points.Count; index++)
             {
                 UIMeshRigPoint point = _points[index];
@@ -310,8 +344,7 @@ namespace Neo.UI
                 // WHY: see UIMeshRigGraphic.SynchronizePointTransforms — rebinding writes serialized
                 // authoring data with no Undo entry, and the Edit Mode preview ticks this every frame.
                 // A previewed point is never rebound; stop the preview to edit the bind.
-                if (!Application.isPlaying && _authoringMode == UIMeshRigAuthoringMode.Setup &&
-                    !point.HasProceduralPose)
+                if (rebindAllowed && !point.HasProceduralPose)
                 {
                     point.CaptureRestPose(this);
                 }
@@ -436,7 +469,8 @@ namespace Neo.UI
                 return false;
             }
 
-            if (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose)
+            if (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose ||
+                UIMeshRigAuthoring.IsAnimationPreviewActive())
             {
                 return true;
             }

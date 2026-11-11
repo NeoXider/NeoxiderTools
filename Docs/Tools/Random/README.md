@@ -52,7 +52,7 @@ Open `Assets/NeoxiderDemos/Demo/Scenes/Tools/ChanceSystemExample.unity` from the
 - **NoCode column** - the `Chance` object (`ChanceSystemBehaviour`) owns the table. `Btn_Roll` calls `GenerateVoid` and `Counter.Add(1)`; `Events By Index[i]` lights the rarity tile and writes *Last drop* through `SetText`; `OnIdGenerated` clears the highlight, writes *Index* and calls `ChanceDemoController.RecordRoll`.
 - **C# column** - *Sample 100 / 1,000* runs `ChanceManager.TryEvaluate` in a loop (no events), and the bars converge on the white expected markers; *Draw 10,000 / 100,000* rolls an `IntegerChanceTable` with exact `1 in 1,000,000` jackpot odds.
 
-The scene is authored by the editor builder `ChanceSystemExampleBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ## Component documentation
 

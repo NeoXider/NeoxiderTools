@@ -35,8 +35,21 @@ namespace Neo.Tools
         [SerializeField]
         private List<UnityEvent> eventsByIndex = new();
 
+        [Header("Unique draw (offers, cards)")]
+        [Tooltip("How many different entries GenerateUniqueVoid() draws at once, for example 3 upgrade cards.")]
+        [SerializeField] [Min(1)]
+        private int drawCount = 3;
+
+        [Tooltip("Invoked before a unique draw announces its picks: hide every option here, then Events By Index " +
+                 "shows the drawn ones.")]
+        [SerializeField]
+        private UnityEvent onDrawStarted = new();
+
         [Header("Debug")] [SerializeField] [Tooltip("Log generated id and probability in the console (Editor only)")]
         private bool logDebugOnce;
+
+        private readonly List<int> _lastDraw = new();
+        private readonly List<int> _picksTaken = new();
 
         /// <summary>Invoked with the selected entry index. Same as OnIdGenerated.</summary>
         public UnityEvent<int> OnIndexSelected => OnIdGenerated;
@@ -58,6 +71,22 @@ namespace Neo.Tools
 
         /// <summary>Last selected entry (by index) after GenerateId() / EvaluateAndNotify().</summary>
         public ChanceManager.Entry LastSelectedEntry { get; private set; }
+
+        /// <summary>Indices of the last unique draw, in draw order.</summary>
+        public IReadOnlyList<int> LastDraw => _lastDraw;
+
+        /// <summary>How often each entry was taken with <see cref="ConsumePick" />, in entry order.</summary>
+        public IReadOnlyList<int> PicksTaken => _picksTaken;
+
+        /// <summary>Invoked before a unique draw announces its picks.</summary>
+        public UnityEvent OnDrawStarted => onDrawStarted;
+
+        /// <summary>Entries drawn by <see cref="GenerateUniqueVoid" />.</summary>
+        public int DrawCount
+        {
+            get => drawCount;
+            set => drawCount = Mathf.Max(1, value);
+        }
 
         private void Awake()
         {
@@ -130,6 +159,67 @@ namespace Neo.Tools
             return EvaluateAndNotify(manager.GetChanceId());
         }
 
+        /// <summary>Draws <see cref="DrawCount" /> different entries (for UnityEvents and buttons).</summary>
+        public void GenerateUniqueVoid()
+        {
+            GenerateUnique(drawCount);
+        }
+
+        /// <summary>
+        ///     Draws up to <paramref name="count" /> different entries by weight, skipping entries whose
+        ///     <c>Max Picks</c> is used up. Invokes On Draw Started, then for every pick On Index Selected,
+        ///     On Index And Weight Selected and its Events By Index entry, then On Roll Complete once.
+        ///     Returns the number drawn.
+        /// </summary>
+        public int GenerateUnique(int count)
+        {
+            EnsurePickCounters();
+            manager.PickUnique(Mathf.Max(0, count), _lastDraw, _picksTaken);
+            onDrawStarted?.Invoke();
+            for (int i = 0; i < _lastDraw.Count; i++)
+            {
+                NotifyPick(_lastDraw[i]);
+            }
+
+            onRollComplete?.Invoke();
+            return _lastDraw.Count;
+        }
+
+        /// <summary>
+        ///     Records that entry <paramref name="index" /> was taken (for example its card was chosen). Entries with
+        ///     <c>Max Picks</c> drop out of later unique draws once the limit is reached.
+        /// </summary>
+        public void ConsumePick(int index)
+        {
+            if (index < 0 || index >= manager.Count)
+            {
+                return;
+            }
+
+            EnsurePickCounters();
+            _picksTaken[index]++;
+        }
+
+        /// <summary>Forgets every recorded pick (new run, new shop).</summary>
+        public void ResetPicks()
+        {
+            _picksTaken.Clear();
+        }
+
+        /// <summary>True when entry <paramref name="index" /> can still be drawn by a unique draw.</summary>
+        public bool HasPicksLeft(int index)
+        {
+            return manager.HasPicksLeft(index, _picksTaken);
+        }
+
+        private void EnsurePickCounters()
+        {
+            while (_picksTaken.Count < manager.Count)
+            {
+                _picksTaken.Add(0);
+            }
+        }
+
         /// <summary>Returns selected index without invoking events.</summary>
         public int GetId()
         {
@@ -159,6 +249,13 @@ namespace Neo.Tools
 
         private int EvaluateAndNotify(int index)
         {
+            NotifyPick(index);
+            onRollComplete?.Invoke();
+            return index;
+        }
+
+        private void NotifyPick(int index)
+        {
             LastSelectedIndex = index;
             LastSelectedEntry = manager.GetEntry(index);
             float normalized = index >= 0 ? manager.GetNormalizedWeight(index) : 0f;
@@ -170,9 +267,6 @@ namespace Neo.Tools
             {
                 eventsByIndex[index]?.Invoke();
             }
-
-            onRollComplete?.Invoke();
-            return index;
         }
 
         public int AddChance(float weight)

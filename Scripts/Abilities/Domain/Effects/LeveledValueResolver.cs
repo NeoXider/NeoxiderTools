@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Neo.Abilities
 {
     /// <summary>
@@ -19,50 +22,41 @@ namespace Neo.Abilities
                 return fallback;
             }
 
-            int index = level - 1;
-            if (index < 0)
+            return byLevel[ClampIndex(level, byLevel.Length)];
+        }
+
+        /// <summary>The integer twin of <see cref="SampleByLevel(float[], int, float)" /> (charges, target caps).</summary>
+        public static int SampleByLevel(int[] byLevel, int level, int fallback)
+        {
+            if (byLevel == null || byLevel.Length == 0)
             {
-                index = 0;
-            }
-            else if (index >= byLevel.Length)
-            {
-                index = byLevel.Length - 1;
+                return fallback;
             }
 
-            return byLevel[index];
+            return byLevel[ClampIndex(level, byLevel.Length)];
         }
 
         /// <summary>
         ///     Resolves a <see cref="LeveledValue" /> in a context for a specific target.
         ///     1) picks the driving level (ability / caster-unit / target-unit / none ⇒ 1),
         ///     2) picks the base (per-level array, else Base + linear term),
-        ///     3) adds the property-scaling term (ScalePerPoint * property of caster or target).
+        ///     3) adds the spent term (SpentCoefficient * what the context's cast spent of SpentResource),
+        ///     4) applies the scaling term (ScalePerPoint * stat of caster or target), added or multiplied.
         /// </summary>
         public static float Resolve(in LeveledValue value, EffectContext context, UnitId target)
         {
-            int level = LevelFor(value.LevelFrom, context, target);
+            return ResolveCore(in value, context.System, context.Caster, context.AbilityLevel, target, context);
+        }
 
-            float result;
-            if (value.Levels != null && value.Levels.Length > 0)
-            {
-                result = SampleByLevel(value.Levels, level, value.Base);
-            }
-            else
-            {
-                result = value.Base + value.PerLevel * (level - 1);
-            }
-
-            if (!string.IsNullOrEmpty(value.ScaleProperty) && value.ScalePerPoint != 0f)
-            {
-                UnitId scaleUnit = value.ScaleFrom == ScaleAmountSource.Target ? target : context.Caster;
-                AbilityUnit unit = context.System.GetUnit(scaleUnit);
-                if (unit != null)
-                {
-                    result += value.ScalePerPoint * unit.GetProperty(value.ScaleProperty);
-                }
-            }
-
-            return result;
+        /// <summary>
+        ///     Resolves a <see cref="LeveledValue" /> outside an effect execution (cast costs, UI previews): the same
+        ///     steps as <see cref="Resolve(in LeveledValue, EffectContext, UnitId)" /> without the spent term, which
+        ///     only exists once a cast has paid.
+        /// </summary>
+        public static float Resolve(in LeveledValue value, AbilitySystem system, UnitId caster, int abilityLevel,
+            UnitId target)
+        {
+            return ResolveCore(in value, system, caster, abilityLevel, target, null);
         }
 
         /// <summary>
@@ -94,24 +88,160 @@ namespace Neo.Abilities
             return amount;
         }
 
-        private static int LevelFor(LevelSource source, EffectContext context, UnitId target)
+        /// <summary>
+        ///     True when one of <paramref name="nodes" /> scales with a spent resource, inline
+        ///     (<see cref="EffectNodeData.AmountSpentResource" />) or through a named special of
+        ///     <paramref name="specials" />. Allocation-free.
+        /// </summary>
+        public static bool UsesSpent(List<EffectNodeData> nodes, List<AbilitySpecialValue> specials)
+        {
+            if (nodes == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                EffectNodeData node = nodes[i];
+                if (node == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(node.AmountSpentResource))
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(node.AmountKey) && specials != null)
+                {
+                    for (int s = 0; s < specials.Count; s++)
+                    {
+                        if (AbilityIdComparer.Same(specials[s].Name, node.AmountKey))
+                        {
+                            if (!string.IsNullOrEmpty(specials[s].Value.SpentResource))
+                            {
+                                return true;
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>True when the tick effects or a reaction of <paramref name="modifier" /> scale with a spent resource.</summary>
+        public static bool UsesSpent(ModifierBlueprint modifier, List<AbilitySpecialValue> specials)
+        {
+            if (modifier == null)
+            {
+                return false;
+            }
+
+            if (UsesSpent(modifier.TickEffects, specials))
+            {
+                return true;
+            }
+
+            List<ModifierEventReaction> reactions = modifier.EventReactions;
+            if (reactions == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < reactions.Count; i++)
+            {
+                if (reactions[i] != null && UsesSpent(reactions[i].Effects, specials))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static float ResolveCore(in LeveledValue value, AbilitySystem system, UnitId caster, int abilityLevel,
+            UnitId target, EffectContext spentSource)
+        {
+            int level = LevelFor(value.LevelFrom, system, caster, abilityLevel, target);
+
+            float result;
+            if (value.Levels != null && value.Levels.Length > 0)
+            {
+                result = SampleByLevel(value.Levels, level, value.Base);
+            }
+            else
+            {
+                result = value.Base + value.PerLevel * (level - 1);
+            }
+
+            if (spentSource != null && !string.IsNullOrEmpty(value.SpentResource) && value.SpentCoefficient != 0f)
+            {
+                result += value.SpentCoefficient * spentSource.GetSpent(value.SpentResource);
+            }
+
+            if (!string.IsNullOrEmpty(value.ScaleProperty) && value.ScalePerPoint != 0f && system != null)
+            {
+                UnitId scaleUnit = value.ScaleFrom == ScaleAmountSource.Target ? target : caster;
+                AbilityUnit unit = system.GetUnit(scaleUnit);
+                if (unit != null)
+                {
+                    float term = value.ScalePerPoint * ReadStat(unit, value.ScaleStat, value.ScaleProperty);
+                    result = value.ScaleMode == ScaleAmountMode.Multiply ? result * (1f + term) : result + term;
+                }
+            }
+
+            return result;
+        }
+
+        private static float ReadStat(AbilityUnit unit, ScaleAmountStat stat, string id)
+        {
+            switch (stat)
+            {
+                case ScaleAmountStat.ResourceCurrent:
+                    return unit.Resources.GetCurrent(id);
+                case ScaleAmountStat.ResourceMax:
+                    return unit.Resources.GetMax(id);
+                case ScaleAmountStat.ResourceMissing:
+                    return MathF.Max(0f, unit.Resources.GetMax(id) - unit.Resources.GetCurrent(id));
+                default:
+                    return unit.GetProperty(id);
+            }
+        }
+
+        private static int ClampIndex(int level, int length)
+        {
+            int index = level - 1;
+            if (index < 0)
+            {
+                return 0;
+            }
+
+            return index >= length ? length - 1 : index;
+        }
+
+        private static int LevelFor(LevelSource source, AbilitySystem system, UnitId caster, int abilityLevel,
+            UnitId target)
         {
             switch (source)
             {
                 case LevelSource.AbilityLevel:
-                    return context.AbilityLevel;
+                    return abilityLevel;
                 case LevelSource.CasterUnitLevel:
-                    return LevelOf(context, context.Caster);
+                    return LevelOf(system, caster);
                 case LevelSource.TargetUnitLevel:
-                    return LevelOf(context, target);
+                    return LevelOf(system, target);
                 default:
                     return 1;
             }
         }
 
-        private static int LevelOf(EffectContext context, UnitId unitId)
+        private static int LevelOf(AbilitySystem system, UnitId unitId)
         {
-            AbilityUnit unit = context.System.GetUnit(unitId);
+            AbilityUnit unit = system?.GetUnit(unitId);
             return unit != null ? unit.Level : 1;
         }
     }

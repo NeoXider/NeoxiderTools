@@ -26,6 +26,17 @@ namespace Neo.Abilities
         [Tooltip("How many units the projectile can hit before despawning (pierce).")]
         [SerializeField] private int _maxHits = 1;
 
+        [Tooltip("GroundXZ: the projectile's forward (Z) follows its flight, for 3D models. ScreenXY: it turns around " +
+                 "Z so its right (+X) follows the flight, for 2D sprites drawn pointing right.")]
+        [SerializeField] private AbilityZonePlane _plane = AbilityZonePlane.GroundXZ;
+
+        /// <summary>How the projectile faces its flight direction (3D forward or 2D sprite right).</summary>
+        public AbilityZonePlane Plane
+        {
+            get => _plane;
+            set => _plane = value;
+        }
+
         private static readonly System.Collections.Generic.List<UnitId> HitScratch =
             new System.Collections.Generic.List<UnitId>(8);
 
@@ -112,7 +123,7 @@ namespace Neo.Abilities
             position += _direction * step;
             if (_direction.sqrMagnitude > 0.0001f)
             {
-                self.SetPositionAndRotation(position, Quaternion.LookRotation(_direction));
+                self.SetPositionAndRotation(position, AbilityZonePlaneFacing.Facing(_direction, _plane));
             }
             else
             {

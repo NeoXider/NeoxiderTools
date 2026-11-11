@@ -166,7 +166,7 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                float range = SearchRange(unit, blueprint);
+                float range = SearchRange(unit, slots[i]);
                 maxRange = Mathf.Max(maxRange, range);
             }
 
@@ -208,7 +208,7 @@ namespace Neo.Abilities
             }
             else
             {
-                float range = SearchRange(unit, blueprint);
+                float range = SearchRange(unit, slot);
                 AbilityUnitBehaviour target = FindNearestTarget(unit, hub, blueprint, range, origin);
                 if (target == null)
                 {
@@ -302,10 +302,12 @@ namespace Neo.Abilities
             return AbilityCasterBehaviour.Resolve(this, _caster, ref _resolvedCaster, ref _casterSearched);
         }
 
-        private float SearchRange(AbilityUnit unit, AbilityBlueprint blueprint)
+        private float SearchRange(AbilityUnit unit, AbilitySlot slot)
         {
-            return blueprint.Range > 0f
-                ? Mathf.Max(0f, blueprint.Range + unit.GetProperty(AbilityProperties.CastRangeBonus))
+            // WHY: the slot's level-resolved range, the same reach the cast pipeline checks.
+            float range = slot.Range;
+            return range > 0f
+                ? Mathf.Max(0f, range + unit.GetProperty(AbilityProperties.CastRangeBonus))
                 : Mathf.Max(0f, _targetSearchRange);
         }
     }

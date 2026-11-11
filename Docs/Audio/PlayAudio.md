@@ -23,6 +23,7 @@ The sources are tried in that order of precedence: explicit clips win, then `_so
 | `_useRandomClip` | If `true` and `_clips` has more than 1 item, a random sound from the array will be played on each call. |
 | `_playOnAwake` | If `true`, plays the sound on start (in `Start()`). |
 | `_volume` | Volume for this play, **replacing** the entry's own volume multiplier (`0..2`). **Negative = use the entry's volume**, which is the default for a new component. Still multiplied by the effects channel. |
+| `_minInterval` (`MinInterval`) | Ignores `AudioPlay()` calls that come sooner than this many seconds after the previous accepted one (unscaled time), so a burst of simultaneous events does not stack the same sound. `0` = every call plays. `LastPlayTime` reports the last accepted play. |
 
 ## See Also
 - [PlayAudioBtn](PlayAudioBtn.md) - Version designed for UI buttons and pointer events.

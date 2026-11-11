@@ -126,7 +126,7 @@ saved in the scene, so the wiring is visible without entering Play Mode:
 - The **Live readout** shows the output size, aspect, `orthographicSize` against the reference, `Camera.rect`, the
   visible world and whether the design frame is cropped.
 
-The scene is authored by `CameraAspectRatioBuilder` (`Neoxider/Demo/Rebuild Active Demo Scene`).
+The scene is saved with its UI and wiring.
 
 ## See also
 

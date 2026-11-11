@@ -90,6 +90,9 @@ namespace Neo.UI
         public Vector2 Position => _position;
         public Color Color => _color;
         public UIMeshRigLayoutPreset LayoutPreset => _layoutPreset;
+        public bool MotionEnabled => _motionEnabled;
+        public float MotionSpeed => _motionSpeed;
+        public float MotionPhase => _motionPhase;
 
         /// <summary>Which UI Toolkit component the host is bound to right now.</summary>
         public UIMeshRigPanelHostKind HostKind => _hostKind;
@@ -141,6 +144,28 @@ namespace Neo.UI
             ApplySettings();
         }
 
+        /// <summary>
+        /// Motion settings go through the host, not straight to <see cref="Element"/>: every host setter
+        /// re-applies all host fields to the element, so a value written only on the element is overwritten.
+        /// </summary>
+        public void SetMotionEnabled(bool enabled)
+        {
+            _motionEnabled = enabled;
+            ApplySettings();
+        }
+
+        public void SetMotionSpeed(float speed)
+        {
+            _motionSpeed = speed;
+            ApplySettings();
+        }
+
+        public void SetMotionPhase(float phase)
+        {
+            _motionPhase = phase;
+            ApplySettings();
+        }
+
         public UIMeshRigGeometry BuildGeometry(float timeSeconds)
         {
             EnsureElement();
@@ -170,6 +195,14 @@ namespace Neo.UI
             _columns = Mathf.Clamp(_columns, 2, 40);
             _rows = Mathf.Clamp(_rows, 2, 40);
             _size = new Vector2(Mathf.Max(1f, _size.x), Mathf.Max(1f, _size.y));
+            ApplySettings();
+        }
+
+        // WHY: an Animator writes keyed host fields (motion speed, phase, tint, position) straight into the
+        // serialized data and then sends this message; nothing else pushed them to the element, so keys on
+        // the host never reached the screen in Play Mode.
+        private void OnDidApplyAnimationProperties()
+        {
             ApplySettings();
         }
 

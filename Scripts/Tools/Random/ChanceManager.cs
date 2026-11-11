@@ -277,6 +277,83 @@ namespace Neo.Tools
             return lastPositiveIndex;
         }
 
+        /// <summary>
+        ///     Draws up to <paramref name="count" /> different indices by weight, without repeats, into
+        ///     <paramref name="result" /> (cleared first). Entries with zero weight, and entries whose
+        ///     <see cref="Entry.MaxPicks" /> is reached in <paramref name="picksTaken" />, are skipped. Returns the number
+        ///     drawn (fewer than <paramref name="count" /> when the table runs out). Allocation-free; uses
+        ///     <see cref="RandomProvider" />.
+        /// </summary>
+        /// <param name="picksTaken">How often each index was taken so far (null = never). Same order as entries.</param>
+        public int PickUnique(int count, List<int> result, IReadOnlyList<int> picksTaken = null)
+        {
+            result.Clear();
+            for (int draw = 0; draw < count; draw++)
+            {
+                double total = 0d;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    total += AvailableWeight(i, result, picksTaken);
+                }
+
+                if (total <= 0d)
+                {
+                    break;
+                }
+
+                float roll = randomProvider != null ? randomProvider() : Random.value;
+                double value = Mathf.Clamp01(roll) * total;
+                int chosen = -1;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    double weight = AvailableWeight(i, result, picksTaken);
+                    if (weight <= 0d)
+                    {
+                        continue;
+                    }
+
+                    chosen = i;
+                    value -= weight;
+                    if (value < 0d)
+                    {
+                        break;
+                    }
+                }
+
+                if (chosen < 0)
+                {
+                    break;
+                }
+
+                result.Add(chosen);
+            }
+
+            return result.Count;
+        }
+
+        /// <summary>True when entry <paramref name="index" /> still has picks left (no limit, or fewer taken).</summary>
+        public bool HasPicksLeft(int index, IReadOnlyList<int> picksTaken)
+        {
+            if (!IsValidIndex(index))
+            {
+                return false;
+            }
+
+            int max = entries[index].MaxPicks;
+            int taken = picksTaken != null && index < picksTaken.Count ? picksTaken[index] : 0;
+            return max <= 0 || taken < max;
+        }
+
+        private double AvailableWeight(int index, List<int> alreadyDrawn, IReadOnlyList<int> picksTaken)
+        {
+            if (alreadyDrawn.Contains(index) || !HasPicksLeft(index, picksTaken))
+            {
+                return 0d;
+            }
+
+            return SanitizeWeight(entries[index].Weight);
+        }
+
         /// <summary>Rolls once and returns the selected entry, or null.</summary>
         public Entry Evaluate()
         {
@@ -561,6 +638,10 @@ namespace Neo.Tools
             [SerializeField] private string label = "Chance";
             [SerializeField] [TextArea] private string notes;
 
+            [Tooltip("How many times this entry may be taken (ChanceSystemBehaviour.ConsumePick) before unique draws " +
+                     "skip it. 0 = unlimited.")]
+            [SerializeField] [Min(0)] private int maxPicks;
+
             public Entry()
             {
             }
@@ -580,6 +661,14 @@ namespace Neo.Tools
                 locked = other.locked;
                 id = other.id;
                 notes = other.notes;
+                maxPicks = other.maxPicks;
+            }
+
+            /// <summary>Picks allowed before unique draws skip this entry; 0 = unlimited.</summary>
+            public int MaxPicks
+            {
+                get => maxPicks;
+                set => maxPicks = Mathf.Max(0, value);
             }
 
             public string Label

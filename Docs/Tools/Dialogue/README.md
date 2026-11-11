@@ -64,7 +64,7 @@ Open `Assets/NeoxiderDemos/Demo/Scenes/Tools/Dialogue.unity` from the Demo downl
 - **Live column** - `OnCharacterChange`, `OnSentenceEnd`, `OnTypewriterProgress` and `OnAllDialoguesEnd` update the labels and the typing bar through `DialogueDemoController`; the toggles and the speed slider change `useTypewriterEffect`, `autoNextSentence` and `Typewriter.CharactersPerSecond`.
 - **Barks panel** - the `Blacksmith Barks` object (`DialogueLinePlayer`) holds idle, greet and hit lines. `Btn_Idle line` calls `RequestIdle`, `Btn_Hit!` calls `RequestContext("hit")` and interrupts an idle line, `Btn_Greet` shows the `FirstOnly` line once and `AfterFirst` lines later, `Btn_New session` calls `ResetSession`.
 
-The scene is authored by the editor builder `DialogueBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ## Component guides
 

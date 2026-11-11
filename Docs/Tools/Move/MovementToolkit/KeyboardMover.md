@@ -35,6 +35,7 @@ fallback stays on the optional new-input path rather than calling unavailable le
 | `movementPlane` | `XY`, `XZ` or `YZ`. |
 | `axisMode` | `AxisRaw` keeps the input magnitude; `AxisNormalized` normalizes nonzero input. |
 | `speed` | Units per second. |
+| `Speed` / `SetSpeed(float)` | Runtime speed for code and NoCode, for example `AbilityUnitBehaviour.OnMoveSpeedChanged -> SetSpeed` so haste and slows move the player. |
 | `inputBackend` | `AutoPreferNew`, `NewInputSystem` or `LegacyInputManager`. |
 | `horizontalAxis` / `verticalAxis` | Legacy Input Manager axis names. |
 | `_logInputFallbackWarnings` | One-time warning when falling back to legacy input. |

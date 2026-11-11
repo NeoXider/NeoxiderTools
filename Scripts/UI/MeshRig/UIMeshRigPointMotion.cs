@@ -113,7 +113,7 @@ namespace Neo.UI
             set
             {
                 _phase = Mathf.Repeat(value, 1f);
-                EvaluateAt(_currentTime);
+                RefreshHeldPose();
             }
         }
 
@@ -123,7 +123,7 @@ namespace Neo.UI
             set
             {
                 _seed = value;
-                EvaluateAt(_currentTime);
+                RefreshHeldPose();
             }
         }
 
@@ -200,7 +200,7 @@ namespace Neo.UI
             _preset = preset;
             if (preset == UIMeshRigMotionPreset.Custom)
             {
-                EvaluateAt(_currentTime);
+                RefreshHeldPose();
                 return;
             }
 
@@ -213,7 +213,7 @@ namespace Neo.UI
             }
 
             _profile.CopyFrom(presetProfile);
-            EvaluateAt(_currentTime);
+            RefreshHeldPose();
         }
 
         public void Play()
@@ -302,6 +302,19 @@ namespace Neo.UI
             float delta = now - _lastRealtime;
             _lastRealtime = now;
             return Mathf.Clamp(delta, 0f, 0.1f);
+        }
+
+        // WHY: configuration setters used to call EvaluateAt, which always pushes a pose. On a stopped motion
+        // that left a frozen procedural pose on the point (Reset on Add Component did it too), so the rig
+        // counted the point as previewed: Setup stopped rebinding it and the mesh stayed deformed in Setup.
+        // A pose is re-evaluated only while this motion plays or already holds one; EvaluateAt stays the
+        // explicit way to apply a pose to a stopped motion.
+        private void RefreshHeldPose()
+        {
+            if (_isPlaying || _hasAppliedPose)
+            {
+                EvaluateAt(_currentTime);
+            }
         }
 
         private void ResolvePoint()

@@ -39,6 +39,10 @@ namespace Neo.Abilities
         // WHY: payment callbacks may cast again before the outer payment loop finishes.
         private readonly List<List<AbilityCost>> _costScratchPool = new List<List<AbilityCost>>(2);
 
+        // WHY: what each cast depth paid, handed to its effect context; nested casts use the next depth's list.
+        private readonly List<List<AbilitySpentResource>> _spentScratchPool =
+            new List<List<AbilitySpentResource>>(MaxCastDepth + 1);
+
         // WHY: casts, projectile hits, modifier ticks and reactions each need a context; recycling them
         // keeps survivor-scale combat (hundreds of ticks and hits per second) free of per-event garbage.
         private readonly List<EffectContext> _contextPool = new List<EffectContext>(8);
@@ -428,10 +432,12 @@ namespace Neo.Abilities
 
             if (!slot.IsReady)
             {
-                return CastResult.Fail(ability.UsesCharges
+                return CastResult.Fail(slot.UsesCharges
                     ? CastFailureReason.NoCharges
                     : CastFailureReason.OnCooldown);
             }
+
+            int level = slot.Level;
 
             AbilityUnit targetUnit = null;
             if (ability.Targeting == TargetingMode.Unit)
@@ -459,9 +465,10 @@ namespace Neo.Abilities
             }
 
             // WHY: range is only checked when the world adapter can supply both positions.
-            if (ability.Range > 0f && _world.TryGetPosition(caster.Id, out Vector3 casterPos))
+            float range = ability.ResolveRange(level);
+            if (range > 0f && _world.TryGetPosition(caster.Id, out Vector3 casterPos))
             {
-                float effectiveRange = ability.Range + caster.GetProperty(AbilityProperties.CastRangeBonus);
+                float effectiveRange = range + caster.GetProperty(AbilityProperties.CastRangeBonus);
                 Vector3? targetPos = null;
                 if (ability.Targeting == TargetingMode.Unit && targetUnit != null &&
                     _world.TryGetPosition(targetUnit.Id, out Vector3 tp))
@@ -483,25 +490,28 @@ namespace Neo.Abilities
                 }
             }
 
-            if (!TryPayCosts(caster, ability))
+            // WHY: casts started by payment callbacks run one cast depth deeper, so each depth owns its record.
+            List<AbilitySpentResource> spent = RentScratch(_spentScratchPool, _castDepth);
+            spent.Clear();
+            if (!TryPayCosts(caster, ability, level, targetUnit != null ? targetUnit.Id : UnitId.None, spent))
             {
+                spent.Clear();
                 return CastResult.Fail(CastFailureReason.NotEnoughResources);
             }
 
             ICooldownRule cooldowns = Rules.Cooldowns;
-            if (ability.UsesCharges)
+            if (slot.UsesCharges)
             {
                 slot.Charges--;
                 if (slot.CooldownRemaining <= 0f)
                 {
-                    float restore = ability.ChargeRestoreTime > 0f ? ability.ChargeRestoreTime : ability.Cooldown;
-                    slot.StartCooldown(cooldowns.ResolveCooldown(caster, ability, restore));
+                    slot.StartCooldown(cooldowns.ResolveCooldown(caster, ability, ability.ResolveChargeRestoreTime(level)));
                 }
             }
             else
             {
                 slot.Charges = 0;
-                slot.StartCooldown(cooldowns.ResolveCooldown(caster, ability, ability.Cooldown));
+                slot.StartCooldown(cooldowns.ResolveCooldown(caster, ability, ability.ResolveCooldown(level)));
             }
 
             uint castId = _nextCastId++;
@@ -516,33 +526,41 @@ namespace Neo.Abilities
             {
                 Events.Publish(new AbilityEventArgs(AbilityEvents.AbilityCast, caster.Id,
                     targetUnit?.Id ?? UnitId.None, 0f, ability.Id, castId: castId));
-                ExecuteAcceptedCast(request, caster, ability, slot, targetUnit, castId);
+                ExecuteAcceptedCast(request, caster, ability, slot, targetUnit, castId, spent);
             }
             finally
             {
                 _traceCause = previousCause;
+                spent.Clear();
             }
 
             return CastResult.Ok(castId);
         }
 
         private void ExecuteAcceptedCast(CastRequest request, AbilityUnit caster, AbilityBlueprint ability,
-            AbilitySlot slot, AbilityUnit targetUnit, uint castId)
+            AbilitySlot slot, AbilityUnit targetUnit, uint castId, List<AbilitySpentResource> spent)
         {
+            // WHY: read after the ability_cast receipt, as before, so a handler that levels the ability on cast still
+            // scales this cast's effects.
+            int level = slot.Level;
             uint seed = request.Seed != 0 ? request.Seed : castId * 2654435761u ^ caster.Id.Value;
             // WHY: evaluated once, before cast effects can change cast_range_bonus, so the cast's target point
             // and its projectile's spawn aim always end at the same place.
             Vector3 directionReach = ability.Targeting == TargetingMode.Direction
-                ? DirectionReach(caster, ability, request.Direction)
+                ? DirectionReach(caster, ability, level, request.Direction)
                 : default;
             EffectContext context = RentContext(caster.Id, ability.Id, seed);
             try
             {
                 FillCastTargets(context, caster, ability, targetUnit, request, directionReach);
                 context.CastId = castId;
-                context.AbilityLevel = slot.Level;
+                context.AbilityLevel = level;
                 context.Specials = ability.Specials;
                 context.Origin = EffectOrigin.Cast;
+                for (int i = 0; i < spent.Count; i++)
+                {
+                    context.AddSpent(spent[i].ResourceId, spent[i].Amount);
+                }
 
                 // WHY: cast-phase effects run immediately, ahead of delivery, regardless of delivery type.
                 if (ability.CastEffects.Count > 0)
@@ -552,8 +570,10 @@ namespace Neo.Abilities
 
                 if (ability.Delivery == AbilityDeliveryType.Projectile)
                 {
-                    _pendingProjectiles[castId] = RentPending(ability, caster.Id, seed, slot.Level,
+                    PendingProjectileCast pending = RentPending(ability, caster.Id, seed, level,
                         _time + PendingProjectileTimeout);
+                    pending.CaptureSpent(context);
+                    _pendingProjectiles[castId] = pending;
                     _world.TryGetPosition(caster.Id, out Vector3 origin);
                     Vector3 direction = request.Direction;
                     if (ability.Targeting == TargetingMode.Direction)
@@ -574,7 +594,8 @@ namespace Neo.Abilities
                     }
 
                     _world.RequestSpawn(new SpawnRequest(ability.ProjectileArchetypeId, caster.Id, origin,
-                        direction, targetUnit?.Id ?? UnitId.None, ability.Id, ability.ProjectileSpeed, castId));
+                        direction, targetUnit?.Id ?? UnitId.None, ability.Id, ability.ResolveProjectileSpeed(level),
+                        castId));
                 }
                 else if (ability.ImpactEffects.Count > 0)
                 {
@@ -590,9 +611,12 @@ namespace Neo.Abilities
         /// <summary>
         ///     Pays every positive authored cost or nothing that preflight can detect. Ids and effective
         ///     amounts are captured once because payment callbacks run synchronously and may change the
-        ///     blueprint or the mana-cost multiplier.
+        ///     blueprint or the mana-cost multiplier. Amounts resolve at the slot level (AmountByLevel / AmountKey)
+        ///     before the cost rule; UpTo / All entries take what is left of their resource after the earlier
+        ///     entries. What was paid is appended to <paramref name="spent" />.
         /// </summary>
-        private bool TryPayCosts(AbilityUnit caster, AbilityBlueprint ability)
+        private bool TryPayCosts(AbilityUnit caster, AbilityBlueprint ability, int level, UnitId target,
+            List<AbilitySpentResource> spent)
         {
             int costCount = ability.Costs.Count;
             if (costCount == 0)
@@ -608,12 +632,40 @@ namespace Neo.Abilities
                 for (int i = 0; i < costCount; i++)
                 {
                     AbilityCost cost = ability.Costs[i];
-                    float amount = Rules.Costs.ResolveCost(caster, ability, cost);
+                    AbilityCost leveled = cost;
+                    leveled.Amount = cost.ResolveAmount(ability.Specials, this, caster.Id, level, target);
+                    float amount = Rules.Costs.ResolveCost(caster, ability, leveled);
                     if (float.IsNaN(amount) || float.IsInfinity(amount))
                     {
                         // WHY: a NaN entry poisons cumulative costs and makes affordability comparisons
                         // false; reject every invalid amount before any resource is paid.
                         return false;
+                    }
+
+                    if (cost.Mode != AbilityCostMode.Fixed)
+                    {
+                        if (string.IsNullOrEmpty(cost.ResourceId))
+                        {
+                            return false;
+                        }
+
+                        float available = caster.Resources.GetCurrent(cost.ResourceId);
+                        for (int previous = 0; previous < capturedCosts.Count; previous++)
+                        {
+                            AbilityCost previousCost = capturedCosts[previous];
+                            if (AbilityIdComparer.Same(previousCost.ResourceId, cost.ResourceId))
+                            {
+                                available -= MathF.Max(0f, previousCost.Amount);
+                            }
+                        }
+
+                        available = MathF.Max(0f, available);
+                        if (available < cost.MinAmount)
+                        {
+                            return false;
+                        }
+
+                        amount = cost.Mode == AbilityCostMode.All ? available : MathF.Min(available, amount);
                     }
 
                     capturedCosts.Add(new AbilityCost(cost.ResourceId, amount));
@@ -660,6 +712,11 @@ namespace Neo.Abilities
                         // WHY: a preceding payment callback may invalidate a later entry after preflight.
                         // Never accept a clipped payment; earlier successful payments are not rolled back.
                         return false;
+                    }
+
+                    if (cost.Amount > 0f)
+                    {
+                        spent.Add(new AbilitySpentResource(cost.ResourceId, cost.Amount));
                     }
                 }
 
@@ -740,6 +797,7 @@ namespace Neo.Abilities
                 context.AbilityLevel = pending.Level;
                 context.Specials = ability.Specials;
                 context.Origin = EffectOrigin.ProjectileHit;
+                pending.CopySpentTo(context);
                 AbilityUnit hit = GetUnit(hitUnit);
                 if (hit != null && hit.IsAlive)
                 {
@@ -828,7 +886,8 @@ namespace Neo.Abilities
                         continue;
                     }
 
-                    if (node.Chance < 1f && context.Random.NextFloat() >= node.Chance)
+                    float chance = node.ResolveChance(context.AbilityLevel);
+                    if (chance < 1f && context.Random.NextFloat() >= chance)
                     {
                         continue;
                     }
@@ -878,7 +937,9 @@ namespace Neo.Abilities
 
         /// <summary>
         ///     Convenience: sets a granted ability's level (clamped to at least 1) so leveled values scale.
-        ///     Returns false when the unit has no such slot.
+        ///     Returns false when the unit has no such slot. Level-scaled cast parameters apply from the next cast: a
+        ///     running cooldown keeps its remaining time; a changed charge cap grants or clamps charges (see
+        ///     <see cref="AbilitySlot" />).
         /// </summary>
         public bool SetAbilityLevel(UnitId unit, string abilityId, int level)
         {
@@ -1009,7 +1070,7 @@ namespace Neo.Abilities
         ///     AbilityAutoCaster use. Range 0 (unlimited) reaches the length of the request direction, at least
         ///     <see cref="DefaultDirectionReach" />, so an aim vector towards a target or cursor arrives there.
         /// </summary>
-        private static Vector3 DirectionReach(AbilityUnit caster, AbilityBlueprint ability, Vector3 direction)
+        private static Vector3 DirectionReach(AbilityUnit caster, AbilityBlueprint ability, int level, Vector3 direction)
         {
             // WHY: double precision keeps far aims (components beyond ~1.8e19, whose float square overflows)
             // pointing the right way instead of collapsing to world forward.
@@ -1028,8 +1089,9 @@ namespace Neo.Abilities
                 length = 0d;
             }
 
-            float reach = ability.Range > 0f
-                ? ability.Range + caster.GetProperty(AbilityProperties.CastRangeBonus)
+            float range = ability.ResolveRange(level);
+            float reach = range > 0f
+                ? range + caster.GetProperty(AbilityProperties.CastRangeBonus)
                 : (float)Math.Min(Math.Max(length, DefaultDirectionReach), float.MaxValue);
             if (float.IsNaN(reach) || float.IsInfinity(reach))
             {
@@ -1109,6 +1171,7 @@ namespace Neo.Abilities
 
                 context.Origin = EffectOrigin.ModifierTick;
                 context.SourceStacks = instance.Stacks;
+                instance.CopySpentTo(context);
                 context.PrimaryTargets.Add(instance.Owner);
                 ExecuteEffects(tickEffects, context);
             }
@@ -1187,6 +1250,9 @@ namespace Neo.Abilities
             /// <summary>Domain time after which the leak guard discards the entry.</summary>
             public float ExpireAt;
 
+            /// <summary>What the launching cast paid; replayed into every hit's context. Null until first needed.</summary>
+            private List<AbilitySpentResource> _spent;
+
             public void Reset(AbilityBlueprint ability, UnitId caster, uint seed, int level, float expireAt)
             {
                 Ability = ability;
@@ -1195,12 +1261,42 @@ namespace Neo.Abilities
                 Level = level;
                 HitIndex = 0;
                 ExpireAt = expireAt;
+                _spent?.Clear();
+            }
+
+            public void CaptureSpent(EffectContext source)
+            {
+                int count = source != null ? source.SpentCount : 0;
+                if (count == 0)
+                {
+                    return;
+                }
+
+                _spent ??= new List<AbilitySpentResource>(count);
+                for (int i = 0; i < count; i++)
+                {
+                    _spent.Add(source.GetSpentAt(i));
+                }
+            }
+
+            public void CopySpentTo(EffectContext context)
+            {
+                if (_spent == null)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < _spent.Count; i++)
+                {
+                    context.AddSpent(_spent[i].ResourceId, _spent[i].Amount);
+                }
             }
 
             public void Clear()
             {
                 Ability = null;
                 Caster = UnitId.None;
+                _spent?.Clear();
             }
         }
     }

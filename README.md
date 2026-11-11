@@ -2,11 +2,11 @@
 
 # NeoxiderTools — a gameplay-systems framework for Unity
 
-[![Version](https://img.shields.io/badge/version-12.2.0-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](./LICENSE.md) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
+[![Version](https://img.shields.io/badge/version-12.3.0-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](./LICENSE.md) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
 
 **A modular Unity C# construction library: abilities, shops, saving, quests, cards, grids, NPC AI, UI motion. 26 module areas plus 17 Tools submodules, 200+ ready components, 200+ extension methods and more than 5,000 tests help you assemble reusable game systems from ready parts. Use runtime APIs directly, add scene components, or combine both.**
 
-**`SurvivorDemo`** shows a Vampire-Survivors-style sample assembled from one `SurvivorConfig` data asset on top of `Neo.Abilities`. **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI** and **UI motion** offer C# APIs and scene workflows, with optional Mirror integration for multiplayer. The package includes EditMode and PlayMode coverage; see [Tests](#tests) for how to run it.
+**`SurvivorDemo`** is a complete Vampire-Survivors-style game assembled only from library components and UnityEvents on top of `Neo.Abilities`, with no game scripts. **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI** and **UI motion** offer C# APIs and scene workflows, with optional Mirror integration for multiplayer. The package includes EditMode and PlayMode coverage; see [Tests](#tests) for how to run it.
 
 [GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md) · [Upgrade from 11.x](./Docs/Migration12.md) · [Upgrade from 10.x](./Docs/Migration11.md)
 
@@ -63,9 +63,9 @@ Captures taken in the Unity Editor (several in Play Mode) of scenes from the **D
 ## Highlight reel
 
 - ⚔️ **Dota-style Abilities + a visual Ability Designer.** Author abilities and modifiers as data assets (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`); one validated cast pipeline resolves damage / heal / knockback / pull / teleport / chain / execute, live crit / lifesteal / evasion, and buffs / debuffs / DoT / auras / shields / stuns — with multiplayer-ready receipts, typed cast results and an opt-in spatial grid for crowds of units.
-- 🧛 **A Vampire-Survivors-style sample from one data asset.** The bundled `SurvivorDemo` assembles auto-fire, waves, upgrades and scaling from a single `SurvivorConfig` on top of `Neo.Abilities` — use it as a starting point for your own survivor-like.
+- 🧛 **A Vampire-Survivors-style game with no game scripts.** The `SurvivorDemo` scene wires auto-fire, waves, XP, upgrade cards, a win timer, hit reactions, particles and sounds from library components and UnityEvents on top of `Neo.Abilities` — use it as a starting point for your own survivor-like.
 - 🧩 **No-code that actually builds games.** Ready components + inspector event wiring + binding scripts let non-coders assemble whole scenes. Study the reference scenes: `adventure`, `Shooter2D`, `ClickerExample`, `DrawExample`.
-- 🔍 **Demo scenes you can read in the Inspector.** Every module demo is saved with its UI and UnityEvent wiring, so you see how a button reaches a module API without entering Play Mode; an editor builder rebuilds each scene from **Neoxider > Demo**.
+- 🔍 **Demo scenes you can read in the Inspector.** Every module demo is saved with its UI and UnityEvent wiring, so you see how a button reaches a module API without entering Play Mode.
 - 🧪 **Testable cores.** Plain C# rules behind the components (bonus schedules, collections, slot math, card decks, grid pathfinding, RPG stat services), injectable clocks (`IFrameClock`, `INeoClock`), seeded shuffles and exact integer odds (`IntegerChanceTable`) make games reproducible in tests, replays and servers.
 - 🟢 **A living inspector.** The Neoxider header is a "slime linter": it reflects each component's health — remembers console errors per component, flags missing references and NaN/∞ fields, and watches the Game view in Play Mode.
 - 🎁 **Juice out of the box.** `AnimationFly` (coins/gems fly to the HUD with fountain / magnet / scatter presets), tweened toggles and buttons, parallax, and audio managers provide configurable motion and feedback.
@@ -186,11 +186,11 @@ The HTML/CSS → UI Toolkit converter (HtmlToUitk) left this package after 11.0.
 
 Demo scenes are not part of the package: each one is a separate download on the [releases page](https://github.com/NeoXider/NeoxiderTools/releases), imported into `Assets/NeoxiderDemos/<name>`, for example `Assets/NeoxiderDemos/Demo/Scenes/SurvivorDemo.unity`. Install the package first.
 
-Every demo scene is saved with its UI, configured components and UnityEvent wiring: open it and inspect the setup in Edit Mode, then press Play. Editor builders in the demo author these scenes, and **Neoxider ▸ Demo ▸ Rebuild Active Demo Scene** restores a scene you changed ([how demo scenes are made](./Docs/Samples.md#how-demo-scenes-are-made)).
+Every demo scene is saved with its UI, configured components and UnityEvent wiring: open it and inspect the setup in Edit Mode, then press Play. Re-import a demo to restore a scene you changed ([how demo scenes are made](./Docs/Samples.md#how-demo-scenes-are-made)).
 
 | Download | Folder | Purpose |
 |----------|--------|---------|
-| `NeoxiderTools.Demo` | `Assets/NeoxiderDemos/Demo` | Integration and NoCode scenes, plus **`SurvivorDemo`**, configured by `SurvivorConfig` on `Neo.Abilities` ([guide](./Docs/Abilities/SurvivorDemo.md)). |
+| `NeoxiderTools.Demo` | `Assets/NeoxiderDemos/Demo` | Integration and NoCode scenes, plus **`SurvivorDemo`**, a NoCode game on `Neo.Abilities` ([guide](./Docs/Abilities/SurvivorDemo.md)). |
 | `NeoxiderPages` | `Assets/NeoxiderDemos/NeoxiderPages` | Optional page-navigation module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`). |
 | `NeoxiderTools.CharacterMovementDemo` | `Assets/NeoxiderDemos/CharacterMovementFundamentals` | Character-controller scenes for slopes, stairs, platforms, gravity, and a top-down arena ([guide](./Docs/Tools/Move/CharacterController/README.md)). |
 
@@ -204,7 +204,7 @@ Samples imported from 12.1 and earlier stay in `Assets/Samples/NeoxiderTools/<ve
 
 ## Tests
 
-More than 5,000 EditMode cases plus the PlayMode suites under `Tests/` cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, networking, and NoCode bindings; the demo builders have their own `Neo.Demo.Editor.Tests`. Read the [EditMode and isolation guide](./Docs/Testing.md) and [PlayMode guide](./Docs/PlayModeTesting.md) for host prerequisites and scope. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For UPM, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply.
+More than 5,000 EditMode cases plus the PlayMode suites under `Tests/` cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, networking, and NoCode bindings. Read the [EditMode and isolation guide](./Docs/Testing.md) and [PlayMode guide](./Docs/PlayModeTesting.md) for host prerequisites and scope. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For UPM, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply.
 
 Static-reset and Play Mode transition fixtures require an isolated host. [Verification 11](./Verification11.md) records accepted Windows results and remaining artifact gates for 11.0.0. The repository does not currently configure GitHub Actions workflows; local native receipts are separate. `python scripts/check_package.py` belongs to the full repository, not a legacy-Core consumer validator. Use full-checkout/UPM testables sources with their host prerequisites; final archive contents are listed in the release-input manifest.
 

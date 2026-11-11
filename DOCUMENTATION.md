@@ -52,7 +52,7 @@ After the `---` add sections as needed: **Fields**, **Methods**, **Events**, **E
 ---
 ```
 
-Further subsections (Data flow, Code structure, etc.) as needed. A module with a demo scene adds a **Demo scene** section: the scene path relative to the Demo Scenes sample, the objects to inspect, and the equivalent C# calls. The scenes are authored by builders; see [Samples](Docs/Samples.md#how-demo-scenes-are-made).
+Further subsections (Data flow, Code structure, etc.) as needed. A module with a demo scene adds a **Demo scene** section: the scene path relative to the Demo Scenes sample, the objects to inspect, and the equivalent C# calls. The scenes are saved complete; see [Samples](Docs/Samples.md#how-demo-scenes-are-made).
 
 ### 2.3. Upgrade pages
 

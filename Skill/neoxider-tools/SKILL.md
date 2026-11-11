@@ -13,7 +13,7 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 12.2.0
+  version: 12.3.0
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---
@@ -278,18 +278,16 @@ Two pieces are **separate downloads** from the GitHub release, not part of the p
   Condition, NoCode, Abilities, Animations, GridSystem, Cards, Bonus incl. Bonus Rewards, Shop, NPC, Network,
   Inventory, Tools incl. Physics 3D, UI incl. UI Components, …; `Docs/Samples.md` lists them and the modules
   that still have none; demos save only under `NeoDemo.<Demo>.<Data>` keys) plus
-  the **Survivor kit** (`Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors game built from one
-  `SurvivorConfig` data asset on `Neo.Abilities`; the reference implementation to **clip** for
+  the **Survivor kit** (`Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors game wired only from library
+  components and UnityEvents on `Neo.Abilities`, no game scripts; the reference implementation to **clip** for
   survivor-likes, see `references/abilities.md`), and hand-authored example games (`adventure`, `Shooter2D`,
-  `ClickerExample`; a minimal builder adds only their info card). Module demo scenes are **authored in the Editor by scene builders**
-  (`Demo/Editor/Builders/<Module>/<Scene>Builder.cs`, assembly `Neo.Demo.Editor`): UI, configured
+  `ClickerExample`). Module demo scenes are **plain saved scenes**: UI, configured
   components, persistent UnityEvent listeners and NoCode bindings are saved in the `.unity`, so open the
   scene and read the wiring in the Inspector without entering Play Mode. Each `<Module>DemoController`
   (assembly `Neo.Rpg.Demo`) holds serialized references and public listener targets — the demo UI is not
   built at runtime. Copy idioms from the module objects and controllers; do not copy the obsolete `NeoDemoShell`
-  runtime frame, and never build UI with IMGUI. After editing a demo's data asset (e.g. a `SurvivorConfig`
-  enemy list), re-run **Neoxider/Demo/Rebuild Active Demo Scene**. The builder workflow is documented for
-  package developers in the repository's `dev-docs/DemoSceneBuilders.md`.
+  runtime frame, and never build UI with IMGUI. There are no scene-generation scripts: edit a demo
+  scene in the Editor like any other scene.
 
 ## Reference files — read the one you need
 

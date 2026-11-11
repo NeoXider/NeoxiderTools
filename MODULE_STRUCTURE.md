@@ -80,7 +80,7 @@ Used as needed; not every module has every folder.
 - EditMode tests live in `Assets/Neoxider/Tests/Edit/` (assembly `Neo.Editor.Tests`); PlayMode tests in `Assets/Neoxider/Tests/Play/` (`Neo.Tests.Play`).
 - Shared helpers: `Tests/Fixtures` (`Neo.Tests.Fixtures`, `Neo.Tests.Fixtures.Network`), `Tests/Integration/Network` (`Neo.Tests.Network.Integration`, Mirror only) and `Tests/Performance` (allocation counter and `NEO_PERF` helpers).
 - Test assemblies reference the runtime assemblies they cover plus `UnityEngine.TestRunner` / `UnityEditor.TestRunner`, and use `defineConstraints: ["UNITY_INCLUDE_TESTS"]`.
-- Never reference the sample assemblies (`Neo.Rpg.Demo`, `Neo.Demo.Editor`) from package test assemblies: the demos live outside the package in `Assets/NeoxiderDemos` and may be absent. Use reflection with `Assume`/`Assert.Ignore`, or put the test into the demo's own `Neo.Demo.Editor.Tests`.
+- Never reference the sample assemblies (`Neo.Rpg.Demo`) from package test assemblies: the demos live outside the package in `Assets/NeoxiderDemos` and may be absent. Use reflection with `Assume`/`Assert.Ignore`.
 - Allocation checks use Unity's GC.Alloc recorder (`Is.Not.AllocatingGCMemory()`), not `GC.GetAllocatedBytesForCurrentThread()`, which reads 0 in the Unity 6 Editor.
 
 ## 7. Assembly map
@@ -199,7 +199,7 @@ One public type per file; namespaces `Neo.Rpg`, `Neo.Rpg.Components` and `Neo.Rp
 6. Add at least smoke/EditMode tests of the public contract.
 7. Add documentation under `Docs/<Module>/` (README with **What it is** / **Contents**, see [DOCUMENTATION.md](./DOCUMENTATION.md)), a `[NeoDoc]` link on each component, and a line in [Docs/README.md](./Docs/README.md).
 8. Add a `CHANGELOG.md` entry.
-9. If the module has scene components, add a demo scene through a builder in `Assets/NeoxiderDemos/Demo/Editor/Builders/<Module>/` (see [Samples](./Docs/Samples.md#how-demo-scenes-are-made)).
+9. If the module has scene components, add a saved demo scene under `Assets/NeoxiderDemos/Demo/Scenes/<Module>/` (see [Samples](./Docs/Samples.md#how-demo-scenes-are-made)).
 
 ## See also
 

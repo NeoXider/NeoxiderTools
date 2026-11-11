@@ -30,7 +30,9 @@ namespace Neo.UI
         [Tooltip("Controls how influence fades between the Inner and Outer ellipses.")]
         [SerializeField] private UIMeshRigFalloffPreset _falloffPreset = UIMeshRigFalloffPreset.Smooth;
 
-        [Tooltip("Multiplies the point's influence. 1 is normal, 0 does nothing, above 1 exaggerates.")]
+        [Tooltip(
+            "Relative weight of the point. 0 turns it off, 1 is normal. Above 1 the fully-following area grows " +
+            "and the point wins over overlapping points, but a vertex never moves further than the point itself.")]
         [Min(0f)] [SerializeField] private float _strength = 1f;
 
         [Header("Deformation Channels")]
@@ -369,17 +371,32 @@ namespace Neo.UI
         /// </summary>
         public void SetProceduralPose(Vector2 position, float rotationDegrees, Vector2 scaleMultiplier)
         {
-            _proceduralPosition = position;
-            _proceduralRotation = rotationDegrees;
-            _proceduralScale = new Vector2(
+            Vector2 scale = new Vector2(
                 Mathf.Max(0.0001f, scaleMultiplier.x),
                 Mathf.Max(0.0001f, scaleMultiplier.y));
+            // WHY: a motion at speed 0, with flat curves or with the default empty Custom profile writes the same
+            // pose every frame. Each write dirtied the owner, which rebuilt and re-uploaded the whole grid for
+            // nothing; an unchanged pose is now a no-op.
+            if (_hasProceduralPose && _proceduralPosition.Equals(position) &&
+                _proceduralRotation.Equals(rotationDegrees) && _proceduralScale.Equals(scale))
+            {
+                return;
+            }
+
+            _proceduralPosition = position;
+            _proceduralRotation = rotationDegrees;
+            _proceduralScale = scale;
             _hasProceduralPose = true;
             NotifyPoseChanged();
         }
 
         public void ClearProceduralPose()
         {
+            if (!_hasProceduralPose)
+            {
+                return;
+            }
+
             _proceduralPosition = Vector2.zero;
             _proceduralRotation = 0f;
             _proceduralScale = Vector2.one;
@@ -447,9 +464,13 @@ namespace Neo.UI
                 return;
             }
 
+            // WHY: the bind centre is normalized in the aspect-fitted drawing rect, anchors in the full
+            // RectTransform. Writing the bind centre straight into the anchors left a letterbox-sized rest
+            // anchoredPosition that a resize then scaled into visible deformation.
             Vector3 worldPosition = pointRect.position;
-            pointRect.anchorMin = normalizedCenter;
-            pointRect.anchorMax = normalizedCenter;
+            Vector2 anchor = owner.GetBindAnchor(normalizedCenter);
+            pointRect.anchorMin = anchor;
+            pointRect.anchorMax = anchor;
             pointRect.position = worldPosition;
         }
 

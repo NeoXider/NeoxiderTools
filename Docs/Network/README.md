@@ -77,8 +77,7 @@ Details: [NeoNetworkManager](./NeoNetworkManager.md#start--stop-cheat-sheet).
 
 ## Demo scene
 
-`Assets/NeoxiderDemos/Demo/Scenes/Network/NetworkDemo.unity` is authored in
-the editor by `NetworkDemoBuilder` (menu **Neoxider/Demo/Rebuild Active Demo Scene**). Everything is saved in the scene,
+`Assets/NeoxiderDemos/Demo/Scenes/Network/NetworkDemo.unity` is the demo scene. Everything is saved in the scene,
 so the wiring is visible in the Inspector without entering Play Mode:
 
 | Object | What to look at |

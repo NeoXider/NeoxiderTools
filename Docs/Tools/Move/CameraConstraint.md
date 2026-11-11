@@ -18,7 +18,7 @@
 | `[Demo] World` | Corner rings, top/bottom edge labels and height ticks that make the clamp visible. |
 | `[Demo] Frame/Content` | Live `GetConstraintBounds` / `IsAtEdge` values. **Edge padding** calls `SetEdgePadding` directly (persistent UnityEvent); **Zoom**, **Clamp X / Y** (`SetAxisConstraint`) and **Jump up / Center / Jump down** go through `CameraConstraintDemoController`. Zoom out past the bounds width and X is pinned to the centre. |
 
-The scene is authored by the editor builder `CameraConstraintBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ---
 

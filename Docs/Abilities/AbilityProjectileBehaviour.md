@@ -17,6 +17,7 @@
 | **Max Lifetime** | float | Seconds before the projectile despawns if it never hits. |
 | **Hit Radius** | float | Hit-detection radius in world units. |
 | **Max Hits** | int | Units it can hit before despawning (pierce). `1` = single hit. |
+| **Plane** | `AbilityZonePlane` | `GroundXZ` (default): the forward axis follows the flight, for 3D models. `ScreenXY`: the projectile turns around Z so its right (+X) follows the flight, for 2D sprites drawn pointing right. The hub uses the same facing for the spawn rotation (`AbilityZonePlaneFacing.Facing`). |
 
 The ability's **Projectile Speed** overrides **Speed** when non-zero (passed as the spawn magnitude).
 

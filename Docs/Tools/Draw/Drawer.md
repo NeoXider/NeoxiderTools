@@ -21,7 +21,7 @@ saved in the scene:
 | `[Demo] Frame/Content` | **Undo last** / **Clear all** call `Drawer.DeleteLast` / `DeleteAll` and **Pause balls** / **Resume balls** call `Spawner.StopSpawn` / `StartSpawn` directly. The smoothing, width, auto-delete and collider controls set the public Drawer fields through `DrawerDemoController` and apply to the next stroke. |
 | `[Demo] Services/Pointer Gate` | `DemoPointerGate` disables the Drawer while the pointer is over the demo UI (button up), so clicking a control never starts a stroke, while a stroke started in the scene still finishes over the UI. In your own UI, toggle `isActive` the same way. |
 
-The scene is authored by the editor builder `DrawExampleBuilder` (menu **Neoxider > Demo > Rebuild Active Demo Scene**).
+The scene is saved with its UI and wiring.
 
 ---
 

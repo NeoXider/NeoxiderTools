@@ -68,7 +68,19 @@ namespace Neo.UI
         private Vector2[] _raycastVertexPositions;
         private int _raycastColumns;
         private int _raycastRows;
-        private bool? _spriteTextureReadable;
+
+        // WHY: a readable texture can still refuse alpha sampling (a tightly packed atlas sprite has no
+        // textureRect). The refusal is remembered per sprite, so assigning another sprite in the Inspector,
+        // which never goes through SetSource, re-enables the alpha test instead of leaving it off for good.
+        private Sprite _alphaHitTestUnavailableSprite;
+
+        // WHY: direct child points ride RectTransform anchors, which follow the full rect, while their binds
+        // live in the aspect-fitted drawing rect. The rects the anchors were last made consistent with are
+        // kept so a resize, sprite swap or Preserve Aspect toggle can move each anchor by exactly what keeps
+        // the point's rest offset from its bind.
+        private Rect _anchorSyncRect;
+        private Rect _anchorSyncDrawingRect;
+        private bool _anchorSyncValid;
 
         public override Texture mainTexture => _sprite != null ? _sprite.texture : s_WhiteTexture;
         public Sprite Sprite => _sprite;
@@ -107,9 +119,9 @@ namespace Neo.UI
         public void SetSource(Sprite sprite, Color tint, Material sourceMaterial = null)
         {
             _sprite = sprite;
-            _spriteTextureReadable = null;
             color = tint;
             material = sourceMaterial;
+            SynchronizeDirectChildAnchors();
             SetAllDirty();
         }
 
@@ -121,6 +133,7 @@ namespace Neo.UI
             }
 
             _preserveAspect = preserveAspect;
+            SynchronizeDirectChildAnchors();
             SetVerticesDirty();
         }
 
@@ -248,6 +261,7 @@ namespace Neo.UI
                 _rows,
                 GetCoordinateSpace(),
                 uvRect,
+                UIMeshRigGeometryBuilder.GetSpriteContentBounds(_sprite),
                 IsDeformationActive(),
                 _pointStates,
                 reuse);
@@ -334,24 +348,23 @@ namespace Neo.UI
                 return true;
             }
 
+            // WHY: Match uGUI Image behavior: a non-readable texture remains clickable instead of silently breaking input.
+            Texture2D texture = _sprite.texture;
+            if (texture == null || !texture.isReadable || ReferenceEquals(_alphaHitTestUnavailableSprite, _sprite))
+            {
+                return true;
+            }
+
             try
             {
-                if (_spriteTextureReadable == false)
-                {
-                    return true;
-                }
-
                 Rect textureRect = _sprite.textureRect;
-                float textureU = (textureRect.x + normalized.x * textureRect.width) / _sprite.texture.width;
-                float textureV = (textureRect.y + normalized.y * textureRect.height) / _sprite.texture.height;
-                bool accepted = _sprite.texture.GetPixelBilinear(textureU, textureV).a >= _alphaHitTestMinimumThreshold;
-                _spriteTextureReadable = true;
-                return accepted;
+                float textureU = (textureRect.x + normalized.x * textureRect.width) / texture.width;
+                float textureV = (textureRect.y + normalized.y * textureRect.height) / texture.height;
+                return texture.GetPixelBilinear(textureU, textureV).a >= _alphaHitTestMinimumThreshold;
             }
             catch (UnityException)
             {
-                // WHY: Match uGUI Image behavior: a non-readable texture remains clickable instead of silently breaking input.
-                _spriteTextureReadable = false;
+                _alphaHitTestUnavailableSprite = _sprite;
                 return true;
             }
         }
@@ -365,6 +378,7 @@ namespace Neo.UI
             SetAllDirty();
             EnsureRaycastPaddingInitialized();
             UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
+            SynchronizeDirectChildAnchors();
         }
 
         protected override void OnDisable()
@@ -402,25 +416,13 @@ namespace Neo.UI
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
-            if (!Application.isPlaying || _authoringMode != UIMeshRigAuthoringMode.Setup)
+            // WHY: every mode, Edit and Play. Only Play Mode Setup used to react, and it snapped each point
+            // back onto its bind, which also threw away the Animator or code pose for that frame. Moving the
+            // anchors instead keeps every offset relative to the bind.
+            if (isActiveAndEnabled)
             {
-                return;
+                SynchronizeDirectChildAnchors();
             }
-
-            EnsurePointCache();
-            for (int index = 0; index < _points.Count; index++)
-            {
-                UIMeshRigPoint point = _points[index];
-                if (point.transform.parent != transform)
-                {
-                    continue;
-                }
-
-                point.transform.position = NormalizedToWorld(point.RestCenterNormalized);
-                point.transform.hasChanged = false;
-            }
-
-            SetVerticesDirty();
         }
 
         private void LateUpdate()
@@ -433,10 +435,107 @@ namespace Neo.UI
             SynchronizePointTransforms();
         }
 
+        /// <summary>
+        /// Anchor that puts a direct child point exactly on <paramref name="normalizedPosition"/> with a zero
+        /// anchoredPosition. Bind centres are normalized in the aspect-fitted drawing rect, anchors in the
+        /// full RectTransform; both agree only while Preserve Aspect leaves no letterbox.
+        /// </summary>
+        internal Vector2 GetBindAnchor(Vector2 normalizedPosition)
+        {
+            SynchronizeDirectChildAnchors();
+            Rect fullRect = rectTransform.rect;
+            Rect drawingRect = GetAnchorDrawingRect();
+            if (drawingRect == fullRect)
+            {
+                return normalizedPosition;
+            }
+
+            return LocalToAnchor(
+                fullRect,
+                drawingRect.min + Vector2.Scale(drawingRect.size, normalizedPosition),
+                normalizedPosition);
+        }
+
+        /// <summary>
+        /// Moves the anchors of direct child points after the full or drawing rect changed (resize, sprite
+        /// swap, Preserve Aspect) so each point keeps its rest offset from its bind. anchoredPosition is left
+        /// alone: Animator keys and code poses stay relative to the bind.
+        /// </summary>
+        internal void SynchronizeDirectChildAnchors()
+        {
+            Rect fullRect = rectTransform.rect;
+            Rect drawingRect = GetAnchorDrawingRect();
+            if (_anchorSyncValid && fullRect == _anchorSyncRect && drawingRect == _anchorSyncDrawingRect)
+            {
+                return;
+            }
+
+            bool hadPreviousRects = _anchorSyncValid;
+            Rect previousRect = _anchorSyncRect;
+            Rect previousDrawingRect = _anchorSyncDrawingRect;
+            _anchorSyncRect = fullRect;
+            _anchorSyncDrawingRect = drawingRect;
+            _anchorSyncValid = true;
+            if (!hadPreviousRects)
+            {
+                return;
+            }
+
+            EnsurePointCache();
+            bool moved = false;
+            for (int index = 0; index < _points.Count; index++)
+            {
+                UIMeshRigPoint point = _points[index];
+                RectTransform pointRect = point.transform as RectTransform;
+                if (pointRect == null || pointRect.parent != transform || pointRect.anchorMin != pointRect.anchorMax)
+                {
+                    continue;
+                }
+
+                Vector2 anchor = pointRect.anchorMin;
+                Vector2 center = point.RestCenterNormalized;
+                Vector2 restOffset =
+                    previousDrawingRect.min + Vector2.Scale(previousDrawingRect.size, center) -
+                    (previousRect.min + Vector2.Scale(previousRect.size, anchor));
+                Vector2 bind = drawingRect.min + Vector2.Scale(drawingRect.size, center);
+                Vector2 nextAnchor = LocalToAnchor(fullRect, bind - restOffset, anchor);
+                if ((nextAnchor - anchor).sqrMagnitude <= 0.000000000001f)
+                {
+                    continue;
+                }
+
+                // WHY: the anchor move is a consequence of the rect change, not an authoring edit. Leaving
+                // hasChanged raised would make Setup re-capture the point and rewrite its rest data.
+                bool wasChanged = pointRect.hasChanged;
+                pointRect.anchorMin = nextAnchor;
+                pointRect.anchorMax = nextAnchor;
+                if (!wasChanged)
+                {
+                    pointRect.hasChanged = false;
+                }
+
+                moved = true;
+            }
+
+            if (moved)
+            {
+                SetVerticesDirty();
+            }
+        }
+
+        private static Vector2 LocalToAnchor(Rect fullRect, Vector2 localPosition, Vector2 fallback)
+        {
+            return new Vector2(
+                Mathf.Abs(fullRect.width) > 0.000001f ? (localPosition.x - fullRect.xMin) / fullRect.width : fallback.x,
+                Mathf.Abs(fullRect.height) > 0.000001f ? (localPosition.y - fullRect.yMin) / fullRect.height : fallback.y);
+        }
+
         private void SynchronizePointTransforms()
         {
+            SynchronizeDirectChildAnchors();
             EnsurePointCache();
             bool changed = false;
+            bool rebindAllowed = UIMeshRigAuthoring.IsRebindAllowed(_authoringMode);
             for (int index = 0; index < _points.Count; index++)
             {
                 UIMeshRigPoint point = _points[index];
@@ -449,9 +548,9 @@ namespace Neo.UI
                 // LateUpdate with no Undo entry, and the Edit Mode preview forces a player-loop update every
                 // editor tick. Any stray hasChanged — an undo, a prefab revert, a redo — was therefore
                 // rewritten into the asset behind the user and left the scene permanently dirty. A previewed
-                // point is never rebound; stop the preview to edit the bind.
-                if (!Application.isPlaying && _authoringMode == UIMeshRigAuthoringMode.Setup &&
-                    !point.HasProceduralPose)
+                // point is never rebound; stop the preview to edit the bind. An Animation window or Timeline
+                // preview counts as a preview too, see UIMeshRigAuthoring.IsRebindAllowed.
+                if (rebindAllowed && !point.HasProceduralPose)
                 {
                     point.CaptureRestPose(this);
                 }
@@ -540,7 +639,8 @@ namespace Neo.UI
                 return false;
             }
 
-            if (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose)
+            if (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose ||
+                UIMeshRigAuthoring.IsAnimationPreviewActive())
             {
                 return true;
             }
@@ -565,7 +665,19 @@ namespace Neo.UI
 
         private Rect GetDrawingRect()
         {
-            Rect rect = GetPixelAdjustedRect();
+            return FitToSprite(GetPixelAdjustedRect());
+        }
+
+        // WHY: anchor bookkeeping uses the unsnapped rect. A pixel-perfect canvas snaps the drawing rect
+        // differently at every canvas scale, so resizing the Game view would otherwise rewrite every point
+        // anchor in the scene for a sub-pixel difference.
+        private Rect GetAnchorDrawingRect()
+        {
+            return FitToSprite(rectTransform.rect);
+        }
+
+        private Rect FitToSprite(Rect rect)
+        {
             if (!_preserveAspect || _sprite == null || _sprite.rect.height <= 0f || rect.height <= 0f)
             {
                 return rect;
@@ -582,6 +694,9 @@ namespace Neo.UI
             bool hasCache = _raycastVertexPositions != null &&
                             _raycastColumns == columns && _raycastRows == rows &&
                             _raycastVertexPositions.Length == (columns + 1) * (rows + 1);
+            // WHY: the grid parameters below span the sprite's texture region, which a trimmed atlas sprite
+            // covers only partly; deforming them as rig coordinates needs the same content bounds the mesh uses.
+            Rect bounds = hasCache ? UIMeshRigGeometryBuilder.UnitRect : UIMeshRigGeometryBuilder.GetSpriteContentBounds(_sprite);
             for (int y = 0; y < rows; y++)
             {
                 float v0 = y / (float)rows;
@@ -600,10 +715,10 @@ namespace Neo.UI
                     int i10 = i00 + 1;
                     int i01 = i00 + stride;
                     int i11 = i01 + 1;
-                    Vector2 p00 = hasCache ? _raycastVertexPositions[i00] : CalculateDeformedLocalPoint(uv00);
-                    Vector2 p10 = hasCache ? _raycastVertexPositions[i10] : CalculateDeformedLocalPoint(uv10);
-                    Vector2 p01 = hasCache ? _raycastVertexPositions[i01] : CalculateDeformedLocalPoint(uv01);
-                    Vector2 p11 = hasCache ? _raycastVertexPositions[i11] : CalculateDeformedLocalPoint(uv11);
+                    Vector2 p00 = hasCache ? _raycastVertexPositions[i00] : CalculateDeformedLocalPoint(GridToNormalized(uv00, bounds));
+                    Vector2 p10 = hasCache ? _raycastVertexPositions[i10] : CalculateDeformedLocalPoint(GridToNormalized(uv10, bounds));
+                    Vector2 p01 = hasCache ? _raycastVertexPositions[i01] : CalculateDeformedLocalPoint(GridToNormalized(uv01, bounds));
+                    Vector2 p11 = hasCache ? _raycastVertexPositions[i11] : CalculateDeformedLocalPoint(GridToNormalized(uv11, bounds));
                     if (TryPointInTriangle(localPoint, p00, p01, p11,
                             out barycentric))
                     {
@@ -622,6 +737,13 @@ namespace Neo.UI
 
             normalized = default;
             return false;
+        }
+
+        private static Vector2 GridToNormalized(Vector2 gridPosition, Rect bounds)
+        {
+            return new Vector2(
+                Mathf.LerpUnclamped(bounds.xMin, bounds.xMax, gridPosition.x),
+                Mathf.LerpUnclamped(bounds.yMin, bounds.yMax, gridPosition.y));
         }
 
         private static bool TryPointInTriangle(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out Vector3 barycentric)

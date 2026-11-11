@@ -212,20 +212,31 @@ namespace Neo.Abilities
                 Targeting = (FixedTargeting)(int)source.Targeting,
                 TeamFilter = (FixedTeamFilter)(int)source.TeamFilter,
                 RangeRaw = c.Raw(source.Range, "Range"),
+                RangeByLevelRaw = c.RawArray(source.RangeByLevel, "RangeByLevel"),
                 CooldownTicks = c.Ticks(source.Cooldown, "Cooldown"),
+                CooldownByLevelTicks = c.TicksArray(source.CooldownByLevel, "CooldownByLevel"),
                 MaxCharges = source.MaxCharges,
+                MaxChargesByLevel = CopyArray(source.MaxChargesByLevel),
                 ChargeRestoreTicks = c.Ticks(source.ChargeRestoreTime, "ChargeRestoreTime"),
+                ChargeRestoreByLevelTicks = c.TicksArray(source.ChargeRestoreTimeByLevel, "ChargeRestoreTimeByLevel"),
                 Delivery = (FixedDelivery)(int)source.Delivery,
                 ProjectileArchetypeId = source.ProjectileArchetypeId,
-                ProjectileSpeedRaw = c.Raw(source.ProjectileSpeed, "ProjectileSpeed")
+                ProjectileSpeedRaw = c.Raw(source.ProjectileSpeed, "ProjectileSpeed"),
+                ProjectileSpeedByLevelRaw = c.RawArray(source.ProjectileSpeedByLevel, "ProjectileSpeedByLevel")
             };
 
             if (source.Costs != null)
             {
                 for (int i = 0; i < source.Costs.Count; i++)
                 {
-                    result.Costs.Add(new FixedAbilityCost(source.Costs[i].ResourceId,
-                        c.Raw(source.Costs[i].Amount, "Costs[" + i + "]")));
+                    AbilityCost cost = source.Costs[i];
+                    string path = "Costs[" + i + "]";
+                    result.Costs.Add(new FixedAbilityCost(cost.ResourceId, c.Raw(cost.Amount, path),
+                        (FixedCostMode)(int)cost.Mode, c.Raw(cost.MinAmount, path + ".MinAmount"))
+                    {
+                        AmountByLevelRaw = c.RawArray(cost.AmountByLevel, path + ".AmountByLevel"),
+                        AmountKey = cost.AmountKey
+                    });
                 }
             }
 
@@ -316,6 +327,18 @@ namespace Neo.Abilities
             }
 
             return result;
+        }
+
+        private static int[] CopyArray(int[] values)
+        {
+            if (values == null || values.Length == 0)
+            {
+                return null;
+            }
+
+            int[] copy = new int[values.Length];
+            Array.Copy(values, copy, values.Length);
+            return copy;
         }
 
         /// <summary>A float value as raw in <paramref name="format" />, rounded half away from zero and saturated.</summary>
@@ -431,16 +454,68 @@ namespace Neo.Abilities
 
             public FixedPropertyContribution Property(PropertyContribution source, string field)
             {
+                float[] byLevel = source.ValueByLevel != null && source.ValueByLevel.Length > 0 ? source.ValueByLevel : null;
                 if (source.Op == PropertyOp.Mul && _settings.ExactPercentMultipliers &&
-                    (!OnGrid(source.Value) || !OnGrid(source.PerStackValue)) &&
-                    IsWholePercent(source.Value) && IsWholePercent(source.PerStackValue))
+                    (!OnGrid(source.Value) || !OnGrid(source.PerStackValue) || !AllOnGrid(byLevel)) &&
+                    IsWholePercent(source.Value) && IsWholePercent(source.PerStackValue) && AllWholePercent(byLevel))
                 {
-                    return new FixedPropertyContribution(source.PropertyId, FixedPropertyOp.Mul,
-                        (int)Math.Round(source.Value * 100d), (int)Math.Round(source.PerStackValue * 100d), 100);
+                    // WHY: one denominator covers the flat value, the per-stack step and every level entry.
+                    FixedPropertyContribution exact = new FixedPropertyContribution(source.PropertyId,
+                        FixedPropertyOp.Mul, (int)Math.Round(source.Value * 100d),
+                        (int)Math.Round(source.PerStackValue * 100d), 100);
+                    if (byLevel != null)
+                    {
+                        exact.ValueByLevelRaw = new int[byLevel.Length];
+                        for (int i = 0; i < byLevel.Length; i++)
+                        {
+                            exact.ValueByLevelRaw[i] = (int)Math.Round(byLevel[i] * 100d);
+                        }
+                    }
+
+                    return exact;
                 }
 
                 return new FixedPropertyContribution(source.PropertyId, (FixedPropertyOp)(int)source.Op,
-                    Raw(source.Value, field + ".Value"), Raw(source.PerStackValue, field + ".PerStackValue"));
+                    Raw(source.Value, field + ".Value"), Raw(source.PerStackValue, field + ".PerStackValue"))
+                {
+                    ValueByLevelRaw = RawArray(byLevel, field + ".ValueByLevel")
+                };
+            }
+
+            private bool AllOnGrid(float[] values)
+            {
+                if (values == null)
+                {
+                    return true;
+                }
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    if (!OnGrid(values[i]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            private static bool AllWholePercent(float[] values)
+            {
+                if (values == null)
+                {
+                    return true;
+                }
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    if (!IsWholePercent(values[i]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
 
             public FixedLeveledValue Leveled(LeveledValue source, string field)
@@ -453,8 +528,28 @@ namespace Neo.Abilities
                     ScaleProperty = source.ScaleProperty,
                     ScalePerPointRaw = Raw(source.ScalePerPoint, field + ".ScalePerPoint"),
                     ScaleFrom = (FixedScaleSource)(int)source.ScaleFrom,
-                    LevelFrom = (FixedLevelSource)(int)source.LevelFrom
+                    LevelFrom = (FixedLevelSource)(int)source.LevelFrom,
+                    ScaleStat = (FixedScaleStat)(int)source.ScaleStat,
+                    ScaleMode = (FixedScaleMode)(int)source.ScaleMode,
+                    SpentResource = source.SpentResource,
+                    SpentCoefficientRaw = Raw(source.SpentCoefficient, field + ".SpentCoefficient")
                 };
+            }
+
+            private int[] ChanceArray(float[] values, string field)
+            {
+                if (values == null || values.Length == 0)
+                {
+                    return null;
+                }
+
+                int[] result = new int[values.Length];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    result[i] = values[i] >= 1f ? FixedEffectNode.Always : Raw(values[i], field + "[" + i + "]");
+                }
+
+                return result;
             }
 
             public void Nodes(List<EffectNodeData> source, List<FixedEffectNode> target, string field)
@@ -497,6 +592,7 @@ namespace Neo.Abilities
                     RadiusRaw = Raw(source.Radius, field + ".Radius"),
                     RadiusByLevelRaw = RawArray(source.RadiusByLevel, field + ".RadiusByLevel"),
                     MaxTargets = source.MaxTargets,
+                    MaxTargetsByLevel = CopyArray(source.MaxTargetsByLevel),
                     AmountRaw = Raw(source.Amount, field + ".Amount"),
                     AmountByLevelRaw = RawArray(source.AmountByLevel, field + ".AmountByLevel"),
                     AmountKey = source.AmountKey,
@@ -504,16 +600,23 @@ namespace Neo.Abilities
                     AmountScalePerPointRaw = Raw(source.AmountScalePerPoint, field + ".AmountScalePerPoint"),
                     AmountScaleSource = (FixedScaleSource)(int)source.AmountScaleSource,
                     AmountLevelSource = (FixedLevelSource)(int)source.AmountLevelSource,
+                    AmountScaleStat = (FixedScaleStat)(int)source.AmountScaleStat,
+                    AmountScaleMode = (FixedScaleMode)(int)source.AmountScaleMode,
+                    AmountSpentResource = source.AmountSpentResource,
+                    AmountSpentCoefficientRaw = Raw(source.AmountSpentCoefficient, field + ".AmountSpentCoefficient"),
                     DamageType = source.DamageType,
                     ModifierId = source.ModifierId,
                     ResourceId = source.ResourceId,
                     ArchetypeId = source.ArchetypeId,
                     CustomParam = source.CustomParam,
                     ChanceRaw = source.Chance >= 1f ? FixedEffectNode.Always : Raw(source.Chance, field + ".Chance"),
+                    ChanceByLevelRaw = ChanceArray(source.ChanceByLevel, field + ".ChanceByLevel"),
                     AbilityId = source.AbilityId,
                     AngleDegrees = angle,
                     DurationTicks = Ticks(source.Duration, field + ".Duration"),
                     IntervalTicks = Ticks(source.Interval, field + ".Interval"),
+                    DurationByLevelTicks = TicksArray(source.DurationByLevel, field + ".DurationByLevel"),
+                    IntervalByLevelTicks = TicksArray(source.IntervalByLevel, field + ".IntervalByLevel"),
                     AmountPerStackRaw = Raw(source.AmountPerStack, field + ".AmountPerStack")
                 };
             }

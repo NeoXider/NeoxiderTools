@@ -75,8 +75,7 @@ Everything is saved in the scene, so the wiring is visible without entering Play
 
 C# equivalents: `InventoryComponent.AddItemInstance` / `TryCaptureSelection`,
 `InventoryTransferService.TransferSelection`, `InventoryHand.SetSlotIndex` / `UseEquippedItem`,
-`InventoryUseAction.TryUse`. The scene is authored by `InventoryUseDemoBuilder`
-(`Demo/Editor/Builders/Inventory`); rebuild it with **Neoxider → Demo → Rebuild Active Demo Scene**.
+`InventoryUseAction.TryUse`. The scene is saved with its UI and wiring.
 
 **По-русски:** готовый пример показывает использование, а не только подбор и переключение. Улов,
 постоянный инвентарь и подиум — отдельные контейнеры; UID, уровень и мутация сохраняются при переносе.

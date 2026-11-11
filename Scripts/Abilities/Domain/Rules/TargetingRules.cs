@@ -141,9 +141,10 @@ namespace Neo.Abilities
             _unitScratch.Clear();
             system.World.QueryUnitsInRadius(center, radius, _unitScratch);
             AbilityUnit caster = system.GetUnit(context.Caster);
+            int maxTargets = node.ResolveMaxTargets(context.AbilityLevel);
 
             // WHY: unlimited case preserves the historical query order and stays zero-allocation.
-            if (node.MaxTargets <= 0)
+            if (maxTargets <= 0)
             {
                 for (int i = 0; i < _unitScratch.Count; i++)
                 {
@@ -177,7 +178,7 @@ namespace Neo.Abilities
             }
 
             _areaScratch.Sort(AreaHitComparison);
-            int keep = node.MaxTargets < _areaScratch.Count ? node.MaxTargets : _areaScratch.Count;
+            int keep = maxTargets < _areaScratch.Count ? maxTargets : _areaScratch.Count;
             for (int i = 0; i < keep; i++)
             {
                 results.Add(_areaScratch[i].Unit);

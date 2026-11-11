@@ -60,7 +60,7 @@ namespace Neo.Abilities
                 PropertyContribution c = props[i];
                 if (AbilityIdComparer.Same(c.PropertyId, AbilityProperties.ShieldHp))
                 {
-                    capacity += c.ValueForStacks(instance.Stacks);
+                    capacity += c.ValueFor(instance.Stacks, instance.AbilityLevel);
                 }
             }
 

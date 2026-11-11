@@ -3,8 +3,10 @@ using System.Collections.Generic;
 namespace Neo.Abilities.Fixed
 {
     /// <summary>
-    ///     A raw amount that may depend on a level and scale with a unit property:
-    ///     base (or the per-level entry) + PerLevel × (level − 1) + ScalePerPoint × property.
+    ///     A raw amount that may depend on a level, on what the cast spent and on a unit stat:
+    ///     base (or the per-level entry) + PerLevel × (level − 1) + SpentCoefficient × spent, then
+    ///     + ScalePerPoint × stat (Add) or × (1 + ScalePerPoint × stat) (Multiply). The stat is a property or a
+    ///     resource pool's current / max / missing amount.
     /// </summary>
     public struct FixedLeveledValue
     {
@@ -15,6 +17,17 @@ namespace Neo.Abilities.Fixed
         public int ScalePerPointRaw;
         public FixedScaleSource ScaleFrom;
         public FixedLevelSource LevelFrom;
+
+        /// <summary>What the scaling term reads; <see cref="ScaleProperty" /> names a resource for the resource stats.</summary>
+        public FixedScaleStat ScaleStat;
+
+        public FixedScaleMode ScaleMode;
+
+        /// <summary>Resource id whose spent amount adds the spent term; null or "" = off.</summary>
+        public string SpentResource;
+
+        /// <summary>Raw coefficient of the spent term: value += SpentCoefficientRaw × spent / one.</summary>
+        public int SpentCoefficientRaw;
 
         public static FixedLeveledValue Flat(int raw)
         {
@@ -37,6 +50,7 @@ namespace Neo.Abilities.Fixed
         public int RadiusRaw;
         public int[] RadiusByLevelRaw;
         public int MaxTargets;
+        public int[] MaxTargetsByLevel;
         public int AmountRaw;
         public int[] AmountByLevelRaw;
         public string AmountKey;
@@ -44,6 +58,10 @@ namespace Neo.Abilities.Fixed
         public int AmountScalePerPointRaw;
         public FixedScaleSource AmountScaleSource;
         public FixedLevelSource AmountLevelSource;
+        public FixedScaleStat AmountScaleStat;
+        public FixedScaleMode AmountScaleMode;
+        public string AmountSpentResource;
+        public int AmountSpentCoefficientRaw;
         public string DamageType = FixedDamageTypes.Magical;
         public string ModifierId;
         public string ResourceId;
@@ -53,6 +71,9 @@ namespace Neo.Abilities.Fixed
         /// <summary>Raw chance in [0, one); <see cref="Always" /> (default) always runs.</summary>
         public int ChanceRaw = Always;
 
+        /// <summary>Per-ability-level raw chances (same rule as <see cref="ChanceRaw" />); null or empty = ChanceRaw.</summary>
+        public int[] ChanceByLevelRaw;
+
         public string AbilityId;
 
         /// <summary>Full cone angle in whole degrees (360 = full circle).</summary>
@@ -60,6 +81,13 @@ namespace Neo.Abilities.Fixed
 
         public int DurationTicks;
         public int IntervalTicks;
+
+        /// <summary>Per-ability-level zone lifetimes in ticks; null or empty = DurationTicks.</summary>
+        public int[] DurationByLevelTicks;
+
+        /// <summary>Per-ability-level zone pulse intervals in ticks; null or empty = IntervalTicks.</summary>
+        public int[] IntervalByLevelTicks;
+
         public int AmountPerStackRaw;
 
         public FixedLeveledValue ToLeveledValue()
@@ -71,8 +99,37 @@ namespace Neo.Abilities.Fixed
                 ScaleProperty = AmountScaleProperty,
                 ScalePerPointRaw = AmountScalePerPointRaw,
                 ScaleFrom = AmountScaleSource,
-                LevelFrom = AmountLevelSource
+                LevelFrom = AmountLevelSource,
+                ScaleStat = AmountScaleStat,
+                ScaleMode = AmountScaleMode,
+                SpentResource = AmountSpentResource,
+                SpentCoefficientRaw = AmountSpentCoefficientRaw
             };
+        }
+
+        public int ResolveChanceRaw(int abilityLevel)
+        {
+            return FixedValueResolver.SampleByLevel(ChanceByLevelRaw, abilityLevel, ChanceRaw);
+        }
+
+        public int ResolveMaxTargets(int abilityLevel)
+        {
+            return FixedValueResolver.SampleByLevel(MaxTargetsByLevel, abilityLevel, MaxTargets);
+        }
+
+        public int ResolveRadiusRaw(int abilityLevel)
+        {
+            return FixedValueResolver.SampleByLevel(RadiusByLevelRaw, abilityLevel, RadiusRaw);
+        }
+
+        public int ResolveDurationTicks(int abilityLevel)
+        {
+            return FixedValueResolver.SampleByLevel(DurationByLevelTicks, abilityLevel, DurationTicks);
+        }
+
+        public int ResolveIntervalTicks(int abilityLevel)
+        {
+            return FixedValueResolver.SampleByLevel(IntervalByLevelTicks, abilityLevel, IntervalTicks);
         }
     }
 
@@ -90,6 +147,12 @@ namespace Neo.Abilities.Fixed
         /// <summary>0 = ValueRaw is a raw number; above 0 = ValueRaw / Denominator is an exact ratio (Mul only).</summary>
         public int Denominator;
 
+        /// <summary>
+        ///     Per-ability-level values in the same unit as <see cref="ValueRaw" /> (raw, or over <see cref="Denominator" />),
+        ///     indexed by the level captured on the modifier; null or empty = ValueRaw.
+        /// </summary>
+        public int[] ValueByLevelRaw;
+
         public FixedPropertyContribution(string propertyId, FixedPropertyOp op, int valueRaw, int perStackRaw = 0,
             int denominator = 0)
         {
@@ -98,12 +161,22 @@ namespace Neo.Abilities.Fixed
             ValueRaw = valueRaw;
             PerStackRaw = perStackRaw;
             Denominator = denominator;
+            ValueByLevelRaw = null;
         }
 
+        /// <summary>ValueRaw + PerStackRaw × (stacks − 1), ignoring <see cref="ValueByLevelRaw" />; the engine uses <see cref="ValueFor" />.</summary>
         public int ValueForStacks(int stacks)
         {
             int extra = stacks > 1 ? stacks - 1 : 0;
             return FixedMath.SaturatingAdd(ValueRaw, FixedMath.SaturatingMultiply(PerStackRaw, extra));
+        }
+
+        /// <summary>(ValueByLevelRaw sampled by the captured level, else ValueRaw) + PerStackRaw × (stacks − 1).</summary>
+        public int ValueFor(int stacks, int abilityLevel)
+        {
+            int extra = stacks > 1 ? stacks - 1 : 0;
+            int value = FixedValueResolver.SampleByLevel(ValueByLevelRaw, abilityLevel, ValueRaw);
+            return FixedMath.SaturatingAdd(value, FixedMath.SaturatingMultiply(PerStackRaw, extra));
         }
     }
 
@@ -204,13 +277,73 @@ namespace Neo.Abilities.Fixed
         }
     }
 
-    /// <summary>A raw resource cost of a fixed ability.</summary>
+    /// <summary>
+    ///     A raw resource cost of a fixed ability: a flat raw amount, per-level raw amounts or a named special
+    ///     (<see cref="AmountKey" />), taken exactly (Fixed), up to the amount (UpTo) or entirely (All).
+    /// </summary>
     public struct FixedAbilityCost
     {
         public string ResourceId;
         public int AmountRaw;
 
+        /// <summary>Per-ability-level raw amounts; null or empty = AmountRaw.</summary>
+        public int[] AmountByLevelRaw;
+
+        /// <summary>Named special of the ability giving the amount; null or "" = AmountRaw / AmountByLevelRaw.</summary>
+        public string AmountKey;
+
+        public FixedCostMode Mode;
+
+        /// <summary>UpTo / All: raw amount that must be available for the cast to proceed.</summary>
+        public int MinAmountRaw;
+
         public FixedAbilityCost(string resourceId, int amountRaw)
+        {
+            ResourceId = resourceId;
+            AmountRaw = amountRaw;
+            AmountByLevelRaw = null;
+            AmountKey = null;
+            Mode = FixedCostMode.Fixed;
+            MinAmountRaw = 0;
+        }
+
+        public FixedAbilityCost(string resourceId, int amountRaw, FixedCostMode mode, int minAmountRaw = 0)
+            : this(resourceId, amountRaw)
+        {
+            Mode = mode;
+            MinAmountRaw = minAmountRaw;
+        }
+
+        /// <summary>
+        ///     Raw amount at an ability level, before the cost rule and the spend mode: the named special when found, else
+        ///     AmountByLevelRaw sampled by the level, else AmountRaw.
+        /// </summary>
+        public int ResolveAmountRaw(List<FixedAbilitySpecial> specials, FixedAbilitySystem system, int caster,
+            int abilityLevel, int target)
+        {
+            if (!string.IsNullOrEmpty(AmountKey) && specials != null)
+            {
+                for (int i = 0; i < specials.Count; i++)
+                {
+                    if (FixedIdComparer.Same(specials[i].Name, AmountKey))
+                    {
+                        FixedLeveledValue special = specials[i].Value;
+                        return FixedValueResolver.Resolve(in special, system, caster, abilityLevel, target);
+                    }
+                }
+            }
+
+            return FixedValueResolver.SampleByLevel(AmountByLevelRaw, abilityLevel, AmountRaw);
+        }
+    }
+
+    /// <summary>How much of one resource a fixed cast actually paid (raw).</summary>
+    public readonly struct FixedSpentResource
+    {
+        public readonly string ResourceId;
+        public readonly int AmountRaw;
+
+        public FixedSpentResource(string resourceId, int amountRaw)
         {
             ResourceId = resourceId;
             AmountRaw = amountRaw;
@@ -226,7 +359,8 @@ namespace Neo.Abilities.Fixed
 
     /// <summary>
     ///     A fixed ability: targeting, raw range and costs, cooldown and charge restore in ticks, delivery, cast and
-    ///     impact effects, named leveled values.
+    ///     impact effects, named leveled values. Every cast parameter may have a per-level array (index = level − 1,
+    ///     clamped; null or empty = the flat field), resolved at the slot level.
     /// </summary>
     public sealed class FixedAbilityBlueprint
     {
@@ -234,17 +368,55 @@ namespace Neo.Abilities.Fixed
         public FixedTargeting Targeting = FixedTargeting.NoTarget;
         public FixedTeamFilter TeamFilter = FixedTeamFilter.Enemies;
         public int RangeRaw;
+        public int[] RangeByLevelRaw;
         public List<FixedAbilityCost> Costs = new List<FixedAbilityCost>();
         public int CooldownTicks;
+        public int[] CooldownByLevelTicks;
         public int MaxCharges = 1;
+        public int[] MaxChargesByLevel;
         public int ChargeRestoreTicks;
+        public int[] ChargeRestoreByLevelTicks;
         public FixedDelivery Delivery = FixedDelivery.Instant;
         public string ProjectileArchetypeId;
         public int ProjectileSpeedRaw;
+        public int[] ProjectileSpeedByLevelRaw;
         public List<FixedEffectNode> CastEffects = new List<FixedEffectNode>();
         public List<FixedEffectNode> ImpactEffects = new List<FixedEffectNode>();
         public List<FixedAbilitySpecial> Specials = new List<FixedAbilitySpecial>();
 
+        /// <summary>True when the flat <see cref="MaxCharges" /> uses charges; level-aware code uses <see cref="UsesChargesAt" />.</summary>
         public bool UsesCharges => MaxCharges > 1;
+
+        public int ResolveRangeRaw(int level)
+        {
+            return FixedValueResolver.SampleByLevel(RangeByLevelRaw, level, RangeRaw);
+        }
+
+        public int ResolveCooldownTicks(int level)
+        {
+            return FixedValueResolver.SampleByLevel(CooldownByLevelTicks, level, CooldownTicks);
+        }
+
+        public int ResolveMaxCharges(int level)
+        {
+            return FixedValueResolver.SampleByLevel(MaxChargesByLevel, level, MaxCharges);
+        }
+
+        public bool UsesChargesAt(int level)
+        {
+            return ResolveMaxCharges(level) > 1;
+        }
+
+        /// <summary>Ticks to restore one charge at a level: the restore entry when positive, else the level's cooldown.</summary>
+        public int ResolveChargeRestoreTicks(int level)
+        {
+            int restore = FixedValueResolver.SampleByLevel(ChargeRestoreByLevelTicks, level, ChargeRestoreTicks);
+            return restore > 0 ? restore : ResolveCooldownTicks(level);
+        }
+
+        public int ResolveProjectileSpeedRaw(int level)
+        {
+            return FixedValueResolver.SampleByLevel(ProjectileSpeedByLevelRaw, level, ProjectileSpeedRaw);
+        }
     }
 }

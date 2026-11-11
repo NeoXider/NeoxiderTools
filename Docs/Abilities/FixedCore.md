@@ -64,6 +64,26 @@ The default world adapter reads `FixedUnit.Position` and scans units linearly in
 
 It reports (`FixedConversionIssue`: severity, content id, field, original, converted, message) every value that moves by more than half a raw unit: times that are not a whole number of ticks, fractional angles, saturated or non-finite numbers, and every operation the fixed core does not provide. `ReportOffGridValues` also lists, as Info, values rounded within half a step.
 
+## Leveled and scalable values
+
+The fixed blueprints carry every leveled and scalable field of the float content ([AbilityDefinition](./AbilityDefinition.md#leveled-and-scalable-values)) and resolve them with the same rules, in raw units and ticks:
+
+| Float field | Fixed field | Conversion |
+|-------------|-------------|------------|
+| `RangeByLevel`, `ProjectileSpeedByLevel` | `RangeByLevelRaw`, `ProjectileSpeedByLevelRaw` | raw |
+| `CooldownByLevel`, `ChargeRestoreTimeByLevel` | `CooldownByLevelTicks`, `ChargeRestoreByLevelTicks` | ticks, rounded up |
+| `MaxChargesByLevel`, `MaxTargetsByLevel` | same names | copied |
+| `AbilityCost.AmountByLevel`, `AmountKey`, `Mode`, `MinAmount` | `FixedAbilityCost.AmountByLevelRaw`, `AmountKey`, `Mode` (`FixedCostMode`), `MinAmountRaw` | raw |
+| `LeveledValue.ScaleStat`, `ScaleMode`, `SpentResource`, `SpentCoefficient` | `FixedLeveledValue.ScaleStat`, `ScaleMode`, `SpentResource`, `SpentCoefficientRaw` | enums copied, raw coefficient |
+| node `AmountScaleStat`, `AmountScaleMode`, `AmountSpentResource`, `AmountSpentCoefficient` | node `AmountScaleStat`, `AmountScaleMode`, `AmountSpentResource`, `AmountSpentCoefficientRaw` | same |
+| node `ChanceByLevel` | `ChanceByLevelRaw` | raw, an entry ≥ 1 ⇒ `Always` |
+| node `DurationByLevel`, `IntervalByLevel` (zone) | `DurationByLevelTicks`, `IntervalByLevelTicks` | ticks, rounded up |
+| `PropertyContribution.ValueByLevel` | `FixedPropertyContribution.ValueByLevelRaw` | raw; with an exact-percent `Mul` every entry shares the `Denominator` (0.8 / 0.7 / 0.6 ⇒ 80 / 70 / 60 over 100) |
+
+The resolve helpers mirror the float ones: `FixedAbilityBlueprint.ResolveRangeRaw / ResolveCooldownTicks / ResolveMaxCharges / ResolveChargeRestoreTicks / ResolveProjectileSpeedRaw(level)`, `FixedAbilitySlot.MaxCharges / UsesCharges / RangeRaw`, `FixedEffectNode.ResolveChanceRaw / ResolveMaxTargets / ResolveRadiusRaw / ResolveDurationTicks / ResolveIntervalTicks(level)`, `FixedPropertyContribution.ValueFor(stacks, level)`, `FixedAbilityCost.ResolveAmountRaw(...)`, `FixedValueResolver.Resolve(in value, system, caster, level, target)` (no context, no spent term). Level changes follow the float rules (a running cooldown keeps its remaining ticks; a raised charge cap grants charges, a lowered one clamps). What a cast paid is recorded raw (`FixedEffectContext.GetSpent`, `FixedModifierInstance.GetSpent`) and travels with projectiles, payloads and the modifiers whose ticks or reactions use it.
+
+Determinism: all of it is integer math. The spent term is `SpentCoefficientRaw × spent / one` and the multiplicative scale term is `value + value × term / one` (`MulDiv`, half away from zero, one rounding each). Content that leaves the new fields at their defaults plays exactly as before; the state hash folds a modifier's captured paid amounts only when it has any, so existing hashes are unchanged (`LeveledDefaultsRegressionTests`). Parity with the float core is covered by `FixedLeveledConformanceTests` (cooldown and charges by level, leveled and keyed costs, spend-all projectile, spent-scaled DoT, slow and stun by level, multiplicative and missing-health scaling, chance and target caps by level). A coefficient off the Q8.8 grid keeps its rounded value as any other fraction: 0.1 (10% of max mana) becomes 26/256 = 0.1016, so 10% of 200 mana costs 20.3 in the fixed core; use a coefficient on the grid (0.125), Q16, or a cost by level when the exact number matters.
+
 ## What the core provides
 
 | Area | Fixed core |
@@ -197,5 +217,7 @@ Steps, hooks, triggers, zone pulses, receipts and the state hash allocate nothin
 Правила подключаются в одном месте, `FixedRules`: формула урона, защита, крит, уклонение, стаки, агрегатор, цели, кулдаун, стоимость, генератор. Пример игровых правил — броня `amount·100/(100+armor)`, рациональные множители StatBlock как агрегатор, стаки DenyNew / RefreshDuration / StackUpTo3 через `StackingKind` — в `FixedVampireDotaRulesExampleTests` и выше. Хэш состояния `FixedStateHasher` идёт по сырым int в порядке полей `AbilityStateHasher`.
 
 Набор проверок соответствия `FixedConformanceTests` гоняет одни и те же сценарии на float-ядре с `DeterministicAbilityProfile` и на фиксированном ядре; результаты совпадают. Известные расхождения перечислены в таблице выше: таймер ровно на границе тика во float-ядре может закончиться на тик позже (накопление ошибки шага), дробь вне сетки (0.3) сохраняет округлённое значение, регенерация во float-ядре накапливает долю шага, порядок тиков разных владельцев, интервалы не кратные тику. Шаг, хуки, триггеры, импульсы зон, события и хэш не выделяют память; на тех же нагрузках фиксированное ядро в редакторе в 1,6–2,3 раза быстрее float-ядра.
+
+Уровневые и масштабируемые параметры есть в обоих ядрах: кулдаун, дальность, заряды, время восстановления заряда и скорость снаряда по уровню способности; стоимость по уровню или из именованного значения (например, 10% максимальной маны) с режимами `Fixed` / `UpTo` / `All`; слагаемое от фактически потраченного ресурса (доходит до попадания снаряда и до тиков модификатора, который использует это слагаемое); множитель `Multiply` и чтение текущего, максимального или недостающего ресурса; сила модификатора `ValueByLevelRaw` и шанс, число целей, длительность и интервал зоны по уровню. Конвертер переносит все поля; по умолчанию они выключены, и старый контент даёт те же результаты и тот же хэш состояния.
 
 При обновлении модификатора фаза тиков по умолчанию продолжается; `RestartTicksOnRefresh` переносит следующий тик на «сейчас + TickIntervalTicks» (как перенос think в `ModifierRuntime` VampireDota). Флаг есть в обоих ядрах, конвертер его переносит, сценарий `restart_ticks_on_refresh` в наборе соответствия.

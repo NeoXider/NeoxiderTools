@@ -8,7 +8,10 @@ grid mesh for uGUI, UI Toolkit, a world mesh or a `SpriteRenderer`.
 1. Create a rig from the menu (see Quick start) or add an adapter component and assign a Sprite.
 2. Apply a layout (`UIMeshRigLayoutBuilder.Apply`, or the Inspector button) or add `UIMeshRigPoint` children.
 3. Animate the points with an Animator, with `UIMeshRigPointMotion` presets, or from code with
-   `SetProceduralPose`.
+   `SetProceduralPose`. The UI Toolkit element has no point objects: pose its layout points from code with
+   `UIMeshRigElement.SetPointPose`.
+4. To see an Animator clip without entering Play Mode, pick it under **Animator Clip Preview** in the rig
+   inspector and press **Preview Clip**.
 
 ---
 
@@ -22,7 +25,10 @@ UI Mesh Rig deforms a single Sprite in four environments from one renderer-agnos
 The `UIMeshRigGeometryBuilder` core builds vertices, indices and UVs the same way everywhere, and computes
 elliptical influence, falloff, pose and procedural motion. The adapters only translate the finished geometry
 into the API of their environment. That is why `Columns`, `Rows`, `Preserve Aspect`, `Deformation Enabled`,
-Sprite/Color and motion presets mean the same thing in every variant.
+Sprite/Color and motion presets mean the same thing in every variant. One difference is structural: the uGUI,
+world and SpriteRenderer rigs are posed through child point Transforms (Animator, Timeline, code), while the UI
+Toolkit element has no Transforms at all and is posed by its layout preset, its motion settings and
+`SetPointPose` from code (see [UI Toolkit](#ui-toolkit)).
 
 ## Quick start
 
@@ -60,8 +66,13 @@ The Scene View has a rig overlay panel: a `Setup` / `Pose / Animate` switch, a t
 (Move / Rotate / Scale) and two readability toggles — `Labels` and `All rings`. By default, unselected points
 draw a single pale outer ring without a label, so seven points no longer turn into a mess of fourteen
 ellipses and seven overlapping labels. The bind-pose handles (anchor and radii) are available in both modes,
-not only in Setup; radii are dragged from four sides (±X and ±Y), and the anchor is noticeably larger and has
-a dark contrasting ring.
+not only in Setup (they hide only while an Animation preview runs, see below); radii are dragged from four
+sides (±X and ±Y), and the anchor is noticeably larger and has a dark contrasting ring.
+
+The pose gizmo writes only the channel of the selected tool and only the axes that moved: Move changes the
+point's `anchoredPosition` (or `localPosition` for world rigs) in the rig plane, Rotate is a disc about the
+rig's forward axis, and Scale keeps Z. Recording in the Animation window therefore keys exactly what was
+dragged, without float noise on untouched channels or out-of-plane rotation the mesh ignores.
 
 > `Handles.Label` does not obey `Handles.color`: labels are drawn through a GUI style, so their transparency
 > is set by their own `GUIStyle.normal.textColor`, not by the alpha of `Handles.color`.
@@ -87,12 +98,47 @@ whenever a rig inspector is disabled, so closing or re-targeting an Inspector ca
 Previews are also stopped by assembly reload / recompile, by entering or leaving Play Mode, and on editor
 quit. A preview therefore cannot keep the editor busy in the background or keep the scene permanently dirty.
 
-A running preview steps at most sixty times a second and only repaints the Scene view. It never calls
+A running preview steps at most sixty times a second, repaints the Scene view and rebuilds, once per step,
+every world and SpriteRenderer rig whose points advanced (those rigs otherwise rebuild only in `LateUpdate`,
+which the editor does not run for a preview step; a Canvas rebuilds on the repaint). It never calls
 `EditorApplication.QueuePlayerLoopUpdate()`: queuing a player loop update from an editor tick schedules
 another tick, which re-enters the driver, which queues another — a loop with no exit while the preview is on.
 
 Previews never run on prefab assets (persistent objects) and never run in Play Mode — in Play Mode the
 component's own `Play On Enable` / `Play()` drives the motion instead.
+
+Choosing a value in the motion component's **Preset** dropdown applies that preset at once: its curves are
+copied into the profile and the live preview starts. `Custom` keeps the current curves. The check runs only
+in the GUI event of the dropdown change, so loading a scene, Undo or editing a curve never re-applies a
+preset over hand-tuned curves. From code call `ApplyPreset(preset)`.
+
+Configuring a stopped motion (`ApplyPreset`, `Phase`, `Seed`, or adding the component, which applies
+Breathe) no longer pushes a pose onto the point. Before 12.3 that left a frozen procedural pose behind: the
+rig counted the point as previewed, stopped rebinding it in Setup and kept the mesh deformed. `EvaluateAt`
+remains the explicit way to apply a pose without playing.
+
+### Animator clips and Timeline in Edit Mode
+
+Unity does not play Animator clips outside Play Mode. The rig inspectors (uGUI, world, SpriteRenderer) show an
+**Animator Clip Preview** block when the rig or one of its parents has an `Animator`: choose a clip of its
+controller and press **Preview Clip**. The clip is sampled through `AnimationMode` on `EditorApplication.update`
+(at most sixty steps a second, looping), and **Stop Clip Preview** restores every property the clip touched.
+Like the motion preview it stops on selection change, when a rig inspector is disabled, on entering Play
+Mode, on assembly reload and on editor quit. It refuses to start while another Animation window or Timeline
+preview owns `AnimationMode`.
+
+While any `AnimationMode` preview runs — this block, the Animation window preview or recording, or a Timeline
+preview — every rig treats itself as posed:
+
+- `Setup` does not rebind a point the clip moved. Before 12.3 each sampled frame was captured as the new
+  bind centre and written into the anchors, which `AnimationMode` does not restore, so scrubbing a clip
+  in `Setup` corrupted the bind for good.
+- The mesh deforms in `Setup` too, so the previewed clip is visible.
+- The bind handles (anchor and radii) are hidden, `Capture Rest Pose` is disabled, and a rig in
+  `Pose / Animate` cannot switch to `Setup`, because that resets every point and recording would key the
+  reset. The inspector shows a warning while this applies.
+- World and SpriteRenderer rigs rebuild their mesh from an editor update while the preview runs; they
+  otherwise rebuild only in `LateUpdate`, which the editor does not run for a scrub.
 
 ## uGUI
 
@@ -103,6 +149,25 @@ menu of a Simple `Image` supports in-place and non-destructive conversion. Rayca
 - `Rect` — the original RectTransform;
 - `Deformed Mesh` — the actual deformed mesh;
 - `Sprite Alpha` — Sprite transparency (requires Read/Write Enabled, otherwise it safely falls back to the mesh).
+  Readability is checked on the current sprite each time, so assigning a readable sprite in the Inspector
+  after a non-readable one turns the alpha test back on.
+
+**Anchors of direct child points.** A point that is a direct child of the rig rides a RectTransform anchor, so
+it follows the rig when the rect changes. The bind centre is normalized in the aspect-fitted drawing rect
+(with `Preserve Aspect` the sprite may cover only part of the RectTransform), while anchors are normalized in
+the full RectTransform. Rebinding a point (`Setup` drag, `Capture Rest Pose`, a layout) therefore puts its
+anchor on the bind centre in full-rect terms, and its rest `anchoredPosition` is `(0, 0)`: Animator keys on
+`anchoredPosition` read as offsets from the bind at any rig size. When the rect, the sprite or
+`Preserve Aspect` changes, in Edit and Play Mode and in both authoring modes, the rig moves those anchors so
+each point keeps its offset from its bind; `anchoredPosition` itself is not touched, so Animator and code
+poses stay relative to the bind. Before 12.3 a resize of a letterboxed rig shifted every point by
+`(newWidth - oldWidth) * (bind - pivot)`, which showed as deformation at rest, and in `Setup` the shifted point
+was rebound further off the sprite on every resize.
+
+Points bound before 12.3 on a letterboxed rig keep their old rest offset (`anchoredPosition` equal to the
+letterbox offset) and stay correct through resizes; rebinding such a point moves it to the new convention.
+A clip that keyed those points' `anchoredPosition` against the old offset needs its rest keys re-recorded after
+the rebind.
 
 ## UI Toolkit
 
@@ -115,6 +180,27 @@ Unity 6.x branch.
 
 For UXML/UI Builder, use the element directly. `UIMeshRigUIToolkitHost` is an optional scene wrapper: it
 creates the element and sets Sprite, Size, Position, grid, preset and motion.
+
+**Posing the element.** UI Toolkit has no point Transforms, so an `AnimationClip` cannot pose single points of
+the element, and the Animation window cannot record them. The code path is the element's point pose API:
+
+```csharp
+UIMeshRigElement element = host.Element;          // or the element from UXML
+int count = element.PointCount;                    // points of the current LayoutPreset
+element.SetPointPose(0, new Vector2(12f, 4f), 8f, new Vector2(1.1f, 0.95f));
+element.ClearPointPose(0);
+element.ClearPointPoses();
+```
+
+The offset is in element pixels with x to the right and y up; it is added to the preset motion, the rotation
+(degrees, counter-clockwise) is added and the scale multiplies, as for `SetProceduralPose` on a point.
+Changing `LayoutPreset` clears every point pose.
+
+Set motion through the host, not on its element: `SetMotionEnabled`, `SetMotionSpeed` and `SetMotionPhase`.
+Every host setter re-applies all host fields to the element, so a value written only on `host.Element` is
+overwritten by the next `host.SetSize(...)`. An Animator can key the host's own fields (motion speed and
+phase, color, position, size); the host pushes them to the element when Unity reports animated properties.
+The element's motion clock is `Time.realtimeSinceStartup`, so it ignores `Time.timeScale`.
 
 **The host works through `PanelRenderer`, not through `UIDocument`.** Starting with Unity 6.5, world-space
 UI Toolkit is rendered by `PanelRenderer`, so the host first looks for it on its own GameObject and subscribes
@@ -174,12 +260,34 @@ grow, while the vertices stay in honest world units.
 The Draw Mode of the `SpriteRenderer` must be `Simple`: `Sliced` and `Tiled` build their own geometry and
 overwrite the deformation. The inspector warns about this explicitly.
 
+**Sprite Atlas.** A sprite packed tightly or with rotation (the Sprite Atlas defaults are Tight Packing and
+Allow Rotation) has no single axis-aligned texture rectangle; `Sprite.textureRect` even throws for it. The
+adapter checks `UIMeshRigSpriteRenderer.CanDeform(sprite)` and keeps drawing the source sprite undeformed
+instead of failing on every rebuild; with `NeoDiagnostics` warnings on it logs a throttled warning, and the
+inspector shows one. Pack rig sprites as Full Rect without rotation.
+
+**Flip X / Flip Y** mirror the drawn sprite but not the points, so the deformation and the Scene handles
+appear on the mirrored side. The inspector warns while a flip is on. To mirror a rigged sprite with its points,
+use a negative Transform scale on the rig.
+
 ## Influence and motion
 
 A point has two independent ellipses: inside INNER the full weight applies, outside OUTER the weight is zero,
 and between them the Falloff Curve is applied. `UIMeshRigPointMotion` adds a procedural pose on top of the
 Transform and does not overwrite Animator keys. Presets: Float, Breathe, BodySway, HeadSway, SoftJiggle, Pulse,
 SquashStretch, Wave and Noise. Shared layouts: SimpleBounce, Character and FlagCloth.
+
+**Strength** is a relative weight, not an amplitude. The weights of all points over a vertex are averaged and
+the vertex moves by at most the full pose, so a vertex never moves further than the point does. `0` turns a
+point off and `1` is normal; above `1` the weight reaches full sooner, so the area that follows the point fully
+grows towards OUTER, and the point wins over overlapping points. To exaggerate a motion, move the point
+further or raise the motion amplitude.
+
+The clip and the procedural pose compose per channel: positions add, rotations add and scales multiply. The
+Transform rotation is read as the shortest angle from the rest rotation (`Mathf.DeltaAngle`), so a rotation
+of more than 180 degrees from rest wraps, which shows as a jump when `Rotation Influence` is below 1.
+`UIMeshRigPointMotion` runs on unscaled time by default while an Animator runs on scaled time; turn off
+`Use Unscaled Time` when both must pause together.
 
 ## Runtime API
 
@@ -204,6 +312,9 @@ UIMeshRigElement element = new UIMeshRigElement
     LayoutPreset = UIMeshRigLayoutPreset.Character
 };
 document.rootVisualElement.Add(element);
+element.SetPointPose(3, new Vector2(0f, 6f), -5f, Vector2.one); // nod the Character head from code
+
+toolkitHost.SetMotionSpeed(2f); // motion settings go through the host, not host.Element
 ```
 
 Layout centers are normalized to the aspect-fitted sprite area. With `Preserve Aspect` enabled, a wide
@@ -262,6 +373,17 @@ An animated rig rebuilds its mesh every frame, so the steady-state rebuild path 
   deformation off it repaints once per property change instead.
 - `UIMeshRigOwnerResolver.Find` walks the ancestors with `TryGetComponent`, and the adapters refill their
   point cache into a reused list, so owner lookups do not allocate either.
+- `UIMeshRigPoint.SetProceduralPose` with the pose the point already holds, and `ClearProceduralPose` on a
+  point without one, do nothing. A motion at speed 0, with flat curves or with the default empty `Custom`
+  profile therefore no longer rebuilds and re-uploads the whole grid every frame.
+- The influence of a point is rejected by the bounding box of its outer ellipse before any square root, and
+  each vertex x point pair copies the point state once instead of three times.
+
+`UIMeshRigGeometryBuilder.Build` has an overload with `normalizedBounds`: the grid covers only that part of
+the coordinate space while the UVs still span the whole UV rect. The adapters pass
+`UIMeshRigGeometryBuilder.GetSpriteContentBounds(sprite)`, which is the unit rect for ordinary sprites and the
+untrimmed inner part for a sprite whose transparent border an atlas trimmed, as uGUI `Image` does with its
+padding. Point binds stay normalized in the full sprite rect.
 
 ```csharp
 UIMeshRigGeometry buffer = null;
@@ -276,21 +398,30 @@ counter (`Neo.Tests.Performance.GcAllocCounter`).
 
 ## Demo
 
-Import the `Demo Scenes` sample and open `Demo/UI Mesh Rig/UIMeshRigDemo.unity`. The top row keeps the three
+Import `NeoxiderTools.Demo.v<ver>.unitypackage` (see [Demo Scenes](../Samples.md)) and open
+`Assets/NeoxiderDemos/Demo/UI Mesh Rig/UIMeshRigDemo.unity`. The top row keeps the three
 previous uGUI workflows (static pose, procedural motion, Animator). The bottom row shows the four output
 adapters side by side: uGUI Simple Bounce, UI Toolkit Character, world Flag Cloth and
 `[Demo] World/Sprite Renderer - Character` (`UIMeshRigSpriteRenderer` with the Character layout).
-The Animator card moves only in Play Mode: Unity does not play Animator clips outside Play Mode, while the
-neighboring cards keep moving in the editor thanks to the edit-mode preview of `UIMeshRigPointMotion`.
+Unity does not play Animator clips outside Play Mode, so the Animator card stands still in the editor until
+you select it and press **Preview Clip** in its inspector (or press Play); the neighboring cards keep moving
+in the editor thanks to the edit-mode preview of `UIMeshRigPointMotion`.
 The collapsed info card in the top-left corner (`[Demo] Info Card`, expand it with `+` in Play Mode) names the
-objects to select and the equivalent C# calls. The sprite-renderer adapter and the info card are added by the
-editor builder `UIMeshRigDemoBuilder`; the hand-authored cards and adapters are left untouched.
+objects to select and the equivalent C# calls. The scene is a plain saved scene: edit it in the Editor, and
+re-import the demo download to get the original back.
 
 ## Limitations
 
 - uGUI conversion targets `Image.Type.Simple`; Sliced, Tiled and Filled have different geometry.
 - UI Toolkit uses `ushort` indices; the current 40x40 limit is well below that cap.
+- An `AnimationClip` cannot pose single points of the UI Toolkit element; use `SetPointPose` or key the host's
+  motion fields. The element's motion ignores `Time.timeScale`.
 - `UIMeshRigSpriteRenderer` requires `Draw Mode = Simple`; `Sliced` and `Tiled` rebuild the geometry themselves.
+- Tightly packed or rotated Sprite Atlas sprites: the uGUI, world and UI Toolkit rigs draw the sprite's
+  bounding rectangle of the atlas (neighbours can show through), and the SpriteRenderer rig draws the sprite
+  undeformed. Use Full Rect packing without rotation for rig sprites.
+- `SpriteRenderer` Flip X / Flip Y mirror the art but not the points; flip with a negative scale instead.
+- Point rotation is read as the shortest angle from rest, so rotations beyond 180 degrees wrap.
 - The bounds of the clone grow only by `Bounds Headroom`; increase the value for extreme deformation.
 - For a multi-layer character, IK and a large set of skeletal clips, a dedicated 2D rig is a better fit.
 - A dense grid and many moving points raise the rebuild CPU cost (no GC); measure with the Profiler.

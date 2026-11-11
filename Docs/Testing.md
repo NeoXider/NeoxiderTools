@@ -259,14 +259,13 @@ resolves nowhere still fails. A sample visible at a non-canonical path is report
 
 | Test | Assembly / platform | What it checks |
 | --- | --- | --- |
-| `Neo.Tests.Play.SampleScenePlaySmokeTests.SampleScene_LoadsTicksWithoutErrorsAndShowsItsGuide` | `Neo.Tests.Play` / PlayMode | One case per scene of the visible samples (named by the scene path): load, 12 frames, no error/assert/exception logs, Filled Images with sprites, no demo controller reporting `IsSceneBuilt == false` and no "scene not authored / Rebuild Active Demo Scene" warning, and the authored `ModuleDemoSceneInfo` card on every scene a Demo builder owns. |
-| `Neo.Tests.Play.SampleScenePlaySmokeTests.EveryRegisteredSceneBuilder_HasItsSceneSavedInTheVisibleSample` | `Neo.Tests.Play` / PlayMode | Every registered demo scene builder has its scene saved in the visible sample. |
+| `Neo.Tests.Play.SampleScenePlaySmokeTests.SampleScene_LoadsTicksWithoutErrorsAndShowsItsGuide` | `Neo.Tests.Play` / PlayMode | One case per scene of the visible samples (named by the scene path): load, 12 frames, no error/assert/exception logs, Filled Images with sprites, no demo controller reporting `IsSceneBuilt == false` and no "scene not authored" warning, and the authored `ModuleDemoSceneInfo` card on every scene of the Demo download. |
 | `Neo.Tests.Play.AudioDemoScenePlayTests` | `Neo.Tests.Play` / PlayMode | Presses the authored buttons of `Scenes/Audio/AudioDemo.unity` (AM voice, music pool and track changes), then removes `AudioDemoController` mid-crossfade: the borrowed music keeps playing and nothing leaks. Needs enabled Unity audio. |
 | `Neo.Editor.Tests.SampleSceneSaveKeyTests` | `Neo.Editor.Tests` / EditMode | Scans the YAML of every sample scene and prefab, prefab-instance overrides included, and fails when a persisting component (inventory, level profile, progression, quests, counter, selector, timer, wallet, shop, score, level manager, equipment, leaderboard, box, collection, rewards) keeps its library default save key. Remaining offenders are listed in `KnownOffenders`, which may only shrink; a listed offender that became clean fails too. |
 | `Neo.Editor.Tests.PackageSampleIsolationTests` | `Neo.Editor.Tests` / EditMode | No package asset references a GUID that ships only inside `Assets/NeoxiderDemos` (parsed from disk, so it also runs while `Samples~` is hidden). |
 | `Neo.Editor.Tests.ParamsOverloadAllocationTests` | `Neo.Editor.Tests` / EditMode | Source guard: no `Mathf.Max` / `Mathf.Min` call with three or more arguments (the `params` overloads allocate an array per call). |
 | `Neo.Tests.NeoxiderPagesChangedBehaviorTests` | `Assembly-CSharp-Editor` / EditMode | PM, `BtnChangePage` (legacy actions, primary-button clicks, `Reset` without asset creation), `PageSubscriber`, `ToggleAudio`, the UIKit facades without managers, `PageIdGenerator`, `PagesEditorGUI` and two Play Mode `FakeLoad`-on-startup-page cases. Ignored while the Pages sample is hidden. |
-| `Neo.Demo.Editor.Tests.*` | `Neo.Demo.Editor.Tests` / EditMode | The kit and every builder end to end in a temporary scene, built twice (wiring present, the second pass creates and removes nothing). Wave additions: `AnimatorsAndUIComponentsDemoBuildersTests`, `BonusRewardsDemoBuilderTests`, `Physics3DDemoBuilderTests` (wiring, explicit references, `NeoDemo.` save keys) and `DemoSceneRunnerSceneCreationTests` (a missing builder scene is created). |
+| `Neo.Tests.Play.Samples.SurvivorDemoGameplayTests` | `Neo.Tests.Play` / PlayMode | The saved Survivor scene is wired from library components without game scripts; an autopilot kills, levels up, takes cards and wins the 180 s run. |
 
 The Play Mode demo cases and the Demo/Pages tests report Ignored when a demo tree under `Assets/NeoxiderDemos` is missing (for example in a project that installed only the package). In Input
 System-only projects the Character Movement Fundamentals scenes report Ignored (they need Active Input Handling =
@@ -447,7 +446,7 @@ must read one call per sample or about 4 KB per operation, otherwise the numbers
 `bytes_per_op_est` is a frame-scoped estimate; treat small values as noise unless the calibration row agrees.
 
 По-русски: тесты демо (`SampleScenePlaySmokeTests`, `AudioDemoScenePlayTests`, `SampleSceneSaveKeyTests`,
-`PackageSampleIsolationTests`) и тесты билдеров `Neo.Demo.Editor.Tests` описаны в таблице выше; Play Mode-случаи
+`PackageSampleIsolationTests`) описаны в таблице выше; Play Mode-случаи
 требуют папок `Assets/NeoxiderDemos/Demo` и `Assets/NeoxiderDemos/NeoxiderPages`. Проверки аллокаций и бенчмарки используют общую тестовую сборку `Neo.Tests.Performance`.
 `GC.GetAllocatedBytesForCurrentThread()` в редакторе Unity 6 всегда возвращает 0, поэтому вместо него
 считаются вызовы `GC.Alloc` через откалиброванный `GcAllocCounter` (пустое окно = 0, удерживаемый

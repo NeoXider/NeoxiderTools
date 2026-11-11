@@ -34,6 +34,29 @@ namespace Neo.Core.Level
         /// <summary>XP required to reach next level (0 if at max or no curve).</summary>
         public int XpToNextLevel { get; private set; } = 100;
 
+        /// <summary>
+        ///     Progress through the current level in [0, 1]: the share of the XP between the current level's threshold
+        ///     and the next one that is already earned. 1 at the max level or without an XP curve. For XP bars.
+        /// </summary>
+        public float LevelProgress01
+        {
+            get
+            {
+                if (!UseXp || XpToNextLevel <= 0)
+                {
+                    return 1f;
+                }
+
+                int start = GetCurrentLevelStartXp();
+                long span = (long)TotalXp + XpToNextLevel - start;
+                return span <= 0 ? 1f : Math.Min(1f, Math.Max(0f, (float)((TotalXp - start) / (double)span)));
+            }
+        }
+
+        private int _cachedStartLevel = -1;
+        private int _cachedStartXp;
+        private int _cachedStartTotal = -1;
+
         public event Action<int, int> OnLevelChanged; // WHY: args are (previousLevel, newLevel)
         public event Action<int, int> OnXpGained; // WHY: args are (added, newTotal)
 
@@ -233,6 +256,47 @@ namespace Neo.Core.Level
             {
                 OnLevelChanged?.Invoke(previous, CurrentLevel);
             }
+        }
+
+        // WHY: the curve only maps XP to a level, so the threshold of the current level is found by a binary search
+        // over [0, TotalXp] (levels never drop as XP grows). Cached per level and total, so a bar polling it is cheap.
+        private int GetCurrentLevelStartXp()
+        {
+            if (_cachedStartLevel == CurrentLevel && _cachedStartTotal == TotalXp)
+            {
+                return _cachedStartXp;
+            }
+
+            int low = 0;
+            int high = TotalXp;
+            while (low < high)
+            {
+                int mid = low + (high - low) / 2;
+                if (EvaluateLevelAt(mid) >= CurrentLevel)
+                {
+                    high = mid;
+                }
+                else
+                {
+                    low = mid + 1;
+                }
+            }
+
+            _cachedStartLevel = CurrentLevel;
+            _cachedStartTotal = TotalXp;
+            _cachedStartXp = low;
+            return low;
+        }
+
+        private int EvaluateLevelAt(int totalXp)
+        {
+            if (_curveDefinition != null)
+            {
+                return _curveDefinition.EvaluateLevel(totalXp, MaxLevel);
+            }
+
+            return LevelCurveEvaluator.EvaluateLevel(totalXp, _curveType, _xpPerLevel, _quadraticBase, _expBase,
+                _expFactor, _customEntries, MaxLevel);
         }
 
         private void RecomputeLevelAndXpToNext()

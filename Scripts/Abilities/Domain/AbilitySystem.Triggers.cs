@@ -396,6 +396,7 @@ namespace Neo.Abilities
                 context.Origin = EffectOrigin.Reaction;
                 context.SourceStacks = m.Stacks;
                 context.Damage = damage;
+                m.CopySpentTo(context);
                 if (TryGetAbility(m.SourceAbilityId, out AbilityBlueprint reactionAbility))
                 {
                     context.Specials = reactionAbility.Specials;

@@ -89,7 +89,8 @@ namespace Neo.Abilities.Fixed
                 FixedUnit target = system.GetUnit(targets[i]);
                 if (target != null && target.IsAlive)
                 {
-                    system.Modifiers.Apply(blueprint, context.Caster, target.Id, context.AbilityId, context.AbilityLevel);
+                    system.Modifiers.Apply(blueprint, context.Caster, target.Id, context.AbilityId, context.AbilityLevel,
+                        context);
                 }
             }
         }
@@ -280,9 +281,10 @@ namespace Neo.Abilities.Fixed
 
             FixedAbilitySystem system = context.System;
             FixedFormat format = system.Rules.Format;
-            int maxHits = node.MaxTargets > 0 ? node.MaxTargets : DefaultMaxHits;
+            int maxTargets = node.ResolveMaxTargets(context.AbilityLevel);
+            int maxHits = maxTargets > 0 ? maxTargets : DefaultMaxHits;
             int falloff = format.TryParse(node.CustomParam, out int parsed) ? parsed : format.One;
-            int radius = FixedValueResolver.SampleByLevel(node.RadiusByLevelRaw, context.AbilityLevel, node.RadiusRaw);
+            int radius = node.ResolveRadiusRaw(context.AbilityLevel);
             FixedUnit caster = system.GetUnit(context.Caster);
             while (_visitedPool.Count <= _depth)
             {
@@ -445,13 +447,13 @@ namespace Neo.Abilities.Fixed
 
             string archetype = !string.IsNullOrEmpty(node.ArchetypeId) ? node.ArchetypeId : payload.ProjectileArchetypeId;
             int resolved = FixedValueResolver.ResolveAmount(node, context, 0);
-            int speed = resolved > 0 ? resolved : payload.ProjectileSpeedRaw;
+            int speed = resolved > 0 ? resolved : payload.ResolveProjectileSpeedRaw(context.AbilityLevel);
             if (targets.Count == 0)
             {
                 if (context.HasTargetPoint)
                 {
                     system.LaunchProjectile(payload, context.Caster, origin, context.TargetPoint - origin, 0, archetype,
-                        speed, context.AbilityLevel, NextSeed(context));
+                        speed, context.AbilityLevel, NextSeed(context), context);
                 }
 
                 return;
@@ -471,7 +473,7 @@ namespace Neo.Abilities.Fixed
                         ? context.TargetPoint - origin
                         : new FixedVec3(0, 0, system.Rules.Format.One);
                 system.LaunchProjectile(payload, context.Caster, origin, direction, target, archetype, speed,
-                    context.AbilityLevel, NextSeed(context));
+                    context.AbilityLevel, NextSeed(context), context);
             }
         }
 
@@ -501,7 +503,8 @@ namespace Neo.Abilities.Fixed
                     FixedUnit unit = system.GetUnit(targets[i]);
                     if (unit != null && unit.IsAlive)
                     {
-                        system.Modifiers.Apply(modifier, context.Caster, unit.Id, context.AbilityId, context.AbilityLevel);
+                        system.Modifiers.Apply(modifier, context.Caster, unit.Id, context.AbilityId, context.AbilityLevel,
+                            context);
                     }
                 }
             }
@@ -524,7 +527,7 @@ namespace Neo.Abilities.Fixed
         public void Execute(FixedEffectContext context, FixedEffectNode node, List<int> targets)
         {
             FixedAbilitySystem system = context.System;
-            int radius = FixedValueResolver.SampleByLevel(node.RadiusByLevelRaw, context.AbilityLevel, node.RadiusRaw);
+            int radius = node.ResolveRadiusRaw(context.AbilityLevel);
             if (radius <= 0)
             {
                 return;
@@ -534,8 +537,8 @@ namespace Neo.Abilities.Fixed
             {
                 Caster = context.Caster,
                 RadiusRaw = radius,
-                DurationTicks = node.DurationTicks,
-                IntervalTicks = node.IntervalTicks,
+                DurationTicks = node.ResolveDurationTicks(context.AbilityLevel),
+                IntervalTicks = node.ResolveIntervalTicks(context.AbilityLevel),
                 PayloadAbilityId = node.AbilityId,
                 ModifierId = node.ModifierId,
                 TeamFilter = node.TeamFilter,

@@ -34,7 +34,8 @@ namespace Neo.Abilities
                 return;
             }
 
-            int maxHits = node.MaxTargets > 0 ? node.MaxTargets : DefaultMaxHits;
+            int maxTargets = node.ResolveMaxTargets(context.AbilityLevel);
+            int maxHits = maxTargets > 0 ? maxTargets : DefaultMaxHits;
             float falloff = ParseFalloff(node.CustomParam);
             float radius = LeveledValueResolver.SampleByLevel(node.RadiusByLevel, context.AbilityLevel, node.Radius);
             AbilityUnit caster = context.System.GetUnit(context.Caster);

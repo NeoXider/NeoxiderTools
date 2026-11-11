@@ -209,9 +209,23 @@ namespace Neo.UI
                 _rows,
                 GetCoordinateSpace(),
                 uvRect,
+                UIMeshRigGeometryBuilder.GetSpriteContentBounds(_sprite),
                 IsDeformationActive(),
                 _pointStates,
                 reuse);
+        }
+
+        /// <summary>
+        /// True when <paramref name="sprite"/> can be cloned as one axis-aligned texture rectangle. A sprite that
+        /// an atlas packed tightly or rotated has no such rectangle (its textureRect throws or holds rotated
+        /// pixels), so the renderer keeps drawing the source sprite undeformed.
+        /// </summary>
+        public static bool CanDeform(Sprite sprite)
+        {
+            return sprite != null && sprite.texture != null &&
+                   (!sprite.packed ||
+                    (sprite.packingMode == SpritePackingMode.Rectangle &&
+                     sprite.packingRotation == SpritePackingRotation.None));
         }
 
         public Vector2 WorldToNormalized(Vector3 worldPosition)
@@ -263,12 +277,44 @@ namespace Neo.UI
             MarkGeometryDirty();
             UIMeshRigOwnerResolver.NotifyEnclosingOwner(transform);
             RebuildIfNeeded();
+#if UNITY_EDITOR
+            UIMeshRigAuthoring.SetAnimationPreviewRefresh(RefreshDuringAnimationPreview, !Application.isPlaying);
+#endif
         }
 
         private void OnDisable()
         {
+#if UNITY_EDITOR
+            UIMeshRigAuthoring.SetAnimationPreviewRefresh(RefreshDuringAnimationPreview, false);
+#endif
             ReleaseClone();
         }
+
+        /// <summary>
+        /// Applies point changes and rebuilds only if something changed, unlike <see cref="Rebuild"/>, which
+        /// always rebuilds. Edit Mode tools call it after they move points.
+        /// </summary>
+        internal void RebuildNow()
+        {
+            SynchronizePointTransforms();
+            RebuildIfNeeded();
+        }
+
+#if UNITY_EDITOR
+        private void RefreshDuringAnimationPreview()
+        {
+            if (this == null)
+            {
+                UIMeshRigAuthoring.SetAnimationPreviewRefresh(RefreshDuringAnimationPreview, false);
+                return;
+            }
+
+            if (UIMeshRigAuthoring.IsAnimationPreviewActive())
+            {
+                RebuildNow();
+            }
+        }
+#endif
 
         private void OnDestroy()
         {
@@ -300,6 +346,7 @@ namespace Neo.UI
         {
             EnsurePointCache();
             bool changed = false;
+            bool rebindAllowed = UIMeshRigAuthoring.IsRebindAllowed(_authoringMode);
             for (int index = 0; index < _points.Count; index++)
             {
                 UIMeshRigPoint point = _points[index];
@@ -311,8 +358,7 @@ namespace Neo.UI
                 // WHY: see UIMeshRigGraphic.SynchronizePointTransforms — rebinding writes serialized
                 // authoring data with no Undo entry, and the Edit Mode preview ticks this every frame.
                 // A previewed point is never rebound; stop the preview to edit the bind.
-                if (!Application.isPlaying && _authoringMode == UIMeshRigAuthoringMode.Setup &&
-                    !point.HasProceduralPose)
+                if (rebindAllowed && !point.HasProceduralPose)
                 {
                     point.CaptureRestPose(this);
                 }
@@ -439,6 +485,25 @@ namespace Neo.UI
                 return;
             }
 
+            // WHY: Sprite.textureRect throws for a tightly packed atlas sprite, which is SpriteAtlas's default,
+            // so the clone failed with an exception on every rebuild of a built player. The source sprite is
+            // kept on the renderer instead: it draws undeformed, and the Inspector explains why.
+            if (!CanDeform(_sprite))
+            {
+                if (!NeoDiagnostics.RuntimeWarningsEnabled)
+                {
+                    return;
+                }
+
+                NeoDiagnostics.LogWarningThrottled(
+                    "UIMeshRigSpriteRenderer.Packed." + NeoDiagnostics.StableId(this),
+                    "[UI Mesh Rig] '" + _sprite.name + "' is packed tightly or rotated in a Sprite Atlas, so the " +
+                    "Sprite Renderer rig cannot deform it. Use Full Rect packing without rotation for rig sprites.",
+                    this,
+                    10f);
+                return;
+            }
+
             Vector2 rectSize = _sprite.rect.size;
             Vector2 pivotNormalized = rectSize.sqrMagnitude > 0f
                 ? new Vector2(_sprite.pivot.x / rectSize.x, _sprite.pivot.y / rectSize.y)
@@ -546,7 +611,8 @@ namespace Neo.UI
                 return false;
             }
 
-            if (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose)
+            if (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose ||
+                UIMeshRigAuthoring.IsAnimationPreviewActive())
             {
                 return true;
             }

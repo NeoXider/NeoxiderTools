@@ -94,9 +94,8 @@ four NPCs on a baked NavMesh, each driven by one `NpcNavigation`:
 | `[Demo] World/NPC Sentry` (orange) | Combined | Patrols `Sentry Zone` and chases the target within 6 m; `onStartFollowing` / `onStopFollowing` toggle its red `Alert` with `GameObject.SetActive`. |
 
 Everything, including the control card, the event wiring and the info card, is saved in the scene and visible in the
-Inspector without entering Play Mode. The scene is authored by the editor builder
-`Assets/NeoxiderDemos/Demo/Editor/Builders/NPC/AiMoveExampleBuilder.cs` (menu **Neoxider/Demo/Rebuild Active Demo Scene**); it also
-migrated the two original agents from the deprecated `AiNavigation` to `NpcNavigation`.
+Inspector without entering Play Mode. The two original agents
+were migrated from the deprecated `AiNavigation` to `NpcNavigation`.
 
 ## See also
 

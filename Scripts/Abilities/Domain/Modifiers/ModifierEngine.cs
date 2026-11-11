@@ -89,6 +89,18 @@ namespace Neo.Abilities
         public ModifierApplyResult Apply(ModifierBlueprint blueprint, UnitId caster, UnitId owner,
             string sourceAbilityId = null, int abilityLevel = 1)
         {
+            return Apply(blueprint, caster, owner, sourceAbilityId, abilityLevel, null);
+        }
+
+        /// <summary>
+        ///     <see cref="Apply(ModifierBlueprint, UnitId, UnitId, string, int)" /> that also captures what
+        ///     <paramref name="spentSource" />'s cast paid, before the Applied triggers run, when the blueprint's tick or
+        ///     reaction effects scale with a spent resource (the apply_modifier and area_apply ops pass their context).
+        ///     A re-application re-captures it like the ability level; null captures nothing.
+        /// </summary>
+        public ModifierApplyResult Apply(ModifierBlueprint blueprint, UnitId caster, UnitId owner,
+            string sourceAbilityId, int abilityLevel, EffectContext spentSource)
+        {
             if (blueprint == null || string.IsNullOrEmpty(blueprint.Id) || !owner.IsValid)
             {
                 return new ModifierApplyResult(null, false);
@@ -155,6 +167,7 @@ namespace Neo.Abilities
                         existing.TickAccumulator = 0f;
                     }
 
+                    existing.CaptureSpent(spentSource);
                     BumpVersion(owner);
                     Applied?.Invoke(existing, false);
                     return new ModifierApplyResult(existing, false);
@@ -179,6 +192,7 @@ namespace Neo.Abilities
                 instance.ReactionStates = new ReactionState[blueprint.EventReactions.Count];
             }
 
+            instance.CaptureSpent(spentSource);
             list.Add(instance);
             CountTriggers(owner, instance.TriggerFlags, 1);
             BumpVersion(owner);
@@ -632,7 +646,7 @@ namespace Neo.Abilities
                     PropertyContribution c = props[p];
                     if (AbilityIdComparer.Same(c.PropertyId, propertyId))
                     {
-                        results.Add(new ResolvedContribution(c.Op, c.ValueForStacks(m.Stacks)));
+                        results.Add(new ResolvedContribution(c.Op, c.ValueFor(m.Stacks, m.AbilityLevel)));
                     }
                 }
             }

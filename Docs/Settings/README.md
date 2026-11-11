@@ -12,7 +12,7 @@
 *Demo scene: `Scenes/Settings/SettingsDemo.unity`, in the Demo download (`Assets/NeoxiderDemos/Demo`). The scenes are saved with their UI and wiring, so you can inspect them without entering Play Mode.*
 <!-- demo-shots:end -->
 
-Demo: `Assets/NeoxiderDemos/Demo/Scenes/Settings/SettingsDemo.unity`, authored by the editor builder `Assets/NeoxiderDemos/Demo/Editor/Builders/Settings/SettingsDemoBuilder.cs` (every control, label and persistent UnityEvent is saved in the scene; rebuild with **Neoxider/Demo/Rebuild Active Demo Scene**), controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/SettingsDemoController.cs` (Demo download). The slider calls `GameSettingsComponent.SetMouseSensitivityForMenu` directly (NoCode, Deferred save); the **Deferred save** row follows `GameSettingsComponent.HasPendingDeferredSave` while a drag is collected into one write, and **Stored in SaveProvider** shows the value that landed. The demo service saves under the key prefix `Neo.Demo.Settings.`, so it never overwrites a game's settings.
+Demo: `Assets/NeoxiderDemos/Demo/Scenes/Settings/SettingsDemo.unity` (every control, label and persistent UnityEvent is saved in the scene), controller `Assets/NeoxiderDemos/Demo/Scripts/Shell/SettingsDemoController.cs` (Demo download). The slider calls `GameSettingsComponent.SetMouseSensitivityForMenu` directly (NoCode, Deferred save); the **Deferred save** row follows `GameSettingsComponent.HasPendingDeferredSave` while a drag is collected into one write, and **Stored in SaveProvider** shows the value that landed. The demo service saves under the key prefix `Neo.Demo.Settings.`, so it never overwrites a game's settings.
 
 **Contents:**
 

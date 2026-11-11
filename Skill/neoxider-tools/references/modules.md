@@ -107,7 +107,7 @@ Create/Sort Scene Hierarchy.
   **Spine** (`SpineController`); **Odin** (some editor drawers). All Mirror code is `#if MIRROR`-guarded; the
   package compiles without it.
 - Install: `"com.neoxider.tools": "https://github.com/NeoXider/NeoxiderTools.git"` in `Packages/manifest.json`.
-- Samples: `Assets/NeoxiderDemos/Demo` (SurvivorDemo + one builder-authored demo scene per module + example games),
+- Samples: `Assets/NeoxiderDemos/Demo` (SurvivorDemo + one saved demo scene per module + example games),
   `Assets/NeoxiderDemos/NeoxiderPages` (`PM`, `UIPage`, `BtnChangePage`).
 - Not in this package: the HTML → UI Toolkit converter moved to `com.neoxider.htmltouitk`
   (https://github.com/NeoXider/HtmlToUitk.git).

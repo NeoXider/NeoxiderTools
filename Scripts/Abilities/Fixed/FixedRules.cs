@@ -578,7 +578,7 @@ namespace Neo.Abilities.Fixed
             bool cone, FixedVec3 aim, long cosHalfQ30)
         {
             FixedAbilitySystem system = context.System;
-            int radius = FixedValueResolver.SampleByLevel(node.RadiusByLevelRaw, context.AbilityLevel, node.RadiusRaw);
+            int radius = node.ResolveRadiusRaw(context.AbilityLevel);
             if (radius <= 0)
             {
                 return;
@@ -587,7 +587,8 @@ namespace Neo.Abilities.Fixed
             _unitScratch.Clear();
             system.World.QueryUnitsInRadius(center, radius, _unitScratch);
             FixedUnit caster = system.GetUnit(context.Caster);
-            if (node.MaxTargets <= 0)
+            int maxTargets = node.ResolveMaxTargets(context.AbilityLevel);
+            if (maxTargets <= 0)
             {
                 for (int i = 0; i < _unitScratch.Count; i++)
                 {
@@ -618,7 +619,7 @@ namespace Neo.Abilities.Fixed
             }
 
             _areaScratch.Sort(AreaHitOrder);
-            int keep = node.MaxTargets < _areaScratch.Count ? node.MaxTargets : _areaScratch.Count;
+            int keep = maxTargets < _areaScratch.Count ? maxTargets : _areaScratch.Count;
             for (int i = 0; i < keep; i++)
             {
                 results.Add(_areaScratch[i].Unit);

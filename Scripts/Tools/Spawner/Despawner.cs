@@ -16,6 +16,12 @@ namespace Neo.Tools
         [Header("When to despawn")] [Tooltip("Despawn when this component or GameObject is disabled.")] [SerializeField]
         private bool _despawnOnDisable;
 
+        [Tooltip("Despawn this many seconds after the object is enabled: pooled effects, projectiles, timed " +
+                 "pickups. 0 = off. Scaled time, so the lifetime waits while the game is paused.")]
+        [Min(0f)]
+        [SerializeField]
+        private float _despawnAfterSeconds;
+
         [Header("Spawn on despawn (optional)")] [SerializeField]
         private GameObject _spawnPrefabOnDespawn;
 
@@ -35,13 +41,27 @@ namespace Neo.Tools
         /// <summary>Fired before despawn with the GameObject that will be despawned (this).</summary>
         public UnityEvent OnDespawn => _onDespawn;
 
+        /// <summary>
+        ///     Seconds after enabling until the object despawns itself. 0 = off. Applies from the next enable.
+        /// </summary>
+        public float DespawnAfterSeconds
+        {
+            get => _despawnAfterSeconds;
+            set => _despawnAfterSeconds = Mathf.Max(0f, value);
+        }
+
         private void OnEnable()
         {
             _isDespawning = false;
+            if (_despawnAfterSeconds > 0f)
+            {
+                Invoke(nameof(Despawn), _despawnAfterSeconds);
+            }
         }
 
         private void OnDisable()
         {
+            CancelInvoke(nameof(Despawn));
             if (_despawnOnDisable)
             {
                 Despawn();

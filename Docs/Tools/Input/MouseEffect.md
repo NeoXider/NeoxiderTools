@@ -84,7 +84,7 @@ On touch-only devices both input backends report the first finger as the left mo
 
 ## Demo scene
 
-`Scenes/Tools/MouseEffectorExample.unity` (Demo download, `Assets/NeoxiderDemos/Demo/`) is authored by `MouseEffectorExampleBuilder` (**Neoxider > Demo > Rebuild Active Demo Scene**). It keeps three hand-authored effects under `Effects` (prefab spawning, trail, follower) and adds:
+`Scenes/Tools/MouseEffectorExample.unity` (Demo download, `Assets/NeoxiderDemos/Demo/`) keeps three effects under `Effects` (prefab spawning, trail, follower) and adds:
 
 - `[Demo] Mouse Input`: a `MouseInputManager` with **Enable Hold** on, so hold spawning works;
 - toggles that call `GameObject.SetActive` on each effect object directly;
@@ -94,4 +94,4 @@ On touch-only devices both input backends report the first finger as the left mo
 
 ## Кратко по-русски
 
-`MouseEffect` рисует след, двигает объект-последователь и спавнит префаб по событиям `MouseInputManager`. Спавн по удержанию (триггер `Hold` или `spawnDuringHold`) работает только при включённом **Enable Hold** у менеджера, а у автосозданного менеджера он выключен: добавьте в сцену `MouseInputManager` с Enable Hold или задайте `MouseInputManager.I.enableHold = true`. `RequiresHoldEvents` показывает, нужен ли он текущим настройкам. Триггер `Click` срабатывает, только если нажатие и отпускание попали в один и тот же коллайдер; над пустым местом используйте `Release`. Демо-сцена `Scenes/Tools/MouseEffectorExample.unity` собирается билдером `MouseEffectorExampleBuilder`.
+`MouseEffect` рисует след, двигает объект-последователь и спавнит префаб по событиям `MouseInputManager`. Спавн по удержанию (триггер `Hold` или `spawnDuringHold`) работает только при включённом **Enable Hold** у менеджера, а у автосозданного менеджера он выключен: добавьте в сцену `MouseInputManager` с Enable Hold или задайте `MouseInputManager.I.enableHold = true`. `RequiresHoldEvents` показывает, нужен ли он текущим настройкам. Триггер `Click` срабатывает, только если нажатие и отпускание попали в один и тот же коллайдер; над пустым местом используйте `Release`. Демо-сцена — `Scenes/Tools/MouseEffectorExample.unity`.

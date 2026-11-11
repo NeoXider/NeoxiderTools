@@ -129,7 +129,45 @@ namespace Neo.Tools
         [SerializeField] [Min(1)]
         private int _maxRejectionTries = 8;
 
+        [Header("Selection")]
+        [Tooltip("Relative weight of each prefab, in the order of Prefabs. Empty or missing entries count as 1.")]
+        [SerializeField]
+        private float[] _prefabWeights = Array.Empty<float>();
+
+        [Tooltip("Seconds after StartSpawn before each prefab may spawn, in the order of Prefabs. Missing entries count " +
+                 "as 0. Lets tougher enemies join later.")]
+        [SerializeField]
+        private float[] _prefabUnlockSeconds = Array.Empty<float>();
+
+        [Tooltip("Multiplier on the spawn delay over seconds since StartSpawn (x = seconds, y = multiplier). " +
+                 "Empty = 1. A curve falling to 0.3 makes spawns three times as frequent.")]
+        [SerializeField]
+        private AnimationCurve _delayOverTime = new();
+
+        [Tooltip("Skip a spawn while this many spawned objects are active. 0 = no cap.")]
+        [SerializeField] [Min(0)]
+        private int _maxActive;
+
+        [Header("Around Target")]
+        [Tooltip("Spawn on a ring around this transform (for example the player). Wins over spawn points; a spawn " +
+                 "area collider still wins over the ring.")]
+        [SerializeField]
+        private Transform _aroundTarget;
+
+        [Tooltip("Inner radius of the ring around the target.")]
+        [SerializeField] [Min(0f)]
+        private float _ringMinRadius = 8f;
+
+        [Tooltip("Outer radius of the ring around the target.")]
+        [SerializeField] [Min(0f)]
+        private float _ringMaxRadius = 12f;
+
+        [Tooltip("Plane of the ring: XY for 2D scenes, XZ for 3D ground.")]
+        [SerializeField]
+        private SpawnPlane _ringPlane = SpawnPlane.XY;
+
         private int _spawnedCount;
+        private float _spawnStartTime;
 
         // WHY: Handle of the running spawn loop only, so OnDisable can stop it without touching the
         // pending delayed-destroy coroutines started by SpawnObject.
@@ -154,6 +192,61 @@ namespace Neo.Tools
         public int CurrentWave { get; private set; } = 1;
 
         public List<GameObject> SpawnedObjects { get; } = new();
+
+        /// <summary>Seconds since the last <see cref="StartSpawn" />; drives prefab unlocks and the delay curve.</summary>
+        public float ElapsedSpawnSeconds => Time.time - _spawnStartTime;
+
+        /// <summary>Transform the ring spawn is centred on, or null for spawn points and areas.</summary>
+        public Transform AroundTarget
+        {
+            get => _aroundTarget;
+            set => _aroundTarget = value;
+        }
+
+        /// <summary>Cap on simultaneously active spawns; 0 = no cap.</summary>
+        public int MaxActive
+        {
+            get => _maxActive;
+            set => _maxActive = Mathf.Max(0, value);
+        }
+
+        /// <summary>Sets the ring around <see cref="AroundTarget" /> and its plane.</summary>
+        public void SetRing(float minRadius, float maxRadius, SpawnPlane plane)
+        {
+            _ringMinRadius = Mathf.Max(0f, minRadius);
+            _ringMaxRadius = Mathf.Max(_ringMinRadius, maxRadius);
+            _ringPlane = plane;
+        }
+
+        /// <summary>Per-prefab weights and unlock times, in the order of <see cref="prefabs" />. Null clears a list.</summary>
+        public void SetSelection(float[] weights, float[] unlockSeconds)
+        {
+            _prefabWeights = weights ?? Array.Empty<float>();
+            _prefabUnlockSeconds = unlockSeconds ?? Array.Empty<float>();
+        }
+
+        /// <summary>Multiplier curve on the spawn delay over seconds since <see cref="StartSpawn" />; null = 1.</summary>
+        public void SetDelayOverTime(AnimationCurve curve)
+        {
+            _delayOverTime = curve ?? new AnimationCurve();
+        }
+
+        /// <summary>
+        ///     Index of the next prefab: weighted by <c>Prefab Weights</c> among prefabs unlocked at
+        ///     <see cref="ElapsedSpawnSeconds" />. -1 when none is available yet.
+        /// </summary>
+        public int PickPrefabIndex()
+        {
+            int count = _prefabs != null ? _prefabs.Length : 0;
+            return SpawnPlanner.PickWeighted(count, _prefabWeights, _prefabUnlockSeconds, ElapsedSpawnSeconds,
+                Random.value);
+        }
+
+        private float NextSpawnDelay()
+        {
+            return Random.Range(minSpawnDelay, maxSpawnDelay) *
+                   SpawnPlanner.DelayMultiplier(_delayOverTime, ElapsedSpawnSeconds);
+        }
 
         private void Start()
         {
@@ -233,6 +326,7 @@ namespace Neo.Tools
             }
 
             _spawnedCount = 0;
+            _spawnStartTime = Time.time;
             ulong generation = ++_productionGeneration;
             isSpawning = true;
             Coroutine routine = StartCoroutine(RunSpawnProduction(generation));
@@ -330,13 +424,23 @@ namespace Neo.Tools
                             yield break;
                         }
 
+                        while (IsAtCap() && IsCurrentProduction(generation))
+                        {
+                            yield return _spawnDelayWait.Get(NextSpawnDelay());
+                        }
+
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
+
                         SpawnRandomObject();
                         if (!IsCurrentProduction(generation))
                         {
                             yield break;
                         }
 
-                        float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+                        float delay = NextSpawnDelay();
                         yield return _spawnDelayWait.Get(delay);
                         if (!IsCurrentProduction(generation))
                         {
@@ -363,6 +467,12 @@ namespace Neo.Tools
             {
                 while (IsCurrentProduction(generation) && (spawnLimit == 0 || _spawnedCount < spawnLimit))
                 {
+                    if (IsAtCap())
+                    {
+                        yield return _spawnDelayWait.Get(NextSpawnDelay());
+                        continue;
+                    }
+
                     SpawnRandomObject();
                     if (!IsCurrentProduction(generation))
                     {
@@ -370,7 +480,7 @@ namespace Neo.Tools
                     }
 
                     _spawnedCount++;
-                    float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+                    float delay = NextSpawnDelay();
                     yield return _spawnDelayWait.Get(delay);
                     if (!IsCurrentProduction(generation))
                     {
@@ -400,7 +510,12 @@ namespace Neo.Tools
                     return null;
                 }
 
-                int rIndex = _prefabs.GetRandomIndex();
+                int rIndex = PickPrefabIndex();
+                if (rIndex < 0)
+                {
+                    return null;
+                }
+
                 CmdSpawnById(rIndex, GetSpawnPosition(), GetSpawnRotation());
                 return null;
             }
@@ -412,7 +527,13 @@ namespace Neo.Tools
                 return null;
             }
 
-            int randomIndex = _prefabs.GetRandomIndex();
+            int randomIndex = PickPrefabIndex();
+            if (randomIndex < 0)
+            {
+                // WHY: every prefab is still locked by Prefab Unlock Seconds; the loop simply tries again later.
+                return null;
+            }
+
             GameObject prefabToSpawn = _prefabs[randomIndex];
 
             if (prefabToSpawn == null)
@@ -693,6 +814,11 @@ namespace Neo.Tools
                 return ResolveAllowedPosition(false);
             }
 
+            if (_aroundTarget != null)
+            {
+                return ResolveRingPosition();
+            }
+
             return _activeSpawnPoint.position;
         }
 
@@ -738,6 +864,26 @@ namespace Neo.Tools
             for (int attempt = 1; attempt < _maxRejectionTries && !IsPositionAllowed(candidate); attempt++)
             {
                 candidate = SampleSpawnArea(useArea3D);
+            }
+
+            return candidate;
+        }
+
+        private bool IsAtCap()
+        {
+            return _maxActive > 0 && GetActiveObjectCount() >= _maxActive;
+        }
+
+        // WHY: Same deny-zone re-roll as the areas; the last candidate is used when every try was denied.
+        private Vector3 ResolveRingPosition()
+        {
+            Vector3 center = _aroundTarget.position;
+            Vector3 candidate = SpawnPlanner.RingPoint(center, _ringMinRadius, _ringMaxRadius, _ringPlane,
+                Random.value, Random.value);
+            for (int attempt = 1; attempt < _maxRejectionTries && !IsPositionAllowed(candidate); attempt++)
+            {
+                candidate = SpawnPlanner.RingPoint(center, _ringMinRadius, _ringMaxRadius, _ringPlane, Random.value,
+                    Random.value);
             }
 
             return candidate;

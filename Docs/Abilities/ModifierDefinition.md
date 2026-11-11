@@ -20,7 +20,7 @@ All fields live under the nested **Blueprint** foldout. A blank **Id** is filled
 | **Duration By Level** | `float[]` | Optional durations sampled by the ability level captured at application. Empty = use Duration. |
 | **Stack Policy** | `ModifierStackPolicy` | Re-application behavior: `Independent`, `Refresh`, `Stack`, `Unique`, `Prolong`, `IndependentCapped`. See below. |
 | **Max Stacks** | int | Cap for the `Stack` policy and the instance cap of `IndependentCapped`. Ignored otherwise. |
-| **Properties** | `List<PropertyContribution>` | Property contributions while active (per-stack scaling supported). |
+| **Properties** | `List<PropertyContribution>` | Property contributions while active (per-stack and per-level scaling supported). |
 | **States** | `List<string>` | Boolean states granted while active (any-true-wins), e.g. `stunned`, `frozen`. |
 | **Tick Interval** | float | Seconds between effect ticks. `0` or negative = no ticking. |
 | **Tick On Apply** | bool | If true, the first tick fires on the next positive `AbilitySystem.Tick`, without waiting a full interval. |
@@ -46,7 +46,7 @@ The decision is made by `AbilityRules.Stacking`, so a game can replace it ([Rule
 
 ### Property contributions
 
-Each entry is `{ PropertyId, Op, Value, PerStackValue }`. Aggregation across all of a unit's modifiers is fixed and deterministic: `final = max((base + sum(Add)) * product(Mul), all Max floors)`.
+Each entry is `{ PropertyId, Op, Value, PerStackValue, ValueByLevel }`. Aggregation across all of a unit's modifiers is fixed and deterministic: `final = max((base + sum(Add)) * product(Mul), all Max floors)`.
 
 | `Op` | Meaning | Example |
 |------|---------|---------|
@@ -55,6 +55,24 @@ Each entry is `{ PropertyId, Op, Value, PerStackValue }`. Aggregation across all
 | `Max` | Raises the final value to at least this floor. | `{ move_speed, Max, 1 }` |
 
 Well-known property ids are in `AbilityProperties` (`move_speed`, `attack_damage`, `armor`, `spell_power`, `crit_chance`, `crit_multiplier`, `evasion_chance`, `lifesteal_percent`, `incoming_damage_mul`, `shield_hp`, …); the registry is open, so any string works. See [combat properties](./README.md#combat-properties-crit--evasion--lifesteal) for how the damage pipeline reads the crit / evasion / lifesteal ones.
+
+### Strength by level
+
+**Value By Level** makes a contribution follow the ability level captured on the instance (the level of the ability that applied it; a re-application re-captures it). The sampling rule is the one of every leveled array: `ValueByLevel[clamp(level - 1)]`, empty = `Value`; per-stack scaling adds on top: `effective = ValueByLevel[level] + PerStackValue × (stacks - 1)`. Shield capacity (`shield_hp`) follows it too.
+
+Example, a slow of 20 / 30 / 40% by level: `{ move_speed, Mul, Value 0.8, Value By Level = [0.8, 0.7, 0.6] }`. A stun of 1 / 1.5 / 2 s: **Duration By Level** = `[1, 1.5, 2]` with the `stunned` state.
+
+```csharp
+ModifierBlueprint frost = new ModifierBlueprint { Id = "frost_slow", Duration = 2f, IsDebuff = true };
+frost.Properties.Add(new PropertyContribution(AbilityProperties.MoveSpeed, PropertyOp.Mul, 0.8f)
+{
+    ValueByLevel = new[] { 0.8f, 0.7f, 0.6f }      // 20 / 30 / 40% slow
+});
+ModifierBlueprint bash = new ModifierBlueprint { Id = "bash_stun", Duration = 1f, DurationByLevel = new[] { 1f, 1.5f, 2f } };
+bash.States.Add(AbilityStates.Stunned);
+```
+
+Tick and reaction effects can also scale with **what the applying cast spent** (a node with **Amount Spent Resource**, or a special with a spent term): such a modifier captures the paid amounts at apply time and replays them into every tick and reaction (`ModifierInstance.SpentCount`, `GetSpent(id)`). Modifiers that do not use a spent term capture nothing. The full table of scalable parameters is in [AbilityDefinition](./AbilityDefinition.md#leveled-and-scalable-values).
 
 ### Event reactions
 
@@ -75,6 +93,10 @@ For an exhausted instance the receipt order remains `shield_absorbed` → `shiel
 | `bool ModifierBlueprint.IsPermanent` | `true` when `Duration <= 0`. |
 | `ModifierInstance.IsPermanent` | Effective permanence after resolving `DurationByLevel`. Use this for a live instance. |
 | `bool ModifierBlueprint.HasTicks` | `true` when it has a positive tick interval and tick effects. |
+| `float ModifierBlueprint.ResolveDuration(level)` | Duration at an ability level (`DurationByLevel`, else `Duration`). |
+| `float PropertyContribution.ValueFor(stacks, level)` | Effective contribution for a stack count and a captured level; `ValueForStacks(stacks)` ignores `ValueByLevel`. |
+| `ModifierInstance.AbilityLevel` / `SpentCount` / `GetSpent(id)` | The captured level and paid amounts of a live instance. |
+| `ModifierEngine.Apply(blueprint, caster, owner, sourceAbilityId, level, spentSource)` | The apply overload that also captures what `spentSource`'s cast paid (custom ops pass their context). |
 
 Apply from code (parallel to the `apply_modifier` op):
 
@@ -118,6 +140,7 @@ system.RegisterModifier(burn);
 - **Bulk removal snapshots its starting instances.** Removal callbacks can safely remove other modifiers. Replacements created by callbacks survive the outer `RemoveById` / `RemoveWhere` / `RemoveAllFrom`; the returned count excludes removals performed inside callbacks.
 - **Tick effect targeting:** during a tick the primary target is the owner and the context caster is the modifier's caster — so `Target = Target` hits the owner and kill credit goes to the caster.
 - **Shields are `shield_hp` contributions, not a state.** The damage pipeline absorbs against every `shield_hp` pool automatically and fires `shield_absorbed` / `shield_broken`; pure damage bypasses shields. See the [Magic Shield example](./README.md#magic-shield).
+- **A level-up does not change a live modifier.** It keeps the level (and the paid amounts) it was applied with until it is re-applied.
 - **`Max` floors are applied last and take the single highest floor**, not a sum — two `{ x, Max, 1 }` and `{ x, Max, 2 }` give a floor of `2`.
 - **`States` do not by themselves stop movement or attacks** beyond what the pipeline reads (`stunned`, `silenced`, `untargetable`, `invulnerable`, `magic_immune`). `frozen`/`rooted` are gameplay conventions — pair them with a `move_speed` `Mul 0` contribution for an actual freeze, and have your movement code read the state.
 

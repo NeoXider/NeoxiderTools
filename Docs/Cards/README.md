@@ -133,7 +133,7 @@ Use `CanAdd(...)` or `TryAdd(...)` for player-facing flows where overflow should
 
 `Assets/NeoxiderDemos/Demo/Scenes/_ExampleGame/CardGame.unity` (Demo download) is a complete Drunkard game assembled in the scene. `CardManager` (`DrunkardGame`), `DECK` (`DeckComponent`), `Hand Player` / `Hand Bot` (`HandComponent`) and `Board` (`BoardComponent`) sit on the NeoxiderPages `PM` pages and talk through UnityEvents: a pile click calls `DrunkardGame.Play`, `HandComponent.OnCardCountChanged` feeds the `SetText` score labels, and the win/lose events call `GM`.
 
-The `[Demo] Guide` overlay is saved in the scene (no runtime bootstrap). The editor builder `CardGameBuilder` in the sample's `Editor/Builders/Cards` folder authors it; **Neoxider/Demo/Rebuild Active Demo Scene** rebuilds it without touching the game objects.
+The `[Demo] Guide` overlay is saved in the scene (no runtime bootstrap).
 
 | Object | What it shows |
 |--------|---------------|

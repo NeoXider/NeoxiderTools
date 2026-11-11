@@ -41,13 +41,16 @@
 
 | Obsolete | Replacement |
 |----------|-------------|
-| `NeoDemoShell.Build(...)`, `NeoDemoShell.ShowInfoCardOnce(...)` | A scene builder with `DemoSceneKit.Frame(...)` and `frame.InfoCard(...)` ([Samples](./Samples.md#how-demo-scenes-are-made)) |
-| `ModuleDemoSceneInfo.Show(...)` | `frame.InfoCard(info, content)` in a builder |
-| `QuestDemoView` | `QuestDemoController` in the builder-authored QuestDemo scene |
+| `NeoDemoShell.Build(...)`, `NeoDemoShell.ShowInfoCardOnce(...)` | A frame authored in the scene as uGUI objects ([Samples](./Samples.md#how-demo-scenes-are-made)) |
+| `ModuleDemoSceneInfo.Show(...)` | An info card authored in the scene |
+| `QuestDemoView` | `QuestDemoController` in the QuestDemo scene |
 
 `SurvivorHud`, obsolete earlier in the 12.0 cycle, was deleted together with the unused `RpgDemoUI`,
-`ConditionDemoSetup`, `HealthTextDisplay` and `Network/TestStart`; use `SurvivorHudView`, authored by
-`SurvivorDemoBuilder`.
+`ConditionDemoSetup`, `HealthTextDisplay` and `Network/TestStart`. In 12.3 the Survivor demo scripts
+(`SurvivorGame`, `SurvivorEnemy`, `SurvivorPlayerController`, `SurvivorXpOrb`, `SurvivorHudView`) were removed too:
+the demo is now a saved scene wired from library components. The editor scene builders (`Neo.Demo.Editor`,
+`Neo.Demo.Editor.Tests`), the `DemoGeneratedRoot` marker, `SurvivorConfig` and `SurvivorUpgrade` left the demo in the
+same release: demo scenes are plain saved scenes.
 
 ## Planned removal
 
