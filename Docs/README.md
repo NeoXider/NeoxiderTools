@@ -4,7 +4,7 @@
 <p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/docs.jpg" alt="Concept art: the NeoxiderTools documentation hub" width="100%" /></p>
 <!-- docs-banner:end -->
 
-**What it is:** the documentation entry point for **NeoxiderTools** `v12.5.0`. It routes you by task to the runtime APIs, scene setup and optional Inspector / NoCode workflows of every module.
+**What it is:** the documentation entry point for **NeoxiderTools** `v12.5.1`. It routes you by task to the runtime APIs, scene setup and optional Inspector / NoCode workflows of every module.
 
 **Contents:** [I want to…](#choose-your-starting-point), [existing building blocks](#do-not-rebuild-first), [module index](#modules), [demos and add-ons](#samples-and-add-ons), [guides](#guides).
 

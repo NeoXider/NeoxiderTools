@@ -167,7 +167,8 @@ namespace Neo.Abilities
             _orbitAngle = 0f;
             _active = true;
 
-            if (!_homingTarget.IsValid && request.Direction.sqrMagnitude > 0.0001f)
+            bool hasDirection = request.Direction.sqrMagnitude > 0.0001f;
+            if (!_homingTarget.IsValid && hasDirection)
             {
                 _detonationPoint = request.Position + request.Direction;
                 _hasDetonationPoint = true;
@@ -176,7 +177,14 @@ namespace Neo.Abilities
             else
             {
                 _hasDetonationPoint = false;
-                _direction = _transform.forward;
+                // WHY: a homing target can be gone before the first frame (another weapon killed it). The
+                // projectile then flies on along the launch direction; the transform's forward is not a flight
+                // direction in 2D, where it points out of the screen and the projectile would hang in place.
+                _direction = hasDirection
+                    ? request.Direction.normalized
+                    : _plane == AbilityZonePlane.ScreenXY
+                        ? _transform.right
+                        : _transform.forward;
             }
         }
 

@@ -1,4 +1,19 @@
 
+## [12.5.1] - 2026-11-11
+
+### Fixed
+
+- **AbilityProjectileBehaviour (2D):** a homing projectile whose target was already gone on its first frame
+  (another weapon killed it) took the transform's forward as its direction. With **Plane** `ScreenXY` that points
+  out of the screen, so the projectile hung where it was launched until **Max Lifetime**. It now flies on along
+  the launch direction. 3D projectiles are not affected.
+
+### Changed
+
+- **Mirror in the development project:** 96.11.3 to 96.11.4 (unread unbatcher writers go back to the pool on
+  disconnect; `NetworkIdentity` no longer serializes its client connection during a domain reload). The package
+  itself still works with or without Mirror; the network tests pass against the new version.
+
 ## [12.5.0] - 2026-11-11
 
 A hit flash for sprites, and upgrades the player can read in the Survivor demo.
