@@ -1,4 +1,23 @@
 
+## [12.5.0] - 2026-11-11
+
+A hit flash for sprites, and upgrades the player can read in the Survivor demo.
+
+### Added
+
+- **SpriteFlash** (`Neo.Tools.View`): flashes sprites with a solid colour for a moment, the usual 2D feedback for
+  a hit. `Flash()`, `FlashFor(seconds)`, `Flash(color, seconds)`, `Stop()`; **Color**, **Duration**, **Fade Out**,
+  **Use Unscaled Time**, **On Flash Started** / **On Flash Finished**. The sprites share one flash material
+  (`Neoxider/Sprite Flash` shader) and get their own back when the flash ends or the object is disabled, so a
+  pooled enemy never returns white. Wire it to `AbilityUnitBehaviour > On Damaged`.
+- **AbilityCooldownSource:** `NextLevel` (`Level + 1`) for "Lv 2 > 3" on an upgrade card.
+
+### Changed
+
+- **Survivor demo:** enemies and the hero flash white when hit. Every weapon card shows the level it takes the
+  weapon to (`Lv 2 > 3`) and says what levels improve. Chain Lightning throws a second bolt at the nearest foe
+  from level 3: a second `chain` node switched on by **Chance By Level**.
+
 ## [12.4.0] - 2026-11-11
 
 Distinct weapon behaviours for the ability constructor, and a Survivor demo rebuilt on them.

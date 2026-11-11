@@ -25,6 +25,7 @@ entry point: `SelectorModel`.
 | [StarView](./StarView.md) | ScoreManager star display |
 | [LightAnimator](./LightAnimator.md), [MeshEmission](./MeshEmission.md) | Light/emission |
 | [ZPositionAdjuster](./ZPositionAdjuster.md) | Z-order |
+| [SpriteFlash](./SpriteFlash.md) | A solid-colour flash on sprites when something is hit |
 
 ## Demo scenes
 

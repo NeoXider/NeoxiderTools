@@ -55,7 +55,7 @@ In **Add Component**, most Tools components sit directly under **Neoxider/Tools*
 | **Inventory** | InventoryComponent, InventoryHand, InventoryDropper, PickableItem, HandView, InventoryView, InventorySlotGridView, InventorySlotView, InventoryItemView, InventoryItemCountText, InventoryTotalCountText, InventoryPickupBridge, InventoryUseAction, ShopInventoryGrantBridge | [Inventory](./Tools/Inventory/README.md) |
 | **Input** | MouseInputManager, MouseEffect, SwipeController, MultiKeyEventTrigger | [Input](./Tools/Input/README.md) |
 | **Interact** | InteractiveObject, ToggleObject (plus InteractionRayProvider at the Tools root) | [Interaction](./Tools/InteractableObject/README.md) |
-| **View** | Selector, SelectorItem, StarView, BillboardUniversal, LightAnimator, MeshEmission, ImageFillAmountAnimator, ZPositionAdjuster | [View](./Tools/View/README.md) |
+| **View** | Selector, SelectorItem, StarView, BillboardUniversal, LightAnimator, MeshEmission, ImageFillAmountAnimator, ZPositionAdjuster, SpriteFlash | [View](./Tools/View/README.md) |
 | **Time** | TimerObject (plus GameTimeController at the Tools root) | [Time](./Tools/Time/README.md) |
 | **Text** | SetText, TimeToText | [Text](./Tools/Text/README.md) |
 | **Random** | ChanceSystemBehaviour | [Random](./Tools/Random/README.md) |

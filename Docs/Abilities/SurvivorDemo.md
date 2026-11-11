@@ -28,7 +28,7 @@ Every weapon is an ability asset in `Survivor/Data`, plus a template in the scen
 | **Magic Bolt** (start) | Homing bolts at the nearest foes. | Unit target; a `projectile` effect with the `AreaAroundCaster` selector launches one bolt per selected foe, and the payload `bolt_hit` deals the damage. | Damage, cooldown and **Max Targets By Level**: 1, 1, 2, 2, 3 bolts. |
 | **Holy Aura** | A ring around the hero that burns and pushes back. | No target; a `zone` cast effect with the `Caster` selector follows the hero and pulses `aura_tick` (damage + `knockback`) every 0.5 s. The zone lasts as long as the cooldown, so it never drops. | Radius and damage. |
 | **Spinning Blades** | Three blades orbit the hero. | No target, `Projectile` delivery; the template is an `AbilityProjectileBehaviour` with **Motion** Orbit, three **Hit Points** and a **Rehit Interval**. | Damage and cooldown: at level 5 the blades are almost permanent. |
-| **Chain Lightning** | Strikes a random foe and jumps on. | Unit target, a `chain` effect with a falloff per hop. A second auto-caster with **Target Pick** Random aims it. | Damage and **Max Targets By Level**: 3 to 8 hops. |
+| **Chain Lightning** | Strikes a random foe and jumps on. | Unit target, a `chain` effect with a falloff per hop. A second auto-caster with **Target Pick** Random aims it. A second `chain` node with the `AreaAroundCaster` selector starts at the nearest foe; **Chance By Level** 0, 0, 1, 1, 1 switches it on. | Damage, cooldown and **Max Targets By Level**: 3 to 8 hops. From level 3 a second bolt strikes the nearest foe. |
 | **Burning Ground** | Sets the ground on fire under a random foe. | Point target; a `zone` effect fixed at the point pulses `fire_tick`. Aimed by the Random auto-caster. | Radius, damage and **Duration By Level**. |
 | **Ice Spear** | A fast spear that pierces a whole line. | Direction target, `Projectile` delivery; the template has **Max Hits** 99. | Damage and cooldown. |
 | **Frost Nova** | Freezes everything around the hero. | No target; area damage plus `apply_modifier` `frozen` (the `stunned` state). | Radius, damage and the freeze: **Duration By Level** 1 to 2 s. |
@@ -92,6 +92,7 @@ The Spitter keeps its distance with `Follow` **Stopping Distance** and casts a s
 
 - XP and HP bars (`SetProgress`), level and kill texts (`NoCodeFormattedText`), the timer (`NoCodeBindText` + `TimeToText`), the cards and the overlays.
 - `Loadout`: one slot per weapon with an `AbilityCooldownSource`, a `SetProgress` on `CooldownNormalized` and a `NoCodeFormattedText` on `Level`.
+- Weapon cards: a `Level` text with a `NoCodeFormattedText` on the slot's `Level` and `NextLevel` shows the level a pick gives, for example `Lv 2 > 3`.
 
 ### Run flow
 
@@ -108,7 +109,7 @@ All as persistent UnityEvents:
 | Feedback | How it is wired |
 |----------|-----------------|
 | Idle "breathing" | `TransformAnimator` (scale pulse, random start time) on each `Body` sprite; the gem also floats, the blades spin. |
-| Hit reaction | `AbilityUnitBehaviour.OnDamaged -> TransformAnimator.Shake()` on the body. The hero's `OnDamaged` also shakes the child camera of the rig, which has its own `TransformAnimator`. |
+| Hit reaction | `AbilityUnitBehaviour.OnDamaged -> TransformAnimator.Shake()` and `SpriteFlash.Flash()` on the body: it shakes and flashes white. The hero's `OnDamaged` also shakes the child camera of the rig, which has its own `TransformAnimator`. |
 | Weapon effects | Ability data names a cue: **Cast Cue** `frost` on Frost Nova, **Impact Cue** `zap` on Chain Lightning and `hit` on the bolt, spear and blades. `AbilityCuePlayer` spawns the pooled effect at the caster or at every damaged unit. |
 | Zones | The aura and the fire are `AbilityZoneView` templates named by the zone effect's archetype id. |
 | Enemy death, gem pickup | `Despawner` **Spawn Prefab On Despawn** on the enemy and gem templates. |
