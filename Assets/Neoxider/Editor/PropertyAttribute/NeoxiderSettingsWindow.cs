@@ -92,9 +92,9 @@ namespace Neo.Editor
         private static bool Switch(GUIContent content, bool value)
         {
             Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
-            Rect field = EditorGUI.PrefixLabel(rect, content);
-            return NeoxiderEditorGUI.DrawPillToggle(
-                new Rect(field.x, field.y, NeoxiderEditorGUI.PillToggleWidth, field.height), value);
+            Rect switchRect = NeoxiderEditorGUI.SwitchRowRects(rect, out Rect labelRect);
+            EditorGUI.HandlePrefixLabel(rect, labelRect, content, 0, EditorStyles.label);
+            return NeoxiderEditorGUI.DrawPillToggle(switchRect, value);
         }
 
         private void DrawHeaderSettings()

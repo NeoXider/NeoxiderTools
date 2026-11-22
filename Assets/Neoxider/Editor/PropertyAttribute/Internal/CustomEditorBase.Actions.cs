@@ -464,8 +464,9 @@ namespace Neo.Editor
                 }
                 else if (type == typeof(bool))
                 {
+                    float switchWidth = Mathf.Min(NeoxiderEditorGUI.PillToggleWidth, fieldRect.width);
                     result = NeoxiderEditorGUI.DrawPillToggle(
-                        new Rect(fieldRect.x, fieldRect.y, NeoxiderEditorGUI.PillToggleWidth, fieldRect.height),
+                        new Rect(fieldRect.xMax - switchWidth, fieldRect.y, switchWidth, fieldRect.height),
                         value is bool boolValue && boolValue);
                 }
                 else if (typeof(Object).IsAssignableFrom(type))

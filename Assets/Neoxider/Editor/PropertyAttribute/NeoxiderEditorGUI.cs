@@ -362,6 +362,7 @@ namespace Neo.Editor
 
         private const float SwitchTrackHeight = 16f;
         private const float SwitchKnobInset = 2f;
+        private const float SwitchLabelGap = 6f;
 
         private static readonly Color SwitchOnColor = new(0.24f, 0.70f, 0.47f, 1f);
         private static readonly Color OverrideMarkerColor = new(0.0f, 0.58f, 0.92f, 1f);
@@ -451,20 +452,34 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Draws a labelled boolean row as label + switch, the way every other bool in the package is drawn.
-        ///     Rect-based, so a PropertyDrawer can use it too. Goes through BeginProperty, so prefab overrides (bold
-        ///     label, override bar, Revert context menu), Undo and multi-object editing (a mixed value shows a dash)
-        ///     behave like a built-in toggle.
+        ///     Splits a boolean row into the switch rect at the row's right edge and the label rect in front of it.
+        /// </summary>
+        /// <remarks>
+        ///     WHY: in the value column the switch left the label only the narrow prefix-label width, so names like
+        ///     "Dont Destroy On Load" were cut off; at the row end the label gets the whole row except the switch.
+        /// </remarks>
+        internal static Rect SwitchRowRects(Rect rowRect, out Rect labelRect)
+        {
+            float width = Mathf.Min(PillToggleWidth, Mathf.Max(0f, rowRect.width));
+            Rect switchRect = new(rowRect.xMax - width, rowRect.y + (rowRect.height - PillToggleHeight) * 0.5f, width,
+                PillToggleHeight);
+            Rect indented = EditorGUI.IndentedRect(rowRect);
+            labelRect = new Rect(indented.x, rowRect.y, Mathf.Max(0f, switchRect.x - SwitchLabelGap - indented.x),
+                EditorGUIUtility.singleLineHeight);
+            return switchRect;
+        }
+
+        /// <summary>
+        ///     Draws a labelled boolean row as label + switch at the row's right edge, the way every other bool in the
+        ///     package is drawn. Rect-based, so a PropertyDrawer can use it too. Goes through BeginProperty, so prefab
+        ///     overrides (bold label, override bar, Revert context menu), Undo and multi-object editing (a mixed value
+        ///     shows a dash) behave like a built-in toggle.
         /// </summary>
         public static void DrawPillToggleField(Rect rowRect, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(rowRect, label, property);
-            Rect contentRect = EditorGUI.PrefixLabel(rowRect, label);
-
-            // WHY: left-aligned at the start of the value column like Unity's own toggle, so the switch sits next to
-            // its label instead of drifting to the far edge of a wide inspector.
-            Rect pillRect = new(contentRect.x, contentRect.y + (contentRect.height - PillToggleHeight) * 0.5f,
-                Mathf.Min(PillToggleWidth, Mathf.Max(0f, contentRect.width)), PillToggleHeight);
+            Rect pillRect = SwitchRowRects(rowRect, out Rect labelRect);
+            EditorGUI.HandlePrefixLabel(rowRect, labelRect, label, 0, EditorStyles.label);
             bool mixed = property.hasMultipleDifferentValues;
             bool current = property.boolValue;
             EditorGUI.BeginChangeCheck();

@@ -597,6 +597,30 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void SwitchRow_PutsTheSwitchAtTheRowEnd_AndGivesTheLabelTheRest()
+        {
+            int indentLevel = EditorGUI.indentLevel;
+            try
+            {
+                EditorGUI.indentLevel = 0;
+                Rect row = new(10f, 40f, 300f, EditorGUIUtility.singleLineHeight);
+
+                Rect switchRect = NeoxiderEditorGUI.SwitchRowRects(row, out Rect label);
+
+                Assert.That(switchRect.xMax, Is.EqualTo(row.xMax).Within(0.01f), "The switch sits at the row end.");
+                Assert.That(switchRect.width, Is.EqualTo(NeoxiderEditorGUI.PillToggleWidth).Within(0.01f));
+                Assert.That(label.x, Is.EqualTo(row.x).Within(0.01f));
+                Assert.That(label.xMax, Is.LessThan(switchRect.x), "The label never runs under the switch.");
+                Assert.That(label.width, Is.GreaterThan(row.width - NeoxiderEditorGUI.PillToggleWidth - 10f),
+                    "A long name gets the whole row except the switch, not just the prefix-label width.");
+            }
+            finally
+            {
+                EditorGUI.indentLevel = indentLevel;
+            }
+        }
+
+        [Test]
         public void DocPreview_FormatsCodeLinksAndBullets()
         {
             string rich = NeoDocHelper.MarkdownToUnityRichText(
