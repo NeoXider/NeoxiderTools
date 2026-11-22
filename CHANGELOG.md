@@ -1,4 +1,13 @@
 
+## [12.5.2] - 2026-11-22
+
+### Changed
+
+- **Inspector switches** sit at the right edge of the row instead of the start of the value column. The name now
+  gets the whole row, so long names such as `Dont Destroy On Load` and `Set Instance On Awake` are no longer cut
+  off in a narrow inspector. The same layout is used by `NeoxiderEditorGUI.DrawPillToggleField` in property
+  drawers, the **Neoxider > Visual Settings** window and `bool` parameters of inspector buttons.
+
 ## [12.5.1] - 2026-11-11
 
 ### Fixed
